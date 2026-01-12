@@ -7,9 +7,7 @@ const corsHeaders = {
 };
 
 // Helper function to fetch poster URL from TMDB when not provided
-async function fetchTmdbPosterUrl(externalId: string | null, externalSource: string | null, mediaType?: string): Promise<string | null> {
-  if (!externalId || (externalSource !== 'tmdb' && externalSource !== 'movie' && externalSource !== 'tv')) return null;
-  
+async function fetchTmdbPosterUrl(externalId: string | null, externalSource: string | null, mediaType?: string, title?: string): Promise<string | null> {
   const tmdbApiKey = Deno.env.get('TMDB_API_KEY');
   if (!tmdbApiKey) {
     console.log('TMDB_API_KEY not available for poster fetch');
@@ -17,26 +15,56 @@ async function fetchTmdbPosterUrl(externalId: string | null, externalSource: str
   }
   
   try {
-    // Determine which endpoint to try first based on mediaType
+    const isTmdbSource = !externalSource || externalSource === 'tmdb' || externalSource === 'movie' || externalSource === 'tv';
     const tryMovie = !mediaType || mediaType === 'movie';
     const tryTv = !mediaType || mediaType === 'tv';
     
-    if (tryMovie) {
-      const response = await fetch(`https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbApiKey}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.poster_path) {
-          return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+    // Try by external ID first if we have one
+    if (externalId && isTmdbSource) {
+      if (tryMovie) {
+        const response = await fetch(`https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbApiKey}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.poster_path) {
+            return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+          }
+        }
+      }
+      
+      if (tryTv) {
+        const response = await fetch(`https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbApiKey}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.poster_path) {
+            return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+          }
         }
       }
     }
     
-    if (tryTv) {
-      const response = await fetch(`https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbApiKey}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.poster_path) {
-          return `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+    // Fallback: search by title if no externalId or ID lookup failed
+    if (title && isTmdbSource) {
+      console.log('TMDB title search for:', title);
+      
+      if (tryTv) {
+        const response = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${tmdbApiKey}&query=${encodeURIComponent(title)}&page=1`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.results?.[0]?.poster_path) {
+            console.log('Found TV poster for:', title);
+            return `https://image.tmdb.org/t/p/w300${data.results[0].poster_path}`;
+          }
+        }
+      }
+      
+      if (tryMovie) {
+        const response = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodeURIComponent(title)}&page=1`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.results?.[0]?.poster_path) {
+            console.log('Found movie poster for:', title);
+            return `https://image.tmdb.org/t/p/w300${data.results[0].poster_path}`;
+          }
         }
       }
     }
@@ -246,7 +274,7 @@ serve(async (req) => {
     let finalImageUrl = imageUrl || null;
     if (!finalImageUrl) {
       console.log('No image URL provided, fetching from TMDB for:', title);
-      finalImageUrl = await fetchTmdbPosterUrl(externalId, externalSource, mediaType);
+      finalImageUrl = await fetchTmdbPosterUrl(externalId, externalSource, mediaType, title);
       if (finalImageUrl) {
         console.log('Fetched poster URL:', finalImageUrl);
       } else {
@@ -345,16 +373,7 @@ serve(async (req) => {
           content = null;
         }
         
-        // Ensure we have a poster URL - fetch from TMDB if missing
-        let finalImageUrl = imageUrl || null;
-        if (!finalImageUrl && externalId && (externalSource === 'tmdb' || !externalSource)) {
-          console.log('No imageUrl provided, fetching from TMDB...');
-          finalImageUrl = await fetchTmdbPosterUrl(externalId, externalSource || 'tmdb', mediaType);
-          if (finalImageUrl) {
-            console.log('Fetched TMDB poster:', finalImageUrl);
-          }
-        }
-        
+        // Use finalImageUrl from earlier fetch (already populated before list_items insert)
         // Use admin client to bypass RLS for social post creation (matching add-media-to-list pattern)
         const { error: postError } = await supabaseAdmin
           .from('social_posts')
