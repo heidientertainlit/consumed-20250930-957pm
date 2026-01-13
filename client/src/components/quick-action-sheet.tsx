@@ -610,29 +610,42 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 </button>
               </div>
               
-              {/* Rating - simplified inline */}
+              {/* Rating - slider-based with half-star support */}
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Rating:</span>
-                <div className="flex gap-0.5">
-                  {[1, 2, 3, 4, 5].map((star) => {
-                    const fillPercent = Math.min(Math.max(ratingValue - (star - 1), 0), 1) * 100;
-                    return (
-                      <button
-                        key={star}
-                        onClick={() => setRatingValue(ratingValue === star ? 0 : star)}
-                        className="focus:outline-none relative"
-                        data-testid={`rating-star-${star}`}
+                <div className="relative flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <div 
+                      key={star} 
+                      className="relative"
+                      style={{ width: 24, height: 24 }}
+                    >
+                      <Star className="w-6 h-6 text-gray-300 absolute inset-0" />
+                      <div 
+                        className="absolute inset-0 overflow-hidden pointer-events-none"
+                        style={{ 
+                          width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%'
+                        }}
                       >
-                        <Star className="w-6 h-6 text-gray-300" />
-                        <div className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}>
-                          <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-                        </div>
-                      </button>
-                    );
-                  })}
+                        <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                      </div>
+                    </div>
+                  ))}
+                  {/* Invisible slider overlay for half-star ratings */}
+                  <input
+                    type="range"
+                    min="0"
+                    max="5"
+                    step="0.5"
+                    value={ratingValue}
+                    onChange={(e) => setRatingValue(parseFloat(e.target.value))}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    style={{ margin: 0 }}
+                    data-testid="rating-slider"
+                  />
                 </div>
                 {ratingValue > 0 && (
-                  <span className="text-sm font-medium text-gray-700">{ratingValue.toFixed(1)}</span>
+                  <span className="text-sm font-medium text-gray-700">{ratingValue}/5</span>
                 )}
               </div>
               
@@ -1191,7 +1204,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
 
   const canPost = () => {
     if (selectedAction === "track") return !!selectedMedia;
-    if (selectedAction === "post" || selectedAction === "hot_take") return !!contentText.trim();
+    // Allow posting with just a rating OR just content (text is optional if rating is set)
+    if (selectedAction === "post" || selectedAction === "hot_take") return !!contentText.trim() || ratingValue > 0;
     if (selectedAction === "poll") return !!contentText.trim() && pollOptions.filter(o => o.trim()).length >= 2;
     if (selectedAction === "ask_for_recs") return !!contentText.trim();
     if (selectedAction === "rank") return !!selectedMedia && !!selectedRankId;
