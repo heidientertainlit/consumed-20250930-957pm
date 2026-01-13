@@ -356,7 +356,7 @@ export default function EntertainmentDNAPage() {
           <textarea
             value={(currentAnswer as string) || ""}
             onChange={(e) => handleAnswer(question.id, e.target.value)}
-            placeholder="Share your thoughts..."
+            placeholder="Just jot down a bunch of things you love..."
             className="w-full p-3 border border-gray-200 rounded-xl focus:border-purple-300 focus:ring-purple-300 min-h-[100px] resize-vertical text-black bg-white placeholder:text-gray-400 text-sm"
             data-testid={`text-input-${question.id}`}
           />
@@ -375,9 +375,9 @@ export default function EntertainmentDNAPage() {
                       ? 'border-purple-600 bg-purple-600 text-white font-medium'
                       : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50 text-gray-700'
                   }`}
-                  data-testid={`option-${question.id}-${option}`}
+                  data-testid={`option-${question.id}-${option.replace(' (please specify)', '')}`}
                 >
-                  {option}
+                  {option.replace(' (please specify)', '')}
                 </button>
               );
             })}
@@ -404,9 +404,9 @@ export default function EntertainmentDNAPage() {
                       ? 'border-purple-600 bg-purple-600 text-white font-medium'
                       : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50 text-gray-700'
                   }`}
-                  data-testid={`multi-option-${question.id}-${option}`}
+                  data-testid={`multi-option-${question.id}-${option.replace(' (please specify)', '')}`}
                 >
-                  {option}
+                  {option.replace(' (please specify)', '')}
                 </button>
               );
             })}
@@ -417,42 +417,110 @@ export default function EntertainmentDNAPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black p-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-3xl p-6 shadow-2xl">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Dna className="text-white" size={28} />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Discover Your Entertainment DNA</h1>
-            <p className="text-gray-600 text-sm">Answer a few questions to unlock your personalized entertainment profile</p>
-            <button
-              onClick={() => window.location.href = '/activity'}
-              className="text-xs text-gray-400 hover:text-gray-500 mt-3 underline"
-            >
-              Skip for now
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black px-6 pt-12 pb-8">
+      <div className="max-w-lg mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-purple-500 to-purple-700 rounded-full flex items-center justify-center mb-4">
+            <Dna className="text-white" size={28} />
           </div>
-
-          {/* DNA Questions */}
-          <div className="mb-6">
-            {questions.map(renderQuestion)}
-          </div>
-
-          {/* Action Button */}
-          <div className="border-t border-gray-100 pt-6">
-            <Button
-              onClick={generateDNA}
-              disabled={!isComplete()}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              data-testid="get-dna-button"
-            >
-              <Sparkles size={18} className="mr-2" />
-              Discover Your Entertainment DNA
-            </Button>
-          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Discover Your Entertainment DNA</h1>
+          <p className="text-purple-200 text-sm">Answer a few questions to unlock your personalized entertainment profile</p>
+          <button
+            onClick={() => window.location.href = '/activity'}
+            className="text-xs text-purple-300/60 hover:text-purple-200 mt-3 underline"
+          >
+            Skip for now
+          </button>
         </div>
+
+        {/* DNA Questions */}
+        <div className="space-y-6 mb-8">
+          {questions.map((question) => {
+            const currentAnswer = getAnswer(question.id);
+            
+            return (
+              <div key={question.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/10" data-testid={`question-${question.id}`}>
+                <h3 className="text-base font-semibold text-white mb-3 leading-relaxed">
+                  {question.question_text}
+                  {!question.is_required && <span className="text-purple-300/60 text-sm font-normal ml-2">(optional)</span>}
+                </h3>
+
+                {question.question_type === 'text' && (
+                  <textarea
+                    value={(currentAnswer as string) || ""}
+                    onChange={(e) => handleAnswer(question.id, e.target.value)}
+                    placeholder="Just jot down a bunch of things you love..."
+                    className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-purple-400 focus:ring-purple-400 min-h-[100px] resize-vertical text-white placeholder:text-white/40 text-sm"
+                    data-testid={`text-input-${question.id}`}
+                  />
+                )}
+
+                {question.question_type === 'select' && (
+                  <div className="flex flex-wrap gap-2">
+                    {question.options?.map((option, index) => {
+                      const isSelected = currentAnswer === option;
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => handleAnswer(question.id, option)}
+                          className={`px-4 py-2 rounded-full transition-all text-sm ${
+                            isSelected
+                              ? 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white font-medium shadow-lg'
+                              : 'bg-white/10 hover:bg-white/20 border border-white/20 text-white/80'
+                          }`}
+                          data-testid={`option-${question.id}-${option.replace(' (please specify)', '')}`}
+                        >
+                          {option.replace(' (please specify)', '')}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {question.question_type === 'multi-select' && (
+                  <div className="flex flex-wrap gap-2">
+                    {question.options?.map((option, index) => {
+                      const currentAnswers = Array.isArray(currentAnswer) ? currentAnswer : [];
+                      const isChecked = currentAnswers.includes(option);
+
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            const updatedAnswers = isChecked
+                              ? currentAnswers.filter(a => a !== option)
+                              : [...currentAnswers, option];
+                            handleAnswer(question.id, updatedAnswers);
+                          }}
+                          className={`px-4 py-2 rounded-full transition-all text-sm ${
+                            isChecked
+                              ? 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white font-medium shadow-lg'
+                              : 'bg-white/10 hover:bg-white/20 border border-white/20 text-white/80'
+                          }`}
+                          data-testid={`multi-option-${question.id}-${option.replace(' (please specify)', '')}`}
+                        >
+                          {option.replace(' (please specify)', '')}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Action Button */}
+        <Button
+          onClick={generateDNA}
+          disabled={!isComplete()}
+          className="w-full bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 hover:from-cyan-300 hover:via-purple-400 hover:to-purple-600 text-white font-semibold rounded-full py-4 text-lg shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          data-testid="get-dna-button"
+        >
+          <Sparkles size={18} className="mr-2" />
+          Discover Your Entertainment DNA
+        </Button>
       </div>
     </div>
   );
