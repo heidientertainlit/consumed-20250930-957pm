@@ -2396,10 +2396,6 @@ export default function Feed() {
         );
         
         if (response.ok) {
-          toast({
-            title: "Rating saved!",
-            description: `You rated ${media.title} ${rating}/5`,
-          });
           setInlineRatings(prev => ({ ...prev, [postId]: '' }));
           setActiveInlineRating(null);
           queryClient.invalidateQueries({ queryKey: ['/api/social-feed'] });
