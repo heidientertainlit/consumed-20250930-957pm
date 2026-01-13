@@ -2880,7 +2880,7 @@ export default function Feed() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 pt-4 pb-6">
+      <div className="max-w-4xl mx-auto px-4 pt-4 pb-6" data-feed-content>
         {/* Activity Stream */}
         <div className="space-y-6">
 

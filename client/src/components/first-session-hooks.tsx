@@ -66,8 +66,10 @@ export function FirstSessionHooks({ onComplete }: FirstSessionHooksProps) {
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => {
-            if (!hookStatus.liked) {
-              markLiked();
+            // Always scroll to feed content where user can like posts
+            const feedContent = document.querySelector('[data-feed-content]');
+            if (feedContent) {
+              feedContent.scrollIntoView({ behavior: 'smooth' });
             }
           }}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
