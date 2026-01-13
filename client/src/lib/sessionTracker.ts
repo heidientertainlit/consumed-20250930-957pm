@@ -51,6 +51,9 @@ class SessionTracker {
 
       console.log('📊 Session started:', this.sessionId);
 
+      // Maybe generate engagement notifications (with randomization)
+      this.maybeGenerateEngagementNotifications(userId);
+
       // Start heartbeat (every 30 seconds)
       this.startHeartbeat();
 
@@ -59,6 +62,63 @@ class SessionTracker {
       window.addEventListener('beforeunload', this.handleBeforeUnload);
     } catch (error) {
       console.error('Error starting session:', error);
+    }
+  }
+
+  private async maybeGenerateEngagementNotifications(userId: string) {
+    try {
+      // Check last session time - only generate if returning after 4+ hours
+      const { data: lastSession } = await supabase
+        .from('user_sessions')
+        .select('started_at')
+        .eq('user_id', userId)
+        .neq('session_id', this.sessionId)
+        .order('started_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      const hoursSinceLastSession = lastSession 
+        ? (Date.now() - new Date(lastSession.started_at).getTime()) / (1000 * 60 * 60)
+        : 24; // First session, treat as returning user
+
+      // Random chance that decreases with more frequent usage
+      // 4-8 hours away: 30% chance
+      // 8-24 hours away: 50% chance
+      // 24+ hours away: 70% chance
+      let chance = 0;
+      if (hoursSinceLastSession >= 24) chance = 0.7;
+      else if (hoursSinceLastSession >= 8) chance = 0.5;
+      else if (hoursSinceLastSession >= 4) chance = 0.3;
+      else return; // Too soon, skip
+
+      if (Math.random() > chance) {
+        console.log('📊 Skipping engagement notifications (random chance)');
+        return;
+      }
+
+      // Call the engagement notification generator
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-engagement-notifications`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ user_id: userId }),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('📊 Engagement notifications generated:', result.notificationsCreated);
+      }
+    } catch (error) {
+      // Silent fail - don't interrupt session start
+      console.error('Error generating engagement notifications:', error);
     }
   }
 
