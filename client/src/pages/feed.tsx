@@ -225,7 +225,7 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
 function MediaCardActions({ media, session }: { media: any; session: any }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   
   // Fetch media details for platform chips (always load for visible content)
   const { data: mediaDetails, isLoading: isLoadingDetails } = useQuery({
@@ -271,7 +271,7 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
       if (!response.ok) return [];
       return response.json();
     },
-    enabled: isDropdownOpen && !!session?.access_token,
+    enabled: isSheetOpen && !!session?.access_token,
   });
 
   // Add to list mutation
@@ -422,45 +422,16 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
 
       {/* Actions row */}
       <div className="flex items-center justify-start gap-2 pb-2">
-        {/* Add to List */}
-        <DropdownMenu onOpenChange={setIsDropdownOpen}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="sm"
-              className="h-7 px-3 bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-500 text-white rounded-full hover:from-purple-700 hover:via-purple-600 hover:to-indigo-600 shadow-sm"
-              disabled={addToListMutation.isPending}
-              data-testid="button-add-to-list"
-            >
-              <Plus size={14} className="mr-1" />
-              <span className="text-xs font-medium">Add</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48">
-            {defaultLists.map((list: any) => (
-              <DropdownMenuItem
-                key={list.id}
-                onClick={() => addToListMutation.mutate({ listType: list.title, isCustom: false })}
-                data-testid={`add-to-${list.title.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                {list.title}
-              </DropdownMenuItem>
-            ))}
-            {customLists.length > 0 && (
-              <>
-                <DropdownMenuSeparator />
-                {customLists.map((list: any) => (
-                  <DropdownMenuItem
-                    key={list.id}
-                    onClick={() => addToListMutation.mutate({ listType: list.id, isCustom: true })}
-                    data-testid={`add-to-custom-${list.id}`}
-                  >
-                    {list.title}
-                  </DropdownMenuItem>
-                ))}
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Add to List - opens bottom sheet */}
+        <Button
+          size="sm"
+          className="h-7 px-3 bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-500 text-white rounded-full hover:from-purple-700 hover:via-purple-600 hover:to-indigo-600 shadow-sm"
+          onClick={() => setIsSheetOpen(true)}
+          data-testid="button-add-to-list"
+        >
+          <Plus size={14} className="mr-1" />
+          <span className="text-xs font-medium">Add</span>
+        </Button>
 
         {/* Share */}
         <Button
@@ -474,6 +445,20 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
           <span className="text-xs">Share</span>
         </Button>
       </div>
+
+      {/* Quick Add List Sheet */}
+      <QuickAddListSheet
+        isOpen={isSheetOpen}
+        onClose={() => setIsSheetOpen(false)}
+        media={{
+          title: media.title,
+          mediaType: media.mediaType,
+          imageUrl: media.imageUrl,
+          externalId: media.externalId,
+          externalSource: media.externalSource,
+          creator: media.creator,
+        }}
+      />
     </div>
   );
 }
