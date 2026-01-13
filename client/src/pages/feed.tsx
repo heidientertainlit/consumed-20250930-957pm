@@ -2391,6 +2391,7 @@ export default function Feed() {
               media_external_id: media.externalId,
               media_external_source: media.externalSource,
               rating: parseFloat(rating),
+              skip_social_post: true,
             }),
           }
         );
