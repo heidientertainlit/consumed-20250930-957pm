@@ -83,8 +83,17 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
         return true;
       }) as Game[];
       
-      console.log(`🎮 PlayFeedCard [${variant}]: Fetched ${pools?.length || 0}, filtered to ${filtered.length}`);
-      return filtered;
+      // Deduplicate by title to avoid showing same question multiple times
+      const seenTitles = new Set<string>();
+      const uniqueGames = filtered.filter((game) => {
+        const normalizedTitle = game.title.toLowerCase().trim();
+        if (seenTitles.has(normalizedTitle)) return false;
+        seenTitles.add(normalizedTitle);
+        return true;
+      });
+      
+      console.log(`🎮 PlayFeedCard [${variant}]: Fetched ${pools?.length || 0}, filtered to ${filtered.length}, unique titles: ${uniqueGames.length}`);
+      return uniqueGames;
     },
   });
 
