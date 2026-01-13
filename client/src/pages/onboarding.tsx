@@ -35,7 +35,6 @@ export default function OnboardingPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [pointsEarned, setPointsEarned] = useState(0);
   const [isCompleting, setIsCompleting] = useState(false);
-  const [activeSearchCategory, setActiveSearchCategory] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -66,14 +65,11 @@ export default function OnboardingPage() {
     }
   };
 
-  const searchMedia = async (query: string, categoryId?: string) => {
+  const searchMedia = async (query: string) => {
     if (!query.trim() || !session?.access_token) return;
     
     setIsSearching(true);
     try {
-      const searchCategory = categoryId || activeSearchCategory || selectedCategories[0] || 'movies';
-      const mediaType = getMediaTypeFromCategory(searchCategory);
-      
       const response = await fetch(
         'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search',
         {
@@ -82,13 +78,25 @@ export default function OnboardingPage() {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ query: query.trim(), type: mediaType }),
+          body: JSON.stringify({ query: query.trim() }),
         }
       );
       
       if (response.ok) {
         const data = await response.json();
-        setSearchResults(data.results?.slice(0, 6) || []);
+        const results = (data.results || []).map((r: any) => ({
+          id: r.id || r.external_id,
+          title: r.title,
+          type: r.type || r.media_type,
+          image_url: r.poster_url || r.image_url || r.poster_path,
+          external_id: r.external_id || r.id?.toString(),
+          external_source: r.external_source || 'tmdb',
+        }));
+        // Deduplicate by external_id
+        const unique = results.filter((r: MediaItem, i: number, arr: MediaItem[]) => 
+          arr.findIndex(x => x.external_id === r.external_id) === i
+        );
+        setSearchResults(unique.slice(0, 6));
       }
     } catch (error) {
       console.error('Search error:', error);
@@ -98,21 +106,15 @@ export default function OnboardingPage() {
   };
 
   useEffect(() => {
-    if (!activeSearchCategory && selectedCategories.length > 0) {
-      setActiveSearchCategory(selectedCategories[0]);
-    }
-  }, [selectedCategories, activeSearchCategory]);
-
-  useEffect(() => {
     const debounce = setTimeout(() => {
       if (searchQuery.length >= 2) {
-        searchMedia(searchQuery, activeSearchCategory || undefined);
+        searchMedia(searchQuery);
       } else {
         setSearchResults([]);
       }
     }, 300);
     return () => clearTimeout(debounce);
-  }, [searchQuery, activeSearchCategory]);
+  }, [searchQuery]);
 
   const addItem = (item: MediaItem) => {
     if (addedItems.length >= 3) return;
@@ -255,8 +257,6 @@ export default function OnboardingPage() {
   }
 
   if (step === 2) {
-    const activeCategoryLabel = CATEGORIES.find(c => c.id === activeSearchCategory)?.label.toLowerCase() || 'things';
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col items-center justify-center p-4">
         <div className="mb-6">
@@ -274,32 +274,6 @@ export default function OnboardingPage() {
             <p className="text-gray-600 text-sm">{addedItems.length}/3 added</p>
           </div>
 
-          {selectedCategories.length > 1 && addedItems.length < 3 && (
-            <div className="flex gap-2 justify-center mb-4 flex-wrap">
-              {selectedCategories.map(catId => {
-                const cat = CATEGORIES.find(c => c.id === catId);
-                if (!cat) return null;
-                return (
-                  <button
-                    key={catId}
-                    onClick={() => {
-                      setActiveSearchCategory(catId);
-                      setSearchQuery("");
-                      setSearchResults([]);
-                    }}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                      activeSearchCategory === catId
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <cat.icon size={14} className="inline mr-1" />{cat.label}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm text-center">
               {error}
@@ -312,7 +286,7 @@ export default function OnboardingPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={`Search for ${activeCategoryLabel}...`}
+                placeholder="Search movies, shows, books, music..."
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-purple-500 focus:ring-purple-500 text-black"
               />
               
@@ -413,24 +387,62 @@ export default function OnboardingPage() {
 
   if (step === 3) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Sparkles className="text-white" size={40} />
-          </div>
-          
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">You earned</h1>
-          <div className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col items-center justify-center p-4">
+        <div className="mb-6">
+          <img 
+            src="/consumed-logo-white.png" 
+            alt="consumed" 
+            className="h-10 mx-auto"
+          />
+        </div>
+        <div className="max-w-md w-full bg-white rounded-3xl p-6 shadow-2xl text-center">
+          <div className="text-2xl font-bold text-gray-900 mb-1">You earned</div>
+          <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-4">
             {pointsEarned} points!
           </div>
-          <p className="text-gray-600 mb-8">Great start! Keep tracking to earn more.</p>
+          
+          <p className="text-gray-600 text-sm mb-6">What would you like to do next?</p>
 
-          <Button
-            onClick={() => setLocation('/activity')}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full py-3"
-          >
-            Let's Go!
-          </Button>
+          <div className="space-y-3">
+            <button
+              onClick={() => setLocation('/play/trivia')}
+              className="w-full p-4 bg-purple-50 hover:bg-purple-100 rounded-xl text-left transition-colors flex items-center gap-3"
+            >
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                <Sparkles className="text-purple-600" size={20} />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Play some quick trivia</p>
+                <p className="text-xs text-gray-500">Earn a badge with 1 game</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setLocation('/activity')}
+              className="w-full p-4 bg-orange-50 hover:bg-orange-100 rounded-xl text-left transition-colors flex items-center gap-3"
+            >
+              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                <span className="text-lg">🔥</span>
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Check out hot takes in your feed</p>
+                <p className="text-xs text-gray-500">See what others are saying</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={() => setLocation('/entertainment-dna')}
+              className="w-full p-4 bg-blue-50 hover:bg-blue-100 rounded-xl text-left transition-colors flex items-center gap-3"
+            >
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-lg">🧬</span>
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Discover your Entertainment DNA</p>
+                <p className="text-xs text-gray-500">Take a quick survey</p>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     );
