@@ -107,7 +107,15 @@ export function FirstSessionHooks({ onComplete }: FirstSessionHooksProps) {
         </button>
 
         <button
-          onClick={() => setLocation('/play/trivia')}
+          onClick={() => {
+            const playRow = document.querySelector('[data-play-row]');
+            if (playRow) {
+              playRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+              // Fallback to play page if not on activity feed
+              setLocation('/play');
+            }
+          }}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
             hookStatus.trivia
               ? 'bg-green-100 text-green-700 border border-green-200'

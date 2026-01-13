@@ -3294,7 +3294,7 @@ export default function Feed() {
                       </div>
                     )}
                     {shouldShowPlayCard && (
-                      <div className="mb-4">
+                      <div className="mb-4" data-play-row>
                         <PlayFeedCard 
                           variant={isGameFilterActive ? getFilterVariant() : playVariant}
                         />
