@@ -1007,13 +1007,13 @@ export default function MediaDetail() {
             {showReviews && (
               <>
                 {/* Your Rating - always show at top if user has rated */}
-                {userRating && (
+                {(userReview || userRating) && (
                   <div className="bg-purple-50 rounded-xl p-4 mt-3 border border-purple-100">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold text-purple-700">Your Rating</span>
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                        <span className="font-bold text-gray-900">{userRating.rating}</span>
+                        <span className="font-bold text-gray-900">{userReview?.rating || userRating?.rating}</span>
                       </div>
                     </div>
                     {/* Show user's review if they have one */}
@@ -1021,7 +1021,7 @@ export default function MediaDetail() {
                       <p className="text-gray-700 text-sm leading-relaxed mt-2">{userReview.content}</p>
                     )}
                     <p className="text-xs text-purple-500 mt-2">
-                      Rated on {new Date(userRating.created_at).toLocaleDateString('en-US', { 
+                      Rated on {new Date(userReview?.created_at || userRating?.created_at).toLocaleDateString('en-US', { 
                         month: 'short', 
                         day: 'numeric', 
                         year: 'numeric' 
