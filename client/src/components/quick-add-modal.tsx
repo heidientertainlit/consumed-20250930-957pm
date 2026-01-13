@@ -315,11 +315,11 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
       return;
     }
     
-    // For other posts, require text content
-    if (postType !== 'rank' && !reviewText.trim()) {
+    // For other posts, require text content OR a rating (when media is attached)
+    if (postType !== 'rank' && !reviewText.trim() && !(selectedMedia && rating > 0)) {
       toast({
         title: "Add content",
-        description: "Please write something for your post.",
+        description: "Please write something or add a rating for your post.",
         variant: "destructive",
       });
       return;
