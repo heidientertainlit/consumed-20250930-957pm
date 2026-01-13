@@ -209,36 +209,37 @@ export default function OnboardingPage() {
 
   if (step === 1) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col items-center justify-center p-4">
-        <div className="mb-6">
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col items-center justify-center px-6 py-12">
+        <div className="mb-8">
           <img 
             src="/consumed-logo-white.png" 
             alt="consumed" 
-            className="h-10 mx-auto"
+            className="h-10"
           />
         </div>
-        <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2" style={{ lineHeight: '1.2' }}>What entertainment do you consume most?</h1>
-            <p className="text-gray-600 text-sm">Select all that apply</p>
-          </div>
+        
+        <div className="max-w-sm w-full">
+          <h1 className="text-2xl font-bold text-white mb-2 text-left" style={{ lineHeight: '1.15' }}>
+            What do you actually spend your time on?
+          </h1>
+          <p className="text-purple-200 text-sm mb-8 text-left">Select all that apply</p>
 
-          <div className="flex flex-wrap gap-3 justify-center mb-8">
+          <div className="flex flex-wrap gap-2 mb-10">
             {CATEGORIES.map(category => {
               const isSelected = selectedCategories.includes(category.id);
               return (
                 <button
                   key={category.id}
                   onClick={() => toggleCategory(category.id)}
-                  className={`px-4 py-2.5 rounded-full border-2 transition-all flex items-center gap-2 ${
+                  className={`px-3.5 py-2 rounded-lg border transition-all flex items-center gap-1.5 text-sm font-semibold ${
                     isSelected
-                      ? 'border-purple-600 bg-purple-600 text-white'
-                      : 'border-gray-200 hover:border-purple-300 text-gray-700'
+                      ? 'border-purple-400 bg-purple-500/30 text-white'
+                      : 'border-white/20 bg-white/5 text-white/80 hover:bg-white/10 hover:border-white/30'
                   }`}
                 >
-                  <category.icon size={18} />
-                  <span className="font-medium">{category.label}</span>
-                  {isSelected && <Check size={16} />}
+                  <category.icon size={16} />
+                  <span>{category.label}</span>
+                  {isSelected && <Check size={14} className="ml-0.5" />}
                 </button>
               );
             })}
@@ -247,7 +248,7 @@ export default function OnboardingPage() {
           <Button
             onClick={() => setStep(2)}
             disabled={selectedCategories.length === 0}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-3"
+            className="w-full bg-white hover:bg-gray-100 text-purple-900 font-semibold rounded-lg py-3"
           >
             Continue
           </Button>
