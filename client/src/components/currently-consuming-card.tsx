@@ -28,7 +28,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
   const [isRatingSheetOpen, setIsRatingSheetOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [thoughts, setThoughts] = useState('');
-  const [shareToFeed, setShareToFeed] = useState(false);
+  const [doNotShare, setDoNotShare] = useState(false);
   
   const mediaType = (item.media_type || 'movie').toLowerCase();
   const isBook = mediaType === 'book';
@@ -185,7 +185,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
   };
 
   const ratingMutation = useMutation({
-    mutationFn: async ({ rating, thoughts, shareToFeed }: { rating: number; thoughts?: string; shareToFeed: boolean }) => {
+    mutationFn: async ({ rating, thoughts, isPrivate }: { rating: number; thoughts?: string; isPrivate: boolean }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
       
       const response = await fetch(
@@ -204,7 +204,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
             media_external_id: item.external_id,
             media_external_source: item.external_source || 'tmdb',
             rating: rating > 0 ? rating : null,
-            is_private: !shareToFeed,
+            is_private: isPrivate,
           }),
         }
       );
@@ -216,14 +216,14 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
       return response.json();
     },
     onSuccess: (_, variables) => {
-      if (variables.shareToFeed) {
+      if (!variables.isPrivate) {
         queryClient.invalidateQueries({ queryKey: ['feed'] });
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       }
       queryClient.invalidateQueries({ queryKey: ['media-reviews'] });
       toast({
-        title: variables.shareToFeed ? "Shared to feed!" : "Rating saved!",
-        description: variables.shareToFeed 
+        title: !variables.isPrivate ? "Shared to feed!" : "Rating saved!",
+        description: !variables.isPrivate 
           ? "Your rating and thoughts have been shared with friends." 
           : "Your rating has been saved privately.",
       });
@@ -243,7 +243,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
     setIsMoveSheetOpen(false);
     setRating(0);
     setThoughts('');
-    setShareToFeed(false);
+    setDoNotShare(false);
     setIsRatingSheetOpen(true);
   };
 
@@ -251,12 +251,22 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
     onMoveToList('finished', 'Finished');
     setIsRatingSheetOpen(false);
     
-    if (shareToFeed && (rating > 0 || thoughts.trim())) {
+    if (!doNotShare && (rating > 0 || thoughts.trim())) {
       try {
         await ratingMutation.mutateAsync({
           rating,
           thoughts: thoughts.trim() || undefined,
-          shareToFeed: true,
+          isPrivate: false,
+        });
+      } catch (error) {
+        console.error('Failed to save rating:', error);
+      }
+    } else if (doNotShare && (rating > 0 || thoughts.trim())) {
+      try {
+        await ratingMutation.mutateAsync({
+          rating,
+          thoughts: thoughts.trim() || undefined,
+          isPrivate: true,
         });
       } catch (error) {
         console.error('Failed to save rating:', error);
@@ -772,32 +782,50 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">What would you rate this?</label>
-              <div className="flex justify-center gap-2">
+              <div className="flex justify-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setRating(star)}
-                    className="p-1 transition-transform hover:scale-110"
-                    data-testid={`rating-star-${star}`}
-                  >
-                    <Star 
-                      size={36} 
-                      className={`transition-colors ${
-                        star <= rating 
-                          ? 'fill-yellow-400 text-yellow-400' 
-                          : 'text-gray-300 hover:text-yellow-300'
-                      }`}
+                  <div key={star} className="relative p-1 transition-transform hover:scale-110">
+                    {/* Left half - for x.5 rating */}
+                    <button
+                      onClick={() => setRating(star - 0.5)}
+                      className="absolute left-0 top-0 w-1/2 h-full z-10"
+                      data-testid={`rating-star-${star}-half`}
                     />
-                  </button>
+                    {/* Right half - for full star rating */}
+                    <button
+                      onClick={() => setRating(star)}
+                      className="absolute right-0 top-0 w-1/2 h-full z-10"
+                      data-testid={`rating-star-${star}`}
+                    />
+                    {/* Star visual */}
+                    <div className="relative">
+                      <Star 
+                        size={36} 
+                        className="text-gray-300"
+                      />
+                      {/* Filled overlay */}
+                      <div 
+                        className="absolute inset-0 overflow-hidden"
+                        style={{ 
+                          width: rating >= star ? '100%' : rating >= star - 0.5 ? '50%' : '0%'
+                        }}
+                      >
+                        <Star 
+                          size={36} 
+                          className="fill-yellow-400 text-yellow-400"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
               {rating > 0 && (
                 <p className="text-center text-sm text-gray-500">
-                  {rating === 1 && "Not for me"}
-                  {rating === 2 && "It was okay"}
-                  {rating === 3 && "Pretty good"}
-                  {rating === 4 && "Really enjoyed it"}
-                  {rating === 5 && "Loved it!"}
+                  {rating <= 1 && "Not for me"}
+                  {rating > 1 && rating <= 2 && "It was okay"}
+                  {rating > 2 && rating <= 3 && "Pretty good"}
+                  {rating > 3 && rating <= 4 && "Really enjoyed it"}
+                  {rating > 4 && "Loved it!"}
                 </p>
               )}
             </div>
@@ -815,20 +843,20 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
 
             {(rating > 0 || thoughts.trim()) && (
               <button
-                onClick={() => setShareToFeed(!shareToFeed)}
+                onClick={() => setDoNotShare(!doNotShare)}
                 className="flex items-center gap-3 w-full p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
                 data-testid="toggle-share-feed"
               >
                 <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
-                  shareToFeed 
+                  doNotShare 
                     ? 'bg-purple-600 border-purple-600' 
                     : 'border-gray-300 bg-white'
                 }`}>
-                  {shareToFeed && <Check size={14} className="text-white" />}
+                  {doNotShare && <Check size={14} className="text-white" />}
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-medium text-gray-900">Share to feed</p>
-                  <p className="text-xs text-gray-500">Let friends see your rating & thoughts</p>
+                  <p className="text-sm font-medium text-gray-900">Do NOT share to feed</p>
+                  <p className="text-xs text-gray-500">Keep this rating private</p>
                 </div>
               </button>
             )}
@@ -840,9 +868,9 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
                 className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-base font-medium"
                 data-testid="button-submit-rating"
               >
-                {ratingMutation.isPending ? 'Sharing...' : 
-                  shareToFeed ? 'Share to Feed' : 
-                  'Mark as Finished'}
+                {ratingMutation.isPending ? 'Saving...' : 
+                  doNotShare ? 'Save Privately' : 
+                  'Share & Finish'}
               </Button>
               
               <button 

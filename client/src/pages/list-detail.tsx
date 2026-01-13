@@ -467,7 +467,7 @@ export default function ListDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
-      setLocation('/track');
+      setLocation('/me?section=collections');
     },
   });
 
