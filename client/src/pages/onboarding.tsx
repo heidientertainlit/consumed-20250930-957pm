@@ -233,8 +233,8 @@ export default function OnboardingPage() {
                   onClick={() => toggleCategory(category.id)}
                   className={`px-4 py-2.5 rounded-full transition-all flex items-center gap-2 text-sm font-medium text-white ${
                     isSelected
-                      ? 'bg-gradient-to-r from-purple-400 via-purple-500 to-purple-700 shadow-lg'
-                      : 'bg-gradient-to-r from-purple-500/60 via-purple-600/60 to-purple-800/60 hover:from-purple-400/70 hover:via-purple-500/70 hover:to-purple-700/70'
+                      ? 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 shadow-lg shadow-purple-500/30'
+                      : 'bg-gradient-to-r from-purple-400/50 via-purple-600/50 to-indigo-700/50 hover:from-cyan-400/60 hover:via-purple-500/60 hover:to-purple-700/60'
                   }`}
                 >
                   <category.icon size={16} />
