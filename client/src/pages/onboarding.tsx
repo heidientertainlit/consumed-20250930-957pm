@@ -36,6 +36,9 @@ const QUICK_SUGGESTIONS: MediaItem[] = [
   { id: 'iron-flame', title: 'Iron Flame', type: 'book', image_url: 'https://covers.openlibrary.org/b/id/14562460-M.jpg', external_id: 'OL46678066M', external_source: 'googlebooks' },
   { id: 'atomic-habits', title: 'Atomic Habits', type: 'book', image_url: 'https://covers.openlibrary.org/b/id/10958382-M.jpg', external_id: 'OL28294024M', external_source: 'googlebooks' },
   { id: 'the-women', title: 'The Women', type: 'book', image_url: 'https://covers.openlibrary.org/b/id/14645475-M.jpg', external_id: 'OL47284426M', external_source: 'googlebooks' },
+  { id: 'zelda-totk', title: 'Zelda: Tears of the Kingdom', type: 'game', image_url: 'https://upload.wikimedia.org/wikipedia/en/f/fb/The_Legend_of_Zelda_Tears_of_the_Kingdom_cover.jpg', external_id: 'zelda-totk', external_source: 'igdb' },
+  { id: 'elden-ring', title: 'Elden Ring', type: 'game', image_url: 'https://upload.wikimedia.org/wikipedia/en/b/b9/Elden_Ring_Box_art.jpg', external_id: 'elden-ring', external_source: 'igdb' },
+  { id: 'minecraft', title: 'Minecraft', type: 'game', image_url: 'https://upload.wikimedia.org/wikipedia/en/5/51/Minecraft_cover.png', external_id: 'minecraft', external_source: 'igdb' },
 ];
 
 export default function OnboardingPage() {
