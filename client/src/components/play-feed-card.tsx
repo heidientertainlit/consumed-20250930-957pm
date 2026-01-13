@@ -128,18 +128,25 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
     }
   });
   
-  // Offset games by variant so each Play card shows different content first
-  // Use larger offsets to ensure truly different starting points
-  const variantOffset = variant === 'mixed' ? 0 : variant === 'polls' ? 10 : 20;
-  const rotateArray = <T,>(arr: T[], offset: number): T[] => {
-    if (arr.length === 0) return arr;
-    const realOffset = offset % arr.length;
-    return [...arr.slice(realOffset), ...arr.slice(0, realOffset)];
+  // Shuffle games differently per variant so each Play row shows different content
+  // Uses a seeded shuffle based on variant name to ensure consistent but different ordering
+  const seededShuffle = <T,>(arr: T[], seed: number): T[] => {
+    const shuffled = [...arr];
+    let currentSeed = seed;
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      currentSeed = (currentSeed * 9301 + 49297) % 233280;
+      const j = Math.floor((currentSeed / 233280) * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
   };
   
-  // Show unplayed first (rotated by variant), then played games
-  const rotatedUnplayed = rotateArray(unplayedGames, variantOffset);
-  const availableGames = [...rotatedUnplayed, ...playedGames];
+  // Different seed per variant ensures different ordering
+  const variantSeed = variant === 'mixed' ? 1 : variant === 'polls' ? 42 : 137;
+  
+  // Show unplayed first (shuffled by variant), then played games
+  const shuffledUnplayed = seededShuffle(unplayedGames, variantSeed);
+  const availableGames = [...shuffledUnplayed, ...playedGames];
 
   const fetchVoteResults = async (poolId: string, options: string[], userChoice: string) => {
     const { data: votes } = await supabase
