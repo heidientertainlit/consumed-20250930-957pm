@@ -66,10 +66,10 @@ export function FirstSessionHooks({ onComplete }: FirstSessionHooksProps) {
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={() => {
+            setHookStatus(prev => ({ ...prev, rated: true }));
             const searchBar = document.querySelector('[data-header-search]');
             if (searchBar) {
               searchBar.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              // Focus the input after scrolling
               setTimeout(() => {
                 const input = searchBar.querySelector('input');
                 if (input) input.focus();
@@ -91,7 +91,10 @@ export function FirstSessionHooks({ onComplete }: FirstSessionHooksProps) {
         </button>
 
         <button
-          onClick={() => setLocation('/entertainment-dna')}
+          onClick={() => {
+            setHookStatus(prev => ({ ...prev, dna: true }));
+            setLocation('/entertainment-dna');
+          }}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
             hookStatus.dna
               ? 'bg-green-100 text-green-700 border border-green-200'
@@ -108,11 +111,11 @@ export function FirstSessionHooks({ onComplete }: FirstSessionHooksProps) {
 
         <button
           onClick={() => {
+            setHookStatus(prev => ({ ...prev, trivia: true }));
             const playRow = document.querySelector('[data-play-row]');
             if (playRow) {
               playRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else {
-              // Fallback to activity feed if play row not found
               setLocation('/');
             }
           }}
