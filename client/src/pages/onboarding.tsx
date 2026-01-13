@@ -269,7 +269,7 @@ export default function OnboardingPage() {
         <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Add 3 things you've enjoyed
+              Add 3 of your favorites
             </h1>
             <p className="text-gray-600 text-sm">{addedItems.length}/3 added</p>
           </div>
