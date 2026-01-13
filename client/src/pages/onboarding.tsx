@@ -299,8 +299,22 @@ export default function OnboardingPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Type a movie, show, book, artist…"
-                className="w-full px-5 py-4 bg-white/10 border border-white/20 rounded-lg text-white text-lg placeholder:text-white/40 focus:border-purple-400 focus:ring-purple-400 focus:bg-white/15 transition-all"
+                className="w-full px-5 py-4 bg-white border-none rounded-lg text-gray-900 text-lg placeholder:text-gray-400 focus:ring-2 focus:ring-purple-400 transition-all"
               />
+              
+              {!searchQuery && searchResults.length === 0 && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {['Friends', 'The Office', 'Seinfeld', 'Taylor Swift', 'Linkin Park', 'The Bachelor', 'Serial', 'Harry Potter'].map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      onClick={() => setSearchQuery(suggestion)}
+                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white/80 text-sm transition-colors"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
               
               {isSearching && (
                 <div className="flex justify-center py-4">
