@@ -33,7 +33,7 @@ import { supabase } from "@/lib/supabase";
 import { apiRequest, queryClient as globalQueryClient } from "@/lib/queryClient";
 import { renderMentions } from "@/lib/mentions";
 import { copyLink } from "@/lib/share";
-import { FirstSessionHooks, useFirstSessionHooks } from "@/components/first-session-hooks";
+import { FirstSessionHooks } from "@/components/first-session-hooks";
 
 interface SocialPost {
   id: string;
@@ -975,7 +975,6 @@ export default function Feed() {
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { markLiked } = useFirstSessionHooks();
   const loadMoreRef = useRef<HTMLDivElement>(null);
   
   // Rotating verbs for header subheadline
@@ -2173,9 +2172,6 @@ export default function Feed() {
     console.log('🔴 handleLike called with postId:', postId, 'isValidUUID:', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(postId));
     const wasLiked = likedPosts.has(postId);
     likeMutation.mutate({ postId, wasLiked });
-    if (!wasLiked) {
-      markLiked();
-    }
   };
 
   const handleComment = (postId: string, parentCommentId?: string, replyContent?: string) => {

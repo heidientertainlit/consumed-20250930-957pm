@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { DnfReasonDrawer } from "./dnf-reason-drawer";
+import { useFirstSessionHooks } from "./first-session-hooks";
 import { 
   Search, 
   Star, 
@@ -64,6 +65,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
   const { user, session } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { markRated } = useFirstSessionHooks();
   
   const [stage, setStage] = useState<Stage>("search");
   const [searchQuery, setSearchQuery] = useState("");
@@ -521,6 +523,11 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
       ]);
       
       await queryClient.refetchQueries({ queryKey: ['social-feed'] });
+      
+      // Mark "Rate media" task as complete if user rated something
+      if (rating > 0) {
+        markRated();
+      }
       
       onClose();
     } catch (error: any) {

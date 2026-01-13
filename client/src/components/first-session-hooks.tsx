@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, Dna, Brain, Check } from "lucide-react";
+import { Star, Dna, Brain, Check } from "lucide-react";
 import { useLocation } from "wouter";
 
 interface FirstSessionHooksProps {
@@ -7,7 +7,7 @@ interface FirstSessionHooksProps {
 }
 
 interface HookStatus {
-  liked: boolean;
+  rated: boolean;
   dna: boolean;
   trivia: boolean;
 }
@@ -19,7 +19,7 @@ export function FirstSessionHooks({ onComplete }: FirstSessionHooksProps) {
     if (saved) {
       return JSON.parse(saved);
     }
-    return { liked: false, dna: false, trivia: false };
+    return { rated: false, dna: false, trivia: false };
   });
   const [dismissed, setDismissed] = useState(() => {
     return localStorage.getItem('firstSessionHooksDismissed') === 'true';
@@ -28,22 +28,22 @@ export function FirstSessionHooks({ onComplete }: FirstSessionHooksProps) {
   useEffect(() => {
     localStorage.setItem('firstSessionHooks', JSON.stringify(hookStatus));
     
-    if (hookStatus.liked && hookStatus.dna && hookStatus.trivia) {
+    if (hookStatus.rated && hookStatus.dna && hookStatus.trivia) {
       onComplete?.();
     }
   }, [hookStatus, onComplete]);
 
-  const markLiked = () => {
-    setHookStatus(prev => ({ ...prev, liked: true }));
+  const markRated = () => {
+    setHookStatus(prev => ({ ...prev, rated: true }));
   };
 
-  const allComplete = hookStatus.liked && hookStatus.dna && hookStatus.trivia;
+  const allComplete = hookStatus.rated && hookStatus.dna && hookStatus.trivia;
   
   if (dismissed || allComplete) {
     return null;
   }
 
-  const completedCount = [hookStatus.liked, hookStatus.dna, hookStatus.trivia].filter(Boolean).length;
+  const completedCount = [hookStatus.rated, hookStatus.dna, hookStatus.trivia].filter(Boolean).length;
 
   return (
     <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
@@ -65,25 +65,19 @@ export function FirstSessionHooks({ onComplete }: FirstSessionHooksProps) {
       
       <div className="flex gap-2 flex-wrap">
         <button
-          onClick={() => {
-            // Always scroll to feed content where user can like posts
-            const feedContent = document.querySelector('[data-feed-content]');
-            if (feedContent) {
-              feedContent.scrollIntoView({ behavior: 'smooth' });
-            }
-          }}
+          onClick={() => setLocation('/search')}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-            hookStatus.liked
+            hookStatus.rated
               ? 'bg-green-100 text-green-700 border border-green-200'
               : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200'
           }`}
         >
-          {hookStatus.liked ? (
+          {hookStatus.rated ? (
             <Check size={16} className="text-green-600" />
           ) : (
-            <Heart size={16} className="text-pink-500" />
+            <Star size={16} className="text-yellow-500" />
           )}
-          <span>Like a post</span>
+          <span>Rate media</span>
         </button>
 
         <button
@@ -123,10 +117,10 @@ export function FirstSessionHooks({ onComplete }: FirstSessionHooksProps) {
 }
 
 export function useFirstSessionHooks() {
-  const markLiked = () => {
+  const markRated = () => {
     const saved = localStorage.getItem('firstSessionHooks');
-    const current = saved ? JSON.parse(saved) : { liked: false, dna: false, trivia: false };
-    current.liked = true;
+    const current = saved ? JSON.parse(saved) : { rated: false, dna: false, trivia: false };
+    current.rated = true;
     localStorage.setItem('firstSessionHooks', JSON.stringify(current));
   };
 
@@ -144,5 +138,5 @@ export function useFirstSessionHooks() {
     localStorage.setItem('firstSessionHooks', JSON.stringify(current));
   };
 
-  return { markLiked, markDNA, markTrivia };
+  return { markRated, markDNA, markTrivia };
 }
