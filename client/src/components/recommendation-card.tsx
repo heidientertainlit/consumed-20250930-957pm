@@ -28,7 +28,7 @@ export default function RecommendationCard({
   onMediaClick,
   onAddClick,
 }: RecommendationCardProps) {
-  const [hoveredStar, setHoveredStar] = useState<number | null>(null);
+  const [currentRating, setCurrentRating] = useState<number>(0);
   const [submittedRating, setSubmittedRating] = useState<number | null>(null);
   const { session } = useAuth();
   const { toast } = useToast();
@@ -65,6 +65,7 @@ export default function RecommendationCard({
             media_title: item.title,
             media_type: mediaType,
             rating: rating,
+            skip_social_post: true,
           }),
         }
       );
@@ -92,12 +93,18 @@ export default function RecommendationCard({
     },
   });
 
-  const handleStarClick = (starValue: number, e: React.MouseEvent) => {
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
-    if (!rateMutation.isPending && submittedRating === null) {
-      rateMutation.mutate(starValue);
+    if (submittedRating === null) {
+      const newRating = parseFloat(e.target.value);
+      setCurrentRating(newRating);
+      if (newRating > 0) {
+        rateMutation.mutate(newRating);
+      }
     }
   };
+
+  const displayRating = submittedRating !== null ? submittedRating : currentRating;
 
   return (
     <div className="flex-shrink-0 w-28">
@@ -123,31 +130,41 @@ export default function RecommendationCard({
       >
         {item.title}
       </p>
-      <div className="flex items-center gap-0.5 mt-1">
-        {[1, 2, 3, 4, 5].map((star) => {
-          const isFilled = submittedRating !== null ? star <= submittedRating : star <= (hoveredStar || 0);
-          return (
-            <button
-              key={star}
-              type="button"
-              className="w-3.5 h-3.5 focus:outline-none disabled:cursor-not-allowed"
-              onMouseEnter={() => !submittedRating && setHoveredStar(star)}
-              onMouseLeave={() => !submittedRating && setHoveredStar(null)}
-              onClick={(e) => handleStarClick(star, e)}
-              disabled={rateMutation.isPending || submittedRating !== null}
-              data-testid={`rec-star-${idx}-${star}`}
+      <div className="relative flex items-center mt-1" onClick={(e) => e.stopPropagation()}>
+        {/* Stars display */}
+        <div className="flex gap-0.5">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <div 
+              key={star} 
+              className="relative"
+              style={{ width: 14, height: 14 }}
             >
-              <Star
-                size={14}
-                className={`transition-colors ${
-                  isFilled
-                    ? "text-yellow-400 fill-yellow-400"
-                    : "text-purple-300"
-                }`}
-              />
-            </button>
-          );
-        })}
+              <Star size={14} className="absolute inset-0 text-purple-300" />
+              <div 
+                className="absolute inset-0 overflow-hidden pointer-events-none"
+                style={{ 
+                  width: displayRating >= star ? '100%' : displayRating >= star - 0.5 ? '50%' : '0%'
+                }}
+              >
+                <Star size={14} className="fill-yellow-400 text-yellow-400" />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Invisible slider overlay */}
+        <input
+          type="range"
+          min="0"
+          max="5"
+          step="0.5"
+          value={displayRating}
+          onChange={handleSliderChange}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          style={{ margin: 0 }}
+          disabled={rateMutation.isPending || submittedRating !== null}
+          data-testid={`rec-slider-${idx}`}
+        />
         {submittedRating !== null && (
           <Check size={12} className="text-green-400 ml-1" />
         )}
