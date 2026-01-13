@@ -24,6 +24,18 @@ interface MediaItem {
   external_source: string;
 }
 
+// Pre-populated suggestions for quick-add (bypasses search)
+const QUICK_SUGGESTIONS: MediaItem[] = [
+  { id: '1668', title: 'Friends', type: 'tv', image_url: 'https://image.tmdb.org/t/p/w300/f496cm9enuEsZkSPzCwnTESEK5s.jpg', external_id: '1668', external_source: 'tmdb' },
+  { id: '2316', title: 'The Office', type: 'tv', image_url: 'https://image.tmdb.org/t/p/w300/qWnJzyZhyy74gjpSjIXWmuk0ifX.jpg', external_id: '2316', external_source: 'tmdb' },
+  { id: '1400', title: 'Seinfeld', type: 'tv', image_url: 'https://image.tmdb.org/t/p/w300/aCw8ONfyz3AhngVQa1E2Ss4KSUQ.jpg', external_id: '1400', external_source: 'tmdb' },
+  { id: 'taylor-swift', title: 'Taylor Swift', type: 'music', image_url: 'https://i.scdn.co/image/ab6761610000e5eb5a00969a4698c3132a15fbb0', external_id: '06HL4z0CvFAxyc27GXpf02', external_source: 'spotify' },
+  { id: 'linkin-park', title: 'Linkin Park', type: 'music', image_url: 'https://i.scdn.co/image/ab6761610000e5eb811da3b2e7c9e5a9c1a6c4a2', external_id: '6XyY86QOPPrYVGvF9ch6wz', external_source: 'spotify' },
+  { id: '1622', title: 'The Bachelor', type: 'tv', image_url: 'https://image.tmdb.org/t/p/w300/iG7RxfOxAQXsNWMFqoMPl0wvVnJ.jpg', external_id: '1622', external_source: 'tmdb' },
+  { id: '67178', title: 'Serial', type: 'podcast', image_url: 'https://image.tmdb.org/t/p/w300/aGPZ9WEBBxDGsJUz7bNFpvlNqkj.jpg', external_id: '67178', external_source: 'tmdb' },
+  { id: '671', title: 'Harry Potter', type: 'movie', image_url: 'https://image.tmdb.org/t/p/w300/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg', external_id: '671', external_source: 'tmdb' },
+];
+
 export default function OnboardingPage() {
   const { session, loading } = useAuth();
   const [, setLocation] = useLocation();
@@ -304,13 +316,15 @@ export default function OnboardingPage() {
               
               {!searchQuery && searchResults.length === 0 && (
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {['Friends', 'The Office', 'Seinfeld', 'Taylor Swift', 'Linkin Park', 'The Bachelor', 'Serial', 'Harry Potter'].map((suggestion) => (
+                  {QUICK_SUGGESTIONS
+                    .filter(s => !addedItems.some(a => a.external_id === s.external_id))
+                    .map((suggestion) => (
                     <button
-                      key={suggestion}
-                      onClick={() => setSearchQuery(suggestion)}
+                      key={suggestion.id}
+                      onClick={() => addItem(suggestion)}
                       className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white/80 text-sm transition-colors"
                     >
-                      {suggestion}
+                      {suggestion.title}
                     </button>
                   ))}
                 </div>
