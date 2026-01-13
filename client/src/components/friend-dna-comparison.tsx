@@ -543,7 +543,6 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
                           <span className={getMatchColor(comparison.match_score)}>
                             {comparison.match_score}%
                           </span>
-                          <span className="ml-2">{getMatchEmoji(comparison.match_score)}</span>
                         </div>
                         <p className="text-gray-600 font-semibold text-base">Entertainment DNA Match</p>
                       </div>
