@@ -417,7 +417,7 @@ export default function EntertainmentDNAPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black px-6 pt-12 pb-8">
+    <div className="min-h-screen bg-gradient-to-b from-black via-purple-950/80 to-purple-900 px-6 pt-12 pb-8">
       <div className="max-w-lg mx-auto">
         {/* Header */}
         <div className="mb-8">
