@@ -209,16 +209,16 @@ export default function OnboardingPage() {
 
   if (step === 1) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col items-center justify-center px-6 py-12">
-        <div className="mb-8">
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col px-6 py-8">
+        <div className="mb-auto">
           <img 
             src="/consumed-logo-white.png" 
             alt="consumed" 
-            className="h-10"
+            className="h-8"
           />
         </div>
         
-        <div className="max-w-sm w-full">
+        <div className="max-w-sm w-full mb-auto">
           <h1 className="text-2xl font-bold text-white mb-2 text-left" style={{ lineHeight: '1.15' }}>
             What do you actually spend your time on?
           </h1>
@@ -233,8 +233,8 @@ export default function OnboardingPage() {
                   onClick={() => toggleCategory(category.id)}
                   className={`px-3.5 py-2 rounded-lg border transition-all flex items-center gap-1.5 text-sm font-semibold ${
                     isSelected
-                      ? 'border-purple-400 bg-purple-500/30 text-white'
-                      : 'border-white/20 bg-white/5 text-white/80 hover:bg-white/10 hover:border-white/30'
+                      ? 'border-purple-300 bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg'
+                      : 'border-purple-400/30 bg-gradient-to-r from-purple-600/40 to-purple-700/40 text-white hover:from-purple-500/50 hover:to-purple-600/50'
                   }`}
                 >
                   <category.icon size={16} />
