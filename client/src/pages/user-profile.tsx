@@ -3555,11 +3555,17 @@ export default function UserProfile() {
                   <Button
                     size="sm"
                     className="bg-purple-600 hover:bg-purple-700"
-                    onClick={() => setIsQuickAddOpen(true)}
+                    onClick={() => {
+                      if (collectionsSubTab === 'lists') {
+                        setShowCreateListDialog(true);
+                      } else {
+                        setIsQuickAddOpen(true);
+                      }
+                    }}
                     data-testid="button-quick-add-library"
                   >
                     <Plus size={16} className="mr-1" />
-                    Add
+                    {collectionsSubTab === 'lists' ? 'Create' : 'Add'}
                   </Button>
                 )}
               </div>
