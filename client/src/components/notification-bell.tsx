@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, Sparkles } from 'lucide-react';
+import { Bell, Heart, MessageCircle, UserPlus, UserCheck, Users, AtSign, Star, FileEdit, Trophy, Zap, Brain, BookOpen, Dna, Vote } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -24,14 +24,6 @@ interface Notification {
   list_id?: string;
   triggered_by_user_id: string;
   action_url?: string;
-  isEngagement?: boolean;
-}
-
-interface EngagementNotification {
-  type: string;
-  message: string;
-  action_url?: string;
-  metadata?: Record<string, any>;
 }
 
 export function NotificationBell() {
@@ -48,8 +40,8 @@ export function NotificationBell() {
     });
   }, []);
 
-  // Fetch regular notifications
-  const { data: regularNotifications = [], refetch } = useQuery<Notification[]>({
+  // Fetch notifications (includes both regular and engagement notifications stored in DB)
+  const { data: notifications = [], refetch } = useQuery<Notification[]>({
     queryKey: ['/api/notifications', userId],
     enabled: !!userId,
     queryFn: async () => {
@@ -66,52 +58,6 @@ export function NotificationBell() {
       return data || [];
     },
   });
-
-  // Fetch engagement notifications (nudges)
-  const { data: engagementNotifications = [] } = useQuery<EngagementNotification[]>({
-    queryKey: ['/api/engagement-notifications', userId],
-    enabled: !!userId && open,
-    staleTime: 5 * 60 * 1000,
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) return [];
-      
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-engagement-notifications`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
-        
-        if (!response.ok) return [];
-        const result = await response.json();
-        return result.notifications || [];
-      } catch (e) {
-        console.error('Failed to fetch engagement notifications:', e);
-        return [];
-      }
-    },
-  });
-
-  // Combine notifications - regular first, then engagement nudges
-  const notifications: Notification[] = [
-    ...regularNotifications,
-    ...engagementNotifications.map((n, idx) => ({
-      id: `engagement-${idx}`,
-      type: n.type,
-      message: n.message,
-      read: true,
-      created_at: new Date().toISOString(),
-      triggered_by_user_id: '',
-      action_url: n.action_url,
-      isEngagement: true,
-    })),
-  ];
 
   // Count unread notifications
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -177,16 +123,16 @@ export function NotificationBell() {
   }, [refetch, userId]);
 
   const handleNotificationClick = (notification: Notification) => {
-    // Mark as read (only for regular notifications)
-    if (!notification.read && !notification.isEngagement) {
+    // Mark as read
+    if (!notification.read) {
       markAsReadMutation.mutate(notification.id);
     }
 
     // Close dropdown before navigating
     setOpen(false);
 
-    // For engagement notifications, use action_url
-    if (notification.isEngagement && notification.action_url) {
+    // For notifications with action_url, use it directly
+    if (notification.action_url) {
       setLocation(notification.action_url);
       return;
     }
@@ -254,43 +200,43 @@ export function NotificationBell() {
   };
 
   const getNotificationIcon = (type: string) => {
+    const iconClass = "h-5 w-5";
     switch (type) {
       case 'like':
       case 'post_like':
       case 'comment_like':
-        return '❤️';
+        return <Heart className={`${iconClass} text-red-400`} />;
       case 'comment':
       case 'comment_reply':
-        return '💬';
-      case 'friend_request':
-        return '👋';
-      case 'friend_accepted':
-        return '✅';
-      case 'follow':
-        return '👥';
-      case 'mention':
-        return '@';
-      case 'inner_circle':
-        return '⭐';
-      case 'collaborator_added':
-        return '📝';
-      case 'leaderboard_position':
-        return '🏆';
-      case 'points_to_rank':
-        return '⚡';
       case 'friend_activity':
-        return '💬';
+        return <MessageCircle className={`${iconClass} text-blue-400`} />;
+      case 'friend_request':
+        return <UserPlus className={`${iconClass} text-purple-400`} />;
+      case 'friend_accepted':
+        return <UserCheck className={`${iconClass} text-green-400`} />;
+      case 'follow':
+        return <Users className={`${iconClass} text-purple-400`} />;
+      case 'mention':
+        return <AtSign className={`${iconClass} text-cyan-400`} />;
+      case 'inner_circle':
+        return <Star className={`${iconClass} text-yellow-400`} />;
+      case 'collaborator_added':
+        return <FileEdit className={`${iconClass} text-orange-400`} />;
+      case 'leaderboard_position':
+        return <Trophy className={`${iconClass} text-yellow-400`} />;
+      case 'points_to_rank':
+        return <Zap className={`${iconClass} text-purple-400`} />;
       case 'trivia_rank':
-        return '🧠';
+        return <Brain className={`${iconClass} text-pink-400`} />;
       case 'tracking_milestone':
       case 'tracking_competition':
-        return '📚';
+        return <BookOpen className={`${iconClass} text-green-400`} />;
       case 'dna_recommendation':
-        return '🧬';
+        return <Dna className={`${iconClass} text-indigo-400`} />;
       case 'poll_nudge':
-        return '🗳️';
+        return <Vote className={`${iconClass} text-blue-400`} />;
       default:
-        return '🔔';
+        return <Bell className={`${iconClass} text-slate-400`} />;
     }
   };
 
@@ -335,7 +281,7 @@ export function NotificationBell() {
             </div>
           ) : (
             <div className="divide-y divide-slate-700">
-              {regularNotifications.length > 0 && regularNotifications.map((notification) => (
+              {notifications.map((notification) => (
                 <button
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
@@ -345,9 +291,9 @@ export function NotificationBell() {
                   data-testid={`notification-${notification.id}`}
                 >
                   <div className="flex items-start gap-3">
-                    <span className="text-2xl" aria-label={notification.type}>
+                    <div className="flex-shrink-0 mt-0.5">
                       {getNotificationIcon(notification.type)}
-                    </span>
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm ${!notification.read ? 'text-white font-medium' : 'text-slate-300'}`}>
                         {notification.message}
@@ -362,46 +308,6 @@ export function NotificationBell() {
                   </div>
                 </button>
               ))}
-              
-              {engagementNotifications.length > 0 && (
-                <>
-                  <div className="px-4 py-2 bg-gradient-to-r from-purple-900/50 to-indigo-900/50 border-y border-purple-700/30">
-                    <p className="text-xs text-purple-300 font-medium flex items-center gap-1.5">
-                      <Sparkles size={12} /> For You
-                    </p>
-                  </div>
-                  {engagementNotifications.map((notification, idx) => (
-                    <button
-                      key={`engagement-${idx}`}
-                      onClick={() => handleNotificationClick({
-                        id: `engagement-${idx}`,
-                        type: notification.type,
-                        message: notification.message,
-                        read: true,
-                        created_at: new Date().toISOString(),
-                        triggered_by_user_id: '',
-                        action_url: notification.action_url,
-                        isEngagement: true,
-                      })}
-                      className="w-full p-4 text-left hover:bg-purple-900/30 transition-colors bg-purple-950/20"
-                    >
-                      <div className="flex items-start gap-3">
-                        <span className="text-2xl" aria-label={notification.type}>
-                          {getNotificationIcon(notification.type)}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-purple-200">
-                            {notification.message}
-                          </p>
-                        </div>
-                        <div className="text-purple-400">
-                          →
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </>
-              )}
             </div>
           )}
         </ScrollArea>
