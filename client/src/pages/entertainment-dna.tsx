@@ -484,7 +484,7 @@ export default function EntertainmentDNAPage() {
                         <button
                           key={index}
                           onClick={() => handleAnswer(question.id, option)}
-                          className={`px-5 py-2.5 rounded-full transition-all text-sm flex items-center gap-2 ${
+                          className={`px-5 py-2.5 rounded-full transition-all text-sm flex items-center gap-2 text-left ${
                             isSelected
                               ? 'bg-purple-500/20 border-2 border-cyan-400 text-white font-medium'
                               : 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white shadow-lg shadow-purple-500/30'
@@ -516,7 +516,7 @@ export default function EntertainmentDNAPage() {
                               : [...currentAnswers, option];
                             handleAnswer(question.id, updatedAnswers);
                           }}
-                          className={`px-5 py-2.5 rounded-full transition-all text-sm flex items-center gap-2 ${
+                          className={`px-5 py-2.5 rounded-full transition-all text-sm flex items-center gap-2 text-left ${
                             isChecked
                               ? 'bg-purple-500/20 border-2 border-cyan-400 text-white font-medium'
                               : 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white shadow-lg shadow-purple-500/30'
