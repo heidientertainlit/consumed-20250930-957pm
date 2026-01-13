@@ -477,8 +477,8 @@ export default function EntertainmentDNAPage() {
                           onClick={() => handleAnswer(question.id, option)}
                           className={`px-5 py-2.5 rounded-full transition-all text-sm ${
                             isSelected
-                              ? 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white font-medium shadow-lg shadow-purple-500/30'
-                              : 'bg-zinc-800/90 hover:bg-zinc-700/90 border border-zinc-600/60 text-zinc-300'
+                              ? 'bg-zinc-800/90 border border-zinc-600/60 text-white font-medium'
+                              : 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white shadow-lg shadow-purple-500/30'
                           }`}
                           data-testid={`option-${question.id}-${option.replace(' (please specify)', '')}`}
                         >
@@ -508,8 +508,8 @@ export default function EntertainmentDNAPage() {
                           }}
                           className={`px-5 py-2.5 rounded-full transition-all text-sm flex items-center gap-2 ${
                             isChecked
-                              ? 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white font-medium shadow-lg shadow-purple-500/30'
-                              : 'bg-zinc-800/90 hover:bg-zinc-700/90 border border-zinc-600/60 text-zinc-300'
+                              ? 'bg-zinc-800/90 border border-zinc-600/60 text-white font-medium'
+                              : 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white shadow-lg shadow-purple-500/30'
                           }`}
                           data-testid={`multi-option-${question.id}-${cleanOption}`}
                         >
