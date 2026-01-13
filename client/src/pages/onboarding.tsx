@@ -183,7 +183,7 @@ export default function OnboardingPage() {
               title: item.title,
               media_type: item.type,
               image_url: item.image_url,
-              list_type: 'finished',
+              list_type: 'all',
             }),
           });
           
@@ -320,7 +320,9 @@ export default function OnboardingPage() {
               />
               
               {!searchQuery && searchResults.length === 0 && (
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-4">
+                  <p className="text-white/50 text-xs mb-2">Quick add suggestions</p>
+                  <div className="flex flex-wrap gap-2">
                   {QUICK_SUGGESTIONS
                     .filter(s => !addedItems.some(a => a.external_id === s.external_id))
                     .map((suggestion) => (
@@ -332,6 +334,7 @@ export default function OnboardingPage() {
                       {suggestion.title}
                     </button>
                   ))}
+                  </div>
                 </div>
               )}
               
