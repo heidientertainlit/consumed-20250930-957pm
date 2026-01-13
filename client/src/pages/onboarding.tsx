@@ -32,8 +32,10 @@ const QUICK_SUGGESTIONS: MediaItem[] = [
   { id: 'taylor-swift', title: 'Taylor Swift', type: 'music', image_url: 'https://i.scdn.co/image/ab6761610000e5eb5a00969a4698c3132a15fbb0', external_id: '06HL4z0CvFAxyc27GXpf02', external_source: 'spotify' },
   { id: 'linkin-park', title: 'Linkin Park', type: 'music', image_url: 'https://i.scdn.co/image/ab6761610000e5eb811da3b2e7c9e5a9c1a6c4a2', external_id: '6XyY86QOPPrYVGvF9ch6wz', external_source: 'spotify' },
   { id: '1622', title: 'The Bachelor', type: 'tv', image_url: 'https://image.tmdb.org/t/p/w300/iG7RxfOxAQXsNWMFqoMPl0wvVnJ.jpg', external_id: '1622', external_source: 'tmdb' },
-  { id: '67178', title: 'Serial', type: 'podcast', image_url: 'https://image.tmdb.org/t/p/w300/aGPZ9WEBBxDGsJUz7bNFpvlNqkj.jpg', external_id: '67178', external_source: 'tmdb' },
   { id: '671', title: 'Harry Potter', type: 'movie', image_url: 'https://image.tmdb.org/t/p/w300/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg', external_id: '671', external_source: 'tmdb' },
+  { id: 'iron-flame', title: 'Iron Flame', type: 'book', image_url: 'https://covers.openlibrary.org/b/id/14562460-M.jpg', external_id: 'OL46678066M', external_source: 'googlebooks' },
+  { id: 'atomic-habits', title: 'Atomic Habits', type: 'book', image_url: 'https://covers.openlibrary.org/b/id/10958382-M.jpg', external_id: 'OL28294024M', external_source: 'googlebooks' },
+  { id: 'the-women', title: 'The Women', type: 'book', image_url: 'https://covers.openlibrary.org/b/id/14645475-M.jpg', external_id: 'OL47284426M', external_source: 'googlebooks' },
 ];
 
 export default function OnboardingPage() {
@@ -129,7 +131,7 @@ export default function OnboardingPage() {
   }, [searchQuery]);
 
   const addItem = (item: MediaItem) => {
-    if (addedItems.length >= 3) return;
+    // No limit on items
     if (addedItems.some(i => i.external_id === item.external_id)) return;
     
     setAddedItems(prev => [...prev, item]);
@@ -273,9 +275,9 @@ export default function OnboardingPage() {
     // Dynamic momentum text based on items added
     const getMomentumText = () => {
       if (addedItems.length === 0) return null;
-      if (addedItems.length === 1) return "Nice. Add two more.";
+      if (addedItems.length === 1) return "Nice. Add at least two more.";
       if (addedItems.length === 2) return "One more and you're in.";
-      return "You're all set!";
+      return "You're all set! Add more or jump in.";
     };
 
     return (
@@ -304,8 +306,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {addedItems.length < 3 && (
-            <div className="mb-6">
+          {/* No limit on items - always show search */}
+          <div className="mb-6">
               <input
                 type="text"
                 value={searchQuery}
@@ -363,8 +365,7 @@ export default function OnboardingPage() {
                   ))}
                 </div>
               )}
-            </div>
-          )}
+          </div>
 
           {addedItems.length > 0 && (
             <div className="space-y-2 mb-6">
