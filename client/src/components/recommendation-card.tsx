@@ -72,6 +72,13 @@ export default function RecommendationCard({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('Rate-media error:', errorData, 'Request was:', {
+          media_external_id: externalId,
+          media_external_source: externalSource,
+          media_title: item.title,
+          media_type: mediaType,
+          rating: rating,
+        });
         throw new Error(errorData.error || "Failed to rate");
       }
 

@@ -329,6 +329,27 @@ export default function MediaDetail() {
     retry: false
   });
 
+  // Fetch user's own rating from media_ratings table (includes private ratings)
+  const { data: userRating } = useQuery({
+    queryKey: ['user-media-rating', params?.source, params?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('media_ratings')
+        .select('rating, created_at')
+        .eq('media_external_id', params?.id)
+        .eq('media_external_source', params?.source)
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Failed to fetch user rating:', error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!params?.source && !!params?.id && !!user?.id
+  });
+
   // Fetch ALL social activity for this specific media
   const { data: socialActivity = [] } = useQuery({
     queryKey: ['media-social-activity', params?.source, params?.id],
@@ -808,10 +829,10 @@ export default function MediaDetail() {
                   <span className="font-medium">{mediaItem.rating}</span>
                   <span className="text-gray-500">avg</span>
                 </div>
-                {userReview?.rating && (
+                {(userRating?.rating || userReview?.rating) && (
                   <div className="flex items-center gap-1 bg-purple-50 px-2 py-1 rounded-full">
                     <Star className="w-3 h-3 text-purple-600 fill-current" />
-                    <span className="font-semibold text-purple-700">{userReview.rating}</span>
+                    <span className="font-semibold text-purple-700">{userRating?.rating || userReview?.rating}</span>
                     <span className="text-purple-500">you</span>
                   </div>
                 )}
