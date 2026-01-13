@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -23,6 +23,15 @@ interface Notification {
   comment_id?: string;
   list_id?: string;
   triggered_by_user_id: string;
+  action_url?: string;
+  isEngagement?: boolean;
+}
+
+interface EngagementNotification {
+  type: string;
+  message: string;
+  action_url?: string;
+  metadata?: Record<string, any>;
 }
 
 export function NotificationBell() {
@@ -39,8 +48,8 @@ export function NotificationBell() {
     });
   }, []);
 
-  // Fetch notifications
-  const { data: notifications = [], refetch } = useQuery<Notification[]>({
+  // Fetch regular notifications
+  const { data: regularNotifications = [], refetch } = useQuery<Notification[]>({
     queryKey: ['/api/notifications', userId],
     enabled: !!userId,
     queryFn: async () => {
@@ -57,6 +66,52 @@ export function NotificationBell() {
       return data || [];
     },
   });
+
+  // Fetch engagement notifications (nudges)
+  const { data: engagementNotifications = [] } = useQuery<EngagementNotification[]>({
+    queryKey: ['/api/engagement-notifications', userId],
+    enabled: !!userId && open,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return [];
+      
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-engagement-notifications`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        
+        if (!response.ok) return [];
+        const result = await response.json();
+        return result.notifications || [];
+      } catch (e) {
+        console.error('Failed to fetch engagement notifications:', e);
+        return [];
+      }
+    },
+  });
+
+  // Combine notifications - regular first, then engagement nudges
+  const notifications: Notification[] = [
+    ...regularNotifications,
+    ...engagementNotifications.map((n, idx) => ({
+      id: `engagement-${idx}`,
+      type: n.type,
+      message: n.message,
+      read: true,
+      created_at: new Date().toISOString(),
+      triggered_by_user_id: '',
+      action_url: n.action_url,
+      isEngagement: true,
+    })),
+  ];
 
   // Count unread notifications
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -122,13 +177,19 @@ export function NotificationBell() {
   }, [refetch, userId]);
 
   const handleNotificationClick = (notification: Notification) => {
-    // Mark as read
-    if (!notification.read) {
+    // Mark as read (only for regular notifications)
+    if (!notification.read && !notification.isEngagement) {
       markAsReadMutation.mutate(notification.id);
     }
 
     // Close dropdown before navigating
     setOpen(false);
+
+    // For engagement notifications, use action_url
+    if (notification.isEngagement && notification.action_url) {
+      setLocation(notification.action_url);
+      return;
+    }
 
     // Navigate based on notification type and available data
     switch (notification.type) {
@@ -213,6 +274,21 @@ export function NotificationBell() {
         return '⭐';
       case 'collaborator_added':
         return '📝';
+      case 'leaderboard_position':
+        return '🏆';
+      case 'points_to_rank':
+        return '⚡';
+      case 'friend_activity':
+        return '💬';
+      case 'trivia_rank':
+        return '🧠';
+      case 'tracking_milestone':
+      case 'tracking_competition':
+        return '📚';
+      case 'dna_recommendation':
+        return '🧬';
+      case 'poll_nudge':
+        return '🗳️';
       default:
         return '🔔';
     }
@@ -259,7 +335,7 @@ export function NotificationBell() {
             </div>
           ) : (
             <div className="divide-y divide-slate-700">
-              {notifications.map((notification) => (
+              {regularNotifications.length > 0 && regularNotifications.map((notification) => (
                 <button
                   key={notification.id}
                   onClick={() => handleNotificationClick(notification)}
@@ -286,6 +362,46 @@ export function NotificationBell() {
                   </div>
                 </button>
               ))}
+              
+              {engagementNotifications.length > 0 && (
+                <>
+                  <div className="px-4 py-2 bg-gradient-to-r from-purple-900/50 to-indigo-900/50 border-y border-purple-700/30">
+                    <p className="text-xs text-purple-300 font-medium flex items-center gap-1.5">
+                      <Sparkles size={12} /> For You
+                    </p>
+                  </div>
+                  {engagementNotifications.map((notification, idx) => (
+                    <button
+                      key={`engagement-${idx}`}
+                      onClick={() => handleNotificationClick({
+                        id: `engagement-${idx}`,
+                        type: notification.type,
+                        message: notification.message,
+                        read: true,
+                        created_at: new Date().toISOString(),
+                        triggered_by_user_id: '',
+                        action_url: notification.action_url,
+                        isEngagement: true,
+                      })}
+                      className="w-full p-4 text-left hover:bg-purple-900/30 transition-colors bg-purple-950/20"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl" aria-label={notification.type}>
+                          {getNotificationIcon(notification.type)}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-purple-200">
+                            {notification.message}
+                          </p>
+                        </div>
+                        <div className="text-purple-400">
+                          →
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
             </div>
           )}
         </ScrollArea>
