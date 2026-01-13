@@ -515,11 +515,10 @@ export default function EntertainmentDNAPage() {
         <Button
           onClick={generateDNA}
           disabled={!isComplete()}
-          className="w-full bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 hover:from-cyan-300 hover:via-purple-400 hover:to-purple-600 text-white font-semibold rounded-full py-4 text-lg shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 hover:from-cyan-300 hover:via-purple-400 hover:to-purple-600 text-white font-semibold rounded-full py-4 text-base shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="get-dna-button"
         >
-          <Sparkles size={18} className="mr-2" />
-          Discover Your Entertainment DNA
+          Discover Your DNA
         </Button>
       </div>
     </div>
