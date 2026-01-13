@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, Loader2, Sparkles, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
 
 const CATEGORIES = [
@@ -135,6 +136,20 @@ export default function OnboardingPage() {
     try {
       const failedItems: string[] = [];
       
+      // Save selected categories to user's DNA profile
+      try {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ preferred_media_types: selectedCategories })
+          .eq('id', session?.user?.id);
+        
+        if (updateError) {
+          console.error('Failed to save media preferences:', updateError);
+        }
+      } catch (e) {
+        console.error('Failed to save media preferences:', e);
+      }
+      
       for (const item of addedItems) {
         try {
           const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-media', {
@@ -197,7 +212,7 @@ export default function OnboardingPage() {
           <img 
             src="/consumed-logo-white.png" 
             alt="consumed" 
-            className="h-8 mx-auto"
+            className="h-10 mx-auto"
           />
         </div>
         <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl">
@@ -248,7 +263,7 @@ export default function OnboardingPage() {
           <img 
             src="/consumed-logo-white.png" 
             alt="consumed" 
-            className="h-8 mx-auto"
+            className="h-10 mx-auto"
           />
         </div>
         <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl">
