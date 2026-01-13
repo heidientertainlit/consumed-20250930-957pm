@@ -209,37 +209,37 @@ export default function OnboardingPage() {
 
   if (step === 1) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col px-6 py-8">
-        <div className="mb-auto">
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col px-6 pt-12 pb-8">
+        <div className="mb-12">
           <img 
             src="/consumed-logo-white.png" 
             alt="consumed" 
-            className="h-8"
+            className="h-10"
           />
         </div>
         
-        <div className="max-w-sm w-full mb-auto">
+        <div className="max-w-sm w-full">
           <h1 className="text-2xl font-bold text-white mb-2 text-left" style={{ lineHeight: '1.15' }}>
             What do you actually spend your time on?
           </h1>
           <p className="text-purple-200 text-sm mb-8 text-left">Select all that apply</p>
 
-          <div className="flex flex-wrap gap-2 mb-10">
+          <div className="flex flex-wrap gap-2.5 mb-10">
             {CATEGORIES.map(category => {
               const isSelected = selectedCategories.includes(category.id);
               return (
                 <button
                   key={category.id}
                   onClick={() => toggleCategory(category.id)}
-                  className={`px-3.5 py-2 rounded-lg border transition-all flex items-center gap-1.5 text-sm font-semibold ${
+                  className={`px-4 py-2.5 rounded-full transition-all flex items-center gap-2 text-sm font-medium text-white ${
                     isSelected
-                      ? 'border-purple-300 bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg'
-                      : 'border-purple-400/30 bg-gradient-to-r from-purple-600/40 to-purple-700/40 text-white hover:from-purple-500/50 hover:to-purple-600/50'
+                      ? 'bg-gradient-to-r from-purple-400 via-purple-500 to-purple-700 shadow-lg'
+                      : 'bg-gradient-to-r from-purple-500/60 via-purple-600/60 to-purple-800/60 hover:from-purple-400/70 hover:via-purple-500/70 hover:to-purple-700/70'
                   }`}
                 >
                   <category.icon size={16} />
                   <span>{category.label}</span>
-                  {isSelected && <Check size={14} className="ml-0.5" />}
+                  {isSelected && <Check size={14} />}
                 </button>
               );
             })}
