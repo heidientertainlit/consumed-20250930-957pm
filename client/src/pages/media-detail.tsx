@@ -1005,9 +1005,35 @@ export default function MediaDetail() {
               />
             </button>
             {showReviews && (
-              reviews.length > 0 ? (
+              <>
+                {/* Your Rating - always show at top if user has rated */}
+                {userRating && (
+                  <div className="bg-purple-50 rounded-xl p-4 mt-3 border border-purple-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-purple-700">Your Rating</span>
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                        <span className="font-bold text-gray-900">{userRating.rating}</span>
+                      </div>
+                    </div>
+                    {/* Show user's review if they have one */}
+                    {userReview?.content && (
+                      <p className="text-gray-700 text-sm leading-relaxed mt-2">{userReview.content}</p>
+                    )}
+                    <p className="text-xs text-purple-500 mt-2">
+                      Rated on {new Date(userRating.created_at).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric', 
+                        year: 'numeric' 
+                      })}
+                    </p>
+                  </div>
+                )}
+
+                {/* Other Reviews */}
+                {reviews.filter((r: any) => r.user_id !== user?.id).length > 0 ? (
               <div className="space-y-4 mt-3">
-                  {reviews.map((review: any) => (
+                  {reviews.filter((r: any) => r.user_id !== user?.id).map((review: any) => (
                     <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2 flex-1">
@@ -1136,13 +1162,15 @@ export default function MediaDetail() {
                     </div>
                   ))}
                 </div>
-              ) : (
+              ) : !userRating && (
                 <div className="text-center py-6 mt-4 border border-dashed border-gray-200 rounded-xl">
                   <Star className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                   <p className="text-gray-500 text-sm mb-1">No reviews yet</p>
                   <p className="text-gray-400 text-xs">Rate this title using the Quick Add button above</p>
                 </div>
-              ))}
+              )}
+              </>
+            )}
           </div>
 
         </div>
