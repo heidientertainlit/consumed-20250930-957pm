@@ -452,19 +452,28 @@ export default function EntertainmentDNAPage() {
             
             return (
               <div key={question.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/10" data-testid={`question-${question.id}`}>
-                <h3 className="text-base font-semibold text-white mb-3 leading-relaxed">
-                  {question.question_text}
-                  {!question.is_required && <span className="text-purple-300/60 text-sm font-normal ml-2">(optional)</span>}
-                </h3>
-
-                {question.question_type === 'text' && (
-                  <textarea
-                    value={(currentAnswer as string) || ""}
-                    onChange={(e) => handleAnswer(question.id, e.target.value)}
-                    placeholder="Just jot down a bunch of things you love..."
-                    className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:border-purple-400 focus:ring-purple-400 min-h-[100px] resize-vertical text-black placeholder:text-gray-400 text-sm"
-                    data-testid={`text-input-${question.id}`}
-                  />
+                {question.question_type === 'text' ? (
+                  <>
+                    <h3 className="text-base font-semibold text-white mb-1 leading-tight">
+                      What do you love?
+                    </h3>
+                    <p className="text-purple-200/80 text-sm leading-snug mb-2">
+                      Drop anything you're into lately or always come back to — books, shows, teams, creators, comfort rewatches, guilty pleasures. Whatever feels you.
+                      <span className="text-purple-300/60 ml-1">(optional)</span>
+                    </p>
+                    <textarea
+                      value={(currentAnswer as string) || ""}
+                      onChange={(e) => handleAnswer(question.id, e.target.value)}
+                      placeholder="Type freely — one thing per line or however it comes out."
+                      className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:border-purple-400 focus:ring-purple-400 min-h-[100px] resize-vertical text-black placeholder:text-gray-400 text-sm"
+                      data-testid={`text-input-${question.id}`}
+                    />
+                  </>
+                ) : (
+                  <h3 className="text-base font-semibold text-white mb-2 leading-snug">
+                    {question.question_text}
+                    {!question.is_required && <span className="text-purple-300/60 text-sm font-normal ml-2">(optional)</span>}
+                  </h3>
                 )}
 
                 {question.question_type === 'select' && (
