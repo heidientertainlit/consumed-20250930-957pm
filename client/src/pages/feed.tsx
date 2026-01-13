@@ -187,8 +187,19 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
     currentAppUserId = data.currentUserId;
     console.log('📌 Current app user ID set to:', currentAppUserId);
     
+    // Filter out empty posts (no content, no rating, no media, no list)
+    const filteredPosts = data.posts.filter((post: any) => {
+      const hasContent = post.content && post.content.trim().length > 0;
+      const hasRating = post.rating && post.rating > 0;
+      const hasMedia = post.mediaItems && post.mediaItems.length > 0;
+      const hasList = post.listData && post.listData.items && post.listData.items.length > 0;
+      const hasGame = post.prediction_pool_id || post.game;
+      // Keep post if it has any meaningful content
+      return hasContent || hasRating || hasMedia || hasList || hasGame;
+    });
+    
     // Debug: Log posts with missing or problematic imageUrls
-    data.posts.forEach((post: any, idx: number) => {
+    filteredPosts.forEach((post: any, idx: number) => {
       if (post.mediaItems?.length > 0) {
         const media = post.mediaItems[0];
         if (!media.imageUrl || media.imageUrl === '' || !media.imageUrl.startsWith('http')) {
@@ -213,7 +224,7 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
       }
     });
     
-    return data.posts;
+    return filteredPosts;
   }
   
   // Fallback for old response format (array of posts)
