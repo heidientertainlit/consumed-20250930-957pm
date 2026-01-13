@@ -2753,7 +2753,7 @@ export default function Feed() {
           </div>
           
           {/* Search Bar with Inline Results */}
-          <div ref={headerSearchRef} className="relative mb-4">
+          <div ref={headerSearchRef} className="relative mb-4" data-header-search>
             <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
             <input
               type="text"
