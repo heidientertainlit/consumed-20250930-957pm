@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Dna, Loader2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles } from "lucide-react";
+import { Dna, Loader2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles, Check } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import html2canvas from "html2canvas";
@@ -475,14 +475,15 @@ export default function EntertainmentDNAPage() {
                         <button
                           key={index}
                           onClick={() => handleAnswer(question.id, option)}
-                          className={`px-5 py-2.5 rounded-full transition-all text-sm ${
+                          className={`px-5 py-2.5 rounded-full transition-all text-sm flex items-center gap-2 ${
                             isSelected
-                              ? 'bg-zinc-800/90 border border-zinc-600/60 text-white font-medium'
+                              ? 'bg-purple-500/20 border-2 border-cyan-400 text-white font-medium'
                               : 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white shadow-lg shadow-purple-500/30'
                           }`}
                           data-testid={`option-${question.id}-${option.replace(' (please specify)', '')}`}
                         >
                           {option.replace(' (please specify)', '')}
+                          {isSelected && <Check size={16} />}
                         </button>
                       );
                     })}
@@ -508,13 +509,14 @@ export default function EntertainmentDNAPage() {
                           }}
                           className={`px-5 py-2.5 rounded-full transition-all text-sm flex items-center gap-2 ${
                             isChecked
-                              ? 'bg-zinc-800/90 border border-zinc-600/60 text-white font-medium'
+                              ? 'bg-purple-500/20 border-2 border-cyan-400 text-white font-medium'
                               : 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white shadow-lg shadow-purple-500/30'
                           }`}
                           data-testid={`multi-option-${question.id}-${cleanOption}`}
                         >
                           {IconComponent && <IconComponent size={16} />}
                           {cleanOption}
+                          {isChecked && <Check size={16} />}
                         </button>
                       );
                     })}
