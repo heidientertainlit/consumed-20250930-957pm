@@ -499,6 +499,26 @@ export const insertScheduledPersonaPostSchema = createInsertSchema(scheduledPers
   createdAt: true,
 });
 
+// User notification settings and nudge tracking
+export const userNotificationSettings = pgTable("user_notification_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  emailNotificationsEnabled: boolean("email_notifications_enabled").default(true),
+  pushNotificationsEnabled: boolean("push_notifications_enabled").default(true),
+  engagementNudgesEnabled: boolean("engagement_nudges_enabled").default(true),
+  nudgesSentSinceActive: integer("nudges_sent_since_active").default(0),
+  lastNudgeAt: timestamp("last_nudge_at"),
+  lastActiveAt: timestamp("last_active_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertUserNotificationSettingsSchema = createInsertSchema(userNotificationSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type List = typeof lists.$inferSelect;
