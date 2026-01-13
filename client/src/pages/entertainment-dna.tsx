@@ -435,8 +435,8 @@ export default function EntertainmentDNAPage() {
           <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-purple-500 to-purple-700 rounded-full flex items-center justify-center mb-4">
             <Dna className="text-white" size={28} />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Discover Your Entertainment DNA</h1>
-          <p className="text-purple-200 text-sm">Answer a few questions to unlock your personalized entertainment profile</p>
+          <h1 className="text-2xl font-bold text-white mb-2">Your entertainment DNA starts here</h1>
+          <p className="text-purple-200 text-sm">Answer a few quick questions to shape your taste profile.</p>
           <button
             onClick={() => window.location.href = '/activity'}
             className="text-xs text-purple-300/60 hover:text-purple-200 mt-3 underline"
