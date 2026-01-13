@@ -27,7 +27,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "./lib/auth";
 import { ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
-import Track from "@/pages/track";
+// Track page removed - features integrated into activity feed search bar
 import Feed from "@/pages/feed";
 import GameFirstFeed from "@/pages/game-first-feed";
 import QuickLog from "@/pages/quick-log";
@@ -129,9 +129,7 @@ function Router() {
           </ProtectedRoute>
         </Route>
         <Route path="/track">
-          <ProtectedRoute>
-            <Track />
-          </ProtectedRoute>
+          <RedirectTo to="/" />
         </Route>
         <Route path="/leaderboard">
           <ProtectedRoute>
@@ -169,9 +167,7 @@ function Router() {
           </ProtectedRoute>
         </Route>
         <Route path="/play">
-          <ProtectedRoute>
-            <Play />
-          </ProtectedRoute>
+          <RedirectTo to="/" />
         </Route>
         <Route path="/my-library">
           <ProtectedRoute>

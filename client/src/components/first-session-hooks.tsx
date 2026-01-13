@@ -112,8 +112,8 @@ export function FirstSessionHooks({ onComplete }: FirstSessionHooksProps) {
             if (playRow) {
               playRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
             } else {
-              // Fallback to play page if not on activity feed
-              setLocation('/play');
+              // Fallback to activity feed if play row not found
+              setLocation('/');
             }
           }}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
