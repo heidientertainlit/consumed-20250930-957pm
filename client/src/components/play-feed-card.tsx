@@ -507,8 +507,10 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
   };
 
   // For mixed variant, show the current game's type dynamically
+  // Show category (e.g., "Sports", "Movies") if available, otherwise fall back to type
   const currentGame = availableGames[currentGameIndex];
   const getCurrentLabel = () => {
+    if (currentGame?.category) return currentGame.category;
     if (variant !== 'mixed' || !currentGame) return getVariantLabel();
     return currentGame.type === 'trivia' ? 'Trivia' : 'Poll';
   };
