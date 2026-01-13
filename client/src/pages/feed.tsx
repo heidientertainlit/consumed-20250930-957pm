@@ -2400,13 +2400,11 @@ export default function Feed() {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              media: {
-                title: media.title,
-                mediaType: media.mediaType,
-                imageUrl: media.imageUrl,
-                externalId: media.externalId,
-                externalSource: media.externalSource,
-              },
+              media_title: media.title,
+              media_type: media.mediaType,
+              media_image_url: media.imageUrl,
+              media_external_id: media.externalId,
+              media_external_source: media.externalSource,
               rating: parseFloat(rating),
             }),
           }

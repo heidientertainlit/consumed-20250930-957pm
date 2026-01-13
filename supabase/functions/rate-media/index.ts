@@ -155,9 +155,9 @@ serve(async (req) => {
       });
     }
 
-    if (rating < 1 || rating > 5) {
+    if (rating < 0.5 || rating > 5) {
       return new Response(JSON.stringify({ 
-        error: 'Rating must be between 1 and 5' 
+        error: 'Rating must be between 0.5 and 5' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
