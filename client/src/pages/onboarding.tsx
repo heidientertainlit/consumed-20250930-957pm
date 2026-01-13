@@ -48,9 +48,6 @@ export default function OnboardingPage() {
       if (prev.includes(categoryId)) {
         return prev.filter(c => c !== categoryId);
       }
-      if (prev.length >= 3) {
-        return prev;
-      }
       return [...prev, categoryId];
     });
   };
@@ -77,11 +74,14 @@ export default function OnboardingPage() {
       const mediaType = getMediaTypeFromCategory(searchCategory);
       
       const response = await fetch(
-        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search?q=${encodeURIComponent(query)}&type=${mediaType}`,
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search',
         {
+          method: 'POST',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
           },
+          body: JSON.stringify({ query: query.trim(), type: mediaType }),
         }
       );
       
@@ -192,11 +192,18 @@ export default function OnboardingPage() {
 
   if (step === 1) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col items-center justify-center p-4">
+        <div className="mb-6">
+          <img 
+            src="/consumed-logo-white.png" 
+            alt="consumed" 
+            className="h-8 mx-auto"
+          />
+        </div>
         <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">What do you consume most?</h1>
-            <p className="text-gray-600 text-sm">Select up to 3</p>
+            <p className="text-gray-600 text-sm">Select all that apply</p>
           </div>
 
           <div className="flex flex-wrap gap-3 justify-center mb-8">
@@ -236,7 +243,14 @@ export default function OnboardingPage() {
     const activeCategoryLabel = CATEGORIES.find(c => c.id === activeSearchCategory)?.label.toLowerCase() || 'things';
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col items-center justify-center p-4">
+        <div className="mb-6">
+          <img 
+            src="/consumed-logo-white.png" 
+            alt="consumed" 
+            className="h-8 mx-auto"
+          />
+        </div>
         <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
