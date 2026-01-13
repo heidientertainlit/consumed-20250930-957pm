@@ -219,7 +219,7 @@ export default function OnboardingPage() {
         </div>
         <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">What entertainment do you consume most?</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">What entertainment do you consume most?</h1>
             <p className="text-gray-600 text-sm">Select all that apply</p>
           </div>
 
