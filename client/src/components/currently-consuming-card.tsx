@@ -782,50 +782,57 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">What would you rate this?</label>
-              <div className="flex justify-center gap-1">
+              <div className="flex justify-center gap-2">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <div key={star} className="relative p-1 transition-transform hover:scale-110">
+                  <div 
+                    key={star} 
+                    className="relative cursor-pointer transition-transform hover:scale-110"
+                    style={{ width: 36, height: 36 }}
+                  >
                     {/* Left half - for x.5 rating */}
-                    <button
+                    <div
                       onClick={() => setRating(star - 0.5)}
-                      className="absolute left-0 top-0 w-1/2 h-full z-10"
+                      className="absolute left-0 top-0 w-1/2 h-full z-20 cursor-pointer"
                       data-testid={`rating-star-${star}-half`}
                     />
                     {/* Right half - for full star rating */}
-                    <button
+                    <div
                       onClick={() => setRating(star)}
-                      className="absolute right-0 top-0 w-1/2 h-full z-10"
+                      className="absolute right-0 top-0 w-1/2 h-full z-20 cursor-pointer"
                       data-testid={`rating-star-${star}`}
                     />
-                    {/* Star visual */}
-                    <div className="relative">
+                    {/* Background star (gray) */}
+                    <Star 
+                      size={36} 
+                      className="absolute inset-0 text-gray-300"
+                    />
+                    {/* Filled overlay with clipping */}
+                    <div 
+                      className="absolute inset-0 overflow-hidden pointer-events-none"
+                      style={{ 
+                        width: rating >= star ? '100%' : rating >= star - 0.5 ? '50%' : '0%'
+                      }}
+                    >
                       <Star 
                         size={36} 
-                        className="text-gray-300"
+                        className="fill-yellow-400 text-yellow-400"
                       />
-                      {/* Filled overlay */}
-                      <div 
-                        className="absolute inset-0 overflow-hidden"
-                        style={{ 
-                          width: rating >= star ? '100%' : rating >= star - 0.5 ? '50%' : '0%'
-                        }}
-                      >
-                        <Star 
-                          size={36} 
-                          className="fill-yellow-400 text-yellow-400"
-                        />
-                      </div>
                     </div>
                   </div>
                 ))}
               </div>
               {rating > 0 && (
                 <p className="text-center text-sm text-gray-500">
-                  {rating <= 1 && "Not for me"}
-                  {rating > 1 && rating <= 2 && "It was okay"}
-                  {rating > 2 && rating <= 3 && "Pretty good"}
-                  {rating > 3 && rating <= 4 && "Really enjoyed it"}
-                  {rating > 4 && "Loved it!"}
+                  {rating === 0.5 && "Not for me"}
+                  {rating === 1 && "Not for me"}
+                  {rating === 1.5 && "Meh"}
+                  {rating === 2 && "It was okay"}
+                  {rating === 2.5 && "Decent"}
+                  {rating === 3 && "Pretty good"}
+                  {rating === 3.5 && "Enjoyed it"}
+                  {rating === 4 && "Really enjoyed it"}
+                  {rating === 4.5 && "Almost perfect"}
+                  {rating === 5 && "Loved it!"}
                 </p>
               )}
             </div>
