@@ -675,27 +675,39 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
 
   const renderStars = () => {
     return (
-      <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onClick={() => setRating(star === rating ? 0 : star)}
-            onMouseEnter={() => setHoverRating(star)}
-            onMouseLeave={() => setHoverRating(0)}
-            className="p-0.5 transition-transform hover:scale-110"
-            data-testid={`star-${star}`}
-          >
-            <Star
-              size={28}
-              className={`transition-colors ${
-                star <= (hoverRating || rating)
-                  ? 'fill-yellow-400 text-yellow-400'
-                  : 'text-gray-300'
-              }`}
-            />
-          </button>
-        ))}
+      <div className="relative flex items-center gap-1">
+        {/* Star display */}
+        <div className="flex gap-0.5">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <div 
+              key={star} 
+              className="relative"
+              style={{ width: 28, height: 28 }}
+            >
+              <Star size={28} className="absolute inset-0 text-gray-300" />
+              <div 
+                className="absolute inset-0 overflow-hidden pointer-events-none"
+                style={{ 
+                  width: rating >= star ? '100%' : rating >= star - 0.5 ? '50%' : '0%'
+                }}
+              >
+                <Star size={28} className="fill-yellow-400 text-yellow-400" />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Invisible slider overlay for half-star ratings */}
+        <input
+          type="range"
+          min="0"
+          max="5"
+          step="0.5"
+          value={rating}
+          onChange={(e) => setRating(parseFloat(e.target.value))}
+          className="absolute left-0 w-[140px] h-7 opacity-0 cursor-pointer z-10"
+          style={{ margin: 0 }}
+          data-testid="rating-slider"
+        />
         {rating > 0 && (
           <span className="ml-2 text-sm text-gray-600">{rating}/5</span>
         )}
@@ -1231,7 +1243,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
             <div className="p-4 border-t border-gray-100">
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting || (!reviewText.trim() && postType !== 'rank')}
+                disabled={isSubmitting || (!reviewText.trim() && postType !== 'rank' && rating === 0)}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
                 data-testid="quick-add-submit"
               >
