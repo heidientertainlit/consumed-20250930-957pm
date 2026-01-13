@@ -233,8 +233,8 @@ export default function OnboardingPage() {
                   onClick={() => toggleCategory(category.id)}
                   className={`px-4 py-2.5 rounded-full transition-all flex items-center gap-2 text-sm font-medium text-white ${
                     isSelected
-                      ? 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 shadow-lg shadow-purple-500/30'
-                      : 'bg-gradient-to-r from-purple-400/50 via-purple-600/50 to-indigo-700/50 hover:from-cyan-400/60 hover:via-purple-500/60 hover:to-purple-700/60'
+                      ? 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 shadow-lg shadow-purple-500/30 ring-2 ring-white/30'
+                      : 'bg-gradient-to-r from-cyan-400/80 via-purple-500/80 to-purple-700/80 hover:shadow-lg hover:shadow-purple-500/20'
                   }`}
                 >
                   <category.icon size={16} />
@@ -258,52 +258,63 @@ export default function OnboardingPage() {
   }
 
   if (step === 2) {
+    // Dynamic momentum text based on items added
+    const getMomentumText = () => {
+      if (addedItems.length === 0) return null;
+      if (addedItems.length === 1) return "Nice. Add two more.";
+      if (addedItems.length === 2) return "One more and you're in.";
+      return "You're all set!";
+    };
+
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col items-center justify-center p-4">
-        <div className="mb-6">
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col px-6 pt-12 pb-8">
+        <div className="mb-8">
           <img 
             src="/consumed-logo-white.png" 
             alt="consumed" 
-            className="h-10 mx-auto"
+            className="h-10"
           />
         </div>
-        <div className="max-w-md w-full bg-white rounded-3xl p-8 shadow-2xl">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Add 3 entertainment favorites
-            </h1>
-            <p className="text-gray-600 text-sm">Movies, shows, books, music... ({addedItems.length}/3)</p>
-          </div>
+        
+        <div className="max-w-md w-full">
+          <h1 className="text-2xl font-bold text-white mb-2">
+            Add a few favorites to start
+          </h1>
+          {getMomentumText() ? (
+            <p className="text-purple-200 text-sm mb-6">{getMomentumText()}</p>
+          ) : (
+            <p className="text-purple-200/60 text-sm mb-6">Movies, shows, books, music...</p>
+          )}
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm text-center">
+            <div className="mb-4 p-3 bg-red-500/20 border border-red-400/30 rounded-lg text-red-200 text-sm">
               {error}
             </div>
           )}
 
           {addedItems.length < 3 && (
-            <div className="mb-4">
+            <div className="mb-6">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search movies, shows, books, music..."
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-purple-500 focus:ring-purple-500 text-black"
+                placeholder="Type a movie, show, book, artist…"
+                className="w-full px-5 py-4 bg-white/10 border border-white/20 rounded-lg text-white text-lg placeholder:text-white/40 focus:border-purple-400 focus:ring-purple-400 focus:bg-white/15 transition-all"
               />
               
               {isSearching && (
                 <div className="flex justify-center py-4">
-                  <Loader2 className="w-6 h-6 text-purple-600 animate-spin" />
+                  <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
                 </div>
               )}
               
               {searchResults.length > 0 && (
-                <div className="mt-2 bg-gray-50 rounded-xl p-2 max-h-48 overflow-y-auto">
+                <div className="mt-3 bg-white/10 backdrop-blur-sm rounded-lg p-2 max-h-52 overflow-y-auto border border-white/10">
                   {searchResults.map((result, index) => (
                     <button
                       key={`${result.external_id}-${index}`}
                       onClick={() => addItem(result)}
-                      className="w-full flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors text-left"
+                      className="w-full flex items-center gap-3 p-2 hover:bg-white/10 rounded-lg transition-colors text-left"
                     >
                       {result.image_url ? (
                         <img 
@@ -312,13 +323,13 @@ export default function OnboardingPage() {
                           className="w-10 h-10 rounded object-cover"
                         />
                       ) : (
-                        <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
-                          <span className="text-gray-400 text-xs">No img</span>
+                        <div className="w-10 h-10 bg-white/20 rounded flex items-center justify-center">
+                          <span className="text-white/40 text-xs">No img</span>
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{result.title}</p>
-                        <p className="text-xs text-gray-500 capitalize">{result.type}</p>
+                        <p className="font-medium text-white truncate">{result.title}</p>
+                        <p className="text-xs text-purple-300 capitalize">{result.type}</p>
                       </div>
                     </button>
                   ))}
@@ -332,7 +343,7 @@ export default function OnboardingPage() {
               {addedItems.map((item) => (
                 <div 
                   key={item.external_id}
-                  className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl"
+                  className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/10"
                 >
                   {item.image_url ? (
                     <img 
@@ -341,17 +352,17 @@ export default function OnboardingPage() {
                       className="w-12 h-12 rounded object-cover"
                     />
                   ) : (
-                    <div className="w-12 h-12 bg-purple-200 rounded flex items-center justify-center">
-                      <Check className="text-purple-600" size={20} />
+                    <div className="w-12 h-12 bg-purple-500/30 rounded flex items-center justify-center">
+                      <Check className="text-purple-300" size={20} />
                     </div>
                   )}
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900">{item.title}</p>
-                    <p className="text-xs text-purple-600">+10 points</p>
+                    <p className="font-medium text-white">{item.title}</p>
+                    <p className="text-xs text-cyan-400">+10 points</p>
                   </div>
                   <button 
                     onClick={() => removeItem(item.id)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-white/40 hover:text-white/70 text-xl"
                   >
                     ×
                   </button>
@@ -363,7 +374,7 @@ export default function OnboardingPage() {
           <Button
             onClick={completeOnboarding}
             disabled={addedItems.length === 0 || isCompleting}
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-3"
+            className="w-full bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 hover:from-cyan-300 hover:via-purple-400 hover:to-purple-600 text-white font-semibold rounded-full py-4 text-lg shadow-lg shadow-purple-500/30 disabled:opacity-50"
           >
             {isCompleting ? (
               <>
@@ -371,13 +382,13 @@ export default function OnboardingPage() {
                 Saving...
               </>
             ) : (
-              `Continue ${addedItems.length > 0 ? `(+${pointsEarned} points)` : ''}`
+              `Jump in ${addedItems.length > 0 ? `(+${pointsEarned} pts)` : ''}`
             )}
           </Button>
           
           <button
             onClick={() => setStep(1)}
-            className="w-full text-gray-500 text-sm mt-3 hover:text-gray-700"
+            className="w-full text-purple-300/60 text-sm mt-4 hover:text-purple-200"
           >
             Back
           </button>
