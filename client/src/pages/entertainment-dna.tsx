@@ -491,7 +491,7 @@ export default function EntertainmentDNAPage() {
                 )}
 
                 {question.question_type === 'multi-select' && (
-                  <div className="flex flex-wrap gap-2 justify-center">
+                  <div className="flex flex-wrap gap-2">
                     {question.options?.map((option, index) => {
                       const currentAnswers = Array.isArray(currentAnswer) ? currentAnswer : [];
                       const isChecked = currentAnswers.includes(option);
