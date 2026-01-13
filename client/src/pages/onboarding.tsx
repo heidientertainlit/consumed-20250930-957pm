@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Loader2, Sparkles } from "lucide-react";
+import { Check, Loader2, Sparkles, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 
 const CATEGORIES = [
-  { id: "tv", label: "TV", emoji: "📺" },
-  { id: "movies", label: "Movies", emoji: "🎬" },
-  { id: "books", label: "Books", emoji: "📚" },
-  { id: "music", label: "Music", emoji: "🎵" },
-  { id: "podcasts", label: "Podcasts", emoji: "🎙️" },
-  { id: "gaming", label: "Gaming", emoji: "🎮" },
-  { id: "sports", label: "Sports", emoji: "⚽" },
+  { id: "tv", label: "TV", icon: Tv },
+  { id: "movies", label: "Movies", icon: Film },
+  { id: "books", label: "Books", icon: BookOpen },
+  { id: "music", label: "Music", icon: Music },
+  { id: "podcasts", label: "Podcasts", icon: Mic },
+  { id: "gaming", label: "Gaming", icon: Gamepad2 },
+  { id: "sports", label: "Sports", icon: Trophy },
 ];
 
 interface MediaItem {
@@ -212,7 +212,7 @@ export default function OnboardingPage() {
                       : 'border-gray-200 hover:border-purple-300 text-gray-700'
                   }`}
                 >
-                  <span>{category.emoji}</span>
+                  <category.icon size={18} />
                   <span className="font-medium">{category.label}</span>
                   {isSelected && <Check size={16} />}
                 </button>
@@ -264,7 +264,7 @@ export default function OnboardingPage() {
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
-                    {cat.emoji} {cat.label}
+                    <cat.icon size={14} className="inline mr-1" />{cat.label}
                   </button>
                 );
               })}
