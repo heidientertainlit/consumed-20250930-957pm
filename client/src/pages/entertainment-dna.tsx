@@ -462,7 +462,7 @@ export default function EntertainmentDNAPage() {
                     value={(currentAnswer as string) || ""}
                     onChange={(e) => handleAnswer(question.id, e.target.value)}
                     placeholder="Just jot down a bunch of things you love..."
-                    className="w-full p-3 bg-white/10 border border-white/20 rounded-lg focus:border-purple-400 focus:ring-purple-400 min-h-[100px] resize-vertical text-white placeholder:text-white/40 text-sm"
+                    className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:border-purple-400 focus:ring-purple-400 min-h-[100px] resize-vertical text-black placeholder:text-gray-400 text-sm"
                     data-testid={`text-input-${question.id}`}
                   />
                 )}
