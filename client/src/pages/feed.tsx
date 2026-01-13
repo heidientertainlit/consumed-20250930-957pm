@@ -2404,13 +2404,15 @@ export default function Feed() {
           setActiveInlineRating(null);
           queryClient.invalidateQueries({ queryKey: ['/api/social-feed'] });
         } else {
-          throw new Error('Failed to save rating');
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Rate-media error response:', errorData);
+          throw new Error(errorData.error || 'Failed to save rating');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error submitting rating:', error);
         toast({
           title: "Error",
-          description: "Failed to save rating. Please try again.",
+          description: error.message || "Failed to save rating. Please try again.",
           variant: "destructive",
         });
       }
