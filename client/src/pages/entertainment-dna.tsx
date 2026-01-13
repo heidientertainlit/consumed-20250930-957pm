@@ -1,10 +1,21 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Dna, Loader2, Download } from "lucide-react";
+import { Dna, Loader2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import html2canvas from "html2canvas";
 import { useFirstSessionHooks } from "@/components/first-session-hooks";
+
+// Icon mapping for entertainment types
+const ENTERTAINMENT_ICONS: Record<string, typeof Tv> = {
+  'TV': Tv,
+  'Movies': Film,
+  'Books': BookOpen,
+  'Music': Music,
+  'Podcasts': Mic,
+  'Gaming': Gamepad2,
+  'Sports': Trophy,
+};
 
 interface SurveyAnswer {
   questionId: string;
@@ -479,10 +490,12 @@ export default function EntertainmentDNAPage() {
                 )}
 
                 {question.question_type === 'multi-select' && (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 justify-center">
                     {question.options?.map((option, index) => {
                       const currentAnswers = Array.isArray(currentAnswer) ? currentAnswer : [];
                       const isChecked = currentAnswers.includes(option);
+                      const cleanOption = option.replace(' (please specify)', '');
+                      const IconComponent = ENTERTAINMENT_ICONS[cleanOption];
 
                       return (
                         <button
@@ -493,14 +506,15 @@ export default function EntertainmentDNAPage() {
                               : [...currentAnswers, option];
                             handleAnswer(question.id, updatedAnswers);
                           }}
-                          className={`px-4 py-2 rounded-full transition-all text-sm ${
+                          className={`px-5 py-2.5 rounded-full transition-all text-sm flex items-center gap-2 ${
                             isChecked
-                              ? 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white font-medium shadow-lg'
-                              : 'bg-white/10 hover:bg-white/20 border border-white/20 text-white/80'
+                              ? 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white font-medium shadow-lg shadow-purple-500/30'
+                              : 'bg-slate-800/80 hover:bg-slate-700/80 border border-slate-600/50 text-white/90'
                           }`}
-                          data-testid={`multi-option-${question.id}-${option.replace(' (please specify)', '')}`}
+                          data-testid={`multi-option-${question.id}-${cleanOption}`}
                         >
-                          {option.replace(' (please specify)', '')}
+                          {IconComponent && <IconComponent size={16} />}
+                          {cleanOption}
                         </button>
                       );
                     })}
