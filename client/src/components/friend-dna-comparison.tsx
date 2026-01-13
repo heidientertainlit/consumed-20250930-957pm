@@ -62,7 +62,6 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
   const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [compareError, setCompareError] = useState<string | null>(null);
   const card1Ref = useRef<HTMLDivElement>(null);
-  const card2Ref = useRef<HTMLDivElement>(null);
 
   const canCompare = hasSurvey && dnaLevel >= 2;
   const appUrl = import.meta.env.VITE_APP_URL || 'https://consumed.app';
@@ -523,293 +522,162 @@ export function FriendDNAComparison({ dnaLevel, itemCount, hasSurvey = false }: 
               )}
 
               {!isComparing && !compareError && comparison && (
-                <div className="space-y-6">
-                  {/* CARD 1: The Match */}
-                  <div className="space-y-3">
-                    <div 
-                      ref={card1Ref}
-                      className="bg-gradient-to-br from-purple-50 via-indigo-50 to-pink-50 rounded-xl p-5 border border-purple-200 mx-auto"
-                      style={{ maxWidth: '320px' }}
-                    >
-                      {/* Part 1 indicator */}
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs text-purple-500 font-medium">🧬 consumed</p>
-                        <Badge className="bg-purple-100 text-purple-700 text-xs">Part 1 of 2</Badge>
-                      </div>
+                <div className="space-y-4">
+                  {/* Combined shareable card */}
+                  <div 
+                    ref={card1Ref}
+                    className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 mx-auto"
+                    style={{ maxWidth: '340px' }}
+                  >
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <p className="text-xs text-purple-500 font-medium">🧬 consumed</p>
+                    </div>
 
-                      {/* Match Score */}
-                      <div className="text-center mb-4">
-                        <div className="text-5xl font-bold mb-1">
-                          <span className={getMatchColor(comparison.match_score)}>
-                            {comparison.match_score}%
-                          </span>
-                        </div>
-                        <p className="text-gray-600 font-semibold text-base">Entertainment DNA Match</p>
+                    {/* Match Score - Clean and prominent */}
+                    <div className="text-center mb-5">
+                      <div className={`text-5xl font-bold ${getMatchColor(comparison.match_score)}`}>
+                        {comparison.match_score}%
                       </div>
+                      <p className="text-gray-600 font-medium text-sm mt-1">Entertainment DNA Match</p>
+                    </div>
 
-                      {/* DNA Labels with Avatars */}
-                      <div className="grid grid-cols-2 gap-3 mb-4">
-                        <div className="bg-white/80 rounded-xl p-3 border border-purple-100 text-center">
-                          <div className="w-12 h-12 rounded-full bg-purple-200 mx-auto mb-2 flex items-center justify-center text-purple-700 font-bold text-lg overflow-hidden">
-                            {user?.user_metadata?.avatar_url ? (
-                              <img src={user.user_metadata.avatar_url} alt="You" className="w-12 h-12 rounded-full object-cover" />
-                            ) : (
-                              user?.email?.charAt(0).toUpperCase() || 'Y'
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-500 mb-0.5">You</p>
-                          <p className="font-semibold text-purple-800 text-xs leading-tight">
-                            {comparison.your_dna_label || 'Your DNA'}
-                          </p>
+                    {/* Avatars row - inline, no cards */}
+                    <div className="flex items-center justify-center gap-6 mb-4">
+                      <div className="text-center">
+                        <div className="w-14 h-14 rounded-full bg-purple-200 mx-auto mb-1.5 flex items-center justify-center text-purple-700 font-bold text-lg overflow-hidden ring-2 ring-purple-300">
+                          {user?.user_metadata?.avatar_url ? (
+                            <img src={user.user_metadata.avatar_url} alt="You" className="w-14 h-14 rounded-full object-cover" />
+                          ) : (
+                            user?.email?.charAt(0).toUpperCase() || 'Y'
+                          )}
                         </div>
-                        <div className="bg-white/80 rounded-xl p-3 border border-indigo-100 text-center">
-                          <div className="w-12 h-12 rounded-full bg-indigo-200 mx-auto mb-2 flex items-center justify-center text-indigo-700 font-bold text-lg overflow-hidden">
-                            {selectedFriend?.avatar_url ? (
-                              <img src={selectedFriend.avatar_url} alt={selectedFriend.user_name} className="w-12 h-12 rounded-full object-cover" />
-                            ) : (
-                              selectedFriend?.user_name.charAt(0).toUpperCase()
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-500 mb-0.5">{selectedFriend?.user_name}</p>
-                          <p className="font-semibold text-indigo-800 text-xs leading-tight">
-                            {comparison.friend_dna_label || 'Their DNA'}
-                          </p>
-                        </div>
+                        <p className="text-xs text-gray-600 font-medium">{comparison.your_dna_label || 'You'}</p>
                       </div>
+                      <div className="text-purple-400 text-lg">×</div>
+                      <div className="text-center">
+                        <div className="w-14 h-14 rounded-full bg-indigo-200 mx-auto mb-1.5 flex items-center justify-center text-indigo-700 font-bold text-lg overflow-hidden ring-2 ring-indigo-300">
+                          {selectedFriend?.avatar_url ? (
+                            <img src={selectedFriend.avatar_url} alt={selectedFriend.user_name} className="w-14 h-14 rounded-full object-cover" />
+                          ) : (
+                            selectedFriend?.user_name.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 font-medium">{comparison.friend_dna_label || selectedFriend?.user_name}</p>
+                      </div>
+                    </div>
 
-                      {/* Compatibility Line */}
-                      {comparison.insights?.compatibilityLine && (
-                        <p className="text-sm text-purple-700 text-center italic bg-white/60 rounded-lg p-3 mb-4">
-                          "{comparison.insights.compatibilityLine}"
+                    {/* Compatibility quote */}
+                    {comparison.insights?.compatibilityLine && (
+                      <p className="text-sm text-purple-700 text-center italic mb-4">
+                        "{comparison.insights.compatibilityLine}"
+                      </p>
+                    )}
+
+                    {/* Shared content - flat layout */}
+                    {comparison.shared_titles?.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-500 mb-1.5 flex items-center gap-1">
+                          <Heart size={10} className="text-red-400" /> You both love
                         </p>
-                      )}
-
-                      {/* Shared Content */}
-                      {comparison.shared_titles?.length > 0 && (
-                        <div className="mb-3">
-                          <h5 className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                            <Heart size={12} className="text-red-500" />
-                            You Both Love
-                          </h5>
-                          <div className="flex flex-wrap gap-1">
-                            {comparison.shared_titles.slice(0, 4).map((item, idx) => (
-                              <Badge key={idx} className="bg-white/80 text-gray-700 text-xs border border-gray-200">
-                                {item.title}
-                              </Badge>
-                            ))}
-                          </div>
+                        <div className="flex flex-wrap gap-1">
+                          {comparison.shared_titles.slice(0, 4).map((item, idx) => (
+                            <span key={idx} className="text-xs text-gray-700 bg-white/70 px-2 py-0.5 rounded-full">
+                              {item.title}
+                            </span>
+                          ))}
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {/* Shared Genres */}
-                      {comparison.shared_genres?.length > 0 && (
-                        <div>
-                          <h5 className="text-xs font-semibold text-gray-700 mb-2">Shared Genres</h5>
-                          <div className="flex flex-wrap gap-1">
-                            {comparison.shared_genres.slice(0, 5).map((genre, idx) => (
-                              <Badge key={idx} className="bg-purple-100/80 text-purple-700 text-xs">
-                                {genre}
-                              </Badge>
-                            ))}
-                          </div>
+                    {/* Shared genres - simple chips */}
+                    {comparison.shared_genres?.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-xs text-gray-500 mb-1.5">Shared genres</p>
+                        <div className="flex flex-wrap gap-1">
+                          {comparison.shared_genres.slice(0, 5).map((genre, idx) => (
+                            <span key={idx} className="text-xs text-purple-600 bg-purple-100/60 px-2 py-0.5 rounded-full">
+                              {genre}
+                            </span>
+                          ))}
                         </div>
-                      )}
-
-                      {/* Footer CTA */}
-                      <div className="pt-4 mt-4 border-t border-purple-100 text-center">
-                        <p className="text-xs text-gray-500">Find your entertainment match at</p>
-                        <p className="text-sm font-semibold text-purple-600">consumed.app</p>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Card 1 Action Buttons */}
-                    <div className="flex gap-2 justify-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(card1Ref, 'match')}
-                        className="border-purple-200 hover:border-purple-300"
-                        data-testid="button-download-card1"
-                      >
-                        <Download size={14} className="mr-2" />
-                        Save
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleShare(card1Ref, 'match')}
-                        className="border-purple-200 hover:border-purple-300"
-                        data-testid="button-share-card1"
-                      >
-                        <Share2 size={14} className="mr-2" />
-                        Share
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* CARD 2: The Exchange */}
-                  <div className="space-y-3">
-                    <div 
-                      ref={card2Ref}
-                      className="bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 rounded-xl p-5 border border-amber-200 mx-auto"
-                      style={{ maxWidth: '320px' }}
-                    >
-                      {/* Part 2 indicator */}
-                      <div className="flex items-center justify-between mb-3">
-                        <p className="text-xs text-amber-600 font-medium">🧬 consumed</p>
-                        <Badge className="bg-amber-100 text-amber-700 text-xs">Part 2 of 2</Badge>
-                      </div>
-
-                      {/* Header */}
-                      <div className="text-center mb-4">
-                        <div className="flex items-center justify-center gap-2 mb-2">
-                          <Heart size={20} className="text-rose-500" />
-                          <span className="text-xl font-bold text-gray-800">Consume Together</span>
-                        </div>
-                        <p className="text-gray-600 text-sm">Based on what you both love</p>
-                      </div>
-
-                      {/* Consume Together Recommendations */}
-                      {(() => {
-                        const consumeTogether = comparison.insights?.consumeTogether;
-                        const hasRecommendations = consumeTogether && (
-                          (consumeTogether.movies?.length || 0) > 0 ||
-                          (consumeTogether.tv?.length || 0) > 0 ||
-                          (consumeTogether.books?.length || 0) > 0 ||
-                          (consumeTogether.podcasts?.length || 0) > 0 ||
-                          (consumeTogether.music?.length || 0) > 0
-                        );
-
-                        if (!hasRecommendations) {
-                          // Fallback to legacy format
-                          const enjoyTogether = comparison.insights?.enjoyTogether;
-                          return enjoyTogether && enjoyTogether.length > 0 && (
-                            <div className="bg-white/80 rounded-xl p-4 border border-amber-100">
-                              <h5 className="text-sm font-semibold text-amber-800 mb-2">Recommendations</h5>
-                              <ul className="space-y-1">
-                                {enjoyTogether.slice(0, 4).map((suggestion, idx) => (
-                                  <li key={idx} className="text-xs text-amber-700">• {suggestion}</li>
+                    {/* Recommendations - compact list */}
+                    {(() => {
+                      const consumeTogether = comparison.insights?.consumeTogether;
+                      const allRecs: {type: string, icon: any, items: string[]}[] = [];
+                      
+                      if (consumeTogether?.movies?.length) allRecs.push({type: 'Movies', icon: Film, items: consumeTogether.movies});
+                      if (consumeTogether?.tv?.length) allRecs.push({type: 'TV', icon: Tv, items: consumeTogether.tv});
+                      if (consumeTogether?.books?.length) allRecs.push({type: 'Books', icon: BookOpen, items: consumeTogether.books});
+                      if (consumeTogether?.music?.length) allRecs.push({type: 'Music', icon: Music, items: consumeTogether.music});
+                      
+                      if (allRecs.length === 0) {
+                        const enjoyTogether = comparison.insights?.enjoyTogether;
+                        if (enjoyTogether?.length) {
+                          return (
+                            <div className="pt-3 border-t border-purple-100">
+                              <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                                <Sparkles size={10} className="text-amber-500" /> Watch together
+                              </p>
+                              <div className="space-y-1">
+                                {enjoyTogether.slice(0, 3).map((item, idx) => (
+                                  <p key={idx} className="text-xs text-gray-700">• {item}</p>
                                 ))}
-                              </ul>
+                              </div>
                             </div>
                           );
                         }
+                        return null;
+                      }
 
-                        return (
-                          <div className="space-y-3">
-                            {/* Movies */}
-                            {consumeTogether.movies && consumeTogether.movies.length > 0 && (
-                              <div className="bg-white/80 rounded-xl p-3 border border-rose-100">
-                                <h5 className="text-xs font-semibold text-rose-700 mb-2 flex items-center gap-1.5">
-                                  <Film size={12} /> Movies
-                                </h5>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {consumeTogether.movies.map((title, idx) => (
-                                    <Badge key={idx} className="text-xs bg-rose-100 text-rose-800 border border-rose-200">
-                                      {title}
-                                    </Badge>
-                                  ))}
-                                </div>
+                      return (
+                        <div className="pt-3 border-t border-purple-100">
+                          <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                            <Sparkles size={10} className="text-amber-500" /> Consume together
+                          </p>
+                          <div className="space-y-2">
+                            {allRecs.slice(0, 3).map((cat, idx) => (
+                              <div key={idx} className="flex items-start gap-2">
+                                <cat.icon size={12} className="text-gray-400 mt-0.5 shrink-0" />
+                                <p className="text-xs text-gray-700">{cat.items.slice(0, 2).join(', ')}</p>
                               </div>
-                            )}
-
-                            {/* TV Shows */}
-                            {consumeTogether.tv && consumeTogether.tv.length > 0 && (
-                              <div className="bg-white/80 rounded-xl p-3 border border-purple-100">
-                                <h5 className="text-xs font-semibold text-purple-700 mb-2 flex items-center gap-1.5">
-                                  <Tv size={12} /> TV Shows
-                                </h5>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {consumeTogether.tv.map((title, idx) => (
-                                    <Badge key={idx} className="text-xs bg-purple-100 text-purple-800 border border-purple-200">
-                                      {title}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Books */}
-                            {consumeTogether.books && consumeTogether.books.length > 0 && (
-                              <div className="bg-white/80 rounded-xl p-3 border border-blue-100">
-                                <h5 className="text-xs font-semibold text-blue-700 mb-2 flex items-center gap-1.5">
-                                  <BookOpen size={12} /> Books
-                                </h5>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {consumeTogether.books.map((title, idx) => (
-                                    <Badge key={idx} className="text-xs bg-blue-100 text-blue-800 border border-blue-200">
-                                      {title}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Podcasts */}
-                            {consumeTogether.podcasts && consumeTogether.podcasts.length > 0 && (
-                              <div className="bg-white/80 rounded-xl p-3 border border-green-100">
-                                <h5 className="text-xs font-semibold text-green-700 mb-2 flex items-center gap-1.5">
-                                  🎙️ Podcasts
-                                </h5>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {consumeTogether.podcasts.map((title, idx) => (
-                                    <Badge key={idx} className="text-xs bg-green-100 text-green-800 border border-green-200">
-                                      {title}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Music */}
-                            {consumeTogether.music && consumeTogether.music.length > 0 && (
-                              <div className="bg-white/80 rounded-xl p-3 border border-amber-100">
-                                <h5 className="text-xs font-semibold text-amber-700 mb-2 flex items-center gap-1.5">
-                                  <Music size={12} /> Music
-                                </h5>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {consumeTogether.music.map((title, idx) => (
-                                    <Badge key={idx} className="text-xs bg-amber-100 text-amber-800 border border-amber-200">
-                                      {title}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                            ))}
                           </div>
-                        );
-                      })()}
+                        </div>
+                      );
+                    })()}
 
-                      {/* Footer CTA */}
-                      <div className="pt-4 mt-4 border-t border-amber-100 text-center">
-                        <p className="text-xs text-gray-500">Find your entertainment match at</p>
-                        <p className="text-sm font-semibold text-amber-600">consumed.app</p>
-                      </div>
+                    {/* Footer */}
+                    <div className="pt-3 mt-3 border-t border-purple-100 text-center">
+                      <p className="text-xs text-gray-400">consumed.app</p>
                     </div>
+                  </div>
 
-                    {/* Card 2 Action Buttons */}
-                    <div className="flex gap-2 justify-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownload(card2Ref, 'exchange')}
-                        className="border-amber-200 hover:border-amber-300"
-                        data-testid="button-download-card2"
-                      >
-                        <Download size={14} className="mr-2" />
-                        Save
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleShare(card2Ref, 'exchange')}
-                        className="border-amber-200 hover:border-amber-300"
-                        data-testid="button-share-card2"
-                      >
-                        <Share2 size={14} className="mr-2" />
-                        Share
-                      </Button>
-                    </div>
+                  {/* Action buttons */}
+                  <div className="flex gap-2 justify-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownload(card1Ref, 'match')}
+                      className="text-xs"
+                      data-testid="button-download-card1"
+                    >
+                      <Download size={12} className="mr-1.5" />
+                      Save
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleShare(card1Ref, 'match')}
+                      className="text-xs"
+                      data-testid="button-share-card1"
+                    >
+                      <Share2 size={12} className="mr-1.5" />
+                      Share
+                    </Button>
                   </div>
                 </div>
               )}
