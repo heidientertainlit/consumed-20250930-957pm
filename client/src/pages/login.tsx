@@ -154,13 +154,9 @@ export default function LoginPage() {
   };
 
   // Show loading spinner while auth state is being determined
-  const gradientStyle = {
-    background: 'radial-gradient(ellipse at center, #0a0a0a 0%, #0a0a0a 20%, transparent 50%), linear-gradient(to right, #7c3aed 0%, #1e1b4b 25%, #0a0a0a 50%, #1e3a5f 75%, #0d9488 100%)'
-  };
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={gradientStyle}>
+      <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <div className="text-white text-sm mt-4">Loading...</div>
@@ -172,7 +168,7 @@ export default function LoginPage() {
   // If user is logged in, show redirecting message (useEffect will redirect)
   if (user) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={gradientStyle}>
+      <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <div className="text-white text-xl mt-4">Redirecting to Feed...</div>
@@ -182,7 +178,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={gradientStyle}>
+    <div className="min-h-screen bg-gradient-to-br from-black from-30% via-purple-950 via-70% to-purple-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Logo and welcome section */}
         <div className="text-center mb-8 mt-8">
