@@ -164,10 +164,10 @@ export function DnaMomentCard() {
       {!showResults ? (
         <div className="grid grid-cols-2 gap-3">
           <button
-            className={`h-auto py-3 px-6 rounded-full text-center flex items-center justify-center transition-all duration-200 font-medium ${
+            className={`h-auto py-3 px-6 rounded-full text-center flex items-center justify-center transition-all duration-200 font-medium border border-purple-900/30 ${
               selectedAnswer === 'a' 
-                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md' 
-                : 'bg-gradient-to-r from-purple-400 to-purple-600 text-white hover:from-purple-500 hover:to-purple-700 shadow-sm hover:shadow-md'
+                ? 'bg-gradient-to-b from-purple-800 to-purple-950 text-white shadow-lg' 
+                : 'bg-gradient-to-b from-purple-700 to-purple-950 text-white hover:from-purple-600 hover:to-purple-900 shadow-md hover:shadow-lg'
             }`}
             onClick={() => handleAnswer('a')}
             disabled={answerMutation.isPending}
@@ -175,10 +175,10 @@ export function DnaMomentCard() {
             {moment.optionA}
           </button>
           <button
-            className={`h-auto py-3 px-6 rounded-full text-center flex items-center justify-center transition-all duration-200 font-medium ${
+            className={`h-auto py-3 px-6 rounded-full text-center flex items-center justify-center transition-all duration-200 font-medium border border-purple-900/30 ${
               selectedAnswer === 'b' 
-                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md' 
-                : 'bg-gradient-to-r from-purple-400 to-purple-600 text-white hover:from-purple-500 hover:to-purple-700 shadow-sm hover:shadow-md'
+                ? 'bg-gradient-to-b from-purple-800 to-purple-950 text-white shadow-lg' 
+                : 'bg-gradient-to-b from-purple-700 to-purple-950 text-white hover:from-purple-600 hover:to-purple-900 shadow-md hover:shadow-lg'
             }`}
             onClick={() => handleAnswer('b')}
             disabled={answerMutation.isPending}
