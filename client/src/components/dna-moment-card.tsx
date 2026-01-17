@@ -163,30 +163,28 @@ export function DnaMomentCard() {
 
       {!showResults ? (
         <div className="grid grid-cols-2 gap-3">
-          <Button
-            variant="outline"
-            className={`h-auto py-4 px-4 rounded-xl text-center flex flex-col items-center justify-center border-2 transition-all duration-200 ${
+          <button
+            className={`h-auto py-3 px-6 rounded-full text-center flex items-center justify-center transition-all duration-200 font-medium ${
               selectedAnswer === 'a' 
-                ? 'border-purple-500 bg-purple-50 text-purple-700' 
-                : 'border-purple-200 bg-white text-gray-700 hover:border-purple-400 hover:bg-purple-50'
+                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md' 
+                : 'bg-gradient-to-r from-purple-400 to-purple-600 text-white hover:from-purple-500 hover:to-purple-700 shadow-sm hover:shadow-md'
             }`}
             onClick={() => handleAnswer('a')}
             disabled={answerMutation.isPending}
           >
-            <span className="text-base font-medium">{moment.optionA}</span>
-          </Button>
-          <Button
-            variant="outline"
-            className={`h-auto py-4 px-4 rounded-xl text-center flex flex-col items-center justify-center border-2 transition-all duration-200 ${
+            {moment.optionA}
+          </button>
+          <button
+            className={`h-auto py-3 px-6 rounded-full text-center flex items-center justify-center transition-all duration-200 font-medium ${
               selectedAnswer === 'b' 
-                ? 'border-purple-500 bg-purple-50 text-purple-700' 
-                : 'border-purple-200 bg-white text-gray-700 hover:border-purple-400 hover:bg-purple-50'
+                ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md' 
+                : 'bg-gradient-to-r from-purple-400 to-purple-600 text-white hover:from-purple-500 hover:to-purple-700 shadow-sm hover:shadow-md'
             }`}
             onClick={() => handleAnswer('b')}
             disabled={answerMutation.isPending}
           >
-            <span className="text-base font-medium">{moment.optionB}</span>
-          </Button>
+            {moment.optionB}
+          </button>
         </div>
       ) : (
         <div className="space-y-3">
