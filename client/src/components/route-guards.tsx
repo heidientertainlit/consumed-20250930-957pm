@@ -41,14 +41,19 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
 
   useEffect(() => {
     if (!loading && user) {
-      // Check if this is a new signup that should go to onboarding
-      const pendingOnboarding = sessionStorage.getItem('pendingOnboarding');
-      if (pendingOnboarding === 'true') {
-        sessionStorage.removeItem('pendingOnboarding');
-        setLocation('/onboarding');
-      } else {
-        setLocation('/activity');
-      }
+      // STASHED: Onboarding redirect disabled for now - always go straight to activity
+      // To restore onboarding, uncomment the block below:
+      // const pendingOnboarding = sessionStorage.getItem('pendingOnboarding');
+      // if (pendingOnboarding === 'true') {
+      //   sessionStorage.removeItem('pendingOnboarding');
+      //   setLocation('/onboarding');
+      // } else {
+      //   setLocation('/activity');
+      // }
+      
+      // Clear any pending onboarding flag and go straight to activity
+      sessionStorage.removeItem('pendingOnboarding');
+      setLocation('/activity');
     }
   }, [user, loading, setLocation]);
 
