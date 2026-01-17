@@ -167,7 +167,9 @@ function Router() {
           </ProtectedRoute>
         </Route>
         <Route path="/play">
-          <RedirectTo to="/" />
+          <ProtectedRoute>
+            <Play />
+          </ProtectedRoute>
         </Route>
         <Route path="/my-library">
           <ProtectedRoute>
