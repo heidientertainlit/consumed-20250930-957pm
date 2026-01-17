@@ -2813,6 +2813,10 @@ export default function Feed() {
             <p className="text-gray-400 text-sm mt-3">Compete, predict, and share your take.</p>
           </div>
           
+          {/* Daily Trivia - Hero Card */}
+          <div className="mb-4">
+            <DailyChallengeCard />
+          </div>
         </div>
       </div>
 
