@@ -33,7 +33,6 @@ import { supabase } from "@/lib/supabase";
 import { apiRequest, queryClient as globalQueryClient } from "@/lib/queryClient";
 import { renderMentions } from "@/lib/mentions";
 import { copyLink } from "@/lib/share";
-import { FirstSessionHooks } from "@/components/first-session-hooks";
 
 interface SocialPost {
   id: string;
@@ -2796,9 +2795,6 @@ export default function Feed() {
             </div>
           ) : filteredPosts && filteredPosts.length > 0 ? (
             <div className="space-y-4 pb-24">
-              {/* First Session Hooks for new users */}
-              <FirstSessionHooks />
-              
               {/* Single Quick Glimpse at the top - scrolls through recent friend activities */}
               {socialPosts && socialPosts.length > 0 && (() => {
                 // Get activities for Quick Glimpse - scan more posts for variety
