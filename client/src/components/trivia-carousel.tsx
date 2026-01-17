@@ -40,15 +40,28 @@ export function TriviaCarousel() {
         .eq('type', 'trivia')
         .eq('status', 'open')
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(100);
       
       if (error) throw error;
       
-      const items: TriviaItem[] = (pools || []).map(pool => {
+      console.log('🎯 Trivia pools from Supabase:', pools?.length);
+      
+      const uniqueTitles = new Map<string, any>();
+      for (const pool of (pools || [])) {
+        if (!uniqueTitles.has(pool.title)) {
+          uniqueTitles.set(pool.title, pool);
+        }
+      }
+      const uniquePools = Array.from(uniqueTitles.values());
+      
+      console.log('🎯 Unique trivia items:', uniquePools.length, uniquePools.map(p => p.title));
+      
+      const items: TriviaItem[] = uniquePools.map(pool => {
         let questionText = pool.title;
         let optionsList: string[] = [];
         let isChallenge = false;
         let questionCount = 1;
+        let correctAns = pool.correct_answer;
         
         if (pool.options && Array.isArray(pool.options)) {
           if (pool.options.length > 0 && typeof pool.options[0] === 'object' && pool.options[0]?.question) {
@@ -57,6 +70,7 @@ export function TriviaCarousel() {
             const firstQ = pool.options[0];
             questionText = firstQ.question || pool.title;
             optionsList = firstQ.options || [];
+            correctAns = firstQ.answer || pool.correct_answer;
           } else {
             optionsList = pool.options.filter((o: any) => typeof o === 'string');
           }
@@ -67,14 +81,16 @@ export function TriviaCarousel() {
           title: pool.title,
           question: questionText,
           options: optionsList,
-          correctAnswer: pool.correct_answer,
+          correctAnswer: correctAns,
           category: pool.category,
           pointsReward: pool.points_reward || 10,
           isChallenge,
           questionCount,
           rawOptions: pool.options
         };
-      });
+      }).filter(item => item.options.length > 0);
+      
+      console.log('🎯 Processed trivia items:', items.length, items.map(i => i.question));
       
       return items;
     },
