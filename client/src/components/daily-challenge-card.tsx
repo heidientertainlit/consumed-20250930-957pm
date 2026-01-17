@@ -208,9 +208,54 @@ export function DailyChallengeCard() {
     }
   };
 
+  // Fetch challenge stats (percentage who answered correctly and friend responses)
+  const { data: challengeStats } = useQuery({
+    queryKey: ['daily-challenge-stats', challenge?.id, user?.id],
+    queryFn: async () => {
+      if (!challenge || !session?.access_token || !user?.id) return null;
+      
+      // First get the user's friends
+      const { data: friendships } = await supabase
+        .from('friendships')
+        .select('friend_id, user_id')
+        .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
+        .eq('status', 'accepted');
+      
+      const friendIds = (friendships || []).map((f: any) => 
+        f.user_id === user.id ? f.friend_id : f.user_id
+      );
+      
+      // Get total responses and correct count
+      const { data: responses, error } = await supabase
+        .from('daily_challenge_responses')
+        .select('response, user_id, users!inner(username, display_name, avatar_url)')
+        .eq('challenge_id', challenge.id)
+        .limit(100);
+      
+      if (error || !responses) return { totalResponses: 0, correctPercentage: 0, friendResponses: [] };
+      
+      const totalResponses = responses.length;
+      const correctResponses = responses.filter((r: any) => 
+        r.response?.answer === challenge.correct_answer
+      ).length;
+      const correctPercentage = totalResponses > 0 ? Math.round((correctResponses / totalResponses) * 100) : 0;
+      
+      // Filter to only friend responses
+      const friendResponsesFiltered = responses.filter((r: any) => friendIds.includes(r.user_id));
+      const friendResponses = friendResponsesFiltered.slice(0, 3).map((r: any) => ({
+        username: r.users?.display_name || r.users?.username || 'User',
+        avatar: r.users?.avatar_url,
+        isCorrect: r.response?.answer === challenge.correct_answer
+      }));
+      
+      return { totalResponses, correctPercentage, friendResponses };
+    },
+    enabled: !!challenge && !!session?.access_token && !!user?.id
+  });
+
   if (challengeLoading) {
     return (
-      <Card className="p-4 bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 border-0">
+      <Card className="p-4 bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 border-0">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-white" />
         </div>
@@ -222,7 +267,7 @@ export function DailyChallengeCard() {
 
   return (
     <Card 
-      className="bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 border-0 overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
+      className="bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 border-0 overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
       onClick={() => setIsExpanded(!isExpanded)}
       data-testid="daily-challenge-card"
     >
@@ -248,6 +293,31 @@ export function DailyChallengeCard() {
             <p className="text-xs text-white/90 font-bold line-clamp-1">PLAY NOW</p>
           </div>
         </div>
+        
+        {/* Stats preview - show on collapsed */}
+        {challengeStats && challengeStats.totalResponses > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="text-right">
+              <span className="text-xs text-purple-300">{challengeStats.correctPercentage}% got it right</span>
+            </div>
+            {/* Friend avatars */}
+            {challengeStats.friendResponses.length > 0 && (
+              <div className="flex -space-x-2">
+                {challengeStats.friendResponses.slice(0, 3).map((friend: any, idx: number) => (
+                  <div key={idx} className="w-6 h-6 rounded-full border-2 border-purple-800 overflow-hidden bg-purple-600">
+                    {friend.avatar ? (
+                      <img src={friend.avatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white text-[10px] font-bold">
+                        {friend.username?.charAt(0)?.toUpperCase() || '?'}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Expanded Content */}

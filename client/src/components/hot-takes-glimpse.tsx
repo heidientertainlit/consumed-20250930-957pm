@@ -18,13 +18,17 @@ interface HotTake {
   origin_type?: string;
 }
 
-export function HotTakesGlimpse() {
+interface HotTakesGlimpseProps {
+  variant?: 'user' | 'consumed';
+}
+
+export function HotTakesGlimpse({ variant }: HotTakesGlimpseProps) {
   const { session } = useAuth();
 
   const { data: hotTakes, isLoading } = useQuery({
-    queryKey: ['hot-takes-glimpse'],
+    queryKey: ['hot-takes-glimpse', variant],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('social_posts')
         .select(`
           id,
@@ -38,6 +42,15 @@ export function HotTakesGlimpse() {
         .order('likes_count', { ascending: false })
         .limit(3);
       
+      // Filter by variant
+      if (variant === 'consumed') {
+        query = query.eq('origin_type', 'consumed');
+      } else if (variant === 'user') {
+        query = query.or('origin_type.is.null,origin_type.neq.consumed');
+      }
+      
+      const { data, error } = await query;
+      
       if (error) throw error;
       return (data || []).map(post => ({
         ...post,
@@ -49,16 +62,24 @@ export function HotTakesGlimpse() {
 
   if (!session || isLoading || !hotTakes || hotTakes.length === 0) return null;
 
+  const cardGradient = variant === 'consumed' 
+    ? 'bg-gradient-to-br from-purple-600 via-purple-500 to-indigo-500' 
+    : 'bg-gradient-to-br from-orange-500 to-red-500';
+
   return (
-    <Card className="bg-gradient-to-br from-orange-500 to-red-500 border-0 rounded-2xl p-4 shadow-lg mb-4">
+    <Card className={`${cardGradient} border-0 rounded-2xl p-4 shadow-lg mb-4`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
             <Flame className="w-3.5 h-3.5 text-white fill-white" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">Hot Takes</p>
-            <p className="text-[10px] text-white/70">Spicy opinions</p>
+            <p className="text-sm font-semibold text-white">
+              {variant === 'consumed' ? '🏆 Consumed Hot Takes' : 'Hot Takes'}
+            </p>
+            <p className="text-[10px] text-white/70">
+              {variant === 'consumed' ? 'Official spicy opinions' : 'Community opinions'}
+            </p>
           </div>
         </div>
         <Link href="/play/hot-takes">

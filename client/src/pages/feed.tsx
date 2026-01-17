@@ -2950,8 +2950,11 @@ export default function Feed() {
               {/* 6. Quick Polls */}
               <PollsCarousel />
 
-              {/* 7-8. Hot Takes (User + Consumed) */}
-              <HotTakesGlimpse />
+              {/* 7. User-created hot takes/predictions */}
+              <HotTakesGlimpse variant="user" />
+
+              {/* 8. Consumed-created hot takes */}
+              <HotTakesGlimpse variant="consumed" />
 
               {/* 9. Points Glimpse - Friend scores */}
               <PointsGlimpse />
@@ -2959,7 +2962,7 @@ export default function Feed() {
               {/* 10. Games Carousel */}
               <GamesCarousel />
 
-              {/* 11. Ranks Glimpse */}
+              {/* 11. Consumed-created Ranks Glimpse */}
               <RanksGlimpse />
 
               {/* Featured Play card when game filter is active */}
