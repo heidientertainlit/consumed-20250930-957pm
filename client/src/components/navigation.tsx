@@ -554,7 +554,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] z-50 pb-safe">
-        <div className="flex justify-center items-center gap-24 h-18 px-4 pt-3 pb-4">
+        <div className="flex justify-center items-center gap-16 h-18 px-4 pt-3 pb-4">
           {/* Activity */}
           <Link
             href="/activity"
@@ -563,6 +563,16 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <Activity className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Activity</span>
+          </Link>
+
+          {/* Play */}
+          <Link
+            href="/play"
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/play" || location.startsWith("/play/") ? "bg-white/15" : ""}`}
+            data-testid="nav-play"
+          >
+            <Gamepad2 className="text-white" size={24} />
+            <span className="text-xs font-medium text-white">Play</span>
           </Link>
 
           {/* Me */}
