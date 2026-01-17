@@ -14,6 +14,7 @@ import MediaCarousel from "@/components/media-carousel";
 import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { DnaMomentCard } from "@/components/dna-moment-card";
+import { TriviaCarousel } from "@/components/trivia-carousel";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -2903,6 +2904,9 @@ export default function Feed() {
                   )}
                 </div>
               )}
+
+              {/* Trivia Carousel - first item in feed */}
+              <TriviaCarousel />
 
               {/* DNA Moment Card - inline in feed */}
               <DnaMomentCard />
