@@ -223,7 +223,7 @@ export function TriviaCarousel() {
 
   if (isLoading) {
     return (
-      <Card className="bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 border-0 rounded-2xl p-5 shadow-lg">
+      <Card className="bg-gradient-to-b from-slate-900 via-purple-950 to-indigo-950 border-0 rounded-2xl p-5 shadow-lg">
         <div className="flex items-center justify-center py-6">
           <Loader2 className="w-6 h-6 animate-spin text-white" />
         </div>
@@ -234,7 +234,7 @@ export function TriviaCarousel() {
   if (isError || !data || data.length === 0) return null;
 
   return (
-    <Card className="bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 border-0 rounded-2xl p-4 shadow-lg overflow-hidden relative">
+    <Card className="bg-gradient-to-b from-slate-900 via-purple-950 to-indigo-950 border-0 rounded-2xl p-4 shadow-lg overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
@@ -279,19 +279,18 @@ export function TriviaCarousel() {
           
           return (
             <div key={question.id} className="flex-shrink-0 w-full snap-center">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="w-4 h-4 text-yellow-300" />
-                <span className="text-xs text-white/80">+{question.pointsReward} points</span>
+              <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-purple-600/40 border border-purple-500/30">
+                <span className="text-xs text-purple-300 font-medium">+{question.pointsReward} pts</span>
               </div>
               
               <h3 className="text-white font-semibold text-base mb-3">{question.question}</h3>
               
               {!answered ? (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-2">
                   {question.options.slice(0, 4).map((option, idx) => (
                     <button
                       key={idx}
-                      className="py-2 px-3 rounded-xl bg-white/90 text-gray-900 text-sm font-medium hover:bg-white shadow-md transition-all text-left"
+                      className="py-3 px-4 rounded-xl bg-purple-900/60 border border-purple-700/50 text-white text-sm font-medium hover:bg-purple-800/70 hover:border-purple-600 transition-all text-left"
                       onClick={() => answerMutation.mutate({ 
                         questionId: question.id, 
                         answer: option,
@@ -355,7 +354,7 @@ export function TriviaCarousel() {
       </Link>
 
       {answerMutation.isPending && (
-        <div className="absolute inset-0 bg-orange-600/50 flex items-center justify-center rounded-2xl">
+        <div className="absolute inset-0 bg-purple-950/50 flex items-center justify-center rounded-2xl">
           <Loader2 className="w-6 h-6 animate-spin text-white" />
         </div>
       )}
