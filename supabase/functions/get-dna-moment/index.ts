@@ -17,6 +17,10 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const url = new URL(req.url);
+    const count = parseInt(url.searchParams.get('count') || '1');
+    const requestedCount = Math.min(Math.max(count, 1), 10);
+
     const authHeader = req.headers.get('Authorization');
     let userId = null;
     if (authHeader) {
@@ -25,14 +29,22 @@ serve(async (req) => {
       userId = user?.id;
     }
 
+    let answeredMomentIds: string[] = [];
+    if (userId) {
+      const { data: userResponses } = await supabaseAdmin
+        .from('dna_moment_responses')
+        .select('moment_id')
+        .eq('user_id', userId);
+      
+      answeredMomentIds = (userResponses || []).map((r: any) => r.moment_id);
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    let moment = null;
-    let hasAnswered = false;
-    let userAnswer = null;
+    const moments: any[] = [];
 
     const { data: scheduledMoment } = await supabaseAdmin
       .from('dna_moments')
@@ -44,38 +56,52 @@ serve(async (req) => {
       .single();
 
     if (scheduledMoment) {
-      moment = scheduledMoment;
-    } else {
-      let answeredMomentIds: string[] = [];
-      if (userId) {
-        const { data: userResponses } = await supabaseAdmin
-          .from('dna_moment_responses')
-          .select('moment_id')
-          .eq('user_id', userId);
-        
-        answeredMomentIds = (userResponses || []).map(r => r.moment_id);
-      }
+      moments.push({
+        id: scheduledMoment.id,
+        questionText: scheduledMoment.question_text,
+        optionA: scheduledMoment.option_a,
+        optionB: scheduledMoment.option_b,
+        category: scheduledMoment.category
+      });
+    }
 
+    if (moments.length < requestedCount) {
       let query = supabaseAdmin
         .from('dna_moments')
         .select('*')
         .eq('is_active', true)
         .is('display_date', null);
 
-      if (answeredMomentIds.length > 0) {
-        query = query.not('id', 'in', `(${answeredMomentIds.join(',')})`);
+      const existingIds = moments.map(m => m.id);
+      const excludeIds = [...answeredMomentIds, ...existingIds];
+      
+      if (excludeIds.length > 0) {
+        query = query.not('id', 'in', `(${excludeIds.join(',')})`);
       }
 
-      const { data: randomMoments } = await query.limit(10);
+      const { data: randomMoments } = await query.limit(requestedCount * 2);
 
       if (randomMoments && randomMoments.length > 0) {
-        moment = randomMoments[Math.floor(Math.random() * randomMoments.length)];
+        const shuffled = randomMoments.sort(() => Math.random() - 0.5);
+        const needed = requestedCount - moments.length;
+        
+        for (let i = 0; i < Math.min(needed, shuffled.length); i++) {
+          const m = shuffled[i];
+          moments.push({
+            id: m.id,
+            questionText: m.question_text,
+            optionA: m.option_a,
+            optionB: m.option_b,
+            category: m.category
+          });
+        }
       }
     }
 
-    if (!moment) {
+    if (moments.length === 0) {
       return new Response(JSON.stringify({ 
-        moment: null, 
+        moments: [], 
+        answeredIds: answeredMomentIds,
         message: 'No DNA moments available' 
       }), {
         status: 200,
@@ -83,81 +109,59 @@ serve(async (req) => {
       });
     }
 
-    if (userId) {
-      const { data: existingResponse } = await supabaseAdmin
+    if (requestedCount === 1 && moments.length === 1) {
+      const moment = moments[0];
+      const hasAnswered = answeredMomentIds.includes(moment.id);
+      let userAnswer = null;
+
+      if (hasAnswered && userId) {
+        const { data: response } = await supabaseAdmin
+          .from('dna_moment_responses')
+          .select('answer')
+          .eq('user_id', userId)
+          .eq('moment_id', moment.id)
+          .single();
+        userAnswer = response?.answer;
+      }
+
+      const { data: allResponses } = await supabaseAdmin
         .from('dna_moment_responses')
         .select('answer')
-        .eq('user_id', userId)
-        .eq('moment_id', moment.id)
-        .single();
+        .eq('moment_id', moment.id);
 
-      if (existingResponse) {
-        hasAnswered = true;
-        userAnswer = existingResponse.answer;
-      }
-    }
+      const totalResponses = allResponses?.length || 0;
+      const optionACount = allResponses?.filter((r: any) => r.answer === 'a').length || 0;
+      const optionBCount = totalResponses - optionACount;
 
-    const { data: allResponses } = await supabaseAdmin
-      .from('dna_moment_responses')
-      .select('answer')
-      .eq('moment_id', moment.id);
+      const stats = {
+        totalResponses,
+        optionAPercent: totalResponses > 0 ? Math.round((optionACount / totalResponses) * 100) : 50,
+        optionBPercent: totalResponses > 0 ? Math.round((optionBCount / totalResponses) * 100) : 50,
+      };
 
-    const totalResponses = allResponses?.length || 0;
-    const optionACount = allResponses?.filter(r => r.answer === 'a').length || 0;
-    const optionBCount = totalResponses - optionACount;
-
-    const stats = {
-      totalResponses,
-      optionAPercent: totalResponses > 0 ? Math.round((optionACount / totalResponses) * 100) : 50,
-      optionBPercent: totalResponses > 0 ? Math.round((optionBCount / totalResponses) * 100) : 50,
-    };
-
-    let friendResponses: any[] = [];
-    if (userId && hasAnswered) {
-      const { data: friends } = await supabaseAdmin
-        .from('friendships')
-        .select('friend_id, user_id')
-        .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
-        .eq('status', 'accepted')
-        .limit(10);
-
-      if (friends && friends.length > 0) {
-        const friendIds = friends.map(f => f.user_id === userId ? f.friend_id : f.user_id);
-        
-        const { data: friendAnswers } = await supabaseAdmin
-          .from('dna_moment_responses')
-          .select(`
-            answer,
-            user_id,
-            users:user_id(display_name, avatar_url)
-          `)
-          .eq('moment_id', moment.id)
-          .in('user_id', friendIds)
-          .limit(5);
-
-        friendResponses = friendAnswers || [];
-      }
+      return new Response(JSON.stringify({
+        moment,
+        hasAnswered,
+        userAnswer,
+        stats,
+        friendResponses: []
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     return new Response(JSON.stringify({
-      moment: {
-        id: moment.id,
-        questionText: moment.question_text,
-        optionA: moment.option_a,
-        optionB: moment.option_b,
-        category: moment.category,
-      },
-      hasAnswered,
-      userAnswer,
-      stats,
-      friendResponses,
+      moments,
+      answeredIds: answeredMomentIds
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('Error:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
