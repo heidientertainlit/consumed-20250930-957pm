@@ -331,8 +331,8 @@ export function DailyChallengeCard() {
                       onClick={(e) => { e.stopPropagation(); setSelectedOption(option); }}
                       className={`w-full p-3 rounded-2xl text-left transition-all ${
                         selectedOption === option
-                          ? 'bg-white/40 text-white shadow-lg ring-2 ring-white/50'
-                          : 'bg-white/20 text-white hover:bg-white/30'
+                          ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg ring-2 ring-white font-semibold'
+                          : 'bg-white/30 text-white hover:bg-white/40'
                       }`}
                       data-testid={`challenge-option-${idx}`}
                     >
