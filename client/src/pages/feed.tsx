@@ -24,6 +24,7 @@ import RankFeedCard from "@/components/rank-feed-card";
 import ConsolidatedActivityCard, { ConsolidatedActivity } from "@/components/consolidated-activity-card";
 import GroupedActivityCard from "@/components/grouped-activity-card";
 import RecommendationCard from "@/components/recommendation-card";
+import ConsumptionCarousel from "@/components/consumption-carousel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -1383,11 +1384,134 @@ export default function Feed() {
     }>;
   }
 
-  // Simplified: No scattered Quick Glimpses - just pass through all posts as regular cards
-  const createTieredFeed = (posts: (SocialPost | ConsolidatedActivity)[]): (SocialPost | ConsolidatedActivity | FriendActivityBlock)[] => {
-    // Simply return posts as-is - no more scattered Quick Glimpse blocks
-    // The single Quick Glimpse at the top of the feed handles summary view
-    return posts;
+  // Helper to check if a post is a consumption/tracking type (adds, ratings, simple updates)
+  const isConsumptionPost = (post: SocialPost): boolean => {
+    const postType = post.type?.toLowerCase() || '';
+    
+    // Explicit consumption/tracking types - all tracking activity goes here
+    const consumptionTypes = [
+      'added_to_list', 'add-to-list', 'added', 
+      'rate', 'rate-review', 'rated', 'review', 'reviewed',
+      'finished', 'consuming', 'progress', 'update', 'started',
+      'watched', 'read', 'listening', 'played'
+    ];
+    
+    // Game/engagement posts should NEVER be consumption posts - always show prominently
+    const gameTypes = ['trivia', 'poll', 'prediction', 'vote', 'hot_take', 'ask_for_recs', 'rank_share', 'media_group'];
+    if (gameTypes.includes(postType)) return false;
+    
+    // Check explicit consumption types
+    if (consumptionTypes.includes(postType)) return true;
+    
+    // Posts with media items but without substantial engagement content are consumption posts
+    const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
+    
+    // If it has media and isn't a game type, it's consumption
+    if (hasMediaItems && !gameTypes.includes(postType)) {
+      return true;
+    }
+    
+    return false;
+  };
+
+  // Interface for consumption carousel blocks
+  interface ConsumptionCarouselBlock {
+    id: string;
+    type: 'consumption_carousel';
+    items: Array<{
+      id: string;
+      userId: string;
+      username: string;
+      displayName: string;
+      avatar?: string;
+      action: string;
+      mediaTitle: string;
+      mediaType?: string;
+      mediaImage?: string;
+      rating?: number;
+      listName?: string;
+      timestamp: string;
+    }>;
+  }
+
+  // Create tiered feed with consumption carousels
+  const createTieredFeed = (posts: (SocialPost | ConsolidatedActivity)[]): (SocialPost | ConsolidatedActivity | FriendActivityBlock | ConsumptionCarouselBlock)[] => {
+    const result: (SocialPost | ConsolidatedActivity | FriendActivityBlock | ConsumptionCarouselBlock)[] = [];
+    const consumptionPosts: SocialPost[] = [];
+    let gamePostCount = 0;
+    const CAROUSEL_INTERVAL = 5; // Show a consumption carousel every 5 game/engagement posts
+    const MAX_ITEMS_PER_CAROUSEL = 8;
+
+    for (const item of posts) {
+      // Skip ConsolidatedActivity items - pass through as-is
+      if ('originalPostIds' in item) {
+        result.push(item);
+        continue;
+      }
+
+      const post = item as SocialPost;
+      
+      if (isConsumptionPost(post)) {
+        // Collect consumption posts for carousels
+        consumptionPosts.push(post);
+      } else {
+        // This is a game/engagement post - add directly to result
+        result.push(post);
+        gamePostCount++;
+        
+        // After every CAROUSEL_INTERVAL game posts, insert a consumption carousel if we have items
+        if (gamePostCount % CAROUSEL_INTERVAL === 0 && consumptionPosts.length > 0) {
+          const carouselItems = consumptionPosts.splice(0, MAX_ITEMS_PER_CAROUSEL).map(p => ({
+            id: p.id,
+            userId: p.user?.id || '',
+            username: p.user?.username || '',
+            displayName: p.user?.displayName || p.user?.username || '',
+            avatar: p.user?.avatar,
+            action: p.type || 'added',
+            mediaTitle: p.mediaItems?.[0]?.title || 'Unknown',
+            mediaType: p.mediaItems?.[0]?.mediaType,
+            mediaImage: p.mediaItems?.[0]?.imageUrl,
+            rating: p.rating,
+            listName: (p as any).listData?.name,
+            timestamp: p.timestamp
+          }));
+          
+          if (carouselItems.length > 0) {
+            result.push({
+              id: `carousel-${gamePostCount}`,
+              type: 'consumption_carousel',
+              items: carouselItems
+            } as ConsumptionCarouselBlock);
+          }
+        }
+      }
+    }
+    
+    // Add any remaining consumption posts as a final carousel (even if just 1-2 items, don't drop them)
+    if (consumptionPosts.length > 0) {
+      const carouselItems = consumptionPosts.slice(0, MAX_ITEMS_PER_CAROUSEL).map(p => ({
+        id: p.id,
+        userId: p.user?.id || '',
+        username: p.user?.username || '',
+        displayName: p.user?.displayName || p.user?.username || '',
+        avatar: p.user?.avatar,
+        action: p.type || 'added',
+        mediaTitle: p.mediaItems?.[0]?.title || 'Unknown',
+        mediaType: p.mediaItems?.[0]?.mediaType,
+        mediaImage: p.mediaItems?.[0]?.imageUrl,
+        rating: p.rating,
+        listName: (p as any).listData?.name,
+        timestamp: p.timestamp
+      }));
+      
+      result.push({
+        id: `carousel-final`,
+        type: 'consumption_carousel',
+        items: carouselItems
+      } as ConsumptionCarouselBlock);
+    }
+    
+    return result;
   };
 
   // Apply tiered grouping (maintains chronological order)
@@ -2800,9 +2924,22 @@ export default function Feed() {
                 // Filter out incorrectly formatted prediction posts
                 if ('originalPostIds' in item) return true; // Keep consolidated activities
                 if ((item as any).type === 'friend_activity_block') return true; // Keep friend activity blocks
+                if ((item as any).type === 'consumption_carousel') return true; // Keep consumption carousels
                 const post = item as SocialPost;
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }).map((item: any, postIndex: number) => {
+                // Handle consumption carousels
+                if ((item as any).type === 'consumption_carousel') {
+                  const carousel = item as any;
+                  return (
+                    <div key={carousel.id} className="mb-4">
+                      <ConsumptionCarousel 
+                        items={carousel.items}
+                        title="What friends are consuming"
+                      />
+                    </div>
+                  );
+                }
                 // Handle Quick Glimpse cards (scrolling Tier 2 grouped activities)
                 if ((item as any).type === 'friend_activity_block') {
                   const block = item as any;
