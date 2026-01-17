@@ -1,7 +1,53 @@
-# consumed - Entertainment Consumption Tracking MVP
+# consumed - Where Fans Come to Play
 
 ## Overview
-consumed is a mobile-first MVP for tracking entertainment consumption, offering social features like leaderboards, activity feeds, friend discovery, trivia, and prediction games. It aims to be an immersive platform for managing and sharing entertainment, characterized by a dark gradient theme, intuitive navigation, and an "Entertainment DNA" onboarding process, with significant market potential to become a leading platform in its niche.
+Consumed is a mobile-first platform where entertainment becomes something you can play with. The core promise: it's not just about what you're consuming, it's how you FEEL about what you're consuming.
+
+**New North Star (Jan 2026):** Games-first, tracking-second. Tracking happens in the background to fuel personalization, but the headline experience is Play → React → Compare.
+
+## Product Philosophy: The Three Core Behaviors
+
+### 1. PLAY (Primary Action)
+Users actively engage with entertainment daily — ranking, voting, predicting, testing knowledge — in under a minute.
+- Low effort
+- Daily relevance  
+- Something to DO, not manage
+
+### 2. REACT (Secondary Action)
+Users share opinions, disagree, explain themselves, respond to others — without creating content from scratch.
+- Expression without pressure
+- Hot takes that feel contextual, not shouty
+- Conversation, not posting
+
+### 3. SEE YOURSELF (Tertiary Action)
+Users see patterns in their taste and how it compares to friends — agreements, arguments, correct predictions.
+- Identity
+- Social comparison
+- Insight without spreadsheets
+
+**Key Insight:** "Expression alone doesn't activate most people. Activation creates expression."
+
+### User Flow Hierarchy
+1. First action = PLAY (trivia, poll, prediction)
+2. Second actions = REACT / COMPARE (see how friends answered, leaderboard movement)
+3. Third actions = EXPLORE / TRACK (discover content, background tracking)
+
+### Hero Card Strategy
+Home shows ONE rotating hero card at a time:
+- 🎯 Today's Trivia: "Can you get this right?" [Play Now]
+- 🔥 Settle This: "Which finale stuck the landing?" [Vote]
+- ⏰ Prediction Closing Soon: "Will this win Best Picture?" [Lock Your Pick]
+
+After playing, users see: friend answers → leaderboard movement → related polls → hot takes → "want more?"
+
+### Content Philosophy
+- Consumed creates the prompts. Users create the reactions.
+- People don't want to "Share a hot take" — they want to "Disagree with something specific"
+- This keeps the app alive, not intimidating, not empty, not Reddit-y
+
+### Future Ideas
+- Watch-along games: Start predictions together when watching with friends/family
+- Flexible timing: "You're watching Junior British Bake Off with your kid — both guess who wins, get points"
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
