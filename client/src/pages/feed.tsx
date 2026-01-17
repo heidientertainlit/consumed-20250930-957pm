@@ -7,7 +7,6 @@ import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
 import InlineGameCard from "@/components/inline-game-card";
-import PlayFeedCard from "@/components/play-feed-card";
 import LeaderboardFeedCard from "@/components/leaderboard-feed-card";
 import PointsAchievementCard from "@/components/points-achievement-card";
 import MediaCarousel from "@/components/media-carousel";
@@ -2964,18 +2963,6 @@ export default function Feed() {
               {/* 11. Consumed-created Ranks Glimpse */}
               <RanksGlimpse />
 
-              {/* Featured Play card when game filter is active */}
-              {(selectedFilter === 'games' || selectedFilter === 'trivia' || selectedFilter === 'polls' || selectedFilter === 'predictions') && (
-                <div className="mb-4">
-                  <PlayFeedCard 
-                    variant={
-                      selectedFilter === 'trivia' ? 'trivia' : 
-                      selectedFilter === 'polls' || selectedFilter === 'predictions' ? 'polls' : 
-                      'mixed'
-                    }
-                  />
-                </div>
-              )}
 
               {filteredPosts.filter((item: any) => {
                 // Filter out incorrectly formatted prediction posts
@@ -3104,33 +3091,6 @@ export default function Feed() {
                   ? post.groupedActivities[0].postId 
                   : post.id;
                 
-                // NEW FEED STRUCTURE: Play content every 4th card with rotation
-                // Position 3: Mixed PlayFeedCard (polls + trivia)
-                // Position 7: Polls-only PlayFeedCard
-                // Position 11: Trivia-only PlayFeedCard
-                // Position 15: Mixed again... and repeat (cycle of 12)
-                
-                // PlayFeedCard appears every 4th position (3, 7, 11, 15, 19...)
-                const isPlayPosition = (postIndex + 1) % 4 === 0;
-                const playRotationIndex = isPlayPosition ? Math.floor((postIndex + 1) / 4) - 1 : 0;
-                const playVariants: Array<'mixed' | 'polls' | 'trivia'> = ['mixed', 'polls', 'trivia'];
-                const playVariant = playVariants[Math.max(0, playRotationIndex) % 3];
-                
-                // Only increase frequency for game-related filters
-                const isGameFilterActive = selectedFilter === 'games' || selectedFilter === 'trivia' || 
-                  selectedFilter === 'polls' || selectedFilter === 'predictions';
-                const shouldShowPlayCard = isGameFilterActive 
-                  ? (postIndex + 1) % 2 === 0 // Every 2nd when game filter active
-                  : isPlayPosition;
-                
-                // Determine variant based on filter
-                const getFilterVariant = (): 'mixed' | 'polls' | 'trivia' => {
-                  if (selectedFilter === 'trivia') return 'trivia';
-                  if (selectedFilter === 'polls' || selectedFilter === 'predictions') return 'polls';
-                  if (selectedFilter === 'games') return playVariant;
-                  return playVariant;
-                };
-                
                 // Check if any filter is active (for hiding other elements)
                 const isFilterActive = selectedFilter && selectedFilter !== 'All' && selectedFilter !== 'all';
                 
@@ -3186,13 +3146,6 @@ export default function Feed() {
                             />
                           ))}
                         </div>
-                      </div>
-                    )}
-                    {shouldShowPlayCard && (
-                      <div className="mb-4" data-play-row>
-                        <PlayFeedCard 
-                          variant={isGameFilterActive ? getFilterVariant() : playVariant}
-                        />
                       </div>
                     )}
                     {shouldShowPointsAchievements && !isFilterActive && (
