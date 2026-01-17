@@ -2686,63 +2686,6 @@ export default function Feed() {
           <div className="mb-4">
             <DailyChallengeCard />
           </div>
-
-          {/* Suggested Quick Adds */}
-          {suggestedQuickAdds.length >= 2 && (
-            <div className="mt-4 space-y-2">
-              <p className="text-gray-400 text-xs font-medium uppercase tracking-wide">Quick add</p>
-              <div className="flex flex-col gap-2">
-                {suggestedQuickAdds.slice(0, 2).map((item: any) => (
-                  <div
-                    key={item.id || item.externalId}
-                    onClick={() => {
-                      const mediaType = item.mediaType || item.type || 'movie';
-                      const externalId = item.externalId || item.id;
-                      const externalSource = item.externalSource || 'tmdb';
-                      setLocation(`/media/${mediaType}/${externalSource}/${externalId}`);
-                    }}
-                    className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-3 border border-white/10 cursor-pointer hover:bg-white/20 transition-colors"
-                    data-testid={`quick-add-${item.id || item.externalId}`}
-                  >
-                    {(item.imageUrl || item.poster_url || item.image_url || item.poster_path) ? (
-                      <img
-                        src={item.imageUrl || item.poster_url || item.image_url || `https://image.tmdb.org/t/p/w200${item.poster_path}`}
-                        alt={item.title}
-                        className="w-8 h-11 rounded-md object-cover shadow-sm flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="w-8 h-11 rounded-md bg-gray-700 flex items-center justify-center flex-shrink-0">
-                        <Film className="w-3 h-3 text-gray-400" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-white text-sm truncate">{item.title}</h4>
-                      <p className="text-xs text-gray-400 uppercase">
-                        {item.mediaType || 'movie'}
-                      </p>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setQuickAddMedia({
-                          title: item.title,
-                          mediaType: item.mediaType || item.type || 'movie',
-                          imageUrl: item.imageUrl || item.poster_url || item.image_url || (item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : null),
-                          externalId: item.externalId || item.id,
-                          externalSource: item.externalSource || 'tmdb',
-                          creator: item.creator,
-                        });
-                        setIsQuickAddOpen(true);
-                      }}
-                      className="w-7 h-7 rounded-full bg-purple-600 hover:bg-purple-500 flex items-center justify-center flex-shrink-0 transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5 text-white" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
