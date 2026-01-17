@@ -80,6 +80,28 @@ export const dnaProfiles = pgTable("dna_profiles", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// DNA Moments - quick binary questions for the feed that build Entertainment DNA
+export const dnaMoments = pgTable("dna_moments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  questionText: text("question_text").notNull(),
+  optionA: text("option_a").notNull(),
+  optionB: text("option_b").notNull(),
+  category: text("category").notNull(), // genre, habit, preference, personality
+  isActive: boolean("is_active").notNull().default(true),
+  displayDate: timestamp("display_date"), // optional: for daily rotation
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// DNA Moment Responses - user answers to DNA moments
+export const dnaMomentResponses = pgTable("dna_moment_responses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  momentId: varchar("moment_id").notNull().references(() => dnaMoments.id),
+  answer: text("answer").notNull(), // 'a' or 'b'
+  pointsEarned: integer("points_earned").notNull().default(5),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const socialPosts = pgTable("social_posts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
@@ -325,6 +347,16 @@ export const insertDnaProfileSchema = createInsertSchema(dnaProfiles).omit({
   updatedAt: true,
 });
 
+export const insertDnaMomentSchema = createInsertSchema(dnaMoments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDnaMomentResponseSchema = createInsertSchema(dnaMomentResponses).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertListSchema = createInsertSchema(lists).omit({
   id: true,
   createdAt: true,
@@ -529,6 +561,10 @@ export type EdnaResponse = typeof ednaResponses.$inferSelect;
 export type InsertEdnaResponse = z.infer<typeof insertEdnaResponseSchema>;
 export type DnaProfile = typeof dnaProfiles.$inferSelect;
 export type InsertDnaProfile = z.infer<typeof insertDnaProfileSchema>;
+export type DnaMoment = typeof dnaMoments.$inferSelect;
+export type InsertDnaMoment = z.infer<typeof insertDnaMomentSchema>;
+export type DnaMomentResponse = typeof dnaMomentResponses.$inferSelect;
+export type InsertDnaMomentResponse = z.infer<typeof insertDnaMomentResponseSchema>;
 export type SocialPost = typeof socialPosts.$inferSelect;
 export type InsertSocialPost = z.infer<typeof insertSocialPostSchema>;
 export type SocialPostComment = typeof socialPostComments.$inferSelect;
