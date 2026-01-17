@@ -16,7 +16,11 @@ interface PollItem {
   pointsReward: number;
 }
 
-export function PollsCarousel() {
+interface PollsCarouselProps {
+  expanded?: boolean;
+}
+
+export function PollsCarousel({ expanded = false }: PollsCarouselProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);

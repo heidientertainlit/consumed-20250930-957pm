@@ -22,7 +22,11 @@ interface TriviaItem {
   rawOptions: any;
 }
 
-export function TriviaCarousel() {
+interface TriviaCarouselProps {
+  expanded?: boolean;
+}
+
+export function TriviaCarousel({ expanded = false }: TriviaCarouselProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);

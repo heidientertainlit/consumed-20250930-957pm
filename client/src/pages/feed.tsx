@@ -2869,7 +2869,7 @@ export default function Feed() {
             <div className="text-center py-8">
               <p className="text-gray-600">Please sign in to view your social feed.</p>
             </div>
-          ) : filteredPosts && filteredPosts.length > 0 ? (
+          ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'hot_takes', 'games'].includes(selectedFilter) ? (
             <div className="space-y-4 pb-24">
               {/* Feed Filter Pills */}
               <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-4">
@@ -2899,29 +2899,32 @@ export default function Feed() {
               </div>
 
               {/* Empty state for filtered views */}
-              {feedFilter && filteredPosts.length === 0 && (
+              {feedFilter === 'friends' && filteredPosts.length === 0 && (
                 <div className="bg-white rounded-2xl p-8 text-center border border-gray-100" data-testid="empty-filter-state">
-                  {feedFilter === 'friends' && (
-                    <>
-                      <div className="text-4xl mb-3">👥</div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">No Friend Activity</h3>
-                      <p className="text-gray-500 text-sm">Follow more friends to see their activity!</p>
-                    </>
-                  )}
+                  <div className="text-4xl mb-3">👥</div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Friend Activity</h3>
+                  <p className="text-gray-500 text-sm">Follow more friends to see their activity!</p>
                 </div>
               )}
 
-              {/* 1. Quick Trivia Carousel */}
-              <TriviaCarousel />
+              {/* Filtered views - show only the selected category */}
+              {/* TRIVIA filter */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} />
+              )}
 
-              {/* 2. Leaderboard - TRIVIA CHAMPIONS */}
-              <LeaderboardFeedCard variant="trivia" />
+              {/* Leaderboard - only in All/games views */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
+                <LeaderboardFeedCard variant="trivia" />
+              )}
 
-              {/* 3. DNA Moment Card */}
-              <DnaMomentCard />
+              {/* DNA Moment Card - in All or DNA filter */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && (
+                <DnaMomentCard />
+              )}
 
-              {/* 4. Consumption Carousel - What friends are consuming */}
-              {socialPosts && socialPosts.length > 0 && (
+              {/* Consumption Carousel - only in All view */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && (
                 <ConsumptionCarousel 
                   items={(socialPosts || [])
                     .filter((p: any) => p.mediaItems?.length > 0 && p.user)
@@ -2943,28 +2946,38 @@ export default function Feed() {
                 />
               )}
 
-              {/* 5. Recommendations - using existing carousel in posts loop */}
+              {/* POLLS filter */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && (
+                <PollsCarousel expanded={selectedFilter === 'polls'} />
+              )}
 
-              {/* 6. Quick Polls */}
-              <PollsCarousel />
+              {/* HOT TAKES filter - User-created */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'hot_takes') && (
+                <HotTakesGlimpse variant="user" />
+              )}
 
-              {/* 7. User-created hot takes/predictions */}
-              <HotTakesGlimpse variant="user" />
+              {/* HOT TAKES filter - Consumed-created */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'hot_takes') && (
+                <HotTakesGlimpse variant="consumed" />
+              )}
 
-              {/* 8. Consumed-created hot takes */}
-              <HotTakesGlimpse variant="consumed" />
+              {/* Points Glimpse - only in All view */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+                <PointsGlimpse />
+              )}
 
-              {/* 9. Points Glimpse - Friend scores */}
-              <PointsGlimpse />
+              {/* Games Carousel - in All or games filter */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
+                <GamesCarousel />
+              )}
 
-              {/* 10. Games Carousel */}
-              <GamesCarousel />
+              {/* Ranks Glimpse - only in All view */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+                <RanksGlimpse />
+              )}
 
-              {/* 11. Consumed-created Ranks Glimpse */}
-              <RanksGlimpse />
-
-
-              {filteredPosts.filter((item: any) => {
+              {/* Social Posts - hidden when specific game filters are active */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && filteredPosts.filter((item: any) => {
                 // Filter out incorrectly formatted prediction posts
                 if ('originalPostIds' in item) return true; // Keep consolidated activities
                 if ((item as any).type === 'friend_activity_block') return true; // Keep friend activity blocks
