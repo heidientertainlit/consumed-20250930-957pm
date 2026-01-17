@@ -2795,9 +2795,9 @@ export default function Feed() {
             </div>
           ) : filteredPosts && filteredPosts.length > 0 ? (
             <div className="space-y-4 pb-24">
-              {/* Single Quick Glimpse at the top - scrolls through recent friend activities */}
+              {/* Single Quick Glimpse at the top - shows game/play activity from friends */}
               {socialPosts && socialPosts.length > 0 && (() => {
-                // Get activities for Quick Glimpse - scan more posts for variety
+                // Get GAME activities only for Quick Glimpse - trivia, polls, predictions
                 const allActivities = socialPosts.slice(0, 100).map(post => {
                   const postType = post.type?.toLowerCase() || '';
                   const user = post.user;
@@ -2808,41 +2808,32 @@ export default function Feed() {
                   let action = '';
                   let mediaTitle = post.mediaItems?.[0]?.title || (post as any).listData?.title || '';
                   
-                  // Ratings
-                  if (postType === 'rating' || (post.rating && post.rating > 0)) {
-                    action = `gave ${mediaTitle} ${post.rating || post.mediaItems?.[0]?.rating || '?'} stars`;
-                  } 
-                  // Finished
-                  else if (postType === 'finished') {
-                    action = `finished ${mediaTitle}`;
-                  } 
-                  // List adds
-                  else if (postType.includes('list') && postType.includes('add')) {
-                    const listName = (post as any).listData?.title || 'a list';
-                    action = `added ${mediaTitle} to ${listName}`;
-                  } 
-                  // Trivia
-                  else if (postType === 'trivia') {
-                    const score = (post as any).score || (post as any).points || 60;
-                    action = `scored ${score} points on ${mediaTitle || 'Trivia'}`;
+                  // Only include game-related activities
+                  // Trivia scores
+                  if (postType === 'trivia') {
+                    const score = (post as any).score || (post as any).points || 80;
+                    action = `scored ${score} on today's trivia`;
                   }
-                  // Hot takes (text-only posts)
-                  else if (postType === 'hot_take' || (post.content && post.content.length > 20 && !post.mediaItems?.length)) {
-                    const preview = post.content?.slice(0, 40) || 'a hot take';
-                    action = `posted "${preview}${post.content && post.content.length > 40 ? '...' : ''}"`;
+                  // Poll votes
+                  else if (postType === 'poll' || postType === 'poll_vote') {
+                    const pollTitle = (post as any).pollTitle || mediaTitle || 'a poll';
+                    action = `voted on "${pollTitle}"`;
                   }
                   // Predictions
                   else if (postType === 'prediction') {
-                    action = `made a prediction about ${mediaTitle || 'something'}`;
+                    action = `locked in a prediction`;
                   }
-                  // Polls
-                  else if (postType === 'poll') {
-                    action = `started a poll`;
+                  // Hot takes with votes
+                  else if (postType === 'hot_take') {
+                    action = `dropped a hot take 🔥`;
                   }
-                  // Generic media add
-                  else if (mediaTitle) {
-                    action = `added ${mediaTitle}`;
-                  } else {
+                  // Leaderboard movement (if we have this data)
+                  else if (postType === 'leaderboard') {
+                    const movement = (post as any).rankChange || 3;
+                    action = `moved up ${movement} spots this week`;
+                  }
+                  // Skip all other activity types (tracking, ratings, list adds)
+                  else {
                     return null;
                   }
                   
@@ -2878,8 +2869,8 @@ export default function Feed() {
                 return (
                   <div className="mb-4 bg-purple-50 rounded-2xl p-3 border border-purple-100 shadow-sm overflow-hidden" data-testid="quick-glimpse-top">
                     <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                      <span>✨</span>
-                      Quick Glimpse
+                      <span>🎮</span>
+                      Friends Playing
                     </p>
                     <div className="h-[72px] overflow-hidden">
                       <div 
