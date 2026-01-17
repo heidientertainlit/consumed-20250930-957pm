@@ -224,7 +224,7 @@ export function DailyChallengeCard() {
         className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <Play className="w-6 h-6 text-purple-400 fill-purple-400" />
+          <Play className="w-6 h-6 text-purple-900 fill-purple-900" />
           <div className="text-left">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-white">Daily Challenge</span>
@@ -232,7 +232,7 @@ export function DailyChallengeCard() {
                 <CheckCircle className="w-4 h-4 text-green-400" />
               )}
             </div>
-            <p className="text-xs text-gray-400 line-clamp-1">{displayChallenge.title}</p>
+            <p className="text-xs text-purple-900 font-medium line-clamp-1">{displayChallenge.title}</p>
           </div>
         </div>
         <div className="flex items-center">
