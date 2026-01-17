@@ -17,8 +17,6 @@ import { DnaMomentCard } from "@/components/dna-moment-card";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
-import { HotTakeCard } from "@/components/hot-take-card";
-import { GeneralPlayCarousel } from "@/components/general-play-carousel";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -2813,7 +2811,7 @@ export default function Feed() {
             <p className="text-gray-400 text-sm mt-3">Compete, predict, and share your take.</p>
           </div>
           
-          {/* Daily Trivia - Hero Card */}
+          {/* Daily Challenge */}
           <div className="mb-4">
             <DailyChallengeCard />
           </div>
@@ -2909,30 +2907,17 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* 1. Trivia */}
+              {/* 1. Trivia Carousel - first item in feed */}
               <TriviaCarousel />
 
-              {/* 2. Leaderboard snippet */}
+              {/* 2. Leaderboard Glimpse */}
               <LeaderboardGlimpse />
 
-              {/* 3. Consumption carousel - first batch will appear in posts below */}
-
-              {/* 4. DNA Moment */}
+              {/* 3. DNA Moment Card */}
               <DnaMomentCard />
 
-              {/* 5. Hot Take */}
-              <HotTakeCard />
-
-              {/* 6. Polls Carousel */}
+              {/* 4. Polls Carousel */}
               <PollsCarousel />
-
-              {/* 7. Consumption - second batch will appear in posts below */}
-
-              {/* 8. Second DNA Moment */}
-              <DnaMomentCard />
-
-              {/* 9. General Play Carousel */}
-              <GeneralPlayCarousel />
 
               {/* Featured Play card when game filter is active */}
               {(selectedFilter === 'games' || selectedFilter === 'trivia' || selectedFilter === 'polls' || selectedFilter === 'predictions') && (
