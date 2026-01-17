@@ -127,9 +127,9 @@ export function DnaMomentCard() {
 
   if (isLoading) {
     return (
-      <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+      <Card className="bg-gradient-to-b from-purple-800 to-purple-950 border-0 rounded-2xl p-5 shadow-lg">
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-white" />
         </div>
       </Card>
     );
@@ -142,32 +142,32 @@ export function DnaMomentCard() {
   const { moment, stats } = data;
 
   return (
-    <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm overflow-hidden relative">
+    <Card className="bg-gradient-to-b from-purple-800 to-purple-950 border-0 rounded-2xl p-5 shadow-lg overflow-hidden relative">
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-          <Dna className="w-4 h-4 text-purple-600" />
+        <div className="w-8 h-8 rounded-full bg-purple-600/30 flex items-center justify-center">
+          <Dna className="w-4 h-4 text-purple-200" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-gray-900">DNA Moment</p>
-          <p className="text-xs text-gray-500">Shapes your Entertainment DNA</p>
+          <p className="text-sm font-semibold text-white">DNA Moment</p>
+          <p className="text-xs text-purple-200/70">Shapes your Entertainment DNA</p>
         </div>
         {stats.totalResponses > 0 && (
-          <div className="flex items-center gap-1 text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+          <div className="flex items-center gap-1 text-xs text-purple-200 bg-purple-600/30 px-2 py-1 rounded-full">
             <Users className="w-3 h-3" />
             <span>{stats.totalResponses}</span>
           </div>
         )}
       </div>
 
-      <h3 className="text-gray-900 font-semibold text-lg mb-4">{moment.questionText}</h3>
+      <h3 className="text-white font-semibold text-lg mb-4">{moment.questionText}</h3>
 
       {!showResults ? (
         <div className="grid grid-cols-2 gap-3">
           <button
-            className={`h-auto py-3 px-6 rounded-full text-center flex items-center justify-center transition-all duration-200 font-medium border border-purple-900/30 ${
+            className={`h-auto py-3 px-6 rounded-full text-center flex items-center justify-center transition-all duration-200 font-medium ${
               selectedAnswer === 'a' 
-                ? 'bg-gradient-to-b from-purple-800 to-purple-950 text-white shadow-lg' 
-                : 'bg-gradient-to-b from-purple-700 to-purple-950 text-white hover:from-purple-600 hover:to-purple-900 shadow-md hover:shadow-lg'
+                ? 'bg-white text-purple-900 shadow-lg' 
+                : 'bg-white/90 text-purple-900 hover:bg-white shadow-md hover:shadow-lg'
             }`}
             onClick={() => handleAnswer('a')}
             disabled={answerMutation.isPending}
@@ -175,10 +175,10 @@ export function DnaMomentCard() {
             {moment.optionA}
           </button>
           <button
-            className={`h-auto py-3 px-6 rounded-full text-center flex items-center justify-center transition-all duration-200 font-medium border border-purple-900/30 ${
+            className={`h-auto py-3 px-6 rounded-full text-center flex items-center justify-center transition-all duration-200 font-medium ${
               selectedAnswer === 'b' 
-                ? 'bg-gradient-to-b from-purple-800 to-purple-950 text-white shadow-lg' 
-                : 'bg-gradient-to-b from-purple-700 to-purple-950 text-white hover:from-purple-600 hover:to-purple-900 shadow-md hover:shadow-lg'
+                ? 'bg-white text-purple-900 shadow-lg' 
+                : 'bg-white/90 text-purple-900 hover:bg-white shadow-md hover:shadow-lg'
             }`}
             onClick={() => handleAnswer('b')}
             disabled={answerMutation.isPending}
@@ -190,70 +190,70 @@ export function DnaMomentCard() {
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className={`relative p-3 rounded-xl border-2 ${
-              selectedAnswer === 'a' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 bg-gray-50'
+              selectedAnswer === 'a' ? 'border-white/40 bg-white/20' : 'border-white/20 bg-white/10'
             }`}>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-900">{moment.optionA}</span>
-                <span className="text-lg font-bold text-purple-600">{resultData?.stats?.optionAPercent || stats.optionAPercent}%</span>
+                <span className="text-sm font-medium text-white">{moment.optionA}</span>
+                <span className="text-lg font-bold text-white">{resultData?.stats?.optionAPercent || stats.optionAPercent}%</span>
               </div>
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-2 bg-white/20 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                  className="h-full bg-white rounded-full transition-all duration-500"
                   style={{ width: `${resultData?.stats?.optionAPercent || stats.optionAPercent}%` }}
                 />
               </div>
               {selectedAnswer === 'a' && (
-                <div className="absolute -top-2 -right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-3 h-3 text-white" />
+                <div className="absolute -top-2 -right-2 w-5 h-5 bg-white rounded-full flex items-center justify-center">
+                  <Sparkles className="w-3 h-3 text-purple-700" />
                 </div>
               )}
             </div>
             <div className={`relative p-3 rounded-xl border-2 ${
-              selectedAnswer === 'b' ? 'border-purple-500 bg-purple-50' : 'border-gray-200 bg-gray-50'
+              selectedAnswer === 'b' ? 'border-white/40 bg-white/20' : 'border-white/20 bg-white/10'
             }`}>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-900">{moment.optionB}</span>
-                <span className="text-lg font-bold text-purple-600">{resultData?.stats?.optionBPercent || stats.optionBPercent}%</span>
+                <span className="text-sm font-medium text-white">{moment.optionB}</span>
+                <span className="text-lg font-bold text-white">{resultData?.stats?.optionBPercent || stats.optionBPercent}%</span>
               </div>
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-2 bg-white/20 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                  className="h-full bg-white rounded-full transition-all duration-500"
                   style={{ width: `${resultData?.stats?.optionBPercent || stats.optionBPercent}%` }}
                 />
               </div>
               {selectedAnswer === 'b' && (
-                <div className="absolute -top-2 -right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-3 h-3 text-white" />
+                <div className="absolute -top-2 -right-2 w-5 h-5 bg-white rounded-full flex items-center justify-center">
+                  <Sparkles className="w-3 h-3 text-purple-700" />
                 </div>
               )}
             </div>
           </div>
 
           {resultData?.matchingFriends && resultData.matchingFriends.length > 0 && (
-            <div className="pt-3 border-t border-gray-100">
-              <p className="text-xs text-gray-500 mb-2">Friends who agree:</p>
+            <div className="pt-3 border-t border-white/20">
+              <p className="text-xs text-purple-200 mb-2">Friends who agree:</p>
               <div className="flex gap-2 flex-wrap">
                 {resultData.matchingFriends.slice(0, 3).map((friend: any, idx: number) => (
-                  <div key={idx} className="flex items-center gap-1.5 bg-purple-100 rounded-full px-2.5 py-1">
-                    <div className="w-5 h-5 rounded-full bg-purple-200 flex items-center justify-center text-[10px] font-medium text-purple-700">
+                  <div key={idx} className="flex items-center gap-1.5 bg-white/20 rounded-full px-2.5 py-1">
+                    <div className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center text-[10px] font-medium text-white">
                       {friend.users?.display_name?.[0] || '?'}
                     </div>
-                    <span className="text-xs text-purple-700 font-medium">{friend.users?.display_name || 'Friend'}</span>
+                    <span className="text-xs text-white font-medium">{friend.users?.display_name || 'Friend'}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          <p className="text-xs text-center text-purple-500 pt-1">
+          <p className="text-xs text-center text-purple-200 pt-1">
             Your DNA is evolving...
           </p>
         </div>
       )}
 
       {answerMutation.isPending && (
-        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-2xl">
-          <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+        <div className="absolute inset-0 bg-purple-900/80 flex items-center justify-center rounded-2xl">
+          <Loader2 className="w-6 h-6 animate-spin text-white" />
         </div>
       )}
     </Card>
