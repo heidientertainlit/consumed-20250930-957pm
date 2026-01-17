@@ -355,7 +355,7 @@ export function TriviaCarousel() {
                         key={idx}
                         className={`py-3 px-4 rounded-xl border text-white text-sm font-medium transition-all text-left ${
                           selected === option 
-                            ? 'bg-purple-600/80 border-purple-400' 
+                            ? 'bg-gradient-to-r from-purple-500 to-indigo-500 border-purple-300 shadow-lg shadow-purple-500/30' 
                             : 'bg-purple-900/60 border-purple-700/50 hover:bg-purple-800/70 hover:border-purple-600'
                         }`}
                         onClick={() => handleSelectOption(item.id, option)}
@@ -369,9 +369,9 @@ export function TriviaCarousel() {
                       <button
                         onClick={() => handleSubmitAnswer(item)}
                         disabled={answerMutation.isPending}
-                        className="mt-2 w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium transition-colors disabled:opacity-50"
+                        className="mt-2 w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium transition-colors disabled:opacity-50"
                       >
-                        {answerMutation.isPending ? 'Submitting...' : 'Vote'}
+                        {answerMutation.isPending ? 'Submitting...' : 'Submit'}
                       </button>
                     )}
                   </div>
