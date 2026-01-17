@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Link } from 'wouter';
-import { ChevronLeft, ChevronRight, Star, Plus, BookOpen, Tv, Film, Music, Gamepad2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Plus, BookOpen, Tv, Film, Music, Gamepad2, List } from 'lucide-react';
 
 interface ConsumptionItem {
   id: string;
@@ -119,7 +119,7 @@ export default function ConsumptionCarousel({ items, title = "What friends are c
         {items.map((item, index) => (
           <div
             key={item.id || index}
-            className="flex-shrink-0 w-36 bg-gray-50 rounded-xl p-3 border border-gray-100"
+            className="flex-shrink-0 w-40 bg-gray-50 rounded-xl p-3 border border-gray-100"
           >
             {item.mediaImage ? (
               <div className="w-full aspect-[2/3] rounded-lg overflow-hidden mb-2 bg-gray-200">
@@ -139,7 +139,7 @@ export default function ConsumptionCarousel({ items, title = "What friends are c
               {item.mediaTitle}
             </p>
             
-            <div className="flex items-center gap-1 mb-1">
+            <div className="flex items-center gap-1 mb-1.5">
               <Link href={`/profile/${item.username}`}>
                 <span className="text-[10px] text-purple-600 font-medium hover:underline cursor-pointer">
                   {item.displayName || item.username}
@@ -150,8 +150,17 @@ export default function ConsumptionCarousel({ items, title = "What friends are c
               </span>
             </div>
             
-            {item.rating && item.rating > 0 && (
-              <div className="flex items-center gap-0.5">
+            {item.listName && (
+              <Link href={`/profile/${item.username}#collections`}>
+                <div className="flex items-center gap-1 text-[10px] text-gray-500 mb-1.5 hover:text-purple-600 cursor-pointer">
+                  <List className="w-3 h-3" />
+                  <span className="truncate">{item.listName}</span>
+                </div>
+              </Link>
+            )}
+            
+            {item.rating && item.rating > 0 ? (
+              <div className="flex items-center gap-0.5 mb-2">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
@@ -161,7 +170,18 @@ export default function ConsumptionCarousel({ items, title = "What friends are c
                   />
                 ))}
               </div>
+            ) : (
+              <div className="flex items-center gap-0.5 mb-2">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-2.5 h-2.5 text-gray-300" />
+                ))}
+              </div>
             )}
+            
+            <button className="w-full py-1.5 px-3 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs font-medium flex items-center justify-center gap-1 hover:from-purple-600 hover:to-blue-600 transition-all shadow-sm">
+              <Plus className="w-3 h-3" />
+              Add
+            </button>
           </div>
         ))}
       </div>

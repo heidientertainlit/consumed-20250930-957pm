@@ -127,7 +127,7 @@ export function DnaMomentCard() {
 
   if (isLoading) {
     return (
-      <Card className="bg-gradient-to-b from-[#2d2659] via-[#1e1a40] to-[#151229] border-0 rounded-2xl p-5 shadow-lg">
+      <Card className="bg-gradient-to-r from-purple-500 via-purple-600 to-blue-500 border-0 rounded-2xl p-5 shadow-lg">
         <div className="flex items-center justify-center py-6">
           <Loader2 className="w-6 h-6 animate-spin text-white" />
         </div>
@@ -142,7 +142,7 @@ export function DnaMomentCard() {
   const { moment, stats } = data;
 
   return (
-    <Card className="bg-gradient-to-b from-[#2d2659] via-[#1e1a40] to-[#151229] border-0 rounded-2xl p-5 shadow-lg overflow-hidden relative">
+    <Card className="bg-gradient-to-r from-purple-500 via-purple-600 to-blue-500 border-0 rounded-2xl p-5 shadow-lg overflow-hidden relative">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 rounded-full bg-purple-600/30 flex items-center justify-center">
           <Dna className="w-4 h-4 text-purple-200" />
