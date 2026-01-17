@@ -17,6 +17,8 @@ import { DnaMomentCard } from "@/components/dna-moment-card";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
+import { HotTakeCard } from "@/components/hot-take-card";
+import { GeneralPlayCarousel } from "@/components/general-play-carousel";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -2907,17 +2909,23 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* 1. Trivia Carousel - first item in feed */}
+              {/* 1. Trivia Carousel */}
               <TriviaCarousel />
 
-              {/* 2. Leaderboard Glimpse */}
+              {/* 2. Leaderboard snippet */}
               <LeaderboardGlimpse />
 
-              {/* 3. DNA Moment Card */}
+              {/* 3. DNA Moment */}
               <DnaMomentCard />
 
-              {/* 4. Polls Carousel */}
+              {/* 4. Hot Take */}
+              <HotTakeCard />
+
+              {/* 5. Polls Carousel */}
               <PollsCarousel />
+
+              {/* 6. General Play Carousel */}
+              <GeneralPlayCarousel />
 
               {/* Featured Play card when game filter is active */}
               {(selectedFilter === 'games' || selectedFilter === 'trivia' || selectedFilter === 'polls' || selectedFilter === 'predictions') && (
