@@ -2944,8 +2944,7 @@ export default function Feed() {
                 />
               )}
 
-              {/* 5. Recommendations */}
-              <RecommendationsGlimpse />
+              {/* 5. Recommendations - using existing carousel in posts loop */}
 
               {/* 6. Quick Polls */}
               <PollsCarousel />

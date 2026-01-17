@@ -267,7 +267,7 @@ export function DailyChallengeCard() {
 
   return (
     <Card 
-      className="bg-gradient-to-b from-slate-900 via-purple-950 to-indigo-950 border-0 overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
+      className="bg-gradient-to-b from-slate-900 via-purple-950 to-indigo-950 border border-purple-500/50 rounded-xl overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
       onClick={() => setIsExpanded(!isExpanded)}
       data-testid="daily-challenge-card"
     >
