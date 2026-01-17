@@ -210,7 +210,7 @@ export function DailyChallengeCard() {
 
   if (challengeLoading) {
     return (
-      <Card className="p-4 bg-gradient-to-br from-blue-500 via-blue-400 to-cyan-400 border-0">
+      <Card className="p-4 bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 border-0">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-white" />
         </div>
@@ -222,7 +222,7 @@ export function DailyChallengeCard() {
 
   return (
     <Card 
-      className="bg-gradient-to-br from-blue-500 via-blue-400 to-cyan-400 border-0 overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
+      className="bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 border-0 overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
       onClick={() => setIsExpanded(!isExpanded)}
       data-testid="daily-challenge-card"
     >
