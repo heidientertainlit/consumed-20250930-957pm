@@ -271,52 +271,28 @@ export function DailyChallengeCard() {
       onClick={() => setIsExpanded(!isExpanded)}
       data-testid="daily-challenge-card"
     >
-      {/* Collapsed Header - Always visible */}
-      <div
-        className="w-full p-4 flex items-center justify-between"
-      >
+      {/* Collapsed Header - Simple design */}
+      <div className="w-full p-4 flex items-center justify-between">
         <div className="flex items-center gap-3 flex-1">
-          <Play className="w-6 h-6 text-white fill-white" />
+          <Play className="w-5 h-5 text-purple-400 fill-purple-400" />
           <div className="text-left flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-white uppercase tracking-tight">Today’s Challenge</span>
+              <span className="text-sm font-semibold text-white">Daily Challenge</span>
+              {!alreadyCompleted && (
+                <span className="text-[10px] text-purple-400 font-medium">LIVE</span>
+              )}
               {alreadyCompleted && (
                 <CheckCircle className="w-4 h-4 text-green-400" />
               )}
-              {!alreadyCompleted && (
-                <div className="flex items-center gap-1 bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold text-white uppercase animate-pulse">
-                  <Flame className="w-2.5 h-2.5 fill-white" />
-                  Live
-                </div>
-              )}
             </div>
-            <p className="text-xs text-white/90 font-bold line-clamp-1">PLAY NOW</p>
+            <p className="text-xs text-gray-400 line-clamp-1">{displayChallenge.title}</p>
           </div>
         </div>
         
-        {/* Stats preview - show on collapsed */}
-        {challengeStats && challengeStats.totalResponses > 0 && (
-          <div className="flex items-center gap-2">
-            <div className="text-right">
-              <span className="text-xs text-purple-300">{challengeStats.correctPercentage}% got it right</span>
-            </div>
-            {/* Friend avatars */}
-            {challengeStats.friendResponses.length > 0 && (
-              <div className="flex -space-x-2">
-                {challengeStats.friendResponses.slice(0, 3).map((friend: any, idx: number) => (
-                  <div key={idx} className="w-6 h-6 rounded-full border-2 border-purple-800 overflow-hidden bg-purple-600">
-                    {friend.avatar ? (
-                      <img src={friend.avatar} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-white text-[10px] font-bold">
-                        {friend.username?.charAt(0)?.toUpperCase() || '?'}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        {isExpanded ? (
+          <ChevronUp className="w-5 h-5 text-gray-400" />
+        ) : (
+          <ChevronDown className="w-5 h-5 text-gray-400" />
         )}
       </div>
 

@@ -2915,8 +2915,8 @@ export default function Feed() {
               {/* 1. Quick Trivia Carousel */}
               <TriviaCarousel />
 
-              {/* 2. Leaderboard Glimpse */}
-              <LeaderboardGlimpse />
+              {/* 2. Leaderboard - TRIVIA CHAMPIONS */}
+              <LeaderboardFeedCard variant="trivia" />
 
               {/* 3. DNA Moment Card */}
               <DnaMomentCard />
