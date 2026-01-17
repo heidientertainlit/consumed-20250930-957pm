@@ -2678,6 +2678,7 @@ export default function Feed() {
                 <span className="block h-10 leading-10 text-2xl md:text-3xl font-bold text-purple-400">watching.</span>
                 <span className="block h-10 leading-10 text-2xl md:text-3xl font-bold text-blue-400">reading.</span>
                 <span className="block h-10 leading-10 text-2xl md:text-3xl font-bold text-green-400">listening to.</span>
+                <span className="block h-10 leading-10 text-2xl md:text-3xl font-bold text-orange-400">consuming.</span>
               </div>
             </div>
             <p className="text-gray-400 text-sm mt-3">Compete, predict, and share your take.</p>

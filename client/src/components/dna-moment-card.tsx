@@ -127,7 +127,7 @@ export function DnaMomentCard() {
 
   if (isLoading) {
     return (
-      <Card className="bg-gradient-to-b from-purple-800 to-purple-950 border-0 rounded-2xl p-5 shadow-lg">
+      <Card className="bg-gradient-to-b from-purple-900 via-purple-950 to-[#1a0a2e] border-0 rounded-2xl p-5 shadow-lg">
         <div className="flex items-center justify-center py-6">
           <Loader2 className="w-6 h-6 animate-spin text-white" />
         </div>
@@ -142,7 +142,7 @@ export function DnaMomentCard() {
   const { moment, stats } = data;
 
   return (
-    <Card className="bg-gradient-to-b from-purple-800 to-purple-950 border-0 rounded-2xl p-5 shadow-lg overflow-hidden relative">
+    <Card className="bg-gradient-to-b from-purple-900 via-purple-950 to-[#1a0a2e] border-0 rounded-2xl p-5 shadow-lg overflow-hidden relative">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 rounded-full bg-purple-600/30 flex items-center justify-center">
           <Dna className="w-4 h-4 text-purple-200" />
@@ -164,7 +164,7 @@ export function DnaMomentCard() {
       {!showResults ? (
         <div className="grid grid-cols-2 gap-3">
           <button
-            className={`h-auto py-3 px-6 rounded-full text-center flex items-center justify-center transition-all duration-200 font-medium ${
+            className={`h-auto py-2 px-5 rounded-full text-center flex items-center justify-center transition-all duration-200 text-sm font-medium ${
               selectedAnswer === 'a' 
                 ? 'bg-white text-purple-900 shadow-lg' 
                 : 'bg-white/90 text-purple-900 hover:bg-white shadow-md hover:shadow-lg'
@@ -175,7 +175,7 @@ export function DnaMomentCard() {
             {moment.optionA}
           </button>
           <button
-            className={`h-auto py-3 px-6 rounded-full text-center flex items-center justify-center transition-all duration-200 font-medium ${
+            className={`h-auto py-2 px-5 rounded-full text-center flex items-center justify-center transition-all duration-200 text-sm font-medium ${
               selectedAnswer === 'b' 
                 ? 'bg-white text-purple-900 shadow-lg' 
                 : 'bg-white/90 text-purple-900 hover:bg-white shadow-md hover:shadow-lg'
