@@ -966,12 +966,7 @@ export default function Feed() {
     mediaType?: string;
   } | null>(null); // Bet modal state
   const [isPlacingBet, setIsPlacingBet] = useState(false);
-  const [headerSearchQuery, setHeaderSearchQuery] = useState("");
   const [suggestedRotation, setSuggestedRotation] = useState(0);
-  const [headerSearchResults, setHeaderSearchResults] = useState<any[]>([]);
-  const [isHeaderSearching, setIsHeaderSearching] = useState(false);
-  const [showHeaderResults, setShowHeaderResults] = useState(false);
-  const headerSearchRef = useRef<HTMLDivElement>(null);
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -989,69 +984,6 @@ export default function Feed() {
     
     return () => clearInterval(interval);
   }, []);
-  
-  // Header search - debounced media search
-  useEffect(() => {
-    if (!session?.access_token || !headerSearchQuery.trim()) {
-      setHeaderSearchResults([]);
-      return;
-    }
-    
-    const timer = setTimeout(async () => {
-      setIsHeaderSearching(true);
-      try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-        const response = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ query: headerSearchQuery.trim() })
-        });
-        if (response.ok) {
-          const data = await response.json();
-          console.log('🔍 Feed search results:', data.results?.slice(0, 5).map((r: any) => ({ title: r.title, score: r._score, type: r.type })));
-          setHeaderSearchResults(data.results || []);
-          setShowHeaderResults(true);
-        }
-      } catch (error) {
-        console.error('Header search error:', error);
-      } finally {
-        setIsHeaderSearching(false);
-      }
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [headerSearchQuery, session?.access_token]);
-  
-  // Close header search results when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (headerSearchRef.current && !headerSearchRef.current.contains(event.target as Node)) {
-        setShowHeaderResults(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-  
-  // Handle selecting a media item from header search - open post composer modal
-  const handleSelectHeaderMedia = (item: any) => {
-    setHeaderSearchQuery("");
-    setHeaderSearchResults([]);
-    setShowHeaderResults(false);
-    // Open QuickAddModal (post composer) with the selected media pre-filled
-    setTrackModalPreSelectedMedia({
-      title: item.title,
-      mediaType: item.type || item.mediaType || 'movie',
-      imageUrl: item.poster_url || item.image_url || item.imageUrl || item.posterPath,
-      externalId: item.external_id || item.externalId || item.id,
-      externalSource: item.external_source || item.externalSource || 'tmdb',
-      creator: item.creator || item.author,
-    });
-    setIsTrackModalOpen(true);
-  };
   
   // Check for URL parameters to scroll to specific post/comment (reactive to URL changes)
   const searchString = useSearch();
@@ -2751,69 +2683,9 @@ export default function Feed() {
             <p className="text-gray-400 text-sm mt-3">Compete, predict, and share your take.</p>
           </div>
           
-          {/* Search Bar with Inline Results */}
-          <div ref={headerSearchRef} className="relative mb-4" data-header-search>
-            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
-            <input
-              type="text"
-              value={headerSearchQuery}
-              onChange={(e) => setHeaderSearchQuery(e.target.value)}
-              onFocus={() => headerSearchResults.length > 0 && setShowHeaderResults(true)}
-              placeholder="Search for something..."
-              className="w-full h-12 pl-12 pr-4 bg-white border border-gray-200 rounded-xl text-gray-900 text-base placeholder:text-gray-400 hover:border-purple-400 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-colors shadow-sm"
-            />
-            {isHeaderSearching && (
-              <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-              </div>
-            )}
-            
-            {/* Search Results Dropdown */}
-            {showHeaderResults && headerSearchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-200 max-h-80 overflow-y-auto z-50">
-                {headerSearchResults.slice(0, 6).map((item: any, idx: number) => (
-                  <div
-                    key={`${item.external_id}-${idx}`}
-                    onClick={() => handleSelectHeaderMedia(item)}
-                    className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                  >
-                    {(item.poster_url || item.image_url) ? (
-                      <img 
-                        src={item.poster_url || item.image_url} 
-                        alt={item.title}
-                        className="w-10 h-14 rounded-lg object-cover shadow-sm"
-                      />
-                    ) : (
-                      <div className="w-10 h-14 rounded-lg bg-gray-200 flex items-center justify-center">
-                        <Film className="w-5 h-5 text-gray-400" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-gray-900 truncate">{item.title}</h4>
-                      <p className="text-xs text-gray-500 uppercase">{item.type} {item.year ? `• ${item.year}` : ''}</p>
-                      {item.creator && <p className="text-xs text-gray-400 truncate">{item.creator}</p>}
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setQuickAddMedia({
-                          title: item.title,
-                          mediaType: item.type || 'movie',
-                          imageUrl: item.poster_url || item.image_url,
-                          externalId: item.external_id || item.id,
-                          externalSource: item.external_source || 'tmdb',
-                          creator: item.creator,
-                        });
-                        setIsQuickAddOpen(true);
-                      }}
-                      className="w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-500 flex items-center justify-center transition-colors"
-                    >
-                      <Plus className="w-4 h-4 text-white" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Daily Challenge */}
+          <div className="mb-4">
+            <DailyChallengeCard />
           </div>
 
           {/* Suggested Quick Adds */}
