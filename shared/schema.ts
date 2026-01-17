@@ -38,6 +38,8 @@ export const lists = pgTable("lists", {
   isDefault: boolean("is_default").default(false),
   isPinned: boolean("is_pinned").default(false),
   isPrivate: boolean("is_private").default(true), // Main public/private toggle
+  originType: text("origin_type").default("user"), // 'user' or 'consumed' for platform-created content
+  originUserId: varchar("origin_user_id"), // For platform personas or admin accounts
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -123,6 +125,8 @@ export const socialPosts = pgTable("social_posts", {
   likesCount: integer("likes_count").default(0),
   commentsCount: integer("comments_count").default(0),
   predictionPoolId: text("prediction_pool_id"),
+  originType: text("origin_type").default("user"), // 'user' or 'consumed' for platform-created content
+  originUserId: varchar("origin_user_id"), // For platform personas or admin accounts
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -282,8 +286,8 @@ export const followedCreators = pgTable("followed_creators", {
 
 // Ranks table - for ranked lists like "Top 10 90s Movies"
 export const ranks = pgTable("ranks", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
   visibility: text("visibility").default("public"), // 'public', 'private', 'friends'
@@ -291,15 +295,17 @@ export const ranks = pgTable("ranks", {
   maxItems: integer("max_items").default(10), // Default to Top 10
   category: text("category"), // 'movies', 'tv', 'books', 'music', 'mixed'
   coverImageUrl: text("cover_image_url"),
+  originType: text("origin_type").default("user"), // 'user' or 'consumed' for platform-created content
+  originUserId: varchar("origin_user_id"), // For platform personas or admin accounts
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Rank items - media items within a rank with position for ordering
 export const rankItems = pgTable("rank_items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  rankId: uuid("rank_id").notNull().references(() => ranks.id, { onDelete: "cascade" }),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  rankId: varchar("rank_id").notNull().references(() => ranks.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   position: integer("position").notNull(), // 1-based position for ordering
   title: text("title").notNull(),
   mediaType: text("media_type"), // 'movie', 'tv', 'book', 'music', 'podcast', 'game'
@@ -317,8 +323,8 @@ export const rankItems = pgTable("rank_items", {
 // Rank item votes - for community voting on rank item positions
 // Note: unique constraint on (rank_item_id, user_id) should be added in Supabase
 export const rankItemVotes = pgTable("rank_item_votes", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  rankItemId: uuid("rank_item_id").notNull().references(() => rankItems.id, { onDelete: "cascade" }),
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  rankItemId: varchar("rank_item_id").notNull().references(() => rankItems.id, { onDelete: "cascade" }),
   voterId: varchar("voter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   direction: text("direction").notNull(), // 'up' or 'down'
   createdAt: timestamp("created_at").defaultNow().notNull(),
