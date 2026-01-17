@@ -203,7 +203,7 @@ export function DailyChallengeCard() {
 
   if (challengeLoading) {
     return (
-      <Card className="p-4 bg-gradient-to-r from-emerald-700 to-purple-800 border-emerald-500/30">
+      <Card className="p-4 bg-gradient-to-r from-blue-900 to-blue-600 border-blue-500/30">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
         </div>
@@ -215,7 +215,7 @@ export function DailyChallengeCard() {
 
   return (
     <Card 
-      className="bg-gradient-to-r from-emerald-700 to-purple-800 border-emerald-500/30 overflow-hidden"
+      className="bg-gradient-to-r from-blue-900 to-blue-600 border-blue-500/30 overflow-hidden"
       data-testid="daily-challenge-card"
     >
       {/* Collapsed Header - Always visible */}
