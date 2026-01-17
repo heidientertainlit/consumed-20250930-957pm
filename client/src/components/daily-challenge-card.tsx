@@ -1,3 +1,4 @@
+import { Flame } from 'lucide-react';
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
@@ -203,9 +204,9 @@ export function DailyChallengeCard() {
 
   if (challengeLoading) {
     return (
-      <Card className="p-4 bg-gradient-to-r from-cyan-500 to-blue-500 border-cyan-400/50">
+      <Card className="p-4 bg-blue-600 border-0">
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-white" />
         </div>
       </Card>
     );
@@ -215,34 +216,33 @@ export function DailyChallengeCard() {
 
   return (
     <Card 
-      className="bg-gradient-to-r from-cyan-500 to-blue-500 border-cyan-400/50 overflow-hidden"
+      className="bg-blue-600 border-0 overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
+      onClick={() => !isExpanded && setIsExpanded(true)}
       data-testid="daily-challenge-card"
     >
       {/* Collapsed Header - Always visible */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+      <div
+        className="w-full p-4 flex items-center justify-between"
       >
-        <div className="flex items-center gap-3">
-          <Play className="w-6 h-6 text-purple-900 fill-purple-900" />
-          <div className="text-left">
+        <div className="flex items-center gap-3 flex-1">
+          <Play className="w-6 h-6 text-white fill-white" />
+          <div className="text-left flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-white">Daily Challenge</span>
+              <span className="text-sm font-bold text-white uppercase tracking-tight">Today’s Challenge</span>
               {alreadyCompleted && (
                 <CheckCircle className="w-4 h-4 text-green-400" />
               )}
+              {!alreadyCompleted && (
+                <div className="flex items-center gap-1 bg-white/20 px-1.5 py-0.5 rounded text-[10px] font-bold text-white uppercase animate-pulse">
+                  <Flame className="w-2.5 h-2.5 fill-white" />
+                  Live
+                </div>
+              )}
             </div>
-            <p className="text-xs text-purple-900 font-medium line-clamp-1">{displayChallenge.title}</p>
+            <p className="text-xs text-white/90 font-bold line-clamp-1">PLAY NOW</p>
           </div>
         </div>
-        <div className="flex items-center">
-          {isExpanded ? (
-            <ChevronUp className="w-5 h-5 text-gray-400" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-gray-400" />
-          )}
-        </div>
-      </button>
+      </div>
 
       {/* Expanded Content */}
       {isExpanded && (
