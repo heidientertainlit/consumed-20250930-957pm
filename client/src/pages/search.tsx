@@ -8,6 +8,7 @@ import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 
 interface Recommendation {
   title: string;
@@ -82,6 +83,8 @@ export default function Search() {
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isAiMode, setIsAiMode] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const { session, user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -711,38 +714,60 @@ export default function Search() {
                       {quickMediaResults.slice(0, 8).map((result: any, idx: number) => (
                         <div
                           key={`${result.external_id || result.id}-${idx}`}
-                          onClick={() => {
-                            const type = result.type || 'movie';
-                            const source = result.source || result.external_source || 'tmdb';
-                            const id = result.external_id || result.id;
-                            if (type && source && id) {
-                              setLocation(`/media/${type}/${source}/${id}`);
-                            }
-                          }}
-                          className="flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer"
+                          className="flex items-center gap-3 p-4 hover:bg-gray-50"
                           data-testid={`media-result-${idx}`}
                         >
-                          {(result.image_url || result.poster_path || result.image) ? (
-                            <img
-                              src={result.image_url || result.poster_path || result.image}
-                              alt={result.title}
-                              className="w-12 h-16 object-cover rounded-lg flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                              {getMediaIcon(result.type || 'movie')}
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 truncate">{result.title}</p>
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                              <span className="capitalize">{result.type}</span>
-                              {result.year && <span>• {result.year}</span>}
-                            </div>
-                            {result.creator && (
-                              <p className="text-xs text-gray-400 truncate">{result.creator}</p>
+                          <div 
+                            className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                            onClick={() => {
+                              const type = result.type || 'movie';
+                              const source = result.source || result.external_source || 'tmdb';
+                              const id = result.external_id || result.id;
+                              if (type && source && id) {
+                                setLocation(`/media/${type}/${source}/${id}`);
+                              }
+                            }}
+                          >
+                            {(result.image_url || result.poster_path || result.image) ? (
+                              <img
+                                src={result.image_url || result.poster_path || result.image}
+                                alt={result.title}
+                                className="w-12 h-16 object-cover rounded-lg flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                {getMediaIcon(result.type || 'movie')}
+                              </div>
                             )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-gray-900 truncate">{result.title}</p>
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <span className="capitalize">{result.type}</span>
+                                {result.year && <span>• {result.year}</span>}
+                              </div>
+                              {result.creator && (
+                                <p className="text-xs text-gray-400 truncate">{result.creator}</p>
+                              )}
+                            </div>
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setQuickAddMedia({
+                                title: result.title,
+                                mediaType: result.type || 'movie',
+                                imageUrl: result.image_url || result.poster_path || result.image,
+                                externalId: result.external_id || result.id,
+                                externalSource: result.external_source || result.source || 'tmdb',
+                                creator: result.creator,
+                              });
+                              setIsQuickAddOpen(true);
+                            }}
+                            className="w-10 h-10 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center flex-shrink-0 transition-colors"
+                            data-testid={`add-media-${idx}`}
+                          >
+                            <Plus size={20} className="text-white" />
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -1027,6 +1052,15 @@ export default function Search() {
           </>
         )}
       </div>
+
+      <QuickAddListSheet
+        isOpen={isQuickAddOpen}
+        onClose={() => {
+          setIsQuickAddOpen(false);
+          setQuickAddMedia(null);
+        }}
+        media={quickAddMedia}
+      />
     </div>
   );
 }
