@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
-import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, CheckCircle, XCircle, Play } from 'lucide-react';
+import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, CheckCircle, XCircle, Play, ChevronDown, ChevronUp, Flame } from 'lucide-react';
 import { TriviaGameModal } from '@/components/trivia-game-modal';
 
 interface TriviaItem {
@@ -30,6 +30,7 @@ export function TriviaCarousel() {
   const [selectedAnswer, setSelectedAnswer] = useState<Record<string, string>>({});
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; stats: any }>>({});
   const [selectedChallenge, setSelectedChallenge] = useState<TriviaItem | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['trivia-carousel'],
@@ -173,7 +174,11 @@ export function TriviaCarousel() {
         throw error;
       }
       
-      await supabase.rpc('increment_user_points', { user_id_param: user.id, points_to_add: points });
+      try {
+        await supabase.rpc('increment_user_points', { user_id_param: user.id, points_to_add: points });
+      } catch (e) {
+        console.log('Points increment skipped');
+      }
       
       const { data: allPredictions } = await supabase
         .from('user_predictions')
@@ -267,8 +272,8 @@ export function TriviaCarousel() {
 
   if (isLoading) {
     return (
-      <Card className="bg-gradient-to-b from-slate-900 via-purple-950 to-indigo-950 border-0 rounded-2xl p-5 shadow-lg">
-        <div className="flex items-center justify-center py-6">
+      <Card className="bg-gradient-to-r from-purple-600 to-purple-700 border-0 rounded-2xl p-4 shadow-lg mb-4">
+        <div className="flex items-center justify-center py-4">
           <Loader2 className="w-6 h-6 animate-spin text-white" />
         </div>
       </Card>
@@ -277,174 +282,200 @@ export function TriviaCarousel() {
 
   if (isError || !data || data.length === 0) return null;
 
+  const currentItem = data[currentIndex];
+  const questionTeaser = currentItem?.question?.length > 30 
+    ? currentItem.question.substring(0, 30) + '...'
+    : currentItem?.question;
+
   return (
     <>
-      <Card className="bg-gradient-to-b from-slate-900 via-purple-950 to-indigo-950 border-0 rounded-2xl p-4 shadow-lg overflow-hidden relative">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-              <Brain className="w-3.5 h-3.5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-white">Quick Trivia</p>
-              <p className="text-[10px] text-white/70">Test your knowledge</p>
-            </div>
+      <Card className="bg-gradient-to-r from-purple-600 to-purple-700 border-0 rounded-2xl shadow-lg overflow-hidden relative mb-4">
+        <button 
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full p-4 flex items-center gap-3 text-left"
+        >
+          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+            <Play className="w-5 h-5 text-white fill-white" />
           </div>
           
-          <div className="flex items-center gap-1">
-            {currentIndex > 0 && (
-              <button
-                onClick={scrollToPrev}
-                className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4 text-white" />
-              </button>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/80">
+                <Flame className="w-3 h-3 text-white" />
+                <span className="text-[10px] text-white font-semibold uppercase">Live</span>
+              </div>
+              <span className="text-white/80 text-xs">+{currentItem?.pointsReward || 10} pts</span>
+            </div>
+            <p className="text-white font-semibold text-sm">TODAY'S CHALLENGE</p>
+            {!isExpanded && (
+              <p className="text-white/70 text-xs truncate">{questionTeaser}</p>
             )}
-            {currentIndex < data.length - 1 && (
-              <button
-                onClick={scrollToNext}
-                className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
-              >
-                <ChevronRight className="w-4 h-4 text-white" />
-              </button>
-            )}
-            <span className="text-xs text-white/60 ml-1">
-              {currentIndex + 1}/{data.length}
-            </span>
           </div>
-        </div>
+          
+          <div className="flex-shrink-0">
+            {isExpanded ? (
+              <ChevronUp className="w-5 h-5 text-white/70" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-white/70" />
+            )}
+          </div>
+        </button>
 
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
-        >
-          {data.map((item) => {
-            const answered = answeredQuestions[item.id];
-            const selected = selectedAnswer[item.id];
-            
-            if (item.isChallenge) {
-              return (
-                <div key={item.id} className="flex-shrink-0 w-full snap-center">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-600/40 border border-purple-500/30">
-                      <span className="text-xs text-purple-300 font-medium">+{item.pointsReward} pts</span>
-                    </div>
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-600/40 border border-amber-500/30">
-                      <span className="text-xs text-amber-300 font-medium">{item.questionCount} questions</span>
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-white font-semibold text-base mb-3">{item.title}</h3>
-                  <p className="text-white/70 text-sm mb-4">Challenge yourself with {item.questionCount} trivia questions!</p>
-                  
-                  {answered ? (
-                    <div className="py-3 px-4 rounded-xl bg-green-600/30 border border-green-500/50 text-center">
-                      <CheckCircle className="w-5 h-5 text-green-400 mx-auto mb-1" />
-                      <span className="text-sm text-green-300">Challenge Completed!</span>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setSelectedChallenge(item)}
-                      className="w-full py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium flex items-center justify-center gap-2 transition-colors"
-                    >
-                      <Play className="w-4 h-4" />
-                      Start Challenge
-                    </button>
-                  )}
-                </div>
-              );
-            }
-            
-            return (
-              <div key={item.id} className="flex-shrink-0 w-full snap-center">
-                <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-purple-600/40 border border-purple-500/30">
-                  <span className="text-xs text-purple-300 font-medium">+{item.pointsReward} pts</span>
-                </div>
-                
-                <h3 className="text-white font-semibold text-base mb-3">{item.question}</h3>
-                
-                {!answered ? (
-                  <div className="flex flex-col gap-2">
-                    {item.options.slice(0, 4).map((option, idx) => (
-                      <button
-                        key={idx}
-                        className={`py-3 px-4 rounded-xl border text-white text-sm font-medium transition-all text-left ${
-                          selected === option 
-                            ? 'bg-gradient-to-r from-purple-500 to-indigo-500 border-purple-300 shadow-lg shadow-purple-500/30' 
-                            : 'bg-purple-900/60 border-purple-700/50 hover:bg-purple-800/70 hover:border-purple-600'
-                        }`}
-                        onClick={() => handleSelectOption(item.id, option)}
-                        disabled={answerMutation.isPending}
-                      >
-                        {option}
-                      </button>
-                    ))}
-                    
-                    {selected && (
-                      <button
-                        onClick={() => handleSubmitAnswer(item)}
-                        disabled={answerMutation.isPending}
-                        className="mt-2 w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium transition-colors disabled:opacity-50"
-                      >
-                        {answerMutation.isPending ? 'Submitting...' : 'Submit'}
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {item.options.slice(0, 4).map((option, idx) => {
-                      const isUserAnswer = answered.answer === option;
-                      const isCorrect = item.correctAnswer === option;
-                      const percentage = answered.stats?.[option] || 0;
-                      
-                      return (
-                        <div 
-                          key={idx}
-                          className={`relative py-3 px-4 rounded-xl border overflow-hidden ${
-                            isUserAnswer && isCorrect
-                              ? 'border-green-400 bg-green-500/20'
-                              : isUserAnswer && !isCorrect
-                                ? 'border-red-400 bg-red-500/20'
-                                : isCorrect
-                                  ? 'border-green-400/50 bg-green-500/10'
-                                  : 'border-purple-700/30 bg-purple-900/40'
-                          }`}
-                        >
-                          <div 
-                            className="absolute left-0 top-0 bottom-0 bg-white/10 transition-all duration-500"
-                            style={{ width: `${percentage}%` }}
-                          />
-                          <div className="relative flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              {isCorrect && <Trophy className="w-4 h-4 text-green-400" />}
-                              {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-400" />}
-                              <span className="text-sm text-white">{option}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Users className="w-3 h-3 text-white/60" />
-                              <span className="text-sm font-bold text-white">{percentage}%</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+        {isExpanded && (
+          <div className="px-4 pb-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-1">
+                {currentIndex > 0 && (
+                  <button
+                    onClick={scrollToPrev}
+                    className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4 text-white" />
+                  </button>
+                )}
+                {currentIndex < data.length - 1 && (
+                  <button
+                    onClick={scrollToNext}
+                    className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4 text-white" />
+                  </button>
                 )}
               </div>
-            );
-          })}
-        </div>
-        
-        <Link href="/play/trivia">
-          <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-white/20 cursor-pointer hover:opacity-80 transition-opacity">
-            <Trophy className="w-3.5 h-3.5 text-white/80" />
-            <span className="text-xs text-white/80 font-medium">See all trivia & games</span>
+              <span className="text-xs text-white/60">
+                {currentIndex + 1}/{data.length}
+              </span>
+            </div>
+
+            <div
+              ref={scrollRef}
+              onScroll={handleScroll}
+              className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
+            >
+              {data.map((item) => {
+                const answered = answeredQuestions[item.id];
+                const selected = selectedAnswer[item.id];
+                
+                if (item.isChallenge) {
+                  return (
+                    <div key={item.id} className="flex-shrink-0 w-full snap-center">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 border border-white/30">
+                          <span className="text-xs text-white font-medium">+{item.pointsReward} pts</span>
+                        </div>
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/40 border border-amber-400/30">
+                          <span className="text-xs text-amber-100 font-medium">{item.questionCount} questions</span>
+                        </div>
+                      </div>
+                      
+                      <h3 className="text-white font-semibold text-base mb-3">{item.title}</h3>
+                      <p className="text-white/70 text-sm mb-4">Challenge yourself with {item.questionCount} trivia questions!</p>
+                      
+                      {answered ? (
+                        <div className="py-3 px-4 rounded-xl bg-green-500/30 border border-green-400/50 text-center">
+                          <CheckCircle className="w-5 h-5 text-green-300 mx-auto mb-1" />
+                          <span className="text-sm text-green-200">Challenge Completed!</span>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setSelectedChallenge(item)}
+                          className="w-full py-3 px-4 rounded-xl bg-white text-purple-700 font-medium flex items-center justify-center gap-2 hover:bg-white/90 transition-colors"
+                        >
+                          <Play className="w-4 h-4" />
+                          Start Challenge
+                        </button>
+                      )}
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div key={item.id} className="flex-shrink-0 w-full snap-center">
+                    <h3 className="text-white font-semibold text-base mb-3">{item.question}</h3>
+                    
+                    {!answered ? (
+                      <div className="flex flex-col gap-2">
+                        {item.options.slice(0, 4).map((option, idx) => (
+                          <button
+                            key={idx}
+                            className={`py-3 px-4 rounded-xl border text-white text-sm font-medium transition-all text-left ${
+                              selected === option 
+                                ? 'bg-white text-purple-700 border-white shadow-lg' 
+                                : 'bg-white/10 border-white/30 hover:bg-white/20 hover:border-white/50'
+                            }`}
+                            onClick={() => handleSelectOption(item.id, option)}
+                            disabled={answerMutation.isPending}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                        
+                        {selected && (
+                          <button
+                            onClick={() => handleSubmitAnswer(item)}
+                            disabled={answerMutation.isPending}
+                            className="mt-2 w-full py-2.5 rounded-xl bg-white text-purple-700 font-semibold hover:bg-white/90 transition-colors disabled:opacity-50"
+                          >
+                            {answerMutation.isPending ? 'Submitting...' : 'Submit Answer'}
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {item.options.slice(0, 4).map((option, idx) => {
+                          const isUserAnswer = answered.answer === option;
+                          const isCorrect = item.correctAnswer === option;
+                          const percentage = answered.stats?.[option] || 0;
+                          
+                          return (
+                            <div 
+                              key={idx}
+                              className={`relative py-3 px-4 rounded-xl border overflow-hidden ${
+                                isUserAnswer && isCorrect
+                                  ? 'border-green-300 bg-green-500/30'
+                                  : isUserAnswer && !isCorrect
+                                    ? 'border-red-300 bg-red-500/30'
+                                    : isCorrect
+                                      ? 'border-green-300/50 bg-green-500/20'
+                                      : 'border-white/20 bg-white/10'
+                              }`}
+                            >
+                              <div 
+                                className="absolute left-0 top-0 bottom-0 bg-white/10 transition-all duration-500"
+                                style={{ width: `${percentage}%` }}
+                              />
+                              <div className="relative flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                  {isCorrect && <Trophy className="w-4 h-4 text-green-300" />}
+                                  {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-300" />}
+                                  <span className="text-sm text-white">{option}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Users className="w-3 h-3 text-white/60" />
+                                  <span className="text-sm font-bold text-white">{percentage}%</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            
+            <Link href="/play/trivia">
+              <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-white/20 cursor-pointer hover:opacity-80 transition-opacity">
+                <Trophy className="w-3.5 h-3.5 text-white/80" />
+                <span className="text-xs text-white/80 font-medium">See all trivia & games</span>
+              </div>
+            </Link>
           </div>
-        </Link>
+        )}
 
         {answerMutation.isPending && (
-          <div className="absolute inset-0 bg-purple-950/50 flex items-center justify-center rounded-2xl">
+          <div className="absolute inset-0 bg-purple-700/50 flex items-center justify-center rounded-2xl">
             <Loader2 className="w-6 h-6 animate-spin text-white" />
           </div>
         )}
