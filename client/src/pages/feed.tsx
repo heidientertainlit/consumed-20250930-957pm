@@ -15,6 +15,8 @@ import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { TriviaCarousel } from "@/components/trivia-carousel";
+import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
+import { PollsCarousel } from "@/components/polls-carousel";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -2905,11 +2907,17 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* Trivia Carousel - first item in feed */}
+              {/* 1. Trivia Carousel - first item in feed */}
               <TriviaCarousel />
 
-              {/* DNA Moment Card - inline in feed */}
+              {/* 2. Leaderboard Glimpse */}
+              <LeaderboardGlimpse />
+
+              {/* 3. DNA Moment Card */}
               <DnaMomentCard />
+
+              {/* 4. Polls Carousel */}
+              <PollsCarousel />
 
               {/* Featured Play card when game filter is active */}
               {(selectedFilter === 'games' || selectedFilter === 'trivia' || selectedFilter === 'polls' || selectedFilter === 'predictions') && (
