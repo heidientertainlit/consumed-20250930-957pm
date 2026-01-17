@@ -2687,11 +2687,6 @@ export default function Feed() {
           <div className="mb-4">
             <DailyChallengeCard />
           </div>
-          
-          {/* DNA Moment */}
-          <div className="mb-4">
-            <DnaMomentCard />
-          </div>
         </div>
       </div>
 
@@ -2782,6 +2777,9 @@ export default function Feed() {
                   )}
                 </div>
               )}
+
+              {/* DNA Moment Card - inline in feed */}
+              <DnaMomentCard />
 
               {/* Featured Play card when game filter is active */}
               {(selectedFilter === 'games' || selectedFilter === 'trivia' || selectedFilter === 'polls' || selectedFilter === 'predictions') && (
