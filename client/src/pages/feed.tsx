@@ -17,6 +17,11 @@ import { DnaMomentCard } from "@/components/dna-moment-card";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
+import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
+import { HotTakesGlimpse } from "@/components/hot-takes-glimpse";
+import { GamesCarousel } from "@/components/games-carousel";
+import { RanksGlimpse } from "@/components/ranks-glimpse";
+import { PointsGlimpse } from "@/components/points-glimpse";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -2907,7 +2912,7 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* 1. Trivia Carousel - first item in feed */}
+              {/* 1. Quick Trivia Carousel */}
               <TriviaCarousel />
 
               {/* 2. Leaderboard Glimpse */}
@@ -2916,8 +2921,46 @@ export default function Feed() {
               {/* 3. DNA Moment Card */}
               <DnaMomentCard />
 
-              {/* 4. Polls Carousel */}
+              {/* 4. Consumption Carousel - What friends are consuming */}
+              {socialPosts && socialPosts.length > 0 && (
+                <ConsumptionCarousel 
+                  items={(socialPosts || [])
+                    .filter((p: any) => p.mediaItems?.length > 0 && p.user)
+                    .slice(0, 10)
+                    .map((p: any) => ({
+                      id: p.id,
+                      userId: p.user?.id || '',
+                      username: p.user?.username || '',
+                      displayName: p.user?.display_name || p.user?.username || '',
+                      avatar: p.user?.avatar_url,
+                      action: p.post_type === 'rating' ? 'rated' : 'added',
+                      mediaTitle: p.mediaItems[0]?.title || '',
+                      mediaType: p.mediaItems[0]?.type || 'movie',
+                      mediaImage: p.mediaItems[0]?.imageUrl || '',
+                      rating: p.rating,
+                      timestamp: p.createdAt || new Date().toISOString()
+                    }))}
+                  title="What friends are consuming"
+                />
+              )}
+
+              {/* 5. Recommendations */}
+              <RecommendationsGlimpse />
+
+              {/* 6. Quick Polls */}
               <PollsCarousel />
+
+              {/* 7-8. Hot Takes (User + Consumed) */}
+              <HotTakesGlimpse />
+
+              {/* 9. Points Glimpse - Friend scores */}
+              <PointsGlimpse />
+
+              {/* 10. Games Carousel */}
+              <GamesCarousel />
+
+              {/* 11. Ranks Glimpse */}
+              <RanksGlimpse />
 
               {/* Featured Play card when game filter is active */}
               {(selectedFilter === 'games' || selectedFilter === 'trivia' || selectedFilter === 'polls' || selectedFilter === 'predictions') && (
