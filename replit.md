@@ -90,6 +90,7 @@ Preferred communication style: Simple, everyday language.
 - Prediction Resolution: Supports timed/open-ended predictions with scoring.
 - AI Builder (`/library-ai`): Customization of lists and tracking via visual builder and AI chat.
 - DNA Levels System: Two-tier "Entertainment DNA" (survey-based) with friend comparison and unified insights.
+- DNA Moments: Quick binary questions in the feed that build Entertainment DNA while feeling like games. Shows % splits, friend answers, and earns points. Data stored in `dna_moments` and `dna_moment_responses` tables. Edge functions: `get-dna-moment`, `answer-dna-moment`.
 
 ### Feature Specifications
 - Friend Profile Viewing: Friends can view Stats, DNA, Collections with appropriate URL parameters.
