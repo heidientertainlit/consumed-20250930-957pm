@@ -42,6 +42,7 @@ export function DailyChallengeCard() {
   const [customResponse, setCustomResponse] = useState('');
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [submittedResult, setSubmittedResult] = useState<{ isCorrect: boolean; correctAnswer: string; userAnswer: string } | null>(null);
 
   const { data: challenge, isLoading: challengeLoading } = useQuery({
     queryKey: ['daily-challenge'],
@@ -121,6 +122,11 @@ export function DailyChallengeCard() {
     },
     onSuccess: (result) => {
       setHasSubmitted(true);
+      setSubmittedResult({
+        isCorrect: result.isCorrect,
+        correctAnswer: result.correctAnswer || '',
+        userAnswer: selectedOption || ''
+      });
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
       
       if (challenge?.challenge_type === 'trivia') {
@@ -204,7 +210,7 @@ export function DailyChallengeCard() {
 
   if (challengeLoading) {
     return (
-      <Card className="p-4 bg-blue-600 border-0">
+      <Card className="p-4 bg-gradient-to-br from-blue-500 via-blue-400 to-cyan-400 border-0">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-white" />
         </div>
@@ -216,8 +222,8 @@ export function DailyChallengeCard() {
 
   return (
     <Card 
-      className="bg-blue-600 border-0 overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
-      onClick={() => !isExpanded && setIsExpanded(true)}
+      className="bg-gradient-to-br from-blue-500 via-blue-400 to-cyan-400 border-0 overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
+      onClick={() => setIsExpanded(!isExpanded)}
       data-testid="daily-challenge-card"
     >
       {/* Collapsed Header - Always visible */}
@@ -246,27 +252,51 @@ export function DailyChallengeCard() {
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="px-4 pb-4 pt-0 border-t border-purple-500/20">
-          <div className="flex items-center gap-1 text-xs text-gray-400 mt-3 mb-3">
+        <div className="px-4 pb-4 pt-0 border-t border-white/20" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-1 text-xs text-white/70 mt-3 mb-3">
             <Calendar className="w-3 h-3" />
             {new Date(displayChallenge.scheduled_date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
           </div>
           
           <h3 className="text-lg font-bold text-white mb-2">{displayChallenge.title}</h3>
           {displayChallenge.description && (
-            <p className="text-sm text-gray-300 mb-4">{displayChallenge.description}</p>
+            <p className="text-sm text-white/80 mb-4">{displayChallenge.description}</p>
           )}
 
           {alreadyCompleted ? (
-            <div className="flex items-center gap-2 p-3 bg-green-500/20 rounded-lg border border-green-500/30">
-              <CheckCircle className="w-5 h-5 text-green-400" />
-              <div>
-                <p className="text-green-300 font-medium">Challenge Complete!</p>
-                {existingResponse && (
-                  <p className="text-xs text-green-400/70">
-                    You earned {existingResponse.points_earned} points
-                  </p>
-                )}
+            <div className="space-y-2">
+              {displayChallenge.options?.map((option, idx) => {
+                const isCorrect = option === (submittedResult?.correctAnswer || displayChallenge.correct_answer);
+                const isUserAnswer = option === (submittedResult?.userAnswer || existingResponse?.response?.answer);
+                
+                return (
+                  <div 
+                    key={idx}
+                    className={`relative py-3 px-4 rounded-2xl overflow-hidden ${
+                      isCorrect 
+                        ? 'bg-green-500/30 border border-green-400/50' 
+                        : isUserAnswer && !isCorrect
+                          ? 'bg-red-500/20 border border-red-400/30'
+                          : 'bg-white/15 border border-white/20'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        {isCorrect && <CheckCircle className="w-4 h-4 text-green-400" />}
+                        <span className="text-sm text-white font-medium">{option}</span>
+                      </div>
+                      {isCorrect && (
+                        <span className="text-xs text-green-300 font-medium">Correct Answer</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="flex items-center justify-center gap-2 mt-3 pt-3 border-t border-white/20">
+                <Trophy className="w-4 h-4 text-yellow-400" />
+                <span className="text-sm text-white font-medium">
+                  +{existingResponse?.points_earned || displayChallenge.points_reward} points earned
+                </span>
               </div>
             </div>
           ) : (
@@ -298,11 +328,11 @@ export function DailyChallengeCard() {
                   {displayChallenge.options.map((option, idx) => (
                     <button
                       key={idx}
-                      onClick={() => setSelectedOption(option)}
-                      className={`w-full p-3 rounded-lg text-left transition-all ${
+                      onClick={(e) => { e.stopPropagation(); setSelectedOption(option); }}
+                      className={`w-full p-3 rounded-2xl text-left transition-all ${
                         selectedOption === option
-                          ? 'bg-purple-600 text-white border-2 border-purple-400'
-                          : 'bg-white/10 text-gray-200 border-2 border-transparent hover:bg-white/20'
+                          ? 'bg-white/40 text-white shadow-lg ring-2 ring-white/50'
+                          : 'bg-white/20 text-white hover:bg-white/30'
                       }`}
                       data-testid={`challenge-option-${idx}`}
                     >
@@ -310,15 +340,15 @@ export function DailyChallengeCard() {
                     </button>
                   ))}
                   <Button
-                    onClick={handleSubmit}
+                    onClick={(e) => { e.stopPropagation(); handleSubmit(); }}
                     disabled={!selectedOption || submitMutation.isPending}
-                    className="w-full mt-3 bg-purple-600 hover:bg-purple-700"
+                    className="w-full mt-3 bg-white/30 hover:bg-white/40 text-white font-semibold"
                     data-testid="submit-challenge"
                   >
                     {submitMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                     ) : null}
-                    Submit Answer
+                    Submit
                   </Button>
                 </div>
               ) : null}

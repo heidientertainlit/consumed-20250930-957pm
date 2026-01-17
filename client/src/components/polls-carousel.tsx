@@ -203,7 +203,7 @@ export function PollsCarousel() {
   if (!session) return null;
   if (isLoading) {
     return (
-      <Card className="bg-gradient-to-br from-blue-500 via-blue-400 to-cyan-400 border-0 rounded-2xl p-5 shadow-lg mb-4">
+      <Card className="bg-gradient-to-r from-blue-600 to-cyan-600 border-0 rounded-2xl p-5 shadow-lg mb-4">
         <div className="flex items-center justify-center py-6">
           <Loader2 className="w-6 h-6 animate-spin text-white" />
         </div>
@@ -213,7 +213,7 @@ export function PollsCarousel() {
   if (isError || !data || data.length === 0) return null;
 
   return (
-    <Card className="bg-gradient-to-br from-blue-500 via-blue-400 to-cyan-400 border-0 rounded-2xl p-4 shadow-lg mb-4 overflow-hidden relative">
+    <Card className="bg-gradient-to-r from-blue-600 to-cyan-600 border-0 rounded-2xl p-4 shadow-lg mb-4 overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
@@ -247,8 +247,8 @@ export function PollsCarousel() {
           
           return (
             <div key={poll.id} className="flex-shrink-0 w-full snap-center">
-              <div className="inline-flex items-center gap-1 mb-3 px-2.5 py-1 rounded-full bg-white/20">
-                <span className="text-xs text-white font-medium">+{poll.pointsReward} pts</span>
+              <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-blue-400/40 border border-blue-300/30">
+                <span className="text-xs text-blue-100 font-medium">+{poll.pointsReward} pts</span>
               </div>
               
               <h3 className="text-white font-semibold text-base mb-3">{poll.title}</h3>
@@ -258,10 +258,10 @@ export function PollsCarousel() {
                   {poll.options.slice(0, 4).map((option, idx) => (
                     <button
                       key={idx}
-                      className={`py-3 px-4 rounded-2xl border-0 text-white text-sm font-medium transition-all text-left ${
+                      className={`py-3 px-4 rounded-xl border text-white text-sm font-medium transition-all text-left ${
                         selected === option 
-                          ? 'bg-white/40 shadow-lg ring-2 ring-white/50' 
-                          : 'bg-white/25 hover:bg-white/35'
+                          ? 'bg-gradient-to-r from-blue-400 to-cyan-400 border-blue-200 shadow-lg' 
+                          : 'bg-blue-800/40 border-blue-500/30 hover:bg-blue-700/50'
                       }`}
                       onClick={() => setSelectedOption(prev => ({ ...prev, [poll.id]: option }))}
                       disabled={voteMutation.isPending}
@@ -274,7 +274,7 @@ export function PollsCarousel() {
                     <button
                       onClick={() => handleVote(poll)}
                       disabled={voteMutation.isPending}
-                      className="mt-2 w-full py-2.5 rounded-2xl bg-white/40 text-white font-semibold hover:bg-white/50 transition-all"
+                      className="mt-2 w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium"
                     >
                       {voteMutation.isPending ? 'Voting...' : 'Vote'}
                     </button>
