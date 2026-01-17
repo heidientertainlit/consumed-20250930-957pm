@@ -6,11 +6,10 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
-import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, Zap } from 'lucide-react';
+import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, CheckCircle, XCircle, Play } from 'lucide-react';
+import { TriviaGameModal } from '@/components/trivia-game-modal';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-
-interface TriviaQuestion {
+interface TriviaItem {
   id: string;
   title: string;
   question: string;
@@ -18,6 +17,9 @@ interface TriviaQuestion {
   correctAnswer?: string;
   category?: string;
   pointsReward: number;
+  isChallenge: boolean;
+  questionCount: number;
+  rawOptions: any;
 }
 
 export function TriviaCarousel() {
@@ -25,7 +27,9 @@ export function TriviaCarousel() {
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<Record<string, string>>({});
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; stats: any }>>({});
+  const [selectedChallenge, setSelectedChallenge] = useState<TriviaItem | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['trivia-carousel'],
@@ -36,16 +40,20 @@ export function TriviaCarousel() {
         .eq('type', 'trivia')
         .eq('status', 'open')
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(10);
       
       if (error) throw error;
       
-      const questions: TriviaQuestion[] = (pools || []).map(pool => {
+      const items: TriviaItem[] = (pools || []).map(pool => {
         let questionText = pool.title;
         let optionsList: string[] = [];
+        let isChallenge = false;
+        let questionCount = 1;
         
         if (pool.options && Array.isArray(pool.options)) {
           if (pool.options.length > 0 && typeof pool.options[0] === 'object' && pool.options[0]?.question) {
+            isChallenge = pool.options.length > 1;
+            questionCount = pool.options.length;
             const firstQ = pool.options[0];
             questionText = firstQ.question || pool.title;
             optionsList = firstQ.options || [];
@@ -61,11 +69,14 @@ export function TriviaCarousel() {
           options: optionsList,
           correctAnswer: pool.correct_answer,
           category: pool.category,
-          pointsReward: pool.points_reward || 10
+          pointsReward: pool.points_reward || 10,
+          isChallenge,
+          questionCount,
+          rawOptions: pool.options
         };
       });
       
-      return questions;
+      return items;
     },
     enabled: !!session?.access_token
   });
@@ -85,6 +96,7 @@ export function TriviaCarousel() {
         
         for (const p of predictions) {
           const question = data.find(q => q.id === p.pool_id);
+          if (!question) continue;
           
           const { data: allPredictions } = await supabase
             .from('user_predictions')
@@ -112,7 +124,7 @@ export function TriviaCarousel() {
   }, [data, user?.id]);
 
   const answerMutation = useMutation({
-    mutationFn: async ({ questionId, answer, pointsReward }: { questionId: string; answer: string; pointsReward: number }) => {
+    mutationFn: async ({ questionId, answer, pointsReward, correctAnswer }: { questionId: string; answer: string; pointsReward: number; correctAnswer?: string }) => {
       if (!user?.id) throw new Error('Not logged in');
       
       const { data: existingAnswer } = await supabase
@@ -126,8 +138,7 @@ export function TriviaCarousel() {
         throw new Error('You already answered this question');
       }
       
-      const question = data?.find(q => q.id === questionId);
-      const isCorrect = question?.correctAnswer === answer;
+      const isCorrect = correctAnswer === answer;
       const points = isCorrect ? pointsReward : Math.floor(pointsReward / 2);
       
       const { error } = await supabase
@@ -153,6 +164,7 @@ export function TriviaCarousel() {
         .select('prediction')
         .eq('pool_id', questionId);
       
+      const question = data?.find(q => q.id === questionId);
       const total = allPredictions?.length || 1;
       const stats: Record<string, number> = {};
       for (const opt of question?.options || []) {
@@ -175,19 +187,19 @@ export function TriviaCarousel() {
       queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
       
       toast({
-        title: result.isCorrect ? `Correct! +${result.points} points` : `+${result.points} points`,
-        description: result.isCorrect ? 'Great job!' : 'Better luck next time!',
+        title: result.isCorrect ? `Correct! +${result.points} points` : `Wrong! +${result.points} points`,
+        description: result.isCorrect ? 'Nice work!' : 'Half points for trying!',
       });
       
       setTimeout(() => {
         if (data && currentIndex < data.length - 1) {
           scrollToNext();
         }
-      }, 1500);
+      }, 2000);
     },
     onError: (error: Error) => {
       toast({
-        title: 'Error',
+        title: 'Already Played',
         description: error.message,
         variant: 'destructive'
       });
@@ -219,6 +231,22 @@ export function TriviaCarousel() {
     }
   };
 
+  const handleSelectOption = (questionId: string, option: string) => {
+    setSelectedAnswer(prev => ({ ...prev, [questionId]: option }));
+  };
+
+  const handleSubmitAnswer = (item: TriviaItem) => {
+    const answer = selectedAnswer[item.id];
+    if (!answer) return;
+    
+    answerMutation.mutate({
+      questionId: item.id,
+      answer,
+      pointsReward: item.pointsReward,
+      correctAnswer: item.correctAnswer
+    });
+  };
+
   if (!session) return null;
 
   if (isLoading) {
@@ -234,130 +262,192 @@ export function TriviaCarousel() {
   if (isError || !data || data.length === 0) return null;
 
   return (
-    <Card className="bg-gradient-to-b from-slate-900 via-purple-950 to-indigo-950 border-0 rounded-2xl p-4 shadow-lg overflow-hidden relative">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-            <Brain className="w-3.5 h-3.5 text-white" />
+    <>
+      <Card className="bg-gradient-to-b from-slate-900 via-purple-950 to-indigo-950 border-0 rounded-2xl p-4 shadow-lg overflow-hidden relative">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+              <Brain className="w-3.5 h-3.5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Quick Trivia</p>
+              <p className="text-[10px] text-white/70">Test your knowledge</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-white">Quick Trivia</p>
-            <p className="text-[10px] text-white/70">Test your knowledge</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-1">
-          {currentIndex > 0 && (
-            <button
-              onClick={scrollToPrev}
-              className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4 text-white" />
-            </button>
-          )}
-          {currentIndex < data.length - 1 && (
-            <button
-              onClick={scrollToNext}
-              className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
-            >
-              <ChevronRight className="w-4 h-4 text-white" />
-            </button>
-          )}
-          <span className="text-xs text-white/60 ml-1">
-            {currentIndex + 1}/{data.length}
-          </span>
-        </div>
-      </div>
-
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
-      >
-        {data.map((question) => {
-          const answered = answeredQuestions[question.id];
           
-          return (
-            <div key={question.id} className="flex-shrink-0 w-full snap-center">
-              <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-purple-600/40 border border-purple-500/30">
-                <span className="text-xs text-purple-300 font-medium">+{question.pointsReward} pts</span>
-              </div>
-              
-              <h3 className="text-white font-semibold text-base mb-3">{question.question}</h3>
-              
-              {!answered ? (
-                <div className="flex flex-col gap-2">
-                  {question.options.slice(0, 4).map((option, idx) => (
+          <div className="flex items-center gap-1">
+            {currentIndex > 0 && (
+              <button
+                onClick={scrollToPrev}
+                className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4 text-white" />
+              </button>
+            )}
+            {currentIndex < data.length - 1 && (
+              <button
+                onClick={scrollToNext}
+                className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
+              >
+                <ChevronRight className="w-4 h-4 text-white" />
+              </button>
+            )}
+            <span className="text-xs text-white/60 ml-1">
+              {currentIndex + 1}/{data.length}
+            </span>
+          </div>
+        </div>
+
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
+        >
+          {data.map((item) => {
+            const answered = answeredQuestions[item.id];
+            const selected = selectedAnswer[item.id];
+            
+            if (item.isChallenge) {
+              return (
+                <div key={item.id} className="flex-shrink-0 w-full snap-center">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-600/40 border border-purple-500/30">
+                      <span className="text-xs text-purple-300 font-medium">+{item.pointsReward} pts</span>
+                    </div>
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-600/40 border border-amber-500/30">
+                      <span className="text-xs text-amber-300 font-medium">{item.questionCount} questions</span>
+                    </div>
+                  </div>
+                  
+                  <h3 className="text-white font-semibold text-base mb-3">{item.title}</h3>
+                  <p className="text-white/70 text-sm mb-4">Challenge yourself with {item.questionCount} trivia questions!</p>
+                  
+                  {answered ? (
+                    <div className="py-3 px-4 rounded-xl bg-green-600/30 border border-green-500/50 text-center">
+                      <CheckCircle className="w-5 h-5 text-green-400 mx-auto mb-1" />
+                      <span className="text-sm text-green-300">Challenge Completed!</span>
+                    </div>
+                  ) : (
                     <button
-                      key={idx}
-                      className="py-3 px-4 rounded-xl bg-purple-900/60 border border-purple-700/50 text-white text-sm font-medium hover:bg-purple-800/70 hover:border-purple-600 transition-all text-left"
-                      onClick={() => answerMutation.mutate({ 
-                        questionId: question.id, 
-                        answer: option,
-                        pointsReward: question.pointsReward 
-                      })}
-                      disabled={answerMutation.isPending}
+                      onClick={() => setSelectedChallenge(item)}
+                      className="w-full py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium flex items-center justify-center gap-2 transition-colors"
                     >
-                      {option}
+                      <Play className="w-4 h-4" />
+                      Start Challenge
                     </button>
-                  ))}
+                  )}
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {question.options.slice(0, 4).map((option, idx) => {
-                    const isSelected = answered.answer === option;
-                    const isCorrect = question.correctAnswer === option;
-                    const percentage = answered.stats?.[option] || 0;
-                    
-                    return (
-                      <div 
+              );
+            }
+            
+            return (
+              <div key={item.id} className="flex-shrink-0 w-full snap-center">
+                <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-purple-600/40 border border-purple-500/30">
+                  <span className="text-xs text-purple-300 font-medium">+{item.pointsReward} pts</span>
+                </div>
+                
+                <h3 className="text-white font-semibold text-base mb-3">{item.question}</h3>
+                
+                {!answered ? (
+                  <div className="flex flex-col gap-2">
+                    {item.options.slice(0, 4).map((option, idx) => (
+                      <button
                         key={idx}
-                        className={`relative p-2 rounded-xl border-2 overflow-hidden ${
-                          isCorrect 
-                            ? 'border-green-400 bg-green-500/20' 
-                            : isSelected 
-                              ? 'border-red-400 bg-red-500/20'
-                              : 'border-white/20 bg-white/10'
+                        className={`py-3 px-4 rounded-xl border text-white text-sm font-medium transition-all text-left ${
+                          selected === option 
+                            ? 'bg-purple-600/80 border-purple-400' 
+                            : 'bg-purple-900/60 border-purple-700/50 hover:bg-purple-800/70 hover:border-purple-600'
                         }`}
+                        onClick={() => handleSelectOption(item.id, option)}
+                        disabled={answerMutation.isPending}
                       >
+                        {option}
+                      </button>
+                    ))}
+                    
+                    {selected && (
+                      <button
+                        onClick={() => handleSubmitAnswer(item)}
+                        disabled={answerMutation.isPending}
+                        className="mt-2 w-full py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium transition-colors disabled:opacity-50"
+                      >
+                        {answerMutation.isPending ? 'Submitting...' : 'Vote'}
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {item.options.slice(0, 4).map((option, idx) => {
+                      const isUserAnswer = answered.answer === option;
+                      const isCorrect = item.correctAnswer === option;
+                      const percentage = answered.stats?.[option] || 0;
+                      
+                      return (
                         <div 
-                          className={`absolute left-0 top-0 bottom-0 transition-all duration-500 ${
-                            isCorrect ? 'bg-green-500/30' : 'bg-white/10'
+                          key={idx}
+                          className={`relative py-3 px-4 rounded-xl border overflow-hidden ${
+                            isUserAnswer && isCorrect
+                              ? 'border-green-400 bg-green-500/20'
+                              : isUserAnswer && !isCorrect
+                                ? 'border-red-400 bg-red-500/20'
+                                : isCorrect
+                                  ? 'border-green-400/50 bg-green-500/10'
+                                  : 'border-purple-700/30 bg-purple-900/40'
                           }`}
-                          style={{ width: `${percentage}%` }}
-                        />
-                        <div className="relative flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            {isCorrect && <Trophy className="w-4 h-4 text-green-400" />}
-                            <span className="text-sm text-white">{option}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Users className="w-3 h-3 text-white/60" />
-                            <span className="text-sm font-bold text-white">{percentage}%</span>
+                        >
+                          <div 
+                            className="absolute left-0 top-0 bottom-0 bg-white/10 transition-all duration-500"
+                            style={{ width: `${percentage}%` }}
+                          />
+                          <div className="relative flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              {isCorrect && <Trophy className="w-4 h-4 text-green-400" />}
+                              {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-400" />}
+                              <span className="text-sm text-white">{option}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Users className="w-3 h-3 text-white/60" />
+                              <span className="text-sm font-bold text-white">{percentage}%</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      
-      <Link href="/play">
-        <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-white/20 cursor-pointer hover:opacity-80 transition-opacity">
-          <Trophy className="w-3.5 h-3.5 text-white/80" />
-          <span className="text-xs text-white/80 font-medium">See all trivia & games</span>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      </Link>
+        
+        <Link href="/play/trivia">
+          <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-white/20 cursor-pointer hover:opacity-80 transition-opacity">
+            <Trophy className="w-3.5 h-3.5 text-white/80" />
+            <span className="text-xs text-white/80 font-medium">See all trivia & games</span>
+          </div>
+        </Link>
 
-      {answerMutation.isPending && (
-        <div className="absolute inset-0 bg-purple-950/50 flex items-center justify-center rounded-2xl">
-          <Loader2 className="w-6 h-6 animate-spin text-white" />
-        </div>
+        {answerMutation.isPending && (
+          <div className="absolute inset-0 bg-purple-950/50 flex items-center justify-center rounded-2xl">
+            <Loader2 className="w-6 h-6 animate-spin text-white" />
+          </div>
+        )}
+      </Card>
+
+      {selectedChallenge && (
+        <TriviaGameModal
+          poolId={selectedChallenge.id}
+          title={selectedChallenge.title}
+          questions={selectedChallenge.rawOptions}
+          pointsReward={selectedChallenge.pointsReward}
+          correctAnswer={selectedChallenge.correctAnswer}
+          isOpen={true}
+          onClose={() => {
+            setSelectedChallenge(null);
+            queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
+          }}
+        />
       )}
-    </Card>
+    </>
   );
 }
