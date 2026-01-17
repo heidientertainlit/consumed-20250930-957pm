@@ -2813,9 +2813,9 @@ export default function Feed() {
             <p className="text-gray-400 text-sm mt-3">Compete, predict, and share your take.</p>
           </div>
           
-          {/* Daily Challenge */}
+          {/* Today's Challenge - Trivia */}
           <div className="mb-4">
-            <DailyChallengeCard />
+            <TriviaCarousel />
           </div>
         </div>
       </div>
@@ -2909,10 +2909,7 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* 1. Trivia Carousel */}
-              <TriviaCarousel />
-
-              {/* 2. Leaderboard snippet */}
+              {/* 1. Leaderboard snippet */}
               <LeaderboardGlimpse />
 
               {/* 3. DNA Moment */}
