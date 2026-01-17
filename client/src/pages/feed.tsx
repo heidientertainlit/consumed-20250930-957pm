@@ -2813,10 +2813,6 @@ export default function Feed() {
             <p className="text-gray-400 text-sm mt-3">Compete, predict, and share your take.</p>
           </div>
           
-          {/* Today's Challenge - Trivia */}
-          <div className="mb-4">
-            <TriviaCarousel />
-          </div>
         </div>
       </div>
 
@@ -2909,19 +2905,29 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* 1. Leaderboard snippet */}
+              {/* 1. Trivia */}
+              <TriviaCarousel />
+
+              {/* 2. Leaderboard snippet */}
               <LeaderboardGlimpse />
 
-              {/* 3. DNA Moment */}
+              {/* 3. Consumption carousel - first batch will appear in posts below */}
+
+              {/* 4. DNA Moment */}
               <DnaMomentCard />
 
-              {/* 4. Hot Take */}
+              {/* 5. Hot Take */}
               <HotTakeCard />
 
-              {/* 5. Polls Carousel */}
+              {/* 6. Polls Carousel */}
               <PollsCarousel />
 
-              {/* 6. General Play Carousel */}
+              {/* 7. Consumption - second batch will appear in posts below */}
+
+              {/* 8. Second DNA Moment */}
+              <DnaMomentCard />
+
+              {/* 9. General Play Carousel */}
               <GeneralPlayCarousel />
 
               {/* Featured Play card when game filter is active */}
