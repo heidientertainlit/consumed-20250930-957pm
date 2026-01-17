@@ -955,7 +955,7 @@ export default function Search() {
             {/* Quick Add Section */}
             {(recommendedContent.length >= 2 || trendingTVShows.length >= 2) && (
               <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e] rounded-2xl p-4 mb-4">
-                <p className="text-gray-400 text-xs font-medium uppercase tracking-wide mb-3">Based on your Entertainment DNA</p>
+                <p className="text-gray-400 text-xs font-medium uppercase tracking-wide mb-3">Quick add based on your Entertainment DNA</p>
                 <div className="flex flex-col gap-2">
                   {(recommendedContent.length >= 2 ? recommendedContent.slice(0, 2) : trendingTVShows.slice(0, 2)).map((item: any) => (
                     <div
