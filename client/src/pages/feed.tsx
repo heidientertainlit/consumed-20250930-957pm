@@ -4732,21 +4732,30 @@ export default function Feed() {
               );
               })}
 
-              {/* Infinite Scroll Loading Indicator */}
-              {isFetchingNextPage && (
+              {/* Infinite Scroll Loading Indicator - only show for All/games filters */}
+              {isFetchingNextPage && (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
                   <p className="text-gray-500 mt-3">Loading more posts...</p>
                 </div>
               )}
 
-              {/* Intersection Observer Target */}
-              {hasNextPage && !isFetchingNextPage && (
+              {/* Intersection Observer Target - only for All/games filters */}
+              {hasNextPage && !isFetchingNextPage && (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
                 <div ref={loadMoreRef} className="h-20" />
               )}
 
+              {/* End of Feed message for specific filters */}
+              {['trivia', 'polls', 'predictions', 'dna', 'hot_takes'].includes(selectedFilter) && (
+                <div className="text-center py-8 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-100 mt-4">
+                  <div className="text-3xl mb-2">🎯</div>
+                  <p className="text-gray-600 font-medium">That's all for now!</p>
+                  <p className="text-gray-500 text-sm mt-1">Check back later for more {selectedFilter === 'trivia' ? 'trivia' : selectedFilter === 'polls' ? 'polls' : selectedFilter === 'predictions' ? 'predictions' : selectedFilter === 'dna' ? 'DNA moments' : 'hot takes'}</p>
+                </div>
+              )}
+
               {/* End of Feed - keep it clean, no message */}
-              {!hasNextPage && filteredPosts.length > 0 && (
+              {!hasNextPage && filteredPosts.length > 0 && (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
                 <div className="h-8" />
               )}
 
