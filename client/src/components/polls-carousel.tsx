@@ -329,12 +329,14 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         })}
       </div>
       
-      <Link href="/play">
-        <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-white/20 cursor-pointer hover:opacity-80">
-          <BarChart3 className="w-3.5 h-3.5 text-white/80" />
-          <span className="text-xs text-white/80 font-medium">See all polls</span>
-        </div>
-      </Link>
+      {!category && (
+        <Link href="/play">
+          <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-white/20 cursor-pointer hover:opacity-80">
+            <BarChart3 className="w-3.5 h-3.5 text-white/80" />
+            <span className="text-xs text-white/80 font-medium">See all polls</span>
+          </div>
+        </Link>
+      )}
 
       {voteMutation.isPending && (
         <div className="absolute inset-0 bg-blue-600/50 flex items-center justify-center rounded-2xl">
