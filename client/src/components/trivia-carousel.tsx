@@ -24,9 +24,10 @@ interface TriviaItem {
 
 interface TriviaCarouselProps {
   expanded?: boolean;
+  category?: string;
 }
 
-export function TriviaCarousel({ expanded = false }: TriviaCarouselProps) {
+export function TriviaCarousel({ expanded = false, category }: TriviaCarouselProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -281,18 +282,46 @@ export function TriviaCarousel({ expanded = false }: TriviaCarouselProps) {
 
   if (isError || !data || data.length === 0) return null;
 
+  const categoryIcons: Record<string, string> = {
+    'Movies': '🎬',
+    'TV': '📺',
+    'Books': '📚',
+    'Music': '🎵',
+    'Sports': '⚽',
+    'Podcasts': '🎙️',
+    'Games': '🎮',
+  };
+
+  const filteredData = category 
+    ? data.filter(item => item.category?.toLowerCase() === category.toLowerCase())
+    : data;
+
+  if (filteredData.length === 0) return null;
+
   return (
     <>
       <Card className="bg-gradient-to-b from-slate-900 via-purple-950 to-indigo-950 border-0 rounded-2xl p-4 shadow-lg overflow-hidden relative">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-              <Brain className="w-3.5 h-3.5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-white">Quick Trivia</p>
-              <p className="text-[10px] text-white/70">Test your knowledge</p>
-            </div>
+            {category ? (
+              <>
+                <span className="text-xl">{categoryIcons[category] || '🎯'}</span>
+                <div>
+                  <p className="text-sm font-semibold text-white">{category}</p>
+                  <p className="text-[10px] text-white/70">{filteredData.length} trivia questions</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                  <Brain className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white">Quick Trivia</p>
+                  <p className="text-[10px] text-white/70">Test your knowledge</p>
+                </div>
+              </>
+            )}
           </div>
           
           <div className="flex items-center gap-1">
@@ -304,7 +333,7 @@ export function TriviaCarousel({ expanded = false }: TriviaCarouselProps) {
                 <ChevronLeft className="w-4 h-4 text-white" />
               </button>
             )}
-            {currentIndex < data.length - 1 && (
+            {currentIndex < filteredData.length - 1 && (
               <button
                 onClick={scrollToNext}
                 className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
@@ -313,7 +342,7 @@ export function TriviaCarousel({ expanded = false }: TriviaCarouselProps) {
               </button>
             )}
             <span className="text-xs text-white/60 ml-1">
-              {currentIndex + 1}/{data.length}
+              {currentIndex + 1}/{filteredData.length}
             </span>
           </div>
         </div>
@@ -323,7 +352,7 @@ export function TriviaCarousel({ expanded = false }: TriviaCarouselProps) {
           onScroll={handleScroll}
           className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
         >
-          {data.map((item) => {
+          {filteredData.map((item) => {
             const answered = answeredQuestions[item.id];
             const selected = selectedAnswer[item.id];
             

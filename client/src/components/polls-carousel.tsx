@@ -18,9 +18,10 @@ interface PollItem {
 
 interface PollsCarouselProps {
   expanded?: boolean;
+  category?: string;
 }
 
-export function PollsCarousel({ expanded = false }: PollsCarouselProps) {
+export function PollsCarousel({ expanded = false, category }: PollsCarouselProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -216,17 +217,45 @@ export function PollsCarousel({ expanded = false }: PollsCarouselProps) {
   }
   if (isError || !data || data.length === 0) return null;
 
+  const categoryIcons: Record<string, string> = {
+    'Movies': '🎬',
+    'TV': '📺',
+    'Books': '📚',
+    'Music': '🎵',
+    'Sports': '⚽',
+    'Podcasts': '🎙️',
+    'Games': '🎮',
+  };
+
+  const filteredData = category 
+    ? data.filter(item => item.category?.toLowerCase() === category.toLowerCase())
+    : data;
+
+  if (filteredData.length === 0) return null;
+
   return (
     <Card className="bg-gradient-to-r from-blue-600 to-cyan-600 border-0 rounded-2xl p-4 shadow-lg mb-4 overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-            <BarChart3 className="w-3.5 h-3.5 text-white" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-white">Quick Polls</p>
-            <p className="text-[10px] text-white/70">Share your opinion</p>
-          </div>
+          {category ? (
+            <>
+              <span className="text-xl">{categoryIcons[category] || '📊'}</span>
+              <div>
+                <p className="text-sm font-semibold text-white">{category}</p>
+                <p className="text-[10px] text-white/70">{filteredData.length} polls</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                <BarChart3 className="w-3.5 h-3.5 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">Quick Polls</p>
+                <p className="text-[10px] text-white/70">Share your opinion</p>
+              </div>
+            </>
+          )}
         </div>
         
         <div className="flex items-center gap-1">
@@ -235,17 +264,17 @@ export function PollsCarousel({ expanded = false }: PollsCarouselProps) {
               <ChevronLeft className="w-4 h-4 text-white" />
             </button>
           )}
-          {currentIndex < data.length - 1 && (
+          {currentIndex < filteredData.length - 1 && (
             <button onClick={scrollToNext} className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30">
               <ChevronRight className="w-4 h-4 text-white" />
             </button>
           )}
-          <span className="text-xs text-white/60 ml-1">{currentIndex + 1}/{data.length}</span>
+          <span className="text-xs text-white/60 ml-1">{currentIndex + 1}/{filteredData.length}</span>
         </div>
       </div>
 
       <div ref={scrollRef} onScroll={handleScroll} className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1">
-        {data.map((poll) => {
+        {filteredData.map((poll) => {
           const voted = votedPolls[poll.id];
           const selected = selectedOption[poll.id];
           

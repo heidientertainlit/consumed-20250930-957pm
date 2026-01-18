@@ -4745,36 +4745,40 @@ export default function Feed() {
                 <div ref={loadMoreRef} className="h-20" />
               )}
 
-              {/* End of Feed message for specific filters with category browsing */}
-              {['trivia', 'polls', 'predictions', 'dna', 'hot_takes'].includes(selectedFilter) && (
+              {/* Category carousels for trivia filter */}
+              {selectedFilter === 'trivia' && (
+                <div className="space-y-4 mt-4">
+                  <div className="text-center py-4">
+                    <p className="text-gray-700 font-semibold">Browse by Category</p>
+                  </div>
+                  <TriviaCarousel category="Movies" />
+                  <TriviaCarousel category="TV" />
+                  <TriviaCarousel category="Books" />
+                  <TriviaCarousel category="Music" />
+                  <TriviaCarousel category="Sports" />
+                  <TriviaCarousel category="Podcasts" />
+                </div>
+              )}
+
+              {/* Category carousels for polls filter */}
+              {selectedFilter === 'polls' && (
+                <div className="space-y-4 mt-4">
+                  <div className="text-center py-4">
+                    <p className="text-gray-700 font-semibold">Browse by Category</p>
+                  </div>
+                  <PollsCarousel category="Movies" />
+                  <PollsCarousel category="TV" />
+                  <PollsCarousel category="Books" />
+                  <PollsCarousel category="Music" />
+                </div>
+              )}
+
+              {/* End of Feed message for other specific filters */}
+              {['predictions', 'dna', 'hot_takes'].includes(selectedFilter) && (
                 <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-100 mt-4">
                   <div className="text-3xl mb-2">🎯</div>
                   <p className="text-gray-600 font-medium">That's all for now!</p>
-                  <p className="text-gray-500 text-sm mt-1 mb-4">Check back later for more {selectedFilter === 'trivia' ? 'trivia' : selectedFilter === 'polls' ? 'polls' : selectedFilter === 'predictions' ? 'predictions' : selectedFilter === 'dna' ? 'DNA moments' : 'hot takes'}</p>
-                  
-                  {/* Category browsing for trivia/polls */}
-                  {(selectedFilter === 'trivia' || selectedFilter === 'polls') && (
-                    <div className="border-t border-purple-200 pt-4 mt-2">
-                      <p className="text-gray-700 font-medium text-sm mb-3">Browse by category</p>
-                      <div className="flex flex-wrap justify-center gap-2 px-4">
-                        {[
-                          { id: 'movies', label: '🎬 Movies', icon: '🎬' },
-                          { id: 'tv', label: '📺 TV', icon: '📺' },
-                          { id: 'books', label: '📚 Books', icon: '📚' },
-                          { id: 'music', label: '🎵 Music', icon: '🎵' },
-                          { id: 'sports', label: '⚽ Sports', icon: '⚽' },
-                          { id: 'podcasts', label: '🎙️ Podcasts', icon: '🎙️' },
-                        ].map((cat) => (
-                          <button
-                            key={cat.id}
-                            className="px-3 py-1.5 bg-white border border-purple-200 rounded-full text-sm font-medium text-gray-700 hover:bg-purple-100 hover:border-purple-300 transition-all shadow-sm"
-                          >
-                            {cat.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <p className="text-gray-500 text-sm mt-1">Check back later for more {selectedFilter === 'predictions' ? 'predictions' : selectedFilter === 'dna' ? 'DNA moments' : 'hot takes'}</p>
                 </div>
               )}
 
