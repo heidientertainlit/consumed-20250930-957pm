@@ -200,6 +200,7 @@ export const userPredictions = pgTable("user_predictions", {
   prediction: text("prediction").notNull(),
   pointsEarned: integer("points_earned"),
   isWinner: boolean("is_winner"),
+  otherPickMetadata: jsonb("other_pick_metadata"),
   createdAt: timestamp("created_at"),
 });
 
