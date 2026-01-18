@@ -282,18 +282,12 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
 
   if (isError || !data || data.length === 0) return null;
 
-  const categoryIcons: Record<string, string> = {
-    'Movies': '🎬',
-    'TV': '📺',
-    'Books': '📚',
-    'Music': '🎵',
-    'Sports': '⚽',
-    'Podcasts': '🎙️',
-    'Games': '🎮',
-  };
-
+  const knownCategories = ['movies', 'tv', 'books', 'music', 'sports', 'podcasts', 'games'];
+  
   const filteredData = category 
-    ? data.filter(item => item.category?.toLowerCase() === category.toLowerCase())
+    ? category.toLowerCase() === 'other'
+      ? data.filter(item => !item.category || !knownCategories.includes(item.category.toLowerCase()))
+      : data.filter(item => item.category?.toLowerCase() === category.toLowerCase())
     : data;
 
   if (filteredData.length === 0) return null;
@@ -305,7 +299,9 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
           <div className="flex items-center gap-2">
             {category ? (
               <>
-                <span className="text-xl">{categoryIcons[category] || '🎯'}</span>
+                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                  <Brain className="w-3.5 h-3.5 text-white" />
+                </div>
                 <div>
                   <p className="text-sm font-semibold text-white">{category}</p>
                   <p className="text-[10px] text-white/70">{filteredData.length} trivia questions</p>

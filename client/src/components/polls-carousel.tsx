@@ -217,18 +217,12 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   }
   if (isError || !data || data.length === 0) return null;
 
-  const categoryIcons: Record<string, string> = {
-    'Movies': '🎬',
-    'TV': '📺',
-    'Books': '📚',
-    'Music': '🎵',
-    'Sports': '⚽',
-    'Podcasts': '🎙️',
-    'Games': '🎮',
-  };
-
+  const knownCategories = ['movies', 'tv', 'books', 'music', 'sports', 'podcasts', 'games'];
+  
   const filteredData = category 
-    ? data.filter(item => item.category?.toLowerCase() === category.toLowerCase())
+    ? category.toLowerCase() === 'other'
+      ? data.filter(item => !item.category || !knownCategories.includes(item.category.toLowerCase()))
+      : data.filter(item => item.category?.toLowerCase() === category.toLowerCase())
     : data;
 
   if (filteredData.length === 0) return null;
@@ -237,25 +231,13 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
     <Card className="bg-gradient-to-r from-blue-600 to-cyan-600 border-0 rounded-2xl p-4 shadow-lg mb-4 overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          {category ? (
-            <>
-              <span className="text-xl">{categoryIcons[category] || '📊'}</span>
-              <div>
-                <p className="text-sm font-semibold text-white">{category}</p>
-                <p className="text-[10px] text-white/70">{filteredData.length} polls</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-                <BarChart3 className="w-3.5 h-3.5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white">Quick Polls</p>
-                <p className="text-[10px] text-white/70">Share your opinion</p>
-              </div>
-            </>
-          )}
+          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+            <BarChart3 className="w-3.5 h-3.5 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white">{category || 'Quick Polls'}</p>
+            <p className="text-[10px] text-white/70">{category ? `${filteredData.length} polls` : 'Share your opinion'}</p>
+          </div>
         </div>
         
         <div className="flex items-center gap-1">

@@ -4757,6 +4757,7 @@ export default function Feed() {
                   <TriviaCarousel category="Music" />
                   <TriviaCarousel category="Sports" />
                   <TriviaCarousel category="Podcasts" />
+                  <TriviaCarousel category="Other" />
                 </div>
               )}
 
@@ -4770,6 +4771,9 @@ export default function Feed() {
                   <PollsCarousel category="TV" />
                   <PollsCarousel category="Books" />
                   <PollsCarousel category="Music" />
+                  <PollsCarousel category="Sports" />
+                  <PollsCarousel category="Podcasts" />
+                  <PollsCarousel category="Other" />
                 </div>
               )}
 
