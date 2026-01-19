@@ -2923,7 +2923,7 @@ export default function Feed() {
                 <DnaMomentCard />
               )}
 
-              {/* Consumption Carousel - only in All view */}
+              {/* Your Circle - Friend Activity with reactions */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && (
                 <ConsumptionCarousel 
                   items={(socialPosts || [])
@@ -2931,18 +2931,17 @@ export default function Feed() {
                     .slice(0, 10)
                     .map((p: any) => ({
                       id: p.id,
+                      type: 'media_added' as const,
                       userId: p.user?.id || '',
                       username: p.user?.username || '',
                       displayName: p.user?.display_name || p.user?.username || '',
                       avatar: p.user?.avatar_url,
-                      action: p.post_type === 'rating' ? 'rated' : 'added',
                       mediaTitle: p.mediaItems[0]?.title || '',
                       mediaType: p.mediaItems[0]?.type || 'movie',
                       mediaImage: p.mediaItems[0]?.imageUrl || '',
-                      rating: p.rating,
                       timestamp: p.createdAt || new Date().toISOString()
                     }))}
-                  title="What friends are consuming"
+                  title="Your Circle"
                 />
               )}
 
@@ -2985,14 +2984,18 @@ export default function Feed() {
                 const post = item as SocialPost;
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }).map((item: any, postIndex: number) => {
-                // Handle consumption carousels
+                // Handle consumption carousels (now "Your Circle")
                 if ((item as any).type === 'consumption_carousel') {
                   const carousel = item as any;
+                  const transformedItems = (carousel.items || []).map((item: any) => ({
+                    ...item,
+                    type: 'media_added' as const
+                  }));
                   return (
                     <div key={carousel.id} className="mb-4">
                       <ConsumptionCarousel 
-                        items={carousel.items}
-                        title="What friends are consuming"
+                        items={transformedItems}
+                        title="Your Circle"
                       />
                     </div>
                   );
