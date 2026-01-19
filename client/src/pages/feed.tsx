@@ -20,6 +20,7 @@ import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { GamesCarousel } from "@/components/games-carousel";
 import { RanksGlimpse } from "@/components/ranks-glimpse";
 import { PointsGlimpse } from "@/components/points-glimpse";
+import { UnifiedGameCardDemo } from "@/components/unified-game-card";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -2799,6 +2800,14 @@ export default function Feed() {
                   </button>
                 ))}
               </div>
+
+              {/* DESIGN PREVIEW: Unified Game Cards */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+                <div className="mb-4">
+                  <p className="text-xs text-purple-600 font-semibold mb-2 px-1">✨ DESIGN PREVIEW - Unified Game Cards</p>
+                  <UnifiedGameCardDemo />
+                </div>
+              )}
 
               {/* Empty state for filtered views */}
               {feedFilter === 'friends' && filteredPosts.length === 0 && (
