@@ -432,7 +432,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                             </div>
                             <div className="flex items-center gap-2">
                               <Users className={`w-3 h-3 ${isCorrect ? 'text-white/70' : 'text-gray-400'}`} />
-                              <span className={`text-sm font-bold ${isCorrect ? 'text-white' : 'text-gray-700'}`}>{percentage}%</span>
+                              <span className={`text-sm ${isCorrect ? 'text-white font-bold' : 'text-gray-400'}`}>{percentage}%</span>
                             </div>
                           </div>
                         </div>
