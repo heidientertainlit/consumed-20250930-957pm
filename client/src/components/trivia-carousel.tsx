@@ -272,9 +272,9 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
 
   if (isLoading) {
     return (
-      <Card className="bg-gradient-to-b from-slate-900 via-purple-950 to-indigo-950 border-0 rounded-2xl p-5 shadow-lg">
+      <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-6 h-6 animate-spin text-white" />
+          <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
         </div>
       </Card>
     );
@@ -294,27 +294,27 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
 
   return (
     <>
-      <Card className="bg-gradient-to-b from-slate-900 via-purple-950 to-indigo-950 border-0 rounded-2xl p-4 shadow-lg overflow-hidden relative">
+      <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm overflow-hidden relative">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             {category ? (
               <>
-                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center">
                   <Brain className="w-3.5 h-3.5 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">{category}</p>
-                  <p className="text-[10px] text-white/70">{filteredData.length} trivia questions</p>
+                  <p className="text-sm font-semibold text-gray-900">{category}</p>
+                  <p className="text-[10px] text-gray-500">{filteredData.length} trivia questions</p>
                 </div>
               </>
             ) : (
               <>
-                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center">
                   <Brain className="w-3.5 h-3.5 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">Quick Trivia</p>
-                  <p className="text-[10px] text-white/70">Test your knowledge</p>
+                  <p className="text-sm font-semibold text-gray-900">Quick Trivia</p>
+                  <p className="text-[10px] text-gray-500">Test your knowledge</p>
                 </div>
               </>
             )}
@@ -324,20 +324,20 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
             {currentIndex > 0 && (
               <button
                 onClick={scrollToPrev}
-                className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
+                className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
-                <ChevronLeft className="w-4 h-4 text-white" />
+                <ChevronLeft className="w-4 h-4 text-gray-600" />
               </button>
             )}
             {currentIndex < filteredData.length - 1 && (
               <button
                 onClick={scrollToNext}
-                className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
+                className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
-                <ChevronRight className="w-4 h-4 text-white" />
+                <ChevronRight className="w-4 h-4 text-gray-600" />
               </button>
             )}
-            <span className="text-xs text-white/60 ml-1">
+            <span className="text-xs text-gray-500 ml-1">
               {currentIndex + 1}/{filteredData.length}
             </span>
           </div>
@@ -356,26 +356,26 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
               return (
                 <div key={item.id} className="flex-shrink-0 w-full snap-center">
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-600/40 border border-purple-500/30">
-                      <span className="text-xs text-purple-300 font-medium">+{item.pointsReward} pts</span>
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
+                      <span className="text-xs text-green-700 font-medium">+{item.pointsReward} pts</span>
                     </div>
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-600/40 border border-amber-500/30">
-                      <span className="text-xs text-amber-300 font-medium">{item.questionCount} questions</span>
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-200">
+                      <span className="text-xs text-amber-700 font-medium">{item.questionCount} questions</span>
                     </div>
                   </div>
                   
-                  <h3 className="text-white font-semibold text-base mb-3">{item.title}</h3>
-                  <p className="text-white/70 text-sm mb-4">Challenge yourself with {item.questionCount} trivia questions!</p>
+                  <h3 className="text-gray-900 font-semibold text-base mb-3">{item.title}</h3>
+                  <p className="text-gray-500 text-sm mb-4">Challenge yourself with {item.questionCount} trivia questions!</p>
                   
                   {answered ? (
-                    <div className="py-3 px-4 rounded-xl bg-green-600/30 border border-green-500/50 text-center">
-                      <CheckCircle className="w-5 h-5 text-green-400 mx-auto mb-1" />
-                      <span className="text-sm text-green-300">Challenge Completed!</span>
+                    <div className="py-3 px-4 rounded-xl bg-green-50 border border-green-200 text-center">
+                      <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
+                      <span className="text-sm text-green-600">Challenge Completed!</span>
                     </div>
                   ) : (
                     <button
                       onClick={() => setSelectedChallenge(item)}
-                      className="w-full py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium flex items-center justify-center gap-2 transition-colors"
+                      className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-slate-900 via-purple-900 to-indigo-900 hover:from-slate-800 hover:via-purple-800 hover:to-indigo-800 text-white font-medium flex items-center justify-center gap-2 transition-colors"
                     >
                       <Play className="w-4 h-4" />
                       Start Challenge
@@ -387,21 +387,21 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
             
             return (
               <div key={item.id} className="flex-shrink-0 w-full snap-center">
-                <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-purple-600/40 border border-purple-500/30">
-                  <span className="text-xs text-purple-300 font-medium">+{item.pointsReward} pts</span>
+                <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
+                  <span className="text-xs text-green-700 font-medium">+{item.pointsReward} pts</span>
                 </div>
                 
-                <h3 className="text-white font-semibold text-base mb-3">{item.question}</h3>
+                <h3 className="text-gray-900 font-semibold text-base mb-3">{item.question}</h3>
                 
                 {!answered ? (
                   <div className="flex flex-col gap-2">
                     {item.options.slice(0, 4).map((option, idx) => (
                       <button
                         key={idx}
-                        className={`py-3 px-4 rounded-xl border text-white text-sm font-medium transition-all text-left ${
+                        className={`py-3 px-4 rounded-xl border text-sm font-medium transition-all text-left ${
                           selected === option 
-                            ? 'bg-gradient-to-r from-purple-500 to-indigo-500 border-purple-300 shadow-lg shadow-purple-500/30' 
-                            : 'bg-purple-900/60 border-purple-700/50 hover:bg-purple-800/70 hover:border-purple-600'
+                            ? 'bg-gradient-to-r from-slate-900 via-purple-900 to-indigo-900 border-purple-400 text-white shadow-lg' 
+                            : 'bg-gradient-to-r from-slate-800 via-purple-800 to-indigo-800 border-purple-700/50 text-white hover:from-slate-700 hover:via-purple-700 hover:to-indigo-700'
                         }`}
                         onClick={() => handleSelectOption(item.id, option)}
                         disabled={answerMutation.isPending}
@@ -414,7 +414,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                       <button
                         onClick={() => handleSubmitAnswer(item)}
                         disabled={answerMutation.isPending}
-                        className="mt-2 w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium transition-colors disabled:opacity-50"
+                        className="mt-2 w-full py-2.5 rounded-xl bg-green-600 hover:bg-green-500 text-white font-medium transition-colors disabled:opacity-50"
                       >
                         {answerMutation.isPending ? 'Submitting...' : 'Submit'}
                       </button>
@@ -432,27 +432,27 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                           key={idx}
                           className={`relative py-3 px-4 rounded-xl border overflow-hidden ${
                             isUserAnswer && isCorrect
-                              ? 'border-green-400 bg-green-500/20'
+                              ? 'border-green-500 bg-green-50'
                               : isUserAnswer && !isCorrect
-                                ? 'border-red-400 bg-red-500/20'
+                                ? 'border-red-500 bg-red-50'
                                 : isCorrect
-                                  ? 'border-green-400/50 bg-green-500/10'
-                                  : 'border-purple-700/30 bg-purple-900/40'
+                                  ? 'border-green-300 bg-green-50'
+                                  : 'border-gray-200 bg-gray-50'
                           }`}
                         >
                           <div 
-                            className="absolute left-0 top-0 bottom-0 bg-white/10 transition-all duration-500"
+                            className="absolute left-0 top-0 bottom-0 bg-purple-200/50 transition-all duration-500"
                             style={{ width: `${percentage}%` }}
                           />
                           <div className="relative flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                              {isCorrect && <Trophy className="w-4 h-4 text-green-400" />}
-                              {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-400" />}
-                              <span className="text-sm text-white">{option}</span>
+                              {isCorrect && <Trophy className="w-4 h-4 text-green-500" />}
+                              {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-500" />}
+                              <span className="text-sm text-gray-700">{option}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Users className="w-3 h-3 text-white/60" />
-                              <span className="text-sm font-bold text-white">{percentage}%</span>
+                              <Users className="w-3 h-3 text-gray-400" />
+                              <span className="text-sm font-bold text-gray-700">{percentage}%</span>
                             </div>
                           </div>
                         </div>
@@ -467,16 +467,16 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
         
         {!category && (
           <Link href="/play/trivia">
-            <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-white/20 cursor-pointer hover:opacity-80 transition-opacity">
-              <Trophy className="w-3.5 h-3.5 text-white/80" />
-              <span className="text-xs text-white/80 font-medium">See all trivia & games</span>
+            <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+              <Trophy className="w-3.5 h-3.5 text-purple-600" />
+              <span className="text-xs text-purple-600 font-medium">See all trivia & games</span>
             </div>
           </Link>
         )}
 
         {answerMutation.isPending && (
-          <div className="absolute inset-0 bg-purple-950/50 flex items-center justify-center rounded-2xl">
-            <Loader2 className="w-6 h-6 animate-spin text-white" />
+          <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-2xl">
+            <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
           </div>
         )}
       </Card>
