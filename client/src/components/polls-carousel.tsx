@@ -370,7 +370,15 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                         <Input
                           placeholder="Search for your pick..."
                           value={otherSearchQuery[poll.id] || ''}
-                          onChange={(e) => setOtherSearchQuery(prev => ({ ...prev, [poll.id]: e.target.value }))}
+                          onChange={(e) => {
+                            const query = e.target.value;
+                            setOtherSearchQuery(prev => ({ ...prev, [poll.id]: query }));
+                            if (query.trim().length >= 2) {
+                              setTimeout(() => {
+                                handleOtherSearch(poll.id, query);
+                              }, 300);
+                            }
+                          }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                               handleOtherSearch(poll.id, otherSearchQuery[poll.id] || '');
