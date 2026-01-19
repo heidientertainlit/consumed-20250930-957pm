@@ -400,7 +400,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                         key={idx}
                         className={`py-3 px-4 rounded-xl border text-sm font-medium transition-all text-left ${
                           selected === option 
-                            ? 'bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600 border-purple-400 text-white shadow-lg' 
+                            ? 'bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 border-purple-500/50 text-white shadow-lg' 
                             : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:border-gray-300'
                         }`}
                         onClick={() => handleSelectOption(item.id, option)}
@@ -432,11 +432,11 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                           key={idx}
                           className={`relative py-3 px-4 rounded-xl border overflow-hidden ${
                             isUserAnswer && isCorrect
-                              ? 'border-green-500 bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600'
+                              ? 'border-green-500 bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900'
                               : isUserAnswer && !isCorrect
                                 ? 'border-red-500 bg-red-50'
                                 : isCorrect
-                                  ? 'border-green-500 bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600'
+                                  ? 'border-green-500 bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900'
                                   : 'border-gray-200 bg-gray-50'
                           }`}
                         >
