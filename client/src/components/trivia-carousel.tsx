@@ -398,7 +398,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                     {item.options.slice(0, 4).map((option, idx) => (
                       <button
                         key={idx}
-                        className={`py-3 px-4 rounded-xl border text-sm font-medium transition-all text-left ${
+                        className={`py-3 px-4 rounded-full border text-sm font-medium transition-all text-left ${
                           selected === option 
                             ? 'bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 border-purple-500/50 text-white shadow-lg' 
                             : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:border-gray-300'
@@ -430,7 +430,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                       return (
                         <div 
                           key={idx}
-                          className={`relative py-3 px-4 rounded-xl border overflow-hidden ${
+                          className={`relative py-3 px-4 rounded-full border overflow-hidden ${
                             isUserAnswer && isCorrect
                               ? 'border-green-500 bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900'
                               : isUserAnswer && !isCorrect
