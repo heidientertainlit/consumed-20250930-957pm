@@ -73,28 +73,32 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reactions, setReactions] = useState<Record<string, 'agree' | 'disagree'>>({});
 
+  // Group items into pages
+  const ITEMS_PER_PAGE = 3;
+  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+
   const scrollToNext = () => {
-    if (scrollRef.current && currentIndex < items.length - 1) {
-      const cardWidth = scrollRef.current.clientWidth;
-      scrollRef.current.scrollBy({ left: cardWidth + 12, behavior: 'smooth' });
-      setCurrentIndex(prev => Math.min(prev + 1, items.length - 1));
+    if (scrollRef.current && currentIndex < totalPages - 1) {
+      const pageWidth = scrollRef.current.clientWidth;
+      scrollRef.current.scrollBy({ left: pageWidth + 12, behavior: 'smooth' });
+      setCurrentIndex(prev => Math.min(prev + 1, totalPages - 1));
     }
   };
 
   const scrollToPrev = () => {
     if (scrollRef.current && currentIndex > 0) {
-      const cardWidth = scrollRef.current.clientWidth;
-      scrollRef.current.scrollBy({ left: -(cardWidth + 12), behavior: 'smooth' });
+      const pageWidth = scrollRef.current.clientWidth;
+      scrollRef.current.scrollBy({ left: -(pageWidth + 12), behavior: 'smooth' });
       setCurrentIndex(prev => Math.max(prev - 1, 0));
     }
   };
 
   const handleScroll = () => {
     if (scrollRef.current) {
-      const cardWidth = scrollRef.current.clientWidth;
+      const pageWidth = scrollRef.current.clientWidth;
       const scrollLeft = scrollRef.current.scrollLeft;
-      const newIndex = Math.round(scrollLeft / (cardWidth + 12));
-      setCurrentIndex(Math.min(Math.max(newIndex, 0), items.length - 1));
+      const newIndex = Math.round(scrollLeft / (pageWidth + 12));
+      setCurrentIndex(Math.min(Math.max(newIndex, 0), totalPages - 1));
     }
   };
 
@@ -104,228 +108,226 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
 
   if (!items || items.length === 0) return null;
 
-  const renderCard = (item: FriendActivityItem, index: number) => {
+  // Create pages array
+  const pages: FriendActivityItem[][] = [];
+  for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
+    pages.push(items.slice(i, i + ITEMS_PER_PAGE));
+  }
+
+  const renderItem = (item: FriendActivityItem, index: number) => {
     const hasReacted = reactions[item.id];
     
     if (item.type === 'media_added') {
       return (
-        <div
-          key={item.id || index}
-          className="flex-shrink-0 w-full snap-center"
-        >
-          <div className="flex items-start gap-3 mb-3">
+        <div key={item.id || index} className="py-2 border-b border-gray-100 last:border-b-0">
+          <div className="flex items-start gap-3">
             {item.mediaImage ? (
-              <div className="w-14 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+              <div className="w-12 h-16 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
                 <img src={item.mediaImage} alt={item.mediaTitle} className="w-full h-full object-cover" />
               </div>
             ) : (
-              <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-16 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
                 {getMediaIcon(item.mediaType)}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <Link href={`/profile/${item.username}`}>
-                <p className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
-                  {item.displayName || item.username}
-                </p>
-              </Link>
-              <p className="text-gray-900 text-sm font-semibold line-clamp-2 mt-0.5">
-                added {item.mediaTitle}
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <Link href={`/profile/${item.username}`}>
+                  <span className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
+                    {item.displayName || item.username}
+                  </span>
+                </Link>
+                <span className="text-xs text-gray-400">added</span>
+              </div>
+              <p className="text-gray-900 text-sm font-semibold line-clamp-1">
+                {item.mediaTitle}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
-                <Users className="w-3 h-3 inline mr-1" />
-                {item.communityPercent || getStablePercent(item.id, 50, 80)}% have this on their list
+              <p className="text-[10px] text-gray-500 mt-0.5">
+                {item.communityPercent || getStablePercent(item.id, 50, 80)}% have this
               </p>
             </div>
+            {!hasReacted ? (
+              <div className="flex gap-1 flex-shrink-0">
+                <button
+                  onClick={() => handleReaction(item.id, 'agree')}
+                  className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-green-100 hover:border-green-300 transition-colors"
+                >
+                  <ThumbsUp className="w-3.5 h-3.5 text-gray-600" />
+                </button>
+                <button
+                  onClick={() => handleReaction(item.id, 'disagree')}
+                  className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-red-100 hover:border-red-300 transition-colors"
+                >
+                  <ThumbsDown className="w-3.5 h-3.5 text-gray-600" />
+                </button>
+              </div>
+            ) : (
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${hasReacted === 'agree' ? 'bg-green-500' : 'bg-red-500'}`}>
+                {hasReacted === 'agree' ? <ThumbsUp className="w-3.5 h-3.5 text-white" /> : <ThumbsDown className="w-3.5 h-3.5 text-white" />}
+              </div>
+            )}
           </div>
-          
-          {!hasReacted ? (
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleReaction(item.id, 'agree')}
-                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
-              >
-                <ThumbsUp className="w-3.5 h-3.5" />
-                Great pick
-              </button>
-              <button
-                onClick={() => handleReaction(item.id, 'disagree')}
-                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
-              >
-                <ThumbsDown className="w-3.5 h-3.5" />
-                Overrated
-              </button>
-            </div>
-          ) : (
-            <div className="py-3 px-4 rounded-full bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 text-white text-sm text-center font-medium">
-              {hasReacted === 'agree' ? "You agreed!" : "You disagreed"}
-            </div>
-          )}
         </div>
       );
     }
     
     if (item.type === 'poll_answer') {
       return (
-        <div
-          key={item.id || index}
-          className="flex-shrink-0 w-full snap-center"
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+        <div key={item.id || index} className="py-2 border-b border-gray-100 last:border-b-0">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
               {getTypeIcon(item.type)}
             </div>
-            <Link href={`/profile/${item.username}`}>
-              <p className="text-xs text-blue-600 font-medium hover:underline cursor-pointer">
-                {item.displayName || item.username}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <Link href={`/profile/${item.username}`}>
+                  <span className="text-xs text-blue-600 font-medium hover:underline cursor-pointer">
+                    {item.displayName || item.username}
+                  </span>
+                </Link>
+                <span className="text-xs text-gray-400">voted</span>
+              </div>
+              <p className="text-gray-900 text-sm font-semibold line-clamp-1">
+                "{item.userAnswer}"
               </p>
-            </Link>
-            <span className="text-xs text-gray-500">voted</span>
+              <p className="text-[10px] text-gray-500 mt-0.5">
+                {item.communityPercent || getStablePercent(item.id, 40, 70)}% agree
+              </p>
+            </div>
+            {!hasReacted ? (
+              <div className="flex gap-1 flex-shrink-0">
+                <button
+                  onClick={() => handleReaction(item.id, 'agree')}
+                  className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-blue-100 hover:border-blue-300 transition-colors"
+                >
+                  <ThumbsUp className="w-3.5 h-3.5 text-gray-600" />
+                </button>
+                <button
+                  onClick={() => handleReaction(item.id, 'disagree')}
+                  className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-red-100 hover:border-red-300 transition-colors"
+                >
+                  <ThumbsDown className="w-3.5 h-3.5 text-gray-600" />
+                </button>
+              </div>
+            ) : (
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${hasReacted === 'agree' ? 'bg-blue-500' : 'bg-red-500'}`}>
+                {hasReacted === 'agree' ? <ThumbsUp className="w-3.5 h-3.5 text-white" /> : <ThumbsDown className="w-3.5 h-3.5 text-white" />}
+              </div>
+            )}
           </div>
-          
-          <p className="text-gray-900 text-base font-semibold mb-1 line-clamp-2">
-            "{item.userAnswer}"
-          </p>
-          
-          <p className="text-xs text-gray-500 mb-2">
-            on: {item.questionTitle}
-          </p>
-          
-          <p className="text-xs text-gray-500 mb-3">
-            <Users className="w-3 h-3 inline mr-1" />
-            {item.communityPercent || getStablePercent(item.id, 40, 70)}% agree
-          </p>
-          
-          {!hasReacted ? (
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleReaction(item.id, 'agree')}
-                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
-              >
-                Side with them
-              </button>
-              <button
-                onClick={() => handleReaction(item.id, 'disagree')}
-                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
-              >
-                Disagree
-              </button>
-            </div>
-          ) : (
-            <div className="py-3 px-4 rounded-full bg-gradient-to-r from-slate-800 via-blue-900 to-cyan-900 text-white text-sm text-center font-medium">
-              {hasReacted === 'agree' ? `You sided with ${item.displayName?.split(' ')[0] || item.username}` : "You disagreed"}
-            </div>
-          )}
         </div>
       );
     }
     
     if (item.type === 'trivia_answer') {
       return (
-        <div
-          key={item.id || index}
-          className="flex-shrink-0 w-full snap-center"
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+        <div key={item.id || index} className="py-2 border-b border-gray-100 last:border-b-0">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
               {getTypeIcon(item.type)}
             </div>
-            <Link href={`/profile/${item.username}`}>
-              <p className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
-                {item.displayName || item.username}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <Link href={`/profile/${item.username}`}>
+                  <span className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
+                    {item.displayName || item.username}
+                  </span>
+                </Link>
+                <span className={`text-xs ${item.isCorrect ? 'text-green-600' : 'text-red-500'}`}>
+                  {item.isCorrect ? '✓' : '✗'}
+                </span>
+              </div>
+              <p className="text-gray-900 text-sm font-semibold line-clamp-1">
+                "{item.questionTitle}"
               </p>
-            </Link>
-            <span className={`text-xs ${item.isCorrect ? 'text-green-600' : 'text-red-500'}`}>
-              {item.isCorrect ? 'got this right' : 'missed this one'}
-            </span>
+              <p className="text-[10px] text-gray-500 mt-0.5">
+                {item.communityPercent || getStablePercent(item.id, 20, 60)}% got it right
+              </p>
+            </div>
+            {!hasReacted ? (
+              <div className="flex gap-1 flex-shrink-0">
+                <button
+                  onClick={() => handleReaction(item.id, 'agree')}
+                  className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-purple-100 hover:border-purple-300 transition-colors"
+                >
+                  <ThumbsUp className="w-3.5 h-3.5 text-gray-600" />
+                </button>
+                <button
+                  onClick={() => handleReaction(item.id, 'disagree')}
+                  className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-red-100 hover:border-red-300 transition-colors"
+                >
+                  <ThumbsDown className="w-3.5 h-3.5 text-gray-600" />
+                </button>
+              </div>
+            ) : (
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${hasReacted === 'agree' ? 'bg-purple-500' : 'bg-red-500'}`}>
+                {hasReacted === 'agree' ? <ThumbsUp className="w-3.5 h-3.5 text-white" /> : <ThumbsDown className="w-3.5 h-3.5 text-white" />}
+              </div>
+            )}
           </div>
-          
-          <p className="text-gray-900 text-base font-semibold mb-3 line-clamp-2">
-            "{item.questionTitle}"
-          </p>
-          
-          <p className="text-xs text-gray-500 mb-3">
-            <Users className="w-3 h-3 inline mr-1" />
-            Only {item.communityPercent || getStablePercent(item.id, 20, 60)}% got it right
-          </p>
-          
-          {!hasReacted ? (
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleReaction(item.id, 'agree')}
-                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
-              >
-                I knew it
-              </button>
-              <button
-                onClick={() => handleReaction(item.id, 'disagree')}
-                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
-              >
-                Play this
-              </button>
-            </div>
-          ) : (
-            <div className="py-3 px-4 rounded-full bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 text-white text-sm text-center font-medium">
-              {hasReacted === 'agree' ? "You knew it too!" : "Challenge accepted"}
-            </div>
-          )}
         </div>
       );
     }
     
     if (item.type === 'dna_moment') {
       return (
-        <div
-          key={item.id || index}
-          className="flex-shrink-0 w-full snap-center"
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
+        <div key={item.id || index} className="py-2 border-b border-gray-100 last:border-b-0">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center flex-shrink-0">
               {getTypeIcon(item.type)}
             </div>
-            <Link href={`/profile/${item.username}`}>
-              <p className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
-                {item.displayName || item.username}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <Link href={`/profile/${item.username}`}>
+                  <span className="text-xs text-pink-600 font-medium hover:underline cursor-pointer">
+                    {item.displayName || item.username}
+                  </span>
+                </Link>
+                <span className="text-xs text-gray-400">says</span>
+              </div>
+              <p className="text-gray-900 text-sm font-semibold line-clamp-1">
+                "{item.userAnswer}"
               </p>
-            </Link>
-            <span className="text-xs text-gray-500">says</span>
+              <p className="text-[10px] text-gray-500 mt-0.5">
+                {item.communityPercent || getStablePercent(item.id, 50, 80)}% agree
+              </p>
+            </div>
+            {!hasReacted ? (
+              <div className="flex gap-1 flex-shrink-0">
+                <button
+                  onClick={() => handleReaction(item.id, 'agree')}
+                  className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-pink-100 hover:border-pink-300 transition-colors"
+                >
+                  <ThumbsUp className="w-3.5 h-3.5 text-gray-600" />
+                </button>
+                <button
+                  onClick={() => handleReaction(item.id, 'disagree')}
+                  className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-red-100 hover:border-red-300 transition-colors"
+                >
+                  <ThumbsDown className="w-3.5 h-3.5 text-gray-600" />
+                </button>
+              </div>
+            ) : (
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${hasReacted === 'agree' ? 'bg-pink-500' : 'bg-red-500'}`}>
+                {hasReacted === 'agree' ? <ThumbsUp className="w-3.5 h-3.5 text-white" /> : <ThumbsDown className="w-3.5 h-3.5 text-white" />}
+              </div>
+            )}
           </div>
-          
-          <p className="text-gray-900 text-base font-semibold mb-3 line-clamp-2">
-            "{item.userAnswer}"
-          </p>
-          
-          <p className="text-xs text-gray-500 mb-3">
-            <Users className="w-3 h-3 inline mr-1" />
-            {item.communityPercent || getStablePercent(item.id, 50, 80)}% are like them
-          </p>
-          
-          {!hasReacted ? (
-            <div className="flex gap-2">
-              <button
-                onClick={() => handleReaction(item.id, 'agree')}
-                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
-              >
-                Same
-              </button>
-              <button
-                onClick={() => handleReaction(item.id, 'disagree')}
-                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
-              >
-                Not me
-              </button>
-            </div>
-          ) : (
-            <div className="py-3 px-4 rounded-full bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 text-white text-sm text-center font-medium">
-              {hasReacted === 'agree' ? "You're the same!" : "You're different"}
-            </div>
-          )}
         </div>
       );
     }
     
     return null;
   };
+
+  const renderPage = (pageItems: FriendActivityItem[], pageIndex: number) => (
+    <div
+      key={pageIndex}
+      className="flex-shrink-0 w-full snap-center"
+    >
+      {pageItems.map((item, i) => renderItem(item, pageIndex * ITEMS_PER_PAGE + i))}
+    </div>
+  );
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
@@ -348,7 +350,7 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
               <ChevronLeft className="w-4 h-4 text-gray-600" />
             </button>
           )}
-          {currentIndex < items.length - 1 && (
+          {currentIndex < pages.length - 1 && (
             <button
               onClick={scrollToNext}
               className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
@@ -356,16 +358,16 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
               <ChevronRight className="w-4 h-4 text-gray-600" />
             </button>
           )}
-          <span className="text-xs text-gray-400 ml-1">{currentIndex + 1}/{items.length}</span>
+          <span className="text-xs text-gray-400 ml-1">{currentIndex + 1}/{pages.length}</span>
         </div>
       </div>
 
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
+        className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
       >
-        {items.map((item, index) => renderCard(item, index))}
+        {pages.map((pageItems, pageIndex) => renderPage(pageItems, pageIndex))}
       </div>
     </div>
   );
