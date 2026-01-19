@@ -110,7 +110,7 @@ export const socialPosts = pgTable("social_posts", {
   listId: varchar("list_id"),
   rankId: text("rank_id"), // For rank_share posts
   content: text("content"),
-  postType: text("post_type").default("update"), // 'update', 'prediction', 'poll', 'hot_take', 'rate_review', 'rank_share'
+  postType: text("post_type").default("update"), // 'update', 'prediction', 'poll', 'rate_review', 'rank_share'
   rating: real("rating"),
   progress: integer("progress"),
   mediaTitle: text("media_title"),

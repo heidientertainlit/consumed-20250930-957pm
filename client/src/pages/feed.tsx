@@ -17,7 +17,6 @@ import { TriviaCarousel } from "@/components/trivia-carousel";
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
-import { HotTakesGlimpse } from "@/components/hot-takes-glimpse";
 import { GamesCarousel } from "@/components/games-carousel";
 import { RanksGlimpse } from "@/components/ranks-glimpse";
 import { PointsGlimpse } from "@/components/points-glimpse";
@@ -951,8 +950,6 @@ export default function Feed() {
   const likedPostsInitialized = useRef(false); // Track if we've done initial sync
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set()); // Track liked comments
   const [commentVotes, setCommentVotes] = useState<Map<string, 'up' | 'down'>>(new Map()); // Track user's comment votes
-  const [hotTakeVotes, setHotTakeVotes] = useState<Map<string, 'fire' | 'ice'>>(new Map()); // Track user's hot take votes
-  const [hotTakeVoteCounts, setHotTakeVoteCounts] = useState<Map<string, { fire: number; ice: number }>>(new Map()); // Track vote counts
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set()); // Track revealed spoiler posts
   const [feedFilter, setFeedFilter] = useState("");
   const [mediaTypeFilter, setMediaTypeFilter] = useState("all");
@@ -960,10 +957,6 @@ export default function Feed() {
   const [inlineRatings, setInlineRatings] = useState<{ [postId: string]: string }>({}); // Track inline ratings
   const [activeInlineRating, setActiveInlineRating] = useState<string | null>(null); // Track which post has inline rating open
   const [currentVerb, setCurrentVerb] = useState("watching");
-  const [passItPostId, setPassItPostId] = useState<string | null>(null); // Hot Take "Pass It" modal
-  const [passItSearch, setPassItSearch] = useState(""); // Search friends for Pass It
-  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null); // Selected friend for Pass It
-  const [isPassingHotTake, setIsPassingHotTake] = useState(false); // Loading state for passing
   const [activeBetPost, setActiveBetPost] = useState<{ 
     postId: string; 
     mediaTitle: string; 
@@ -1329,7 +1322,7 @@ export default function Feed() {
     const postType = post.type?.toLowerCase() || '';
     
     // Tier 1: Jump-in moments (high engagement, interactive)
-    if (['hot_take', 'prediction', 'poll', 'vote', 'bet'].includes(postType)) {
+    if (['prediction', 'poll', 'vote', 'bet'].includes(postType)) {
       return 1;
     }
     
@@ -1343,7 +1336,7 @@ export default function Feed() {
       return 1;
     }
     
-    // Tier 1: Posts with substantial text content (reviews, hot takes)
+    // Tier 1: Posts with substantial text content (reviews)
     if (post.content && post.content.length > 100) {
       return 1;
     }
@@ -1404,7 +1397,7 @@ export default function Feed() {
     ];
     
     // Game/engagement posts should NEVER be consumption posts - always show prominently
-    const gameTypes = ['trivia', 'poll', 'prediction', 'vote', 'hot_take', 'ask_for_recs', 'rank_share', 'media_group'];
+    const gameTypes = ['trivia', 'poll', 'prediction', 'vote', 'ask_for_recs', 'rank_share', 'media_group'];
     if (gameTypes.includes(postType)) return false;
     
     // Check explicit consumption types
@@ -1534,9 +1527,9 @@ export default function Feed() {
     const post = item as SocialPost;
     
     // Hide malformed posts: short content (looks like just a title), no media items, 
-    // and not a special post type (prediction/poll/trivia/rank_share/hot_take)
+    // and not a special post type (prediction/poll/trivia/rank_share)
     // Note: 'add-to-list' (from track-media) is also a valid type
-    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'hot_take', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'friend_list_group'];
+    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'friend_list_group'];
     const isSpecialType = specialTypes.includes(post.type || '');
     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
     const hasListData = !!(post as any).listData;
@@ -1550,7 +1543,7 @@ export default function Feed() {
       return false;
     }
     
-    // Apply main feed filter (All, Friends, Hot Takes, Ask for Recs)
+    // Apply main feed filter (All, Friends, Ask for Recs)
     if (feedFilter === 'friends') {
       // Show only posts from friends (not own posts)
       if (!post.user || post.user.id === user?.id || !friendIds.has(post.user.id)) {
@@ -1585,7 +1578,7 @@ export default function Feed() {
       if (!detailedFilters.engagementTypes.includes(mappedType)) return false;
     }
 
-    // Apply selected filter (games, trivia, polls, predictions, hot_takes)
+    // Apply selected filter (games, trivia, polls, predictions)
     if (selectedFilter && selectedFilter !== 'All' && selectedFilter !== 'all') {
       const postType = post.type?.toLowerCase() || '';
       
@@ -1599,8 +1592,6 @@ export default function Feed() {
         if (postType !== 'poll' && postType !== 'vote') return false;
       } else if (selectedFilter === 'predictions') {
         if (postType !== 'prediction') return false;
-      } else if (selectedFilter === 'hot_takes') {
-        if (postType !== 'hot_take') return false;
       }
     }
 
@@ -2322,106 +2313,6 @@ export default function Feed() {
     }
   };
 
-  // Hot Take vote mutation with optimistic updates (same pattern as comment votes)
-  const hotTakeVoteMutation = useMutation({
-    mutationFn: async ({ postId, voteType }: { postId: string; voteType: 'fire' | 'ice' }) => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-      
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/hot-take-vote`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ postId, voteType }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to vote');
-      }
-      return await response.json();
-    },
-    onMutate: async ({ postId, voteType }) => {
-      const previousVote = hotTakeVotes.get(postId);
-      const previousCounts = hotTakeVoteCounts.get(postId) || { fire: 0, ice: 0 };
-      
-      // Calculate new counts optimistically
-      let newCounts = { ...previousCounts };
-      if (previousVote === voteType) {
-        // Clicking same vote type removes vote
-        newCounts[voteType] = Math.max(0, newCounts[voteType] - 1);
-      } else {
-        // Add vote to new type
-        newCounts[voteType] = newCounts[voteType] + 1;
-        // If switching votes, remove from previous type
-        if (previousVote) {
-          newCounts[previousVote] = Math.max(0, newCounts[previousVote] - 1);
-        }
-      }
-      
-      // Optimistically update vote state
-      setHotTakeVotes(prev => {
-        const newMap = new Map(prev);
-        if (previousVote === voteType) {
-          newMap.delete(postId);
-        } else {
-          newMap.set(postId, voteType);
-        }
-        return newMap;
-      });
-      
-      // Optimistically update counts
-      setHotTakeVoteCounts(prev => {
-        const newMap = new Map(prev);
-        newMap.set(postId, newCounts);
-        return newMap;
-      });
-      
-      return { previousVote, previousCounts };
-    },
-    onSuccess: () => {
-      // No toast needed - UI already shows the vote count update
-    },
-    onError: (error, { postId }, context) => {
-      console.error('Hot take vote error:', error);
-      // Revert optimistic updates
-      setHotTakeVotes(prev => {
-        const newMap = new Map(prev);
-        if (context?.previousVote) {
-          newMap.set(postId, context.previousVote);
-        } else {
-          newMap.delete(postId);
-        }
-        return newMap;
-      });
-      setHotTakeVoteCounts(prev => {
-        const newMap = new Map(prev);
-        if (context?.previousCounts) {
-          newMap.set(postId, context.previousCounts);
-        }
-        return newMap;
-      });
-      toast({
-        title: "Vote Failed",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Handle Hot Take voting (fire/ice)
-  const handleHotTakeVote = (postId: string, voteType: 'fire' | 'ice') => {
-    if (!session?.access_token) {
-      toast({
-        title: "Not Authenticated",
-        description: "Please log in to vote.",
-        variant: "destructive",
-      });
-      return;
-    }
-    hotTakeVoteMutation.mutate({ postId, voteType });
-  };
-
   const hasRating = (content: string): boolean => {
     return /^\s*(\d{1,2}(?:\.\d{1,2})?)\s*[.:]/.test(content);
   };
@@ -2869,7 +2760,7 @@ export default function Feed() {
             <div className="text-center py-8">
               <p className="text-gray-600">Please sign in to view your social feed.</p>
             </div>
-          ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'hot_takes', 'games'].includes(selectedFilter) ? (
+          ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'games'].includes(selectedFilter) ? (
             <div className="space-y-4 pb-24">
               {/* Feed Filter Pills */}
               <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-4">
@@ -2880,7 +2771,6 @@ export default function Feed() {
                   { id: 'polls', label: 'Polls', Icon: BarChart },
                   { id: 'predictions', label: 'Predictions', Icon: Target },
                   { id: 'dna', label: 'DNA', Icon: Dna },
-                  { id: 'hot_takes', label: 'Hot Takes', Icon: Flame },
                 ].map((filter) => (
                   <button
                     key={filter.id}
@@ -2948,16 +2838,6 @@ export default function Feed() {
               {/* POLLS filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} />
-              )}
-
-              {/* HOT TAKES filter - User-created */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'hot_takes') && (
-                <HotTakesGlimpse variant="user" />
-              )}
-
-              {/* HOT TAKES filter - Consumed-created */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'hot_takes') && (
-                <HotTakesGlimpse variant="consumed" />
               )}
 
               {/* Points Glimpse - only in All view */}
@@ -3267,180 +3147,6 @@ export default function Feed() {
                           likedComments={likedComments}
                           commentVotes={commentVotes}
                         />
-                      </div>
-                    </div>
-                  );
-                }
-
-                // Check if this item is a hot_take post
-                if (post.type === 'hot_take') {
-                  // Use local state for optimistic updates, fallback to post data
-                  const localCounts = hotTakeVoteCounts.get(post.id);
-                  const serverCounts = { 
-                    fire: (post as any).fireVotes || (post as any).fire_votes || 0, 
-                    ice: (post as any).iceVotes || (post as any).ice_votes || 0 
-                  };
-                  const displayCounts = localCounts || serverCounts;
-                  const userHotTakeVote = hotTakeVotes.get(post.id) || (post as any).userHotTakeVote; // 'fire' | 'ice' | null
-                  
-                  return (
-                    <div key={`hot-take-${post.id}`} id={`post-${post.id}`}>
-                      {carouselElements}
-                      <div className="mb-4">
-                        <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
-                          {/* Hot Take Header Strip */}
-                          <div className="bg-gradient-to-r from-purple-600 via-fuchsia-600 to-purple-700 px-4 py-2.5">
-                            <p className="text-sm text-white font-medium flex items-center gap-1.5">
-                              <span>🔥</span>
-                              <span className="font-bold tracking-wide">HOT TAKE</span>
-                            </p>
-                          </div>
-                          
-                          {/* Card Body */}
-                          <div className="p-4">
-                            {/* User info with trash icon */}
-                            {post.user && (
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                  <Link href={`/user/${post.user.id}`}>
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
-                                      {post.user.avatar ? (
-                                        <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                                      ) : (
-                                        <span className="text-xs">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
-                                      )}
-                                    </div>
-                                  </Link>
-                                  <Link href={`/user/${post.user.id}`}>
-                                    <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">
-                                      {post.user.username}
-                                    </span>
-                                  </Link>
-                                </div>
-                                {post.user.id === user?.id && (
-                                  <button
-                                    onClick={() => {
-                                      if (confirm('Delete this Hot Take?')) {
-                                        deletePostMutation.mutate(post.id);
-                                      }
-                                    }}
-                                    className="text-gray-400 hover:text-red-500 transition-colors"
-                                    data-testid={`button-delete-hot-take-${post.id}`}
-                                    title="Delete Hot Take"
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                            
-                            {/* Hot Take Content */}
-                            <p className="text-lg font-medium text-gray-900 mb-3">{post.content}</p>
-                            
-                            {/* Media if attached */}
-                            {post.mediaItems && post.mediaItems.length > 0 && (
-                              <div className="flex items-center gap-2.5 p-2.5 bg-gray-50 rounded-lg mb-3">
-                                {post.mediaItems[0].imageUrl && (
-                                  <img 
-                                    src={post.mediaItems[0].imageUrl} 
-                                    alt={post.mediaItems[0].title}
-                                    className="w-10 h-14 object-cover rounded-md"
-                                  />
-                                )}
-                                <div>
-                                  <p className="font-medium text-gray-900 text-sm">{post.mediaItems[0].title}</p>
-                                  <p className="text-xs text-gray-500 capitalize">{post.mediaItems[0].mediaType}</p>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {/* Fire/Ice Voting Pills */}
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => handleHotTakeVote(post.id, 'fire')}
-                                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-sm font-medium transition-all ${
-                                  userHotTakeVote === 'fire'
-                                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-sm'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-orange-50 hover:text-orange-600'
-                                }`}
-                                data-testid={`button-hot-take-fire-${post.id}`}
-                              >
-                                <span>🔥</span>
-                                <span>{displayCounts.fire}</span>
-                              </button>
-                              
-                              <button
-                                onClick={() => handleHotTakeVote(post.id, 'ice')}
-                                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-sm font-medium transition-all ${
-                                  userHotTakeVote === 'ice'
-                                    ? 'bg-gradient-to-r from-blue-400 to-cyan-500 text-white shadow-sm'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600'
-                                }`}
-                                data-testid={`button-hot-take-ice-${post.id}`}
-                              >
-                                <span>🧊</span>
-                                <span>{displayCounts.ice}</span>
-                              </button>
-                            </div>
-                          </div>
-                          
-                          {/* Bottom Bar with Likes/Comments */}
-                          <div className="flex items-center justify-between px-3 py-2.5 border-t border-gray-100 bg-gray-50/50">
-                            <div className="flex items-center gap-4">
-                              {/* Like */}
-                              <button
-                                onClick={() => handleLike(post.id)}
-                                className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}
-                                data-testid={`button-like-${post.id}`}
-                              >
-                                <Heart size={16} className={likedPosts.has(post.id) ? 'fill-current' : ''} />
-                                <span>{post.likes || 0}</span>
-                              </button>
-                              
-                              {/* Comments */}
-                              <button
-                                onClick={() => setExpandedComments(prev => {
-                                  const newSet = new Set(prev);
-                                  if (newSet.has(post.id)) newSet.delete(post.id);
-                                  else newSet.add(post.id);
-                                  return newSet;
-                                })}
-                                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600"
-                                data-testid={`button-comments-${post.id}`}
-                              >
-                                <MessageCircle size={16} />
-                                <span>{post.comments || 0}</span>
-                              </button>
-                            </div>
-                            <span className="text-xs text-gray-400">
-                              {post.timestamp ? formatDate(post.timestamp) : 'Today'}
-                            </span>
-                          </div>
-                          
-                          {/* Comments Section */}
-                          {expandedComments.has(post.id) && (
-                            <div className="px-3 pb-3 border-t border-gray-100">
-                          <CommentsSection
-                            postId={post.id}
-                            isLiked={likedPosts.has(post.id)}
-                            onLike={handleLike}
-                            expandedComments={true}
-                            onToggleComments={() => {}}
-                            fetchComments={fetchComments}
-                            commentInput={commentInputs[post.id] || ''}
-                            onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
-                            onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
-                            isSubmitting={commentMutation.isPending}
-                            currentUserId={user?.id}
-                            onDeleteComment={handleDeleteComment}
-                            onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
-                            onVoteComment={handleVoteComment}
-                            likedComments={likedComments}
-                            commentVotes={commentVotes}
-                          />
-                            </div>
-                          )}
-                        </div>
                       </div>
                     </div>
                   );
@@ -4781,11 +4487,11 @@ export default function Feed() {
               )}
 
               {/* End of Feed message for other specific filters */}
-              {['predictions', 'dna', 'hot_takes'].includes(selectedFilter) && (
+              {['predictions', 'dna'].includes(selectedFilter) && (
                 <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-100 mt-4">
                   <div className="text-3xl mb-2">🎯</div>
                   <p className="text-gray-600 font-medium">That's all for now!</p>
-                  <p className="text-gray-500 text-sm mt-1">Check back later for more {selectedFilter === 'predictions' ? 'predictions' : selectedFilter === 'dna' ? 'DNA moments' : 'hot takes'}</p>
+                  <p className="text-gray-500 text-sm mt-1">Check back later for more {selectedFilter === 'predictions' ? 'predictions' : 'DNA moments'}</p>
                 </div>
               )}
 
@@ -4833,156 +4539,6 @@ export default function Feed() {
         }}
         media={quickAddMedia}
       />
-
-      {/* Pass It Modal for Hot Takes */}
-      {passItPostId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl">
-            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Pass It to a Friend</h3>
-              <button
-                onClick={() => {
-                  setPassItPostId(null);
-                  setPassItSearch("");
-                  setSelectedFriendId(null);
-                }}
-                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X size={20} className="text-gray-500" />
-              </button>
-            </div>
-            <div className="p-4">
-              {/* Search Input */}
-              <div className="relative mb-4">
-                <SearchIcon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search friends..."
-                  value={passItSearch}
-                  onChange={(e) => setPassItSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  data-testid="input-pass-it-search"
-                />
-              </div>
-              
-              {/* Friend List */}
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {friendsData.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-4">
-                    Add friends to pass Hot Takes! They'll get to defend or drop your take.
-                  </p>
-                ) : (
-                  friendsData
-                    .filter((friend: any) => {
-                      if (!passItSearch) return true;
-                      const searchLower = passItSearch.toLowerCase();
-                      return (
-                        friend.user_name?.toLowerCase().includes(searchLower) ||
-                        friend.display_name?.toLowerCase().includes(searchLower)
-                      );
-                    })
-                    .map((friend: any) => (
-                      <button
-                        key={friend.id}
-                        onClick={() => setSelectedFriendId(friend.id)}
-                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
-                          selectedFriendId === friend.id
-                            ? 'bg-purple-100 border-2 border-purple-500'
-                            : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
-                        }`}
-                        data-testid={`button-select-friend-${friend.id}`}
-                      >
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-white font-semibold">
-                          {friend.profile_image_url ? (
-                            <img src={friend.profile_image_url} alt="" className="w-full h-full rounded-full object-cover" />
-                          ) : (
-                            <span>{friend.display_name?.[0]?.toUpperCase() || friend.user_name?.[0]?.toUpperCase() || '?'}</span>
-                          )}
-                        </div>
-                        <div className="text-left flex-1">
-                          <p className="font-medium text-gray-900">{friend.display_name || friend.user_name}</p>
-                          {friend.user_name && friend.display_name && (
-                            <p className="text-sm text-gray-500">@{friend.user_name}</p>
-                          )}
-                        </div>
-                        {selectedFriendId === friend.id && (
-                          <Check size={20} className="text-purple-600" />
-                        )}
-                      </button>
-                    ))
-                )}
-              </div>
-            </div>
-            <div className="p-4 border-t border-gray-200">
-              <button
-                onClick={async () => {
-                  if (!selectedFriendId || !passItPostId) {
-                    toast({
-                      title: "Select a Friend",
-                      description: "Please select a friend to pass this Hot Take to.",
-                      variant: "destructive",
-                    });
-                    return;
-                  }
-                  
-                  setIsPassingHotTake(true);
-                  try {
-                    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/pass-hot-take`, {
-                      method: 'POST',
-                      headers: {
-                        'Authorization': `Bearer ${session?.access_token}`,
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({
-                        postId: passItPostId,
-                        targetUserId: selectedFriendId
-                      }),
-                    });
-                    
-                    if (!response.ok) {
-                      throw new Error('Failed to pass Hot Take');
-                    }
-                    
-                    toast({
-                      title: "🔥 Hot Take Passed!",
-                      description: "Your friend will get a notification to defend or drop it.",
-                    });
-                    
-                    setPassItPostId(null);
-                    setPassItSearch("");
-                    setSelectedFriendId(null);
-                  } catch (error) {
-                    console.error('Error passing hot take:', error);
-                    toast({
-                      title: "Failed to Pass",
-                      description: "Please try again.",
-                      variant: "destructive",
-                    });
-                  } finally {
-                    setIsPassingHotTake(false);
-                  }
-                }}
-                disabled={!selectedFriendId || isPassingHotTake}
-                className={`w-full py-3 rounded-xl font-semibold transition-all ${
-                  selectedFriendId && !isPassingHotTake
-                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
-                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                }`}
-                data-testid="button-pass-it-confirm"
-              >
-                {isPassingHotTake ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Passing...
-                  </span>
-                ) : (
-                  'Pass This Hot Take'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Bet Modal - Will they like it? */}
       {activeBetPost && (
