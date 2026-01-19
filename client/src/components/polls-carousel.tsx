@@ -243,7 +243,8 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
       );
       
       if (response.ok) {
-        const results = await response.json();
+        const data = await response.json();
+        const results = Array.isArray(data) ? data : (data.results || []);
         setOtherSearchResults(prev => ({ ...prev, [pollId]: results.slice(0, 5) }));
       }
     } catch (error) {
