@@ -70,26 +70,31 @@ const getTypeIcon = (type: string) => {
 
 export default function ConsumptionCarousel({ items, title = "Your Circle" }: ConsumptionCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [reactions, setReactions] = useState<Record<string, 'agree' | 'disagree'>>({});
 
-  const checkScroll = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+  const scrollToNext = () => {
+    if (scrollRef.current && currentIndex < items.length - 1) {
+      const cardWidth = scrollRef.current.clientWidth;
+      scrollRef.current.scrollBy({ left: cardWidth + 12, behavior: 'smooth' });
+      setCurrentIndex(prev => Math.min(prev + 1, items.length - 1));
     }
   };
 
-  const scroll = (direction: 'left' | 'right') => {
+  const scrollToPrev = () => {
+    if (scrollRef.current && currentIndex > 0) {
+      const cardWidth = scrollRef.current.clientWidth;
+      scrollRef.current.scrollBy({ left: -(cardWidth + 12), behavior: 'smooth' });
+      setCurrentIndex(prev => Math.max(prev - 1, 0));
+    }
+  };
+
+  const handleScroll = () => {
     if (scrollRef.current) {
-      const scrollAmount = 280;
-      scrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-      setTimeout(checkScroll, 300);
+      const cardWidth = scrollRef.current.clientWidth;
+      const scrollLeft = scrollRef.current.scrollLeft;
+      const newIndex = Math.round(scrollLeft / (cardWidth + 12));
+      setCurrentIndex(Math.min(Math.max(newIndex, 0), items.length - 1));
     }
   };
 
@@ -106,15 +111,15 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
       return (
         <div
           key={item.id || index}
-          className="flex-shrink-0 w-64 bg-gray-50 rounded-xl p-4 border border-gray-200"
+          className="flex-shrink-0 w-full snap-center"
         >
           <div className="flex items-start gap-3 mb-3">
             {item.mediaImage ? (
-              <div className="w-12 h-16 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+              <div className="w-14 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
                 <img src={item.mediaImage} alt={item.mediaTitle} className="w-full h-full object-cover" />
               </div>
             ) : (
-              <div className="w-12 h-16 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
                 {getMediaIcon(item.mediaType)}
               </div>
             )}
@@ -127,33 +132,32 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
               <p className="text-gray-900 text-sm font-semibold line-clamp-2 mt-0.5">
                 added {item.mediaTitle}
               </p>
+              <p className="text-xs text-gray-500 mt-1">
+                <Users className="w-3 h-3 inline mr-1" />
+                {item.communityPercent || getStablePercent(item.id, 50, 80)}% have this on their list
+              </p>
             </div>
           </div>
-          
-          <p className="text-xs text-gray-500 mb-3">
-            <Users className="w-3 h-3 inline mr-1" />
-            {item.communityPercent || getStablePercent(item.id, 50, 80)}% have this on their list
-          </p>
           
           {!hasReacted ? (
             <div className="flex gap-2">
               <button
                 onClick={() => handleReaction(item.id, 'agree')}
-                className="flex-1 py-2 px-3 rounded-full bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 text-white text-xs font-medium hover:opacity-90 transition-colors flex items-center justify-center gap-1"
+                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
               >
-                <ThumbsUp className="w-3 h-3" />
+                <ThumbsUp className="w-3.5 h-3.5" />
                 Great pick
               </button>
               <button
                 onClick={() => handleReaction(item.id, 'disagree')}
-                className="flex-1 py-2 px-3 rounded-full bg-gray-100 border border-gray-200 text-gray-600 text-xs font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
+                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-1"
               >
-                <ThumbsDown className="w-3 h-3" />
+                <ThumbsDown className="w-3.5 h-3.5" />
                 Overrated
               </button>
             </div>
           ) : (
-            <div className="py-2 px-3 rounded-full bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 text-white text-xs text-center">
+            <div className="py-3 px-4 rounded-full bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 text-white text-sm text-center font-medium">
               {hasReacted === 'agree' ? "You agreed!" : "You disagreed"}
             </div>
           )}
@@ -165,7 +169,7 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
       return (
         <div
           key={item.id || index}
-          className="flex-shrink-0 w-64 bg-gray-50 rounded-xl p-4 border border-gray-200"
+          className="flex-shrink-0 w-full snap-center"
         >
           <div className="flex items-center gap-2 mb-2">
             <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
@@ -179,11 +183,11 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
             <span className="text-xs text-gray-500">voted</span>
           </div>
           
-          <p className="text-gray-900 text-sm font-semibold mb-1 line-clamp-2">
+          <p className="text-gray-900 text-base font-semibold mb-1 line-clamp-2">
             "{item.userAnswer}"
           </p>
           
-          <p className="text-xs text-gray-500 mb-3">
+          <p className="text-xs text-gray-500 mb-2">
             on: {item.questionTitle}
           </p>
           
@@ -196,19 +200,19 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
             <div className="flex gap-2">
               <button
                 onClick={() => handleReaction(item.id, 'agree')}
-                className="flex-1 py-2 px-3 rounded-full bg-gradient-to-r from-slate-800 via-blue-900 to-cyan-900 text-white text-xs font-medium hover:opacity-90 transition-colors"
+                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
               >
                 Side with them
               </button>
               <button
                 onClick={() => handleReaction(item.id, 'disagree')}
-                className="flex-1 py-2 px-3 rounded-full bg-gray-100 border border-gray-200 text-gray-600 text-xs font-medium hover:bg-gray-200 transition-colors"
+                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
               >
                 Disagree
               </button>
             </div>
           ) : (
-            <div className="py-2 px-3 rounded-full bg-gradient-to-r from-slate-800 via-blue-900 to-cyan-900 text-white text-xs text-center">
+            <div className="py-3 px-4 rounded-full bg-gradient-to-r from-slate-800 via-blue-900 to-cyan-900 text-white text-sm text-center font-medium">
               {hasReacted === 'agree' ? `You sided with ${item.displayName?.split(' ')[0] || item.username}` : "You disagreed"}
             </div>
           )}
@@ -220,7 +224,7 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
       return (
         <div
           key={item.id || index}
-          className="flex-shrink-0 w-64 bg-gray-50 rounded-xl p-4 border border-gray-200"
+          className="flex-shrink-0 w-full snap-center"
         >
           <div className="flex items-center gap-2 mb-2">
             <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
@@ -236,7 +240,7 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
             </span>
           </div>
           
-          <p className="text-gray-900 text-sm font-semibold mb-3 line-clamp-2">
+          <p className="text-gray-900 text-base font-semibold mb-3 line-clamp-2">
             "{item.questionTitle}"
           </p>
           
@@ -249,19 +253,19 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
             <div className="flex gap-2">
               <button
                 onClick={() => handleReaction(item.id, 'agree')}
-                className="flex-1 py-2 px-3 rounded-full bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 text-white text-xs font-medium hover:opacity-90 transition-colors"
+                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
               >
                 I knew it
               </button>
               <button
                 onClick={() => handleReaction(item.id, 'disagree')}
-                className="flex-1 py-2 px-3 rounded-full bg-gray-100 border border-gray-200 text-gray-600 text-xs font-medium hover:bg-gray-200 transition-colors"
+                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
               >
                 Play this
               </button>
             </div>
           ) : (
-            <div className="py-2 px-3 rounded-full bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 text-white text-xs text-center">
+            <div className="py-3 px-4 rounded-full bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 text-white text-sm text-center font-medium">
               {hasReacted === 'agree' ? "You knew it too!" : "Challenge accepted"}
             </div>
           )}
@@ -273,7 +277,7 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
       return (
         <div
           key={item.id || index}
-          className="flex-shrink-0 w-64 bg-gray-50 rounded-xl p-4 border border-gray-200"
+          className="flex-shrink-0 w-full snap-center"
         >
           <div className="flex items-center gap-2 mb-2">
             <div className="w-6 h-6 rounded-full bg-pink-100 flex items-center justify-center text-pink-600">
@@ -287,7 +291,7 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
             <span className="text-xs text-gray-500">says</span>
           </div>
           
-          <p className="text-gray-900 text-sm font-semibold mb-3 line-clamp-2">
+          <p className="text-gray-900 text-base font-semibold mb-3 line-clamp-2">
             "{item.userAnswer}"
           </p>
           
@@ -300,19 +304,19 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
             <div className="flex gap-2">
               <button
                 onClick={() => handleReaction(item.id, 'agree')}
-                className="flex-1 py-2 px-3 rounded-full bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 text-white text-xs font-medium hover:opacity-90 transition-colors"
+                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
               >
                 Same
               </button>
               <button
                 onClick={() => handleReaction(item.id, 'disagree')}
-                className="flex-1 py-2 px-3 rounded-full bg-gray-100 border border-gray-200 text-gray-600 text-xs font-medium hover:bg-gray-200 transition-colors"
+                className="flex-1 py-3 px-4 rounded-full bg-gray-100 border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-200 transition-colors"
               >
                 Not me
               </button>
             </div>
           ) : (
-            <div className="py-2 px-3 rounded-full bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 text-white text-xs text-center">
+            <div className="py-3 px-4 rounded-full bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 text-white text-sm text-center font-medium">
               {hasReacted === 'agree' ? "You're the same!" : "You're different"}
             </div>
           )}
@@ -336,36 +340,33 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
           </div>
         </div>
         <div className="flex items-center gap-1">
-          {canScrollLeft && (
+          {currentIndex > 0 && (
             <button
-              onClick={() => scroll('left')}
+              onClick={scrollToPrev}
               className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
             >
               <ChevronLeft className="w-4 h-4 text-gray-600" />
             </button>
           )}
-          {canScrollRight && (
+          {currentIndex < items.length - 1 && (
             <button
-              onClick={() => scroll('right')}
+              onClick={scrollToNext}
               className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
             >
               <ChevronRight className="w-4 h-4 text-gray-600" />
             </button>
           )}
+          <span className="text-xs text-gray-400 ml-1">{currentIndex + 1}/{items.length}</span>
         </div>
       </div>
 
       <div
         ref={scrollRef}
-        onScroll={checkScroll}
-        className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1"
+        onScroll={handleScroll}
+        className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
       >
         {items.map((item, index) => renderCard(item, index))}
       </div>
-      
-      <p className="text-[10px] text-gray-400 text-center mt-3">
-        {items.length} friend activities
-      </p>
     </div>
   );
 }
