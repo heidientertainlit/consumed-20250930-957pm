@@ -160,7 +160,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
       }
       
       const isCorrect = correctAnswer === answer;
-      const points = isCorrect ? pointsReward : Math.floor(pointsReward / 2);
+      const points = isCorrect ? pointsReward : 0;
       
       const { error } = await supabase
         .from('user_predictions')
@@ -208,8 +208,8 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
       queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
       
       toast({
-        title: result.isCorrect ? `Correct! +${result.points} points` : `Wrong! +${result.points} points`,
-        description: result.isCorrect ? 'Nice work!' : 'Half points for trying!',
+        title: result.isCorrect ? `Correct! +${result.points} points` : 'Wrong!',
+        description: result.isCorrect ? 'Nice work!' : 'Better luck next time!',
       });
       
       setTimeout(() => {
@@ -252,17 +252,11 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
     }
   };
 
-  const handleSelectOption = (questionId: string, option: string) => {
-    setSelectedAnswer(prev => ({ ...prev, [questionId]: option }));
-  };
-
-  const handleSubmitAnswer = (item: TriviaItem) => {
-    const answer = selectedAnswer[item.id];
-    if (!answer) return;
-    
+  const handleSelectAndSubmit = (item: TriviaItem, option: string) => {
+    setSelectedAnswer(prev => ({ ...prev, [item.id]: option }));
     answerMutation.mutate({
       questionId: item.id,
-      answer,
+      answer: option,
       pointsReward: item.pointsReward,
       correctAnswer: item.correctAnswer
     });
@@ -403,22 +397,12 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                             ? 'bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 border-purple-500/50 text-white shadow-lg' 
                             : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:border-gray-300'
                         }`}
-                        onClick={() => handleSelectOption(item.id, option)}
+                        onClick={() => handleSelectAndSubmit(item, option)}
                         disabled={answerMutation.isPending}
                       >
                         {option}
                       </button>
                     ))}
-                    
-                    {selected && (
-                      <button
-                        onClick={() => handleSubmitAnswer(item)}
-                        disabled={answerMutation.isPending}
-                        className="mt-2 w-full py-2.5 rounded-xl bg-green-600 hover:bg-green-500 text-white font-medium transition-colors disabled:opacity-50"
-                      >
-                        {answerMutation.isPending ? 'Submitting...' : 'Submit'}
-                      </button>
-                    )}
                   </div>
                 ) : (
                   <div className="space-y-2">
