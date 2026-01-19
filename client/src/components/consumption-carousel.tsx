@@ -1,6 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
 import { Link } from 'wouter';
-import { ChevronLeft, ChevronRight, Users, ThumbsUp, ThumbsDown, HelpCircle, BarChart3, Sparkles, Film, Tv, BookOpen, Music } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ThumbsUp, ThumbsDown, HelpCircle, BarChart3, Sparkles, Film, Tv, BookOpen, Music, Star, Plus } from 'lucide-react';
 
 const getStablePercent = (id: string, min = 40, max = 80) => {
   let hash = 0;
@@ -146,26 +146,44 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
                 {item.communityPercent || getStablePercent(item.id, 50, 80)}% have this
               </p>
             </div>
-            {!hasReacted ? (
-              <div className="flex gap-1 flex-shrink-0">
-                <button
-                  onClick={() => handleReaction(item.id, 'agree')}
-                  className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-green-100 hover:border-green-300 transition-colors"
-                >
-                  <ThumbsUp className="w-3.5 h-3.5 text-gray-600" />
-                </button>
-                <button
-                  onClick={() => handleReaction(item.id, 'disagree')}
-                  className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-red-100 hover:border-red-300 transition-colors"
-                >
-                  <ThumbsDown className="w-3.5 h-3.5 text-gray-600" />
-                </button>
-              </div>
-            ) : (
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${hasReacted === 'agree' ? 'bg-green-500' : 'bg-red-500'}`}>
-                {hasReacted === 'agree' ? <ThumbsUp className="w-3.5 h-3.5 text-white" /> : <ThumbsDown className="w-3.5 h-3.5 text-white" />}
-              </div>
-            )}
+            <div className="flex gap-1 flex-shrink-0">
+              {!hasReacted ? (
+                <>
+                  <button
+                    onClick={() => handleReaction(item.id, 'agree')}
+                    className="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-green-100 hover:border-green-300 transition-colors"
+                    title="Great pick"
+                  >
+                    <ThumbsUp className="w-3 h-3 text-gray-600" />
+                  </button>
+                  <button
+                    onClick={() => handleReaction(item.id, 'disagree')}
+                    className="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-red-100 hover:border-red-300 transition-colors"
+                    title="Overrated"
+                  >
+                    <ThumbsDown className="w-3 h-3 text-gray-600" />
+                  </button>
+                </>
+              ) : (
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center ${hasReacted === 'agree' ? 'bg-green-500' : 'bg-red-500'}`}>
+                  {hasReacted === 'agree' ? <ThumbsUp className="w-3 h-3 text-white" /> : <ThumbsDown className="w-3 h-3 text-white" />}
+                </div>
+              )}
+              <button
+                onClick={() => {/* TODO: Open rating modal */}}
+                className="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-yellow-100 hover:border-yellow-300 transition-colors"
+                title="Rate it"
+              >
+                <Star className="w-3 h-3 text-gray-600" />
+              </button>
+              <button
+                onClick={() => {/* TODO: Open add to list modal */}}
+                className="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-purple-100 hover:border-purple-300 transition-colors"
+                title="Add to list"
+              >
+                <Plus className="w-3 h-3 text-gray-600" />
+              </button>
+            </div>
           </div>
         </div>
       );
