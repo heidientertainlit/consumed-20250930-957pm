@@ -432,27 +432,23 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                           key={idx}
                           className={`relative py-3 px-4 rounded-xl border overflow-hidden ${
                             isUserAnswer && isCorrect
-                              ? 'border-green-500 bg-green-50'
+                              ? 'border-green-500 bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-500'
                               : isUserAnswer && !isCorrect
                                 ? 'border-red-500 bg-red-50'
                                 : isCorrect
-                                  ? 'border-green-300 bg-green-50'
+                                  ? 'border-green-500 bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-500'
                                   : 'border-gray-200 bg-gray-50'
                           }`}
                         >
-                          <div 
-                            className="absolute left-0 top-0 bottom-0 bg-purple-200/50 transition-all duration-500"
-                            style={{ width: `${percentage}%` }}
-                          />
                           <div className="relative flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                              {isCorrect && <Trophy className="w-4 h-4 text-green-500" />}
+                              {isCorrect && <Trophy className={`w-4 h-4 ${isCorrect ? 'text-white' : 'text-green-500'}`} />}
                               {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-500" />}
-                              <span className="text-sm text-gray-700">{option}</span>
+                              <span className={`text-sm ${isCorrect ? 'text-white font-medium' : 'text-gray-700'}`}>{option}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Users className="w-3 h-3 text-gray-400" />
-                              <span className="text-sm font-bold text-gray-700">{percentage}%</span>
+                              <Users className={`w-3 h-3 ${isCorrect ? 'text-white/70' : 'text-gray-400'}`} />
+                              <span className={`text-sm font-bold ${isCorrect ? 'text-white' : 'text-gray-700'}`}>{percentage}%</span>
                             </div>
                           </div>
                         </div>
