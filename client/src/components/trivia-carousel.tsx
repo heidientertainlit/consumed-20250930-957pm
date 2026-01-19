@@ -37,7 +37,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
   const [selectedChallenge, setSelectedChallenge] = useState<TriviaItem | null>(null);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['trivia-carousel'],
+    queryKey: ['trivia-carousel', user?.id],
     queryFn: async () => {
       const { data: pools, error } = await supabase
         .from('prediction_pools')
@@ -49,17 +49,24 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
       
       if (error) throw error;
       
-      console.log('🎯 Trivia pools from Supabase:', pools?.length);
+      let answeredPoolIds: string[] = [];
+      if (user?.id) {
+        const { data: userPredictions } = await supabase
+          .from('user_predictions')
+          .select('pool_id')
+          .eq('user_id', user.id);
+        answeredPoolIds = (userPredictions || []).map(p => p.pool_id);
+      }
+      
+      const unansweredPools = (pools || []).filter(pool => !answeredPoolIds.includes(pool.id));
       
       const uniqueTitles = new Map<string, any>();
-      for (const pool of (pools || [])) {
+      for (const pool of unansweredPools) {
         if (!uniqueTitles.has(pool.title)) {
           uniqueTitles.set(pool.title, pool);
         }
       }
       const uniquePools = Array.from(uniqueTitles.values());
-      
-      console.log('🎯 Unique trivia items:', uniquePools.length, uniquePools.map(p => p.title));
       
       const items: TriviaItem[] = uniquePools.map(pool => {
         let questionText = pool.title;
@@ -94,8 +101,6 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
           rawOptions: pool.options
         };
       }).filter(item => item.options.length > 0);
-      
-      console.log('🎯 Processed trivia items:', items.length, items.map(i => i.question));
       
       return items;
     },
