@@ -231,6 +231,15 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
     });
   };
 
+  const handleSelectAndVote = (poll: PollItem, option: string) => {
+    setSelectedOption(prev => ({ ...prev, [poll.id]: option }));
+    voteMutation.mutate({
+      pollId: poll.id,
+      vote: option,
+      pointsReward: poll.pointsReward
+    });
+  };
+
   const handleOtherSearch = async (pollId: string, query: string) => {
     if (!query.trim() || !session?.access_token) return;
     
@@ -285,9 +294,9 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   if (!session) return null;
   if (isLoading) {
     return (
-      <Card className="bg-gradient-to-r from-blue-600 to-cyan-600 border-0 rounded-2xl p-5 shadow-lg mb-4">
+      <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm mb-4">
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-6 h-6 animate-spin text-white" />
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
         </div>
       </Card>
     );
@@ -305,30 +314,30 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   if (filteredData.length === 0) return null;
 
   return (
-    <Card className="bg-gradient-to-r from-blue-600 to-cyan-600 border-0 rounded-2xl p-4 shadow-lg mb-4 overflow-hidden relative">
+    <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm mb-4 overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-            <BarChart3 className="w-3.5 h-3.5 text-white" />
+          <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
+            <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">{category || 'Quick Polls'}</p>
-            <p className="text-[10px] text-white/70">{category ? `${filteredData.length} polls` : 'Share your opinion'}</p>
+            <p className="text-sm font-semibold text-gray-900">{category || 'Quick Polls'}</p>
+            <p className="text-[10px] text-gray-500">{category ? `${filteredData.length} polls` : 'Share your opinion'}</p>
           </div>
         </div>
         
         <div className="flex items-center gap-1">
           {currentIndex > 0 && (
-            <button onClick={scrollToPrev} className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30">
-              <ChevronLeft className="w-4 h-4 text-white" />
+            <button onClick={scrollToPrev} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">
+              <ChevronLeft className="w-4 h-4 text-gray-600" />
             </button>
           )}
           {currentIndex < filteredData.length - 1 && (
-            <button onClick={scrollToNext} className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30">
-              <ChevronRight className="w-4 h-4 text-white" />
+            <button onClick={scrollToNext} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">
+              <ChevronRight className="w-4 h-4 text-gray-600" />
             </button>
           )}
-          <span className="text-xs text-white/60 ml-1">{currentIndex + 1}/{filteredData.length}</span>
+          <span className="text-xs text-gray-400 ml-1">{currentIndex + 1}/{filteredData.length}</span>
         </div>
       </div>
 
@@ -339,23 +348,23 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
           
           return (
             <div key={poll.id} className="flex-shrink-0 w-full snap-center">
-              <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-blue-400/40 border border-blue-300/30">
-                <span className="text-xs text-blue-100 font-medium">+{poll.pointsReward} pts</span>
+              <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
+                <span className="text-xs text-green-700 font-medium">+{poll.pointsReward} pts</span>
               </div>
               
-              <h3 className="text-white font-semibold text-base mb-3">{poll.title}</h3>
+              <h3 className="text-gray-900 font-semibold text-base mb-3">{poll.title}</h3>
               
               {!voted ? (
                 <div className="flex flex-col gap-2">
                   {poll.options.slice(0, 4).map((option, idx) => (
                     <button
                       key={idx}
-                      className={`py-3 px-4 rounded-xl border text-white text-sm font-medium transition-all text-left ${
+                      className={`py-3 px-4 rounded-full border text-sm font-medium transition-all text-left ${
                         selected === option 
-                          ? 'bg-gradient-to-r from-blue-400 to-cyan-400 border-blue-200 shadow-lg' 
-                          : 'bg-blue-800/40 border-blue-500/30 hover:bg-blue-700/50'
+                          ? 'bg-gradient-to-r from-slate-800 via-blue-900 to-cyan-900 border-blue-500/50 text-white shadow-lg' 
+                          : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:border-gray-300'
                       }`}
-                      onClick={() => setSelectedOption(prev => ({ ...prev, [poll.id]: option }))}
+                      onClick={() => handleSelectAndVote(poll, option)}
                       disabled={voteMutation.isPending}
                     >
                       {option}
@@ -364,7 +373,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                   
                   {!otherSearchOpen[poll.id] ? (
                     <button
-                      className="py-3 px-4 rounded-xl border border-dashed border-blue-400/50 text-white/70 text-sm font-medium transition-all text-left hover:bg-blue-700/30 flex items-center gap-2"
+                      className="py-3 px-4 rounded-full border border-dashed border-gray-300 text-gray-500 text-sm font-medium transition-all text-left hover:bg-gray-100 flex items-center gap-2"
                       onClick={() => setOtherSearchOpen(prev => ({ ...prev, [poll.id]: true }))}
                       disabled={voteMutation.isPending}
                     >
@@ -372,9 +381,9 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                       My Pick
                     </button>
                   ) : (
-                    <div className="bg-blue-900/50 rounded-xl p-3 border border-blue-400/30">
+                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
                       <div className="flex items-center gap-2 mb-2">
-                        <Search className="w-4 h-4 text-white/60" />
+                        <Search className="w-4 h-4 text-gray-400" />
                         <Input
                           placeholder="Search for your pick..."
                           value={otherSearchQuery[poll.id] || ''}
@@ -392,7 +401,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                               handleOtherSearch(poll.id, otherSearchQuery[poll.id] || '');
                             }
                           }}
-                          className="flex-1 bg-transparent border-0 text-white placeholder:text-white/50 text-sm h-8 p-0 focus-visible:ring-0"
+                          className="flex-1 bg-transparent border-0 text-gray-700 placeholder:text-gray-400 text-sm h-8 p-0 focus-visible:ring-0"
                           autoFocus
                         />
                         <button
@@ -401,15 +410,15 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                             setOtherSearchQuery(prev => ({ ...prev, [poll.id]: '' }));
                             setOtherSearchResults(prev => ({ ...prev, [poll.id]: [] }));
                           }}
-                          className="p-1 hover:bg-white/10 rounded"
+                          className="p-1 hover:bg-gray-200 rounded"
                         >
-                          <X className="w-4 h-4 text-white/60" />
+                          <X className="w-4 h-4 text-gray-400" />
                         </button>
                       </div>
                       
                       {isSearching[poll.id] && (
                         <div className="flex items-center justify-center py-3">
-                          <Loader2 className="w-4 h-4 animate-spin text-white/60" />
+                          <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
                         </div>
                       )}
                       
@@ -419,7 +428,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                             <button
                               key={idx}
                               onClick={() => handleSelectOther(poll, result)}
-                              className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-white/10 transition-colors text-left"
+                              className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-left"
                             >
                               {result.poster_url || result.image_url ? (
                                 <img 
@@ -428,29 +437,19 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                                   className="w-8 h-10 object-cover rounded"
                                 />
                               ) : (
-                                <div className="w-8 h-10 bg-white/20 rounded flex items-center justify-center">
-                                  <Search className="w-3 h-3 text-white/40" />
+                                <div className="w-8 h-10 bg-gray-200 rounded flex items-center justify-center">
+                                  <Search className="w-3 h-3 text-gray-400" />
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className="text-white text-sm font-medium truncate">{result.title}</p>
-                                <p className="text-white/50 text-xs">{result.type} {result.year ? `(${result.year})` : ''}</p>
+                                <p className="text-gray-700 text-sm font-medium truncate">{result.title}</p>
+                                <p className="text-gray-500 text-xs">{result.type} {result.year ? `(${result.year})` : ''}</p>
                               </div>
                             </button>
                           ))}
                         </div>
                       )}
                     </div>
-                  )}
-                  
-                  {selected && !otherSearchOpen[poll.id] && (
-                    <button
-                      onClick={() => handleVote(poll)}
-                      disabled={voteMutation.isPending}
-                      className="mt-2 w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium"
-                    >
-                      {voteMutation.isPending ? 'Voting...' : 'Vote'}
-                    </button>
                   )}
                 </div>
               ) : (
@@ -462,19 +461,20 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                     return (
                       <div 
                         key={idx}
-                        className={`relative py-3 px-4 rounded-xl border overflow-hidden ${
-                          isUserVote ? 'border-white bg-white/20' : 'border-blue-400/30 bg-blue-800/30'
+                        className={`relative py-3 px-4 rounded-full border overflow-hidden ${
+                          isUserVote 
+                            ? 'border-blue-500 bg-gradient-to-r from-slate-800 via-blue-900 to-cyan-900' 
+                            : 'border-gray-200 bg-gray-50'
                         }`}
                       >
-                        <div className="absolute left-0 top-0 bottom-0 bg-white/20" style={{ width: `${percentage}%` }} />
                         <div className="relative flex justify-between items-center">
                           <div className="flex items-center gap-2">
                             {isUserVote && <Check className="w-4 h-4 text-white" />}
-                            <span className="text-sm text-white">{option}</span>
+                            <span className={`text-sm ${isUserVote ? 'text-white font-medium' : 'text-gray-700'}`}>{option}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Users className="w-3 h-3 text-white/60" />
-                            <span className="text-sm font-bold text-white">{percentage}%</span>
+                            <Users className={`w-3 h-3 ${isUserVote ? 'text-white/70' : 'text-gray-400'}`} />
+                            <span className={`text-sm ${isUserVote ? 'text-white font-bold' : 'text-gray-400'}`}>{percentage}%</span>
                           </div>
                         </div>
                       </div>
@@ -482,19 +482,20 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                   })}
                   {(voted.stats['Other'] > 0 || voted.vote === 'Other') && (
                     <div 
-                      className={`relative py-3 px-4 rounded-xl border overflow-hidden ${
-                        voted.vote === 'Other' ? 'border-white bg-white/20' : 'border-blue-400/30 bg-blue-800/30'
+                      className={`relative py-3 px-4 rounded-full border overflow-hidden ${
+                        voted.vote === 'Other' 
+                          ? 'border-blue-500 bg-gradient-to-r from-slate-800 via-blue-900 to-cyan-900' 
+                          : 'border-gray-200 bg-gray-50'
                       }`}
                     >
-                      <div className="absolute left-0 top-0 bottom-0 bg-white/20" style={{ width: `${voted.stats['Other'] || 0}%` }} />
                       <div className="relative flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           {voted.vote === 'Other' && <Check className="w-4 h-4 text-white" />}
-                          <span className="text-sm text-white">Other</span>
+                          <span className={`text-sm ${voted.vote === 'Other' ? 'text-white font-medium' : 'text-gray-700'}`}>Other</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Users className="w-3 h-3 text-white/60" />
-                          <span className="text-sm font-bold text-white">{voted.stats['Other'] || 0}%</span>
+                          <Users className={`w-3 h-3 ${voted.vote === 'Other' ? 'text-white/70' : 'text-gray-400'}`} />
+                          <span className={`text-sm ${voted.vote === 'Other' ? 'text-white font-bold' : 'text-gray-400'}`}>{voted.stats['Other'] || 0}%</span>
                         </div>
                       </div>
                     </div>
@@ -508,16 +509,16 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
       
       {!category && (
         <Link href="/play">
-          <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-white/20 cursor-pointer hover:opacity-80">
-            <BarChart3 className="w-3.5 h-3.5 text-white/80" />
-            <span className="text-xs text-white/80 font-medium">See all polls</span>
+          <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-gray-200 cursor-pointer hover:opacity-80">
+            <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
+            <span className="text-xs text-blue-600 font-medium">See all polls</span>
           </div>
         </Link>
       )}
 
       {voteMutation.isPending && (
-        <div className="absolute inset-0 bg-blue-600/50 flex items-center justify-center rounded-2xl">
-          <Loader2 className="w-6 h-6 animate-spin text-white" />
+        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-2xl">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
         </div>
       )}
     </Card>
