@@ -277,7 +277,7 @@ export function DailyChallengeCard() {
           <Play className="w-5 h-5 text-purple-400 fill-purple-400" />
           <div className="text-left flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-white">Daily Challenge</span>
+              <span className="text-sm font-semibold text-white">The Daily Call</span>
               {!alreadyCompleted && (
                 <span className="text-[10px] text-purple-400 font-medium">LIVE</span>
               )}

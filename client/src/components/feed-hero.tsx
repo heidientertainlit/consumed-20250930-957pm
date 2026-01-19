@@ -203,7 +203,7 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-purple-300 uppercase tracking-wide">Daily Challenge</span>
+                <span className="text-xs font-medium text-purple-300 uppercase tracking-wide">The Daily Call</span>
                 {hasCompleted && (
                   <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <CheckCircle className="w-3 h-3" /> Done
@@ -293,7 +293,7 @@ export default function FeedHero({ onPlayChallenge, variant = "default" }: FeedH
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <Zap size={16} className="text-yellow-300" />
-              <span className="text-xs font-medium text-purple-200 uppercase tracking-wide">Daily Challenge</span>
+              <span className="text-xs font-medium text-purple-200 uppercase tracking-wide">The Daily Call</span>
               {hasCompleted && (
                 <span className="text-xs bg-green-500/30 text-green-300 px-2 py-0.5 rounded-full flex items-center gap-1">
                   <CheckCircle className="w-3 h-3" /> Done
