@@ -509,7 +509,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
       
       {!category && (
         <Link href="/play">
-          <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-gray-200 cursor-pointer hover:opacity-80">
+          <div className="flex items-center justify-center gap-1.5 mt-2 pt-2 border-t border-gray-200 cursor-pointer hover:opacity-80">
             <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
             <span className="text-xs text-blue-600 font-medium">See all polls</span>
           </div>

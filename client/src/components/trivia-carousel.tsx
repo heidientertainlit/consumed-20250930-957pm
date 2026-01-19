@@ -452,7 +452,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
         
         {!category && (
           <Link href="/play/trivia">
-            <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+            <div className="flex items-center justify-center gap-1.5 mt-2 pt-2 border-t border-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
               <Trophy className="w-3.5 h-3.5 text-purple-600" />
               <span className="text-xs text-purple-600 font-medium">See all trivia & games</span>
             </div>
