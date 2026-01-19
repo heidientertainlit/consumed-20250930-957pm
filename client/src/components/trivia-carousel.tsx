@@ -401,7 +401,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                         className={`py-3 px-4 rounded-xl border text-sm font-medium transition-all text-left ${
                           selected === option 
                             ? 'bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600 border-purple-400 text-white shadow-lg' 
-                            : 'bg-gradient-to-r from-purple-700 via-purple-600 to-indigo-600 border-transparent text-white hover:from-purple-600 hover:via-purple-500 hover:to-indigo-500'
+                            : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:border-gray-300'
                         }`}
                         onClick={() => handleSelectOption(item.id, option)}
                         disabled={answerMutation.isPending}
