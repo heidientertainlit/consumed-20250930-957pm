@@ -2863,26 +2863,10 @@ export default function Feed() {
                 // Filter out incorrectly formatted prediction posts
                 if ('originalPostIds' in item) return true; // Keep consolidated activities
                 if ((item as any).type === 'friend_activity_block') return true; // Keep friend activity blocks
-                if ((item as any).type === 'consumption_carousel') return true; // Keep consumption carousels
+                if ((item as any).type === 'consumption_carousel') return false; // Skip - handled separately above
                 const post = item as SocialPost;
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }).map((item: any, postIndex: number) => {
-                // Handle consumption carousels (now "Your Circle")
-                if ((item as any).type === 'consumption_carousel') {
-                  const carousel = item as any;
-                  const transformedItems = (carousel.items || []).map((item: any) => ({
-                    ...item,
-                    type: 'media_added' as const
-                  }));
-                  return (
-                    <div key={carousel.id} className="mb-4">
-                      <ConsumptionCarousel 
-                        items={transformedItems}
-                        title="Your Circle"
-                      />
-                    </div>
-                  );
-                }
                 // Handle Quick Glimpse cards (scrolling Tier 2 grouped activities)
                 if ((item as any).type === 'friend_activity_block') {
                   const block = item as any;
