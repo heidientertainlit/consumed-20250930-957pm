@@ -129,13 +129,20 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         points_earned: pointsReward
       };
       
-      if (otherPickMetadata) {
-        insertData.other_pick_metadata = otherPickMetadata;
-      }
-      
-      const { error } = await supabase
+      let { error } = await supabase
         .from('user_predictions')
         .insert(insertData);
+      
+      if (!error && otherPickMetadata) {
+        const { error: updateError } = await supabase
+          .from('user_predictions')
+          .update({ other_pick_metadata: otherPickMetadata })
+          .eq('user_id', user.id)
+          .eq('pool_id', pollId);
+        if (updateError) {
+          console.log('Note: other_pick_metadata column not available yet, skipping metadata storage');
+        }
+      }
       
       if (error) throw error;
       
