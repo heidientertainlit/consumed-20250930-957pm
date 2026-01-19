@@ -1526,6 +1526,18 @@ export default function Feed() {
     
     const post = item as SocialPost;
     
+    // Hide user-generated polls and predictions - only show Consumed-created ones
+    const postType = post.type?.toLowerCase() || '';
+    if (['prediction', 'poll', 'vote'].includes(postType)) {
+      const postData = post as any;
+      const isUserGenerated = postData.origin_type === 'user' || 
+        (!postData.origin_type && postData.origin_user_id) ||
+        (postData.user && !postData.origin_type);
+      if (isUserGenerated) {
+        return false; // Hide user-generated polls/predictions
+      }
+    }
+    
     // Hide malformed posts: short content (looks like just a title), no media items, 
     // and not a special post type (prediction/poll/trivia/rank_share)
     // Note: 'add-to-list' (from track-media) is also a valid type
@@ -3068,8 +3080,13 @@ export default function Feed() {
                 );
                 
                 // Check if this item is a prediction from the API
+                // Skip user-generated predictions - only show Consumed-created ones
                 if (post.type === 'prediction' && (post as any).question) {
                   const predPost = post as any;
+                  const isUserGenerated = predPost.origin_type === 'user' || (!predPost.origin_type && predPost.origin_user_id);
+                  if (isUserGenerated) {
+                    return null; // Hide user-generated predictions
+                  }
                   const predictionCardData = {
                     ...post,
                     id: predPost.poolId || post.id,
