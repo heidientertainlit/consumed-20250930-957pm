@@ -134,16 +134,16 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
               <div className="flex items-center gap-1.5 mb-0.5">
                 <Link href={`/profile/${item.username}`}>
                   <span className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
-                    {item.displayName || item.username}
+                    {item.displayName || item.username || 'A friend'}
                   </span>
                 </Link>
-                <span className="text-xs text-gray-400">added</span>
+                <span className="text-xs text-gray-400">is tracking</span>
               </div>
               <p className="text-gray-900 text-sm font-semibold line-clamp-1">
                 {item.mediaTitle}
               </p>
               <p className="text-[10px] text-gray-500 mt-0.5">
-                {item.communityPercent || getStablePercent(item.id, 50, 80)}% have this
+                {item.communityPercent || getStablePercent(item.id, 50, 80)}% of your circle has this
               </p>
             </div>
             <div className="flex gap-1 flex-shrink-0">
