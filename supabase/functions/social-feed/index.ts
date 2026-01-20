@@ -429,13 +429,15 @@ serve(async (req) => {
       // Skip user lookup if no user IDs to fetch - use admin client to bypass RLS
       let users: any[] = [];
       let usersError = null;
-      if (userIds.length > 0) {
+      // Filter out null/undefined user IDs to prevent PostgreSQL UUID errors
+      const validUserIds = userIds.filter(id => id != null && id !== 'null');
+      if (validUserIds.length > 0) {
         // Try users table first with admin client
-        console.log('Querying users with IDs:', userIds.slice(0, 3));
+        console.log('Querying users with IDs:', validUserIds.slice(0, 3));
         let result = await supabaseAdmin
           .from('users')
           .select('id, user_name, display_name, email, avatar')
-          .in('id', userIds);
+          .in('id', validUserIds);
         users = result.data || [];
         usersError = result.error;
         console.log('Admin users query result:', { data: result.data?.length, error: result.error });
@@ -446,7 +448,7 @@ serve(async (req) => {
           const regularResult = await supabase
             .from('users')
             .select('id, user_name, display_name, email, avatar')
-            .in('id', userIds);
+            .in('id', validUserIds);
           users = regularResult.data || [];
           usersError = regularResult.error;
           console.log('Regular users query result:', { data: regularResult.data?.length, error: regularResult.error });
@@ -1172,11 +1174,11 @@ serve(async (req) => {
         posts: allItems, 
         currentUserId: appUser.id,
         _debug: {
-          userIdsQueried: userIds.length,
+          userIdsQueried: validUserIds.length,
           usersFound: users?.length,
           usersError: usersError?.message || null,
           hasServiceRoleKey: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
-          sampleUserIds: userIds.slice(0, 3),
+          sampleUserIds: validUserIds.slice(0, 3),
           sampleUsers: users?.slice(0, 3).map(u => ({ id: u.id?.substring(0, 8), user_name: u.user_name, display_name: u.display_name }))
         }
       }), {
