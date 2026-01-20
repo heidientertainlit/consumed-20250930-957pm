@@ -2819,12 +2819,18 @@ export default function Feed() {
               )}
 
               {/* The Room - Friend Activity with reactions */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && (
+              {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && (() => {
+                const carouselPosts = (socialPosts || [])
+                  .filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown')
+                  .slice(0, 10);
+                console.log('🏠 The Room - Posts with users:', carouselPosts.slice(0, 3).map((p: any) => ({
+                  id: p.id?.substring(0, 8),
+                  user: p.user,
+                  mediaTitle: p.mediaItems?.[0]?.title
+                })));
+                return (
                 <ConsumptionCarousel 
-                  items={(socialPosts || [])
-                    .filter((p: any) => p.mediaItems?.length > 0 && p.user)
-                    .slice(0, 10)
-                    .map((p: any) => ({
+                  items={carouselPosts.map((p: any) => ({
                       id: p.id,
                       type: 'media_added' as const,
                       userId: p.user?.id || '',
@@ -2839,7 +2845,8 @@ export default function Feed() {
                     }))}
                   title="The Room"
                 />
-              )}
+              );
+              })()}
 
               {/* POLLS filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && (
