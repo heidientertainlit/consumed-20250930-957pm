@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
-import { BarChart3, ChevronLeft, ChevronRight, Loader2, GripVertical } from 'lucide-react';
+import { BarChart3, ChevronLeft, ChevronRight, Loader2, GripVertical, Plus, X } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -116,6 +118,8 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
   const [expandedRanks, setExpandedRanks] = useState<Record<string, boolean>>({});
   const [localRankings, setLocalRankings] = useState<Record<string, RankItem[]>>({});
   const [submittedRanks, setSubmittedRanks] = useState<Record<string, boolean>>({});
+  const [addingToRank, setAddingToRank] = useState<string | null>(null);
+  const [customAddInput, setCustomAddInput] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -266,6 +270,44 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
     }
   });
 
+  const addCustomItemMutation = useMutation({
+    mutationFn: async ({ rankId, title }: { rankId: string; title: string }) => {
+      if (!user?.id) throw new Error('Must be logged in');
+      
+      const { data: maxPos } = await supabase
+        .from('rank_items')
+        .select('position')
+        .eq('rank_id', rankId)
+        .order('position', { ascending: false })
+        .limit(1)
+        .single();
+      
+      const newPosition = (maxPos?.position || 0) + 1;
+      
+      const { error } = await supabase.from('rank_items').insert({
+        rank_id: rankId,
+        user_id: user.id,
+        title: title.trim(),
+        position: newPosition,
+        custom_add_user_id: user.id,
+        up_vote_count: 0,
+        down_vote_count: 0
+      });
+      
+      if (error) throw error;
+      return { rankId };
+    },
+    onSuccess: () => {
+      setAddingToRank(null);
+      setCustomAddInput('');
+      queryClient.invalidateQueries({ queryKey: ['consumed-ranks-carousel'] });
+      toast({ title: 'Added!', description: 'Your pick has been added to the list.' });
+    },
+    onError: () => {
+      toast({ title: 'Failed to add', variant: 'destructive' });
+    }
+  });
+
   const scrollToNext = () => {
     if (scrollRef.current && ranks && currentIndex < ranks.length - 1) {
       const cardWidth = scrollRef.current.children[0]?.clientWidth || 280;
@@ -405,7 +447,55 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                 </SortableContext>
               </DndContext>
 
-              <div className="flex items-center gap-2 mt-3">
+              {addingToRank === rank.id ? (
+                <div className="flex gap-2 mt-3">
+                  <Input
+                    value={customAddInput}
+                    onChange={(e) => setCustomAddInput(e.target.value)}
+                    placeholder="Enter your pick..."
+                    className="flex-1 h-8 text-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && customAddInput.trim()) {
+                        addCustomItemMutation.mutate({ rankId: rank.id, title: customAddInput });
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (customAddInput.trim()) {
+                        addCustomItemMutation.mutate({ rankId: rank.id, title: customAddInput });
+                      }
+                    }}
+                    disabled={!customAddInput.trim() || addCustomItemMutation.isPending}
+                    className="h-8 px-3 bg-teal-600 hover:bg-teal-700"
+                  >
+                    {addCustomItemMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setAddingToRank(null);
+                      setCustomAddInput('');
+                    }}
+                    className="h-8 px-2"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setAddingToRank(rank.id)}
+                  className="flex items-center gap-1.5 mt-3 text-teal-600 text-sm hover:text-teal-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add your pick
+                </button>
+              )}
+
+              <div className="flex items-center gap-2 mt-2">
                 {rank.items.length > 5 && (
                   <button
                     onClick={() => toggleExpanded(rank.id)}

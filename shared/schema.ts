@@ -317,6 +317,7 @@ export const rankItems = pgTable("rank_items", {
   notes: text("notes"), // Personal notes about why it's ranked here
   upVoteCount: integer("up_vote_count").default(0), // Cached count of up votes
   downVoteCount: integer("down_vote_count").default(0), // Cached count of down votes
+  customAddUserId: varchar("custom_add_user_id").references(() => users.id, { onDelete: "set null" }), // User who added this as a custom pick
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
