@@ -2803,12 +2803,12 @@ export default function Feed() {
               )}
 
               {/* Filtered views - show only the selected category */}
-              {/* TRIVIA filter */}
+              {/* TRIVIA filter - Movies/TV category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} />
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Movies" />
               )}
 
-              {/* Leaderboard - only in All/games views */}
+              {/* Leaderboard - Trivia Champions */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
                 <LeaderboardFeedCard variant="trivia" />
               )}
@@ -2841,9 +2841,14 @@ export default function Feed() {
                 />
               )}
 
-              {/* POLLS filter */}
+              {/* POLLS filter - Movies category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && (
-                <PollsCarousel expanded={selectedFilter === 'polls'} />
+                <PollsCarousel expanded={selectedFilter === 'polls'} category="Movies" />
+              )}
+
+              {/* Leaderboard - Top Engagers */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
+                <LeaderboardFeedCard variant="overall" />
               )}
 
               {/* Points Glimpse - only in All view */}
@@ -2851,11 +2856,39 @@ export default function Feed() {
                 <PointsGlimpse />
               )}
 
-              {/* Games Carousel removed from feed - available in Play section */}
-
               {/* Consumed Rankings Carousel - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
                 <RanksCarousel />
+              )}
+
+              {/* TRIVIA filter - TV category */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
+              )}
+
+              {/* Leaderboard - Poll Masters */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
+                <LeaderboardFeedCard variant="polls" />
+              )}
+
+              {/* POLLS filter - TV category */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && (
+                <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
+              )}
+
+              {/* Leaderboard - Prediction Pros */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
+                <LeaderboardFeedCard variant="predictions" />
+              )}
+
+              {/* More Ranks */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+                <RanksCarousel />
+              )}
+
+              {/* Leaderboard - Media Leaders */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
+                <LeaderboardFeedCard variant="consumption" />
               )}
 
               {/* Social Posts - hidden when specific game filters are active */}
