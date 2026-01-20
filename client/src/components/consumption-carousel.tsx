@@ -131,14 +131,12 @@ export default function ConsumptionCarousel({ items, title = "Community" }: Cons
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <Link href={`/profile/${item.username}`}>
-                  <span className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
-                    {item.displayName || item.username || 'A friend'}
-                  </span>
-                </Link>
-                <span className="text-xs text-gray-400">is tracking</span>
-              </div>
+              <Link href={`/profile/${item.username}`}>
+                <span className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
+                  {item.displayName || item.username || 'A fan'}
+                </span>
+              </Link>
+              <p className="text-[10px] text-gray-400 mb-1">added</p>
               <p className="text-gray-900 text-sm font-semibold line-clamp-1">
                 {item.mediaTitle}
               </p>
