@@ -178,6 +178,29 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
     mutationFn: async ({ rankId, items }: { rankId: string; items: RankItem[] }) => {
       if (!user?.id) throw new Error('Must be logged in');
       
+      // Save user's complete order to user_rank_orders table
+      const itemOrder = items.map(item => item.id);
+      const { data: existingOrder } = await supabase
+        .from('user_rank_orders')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('rank_id', rankId)
+        .single();
+      
+      if (existingOrder) {
+        await supabase
+          .from('user_rank_orders')
+          .update({ item_order: itemOrder, updated_at: new Date().toISOString() })
+          .eq('id', existingOrder.id);
+      } else {
+        await supabase.from('user_rank_orders').insert({
+          user_id: user.id,
+          rank_id: rankId,
+          item_order: itemOrder
+        });
+      }
+      
+      // Also record individual up/down votes for aggregate scoring
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         const originalPosition = ranks?.find(r => r.id === rankId)?.items.find(it => it.id === item.id)?.position || i + 1;

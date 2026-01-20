@@ -331,6 +331,15 @@ export const rankItemVotes = pgTable("rank_item_votes", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const userRankOrders = pgTable("user_rank_orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  rankId: varchar("rank_id").notNull().references(() => ranks.id, { onDelete: "cascade" }),
+  itemOrder: jsonb("item_order").notNull(), // Array of rank_item_ids in user's preferred order
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
