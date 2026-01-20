@@ -1,37 +1,147 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, ChevronRight, Check, X, Users, Trophy, Plus, Star } from "lucide-react";
+import { Eye, ChevronRight, Check, X, Users, Trophy, Plus, Star, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
+import { trackEvent } from "@/lib/posthog";
 
-interface MediaItem {
+interface SeenItItem {
   id: string;
   title: string;
-  image: string;
+  image_url: string;
   year?: string;
 }
 
-const SAMPLE_ITEMS: MediaItem[] = [
-  { id: '1', title: 'The Shawshank Redemption', image: 'https://image.tmdb.org/t/p/w300/9cqNxx0GxF0bflZmeSMuL5tnGzr.jpg', year: '1994' },
-  { id: '2', title: 'The Godfather', image: 'https://image.tmdb.org/t/p/w300/3bhkrj58Vtu7enYsRolD1fZdja1.jpg', year: '1972' },
-  { id: '3', title: 'The Dark Knight', image: 'https://image.tmdb.org/t/p/w300/qJ2tW6WMUDux911r6m7haRef0WH.jpg', year: '2008' },
-  { id: '4', title: 'Pulp Fiction', image: 'https://image.tmdb.org/t/p/w300/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg', year: '1994' },
-  { id: '5', title: 'Forrest Gump', image: 'https://image.tmdb.org/t/p/w300/arw2vcBveWOVZr6pxd9XTd1TdQa.jpg', year: '1994' },
-  { id: '6', title: 'Inception', image: 'https://image.tmdb.org/t/p/w300/ljsZTbVsrQSqZgWeep2B1QiDKuh.jpg', year: '2010' },
-];
+interface SeenItSet {
+  id: string;
+  title: string;
+  items: SeenItItem[];
+}
 
-export default function SeenItGame({ 
-  title = "90s Classics",
-  items = SAMPLE_ITEMS
-}: { title?: string; items?: MediaItem[] }) {
-  const [responses, setResponses] = useState<Record<string, boolean | null>>({});
+export default function SeenItGame() {
+  const { session, user } = useAuth();
+  const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [responses, setResponses] = useState<Record<string, boolean | null>>({});
+  const [currentSetIndex, setCurrentSetIndex] = useState(0);
 
-  const seenCount = Object.values(responses).filter(v => v === true).length;
-  const answeredCount = Object.values(responses).filter(v => v !== null && v !== undefined).length;
+  const { data: sets, isLoading } = useQuery({
+    queryKey: ['seen-it-sets'],
+    queryFn: async () => {
+      const { data: setsData, error } = await supabase
+        .from('seen_it_sets')
+        .select('*')
+        .eq('visibility', 'public')
+        .order('created_at', { ascending: false })
+        .limit(3);
+      
+      if (error) throw error;
+      
+      const setsWithItems: SeenItSet[] = [];
+      for (const set of setsData || []) {
+        const { data: items } = await supabase
+          .from('seen_it_items')
+          .select('*')
+          .eq('set_id', set.id)
+          .order('position', { ascending: true });
+        
+        setsWithItems.push({
+          id: set.id,
+          title: set.title,
+          items: items || []
+        });
+      }
+      
+      return setsWithItems;
+    }
+  });
 
-  const handleResponse = (id: string, seen: boolean) => {
-    setResponses(prev => ({ ...prev, [id]: seen }));
+  const { data: existingResponses } = useQuery({
+    queryKey: ['seen-it-responses', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return {};
+      const { data } = await supabase
+        .from('seen_it_responses')
+        .select('item_id, seen')
+        .eq('user_id', user.id);
+      
+      const responseMap: Record<string, boolean> = {};
+      (data || []).forEach(r => {
+        responseMap[r.item_id] = r.seen;
+      });
+      return responseMap;
+    },
+    enabled: !!user?.id
+  });
+
+  useEffect(() => {
+    if (existingResponses && Object.keys(existingResponses).length > 0) {
+      setResponses(existingResponses);
+    }
+  }, [existingResponses]);
+
+  const responseMutation = useMutation({
+    mutationFn: async ({ setId, itemId, seen }: { setId: string; itemId: string; seen: boolean }) => {
+      if (!user?.id) throw new Error('Must be logged in');
+      
+      const { data: existing } = await supabase
+        .from('seen_it_responses')
+        .select('id')
+        .eq('item_id', itemId)
+        .eq('user_id', user.id)
+        .single();
+      
+      if (existing) {
+        await supabase
+          .from('seen_it_responses')
+          .update({ seen })
+          .eq('id', existing.id);
+      } else {
+        await supabase.from('seen_it_responses').insert({
+          set_id: setId,
+          item_id: itemId,
+          user_id: user.id,
+          seen
+        });
+      }
+      
+      return { itemId, seen };
+    },
+    onSuccess: ({ itemId, seen }) => {
+      trackEvent('seen_it_response', { item_id: itemId, seen });
+    }
+  });
+
+  const handleResponse = (setId: string, itemId: string, seen: boolean) => {
+    setResponses(prev => ({ ...prev, [itemId]: seen }));
+    if (session) {
+      responseMutation.mutate({ setId, itemId, seen });
+    }
   };
+
+  const currentSet = sets?.[currentSetIndex];
+
+  if (isLoading) {
+    return (
+      <Card className="bg-gradient-to-br from-[#2d1b4e] via-[#1a1035] to-[#0f0a1a] border-0 p-4 rounded-xl">
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (!sets || sets.length === 0 || !currentSet) {
+    return null;
+  }
+
+  const seenCount = currentSet.items.filter(item => responses[item.id] === true).length;
+  const answeredCount = currentSet.items.filter(item => responses[item.id] !== null && responses[item.id] !== undefined).length;
+  const isComplete = answeredCount === currentSet.items.length;
 
   return (
     <Card className="bg-gradient-to-br from-[#2d1b4e] via-[#1a1035] to-[#0f0a1a] border-0 p-4 rounded-xl">
@@ -39,13 +149,13 @@ export default function SeenItGame({
         <div className="flex items-center gap-2">
           <Eye className="w-4 h-4 text-yellow-400" />
           <h3 className="text-white font-medium text-sm">Seen It?</h3>
-          <span className="text-purple-400 text-xs">• {title}</span>
+          <span className="text-purple-400 text-xs">• {currentSet.title}</span>
         </div>
         <div className="flex items-center gap-2">
           {answeredCount > 0 && (
-            <span className="text-purple-300 text-sm">{seenCount}/{answeredCount}</span>
+            <span className="text-purple-300 text-xs">{seenCount}/{answeredCount}</span>
           )}
-          <ChevronRight className="w-4 h-4 text-purple-300" />
+          <ChevronRight className="w-4 h-4 text-purple-400" />
         </div>
       </div>
 
@@ -54,7 +164,7 @@ export default function SeenItGame({
         className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
-        {items.map((item) => {
+        {currentSet.items.map((item) => {
           const response = responses[item.id];
           const answered = response !== null && response !== undefined;
           
@@ -62,13 +172,12 @@ export default function SeenItGame({
             <div key={item.id} className="flex-shrink-0 w-32">
               <div className="relative">
                 <img 
-                  src={item.image} 
+                  src={item.image_url} 
                   alt={item.title}
                   className={`w-32 h-48 rounded-lg object-cover transition-all ${
                     answered ? 'opacity-60' : ''
                   }`}
                 />
-                {/* Action icons on poster */}
                 <div className="absolute top-2 right-2 flex flex-col gap-1">
                   <button className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all">
                     <Plus className="w-4 h-4 text-white" />
@@ -95,13 +204,13 @@ export default function SeenItGame({
               {!answered ? (
                 <div className="flex gap-1 mt-2">
                   <button
-                    onClick={() => handleResponse(item.id, false)}
+                    onClick={() => handleResponse(currentSet.id, item.id, false)}
                     className="flex-1 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-medium hover:bg-white/20 active:scale-95 transition-all"
                   >
                     Nope
                   </button>
                   <button
-                    onClick={() => handleResponse(item.id, true)}
+                    onClick={() => handleResponse(currentSet.id, item.id, true)}
                     className="flex-1 py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all"
                   >
                     Seen It
@@ -119,18 +228,32 @@ export default function SeenItGame({
         })}
       </div>
 
-      {answeredCount === items.length && (
+      {isComplete && (
         <div className="mt-3 pt-3 border-t border-purple-700/50 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Trophy className="w-4 h-4 text-yellow-400" />
             <span className="text-white text-sm font-medium">
-              {Math.round((seenCount / items.length) * 100)}% seen
+              {Math.round((seenCount / currentSet.items.length) * 100)}% seen
             </span>
           </div>
-          <Button size="sm" className="bg-purple-600 hover:bg-purple-500 text-white text-xs h-8">
+          <Button size="sm" className="bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs h-8">
             <Users className="w-3 h-3 mr-1" />
             Challenge Friend
           </Button>
+        </div>
+      )}
+
+      {sets.length > 1 && (
+        <div className="flex justify-center gap-1.5 mt-3">
+          {sets.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSetIndex(idx)}
+              className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                idx === currentSetIndex ? 'bg-purple-400' : 'bg-purple-700'
+              }`}
+            />
+          ))}
         </div>
       )}
     </Card>
