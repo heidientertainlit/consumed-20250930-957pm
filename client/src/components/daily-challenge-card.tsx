@@ -274,7 +274,7 @@ export function DailyChallengeCard() {
       {/* Collapsed Header - Simple design */}
       <div className="w-full p-4 flex items-center justify-between">
         <div className="flex items-center gap-3 flex-1">
-          <Play className="w-5 h-5 text-blue-400 fill-blue-400" />
+          <Play className="w-5 h-5 text-white fill-white" />
           <div className="text-left flex-1">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-white">The Daily Call</span>
@@ -358,7 +358,7 @@ export function DailyChallengeCard() {
                   <Button
                     onClick={handleSubmit}
                     disabled={!customResponse.trim() || submitMutation.isPending}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    className="w-full bg-white text-purple-900 hover:bg-gray-100 font-semibold"
                     data-testid="submit-custom-challenge"
                   >
                     {submitMutation.isPending ? (
