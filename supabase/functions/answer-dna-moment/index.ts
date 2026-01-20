@@ -37,8 +37,8 @@ serve(async (req) => {
 
     const { momentId, answer } = await req.json();
 
-    if (!momentId || !answer || !['a', 'b'].includes(answer)) {
-      return new Response(JSON.stringify({ error: 'Invalid request. momentId and answer (a or b) required.' }), {
+    if (!momentId || !answer || !['a', 'b', 'c'].includes(answer)) {
+      return new Response(JSON.stringify({ error: 'Invalid request. momentId and answer (a, b, or c) required.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -105,12 +105,14 @@ serve(async (req) => {
 
     const totalResponses = allResponses?.length || 0;
     const optionACount = allResponses?.filter(r => r.answer === 'a').length || 0;
-    const optionBCount = totalResponses - optionACount;
+    const optionBCount = allResponses?.filter(r => r.answer === 'b').length || 0;
+    const optionCCount = allResponses?.filter(r => r.answer === 'c').length || 0;
 
     const stats = {
       totalResponses,
-      optionAPercent: totalResponses > 0 ? Math.round((optionACount / totalResponses) * 100) : 50,
-      optionBPercent: totalResponses > 0 ? Math.round((optionBCount / totalResponses) * 100) : 50,
+      optionAPercent: totalResponses > 0 ? Math.round((optionACount / totalResponses) * 100) : 33,
+      optionBPercent: totalResponses > 0 ? Math.round((optionBCount / totalResponses) * 100) : 33,
+      optionCPercent: totalResponses > 0 ? Math.round((optionCCount / totalResponses) * 100) : 33,
     };
 
     const { data: friends } = await supabaseAdmin
@@ -138,8 +140,8 @@ serve(async (req) => {
       friendResponses = friendAnswers || [];
     }
 
-    const yourChoice = answer === 'a' ? moment.option_a : moment.option_b;
-    const yourPercent = answer === 'a' ? stats.optionAPercent : stats.optionBPercent;
+    const yourChoice = answer === 'a' ? moment.option_a : answer === 'b' ? moment.option_b : moment.option_c;
+    const yourPercent = answer === 'a' ? stats.optionAPercent : answer === 'b' ? stats.optionBPercent : stats.optionCPercent;
     const matchingFriends = friendResponses.filter(f => f.answer === answer);
 
     return new Response(JSON.stringify({

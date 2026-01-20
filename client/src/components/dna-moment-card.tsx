@@ -15,6 +15,7 @@ interface DnaMoment {
   questionText: string;
   optionA: string;
   optionB: string;
+  optionC?: string;
   category: string;
 }
 
@@ -27,6 +28,7 @@ interface DnaMomentData {
     totalResponses: number;
     optionAPercent: number;
     optionBPercent: number;
+    optionCPercent?: number;
   };
   friendResponses: any[];
 }
@@ -217,48 +219,71 @@ export function DnaMomentCard() {
               <h3 className="text-white font-semibold text-base mb-3">{moment.questionText}</h3>
               
               {!isAnswered ? (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-2">
                   <button
-                    className="py-2 px-4 rounded-full bg-white/90 text-purple-900 text-sm font-medium hover:bg-white shadow-md transition-all"
+                    className="py-2.5 px-4 rounded-xl bg-white/10 border border-white/30 text-white text-sm font-medium hover:bg-white/20 hover:border-white/50 transition-all text-left"
                     onClick={() => answerMutation.mutate({ momentId: moment.id, answer: 'a' })}
                     disabled={answerMutation.isPending}
                   >
                     {moment.optionA}
                   </button>
                   <button
-                    className="py-2 px-4 rounded-full bg-white/90 text-purple-900 text-sm font-medium hover:bg-white shadow-md transition-all"
+                    className="py-2.5 px-4 rounded-xl bg-white/10 border border-white/30 text-white text-sm font-medium hover:bg-white/20 hover:border-white/50 transition-all text-left"
                     onClick={() => answerMutation.mutate({ momentId: moment.id, answer: 'b' })}
                     disabled={answerMutation.isPending}
                   >
                     {moment.optionB}
                   </button>
+                  {moment.optionC && (
+                    <button
+                      className="py-2.5 px-4 rounded-xl bg-white/10 border border-white/30 text-white text-sm font-medium hover:bg-white/20 hover:border-white/50 transition-all text-left"
+                      onClick={() => answerMutation.mutate({ momentId: moment.id, answer: 'c' })}
+                      disabled={answerMutation.isPending}
+                    >
+                      {moment.optionC}
+                    </button>
+                  )}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="p-2 rounded-xl bg-white/20 border border-white/30">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs text-white">{moment.optionA}</span>
-                      <span className="text-sm font-bold text-white">{result?.stats?.optionAPercent || 50}%</span>
+                <div className="flex flex-col gap-2">
+                  <div className="p-2.5 rounded-xl bg-white/10 border border-white/30">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-xs text-white/90">{moment.optionA}</span>
+                      <span className="text-sm font-bold text-white">{result?.stats?.optionAPercent || 33}%</span>
                     </div>
                     <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-white rounded-full transition-all duration-500"
-                        style={{ width: `${result?.stats?.optionAPercent || 50}%` }}
+                        style={{ width: `${result?.stats?.optionAPercent || 33}%` }}
                       />
                     </div>
                   </div>
-                  <div className="p-2 rounded-xl bg-white/20 border border-white/30">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs text-white">{moment.optionB}</span>
-                      <span className="text-sm font-bold text-white">{result?.stats?.optionBPercent || 50}%</span>
+                  <div className="p-2.5 rounded-xl bg-white/10 border border-white/30">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-xs text-white/90">{moment.optionB}</span>
+                      <span className="text-sm font-bold text-white">{result?.stats?.optionBPercent || 33}%</span>
                     </div>
                     <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-white rounded-full transition-all duration-500"
-                        style={{ width: `${result?.stats?.optionBPercent || 50}%` }}
+                        style={{ width: `${result?.stats?.optionBPercent || 33}%` }}
                       />
                     </div>
                   </div>
+                  {moment.optionC && (
+                    <div className="p-2.5 rounded-xl bg-white/10 border border-white/30">
+                      <div className="flex justify-between items-center mb-1.5">
+                        <span className="text-xs text-white/90">{moment.optionC}</span>
+                        <span className="text-sm font-bold text-white">{result?.stats?.optionCPercent || 33}%</span>
+                      </div>
+                      <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-white rounded-full transition-all duration-500"
+                          style={{ width: `${result?.stats?.optionCPercent || 33}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

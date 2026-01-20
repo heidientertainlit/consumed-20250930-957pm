@@ -68,7 +68,7 @@ const getTypeIcon = (type: string) => {
   }
 };
 
-export default function ConsumptionCarousel({ items, title = "Your Circle" }: ConsumptionCarouselProps) {
+export default function ConsumptionCarousel({ items, title = "Community" }: ConsumptionCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reactions, setReactions] = useState<Record<string, 'agree' | 'disagree'>>({});
@@ -143,7 +143,7 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
                 {item.mediaTitle}
               </p>
               <p className="text-[10px] text-gray-500 mt-0.5">
-                {item.communityPercent || getStablePercent(item.id, 50, 80)}% of your circle has this
+                {item.communityPercent || getStablePercent(item.id, 50, 80)}% of fans have this
               </p>
             </div>
             <div className="flex gap-1 flex-shrink-0">
@@ -356,7 +356,7 @@ export default function ConsumptionCarousel({ items, title = "Your Circle" }: Co
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-            <p className="text-[10px] text-gray-500">See what friends are doing</p>
+            <p className="text-[10px] text-gray-500">See what fans are tracking</p>
           </div>
         </div>
         <div className="flex items-center gap-1">

@@ -61,6 +61,7 @@ serve(async (req) => {
         questionText: scheduledMoment.question_text,
         optionA: scheduledMoment.option_a,
         optionB: scheduledMoment.option_b,
+        optionC: scheduledMoment.option_c || null,
         category: scheduledMoment.category
       });
     }
@@ -92,6 +93,7 @@ serve(async (req) => {
             questionText: m.question_text,
             optionA: m.option_a,
             optionB: m.option_b,
+            optionC: m.option_c || null,
             category: m.category
           });
         }
@@ -131,12 +133,14 @@ serve(async (req) => {
 
       const totalResponses = allResponses?.length || 0;
       const optionACount = allResponses?.filter((r: any) => r.answer === 'a').length || 0;
-      const optionBCount = totalResponses - optionACount;
+      const optionBCount = allResponses?.filter((r: any) => r.answer === 'b').length || 0;
+      const optionCCount = allResponses?.filter((r: any) => r.answer === 'c').length || 0;
 
       const stats = {
         totalResponses,
-        optionAPercent: totalResponses > 0 ? Math.round((optionACount / totalResponses) * 100) : 50,
-        optionBPercent: totalResponses > 0 ? Math.round((optionBCount / totalResponses) * 100) : 50,
+        optionAPercent: totalResponses > 0 ? Math.round((optionACount / totalResponses) * 100) : 33,
+        optionBPercent: totalResponses > 0 ? Math.round((optionBCount / totalResponses) * 100) : 33,
+        optionCPercent: totalResponses > 0 ? Math.round((optionCCount / totalResponses) * 100) : 33,
       };
 
       return new Response(JSON.stringify({
