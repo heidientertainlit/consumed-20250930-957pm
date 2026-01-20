@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, Medal } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2 } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
@@ -49,29 +49,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
-
-  // Fetch user stats for rank and points display in top bar
-  const { data: userStatsData } = useQuery({
-    queryKey: ['user-stats-topbar', user?.id],
-    queryFn: async () => {
-      if (!session?.access_token || !user?.id) return null;
-      
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/calculate-user-points?user_id=${user.id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      
-      if (!response.ok) return null;
-      return response.json();
-    },
-    enabled: !!session?.access_token && !!user?.id,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-  });
 
   // Prefetch Collections data on hover/touch
   const prefetchCollections = useCallback(async () => {
@@ -560,24 +537,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             </div>
             
             {!isSearchExpanded && (
-              <div className="flex items-center gap-5">
-                {/* Stats Row */}
-                <Link href="/points">
-                  <div className="flex items-center gap-1 hover:opacity-70 transition-opacity cursor-pointer">
-                    <Trophy className="w-4 h-4 text-amber-400/80" />
-                    <span className="text-white/70 text-xs font-medium">
-                      {userStatsData?.points?.all_time?.toLocaleString() || '0'}
-                    </span>
-                  </div>
-                </Link>
-                <Link href="/leaderboard">
-                  <div className="flex items-center gap-1 hover:opacity-70 transition-opacity cursor-pointer">
-                    <Medal className="w-4 h-4 text-purple-400/80" />
-                    <span className="text-white/70 text-xs font-medium">
-                      #{userStatsData?.rank?.global || '—'}
-                    </span>
-                  </div>
-                </Link>
+              <div className="flex items-center gap-4">
                 <NotificationBell />
               </div>
             )}
@@ -605,7 +565,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             data-testid="nav-leaderboard"
           >
             <Trophy className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Ranks</span>
+            <span className="text-xs font-medium text-white">Leaders</span>
           </Link>
 
           {/* Me */}
