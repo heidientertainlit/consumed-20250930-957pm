@@ -616,3 +616,36 @@ export type Bet = typeof bets.$inferSelect;
 export type InsertBet = z.infer<typeof insertBetSchema>;
 export type ScheduledPersonaPost = typeof scheduledPersonaPosts.$inferSelect;
 export type InsertScheduledPersonaPost = z.infer<typeof insertScheduledPersonaPostSchema>;
+
+// Friend Casting Games - "Who would play you/your friend in a movie?"
+export const friendCasts = pgTable("friend_casts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  creatorId: varchar("creator_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  targetFriendId: varchar("target_friend_id").references(() => users.id, { onDelete: "cascade" }),
+  targetFriendName: text("target_friend_name"), // For non-user friends
+  prompt: text("prompt").notNull().default("Who would play them in a movie?"),
+  creatorPickCelebId: text("creator_pick_celeb_id"), // TMDB person ID
+  creatorPickCelebName: text("creator_pick_celeb_name"),
+  creatorPickCelebImage: text("creator_pick_celeb_image"),
+  isPublic: boolean("is_public").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Responses to friend casting games
+export const friendCastResponses = pgTable("friend_cast_responses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  friendCastId: varchar("friend_cast_id").notNull().references(() => friendCasts.id, { onDelete: "cascade" }),
+  responderId: varchar("responder_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  celebId: text("celeb_id").notNull(), // TMDB person ID
+  celebName: text("celeb_name").notNull(),
+  celebImage: text("celeb_image"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertFriendCastSchema = createInsertSchema(friendCasts).omit({ id: true, createdAt: true });
+export const insertFriendCastResponseSchema = createInsertSchema(friendCastResponses).omit({ id: true, createdAt: true });
+
+export type FriendCast = typeof friendCasts.$inferSelect;
+export type InsertFriendCast = z.infer<typeof insertFriendCastSchema>;
+export type FriendCastResponse = typeof friendCastResponses.$inferSelect;
+export type InsertFriendCastResponse = z.infer<typeof insertFriendCastResponseSchema>;
