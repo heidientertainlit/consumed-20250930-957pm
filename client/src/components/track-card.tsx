@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, Plus, Film, Tv, BookOpen, Music, Loader2 } from "lucide-react";
@@ -20,6 +21,7 @@ interface MediaResult {
 
 export default function TrackCard() {
   const { session } = useAuth();
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<MediaResult[]>([]);
@@ -48,7 +50,7 @@ export default function TrackCard() {
     }
   };
 
-  const handleSelectMedia = (item: MediaResult) => {
+  const handleOpenListSheet = (item: MediaResult) => {
     setSelectedMedia({
       title: item.title,
       mediaType: item.type,
@@ -58,6 +60,10 @@ export default function TrackCard() {
       creator: item.creator
     });
     setIsListSheetOpen(true);
+  };
+
+  const handleNavigateToMedia = (item: MediaResult) => {
+    setLocation(`/media/${item.external_source}/${item.external_id}`);
   };
 
   const handleSheetClose = () => {
@@ -106,36 +112,43 @@ export default function TrackCard() {
         {results.length > 0 && (
           <div className="space-y-2">
             {results.map((item, index) => (
-              <button
+              <div
                 key={`${item.external_source}-${item.external_id}-${index}`}
-                onClick={() => handleSelectMedia(item)}
-                className="w-full flex items-center gap-3 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-left"
+                className="flex items-center gap-3 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
               >
-                {(item.poster_url || item.image_url) ? (
-                  <img
-                    src={item.poster_url || item.image_url}
-                    alt={item.title}
-                    className="w-10 h-14 rounded object-cover"
-                  />
-                ) : (
-                  <div className="w-10 h-14 rounded bg-purple-900/50 flex items-center justify-center text-gray-400">
-                    {getTypeIcon(item.type)}
+                <button
+                  onClick={() => handleNavigateToMedia(item)}
+                  className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                >
+                  {(item.poster_url || item.image_url) ? (
+                    <img
+                      src={item.poster_url || item.image_url}
+                      alt={item.title}
+                      className="w-10 h-14 rounded object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-14 rounded bg-purple-900/50 flex items-center justify-center text-gray-400">
+                      {getTypeIcon(item.type)}
+                    </div>
+                  )}
+                  
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-medium truncate">{item.title}</p>
+                    <div className="flex items-center gap-1.5 text-gray-400 text-xs">
+                      {getTypeIcon(item.type)}
+                      <span className="uppercase">{item.type}</span>
+                      {item.year && <span>• {item.year}</span>}
+                    </div>
                   </div>
-                )}
+                </button>
                 
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium truncate">{item.title}</p>
-                  <div className="flex items-center gap-1.5 text-gray-400 text-xs">
-                    {getTypeIcon(item.type)}
-                    <span className="uppercase">{item.type}</span>
-                    {item.year && <span>• {item.year}</span>}
-                  </div>
-                </div>
-                
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center">
+                <button
+                  onClick={() => handleOpenListSheet(item)}
+                  className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center hover:opacity-90 active:scale-95 transition-all"
+                >
                   <Plus className="w-4 h-4 text-white" />
-                </div>
-              </button>
+                </button>
+              </div>
             ))}
           </div>
         )}
