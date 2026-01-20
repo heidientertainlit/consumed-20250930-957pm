@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
+import { trackEvent } from '@/lib/posthog';
 import { BarChart3, ChevronLeft, ChevronRight, Loader2, GripVertical, Plus, X } from 'lucide-react';
 import {
   DndContext,
@@ -263,6 +264,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
     onSuccess: ({ rankId }) => {
       setSubmittedRanks(prev => ({ ...prev, [rankId]: true }));
       queryClient.invalidateQueries({ queryKey: ['consumed-ranks-carousel'] });
+      trackEvent('rank_submitted', { rank_id: rankId });
       toast({ title: 'Ranking submitted!', description: 'Your vote has been recorded.' });
     },
     onError: () => {
@@ -301,6 +303,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
       setAddingToRank(null);
       setCustomAddInput('');
       queryClient.invalidateQueries({ queryKey: ['consumed-ranks-carousel'] });
+      trackEvent('rank_custom_add', { rank_id: addingToRank });
       toast({ title: 'Added!', description: 'Your pick has been added to the list.' });
     },
     onError: () => {

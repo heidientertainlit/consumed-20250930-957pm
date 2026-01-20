@@ -1,6 +1,9 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
+import { initPostHog } from "./lib/posthog";
+
+initPostHog();
 
 // Register service worker for PWA - TEMPORARILY DISABLED FOR DEBUGGING
 if ('serviceWorker' in navigator) {

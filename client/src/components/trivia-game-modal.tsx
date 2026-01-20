@@ -8,6 +8,7 @@ import { CheckCircle, XCircle, Trophy, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
+import { trackEvent } from "@/lib/posthog";
 import CelebrationModal from './celebration-modal';
 
 interface TriviaQuestion {
@@ -91,6 +92,7 @@ export function TriviaGameModal({ poolId, title, questions, pointsReward, isOpen
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/pools'] });
+      trackEvent('trivia_answered', { pool_id: poolId, points_reward: pointsReward });
     }
   });
 

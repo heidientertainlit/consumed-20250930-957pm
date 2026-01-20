@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
+import { trackEvent } from '@/lib/posthog';
 import { BarChart3, Loader2, ChevronLeft, ChevronRight, Users, Check, Search, Plus, X } from 'lucide-react';
 
 interface PollItem {
@@ -186,6 +187,8 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
       }));
       
       queryClient.invalidateQueries({ queryKey: ['polls-carousel'] });
+      
+      trackEvent('poll_voted', { poll_id: result.pollId, points_earned: result.points });
       
       toast({
         title: `+${result.points} points!`,

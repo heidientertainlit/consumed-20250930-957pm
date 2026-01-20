@@ -46,3 +46,4 @@ integrations = ["javascript_openai:1.0.0", "javascript_supabase:1.0.0"]
 
 [userenv.shared]
 VITE_SUPABASE_URL = "https://mahpgcogwpawvviapqza.supabase.co"
+VITE_POSTHOG_KEY = "phc_DlvyPkI6udMcdgVY4paFXJDkwZrl5MIFiq8BhI5AFlG"

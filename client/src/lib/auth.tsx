@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { sessionTracker } from './sessionTracker'
+import { identifyUser, resetUser, trackEvent } from './posthog'
 
 interface AuthContextType {
   user: User | null
@@ -31,6 +32,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Start session tracking if user is logged in
       if (session?.user?.id) {
         sessionTracker.startSession(session.user.id)
+        identifyUser(session.user.id, {
+          email: session.user.email,
+        })
       }
     })
 
@@ -45,8 +49,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Handle session tracking based on auth state
         if (event === 'SIGNED_IN' && session?.user?.id) {
           sessionTracker.startSession(session.user.id)
+          identifyUser(session.user.id, {
+            email: session.user.email,
+          })
+          trackEvent('user_signed_in')
         } else if (event === 'SIGNED_OUT') {
           sessionTracker.endSession()
+          resetUser()
+          trackEvent('user_signed_out')
         }
       }
     )
