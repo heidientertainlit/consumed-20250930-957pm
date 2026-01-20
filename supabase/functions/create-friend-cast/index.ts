@@ -79,9 +79,10 @@ serve(async (req) => {
       });
     }
 
-    await supabase.from('users').update({
-      points: supabase.rpc('increment_points', { amount: 15 })
-    }).eq('id', user.id);
+    const { data: userData } = await supabase.from('users').select('points').eq('id', user.id).single();
+    if (userData) {
+      await supabase.from('users').update({ points: (userData.points || 0) + 15 }).eq('id', user.id);
+    }
 
     return new Response(JSON.stringify({ success: true, friendCast }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
