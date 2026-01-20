@@ -229,7 +229,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col px-6 pt-12 pb-8">
         <div className="mb-12">
           <img 
-            src="/consumed-logo-white.png" 
+            src="/consumed-logo-new.png" 
             alt="consumed" 
             className="h-10"
           />
@@ -287,7 +287,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col px-6 pt-12 pb-8">
         <div className="mb-8">
           <img 
-            src="/consumed-logo-white.png" 
+            src="/consumed-logo-new.png" 
             alt="consumed" 
             className="h-10"
           />
@@ -437,7 +437,7 @@ export default function OnboardingPage() {
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-950 to-black flex flex-col items-center justify-center p-4">
         <div className="mb-6">
           <img 
-            src="/consumed-logo-white.png" 
+            src="/consumed-logo-new.png" 
             alt="consumed" 
             className="h-10 mx-auto"
           />

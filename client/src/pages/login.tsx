@@ -184,7 +184,7 @@ export default function LoginPage() {
         <div className="text-center mb-8 mt-8">
           <div className="flex justify-center mb-3">
             <img 
-              src="/consumed-logo-white.png" 
+              src="/consumed-logo-new.png" 
               alt="Consumed" 
               className="h-16 w-auto"
             />
