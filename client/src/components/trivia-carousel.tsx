@@ -45,21 +45,47 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
         .from('profiles')
         .select('id, display_name, total_points')
         .order('total_points', { ascending: false })
-        .limit(20);
+        .limit(100);
       
-      if (!leaderboard) return null;
+      if (!leaderboard || leaderboard.length === 0) return { position: null, nextPerson: null };
       
       const userIndex = leaderboard.findIndex(p => p.id === user.id);
-      if (userIndex === -1) return { position: null, nextPerson: null };
+      
+      if (userIndex === -1) {
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('total_points')
+          .eq('id', user.id)
+          .single();
+        
+        const userPoints = userProfile?.total_points || 0;
+        const { count } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .gt('total_points', userPoints);
+        
+        const position = (count || 0) + 1;
+        const nearbyPerson = leaderboard.find(p => (p.total_points || 0) > userPoints);
+        const pointsNeeded = nearbyPerson ? Math.ceil(((nearbyPerson.total_points || 0) - userPoints) / 10) : 1;
+        
+        return { 
+          position, 
+          nextPerson: nearbyPerson?.display_name || 'the next spot',
+          pointsNeeded: Math.max(1, pointsNeeded)
+        };
+      }
+      
       if (userIndex === 0) return { position: 1, nextPerson: null, isFirst: true };
       
       const nextPerson = leaderboard[userIndex - 1];
-      const pointsNeeded = (nextPerson?.total_points || 0) - (leaderboard[userIndex]?.total_points || 0);
+      const userPoints = leaderboard[userIndex]?.total_points || 0;
+      const nextPoints = nextPerson?.total_points || 0;
+      const pointsNeeded = Math.max(1, Math.ceil((nextPoints - userPoints) / 10));
       
       return { 
         position: userIndex + 1, 
         nextPerson: nextPerson?.display_name || 'the next spot',
-        pointsNeeded: Math.max(1, Math.ceil(pointsNeeded / 10))
+        pointsNeeded
       };
     },
     enabled: !!user?.id
