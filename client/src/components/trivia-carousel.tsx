@@ -39,56 +39,61 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
   const { data: leaderboardData } = useQuery({
     queryKey: ['trivia-leaderboard-position', user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!user?.id) return { position: null, nextPerson: null };
       
-      const { data: leaderboard } = await supabase
+      const { data: leaderboard, error } = await supabase
         .from('profiles')
         .select('id, display_name, total_points')
         .order('total_points', { ascending: false })
         .limit(100);
       
-      if (!leaderboard || leaderboard.length === 0) return { position: null, nextPerson: null };
+      console.log('📊 Leaderboard query:', { leaderboard: leaderboard?.slice(0, 5), error, userId: user.id });
+      
+      if (error || !leaderboard || leaderboard.length === 0) return { position: 1, nextPerson: null, isFirst: true };
       
       const userIndex = leaderboard.findIndex(p => p.id === user.id);
       
-      if (userIndex === -1) {
-        const { data: userProfile } = await supabase
-          .from('profiles')
-          .select('total_points')
-          .eq('id', user.id)
-          .single();
-        
-        const userPoints = userProfile?.total_points || 0;
-        const { count } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .gt('total_points', userPoints);
-        
-        const position = (count || 0) + 1;
-        const nearbyPerson = leaderboard.find(p => (p.total_points || 0) > userPoints);
-        const pointsNeeded = nearbyPerson ? Math.ceil(((nearbyPerson.total_points || 0) - userPoints) / 10) : 1;
+      if (userIndex === 0) return { position: 1, nextPerson: null, isFirst: true };
+      
+      if (userIndex > 0) {
+        const nextPerson = leaderboard[userIndex - 1];
+        const userPoints = leaderboard[userIndex]?.total_points || 0;
+        const nextPoints = nextPerson?.total_points || 0;
+        const pointsNeeded = Math.max(1, Math.ceil((nextPoints - userPoints) / 10));
         
         return { 
-          position, 
-          nextPerson: nearbyPerson?.display_name || 'the next spot',
-          pointsNeeded: Math.max(1, pointsNeeded)
+          position: userIndex + 1, 
+          nextPerson: nextPerson?.display_name || 'someone',
+          pointsNeeded
         };
       }
       
-      if (userIndex === 0) return { position: 1, nextPerson: null, isFirst: true };
+      // User not in top 100, find their position
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('total_points')
+        .eq('id', user.id)
+        .single();
       
-      const nextPerson = leaderboard[userIndex - 1];
-      const userPoints = leaderboard[userIndex]?.total_points || 0;
-      const nextPoints = nextPerson?.total_points || 0;
-      const pointsNeeded = Math.max(1, Math.ceil((nextPoints - userPoints) / 10));
+      const userPoints = userProfile?.total_points || 0;
+      const { count } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gt('total_points', userPoints);
+      
+      const position = (count || 0) + 1;
+      // Find someone just ahead
+      const nearbyPerson = leaderboard.find(p => (p.total_points || 0) > userPoints);
+      const pointsNeeded = nearbyPerson ? Math.ceil(((nearbyPerson.total_points || 0) - userPoints) / 10) : 1;
       
       return { 
-        position: userIndex + 1, 
-        nextPerson: nextPerson?.display_name || 'the next spot',
-        pointsNeeded
+        position, 
+        nextPerson: nearbyPerson?.display_name || 'someone',
+        pointsNeeded: Math.max(1, pointsNeeded)
       };
     },
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    staleTime: 30000
   });
 
   const { data, isLoading, isError } = useQuery({
@@ -348,7 +353,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
 
   return (
     <>
-      <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm overflow-hidden relative">
+      <Card className="bg-white border border-gray-200 rounded-2xl p-4 pb-3 shadow-sm overflow-hidden relative">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             {category ? (
@@ -507,7 +512,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
         
         {!category && (
           <Link href="/leaderboard">
-            <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+            <div className="flex items-center justify-center gap-1.5 pt-2 mt-2 border-t border-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
               <Trophy className="w-3.5 h-3.5 text-purple-600" />
               <span className="text-xs text-purple-600 font-medium">
                 {leaderboardData?.isFirst 
