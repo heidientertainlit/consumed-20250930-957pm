@@ -2855,23 +2855,20 @@ export default function Feed() {
 
               {/* Academy Awards 2026 Coming Soon Card */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
-                <Link href="/awards">
-                  <div className="bg-gradient-to-r from-amber-900 via-yellow-800 to-amber-900 rounded-2xl p-4 shadow-lg border border-amber-500/30 cursor-pointer hover:scale-[1.01] transition-transform">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-lg">
-                        <Trophy className="w-6 h-6 text-white" />
+                <div className="bg-gradient-to-r from-amber-900 via-yellow-800 to-amber-900 rounded-2xl p-4 shadow-lg border border-amber-500/30">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                      <Trophy className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-white font-bold text-lg">2026 Academy Awards</h3>
+                        <span className="px-2 py-0.5 bg-purple-500/30 text-purple-300 text-[10px] font-medium rounded-full">COMING SOON</span>
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-white font-bold text-lg">2026 Academy Awards</h3>
-                          <span className="px-2 py-0.5 bg-purple-500/30 text-purple-300 text-[10px] font-medium rounded-full">COMING SOON</span>
-                        </div>
-                        <p className="text-amber-200/80 text-sm">Nominations announced soon - be ready to predict the winners!</p>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-amber-300" />
+                      <p className="text-amber-200/80 text-sm">Nominations announced soon - be ready to predict the winners!</p>
                     </div>
                   </div>
-                </Link>
+                </div>
               )}
 
               {/* Points Glimpse - only in All view */}
@@ -4589,12 +4586,70 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* End of Feed message for other specific filters */}
-              {['predictions', 'dna'].includes(selectedFilter) && (
+              {/* Predictions Filter - Show all awards */}
+              {selectedFilter === 'predictions' && (
+                <div className="space-y-3">
+                  {/* 2026 Academy Awards - Coming Soon */}
+                  <div className="bg-gradient-to-r from-amber-900 via-yellow-800 to-amber-900 rounded-2xl p-4 shadow-lg border border-amber-500/30">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <Trophy className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-white font-bold text-lg">2026 Academy Awards</h3>
+                          <span className="px-2 py-0.5 bg-purple-500/30 text-purple-300 text-[10px] font-medium rounded-full">COMING SOON</span>
+                        </div>
+                        <p className="text-amber-200/80 text-sm">Nominations announced soon - be ready to predict!</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2026 Grammy Awards - Coming Soon */}
+                  <div className="bg-gradient-to-r from-rose-900 via-pink-800 to-rose-900 rounded-2xl p-4 shadow-lg border border-rose-500/30">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-rose-400 to-pink-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <Music className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-white font-bold text-lg">2026 Grammy Awards</h3>
+                          <span className="px-2 py-0.5 bg-purple-500/30 text-purple-300 text-[10px] font-medium rounded-full">COMING SOON</span>
+                        </div>
+                        <p className="text-rose-200/80 text-sm">Music's biggest night - predictions opening soon</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2026 Emmy Awards - Coming Soon */}
+                  <div className="bg-gradient-to-r from-blue-900 via-indigo-800 to-blue-900 rounded-2xl p-4 shadow-lg border border-blue-500/30">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg">
+                        <Tv2 className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-white font-bold text-lg">2026 Emmy Awards</h3>
+                          <span className="px-2 py-0.5 bg-purple-500/30 text-purple-300 text-[10px] font-medium rounded-full">COMING SOON</span>
+                        </div>
+                        <p className="text-blue-200/80 text-sm">Television's finest - stay tuned for nominations</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* End message */}
+                  <div className="text-center py-4 text-gray-400 text-sm">
+                    More award shows coming soon!
+                  </div>
+                </div>
+              )}
+
+              {/* End of Feed message for DNA filter only */}
+              {selectedFilter === 'dna' && (
                 <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-100 mt-4">
-                  <div className="text-3xl mb-2">🎯</div>
+                  <div className="text-3xl mb-2">🧬</div>
                   <p className="text-gray-600 font-medium">That's all for now!</p>
-                  <p className="text-gray-500 text-sm mt-1">Check back later for more {selectedFilter === 'predictions' ? 'predictions' : 'DNA moments'}</p>
+                  <p className="text-gray-500 text-sm mt-1">Check back later for more DNA moments</p>
                 </div>
               )}
 
