@@ -226,58 +226,46 @@ export default function SeenItGame() {
             </div>
           );
         })}
+        
+        {isComplete && (
+          <div className="flex-shrink-0 w-32">
+            <div className="w-32 h-48 rounded-lg bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-800 flex flex-col items-center justify-center p-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center mb-2">
+                <Trophy className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-white font-bold text-lg">
+                {Math.round((seenCount / currentSet.items.length) * 100)}%
+              </span>
+              <span className="text-purple-200 text-[10px] text-center mb-2">
+                Added to DNA
+              </span>
+              <Sparkles className="w-4 h-4 text-yellow-400" />
+            </div>
+            
+            <p className="text-white text-sm font-medium mt-2 text-center">Complete!</p>
+            
+            <div className="flex flex-col gap-1 mt-2">
+              {sets && sets.length > 1 && currentSetIndex < sets.length - 1 ? (
+                <button
+                  onClick={() => setCurrentSetIndex(prev => prev + 1)}
+                  className="w-full py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all"
+                >
+                  Next Set →
+                </button>
+              ) : (
+                <button className="w-full py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all">
+                  View DNA
+                </button>
+              )}
+              <button className="w-full py-1.5 rounded-full bg-white/10 text-white/80 text-xs font-medium hover:bg-white/20 active:scale-95 transition-all">
+                Challenge
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {isComplete && (
-        <div className="mt-4 bg-gradient-to-br from-purple-800/80 to-indigo-900/80 rounded-xl p-4 border border-purple-500/30">
-          <div className="text-center mb-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 mb-3">
-              <Trophy className="w-8 h-8 text-white" />
-            </div>
-            <h4 className="text-white font-bold text-xl mb-1">
-              {Math.round((seenCount / currentSet.items.length) * 100)}% Seen
-            </h4>
-            <p className="text-purple-300 text-sm">
-              {seenCount} of {currentSet.items.length} • {currentSet.title}
-            </p>
-          </div>
-          
-          <div className="bg-purple-900/50 rounded-lg p-3 mb-4">
-            <div className="flex items-center gap-2 text-purple-200 text-sm">
-              <Sparkles className="w-4 h-4 text-yellow-400" />
-              <span>Added to your Entertainment DNA</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            {sets && sets.length > 1 && currentSetIndex < sets.length - 1 ? (
-              <Button 
-                onClick={() => setCurrentSetIndex(prev => prev + 1)}
-                className="bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-sm h-10"
-              >
-                <ChevronRight className="w-4 h-4 mr-1" />
-                Next Set
-              </Button>
-            ) : (
-              <Button 
-                variant="outline"
-                className="border-purple-400 text-purple-200 hover:bg-purple-800 text-sm h-10"
-              >
-                <Eye className="w-4 h-4 mr-1" />
-                View History
-              </Button>
-            )}
-            <Button 
-              variant="outline"
-              className="border-purple-400 text-purple-200 hover:bg-purple-800 text-sm h-10"
-            >
-              <Users className="w-4 h-4 mr-1" />
-              Challenge Friend
-            </Button>
-          </div>
-        </div>
-      )}
-
+      
       {sets.length > 1 && (
         <div className="flex justify-center gap-1.5 mt-3">
           {sets.map((_, idx) => (
