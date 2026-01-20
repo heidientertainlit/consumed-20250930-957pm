@@ -2891,6 +2891,46 @@ export default function Feed() {
                 <LeaderboardFeedCard variant="consumption" />
               )}
 
+              {/* Complete Your DNA Card */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && (
+                <div className="bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 rounded-2xl p-4 shadow-lg">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                      <span className="text-xl">🧬</span>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">Complete Your DNA</h3>
+                      <p className="text-white/70 text-xs">Answer more questions to unlock personalized insights</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Link href="/dna">
+                      <button className="bg-white text-teal-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-white/90 transition-colors">
+                        Take DNA Quiz
+                      </button>
+                    </Link>
+                    <Link href="/profile#dna">
+                      <button className="bg-white/20 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-white/30 transition-colors">
+                        View My DNA
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* Recommendations - For You */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+                <RecommendationsGlimpse />
+              )}
+
+              {/* End of Feed Message */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+                <div className="text-center py-8 text-gray-400">
+                  <p className="text-sm">You're all caught up! 🎉</p>
+                  <p className="text-xs mt-1">Check back later for more content</p>
+                </div>
+              )}
+
               {/* Social Posts - hidden when specific game filters are active */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && filteredPosts.filter((item: any) => {
                 // Filter out incorrectly formatted prediction posts

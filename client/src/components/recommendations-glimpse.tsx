@@ -50,19 +50,19 @@ export function RecommendationsGlimpse() {
   if (!recommendations || recommendations.length === 0) return null;
 
   return (
-    <Card className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm mb-4">
+    <Card className="bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 border-0 rounded-2xl p-4 shadow-lg mb-4">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
             <Sparkles className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-900">For You</p>
-            <p className="text-[10px] text-gray-500">Based on your taste</p>
+            <p className="text-sm font-semibold text-white">For You</p>
+            <p className="text-[10px] text-purple-200">Based on your taste</p>
           </div>
         </div>
         <Link href="/discover">
-          <div className="flex items-center gap-1 text-purple-600 hover:text-purple-700 cursor-pointer">
+          <div className="flex items-center gap-1 text-purple-200 hover:text-white cursor-pointer">
             <span className="text-xs font-medium">See All</span>
             <ChevronRight className="w-4 h-4" />
           </div>
@@ -89,7 +89,7 @@ export function RecommendationsGlimpse() {
                   <Plus className="w-3.5 h-3.5 text-white" />
                 </button>
               </div>
-              <p className="text-xs font-medium text-gray-900 line-clamp-2 leading-tight">{item.title}</p>
+              <p className="text-xs font-medium text-white line-clamp-2 leading-tight">{item.title}</p>
             </div>
           </Link>
         ))}
