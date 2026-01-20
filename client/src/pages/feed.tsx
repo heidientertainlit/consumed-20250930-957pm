@@ -2928,7 +2928,7 @@ export default function Feed() {
               {/* End of Feed Message */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
                 <div className="text-center py-8 text-gray-400">
-                  <p className="text-sm font-medium text-white">You're all caught up! 🎉</p>
+                  <p className="text-sm font-medium text-purple-600">You're all caught up! 🎉</p>
                   <p className="text-xs mt-2 max-w-xs mx-auto">Give feedback and tell us what you want more of, what went wrong, or scroll up and go play more trivia.</p>
                   <Button
                     onClick={() => setIsFeedbackOpen(true)}
@@ -4519,18 +4519,22 @@ export default function Feed() {
               );
               })}
 
-              {/* Infinite Scroll Loading Indicator - only show for All/games filters */}
+              {/* Infinite Scroll Loading Indicator - DISABLED */}
+              {/* 
               {isFetchingNextPage && (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
                   <p className="text-gray-500 mt-3">Loading more posts...</p>
                 </div>
               )}
+              */}
 
-              {/* Intersection Observer Target - only for All/games filters */}
+              {/* Intersection Observer Target - DISABLED */}
+              {/* 
               {hasNextPage && !isFetchingNextPage && (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
                 <div ref={loadMoreRef} className="h-20" />
               )}
+              */}
 
               {/* Category carousels for trivia filter */}
               {selectedFilter === 'trivia' && (
