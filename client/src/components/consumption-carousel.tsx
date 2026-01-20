@@ -132,9 +132,9 @@ export default function ConsumptionCarousel({ items, title = "Community" }: Cons
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <Link href={`/profile/${item.username}`}>
+              <Link href={`/user/${item.userId}`}>
                 <span className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
-                  {(item.displayName && item.displayName !== 'Unknown' && item.displayName !== 'unknown') ? item.displayName : (item.username && item.username !== 'friend' && item.username !== 'Unknown' && item.username !== 'unknown') ? item.username : 'A fan'}
+                  {(item.username && item.username !== 'friend' && item.username !== 'Unknown' && item.username !== 'unknown') ? item.username : 'A fan'}
                 </span>
               </Link>
               <p className="text-[10px] text-gray-400 mb-1">{item.activityText || 'added'}</p>
@@ -197,9 +197,9 @@ export default function ConsumptionCarousel({ items, title = "Community" }: Cons
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5">
-                <Link href={`/profile/${item.username}`}>
+                <Link href={`/user/${item.userId}`}>
                   <span className="text-xs text-blue-600 font-medium hover:underline cursor-pointer">
-                    {item.displayName || item.username}
+                    {item.username}
                   </span>
                 </Link>
                 <span className="text-xs text-gray-400">voted</span>
@@ -245,9 +245,9 @@ export default function ConsumptionCarousel({ items, title = "Community" }: Cons
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5">
-                <Link href={`/profile/${item.username}`}>
+                <Link href={`/user/${item.userId}`}>
                   <span className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
-                    {item.displayName || item.username}
+                    {item.username}
                   </span>
                 </Link>
                 <span className={`text-xs ${item.isCorrect ? 'text-green-600' : 'text-red-500'}`}>
@@ -295,9 +295,9 @@ export default function ConsumptionCarousel({ items, title = "Community" }: Cons
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-0.5">
-                <Link href={`/profile/${item.username}`}>
+                <Link href={`/user/${item.userId}`}>
                   <span className="text-xs text-pink-600 font-medium hover:underline cursor-pointer">
-                    {item.displayName || item.username}
+                    {item.username}
                   </span>
                 </Link>
                 <span className="text-xs text-gray-400">says</span>

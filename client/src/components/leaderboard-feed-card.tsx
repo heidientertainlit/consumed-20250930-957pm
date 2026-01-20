@@ -224,7 +224,7 @@ export default function LeaderboardFeedCard({ className, variant = 'trivia' }: L
                 href={`/user/${entry.userId}`}
                 className="flex-1 font-medium truncate text-gray-800 hover:text-purple-600 transition-colors"
               >
-                {entry.displayName}
+                {entry.username}
               </Link>
             )}
             
