@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
@@ -32,6 +31,7 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
   const { session } = useAuth();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [expandedRanks, setExpandedRanks] = useState<Record<string, boolean>>({});
 
   const { data: ranks, isLoading } = useQuery({
     queryKey: ['consumed-ranks-carousel'],
@@ -52,8 +52,7 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
           .from('rank_items')
           .select('*')
           .eq('rank_id', rank.id)
-          .order('position', { ascending: true })
-          .limit(5);
+          .order('position', { ascending: true });
         
         ranksWithItems.push({
           id: rank.id,
@@ -92,6 +91,13 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
       const newIndex = Math.round(scrollLeft / (cardWidth + 12));
       setCurrentIndex(Math.min(Math.max(newIndex, 0), ranks.length - 1));
     }
+  };
+
+  const toggleExpanded = (rankId: string) => {
+    setExpandedRanks(prev => ({
+      ...prev,
+      [rankId]: !prev[rankId]
+    }));
   };
 
   if (isLoading) {
@@ -149,52 +155,57 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
         onScroll={handleScroll}
         className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
       >
-        {ranks.map((rank) => (
-          <div key={rank.id} className="flex-shrink-0 w-full snap-center">
-            <h3 className="text-gray-900 font-semibold text-base mb-3">
-              {rank.title}
-            </h3>
+        {ranks.map((rank) => {
+          const isExpanded = expandedRanks[rank.id];
+          const displayItems = isExpanded ? rank.items : rank.items.slice(0, 3);
+          
+          return (
+            <div key={rank.id} className="flex-shrink-0 w-full snap-center">
+              <h3 className="text-gray-900 font-semibold text-base mb-3">
+                {rank.title}
+              </h3>
 
-            <div className="space-y-2 mb-3">
-              {rank.items.slice(0, 3).map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 py-2 px-3 rounded-xl bg-gray-50 border border-gray-100"
+              <div className="space-y-2 mb-3">
+                {displayItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 py-2 px-3 rounded-xl bg-gray-50 border border-gray-100"
+                  >
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold ${
+                      item.position === 1 ? 'bg-gradient-to-br from-purple-600 to-purple-800 text-white' :
+                      item.position === 2 ? 'bg-gradient-to-br from-purple-500 to-purple-700 text-white' :
+                      'bg-gradient-to-br from-purple-400 to-purple-600 text-white'
+                    }`}>
+                      {item.position}
+                    </div>
+                    <span className="text-gray-900 font-medium flex-1 truncate text-sm">
+                      {item.title}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button className="flex items-center gap-0.5 text-green-600 hover:text-green-700 transition-colors">
+                        <ChevronUp size={16} strokeWidth={2.5} />
+                        <span className="text-xs font-medium">{item.up_vote_count}</span>
+                      </button>
+                      <button className="flex items-center gap-0.5 text-red-500 hover:text-red-600 transition-colors">
+                        <ChevronDown size={16} strokeWidth={2.5} />
+                        <span className="text-xs font-medium">{item.down_vote_count}</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {rank.items.length > 3 && (
+                <button
+                  onClick={() => toggleExpanded(rank.id)}
+                  className="text-purple-600 text-sm hover:underline block text-center w-full"
                 >
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold ${
-                    item.position === 1 ? 'bg-gradient-to-br from-purple-600 to-purple-800 text-white' :
-                    item.position === 2 ? 'bg-gradient-to-br from-purple-500 to-purple-700 text-white' :
-                    'bg-gradient-to-br from-purple-400 to-purple-600 text-white'
-                  }`}>
-                    {item.position}
-                  </div>
-                  <span className="text-gray-900 font-medium flex-1 truncate text-sm">
-                    {item.title}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-0.5 text-green-600 hover:text-green-700 transition-colors">
-                      <ChevronUp size={16} strokeWidth={2.5} />
-                      <span className="text-xs font-medium">{item.up_vote_count}</span>
-                    </button>
-                    <button className="flex items-center gap-0.5 text-red-500 hover:text-red-600 transition-colors">
-                      <ChevronDown size={16} strokeWidth={2.5} />
-                      <span className="text-xs font-medium">{item.down_vote_count}</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
+                  {isExpanded ? 'Show less' : `Show all ${rank.items.length} items`}
+                </button>
+              )}
             </div>
-
-            {rank.items.length > 3 && (
-              <Link
-                href={`/rank/${rank.id}`}
-                className="text-purple-600 text-sm hover:underline block text-center"
-              >
-                Show all {rank.items.length} items
-              </Link>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {ranks.length > 1 && (
