@@ -2878,7 +2878,7 @@ export default function Feed() {
 
               {/* Consumed Rankings Carousel - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
-                <RanksCarousel />
+                <RanksCarousel offset={0} />
               )}
 
               {/* TRIVIA filter - TV category */}
@@ -2903,7 +2903,7 @@ export default function Feed() {
 
               {/* More Ranks */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
-                <RanksCarousel />
+                <RanksCarousel offset={1} />
               )}
 
               {/* Leaderboard - Media Leaders */}

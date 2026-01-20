@@ -105,9 +105,10 @@ function SortableItem({ item, index, totalVotes }: SortableItemProps) {
 
 interface RanksCarouselProps {
   expanded?: boolean;
+  offset?: number;
 }
 
-export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
+export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -128,14 +129,15 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
   );
 
   const { data: ranks, isLoading } = useQuery({
-    queryKey: ['consumed-ranks-carousel'],
+    queryKey: ['consumed-ranks-carousel', offset],
     queryFn: async () => {
       const { data: ranksData, error: ranksError } = await supabase
         .from('ranks')
         .select('*')
         .eq('origin_type', 'consumed')
         .eq('visibility', 'public')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(offset * 3, (offset * 3) + 2);
       
       if (ranksError) throw ranksError;
       
