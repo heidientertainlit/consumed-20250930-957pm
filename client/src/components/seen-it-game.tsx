@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, ChevronRight, Check, X, Users, Trophy } from "lucide-react";
+import { Eye, ChevronRight, Check, X, Users, Trophy, Plus, Star } from "lucide-react";
 
 interface MediaItem {
   id: string;
@@ -34,11 +34,11 @@ export default function SeenItGame({
   };
 
   return (
-    <Card className="bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 border-0 p-4 rounded-xl">
+    <Card className="bg-gradient-to-br from-[#1a0a2e] via-[#16082a] to-[#0d0618] border-0 p-4 rounded-xl">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Eye className="w-5 h-5 text-yellow-400" />
-          <h3 className="text-white font-semibold text-lg">Seen It</h3>
+          <h3 className="text-white font-semibold text-lg">Seen It?</h3>
           <span className="text-purple-300 text-sm">• {title}</span>
         </div>
         <div className="flex items-center gap-2">
@@ -68,6 +68,15 @@ export default function SeenItGame({
                     answered ? 'opacity-60' : ''
                   }`}
                 />
+                {/* Action icons on poster */}
+                <div className="absolute top-2 right-2 flex flex-col gap-1">
+                  <button className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all">
+                    <Plus className="w-4 h-4 text-white" />
+                  </button>
+                  <button className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all">
+                    <Star className="w-4 h-4 text-white" />
+                  </button>
+                </div>
                 {answered && (
                   <div className={`absolute inset-0 flex items-center justify-center rounded-lg ${
                     response ? 'bg-green-500/30' : 'bg-red-500/30'
