@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/posthog";
-import { Search, X, Check, Users, Share2, ChevronLeft, ChevronRight, Loader2, Sparkles, UserPlus } from "lucide-react";
+import { Users, Sparkles, Search, ChevronLeft, ChevronRight, Loader2, UserPlus, Share2, MessageSquare } from "lucide-react";
 import { Link } from "wouter";
 
 interface Celebrity {
@@ -27,32 +28,56 @@ interface CastFriendsGameProps {
 export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
-  const [step, setStep] = useState<'describe' | 'pick-celeb' | 'add-friend' | 'confirm'>('describe');
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [step, setStep] = useState<'browse' | 'add-friend' | 'confirm'>('browse');
   const [celebrities, setCelebrities] = useState<Celebrity[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [gender, setGender] = useState<'all' | 'male' | 'female'>('all');
+  const [mode, setMode] = useState<'browse' | 'describe' | 'search'>('browse');
   const [description, setDescription] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null);
   const [customFriendName, setCustomFriendName] = useState("");
   const [selectedCeleb, setSelectedCeleb] = useState<Celebrity | null>(null);
-  const [celebScrollIndex, setCelebScrollIndex] = useState(0);
-  const [mode, setMode] = useState<'describe' | 'search'>('describe');
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
   useEffect(() => {
+    loadPopularCelebs();
     if (session) loadFriends();
   }, [session]);
 
+  useEffect(() => {
+    loadPopularCelebs();
+  }, [gender]);
+
+  const loadPopularCelebs = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/search-celebrities`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ popular: true, gender })
+      });
+      const data = await response.json();
+      setCelebrities(data.celebrities || []);
+      setCurrentIndex(0);
+    } catch (error) {
+      console.error('Failed to load celebrities:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const suggestCelebrities = async () => {
     if (!description.trim() || description.length < 5) {
-      toast({ title: "Please describe your friend a bit more", variant: "destructive" });
+      toast({ title: "Describe a bit more!", variant: "destructive" });
       return;
     }
-    
-    setIsSearching(true);
+    setIsLoading(true);
     try {
       const response = await fetch(`${supabaseUrl}/functions/v1/suggest-celebrities`, {
         method: 'POST',
@@ -60,43 +85,40 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
         body: JSON.stringify({ description })
       });
       const data = await response.json();
-      
-      if (data.celebrities && data.celebrities.length > 0) {
+      if (data.celebrities?.length > 0) {
         setCelebrities(data.celebrities);
-        setCelebScrollIndex(0);
-        setStep('pick-celeb');
+        setCurrentIndex(0);
+        setMode('browse');
         trackEvent('cast_friends_ai_suggest', { description_length: description.length });
       } else {
-        toast({ title: "No matches found. Try different words!", variant: "destructive" });
+        toast({ title: "No matches found", variant: "destructive" });
       }
     } catch (error) {
-      console.error('Suggest failed:', error);
       toast({ title: "Something went wrong", variant: "destructive" });
     } finally {
-      setIsSearching(false);
+      setIsLoading(false);
     }
   };
 
-  const searchCelebrities = async (query: string) => {
-    if (!query.trim()) return;
-    
-    setIsSearching(true);
+  const searchCelebrities = async () => {
+    if (!searchQuery.trim()) return;
+    setIsLoading(true);
     try {
       const response = await fetch(`${supabaseUrl}/functions/v1/search-celebrities`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ query: searchQuery })
       });
       const data = await response.json();
-      setCelebrities(data.celebrities || []);
-      setCelebScrollIndex(0);
       if (data.celebrities?.length > 0) {
-        setStep('pick-celeb');
+        setCelebrities(data.celebrities);
+        setCurrentIndex(0);
+        setMode('browse');
       }
     } catch (error) {
       console.error('Search failed:', error);
     } finally {
-      setIsSearching(false);
+      setIsLoading(false);
     }
   };
 
@@ -115,7 +137,6 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
 
   const handleSubmit = async () => {
     if (!session || (!selectedFriend && !customFriendName) || !selectedCeleb) return;
-    
     setIsSubmitting(true);
     try {
       const response = await fetch(`${supabaseUrl}/functions/v1/create-friend-cast`, {
@@ -137,19 +158,16 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
 
       trackEvent('friend_cast_created', {
         has_friend_account: !!selectedFriend,
-        celeb_name: selectedCeleb.name,
-        used_ai: mode === 'describe'
+        celeb_name: selectedCeleb.name
       });
 
-      toast({ title: "Cast created! Share with your friend! 🎬" });
+      toast({ title: "Cast shared! Ask friends to argue your pick! 🎬" });
       onComplete?.();
       
-      setStep('describe');
+      setStep('browse');
       setSelectedCeleb(null);
       setSelectedFriend(null);
       setCustomFriendName("");
-      setDescription("");
-      setCelebrities([]);
     } catch (error) {
       toast({ title: "Failed to create cast", variant: "destructive" });
     } finally {
@@ -157,231 +175,256 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
     }
   };
 
-  const visibleCelebs = celebrities.slice(celebScrollIndex, celebScrollIndex + 4);
-  const canScrollLeft = celebScrollIndex > 0;
-  const canScrollRight = celebScrollIndex + 4 < celebrities.length;
+  const scrollToNext = () => {
+    if (scrollRef.current && currentIndex < celebrities.length - 1) {
+      const cardWidth = 140;
+      scrollRef.current.scrollBy({ left: cardWidth + 8, behavior: 'smooth' });
+      setCurrentIndex(prev => Math.min(prev + 1, celebrities.length - 1));
+    }
+  };
+
+  const scrollToPrev = () => {
+    if (scrollRef.current && currentIndex > 0) {
+      const cardWidth = 140;
+      scrollRef.current.scrollBy({ left: -(cardWidth + 8), behavior: 'smooth' });
+      setCurrentIndex(prev => Math.max(prev - 1, 0));
+    }
+  };
 
   if (!session) {
     return (
-      <div className="bg-gradient-to-br from-amber-900/30 to-orange-900/30 rounded-xl p-6 border border-amber-500/30">
+      <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-            <Users className="w-5 h-5 text-amber-400" />
+          <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center">
+            <Users className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 className="font-bold text-white">Cast Your Friends</h3>
-            <p className="text-sm text-gray-400">Who would play them in a movie?</p>
+            <p className="font-semibold text-gray-900">Cast Your Friends</p>
+            <p className="text-xs text-gray-500">Who would play them in a movie?</p>
           </div>
         </div>
-        <p className="text-gray-300 text-sm mb-4">Sign in to cast your friends as celebrities!</p>
         <Link href="/login">
-          <Button className="w-full bg-amber-600 hover:bg-amber-700">Sign In to Play</Button>
+          <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white">Sign In to Play</Button>
         </Link>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-gradient-to-br from-amber-900/30 to-orange-900/30 rounded-xl p-4 border border-amber-500/30">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-            <Users className="w-5 h-5 text-amber-400" />
+    <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center">
+            <Users className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
-            <h3 className="font-bold text-white">Cast Your Friends</h3>
-            <p className="text-xs text-gray-400">
-              {step === 'describe' && "Describe or search"}
-              {step === 'pick-celeb' && "Pick a celebrity"}
+            <p className="text-sm font-semibold text-gray-900">Cast Your Friends</p>
+            <p className="text-[10px] text-gray-500">
+              {step === 'browse' && "Pick a celebrity"}
               {step === 'add-friend' && "Who is this for?"}
-              {step === 'confirm' && "Confirm your cast"}
+              {step === 'confirm' && "Confirm & share"}
             </p>
           </div>
         </div>
-        {step !== 'describe' && (
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => {
-              if (step === 'pick-celeb') setStep('describe');
-              else if (step === 'add-friend') setStep('pick-celeb');
-              else if (step === 'confirm') setStep('add-friend');
-            }}
+        
+        {step !== 'browse' && (
+          <button
+            onClick={() => setStep(step === 'confirm' ? 'add-friend' : 'browse')}
+            className="text-xs text-gray-500 flex items-center"
           >
-            <ChevronLeft className="w-4 h-4 mr-1" /> Back
-          </Button>
+            <ChevronLeft className="w-3 h-3" /> Back
+          </button>
         )}
       </div>
 
-      {step === 'describe' && (
-        <div className="space-y-3">
-          <div className="flex gap-2 mb-3">
-            <Button
-              variant={mode === 'describe' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setMode('describe')}
-              className={mode === 'describe' ? 'bg-amber-600' : ''}
-            >
-              <Sparkles className="w-3 h-3 mr-1" /> Describe
-            </Button>
-            <Button
-              variant={mode === 'search' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setMode('search')}
-              className={mode === 'search' ? 'bg-amber-600' : ''}
-            >
-              <Search className="w-3 h-3 mr-1" /> Search Name
-            </Button>
-          </div>
-
-          {mode === 'describe' ? (
+      {step === 'browse' && (
+        <>
+          {mode === 'browse' && (
             <>
-              <p className="text-sm text-gray-300">Describe your friend - looks, personality, vibe...</p>
+              <div className="flex gap-2 mb-3">
+                {(['all', 'male', 'female'] as const).map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setGender(g)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      gender === g
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {g === 'all' ? 'All' : g === 'male' ? 'Male' : 'Female'}
+                  </button>
+                ))}
+                
+                <div className="flex-1" />
+                
+                <button
+                  onClick={() => setMode('describe')}
+                  className="px-2 py-1.5 rounded-full bg-purple-100 text-purple-700 text-xs font-medium flex items-center gap-1"
+                >
+                  <Sparkles className="w-3 h-3" /> AI
+                </button>
+                <button
+                  onClick={() => setMode('search')}
+                  className="px-2 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium flex items-center gap-1"
+                >
+                  <Search className="w-3 h-3" />
+                </button>
+              </div>
+
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+                </div>
+              ) : (
+                <div className="relative">
+                  {currentIndex > 0 && (
+                    <button
+                      onClick={scrollToPrev}
+                      className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-white shadow-md flex items-center justify-center"
+                    >
+                      <ChevronLeft className="w-4 h-4 text-gray-600" />
+                    </button>
+                  )}
+                  
+                  <div
+                    ref={scrollRef}
+                    className="flex gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-1"
+                  >
+                    {celebrities.map((celeb) => (
+                      <button
+                        key={celeb.id}
+                        onClick={() => {
+                          setSelectedCeleb(celeb);
+                          setStep('add-friend');
+                        }}
+                        className={`flex-shrink-0 snap-center w-[100px] transition-transform hover:scale-105 ${
+                          selectedCeleb?.id === celeb.id ? 'ring-2 ring-amber-500 rounded-xl' : ''
+                        }`}
+                      >
+                        <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
+                          <img 
+                            src={celeb.image} 
+                            alt={celeb.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                            <p className="text-[10px] text-white font-medium truncate">{celeb.name}</p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  {currentIndex < celebrities.length - 4 && (
+                    <button
+                      onClick={scrollToNext}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-white shadow-md flex items-center justify-center"
+                    >
+                      <ChevronRight className="w-4 h-4 text-gray-600" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {mode === 'describe' && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">Describe your friend's look and vibe...</p>
               <Textarea
-                placeholder="e.g. Tall, dark hair, funny, always the life of the party, gives off superhero energy..."
+                placeholder="e.g. Tall, dark hair, funny, always the life of the party..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="bg-black/30 border-amber-500/30 min-h-[80px] resize-none"
+                className="min-h-[70px] resize-none text-sm"
               />
-              <Button 
-                onClick={suggestCelebrities}
-                disabled={isSearching || description.length < 5}
-                className="w-full bg-amber-600 hover:bg-amber-700"
-              >
-                {isSearching ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <Sparkles className="w-4 h-4 mr-2" />
-                )}
-                Find Matching Celebrities
-              </Button>
-            </>
-          ) : (
-            <>
-              <p className="text-sm text-gray-300">Search for a specific celebrity</p>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMode('browse')}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={suggestCelebrities}
+                  disabled={isLoading || description.length < 5}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                  size="sm"
+                >
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1" />}
+                  Find Matches
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'search' && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">Search for a specific celebrity</p>
               <div className="flex gap-2">
                 <Input
                   placeholder="e.g. Ryan Gosling"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && searchCelebrities(searchQuery)}
-                  className="bg-black/30 border-amber-500/30"
+                  onKeyDown={(e) => e.key === 'Enter' && searchCelebrities()}
+                  className="text-sm"
                 />
                 <Button 
-                  onClick={() => searchCelebrities(searchQuery)}
-                  disabled={isSearching || !searchQuery.trim()}
-                  className="bg-amber-600 hover:bg-amber-700"
+                  onClick={searchCelebrities}
+                  disabled={isLoading || !searchQuery.trim()}
+                  size="sm"
                 >
-                  {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                 </Button>
               </div>
-            </>
-          )}
-        </div>
-      )}
-
-      {step === 'pick-celeb' && (
-        <div className="space-y-3">
-          <p className="text-sm text-gray-300">
-            {mode === 'describe' ? 'AI found these matches!' : 'Pick your celebrity'}
-          </p>
-
-          <div className="relative">
-            {canScrollLeft && (
-              <button
-                onClick={() => setCelebScrollIndex(Math.max(0, celebScrollIndex - 4))}
-                className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/80 border border-amber-500/30 flex items-center justify-center"
+              <Button 
+                variant="ghost"
+                size="sm"
+                onClick={() => setMode('browse')}
+                className="w-full text-gray-500"
               >
-                <ChevronLeft className="w-4 h-4 text-white" />
-              </button>
-            )}
-            
-            <div className="grid grid-cols-4 gap-2 py-2">
-              {visibleCelebs.map(celeb => (
-                <button
-                  key={celeb.id}
-                  onClick={() => {
-                    setSelectedCeleb(celeb);
-                    setStep('add-friend');
-                  }}
-                  className={`relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all ${
-                    selectedCeleb?.id === celeb.id 
-                      ? 'border-amber-500 scale-105' 
-                      : 'border-transparent hover:border-amber-500/50'
-                  }`}
-                >
-                  <img 
-                    src={celeb.image} 
-                    alt={celeb.name}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1">
-                    <p className="text-[10px] text-white font-medium truncate">{celeb.name}</p>
-                    {celeb.known_for && (
-                      <p className="text-[8px] text-gray-400 truncate">{celeb.known_for}</p>
-                    )}
-                  </div>
-                </button>
-              ))}
+                Cancel
+              </Button>
             </div>
-
-            {canScrollRight && (
-              <button
-                onClick={() => setCelebScrollIndex(Math.min(celebrities.length - 4, celebScrollIndex + 4))}
-                className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/80 border border-amber-500/30 flex items-center justify-center"
-              >
-                <ChevronRight className="w-4 h-4 text-white" />
-              </button>
-            )}
-          </div>
-
-          {celebrities.length === 0 && (
-            <p className="text-center text-gray-400 text-sm py-4">No celebrities found</p>
           )}
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setStep('describe')}
-            className="w-full text-gray-400"
-          >
-            Try a different description
-          </Button>
-        </div>
+        </>
       )}
 
       {step === 'add-friend' && selectedCeleb && (
         <div className="space-y-3">
-          <div className="flex items-center gap-3 bg-black/30 rounded-lg p-3 mb-2">
+          <div className="flex items-center gap-3 bg-amber-50 rounded-xl p-3">
             <img 
               src={selectedCeleb.image} 
               alt={selectedCeleb.name}
               className="w-12 h-16 rounded-lg object-cover"
             />
             <div>
-              <p className="text-xs text-gray-400">You picked:</p>
-              <p className="text-amber-400 font-bold">{selectedCeleb.name}</p>
+              <p className="text-xs text-gray-500">You picked:</p>
+              <p className="text-amber-600 font-bold">{selectedCeleb.name}</p>
             </div>
           </div>
 
-          <p className="text-sm text-gray-300">Who does this remind you of?</p>
+          <p className="text-sm text-gray-600">Who does this remind you of?</p>
           
           {friends.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-wrap gap-2">
               {friends.slice(0, 6).map(friend => (
-                <Button
+                <button
                   key={friend.id}
-                  variant={selectedFriend?.id === friend.id ? "default" : "outline"}
-                  size="sm"
                   onClick={() => {
                     setSelectedFriend(friend);
                     setCustomFriendName("");
                     setStep('confirm');
                   }}
-                  className={selectedFriend?.id === friend.id ? "bg-amber-600" : ""}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    selectedFriend?.id === friend.id
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 >
                   @{friend.user_name}
-                </Button>
+                </button>
               ))}
             </div>
           )}
@@ -394,12 +437,12 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
                 setCustomFriendName(e.target.value);
                 setSelectedFriend(null);
               }}
-              className="bg-black/30 border-amber-500/30"
+              className="text-sm"
             />
             <Button 
               onClick={() => customFriendName && setStep('confirm')}
               disabled={!customFriendName}
-              className="bg-amber-600 hover:bg-amber-700"
+              size="sm"
             >
               <UserPlus className="w-4 h-4" />
             </Button>
@@ -409,38 +452,39 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
 
       {step === 'confirm' && selectedCeleb && (
         <div className="space-y-4">
-          <div className="flex items-center gap-4 bg-black/30 rounded-lg p-3">
+          <div className="flex items-center gap-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4">
             <img 
               src={selectedCeleb.image} 
               alt={selectedCeleb.name}
-              className="w-16 h-20 rounded-lg object-cover"
+              className="w-14 h-18 rounded-lg object-cover"
             />
-            <div className="flex-1">
-              <p className="text-gray-400 text-sm">You think</p>
-              <p className="text-amber-400 font-bold">{selectedCeleb.name}</p>
-              <p className="text-gray-400 text-sm">would play</p>
-              <p className="text-white font-bold">{selectedFriend?.user_name || customFriendName}</p>
+            <div>
+              <p className="text-xs text-gray-500">You think</p>
+              <p className="text-amber-600 font-bold text-lg">{selectedCeleb.name}</p>
+              <p className="text-xs text-gray-500">would play</p>
+              <p className="text-gray-900 font-bold">{selectedFriend?.user_name || customFriendName}</p>
             </div>
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <MessageSquare className="w-4 h-4 text-gray-400 mx-auto mb-1" />
+            <p className="text-xs text-gray-500">Friends can <span className="font-semibold text-amber-600">argue your pick</span> with their own!</p>
           </div>
 
           <Button 
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="w-full bg-amber-600 hover:bg-amber-700"
+            className="w-full bg-amber-500 hover:bg-amber-600"
           >
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
             ) : (
               <Share2 className="w-4 h-4 mr-2" />
             )}
-            Share & Ask Friends
+            Share & Let Friends Argue
           </Button>
-          
-          <p className="text-center text-xs text-gray-400">
-            Your pick will be shared for friends to weigh in
-          </p>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

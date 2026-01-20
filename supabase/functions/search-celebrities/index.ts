@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { query, popular } = await req.json();
+    const { query, popular, gender } = await req.json();
     
     let url: string;
     if (popular || !query) {
@@ -21,12 +21,14 @@ serve(async (req) => {
     } else {
       url = `https://api.themoviedb.org/3/search/person?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&page=1`;
     }
+    
+    const genderFilter = gender === 'male' ? 2 : gender === 'female' ? 1 : null;
 
     const response = await fetch(url);
     const data = await response.json();
 
     const celebrities = (data.results || [])
-      .filter((person: any) => person.profile_path)
+      .filter((person: any) => person.profile_path && (!genderFilter || person.gender === genderFilter))
       .slice(0, 20)
       .map((person: any) => ({
         id: String(person.id),
