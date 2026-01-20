@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/posthog";
-import { Search, X, Check, Users, Share2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Search, X, Check, Users, Share2, ChevronLeft, ChevronRight, Loader2, Sparkles, UserPlus } from "lucide-react";
 import { Link } from "wouter";
 
 interface Celebrity {
@@ -26,9 +27,10 @@ interface CastFriendsGameProps {
 export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
-  const [step, setStep] = useState<'select-friend' | 'select-celeb' | 'confirm'>('select-friend');
+  const [step, setStep] = useState<'describe' | 'pick-celeb' | 'add-friend' | 'confirm'>('describe');
   const [celebrities, setCelebrities] = useState<Celebrity[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [description, setDescription] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,33 +38,48 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
   const [customFriendName, setCustomFriendName] = useState("");
   const [selectedCeleb, setSelectedCeleb] = useState<Celebrity | null>(null);
   const [celebScrollIndex, setCelebScrollIndex] = useState(0);
+  const [mode, setMode] = useState<'describe' | 'search'>('describe');
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
   useEffect(() => {
-    loadPopularCelebs();
     if (session) loadFriends();
   }, [session]);
 
-  const loadPopularCelebs = async () => {
+  const suggestCelebrities = async () => {
+    if (!description.trim() || description.length < 5) {
+      toast({ title: "Please describe your friend a bit more", variant: "destructive" });
+      return;
+    }
+    
+    setIsSearching(true);
     try {
-      const response = await fetch(`${supabaseUrl}/functions/v1/search-celebrities`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/suggest-celebrities`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ popular: true })
+        body: JSON.stringify({ description })
       });
       const data = await response.json();
-      setCelebrities(data.celebrities || []);
+      
+      if (data.celebrities && data.celebrities.length > 0) {
+        setCelebrities(data.celebrities);
+        setCelebScrollIndex(0);
+        setStep('pick-celeb');
+        trackEvent('cast_friends_ai_suggest', { description_length: description.length });
+      } else {
+        toast({ title: "No matches found. Try different words!", variant: "destructive" });
+      }
     } catch (error) {
-      console.error('Failed to load celebrities:', error);
+      console.error('Suggest failed:', error);
+      toast({ title: "Something went wrong", variant: "destructive" });
+    } finally {
+      setIsSearching(false);
     }
   };
 
   const searchCelebrities = async (query: string) => {
-    if (!query.trim()) {
-      loadPopularCelebs();
-      return;
-    }
+    if (!query.trim()) return;
+    
     setIsSearching(true);
     try {
       const response = await fetch(`${supabaseUrl}/functions/v1/search-celebrities`, {
@@ -73,8 +90,11 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
       const data = await response.json();
       setCelebrities(data.celebrities || []);
       setCelebScrollIndex(0);
+      if (data.celebrities?.length > 0) {
+        setStep('pick-celeb');
+      }
     } catch (error) {
-      console.error('Celebrity search failed:', error);
+      console.error('Search failed:', error);
     } finally {
       setIsSearching(false);
     }
@@ -117,11 +137,19 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
 
       trackEvent('friend_cast_created', {
         has_friend_account: !!selectedFriend,
-        celeb_name: selectedCeleb.name
+        celeb_name: selectedCeleb.name,
+        used_ai: mode === 'describe'
       });
 
       toast({ title: "Cast created! Share with your friend! 🎬" });
       onComplete?.();
+      
+      setStep('describe');
+      setSelectedCeleb(null);
+      setSelectedFriend(null);
+      setCustomFriendName("");
+      setDescription("");
+      setCelebrities([]);
     } catch (error) {
       toast({ title: "Failed to create cast", variant: "destructive" });
     } finally {
@@ -163,89 +191,100 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
           <div>
             <h3 className="font-bold text-white">Cast Your Friends</h3>
             <p className="text-xs text-gray-400">
-              {step === 'select-friend' && "Pick a friend"}
-              {step === 'select-celeb' && "Choose a celebrity"}
+              {step === 'describe' && "Describe or search"}
+              {step === 'pick-celeb' && "Pick a celebrity"}
+              {step === 'add-friend' && "Who is this for?"}
               {step === 'confirm' && "Confirm your cast"}
             </p>
           </div>
         </div>
-        {step !== 'select-friend' && (
+        {step !== 'describe' && (
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => setStep(step === 'confirm' ? 'select-celeb' : 'select-friend')}
+            onClick={() => {
+              if (step === 'pick-celeb') setStep('describe');
+              else if (step === 'add-friend') setStep('pick-celeb');
+              else if (step === 'confirm') setStep('add-friend');
+            }}
           >
             <ChevronLeft className="w-4 h-4 mr-1" /> Back
           </Button>
         )}
       </div>
 
-      {step === 'select-friend' && (
+      {step === 'describe' && (
         <div className="space-y-3">
-          <p className="text-sm text-gray-300">Who would you like to cast?</p>
-          
-          {friends.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
-              {friends.slice(0, 6).map(friend => (
-                <Button
-                  key={friend.id}
-                  variant={selectedFriend?.id === friend.id ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setSelectedFriend(friend);
-                    setCustomFriendName("");
-                    setStep('select-celeb');
-                  }}
-                  className={selectedFriend?.id === friend.id ? "bg-amber-600" : ""}
-                >
-                  @{friend.user_name}
-                </Button>
-              ))}
-            </div>
-          )}
-          
-          <div className="flex gap-2">
-            <Input
-              placeholder="Or type a name..."
-              value={customFriendName}
-              onChange={(e) => {
-                setCustomFriendName(e.target.value);
-                setSelectedFriend(null);
-              }}
-              className="bg-black/30 border-amber-500/30"
-            />
-            <Button 
-              onClick={() => customFriendName && setStep('select-celeb')}
-              disabled={!customFriendName}
-              className="bg-amber-600 hover:bg-amber-700"
+          <div className="flex gap-2 mb-3">
+            <Button
+              variant={mode === 'describe' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setMode('describe')}
+              className={mode === 'describe' ? 'bg-amber-600' : ''}
             >
-              Next
+              <Sparkles className="w-3 h-3 mr-1" /> Describe
+            </Button>
+            <Button
+              variant={mode === 'search' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setMode('search')}
+              className={mode === 'search' ? 'bg-amber-600' : ''}
+            >
+              <Search className="w-3 h-3 mr-1" /> Search Name
             </Button>
           </div>
+
+          {mode === 'describe' ? (
+            <>
+              <p className="text-sm text-gray-300">Describe your friend - looks, personality, vibe...</p>
+              <Textarea
+                placeholder="e.g. Tall, dark hair, funny, always the life of the party, gives off superhero energy..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="bg-black/30 border-amber-500/30 min-h-[80px] resize-none"
+              />
+              <Button 
+                onClick={suggestCelebrities}
+                disabled={isSearching || description.length < 5}
+                className="w-full bg-amber-600 hover:bg-amber-700"
+              >
+                {isSearching ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Sparkles className="w-4 h-4 mr-2" />
+                )}
+                Find Matching Celebrities
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-gray-300">Search for a specific celebrity</p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g. Ryan Gosling"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && searchCelebrities(searchQuery)}
+                  className="bg-black/30 border-amber-500/30"
+                />
+                <Button 
+                  onClick={() => searchCelebrities(searchQuery)}
+                  disabled={isSearching || !searchQuery.trim()}
+                  className="bg-amber-600 hover:bg-amber-700"
+                >
+                  {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {step === 'select-celeb' && (
+      {step === 'pick-celeb' && (
         <div className="space-y-3">
           <p className="text-sm text-gray-300">
-            Who would play <span className="text-amber-400 font-semibold">{selectedFriend?.user_name || customFriendName}</span> in a movie?
+            {mode === 'describe' ? 'AI found these matches!' : 'Pick your celebrity'}
           </p>
-          
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              placeholder="Search celebrities..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                if (e.target.value.length > 2) {
-                  searchCelebrities(e.target.value);
-                }
-              }}
-              className="pl-10 bg-black/30 border-amber-500/30"
-            />
-            {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-amber-400" />}
-          </div>
 
           <div className="relative">
             {canScrollLeft && (
@@ -263,7 +302,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
                   key={celeb.id}
                   onClick={() => {
                     setSelectedCeleb(celeb);
-                    setStep('confirm');
+                    setStep('add-friend');
                   }}
                   className={`relative aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all ${
                     selectedCeleb?.id === celeb.id 
@@ -278,12 +317,10 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
                   />
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1">
                     <p className="text-[10px] text-white font-medium truncate">{celeb.name}</p>
+                    {celeb.known_for && (
+                      <p className="text-[8px] text-gray-400 truncate">{celeb.known_for}</p>
+                    )}
                   </div>
-                  {selectedCeleb?.id === celeb.id && (
-                    <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center">
-                      <Check className="w-3 h-3 text-white" />
-                    </div>
-                  )}
                 </button>
               ))}
             </div>
@@ -298,9 +335,75 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
             )}
           </div>
 
-          {celebrities.length === 0 && !isSearching && (
+          {celebrities.length === 0 && (
             <p className="text-center text-gray-400 text-sm py-4">No celebrities found</p>
           )}
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setStep('describe')}
+            className="w-full text-gray-400"
+          >
+            Try a different description
+          </Button>
+        </div>
+      )}
+
+      {step === 'add-friend' && selectedCeleb && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 bg-black/30 rounded-lg p-3 mb-2">
+            <img 
+              src={selectedCeleb.image} 
+              alt={selectedCeleb.name}
+              className="w-12 h-16 rounded-lg object-cover"
+            />
+            <div>
+              <p className="text-xs text-gray-400">You picked:</p>
+              <p className="text-amber-400 font-bold">{selectedCeleb.name}</p>
+            </div>
+          </div>
+
+          <p className="text-sm text-gray-300">Who does this remind you of?</p>
+          
+          {friends.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {friends.slice(0, 6).map(friend => (
+                <Button
+                  key={friend.id}
+                  variant={selectedFriend?.id === friend.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setSelectedFriend(friend);
+                    setCustomFriendName("");
+                    setStep('confirm');
+                  }}
+                  className={selectedFriend?.id === friend.id ? "bg-amber-600" : ""}
+                >
+                  @{friend.user_name}
+                </Button>
+              ))}
+            </div>
+          )}
+          
+          <div className="flex gap-2">
+            <Input
+              placeholder="Or type any name..."
+              value={customFriendName}
+              onChange={(e) => {
+                setCustomFriendName(e.target.value);
+                setSelectedFriend(null);
+              }}
+              className="bg-black/30 border-amber-500/30"
+            />
+            <Button 
+              onClick={() => customFriendName && setStep('confirm')}
+              disabled={!customFriendName}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              <UserPlus className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       )}
 
