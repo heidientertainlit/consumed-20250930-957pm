@@ -14,6 +14,9 @@ interface SeenItItem {
   title: string;
   image_url: string;
   year?: string;
+  external_id?: string;
+  external_source?: string;
+  media_type?: string;
 }
 
 interface SeenItSet {
@@ -85,7 +88,7 @@ export default function SeenItGame() {
   }, [existingResponses]);
 
   const responseMutation = useMutation({
-    mutationFn: async ({ setId, itemId, seen }: { setId: string; itemId: string; seen: boolean }) => {
+    mutationFn: async ({ setId, itemId, seen, item }: { setId: string; itemId: string; seen: boolean; item: SeenItItem }) => {
       if (!user?.id) throw new Error('Must be logged in');
       
       const { data: existing } = await supabase
@@ -109,17 +112,42 @@ export default function SeenItGame() {
         });
       }
       
+      // If user marked as "seen", add to their watch history (Finished list)
+      if (seen && item.external_id && item.external_source) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          await supabase.functions.invoke('track-media', {
+            body: {
+              media: {
+                title: item.title,
+                mediaType: item.media_type || 'movie',
+                imageUrl: item.image_url,
+                externalId: item.external_id,
+                externalSource: item.external_source
+              },
+              listType: 'finished',
+              skip_social_post: true
+            }
+          });
+        } catch (err) {
+          console.error('Failed to add to watch history:', err);
+        }
+      }
+      
       return { itemId, seen };
     },
     onSuccess: ({ itemId, seen }) => {
       trackEvent('seen_it_response', { item_id: itemId, seen });
+      if (seen) {
+        queryClient.invalidateQueries({ queryKey: ['/api/list-items'] });
+      }
     }
   });
 
-  const handleResponse = (setId: string, itemId: string, seen: boolean) => {
-    setResponses(prev => ({ ...prev, [itemId]: seen }));
+  const handleResponse = (setId: string, item: SeenItItem, seen: boolean) => {
+    setResponses(prev => ({ ...prev, [item.id]: seen }));
     if (session) {
-      responseMutation.mutate({ setId, itemId, seen });
+      responseMutation.mutate({ setId, itemId: item.id, seen, item });
     }
   };
 
@@ -204,13 +232,13 @@ export default function SeenItGame() {
               {!answered ? (
                 <div className="flex gap-1 mt-2">
                   <button
-                    onClick={() => handleResponse(currentSet.id, item.id, false)}
+                    onClick={() => handleResponse(currentSet.id, item, false)}
                     className="flex-1 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-medium hover:bg-white/20 active:scale-95 transition-all"
                   >
                     Nope
                   </button>
                   <button
-                    onClick={() => handleResponse(currentSet.id, item.id, true)}
+                    onClick={() => handleResponse(currentSet.id, item, true)}
                     className="flex-1 py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all"
                   >
                     Seen It
