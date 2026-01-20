@@ -35,7 +35,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   const [isSearching, setIsSearching] = useState<Record<string, boolean>>({});
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['polls-carousel'],
+    queryKey: ['polls-carousel', user?.id],
     queryFn: async () => {
       const { data: pools, error } = await supabase
         .from('prediction_pools')
@@ -47,8 +47,20 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
       
       if (error) throw error;
       
+      // Filter out polls user has already voted on
+      let votedPoolIds: string[] = [];
+      if (user?.id) {
+        const { data: userPredictions } = await supabase
+          .from('user_predictions')
+          .select('pool_id')
+          .eq('user_id', user.id);
+        votedPoolIds = (userPredictions || []).map(p => p.pool_id);
+      }
+      
+      const unvotedPools = (pools || []).filter(pool => !votedPoolIds.includes(pool.id));
+      
       const uniqueTitles = new Map<string, any>();
-      for (const pool of (pools || [])) {
+      for (const pool of unvotedPools) {
         if (!uniqueTitles.has(pool.title)) {
           uniqueTitles.set(pool.title, pool);
         }
