@@ -2849,10 +2849,7 @@ export default function Feed() {
                 <PointsGlimpse />
               )}
 
-              {/* Games Carousel - in All or games filter */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
-                <GamesCarousel />
-              )}
+              {/* Games Carousel removed from feed - available in Play section */}
 
               {/* Consumed Rankings Carousel - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
