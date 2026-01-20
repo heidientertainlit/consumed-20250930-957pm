@@ -2827,12 +2827,13 @@ export default function Feed() {
                       id: p.id,
                       type: 'media_added' as const,
                       userId: p.user?.id || '',
-                      username: p.user?.username || 'friend',
-                      displayName: p.user?.display_name || p.user?.username || p.user?.email?.split('@')[0] || 'A friend',
+                      username: p.user?.username || '',
+                      displayName: p.user?.display_name || p.user?.username || '',
                       avatar: p.user?.avatar_url,
                       mediaTitle: p.mediaItems[0]?.title || '',
                       mediaType: p.mediaItems[0]?.type || 'movie',
                       mediaImage: p.mediaItems[0]?.imageUrl || '',
+                      activityText: p.activityText || 'added',
                       timestamp: p.createdAt || new Date().toISOString()
                     }))}
                   title="The Room"

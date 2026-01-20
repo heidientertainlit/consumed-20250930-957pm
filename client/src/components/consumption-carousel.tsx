@@ -23,6 +23,7 @@ interface FriendActivityItem {
   mediaTitle?: string;
   mediaType?: string;
   mediaImage?: string;
+  activityText?: string; // e.g., "rated it ⭐⭐⭐⭐", "added it to their list", "finished it"
   
   // For poll/trivia/dna
   questionTitle?: string;
@@ -133,10 +134,10 @@ export default function ConsumptionCarousel({ items, title = "Community" }: Cons
             <div className="flex-1 min-w-0">
               <Link href={`/profile/${item.username}`}>
                 <span className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
-                  {item.displayName || item.username || 'A fan'}
+                  {(item.displayName && item.displayName !== 'Unknown') ? item.displayName : (item.username && item.username !== 'friend') ? item.username : 'A fan'}
                 </span>
               </Link>
-              <p className="text-[10px] text-gray-400 mb-1">added</p>
+              <p className="text-[10px] text-gray-400 mb-1">{item.activityText || 'added'}</p>
               <p className="text-gray-900 text-sm font-semibold line-clamp-1">
                 {item.mediaTitle}
               </p>
