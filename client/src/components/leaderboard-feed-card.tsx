@@ -25,48 +25,48 @@ const CATEGORY_CONFIG: Record<LeaderboardVariant, {
   ctaHref: string;
 }> = {
   trivia: {
-    title: 'TRIVIA CHAMPIONS',
+    title: 'Trivia Champions',
     apiCategory: 'trivia',
     icon: Brain,
     gradientFrom: 'from-purple-50',
     gradientTo: 'to-pink-50',
-    ctaLabel: 'View Leaderboard',
+    ctaLabel: 'Leaderboard',
     ctaHref: '/leaderboard',
   },
   overall: {
-    title: 'TOP ENGAGERS',
+    title: 'Top Engagers',
     apiCategory: 'overall',
     icon: TrendingUp,
     gradientFrom: 'from-purple-50',
     gradientTo: 'to-pink-50',
-    ctaLabel: 'View Leaderboard',
+    ctaLabel: 'Leaderboard',
     ctaHref: '/leaderboard',
   },
   consumption: {
-    title: 'MEDIA LEADERS',
+    title: 'Media Leaders',
     apiCategory: 'total_consumption',
     icon: Library,
     gradientFrom: 'from-purple-50',
     gradientTo: 'to-pink-50',
-    ctaLabel: 'View Leaderboard',
+    ctaLabel: 'Leaderboard',
     ctaHref: '/leaderboard',
   },
   polls: {
-    title: 'POLL MASTERS',
+    title: 'Poll Masters',
     apiCategory: 'polls',
     icon: Target,
     gradientFrom: 'from-purple-50',
     gradientTo: 'to-pink-50',
-    ctaLabel: 'View Leaderboard',
+    ctaLabel: 'Leaderboard',
     ctaHref: '/leaderboard',
   },
   predictions: {
-    title: 'PREDICTION PROS',
+    title: 'Prediction Pros',
     apiCategory: 'predictions',
     icon: Trophy,
     gradientFrom: 'from-purple-50',
     gradientTo: 'to-pink-50',
-    ctaLabel: 'View Leaderboard',
+    ctaLabel: 'Leaderboard',
     ctaHref: '/leaderboard',
   },
 };
@@ -215,12 +215,16 @@ export default function LeaderboardFeedCard({ className, variant = 'trivia' }: L
               )}
             </div>
             
-            <span className={cn(
-              "flex-1 font-medium truncate",
-              entry.isCurrentUser ? "text-purple-700" : "text-gray-800"
-            )}>
-              {entry.isCurrentUser ? 'You' : entry.username}
-            </span>
+            {entry.isCurrentUser ? (
+              <span className="flex-1 font-medium truncate text-purple-700">You</span>
+            ) : (
+              <Link 
+                href={`/user/${entry.userId}`}
+                className="flex-1 font-medium truncate text-gray-800 hover:text-purple-600 transition-colors"
+              >
+                {entry.username}
+              </Link>
+            )}
             
             <span className="font-semibold text-gray-700">
               {entry.points.toLocaleString()}
