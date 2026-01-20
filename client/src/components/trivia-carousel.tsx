@@ -398,7 +398,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
+          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1 items-start"
         >
           {filteredData.map((item) => {
             const answered = answeredQuestions[item.id];
@@ -406,7 +406,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
             
             if (item.isChallenge) {
               return (
-                <div key={item.id} className="flex-shrink-0 w-full snap-center">
+                <div key={item.id} className="flex-shrink-0 w-full snap-center h-auto">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
                       <span className="text-xs text-green-700 font-medium">+{item.pointsReward} pts</span>
@@ -438,7 +438,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
             }
             
             return (
-              <div key={item.id} className="flex-shrink-0 w-full snap-center">
+              <div key={item.id} className="flex-shrink-0 w-full snap-center h-auto">
                 <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
                   <span className="text-xs text-green-700 font-medium">+{item.pointsReward} pts</span>
                 </div>
