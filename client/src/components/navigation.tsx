@@ -565,6 +565,16 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-xs font-medium text-white">Play</span>
           </Link>
 
+          {/* Leaderboard */}
+          <Link
+            href="/leaderboard"
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
+            data-testid="nav-leaderboard"
+          >
+            <Trophy className="text-white" size={24} />
+            <span className="text-xs font-medium text-white">Ranks</span>
+          </Link>
+
           {/* Me */}
           <Link
             href={user?.id ? `/user/${user.id}` : "/login"}
