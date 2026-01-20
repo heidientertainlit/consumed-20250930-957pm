@@ -14,6 +14,7 @@ import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { TriviaCarousel } from "@/components/trivia-carousel";
+import CastFriendsGame from "@/components/cast-friends-game";
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
@@ -2818,6 +2819,11 @@ export default function Feed() {
               {/* DNA Moment Card - in All or DNA filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && (
                 <DnaMomentCard />
+              )}
+
+              {/* Cast Your Friends Game */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+                <CastFriendsGame />
               )}
 
               {/* The Room - Friend Activity with reactions */}
