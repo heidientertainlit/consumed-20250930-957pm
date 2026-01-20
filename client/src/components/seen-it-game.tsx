@@ -34,12 +34,12 @@ export default function SeenItGame({
   };
 
   return (
-    <Card className="bg-gradient-to-br from-[#1a0a2e] via-[#16082a] to-[#0d0618] border-0 p-4 rounded-xl">
+    <Card className="bg-gradient-to-br from-[#2d1b4e] via-[#1a1035] to-[#0f0a1a] border-0 p-4 rounded-xl">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Eye className="w-5 h-5 text-yellow-400" />
-          <h3 className="text-white font-semibold text-lg">Seen It?</h3>
-          <span className="text-purple-300 text-sm">• {title}</span>
+          <Eye className="w-4 h-4 text-yellow-400" />
+          <h3 className="text-white font-medium text-sm">Seen It?</h3>
+          <span className="text-purple-400 text-xs">• {title}</span>
         </div>
         <div className="flex items-center gap-2">
           {answeredCount > 0 && (
@@ -96,20 +96,20 @@ export default function SeenItGame({
                 <div className="flex gap-1 mt-2">
                   <button
                     onClick={() => handleResponse(item.id, false)}
-                    className="flex-1 py-1.5 rounded-lg border border-purple-400 text-purple-300 text-xs font-medium hover:bg-purple-700/50 active:scale-95 transition-all"
+                    className="flex-1 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-medium hover:bg-white/20 active:scale-95 transition-all"
                   >
                     Nope
                   </button>
                   <button
                     onClick={() => handleResponse(item.id, true)}
-                    className="flex-1 py-1.5 rounded-lg bg-purple-600 text-white text-xs font-medium hover:bg-purple-500 active:scale-95 transition-all"
+                    className="flex-1 py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all"
                   >
                     Seen It
                   </button>
                 </div>
               ) : (
-                <div className={`mt-2 py-1.5 rounded-lg text-center text-xs font-medium ${
-                  response ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                <div className={`mt-2 py-1.5 rounded-full text-center text-xs font-medium ${
+                  response ? 'bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white' : 'bg-white/10 text-white/60'
                 }`}>
                   {response ? '✓ Seen' : '✗ Nope'}
                 </div>
