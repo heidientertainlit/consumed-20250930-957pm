@@ -15,6 +15,7 @@ import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import CastFriendsGame from "@/components/cast-friends-game";
+import SeenItGame from "@/components/seen-it-game";
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
@@ -2824,6 +2825,11 @@ export default function Feed() {
               {/* Cast Your Friends Game */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
                 <CastFriendsGame />
+              )}
+
+              {/* Seen It Game */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+                <SeenItGame />
               )}
 
               {/* The Room - Friend Activity with reactions */}
