@@ -431,12 +431,15 @@ serve(async (req) => {
       let usersError = null;
       if (userIds.length > 0) {
         // Try users table first
+        console.log('Querying users with IDs:', userIds.slice(0, 3));
+        console.log('Has service role key:', !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
         const result = await supabaseAdmin
           .from('users')
           .select('id, user_name, display_name, email, avatar')
           .in('id', userIds);
         users = result.data || [];
         usersError = result.error;
+        console.log('Users query result:', { data: result.data?.length, error: result.error });
         
         // If users table didn't return enough results, try profiles table
         const missingUserIds = userIds.filter(id => !users.find(u => u.id === id));
@@ -1157,6 +1160,11 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         posts: allItems, 
         currentUserId: appUser.id,
+        _debug: {
+          userIdsQueried: userIds.length,
+          usersFound: users?.length,
+          sampleUsers: users?.slice(0, 3).map(u => ({ id: u.id?.substring(0, 8), user_name: u.user_name, display_name: u.display_name }))
+        }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });

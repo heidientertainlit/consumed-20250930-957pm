@@ -188,6 +188,7 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
   console.log('🔄 Feed response is array:', Array.isArray(data));
   console.log('🔄 Feed response has posts key:', data && 'posts' in data);
   console.log('🔄 Feed response has currentUserId key:', data && 'currentUserId' in data);
+  console.log('🔄 Feed _debug:', data?._debug);
   
   // Handle new response format with currentUserId
   if (data && typeof data === 'object' && !Array.isArray(data) && 'posts' in data && 'currentUserId' in data) {
