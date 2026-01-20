@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
-import { BarChart3, ChevronLeft, ChevronRight, Loader2, GripVertical, Check } from 'lucide-react';
+import { BarChart3, ChevronLeft, ChevronRight, Loader2, GripVertical } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -85,9 +85,9 @@ function SortableItem({ item, index, totalVotes }: SortableItemProps) {
         <GripVertical size={16} />
       </button>
       <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${
-        index === 0 ? 'bg-gradient-to-br from-purple-600 to-purple-800 text-white' :
-        index === 1 ? 'bg-gradient-to-br from-purple-500 to-purple-700 text-white' :
-        'bg-gradient-to-br from-purple-400 to-purple-600 text-white'
+        index === 0 ? 'bg-gradient-to-br from-teal-500 to-cyan-600 text-white' :
+        index === 1 ? 'bg-gradient-to-br from-teal-400 to-cyan-500 text-white' :
+        'bg-gradient-to-br from-teal-300 to-cyan-400 text-white'
       }`}>
         {index + 1}
       </div>
@@ -294,7 +294,7 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
     return (
       <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+          <Loader2 className="w-6 h-6 animate-spin text-teal-500" />
         </div>
       </Card>
     );
@@ -308,12 +308,12 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
     <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center">
             <BarChart3 className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-900">Debate the Rank</p>
-            <p className="text-[10px] text-gray-500">Drag to reorder, then submit</p>
+            <p className="text-[10px] text-gray-500">Drag to reorder</p>
           </div>
         </div>
         
@@ -384,24 +384,9 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
                 {rank.items.length > 5 && (
                   <button
                     onClick={() => toggleExpanded(rank.id)}
-                    className="text-purple-600 text-sm hover:underline"
+                    className="text-teal-600 text-sm hover:underline"
                   >
                     {isExpanded ? 'Show less' : `Show all ${rank.items.length}`}
-                  </button>
-                )}
-                <div className="flex-1" />
-                {isSubmitted ? (
-                  <div className="flex items-center gap-1 text-green-600 text-sm">
-                    <Check size={16} />
-                    <span>Submitted!</span>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => submitMutation.mutate({ rankId: rank.id, items: currentItems })}
-                    disabled={submitMutation.isPending}
-                    className="bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium px-4 py-1.5 rounded-full transition-colors disabled:opacity-50"
-                  >
-                    {submitMutation.isPending ? 'Submitting...' : 'Submit My Rank'}
                   </button>
                 )}
               </div>
@@ -416,7 +401,7 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
             <div
               key={idx}
               className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                idx === currentIndex ? 'bg-purple-600' : 'bg-gray-300'
+                idx === currentIndex ? 'bg-teal-500' : 'bg-gray-300'
               }`}
             />
           ))}
