@@ -189,7 +189,7 @@ export default function LeaderboardFeedCard({ className, variant = 'trivia' }: L
         </div>
       </div>
 
-      <div className="px-3 pb-2 space-y-1.5">
+      <div className="px-3 pb-3 space-y-2">
         {top3.map((entry) => (
           <div 
             key={entry.userId}
