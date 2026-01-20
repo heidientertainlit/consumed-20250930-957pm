@@ -218,11 +218,11 @@ export default function LeaderboardFeedCard({ className, variant = 'trivia' }: L
             </div>
             
             {entry.isCurrentUser ? (
-              <span className="flex-1 font-medium truncate text-purple-700">You</span>
+              <span className="flex-1 text-sm font-medium truncate text-purple-700">You</span>
             ) : (
               <Link 
                 href={`/user/${entry.userId}`}
-                className="flex-1 font-medium truncate text-gray-800 hover:text-purple-600 transition-colors"
+                className="flex-1 text-sm font-medium truncate text-gray-800 hover:text-purple-600 transition-colors"
               >
                 {entry.username}
               </Link>
