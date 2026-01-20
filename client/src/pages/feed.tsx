@@ -2740,22 +2740,22 @@ export default function Feed() {
           {/* Mini Stats Row */}
           <div className="flex items-center justify-center gap-6 py-2">
             <Link href="/leaderboard">
-              <div className="flex items-center gap-1.5 text-white/80 hover:text-white transition-colors cursor-pointer">
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span className="text-xs font-medium">
-                  #{userStatsData?.currentUser?.rank || '—'}
-                </span>
-                <span className="text-[10px] text-white/60">rank</span>
-              </div>
-            </Link>
-            <div className="w-px h-3 bg-white/30" />
-            <Link href="/leaderboard">
-              <div className="flex items-center gap-1.5 text-white/80 hover:text-white transition-colors cursor-pointer">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span className="text-xs font-medium">
+              <div className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer">
+                <span className="text-amber-400 text-sm">🏆</span>
+                <span className="text-white text-sm font-semibold">
                   {userStatsData?.currentUser?.total_points?.toLocaleString() || '0'}
                 </span>
-                <span className="text-[10px] text-white/60">pts</span>
+                <span className="text-white/70 text-xs">total points →</span>
+              </div>
+            </Link>
+            <div className="w-px h-4 bg-white/30" />
+            <Link href="/leaderboard">
+              <div className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer">
+                <span className="text-amber-400 text-sm">🥇</span>
+                <span className="text-purple-300 text-sm font-semibold">
+                  #{userStatsData?.currentUser?.rank || '—'}
+                </span>
+                <span className="text-white/70 text-xs">View Leaderboard →</span>
               </div>
             </Link>
           </div>
