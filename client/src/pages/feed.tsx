@@ -16,13 +16,14 @@ import { DnaMomentCard } from "@/components/dna-moment-card";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import CastFriendsGame from "@/components/cast-friends-game";
 import SeenItGame from "@/components/seen-it-game";
+import TrackCard from "@/components/track-card";
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { GamesCarousel } from "@/components/games-carousel";
 import { RanksCarousel } from "@/components/ranks-carousel";
 import { PointsGlimpse } from "@/components/points-glimpse";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -2769,13 +2770,14 @@ export default function Feed() {
             <div className="text-center py-8">
               <p className="text-gray-600">Please sign in to view your social feed.</p>
             </div>
-          ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'games'].includes(selectedFilter) ? (
+          ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'games', 'track'].includes(selectedFilter) ? (
             <div className="space-y-4 pb-24">
               {/* Feed Filter Pills */}
               <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-4">
                 {[
                   { id: 'all', label: 'All', Icon: Sparkles },
                   { id: 'games', label: 'Play', Icon: Gamepad2 },
+                  { id: 'track', label: 'Track', Icon: ListPlus },
                   { id: 'trivia', label: 'Trivia', Icon: Brain },
                   { id: 'polls', label: 'Polls', Icon: BarChart },
                   { id: 'predictions', label: 'Predictions', Icon: Target },
@@ -2830,6 +2832,11 @@ export default function Feed() {
               {/* Seen It Game */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
                 <SeenItGame />
+              )}
+
+              {/* Quick Track Card */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'track') && (
+                <TrackCard />
               )}
 
               {/* The Room - Friend Activity with reactions */}
