@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
+import { trackEvent } from '@/lib/posthog';
 import { Dna, Loader2, Users, Sparkles, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -123,6 +124,8 @@ export function DnaMomentCard() {
     onSuccess: ({ momentId, result }) => {
       setAnsweredMoments(prev => new Set([...prev, momentId]));
       setMomentResults(prev => ({ ...prev, [momentId]: result }));
+      
+      trackEvent('dna_moment_answered', { moment_id: momentId, points_earned: result.pointsEarned });
       
       toast({
         title: `+${result.pointsEarned} points!`,

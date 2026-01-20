@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
+import { trackEvent } from '@/lib/posthog';
 import { Calendar, Trophy, CheckCircle, Loader2, Send, Play, ChevronDown, ChevronUp } from 'lucide-react';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -128,6 +129,12 @@ export function DailyChallengeCard() {
         userAnswer: selectedOption || ''
       });
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
+      
+      trackEvent('daily_challenge_completed', { 
+        points_earned: result.pointsEarned, 
+        is_correct: result.isCorrect,
+        challenge_type: challenge?.challenge_type 
+      });
       
       if (challenge?.challenge_type === 'trivia') {
         if (result.isCorrect) {

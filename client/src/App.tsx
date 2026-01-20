@@ -1,6 +1,7 @@
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 import { sessionTracker } from "./lib/sessionTracker";
+import { trackPageView } from "./lib/posthog";
 
 // Simple redirect component for wouter
 function RedirectTo({ to }: { to: string }) {
@@ -16,6 +17,7 @@ function PageTracker({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Track page view when location changes
     sessionTracker.trackPageView(location);
+    trackPageView(location);
   }, [location]);
 
   return <>{children}</>;

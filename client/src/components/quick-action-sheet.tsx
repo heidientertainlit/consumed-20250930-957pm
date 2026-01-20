@@ -6,6 +6,7 @@ import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { trackEvent } from "@/lib/posthog";
 import { useQuery } from "@tanstack/react-query";
 import { Checkbox } from "@/components/ui/checkbox";
 import MentionTextarea from "@/components/mention-textarea";
@@ -324,6 +325,12 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           console.error('Track media error:', trackResponse.status, errorData);
           throw new Error(errorData.error || 'Failed to track media');
         }
+        
+        trackEvent('media_tracked', { 
+          media_type: selectedMedia.type, 
+          list_type: selectedListId || 'currently',
+          has_rating: ratingValue > 0
+        });
         
         // Also create a hot take or poll if selected
         if (trackPostType === 'hot_take' && contentText.trim()) {
