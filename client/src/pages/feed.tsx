@@ -20,7 +20,7 @@ import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { GamesCarousel } from "@/components/games-carousel";
 import { RanksGlimpse } from "@/components/ranks-glimpse";
 import { PointsGlimpse } from "@/components/points-glimpse";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -2738,24 +2738,23 @@ export default function Feed() {
           </div>
           
           {/* Mini Stats Row */}
-          <div className="flex items-center justify-center gap-6 py-2">
-            <Link href="/leaderboard">
+          <div className="flex items-center justify-center gap-8 py-2">
+            <Link href="/points">
               <div className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer">
-                <span className="text-amber-400 text-sm">🏆</span>
+                <Trophy className="w-4 h-4 text-amber-400" />
                 <span className="text-white text-sm font-semibold">
                   {userStatsData?.currentUser?.total_points?.toLocaleString() || '0'}
                 </span>
-                <span className="text-white/70 text-xs">total points →</span>
+                <span className="text-white/60 text-xs">points</span>
               </div>
             </Link>
-            <div className="w-px h-4 bg-white/30" />
             <Link href="/leaderboard">
               <div className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer">
-                <span className="text-amber-400 text-sm">🥇</span>
-                <span className="text-purple-300 text-sm font-semibold">
+                <Medal className="w-4 h-4 text-purple-400" />
+                <span className="text-white text-sm font-semibold">
                   #{userStatsData?.currentUser?.rank || '—'}
                 </span>
-                <span className="text-white/70 text-xs">View Leaderboard →</span>
+                <span className="text-white/60 text-xs">rank</span>
               </div>
             </Link>
           </div>
