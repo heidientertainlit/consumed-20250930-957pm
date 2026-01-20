@@ -2,12 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, ChevronRight, Check, X, Users, Trophy, Plus, Star, Loader2, Sparkles } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Eye, ChevronRight, Check, X, Users, Trophy, Plus, Star, Loader2, Sparkles, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { trackEvent } from "@/lib/posthog";
+import { useFriendsManagement } from "@/hooks/use-friends-management";
 
 interface SeenItItem {
   id: string;
@@ -31,6 +33,8 @@ export default function SeenItGame() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [responses, setResponses] = useState<Record<string, boolean | null>>({});
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
+  const [showChallengeModal, setShowChallengeModal] = useState(false);
+  const { friendsData, isLoadingFriends } = useFriendsManagement();
 
   const { data: sets, isLoading } = useQuery({
     queryKey: ['seen-it-sets'],
@@ -150,6 +154,43 @@ export default function SeenItGame() {
       responseMutation.mutate({ setId, itemId: item.id, seen, item });
     }
   };
+
+  const challengeMutation = useMutation({
+    mutationFn: async (friendId: string) => {
+      if (!user?.id || !currentSet) throw new Error('Must be logged in');
+      
+      const { data, error } = await supabase.functions.invoke('seen-it-challenge', {
+        body: {
+          action: 'create',
+          set_id: currentSet.id,
+          set_title: currentSet.title,
+          challenged_id: friendId,
+          score: seenCount,
+          total_items: currentSet.items.length
+        }
+      });
+      
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      return data;
+    },
+    onSuccess: () => {
+      setShowChallengeModal(false);
+      toast({
+        title: "Challenge sent!",
+        description: "Your friend will be notified"
+      });
+      trackEvent('seen_it_challenge_sent', { set_id: currentSet?.id });
+    },
+    onError: (err) => {
+      toast({
+        title: "Couldn't send challenge",
+        description: err instanceof Error ? err.message : "Try again",
+        variant: "destructive"
+      });
+    }
+  });
 
   const currentSet = sets?.[currentSetIndex];
 
@@ -288,7 +329,10 @@ export default function SeenItGame() {
                   View DNA
                 </button>
               )}
-              <button className="w-full py-1.5 rounded-full bg-white/10 text-white/80 text-xs font-medium hover:bg-white/20 active:scale-95 transition-all">
+              <button 
+                onClick={() => setShowChallengeModal(true)}
+                className="w-full py-1.5 rounded-full bg-white/10 text-white/80 text-xs font-medium hover:bg-white/20 active:scale-95 transition-all"
+              >
                 Challenge
               </button>
             </div>
@@ -310,6 +354,57 @@ export default function SeenItGame() {
           ))}
         </div>
       )}
+
+      <Dialog open={showChallengeModal} onOpenChange={setShowChallengeModal}>
+        <DialogContent className="bg-[#1a1035] border-purple-500/30 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Users className="w-5 h-5 text-purple-400" />
+              Challenge a Friend
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-3 max-h-64 overflow-y-auto">
+            {isLoadingFriends ? (
+              <div className="flex justify-center py-4">
+                <Loader2 className="w-5 h-5 animate-spin text-purple-400" />
+              </div>
+            ) : !friendsData?.friends?.length ? (
+              <p className="text-purple-300 text-sm text-center py-4">
+                Add friends to challenge them!
+              </p>
+            ) : (
+              friendsData.friends.map((friend: any) => (
+                <button
+                  key={friend.id}
+                  onClick={() => challengeMutation.mutate(friend.id)}
+                  disabled={challengeMutation.isPending}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-purple-900/30 hover:bg-purple-800/40 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                    {(friend.display_name || friend.user_name || '?')[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-white font-medium text-sm">
+                      {friend.display_name || friend.user_name}
+                    </p>
+                    <p className="text-purple-400 text-xs">@{friend.user_name}</p>
+                  </div>
+                  {challengeMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-purple-400" />
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+          
+          <p className="text-purple-300/60 text-xs text-center mt-2">
+            Your score: {seenCount}/{currentSet?.items?.length || 0} ({Math.round((seenCount / (currentSet?.items?.length || 1)) * 100)}%)
+          </p>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
