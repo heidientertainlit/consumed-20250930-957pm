@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import { useAuth } from '@/lib/auth';
-import { Plus, Star, ChevronRight } from 'lucide-react';
+import { Star, Check, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useMutation } from '@tanstack/react-query';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
@@ -12,15 +13,142 @@ interface RecommendedItem {
   title: string;
   imageUrl?: string;
   type: string;
-  reason?: string;
   externalSource?: string;
+}
+
+function RecommendationItemCard({ 
+  item, 
+  idx, 
+  onAddClick 
+}: { 
+  item: RecommendedItem; 
+  idx: number; 
+  onAddClick: (item: RecommendedItem) => void;
+}) {
+  const [currentRating, setCurrentRating] = useState<number>(0);
+  const [submittedRating, setSubmittedRating] = useState<number | null>(null);
+  const { session } = useAuth();
+  const { toast } = useToast();
+
+  const rateMutation = useMutation({
+    mutationFn: async (rating: number) => {
+      if (!session?.access_token) throw new Error("Not authenticated");
+
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/rate-media`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            media_external_id: item.id,
+            media_external_source: item.externalSource || 'tmdb',
+            media_title: item.title,
+            media_type: item.type || 'movie',
+            rating: rating,
+            skip_social_post: true,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to rate");
+      return response.json();
+    },
+    onSuccess: (_, rating) => {
+      setSubmittedRating(rating);
+      toast({
+        title: "Rated!",
+        description: `You rated "${item.title}" ${rating} star${rating !== 1 ? "s" : ""}.`,
+      });
+    },
+  });
+
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    if (submittedRating === null) {
+      const newRating = parseFloat(e.target.value);
+      setCurrentRating(newRating);
+      if (newRating > 0) {
+        rateMutation.mutate(newRating);
+      }
+    }
+  };
+
+  const displayRating = submittedRating !== null ? submittedRating : currentRating;
+
+  return (
+    <div className="flex-shrink-0 w-28">
+      <Link href={`/media/${item.type || 'movie'}/tmdb/${item.id}`}>
+        <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 mb-1.5 cursor-pointer">
+          {item.imageUrl ? (
+            <img
+              src={item.imageUrl}
+              alt={item.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs bg-gradient-to-br from-purple-900 to-indigo-900">
+              🎬
+            </div>
+          )}
+        </div>
+      </Link>
+      <Link href={`/media/${item.type || 'movie'}/tmdb/${item.id}`}>
+        <p className="text-xs font-medium text-white line-clamp-2 leading-tight cursor-pointer h-8 hover:text-purple-300">
+          {item.title}
+        </p>
+      </Link>
+      <div className="relative flex items-center mt-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex gap-0.5">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <div key={star} className="relative" style={{ width: 14, height: 14 }}>
+              <Star size={14} className="absolute inset-0 text-purple-400" />
+              <div 
+                className="absolute inset-0 overflow-hidden pointer-events-none"
+                style={{ 
+                  width: displayRating >= star ? '100%' : displayRating >= star - 0.5 ? '50%' : '0%'
+                }}
+              >
+                <Star size={14} className="fill-yellow-400 text-yellow-400" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="5"
+          step="0.5"
+          value={displayRating}
+          onChange={handleSliderChange}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          style={{ margin: 0 }}
+          disabled={rateMutation.isPending || submittedRating !== null}
+        />
+        {submittedRating !== null && (
+          <Check size={12} className="text-green-400 ml-1" />
+        )}
+      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onAddClick(item);
+        }}
+        className="mt-1.5 w-full bg-white text-purple-800 text-xs py-1.5 rounded-full hover:bg-purple-100 transition-colors font-medium"
+      >
+        + Add
+      </button>
+    </div>
+  );
 }
 
 export function RecommendationsGlimpse() {
   const { session } = useAuth();
   const { toast } = useToast();
-  const [addedItems, setAddedItems] = useState<Set<string>>(new Set());
-  const [starredItems, setStarredItems] = useState<Set<string>>(new Set());
+  const [quickAddItem, setQuickAddItem] = useState<RecommendedItem | null>(null);
 
   const { data: recommendations, isLoading } = useQuery({
     queryKey: ['feed-recommendations'],
@@ -44,7 +172,6 @@ export function RecommendationsGlimpse() {
         title: item.title,
         imageUrl: item.imageUrl || item.image_url || item.poster_url,
         type: item.type || item.media_type || 'movie',
-        reason: item.reason,
         externalSource: item.external_source || 'tmdb'
       })) as RecommendedItem[];
     },
@@ -52,12 +179,7 @@ export function RecommendationsGlimpse() {
     staleTime: 5 * 60 * 1000
   });
 
-  const handleAddToList = async (item: RecommendedItem, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (addedItems.has(item.id)) return;
-    
+  const handleAddToList = async (item: RecommendedItem) => {
     try {
       const response = await fetch(`${SUPABASE_URL}/functions/v1/add-to-list`, {
         method: 'POST',
@@ -76,7 +198,6 @@ export function RecommendationsGlimpse() {
       });
       
       if (response.ok) {
-        setAddedItems(prev => new Set(prev).add(item.id));
         toast({ title: 'Added to Want to Watch!' });
       }
     } catch (err) {
@@ -84,93 +205,34 @@ export function RecommendationsGlimpse() {
     }
   };
 
-  const handleStar = (item: RecommendedItem, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    setStarredItems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(item.id)) {
-        newSet.delete(item.id);
-      } else {
-        newSet.add(item.id);
-        toast({ title: 'Added to favorites!' });
-      }
-      return newSet;
-    });
-  };
-
   if (!session || isLoading) return null;
   if (!recommendations || recommendations.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 rounded-2xl p-5 shadow-xl mb-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-white">Recommended For You</h2>
+    <div 
+      className="bg-gradient-to-r from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-2xl border border-purple-900/50 p-4 shadow-lg mb-4"
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">✨</span>
+          <h3 className="font-semibold text-white">Recommended For You</h3>
+        </div>
         <Link href="/discover">
-          <div className="flex items-center gap-1 text-gray-400 hover:text-white cursor-pointer transition-colors">
+          <div className="flex items-center gap-1 text-purple-300 hover:text-white cursor-pointer transition-colors">
             <span className="text-sm">See All</span>
             <ChevronRight className="w-4 h-4" />
           </div>
         </Link>
       </div>
-
-      {/* Scrolling cards */}
-      <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-2">
+      
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
         {recommendations.map((item, idx) => (
-          <div key={item.id || idx} className="flex-shrink-0 w-28">
-            {/* Poster with overlay buttons */}
-            <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-slate-800 mb-2 group">
-              <Link href={`/media/${item.type || 'movie'}/tmdb/${item.id}`}>
-                {item.imageUrl ? (
-                  <img 
-                    src={item.imageUrl} 
-                    alt={item.title}
-                    className="w-full h-full object-cover cursor-pointer"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-600 cursor-pointer">
-                    <span className="text-2xl">🎬</span>
-                  </div>
-                )}
-              </Link>
-              
-              {/* Bottom gradient overlay */}
-              <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
-              
-              {/* Action buttons on poster */}
-              <div className="absolute bottom-2 left-0 right-0 flex items-center justify-center gap-2">
-                <button
-                  onClick={(e) => handleAddToList(item, e)}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                    addedItems.has(item.id)
-                      ? 'bg-green-500 text-white'
-                      : 'bg-white/30 backdrop-blur-sm text-white hover:bg-white/50'
-                  }`}
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={(e) => handleStar(item, e)}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                    starredItems.has(item.id)
-                      ? 'bg-yellow-500 text-white'
-                      : 'bg-white/30 backdrop-blur-sm text-white hover:bg-white/50'
-                  }`}
-                >
-                  <Star className={`w-4 h-4 ${starredItems.has(item.id) ? 'fill-current' : ''}`} />
-                </button>
-              </div>
-            </div>
-            
-            {/* Title below poster */}
-            <Link href={`/media/${item.type || 'movie'}/tmdb/${item.id}`}>
-              <p className="text-sm font-medium text-white line-clamp-2 leading-tight cursor-pointer hover:text-purple-300 transition-colors">
-                {item.title}
-              </p>
-            </Link>
-          </div>
+          <RecommendationItemCard
+            key={item.id || idx}
+            item={item}
+            idx={idx}
+            onAddClick={handleAddToList}
+          />
         ))}
       </div>
     </div>
