@@ -62,7 +62,10 @@ serve(async (req) => {
         optionA: scheduledMoment.option_a,
         optionB: scheduledMoment.option_b,
         optionC: scheduledMoment.option_c || null,
-        category: scheduledMoment.category
+        optionD: scheduledMoment.option_d || null,
+        optionE: scheduledMoment.option_e || null,
+        category: scheduledMoment.category,
+        isMultiSelect: scheduledMoment.is_multi_select || false
       });
     }
 
@@ -94,7 +97,10 @@ serve(async (req) => {
             optionA: m.option_a,
             optionB: m.option_b,
             optionC: m.option_c || null,
-            category: m.category
+            optionD: m.option_d || null,
+            optionE: m.option_e || null,
+            category: m.category,
+            isMultiSelect: m.is_multi_select || false
           });
         }
       }
@@ -136,11 +142,16 @@ serve(async (req) => {
       const optionBCount = allResponses?.filter((r: any) => r.answer === 'b').length || 0;
       const optionCCount = allResponses?.filter((r: any) => r.answer === 'c').length || 0;
 
+      const optionDCount = allResponses?.filter((r: any) => r.answer?.includes('d')).length || 0;
+      const optionECount = allResponses?.filter((r: any) => r.answer?.includes('e')).length || 0;
+
       const stats = {
         totalResponses,
-        optionAPercent: totalResponses > 0 ? Math.round((optionACount / totalResponses) * 100) : 33,
-        optionBPercent: totalResponses > 0 ? Math.round((optionBCount / totalResponses) * 100) : 33,
-        optionCPercent: totalResponses > 0 ? Math.round((optionCCount / totalResponses) * 100) : 33,
+        optionAPercent: totalResponses > 0 ? Math.round((optionACount / totalResponses) * 100) : 20,
+        optionBPercent: totalResponses > 0 ? Math.round((optionBCount / totalResponses) * 100) : 20,
+        optionCPercent: totalResponses > 0 ? Math.round((optionCCount / totalResponses) * 100) : 20,
+        optionDPercent: totalResponses > 0 ? Math.round((optionDCount / totalResponses) * 100) : 20,
+        optionEPercent: totalResponses > 0 ? Math.round((optionECount / totalResponses) * 100) : 20,
       };
 
       return new Response(JSON.stringify({

@@ -35,10 +35,27 @@ serve(async (req) => {
       });
     }
 
-    const { momentId, answer } = await req.json();
+    const { momentId, answer, answers } = await req.json();
 
-    if (!momentId || !answer || !['a', 'b', 'c'].includes(answer)) {
-      return new Response(JSON.stringify({ error: 'Invalid request. momentId and answer (a, b, or c) required.' }), {
+    const validOptions = ['a', 'b', 'c', 'd', 'e'];
+    const finalAnswer = answers ? answers.sort().join(',') : answer;
+    
+    if (!momentId || (!answer && !answers)) {
+      return new Response(JSON.stringify({ error: 'Invalid request. momentId and answer or answers required.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    if (answer && !validOptions.includes(answer)) {
+      return new Response(JSON.stringify({ error: 'Invalid answer option.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    if (answers && !Array.isArray(answers)) {
+      return new Response(JSON.stringify({ error: 'Answers must be an array.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -79,7 +96,7 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         moment_id: momentId,
-        answer,
+        answer: finalAnswer,
         points_earned: pointsEarned,
       });
 
@@ -104,15 +121,19 @@ serve(async (req) => {
       .eq('moment_id', momentId);
 
     const totalResponses = allResponses?.length || 0;
-    const optionACount = allResponses?.filter(r => r.answer === 'a').length || 0;
-    const optionBCount = allResponses?.filter(r => r.answer === 'b').length || 0;
-    const optionCCount = allResponses?.filter(r => r.answer === 'c').length || 0;
+    const optionACount = allResponses?.filter(r => r.answer?.includes('a')).length || 0;
+    const optionBCount = allResponses?.filter(r => r.answer?.includes('b')).length || 0;
+    const optionCCount = allResponses?.filter(r => r.answer?.includes('c')).length || 0;
+    const optionDCount = allResponses?.filter(r => r.answer?.includes('d')).length || 0;
+    const optionECount = allResponses?.filter(r => r.answer?.includes('e')).length || 0;
 
     const stats = {
       totalResponses,
-      optionAPercent: totalResponses > 0 ? Math.round((optionACount / totalResponses) * 100) : 33,
-      optionBPercent: totalResponses > 0 ? Math.round((optionBCount / totalResponses) * 100) : 33,
-      optionCPercent: totalResponses > 0 ? Math.round((optionCCount / totalResponses) * 100) : 33,
+      optionAPercent: totalResponses > 0 ? Math.round((optionACount / totalResponses) * 100) : 20,
+      optionBPercent: totalResponses > 0 ? Math.round((optionBCount / totalResponses) * 100) : 20,
+      optionCPercent: totalResponses > 0 ? Math.round((optionCCount / totalResponses) * 100) : 20,
+      optionDPercent: totalResponses > 0 ? Math.round((optionDCount / totalResponses) * 100) : 20,
+      optionEPercent: totalResponses > 0 ? Math.round((optionECount / totalResponses) * 100) : 20,
     };
 
     const { data: friends } = await supabaseAdmin
@@ -140,9 +161,27 @@ serve(async (req) => {
       friendResponses = friendAnswers || [];
     }
 
-    const yourChoice = answer === 'a' ? moment.option_a : answer === 'b' ? moment.option_b : moment.option_c;
-    const yourPercent = answer === 'a' ? stats.optionAPercent : answer === 'b' ? stats.optionBPercent : stats.optionCPercent;
-    const matchingFriends = friendResponses.filter(f => f.answer === answer);
+    const optionMap: Record<string, string> = {
+      'a': moment.option_a,
+      'b': moment.option_b,
+      'c': moment.option_c,
+      'd': moment.option_d,
+      'e': moment.option_e,
+    };
+    
+    const selectedOptions = answers || [answer];
+    const yourChoices = selectedOptions.map((o: string) => optionMap[o]).filter(Boolean);
+    const yourChoice = yourChoices.length > 1 ? `${yourChoices.length} items` : yourChoices[0] || 'your pick';
+    const yourPercent = answers 
+      ? Math.round(selectedOptions.reduce((sum: number, o: string) => {
+          const key = `option${o.toUpperCase()}Percent` as keyof typeof stats;
+          return sum + (stats[key] || 0);
+        }, 0) / selectedOptions.length)
+      : answer === 'a' ? stats.optionAPercent : answer === 'b' ? stats.optionBPercent : stats.optionCPercent;
+    const matchingFriends = friendResponses.filter(f => {
+      if (answers) return answers.some((a: string) => f.answer?.includes(a));
+      return f.answer === answer;
+    });
 
     return new Response(JSON.stringify({
       success: true,

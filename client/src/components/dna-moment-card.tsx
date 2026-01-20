@@ -16,7 +16,10 @@ interface DnaMoment {
   optionA: string;
   optionB: string;
   optionC?: string;
+  optionD?: string;
+  optionE?: string;
   category: string;
+  isMultiSelect?: boolean;
 }
 
 interface DnaMomentData {
@@ -29,6 +32,8 @@ interface DnaMomentData {
     optionAPercent: number;
     optionBPercent: number;
     optionCPercent?: number;
+    optionDPercent?: number;
+    optionEPercent?: number;
   };
   friendResponses: any[];
 }
@@ -40,6 +45,24 @@ export function DnaMomentCard() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answeredMoments, setAnsweredMoments] = useState<Set<string>>(new Set());
   const [momentResults, setMomentResults] = useState<Record<string, any>>({});
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, Set<string>>>({});
+
+  const toggleOption = (momentId: string, option: string) => {
+    setSelectedOptions(prev => {
+      const current = prev[momentId] || new Set();
+      const newSet = new Set(current);
+      if (newSet.has(option)) {
+        newSet.delete(option);
+      } else {
+        newSet.add(option);
+      }
+      return { ...prev, [momentId]: newSet };
+    });
+  };
+
+  const getSelectedForMoment = (momentId: string): string[] => {
+    return Array.from(selectedOptions[momentId] || new Set());
+  };
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['dna-moments-carousel'],
@@ -78,7 +101,7 @@ export function DnaMomentCard() {
   }, [data?.answeredIds]);
 
   const answerMutation = useMutation({
-    mutationFn: async ({ momentId, answer }: { momentId: string, answer: 'a' | 'b' }) => {
+    mutationFn: async ({ momentId, answer, answers }: { momentId: string, answer?: string, answers?: string[] }) => {
       if (!session?.access_token) throw new Error('Missing data');
 
       const response = await fetch(`${SUPABASE_URL}/functions/v1/answer-dna-moment`, {
@@ -87,7 +110,7 @@ export function DnaMomentCard() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
-        body: JSON.stringify({ momentId, answer })
+        body: JSON.stringify({ momentId, answer, answers })
       });
       
       const result = await response.json();
@@ -210,80 +233,92 @@ export function DnaMomentCard() {
         {moments.map((moment, index) => {
           const isAnswered = answeredMoments.has(moment.id);
           const result = momentResults[moment.id];
+          const isMulti = moment.isMultiSelect;
+          const selected = getSelectedForMoment(moment.id);
+          
+          const allOptions = [
+            { key: 'a', label: moment.optionA },
+            { key: 'b', label: moment.optionB },
+            moment.optionC ? { key: 'c', label: moment.optionC } : null,
+            moment.optionD ? { key: 'd', label: moment.optionD } : null,
+            moment.optionE ? { key: 'e', label: moment.optionE } : null,
+          ].filter(Boolean) as { key: string; label: string }[];
+          
+          const getPercent = (key: string) => {
+            const percentKey = `option${key.toUpperCase()}Percent` as keyof typeof result.stats;
+            return result?.stats?.[percentKey] || Math.round(100 / allOptions.length);
+          };
           
           return (
             <div
               key={moment.id}
               className="flex-shrink-0 w-full snap-center"
             >
-              <h3 className="text-gray-900 font-semibold text-base mb-3">{moment.questionText}</h3>
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-gray-900 font-semibold text-base">{moment.questionText}</h3>
+                {isMulti && !isAnswered && (
+                  <span className="text-[10px] bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full">Select all that apply</span>
+                )}
+              </div>
               
               {!isAnswered ? (
                 <div className="flex flex-col gap-2">
-                  <button
-                    className="py-2.5 px-4 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 text-sm font-medium hover:bg-purple-50 hover:border-purple-300 transition-all text-left"
-                    onClick={() => answerMutation.mutate({ momentId: moment.id, answer: 'a' })}
-                    disabled={answerMutation.isPending}
-                  >
-                    {moment.optionA}
-                  </button>
-                  <button
-                    className="py-2.5 px-4 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 text-sm font-medium hover:bg-purple-50 hover:border-purple-300 transition-all text-left"
-                    onClick={() => answerMutation.mutate({ momentId: moment.id, answer: 'b' })}
-                    disabled={answerMutation.isPending}
-                  >
-                    {moment.optionB}
-                  </button>
-                  {moment.optionC && (
+                  {allOptions.map(opt => {
+                    const isSelected = selected.includes(opt.key);
+                    return (
+                      <button
+                        key={opt.key}
+                        className={`py-2.5 px-4 rounded-xl border text-sm font-medium transition-all text-left flex items-center gap-2 ${
+                          isMulti && isSelected 
+                            ? 'bg-purple-100 border-purple-400 text-purple-900' 
+                            : 'bg-gray-50 border-gray-200 text-gray-900 hover:bg-purple-50 hover:border-purple-300'
+                        }`}
+                        onClick={() => {
+                          if (isMulti) {
+                            toggleOption(moment.id, opt.key);
+                          } else {
+                            answerMutation.mutate({ momentId: moment.id, answer: opt.key });
+                          }
+                        }}
+                        disabled={answerMutation.isPending}
+                      >
+                        {isMulti && (
+                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                            isSelected ? 'bg-purple-600 border-purple-600' : 'border-gray-300'
+                          }`}>
+                            {isSelected && <span className="text-white text-xs">✓</span>}
+                          </div>
+                        )}
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                  {isMulti && selected.length > 0 && (
                     <button
-                      className="py-2.5 px-4 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 text-sm font-medium hover:bg-purple-50 hover:border-purple-300 transition-all text-left"
-                      onClick={() => answerMutation.mutate({ momentId: moment.id, answer: 'c' })}
+                      className="mt-2 py-2.5 px-4 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 transition-all"
+                      onClick={() => answerMutation.mutate({ momentId: moment.id, answers: selected })}
                       disabled={answerMutation.isPending}
                     >
-                      {moment.optionC}
+                      Submit ({selected.length} selected)
                     </button>
                   )}
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
-                    <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-xs text-gray-700">{moment.optionA}</span>
-                      <span className="text-sm font-bold text-purple-600">{result?.stats?.optionAPercent || 33}%</span>
-                    </div>
-                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-purple-500 rounded-full transition-all duration-500"
-                        style={{ width: `${result?.stats?.optionAPercent || 33}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
-                    <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-xs text-gray-700">{moment.optionB}</span>
-                      <span className="text-sm font-bold text-purple-600">{result?.stats?.optionBPercent || 33}%</span>
-                    </div>
-                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-purple-500 rounded-full transition-all duration-500"
-                        style={{ width: `${result?.stats?.optionBPercent || 33}%` }}
-                      />
-                    </div>
-                  </div>
-                  {moment.optionC && (
-                    <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+                  {allOptions.map(opt => (
+                    <div key={opt.key} className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
                       <div className="flex justify-between items-center mb-1.5">
-                        <span className="text-xs text-gray-700">{moment.optionC}</span>
-                        <span className="text-sm font-bold text-purple-600">{result?.stats?.optionCPercent || 33}%</span>
+                        <span className="text-xs text-gray-700">{opt.label}</span>
+                        <span className="text-sm font-bold text-purple-600">{getPercent(opt.key)}%</span>
                       </div>
                       <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-purple-500 rounded-full transition-all duration-500"
-                          style={{ width: `${result?.stats?.optionCPercent || 33}%` }}
+                          style={{ width: `${getPercent(opt.key)}%` }}
                         />
                       </div>
                     </div>
-                  )}
+                  ))}
                 </div>
               )}
             </div>
