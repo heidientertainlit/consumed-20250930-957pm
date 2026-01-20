@@ -41,6 +41,7 @@ import { supabase } from "@/lib/supabase";
 import { apiRequest, queryClient as globalQueryClient } from "@/lib/queryClient";
 import { renderMentions } from "@/lib/mentions";
 import { copyLink } from "@/lib/share";
+import { FeedbackDialog } from "@/components/feedback-dialog";
 
 interface SocialPost {
   id: string;
@@ -969,6 +970,7 @@ export default function Feed() {
   } | null>(null); // Bet modal state
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [suggestedRotation, setSuggestedRotation] = useState(0);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -2926,13 +2928,19 @@ export default function Feed() {
               {/* End of Feed Message */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
                 <div className="text-center py-8 text-gray-400">
-                  <p className="text-sm">You're all caught up! 🎉</p>
-                  <p className="text-xs mt-1">Check back later for more content</p>
+                  <p className="text-sm font-medium text-white">You're all caught up! 🎉</p>
+                  <p className="text-xs mt-2 max-w-xs mx-auto">Give feedback and tell us what you want more of, what went wrong, or scroll up and go play more trivia.</p>
+                  <Button
+                    onClick={() => setIsFeedbackOpen(true)}
+                    className="mt-4 bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6"
+                  >
+                    Give Feedback
+                  </Button>
                 </div>
               )}
 
-              {/* Social Posts - hidden when specific game filters are active */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && filteredPosts.filter((item: any) => {
+              {/* Social Posts - DISABLED: feed ends at "You're all caught up" message */}
+              {false && (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && filteredPosts.filter((item: any) => {
                 // Filter out incorrectly formatted prediction posts
                 if ('originalPostIds' in item) return true; // Keep consolidated activities
                 if ((item as any).type === 'friend_activity_block') return true; // Keep friend activity blocks
@@ -4668,6 +4676,8 @@ export default function Feed() {
         </div>
       )}
 
+      {/* Feedback Dialog */}
+      <FeedbackDialog isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
 
       </div>
     </div>
