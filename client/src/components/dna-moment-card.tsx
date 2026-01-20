@@ -110,7 +110,7 @@ export function DnaMomentCard() {
         if (data?.moments && currentIndex < data.moments.length - 1) {
           scrollToNext();
         }
-      }, 1500);
+      }, 4000);
     },
     onError: (error: Error) => {
       toast({
