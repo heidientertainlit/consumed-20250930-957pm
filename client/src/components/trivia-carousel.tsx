@@ -398,7 +398,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
+          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1 items-start"
         >
           {filteredData.map((item) => {
             const answered = answeredQuestions[item.id];
