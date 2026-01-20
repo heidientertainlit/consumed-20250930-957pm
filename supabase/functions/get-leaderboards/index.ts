@@ -94,16 +94,28 @@ serve(async (req) => {
       friendIds = [...new Set([...outboundIds, ...inboundIds, appUser.id])];
     }
 
-    // Get all users for name mapping
+    // Get all users for name mapping (include first_name, last_name for proper display names)
     const { data: allUsers } = await supabase
       .from('users')
-      .select('id, user_name, display_name');
+      .select('id, user_name, display_name, first_name, last_name');
     
     const userMap: Record<string, { username: string; display_name: string }> = {};
     (allUsers || []).forEach((u: any) => {
+      // Build display name similar to profile page: first_name + last_name, then fallback to display_name, then user_name
+      let displayName = 'Unknown';
+      if (u.first_name && u.last_name) {
+        displayName = `${u.first_name} ${u.last_name}`.trim();
+      } else if (u.first_name) {
+        displayName = u.first_name;
+      } else if (u.display_name) {
+        displayName = u.display_name;
+      } else if (u.user_name) {
+        displayName = u.user_name;
+      }
+      
       userMap[u.id] = { 
         username: u.user_name || 'unknown', 
-        display_name: u.display_name || u.user_name || 'Unknown' 
+        display_name: displayName
       };
     });
 

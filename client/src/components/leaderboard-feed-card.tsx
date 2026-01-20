@@ -8,6 +8,7 @@ interface LeaderboardEntry {
   rank: number;
   userId: string;
   username: string;
+  displayName: string;
   avatarUrl?: string;
   points: number;
   isCurrentUser: boolean;
@@ -130,7 +131,8 @@ export default function LeaderboardFeedCard({ className, variant = 'trivia' }: L
   const entries: LeaderboardEntry[] = (leaderboard || []).map((entry: any, index: number) => ({
     rank: entry.rank || index + 1,
     userId: entry.user_id || entry.id,
-    username: entry.display_name || entry.username || 'Unknown',
+    username: entry.username || 'unknown',
+    displayName: entry.display_name || entry.username || 'Unknown',
     avatarUrl: entry.avatar_url,
     points: entry.score || entry.total_points || entry.points || 0,
     isCurrentUser: currentUser?.id === (entry.user_id || entry.id),
@@ -222,7 +224,7 @@ export default function LeaderboardFeedCard({ className, variant = 'trivia' }: L
                 href={`/user/${entry.userId}`}
                 className="flex-1 font-medium truncate text-gray-800 hover:text-purple-600 transition-colors"
               >
-                {entry.username}
+                {entry.displayName}
               </Link>
             )}
             
