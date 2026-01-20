@@ -152,9 +152,9 @@ export function DnaMomentCard() {
 
   if (isLoading) {
     return (
-      <Card className="bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-700 border-0 rounded-2xl p-5 shadow-lg">
+      <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-6 h-6 animate-spin text-white" />
+          <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
         </div>
       </Card>
     );
@@ -167,15 +167,15 @@ export function DnaMomentCard() {
   const moments = data.moments;
 
   return (
-    <Card className="bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-700 border-0 rounded-2xl p-4 shadow-lg overflow-hidden relative">
+    <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-            <Dna className="w-3.5 h-3.5 text-white" />
+          <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center">
+            <Dna className="w-3.5 h-3.5 text-purple-600" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">DNA Moments</p>
-            <p className="text-[10px] text-white/70">Build your Entertainment DNA</p>
+            <p className="text-sm font-semibold text-gray-900">DNA Moments</p>
+            <p className="text-[10px] text-gray-500">Build your Entertainment DNA</p>
           </div>
         </div>
         
@@ -183,20 +183,20 @@ export function DnaMomentCard() {
           {currentIndex > 0 && (
             <button
               onClick={scrollToPrev}
-              className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
+              className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
             >
-              <ChevronLeft className="w-4 h-4 text-white" />
+              <ChevronLeft className="w-4 h-4 text-gray-600" />
             </button>
           )}
           {currentIndex < moments.length - 1 && (
             <button
               onClick={scrollToNext}
-              className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-colors"
+              className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
             >
-              <ChevronRight className="w-4 h-4 text-white" />
+              <ChevronRight className="w-4 h-4 text-gray-600" />
             </button>
           )}
-          <span className="text-xs text-white/60 ml-1">
+          <span className="text-xs text-gray-400 ml-1">
             {currentIndex + 1}/{moments.length}
           </span>
         </div>
@@ -216,19 +216,19 @@ export function DnaMomentCard() {
               key={moment.id}
               className="flex-shrink-0 w-full snap-center"
             >
-              <h3 className="text-white font-semibold text-base mb-3">{moment.questionText}</h3>
+              <h3 className="text-gray-900 font-semibold text-base mb-3">{moment.questionText}</h3>
               
               {!isAnswered ? (
                 <div className="flex flex-col gap-2">
                   <button
-                    className="py-2.5 px-4 rounded-xl bg-white/10 border border-white/30 text-white text-sm font-medium hover:bg-white/20 hover:border-white/50 transition-all text-left"
+                    className="py-2.5 px-4 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 text-sm font-medium hover:bg-purple-50 hover:border-purple-300 transition-all text-left"
                     onClick={() => answerMutation.mutate({ momentId: moment.id, answer: 'a' })}
                     disabled={answerMutation.isPending}
                   >
                     {moment.optionA}
                   </button>
                   <button
-                    className="py-2.5 px-4 rounded-xl bg-white/10 border border-white/30 text-white text-sm font-medium hover:bg-white/20 hover:border-white/50 transition-all text-left"
+                    className="py-2.5 px-4 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 text-sm font-medium hover:bg-purple-50 hover:border-purple-300 transition-all text-left"
                     onClick={() => answerMutation.mutate({ momentId: moment.id, answer: 'b' })}
                     disabled={answerMutation.isPending}
                   >
@@ -236,7 +236,7 @@ export function DnaMomentCard() {
                   </button>
                   {moment.optionC && (
                     <button
-                      className="py-2.5 px-4 rounded-xl bg-white/10 border border-white/30 text-white text-sm font-medium hover:bg-white/20 hover:border-white/50 transition-all text-left"
+                      className="py-2.5 px-4 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 text-sm font-medium hover:bg-purple-50 hover:border-purple-300 transition-all text-left"
                       onClick={() => answerMutation.mutate({ momentId: moment.id, answer: 'c' })}
                       disabled={answerMutation.isPending}
                     >
@@ -246,39 +246,39 @@ export function DnaMomentCard() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <div className="p-2.5 rounded-xl bg-white/10 border border-white/30">
+                  <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
                     <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-xs text-white/90">{moment.optionA}</span>
-                      <span className="text-sm font-bold text-white">{result?.stats?.optionAPercent || 33}%</span>
+                      <span className="text-xs text-gray-700">{moment.optionA}</span>
+                      <span className="text-sm font-bold text-purple-600">{result?.stats?.optionAPercent || 33}%</span>
                     </div>
-                    <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-white rounded-full transition-all duration-500"
+                        className="h-full bg-purple-500 rounded-full transition-all duration-500"
                         style={{ width: `${result?.stats?.optionAPercent || 33}%` }}
                       />
                     </div>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-white/10 border border-white/30">
+                  <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
                     <div className="flex justify-between items-center mb-1.5">
-                      <span className="text-xs text-white/90">{moment.optionB}</span>
-                      <span className="text-sm font-bold text-white">{result?.stats?.optionBPercent || 33}%</span>
+                      <span className="text-xs text-gray-700">{moment.optionB}</span>
+                      <span className="text-sm font-bold text-purple-600">{result?.stats?.optionBPercent || 33}%</span>
                     </div>
-                    <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-white rounded-full transition-all duration-500"
+                        className="h-full bg-purple-500 rounded-full transition-all duration-500"
                         style={{ width: `${result?.stats?.optionBPercent || 33}%` }}
                       />
                     </div>
                   </div>
                   {moment.optionC && (
-                    <div className="p-2.5 rounded-xl bg-white/10 border border-white/30">
+                    <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
                       <div className="flex justify-between items-center mb-1.5">
-                        <span className="text-xs text-white/90">{moment.optionC}</span>
-                        <span className="text-sm font-bold text-white">{result?.stats?.optionCPercent || 33}%</span>
+                        <span className="text-xs text-gray-700">{moment.optionC}</span>
+                        <span className="text-sm font-bold text-purple-600">{result?.stats?.optionCPercent || 33}%</span>
                       </div>
-                      <div className="h-1.5 bg-white/20 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-white rounded-full transition-all duration-500"
+                          className="h-full bg-purple-500 rounded-full transition-all duration-500"
                           style={{ width: `${result?.stats?.optionCPercent || 33}%` }}
                         />
                       </div>
@@ -292,16 +292,16 @@ export function DnaMomentCard() {
       </div>
       
       <Link href="/entertainment-dna">
-        <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-white/20 cursor-pointer hover:opacity-80 transition-opacity">
-          <Sparkles className="w-3.5 h-3.5 text-white/80" />
-          <span className="text-xs text-white/80 font-medium">See your Entertainment DNA profile</span>
-          <ArrowRight className="w-3 h-3 text-white/80" />
+        <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-gray-100 cursor-pointer hover:opacity-80 transition-opacity">
+          <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+          <span className="text-xs text-gray-600 font-medium">See your Entertainment DNA profile</span>
+          <ArrowRight className="w-3 h-3 text-gray-400" />
         </div>
       </Link>
 
       {answerMutation.isPending && (
-        <div className="absolute inset-0 bg-purple-600/50 flex items-center justify-center rounded-2xl">
-          <Loader2 className="w-6 h-6 animate-spin text-white" />
+        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-2xl">
+          <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
         </div>
       )}
     </Card>
