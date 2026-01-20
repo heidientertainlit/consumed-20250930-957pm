@@ -1074,6 +1074,29 @@ export default function Feed() {
   // Create a Set of friend user IDs for quick lookup
   const friendIds = new Set(friendsData.map((friend: any) => friend.id));
 
+  // Fetch user stats for rank and points display
+  const { data: userStatsData } = useQuery({
+    queryKey: ['user-stats-mini'],
+    queryFn: async () => {
+      if (!session?.access_token) return null;
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-leaderboards?category=all&scope=global&period=all_time`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!session?.access_token,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
   const { 
     data: infinitePosts, 
     isLoading, 
@@ -2710,8 +2733,31 @@ export default function Feed() {
           </div>
           
           {/* Daily Challenge */}
-          <div className="mb-4">
+          <div className="mb-2">
             <DailyChallengeCard />
+          </div>
+          
+          {/* Mini Stats Row */}
+          <div className="flex items-center justify-center gap-6 py-2">
+            <Link href="/leaderboard">
+              <div className="flex items-center gap-1.5 text-white/80 hover:text-white transition-colors cursor-pointer">
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span className="text-xs font-medium">
+                  #{userStatsData?.currentUser?.rank || '—'}
+                </span>
+                <span className="text-[10px] text-white/60">rank</span>
+              </div>
+            </Link>
+            <div className="w-px h-3 bg-white/30" />
+            <Link href="/leaderboard">
+              <div className="flex items-center gap-1.5 text-white/80 hover:text-white transition-colors cursor-pointer">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span className="text-xs font-medium">
+                  {userStatsData?.currentUser?.total_points?.toLocaleString() || '0'}
+                </span>
+                <span className="text-[10px] text-white/60">pts</span>
+              </div>
+            </Link>
           </div>
         </div>
       </div>
