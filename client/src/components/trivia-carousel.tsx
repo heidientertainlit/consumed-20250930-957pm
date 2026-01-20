@@ -36,6 +36,35 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; stats: any }>>({});
   const [selectedChallenge, setSelectedChallenge] = useState<TriviaItem | null>(null);
 
+  const { data: leaderboardData } = useQuery({
+    queryKey: ['trivia-leaderboard-position', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      
+      const { data: leaderboard } = await supabase
+        .from('profiles')
+        .select('id, display_name, total_points')
+        .order('total_points', { ascending: false })
+        .limit(20);
+      
+      if (!leaderboard) return null;
+      
+      const userIndex = leaderboard.findIndex(p => p.id === user.id);
+      if (userIndex === -1) return { position: null, nextPerson: null };
+      if (userIndex === 0) return { position: 1, nextPerson: null, isFirst: true };
+      
+      const nextPerson = leaderboard[userIndex - 1];
+      const pointsNeeded = (nextPerson?.total_points || 0) - (leaderboard[userIndex]?.total_points || 0);
+      
+      return { 
+        position: userIndex + 1, 
+        nextPerson: nextPerson?.display_name || 'the next spot',
+        pointsNeeded: Math.max(1, Math.ceil(pointsNeeded / 10))
+      };
+    },
+    enabled: !!user?.id
+  });
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ['trivia-carousel', user?.id],
     queryFn: async () => {
@@ -454,7 +483,13 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
           <Link href="/leaderboard">
             <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
               <Trophy className="w-3.5 h-3.5 text-purple-600" />
-              <span className="text-xs text-purple-600 font-medium">Get 3 more right to climb the leaderboard</span>
+              <span className="text-xs text-purple-600 font-medium">
+                {leaderboardData?.isFirst 
+                  ? "Keep playing to stay ahead!" 
+                  : leaderboardData?.nextPerson 
+                    ? `Get ${leaderboardData.pointsNeeded} more right to pass ${leaderboardData.nextPerson}`
+                    : "Play to climb the leaderboard"}
+              </span>
             </div>
           </Link>
         )}
