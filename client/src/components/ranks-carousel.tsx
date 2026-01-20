@@ -285,16 +285,14 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
                           className="flex items-center gap-1 hover:opacity-80 transition-opacity"
                         >
                           <svg 
-                            width="16" 
-                            height="16" 
+                            width="14" 
+                            height="14" 
                             viewBox="0 0 24 24" 
-                            className={userVote === 'up' ? 'text-green-600' : 'text-gray-400'}
-                            fill={userVote === 'up' ? 'currentColor' : 'none'}
-                            stroke="currentColor" 
+                            fill={userVote === 'up' ? '#16a34a' : 'none'}
+                            stroke={userVote === 'up' ? '#16a34a' : '#9ca3af'}
                             strokeWidth="2"
                           >
-                            <path d="M12 19V5M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M5 19h14" strokeLinecap="round" />
+                            <path d="M12 3L4 14h5v7h6v-7h5L12 3z" strokeLinejoin="round" />
                           </svg>
                           <span className={`text-xs font-medium ${
                             item.up_vote_count > 0 ? 'text-green-600' : 'text-gray-400'
@@ -308,16 +306,14 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
                           className="flex items-center gap-1 hover:opacity-80 transition-opacity"
                         >
                           <svg 
-                            width="16" 
-                            height="16" 
+                            width="14" 
+                            height="14" 
                             viewBox="0 0 24 24" 
-                            className={userVote === 'down' ? 'text-red-500' : 'text-gray-400'}
-                            fill={userVote === 'down' ? 'currentColor' : 'none'}
-                            stroke="currentColor" 
+                            fill={userVote === 'down' ? '#ef4444' : 'none'}
+                            stroke={userVote === 'down' ? '#ef4444' : '#9ca3af'}
                             strokeWidth="2"
                           >
-                            <path d="M12 5v14M5 12l7 7 7-7" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M5 5h14" strokeLinecap="round" />
+                            <path d="M12 21L4 10h5V3h6v7h5L12 21z" strokeLinejoin="round" />
                           </svg>
                           <span className={`text-xs font-medium ${
                             item.down_vote_count > 0 ? 'text-red-500' : 'text-gray-400'
