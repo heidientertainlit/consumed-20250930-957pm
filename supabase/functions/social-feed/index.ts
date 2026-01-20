@@ -430,16 +430,27 @@ serve(async (req) => {
       let users: any[] = [];
       let usersError = null;
       if (userIds.length > 0) {
-        // Try users table first
+        // Try users table first with admin client
         console.log('Querying users with IDs:', userIds.slice(0, 3));
-        console.log('Has service role key:', !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
-        const result = await supabaseAdmin
+        let result = await supabaseAdmin
           .from('users')
           .select('id, user_name, display_name, email, avatar')
           .in('id', userIds);
         users = result.data || [];
         usersError = result.error;
-        console.log('Users query result:', { data: result.data?.length, error: result.error });
+        console.log('Admin users query result:', { data: result.data?.length, error: result.error });
+        
+        // If admin client failed, try with regular authenticated client
+        if (users.length === 0) {
+          console.log('Admin client returned 0 users, trying regular client');
+          const regularResult = await supabase
+            .from('users')
+            .select('id, user_name, display_name, email, avatar')
+            .in('id', userIds);
+          users = regularResult.data || [];
+          usersError = regularResult.error;
+          console.log('Regular users query result:', { data: regularResult.data?.length, error: regularResult.error });
+        }
         
         // If users table didn't return enough results, try profiles table
         const missingUserIds = userIds.filter(id => !users.find(u => u.id === id));
