@@ -1076,12 +1076,12 @@ export default function Feed() {
 
   // Fetch user stats for rank and points display
   const { data: userStatsData } = useQuery({
-    queryKey: ['user-stats-mini'],
+    queryKey: ['user-stats-mini', user?.id],
     queryFn: async () => {
-      if (!session?.access_token) return null;
+      if (!session?.access_token || !user?.id) return null;
       
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-leaderboards?category=all&scope=global&period=all_time`,
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/calculate-user-points?user_id=${user.id}`,
         {
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -1093,7 +1093,7 @@ export default function Feed() {
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!session?.access_token,
+    enabled: !!session?.access_token && !!user?.id,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
@@ -2740,21 +2740,21 @@ export default function Feed() {
           {/* Mini Stats Row */}
           <div className="flex items-center justify-center gap-8 py-2">
             <Link href="/points">
-              <div className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer">
-                <Trophy className="w-4 h-4 text-amber-400" />
-                <span className="text-white text-sm font-semibold">
-                  {userStatsData?.currentUser?.total_points?.toLocaleString() || '0'}
+              <div className="flex items-center gap-1.5 hover:opacity-70 transition-opacity cursor-pointer">
+                <Trophy className="w-4 h-4 text-amber-400/80" />
+                <span className="text-white/70 text-sm font-medium">
+                  {userStatsData?.points?.all_time?.toLocaleString() || '0'}
                 </span>
-                <span className="text-white/60 text-xs">points</span>
+                <span className="text-white/50 text-xs">points</span>
               </div>
             </Link>
             <Link href="/leaderboard">
-              <div className="flex items-center gap-1.5 hover:opacity-80 transition-opacity cursor-pointer">
-                <Medal className="w-4 h-4 text-purple-400" />
-                <span className="text-white text-sm font-semibold">
-                  #{userStatsData?.currentUser?.rank || '—'}
+              <div className="flex items-center gap-1.5 hover:opacity-70 transition-opacity cursor-pointer">
+                <Medal className="w-4 h-4 text-purple-400/80" />
+                <span className="text-white/70 text-sm font-medium">
+                  #{userStatsData?.rank?.global || '—'}
                 </span>
-                <span className="text-white/60 text-xs">rank</span>
+                <span className="text-white/50 text-xs">rank</span>
               </div>
             </Link>
           </div>
