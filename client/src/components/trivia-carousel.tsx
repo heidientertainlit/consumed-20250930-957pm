@@ -398,7 +398,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1 items-start"
+          className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
         >
           {filteredData.map((item) => {
             const answered = answeredQuestions[item.id];
@@ -502,16 +502,15 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
             );
           })}
         </div>
-        
         {!category && (
           <Link href="/leaderboard">
-            <div className="flex items-center justify-center gap-1.5 pt-2 mt-1 border-t border-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
+            <div className="flex items-center justify-center gap-1.5 py-1 border-t border-gray-200 cursor-pointer hover:opacity-80 transition-opacity">
               <Trophy className="w-3.5 h-3.5 text-purple-600" />
               <span className="text-xs text-purple-600 font-medium">
                 {leaderboardData?.isFirst 
                   ? "Keep playing to stay ahead!" 
                   : leaderboardData?.nextPerson 
-                    ? `Get ${leaderboardData.pointsNeeded} more right to pass ${leaderboardData.nextPerson}`
+                    ? `Get ${leaderboardData.pointsNeeded} more points to pass ${leaderboardData.nextPerson}`
                     : "Play to climb the leaderboard"}
               </span>
             </div>
