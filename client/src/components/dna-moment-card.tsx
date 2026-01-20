@@ -177,7 +177,7 @@ export function DnaMomentCard() {
     return (
       <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+          <Loader2 className="w-6 h-6 animate-spin text-teal-500" />
         </div>
       </Card>
     );
@@ -193,8 +193,8 @@ export function DnaMomentCard() {
     <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center">
-            <Dna className="w-3.5 h-3.5 text-purple-600" />
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center">
+            <Dna className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-900">DNA Moments</p>
@@ -270,8 +270,8 @@ export function DnaMomentCard() {
                         key={opt.key}
                         className={`py-2.5 px-4 rounded-xl border text-sm font-medium transition-all text-left flex items-center gap-2 ${
                           isMulti && isSelected 
-                            ? 'bg-purple-100 border-purple-400 text-purple-900' 
-                            : 'bg-gray-50 border-gray-200 text-gray-900 hover:bg-purple-50 hover:border-purple-300'
+                            ? 'bg-teal-100 border-teal-400 text-teal-900' 
+                            : 'bg-gray-50 border-gray-200 text-gray-900 hover:bg-teal-50 hover:border-teal-300'
                         }`}
                         onClick={() => {
                           if (isMulti) {
@@ -284,7 +284,7 @@ export function DnaMomentCard() {
                       >
                         {isMulti && (
                           <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                            isSelected ? 'bg-purple-600 border-purple-600' : 'border-gray-300'
+                            isSelected ? 'bg-teal-500 border-teal-500' : 'border-gray-300'
                           }`}>
                             {isSelected && <span className="text-white text-xs">✓</span>}
                           </div>
@@ -295,7 +295,7 @@ export function DnaMomentCard() {
                   })}
                   {isMulti && selected.length > 0 && (
                     <button
-                      className="mt-2 py-2.5 px-4 rounded-xl bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 transition-all"
+                      className="mt-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-teal-500 to-blue-500 text-white text-sm font-semibold hover:from-teal-600 hover:to-blue-600 transition-all"
                       onClick={() => answerMutation.mutate({ momentId: moment.id, answers: selected })}
                       disabled={answerMutation.isPending}
                     >
@@ -309,11 +309,11 @@ export function DnaMomentCard() {
                     <div key={opt.key} className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
                       <div className="flex justify-between items-center mb-1.5">
                         <span className="text-xs text-gray-700">{opt.label}</span>
-                        <span className="text-sm font-bold text-purple-600">{getPercent(opt.key)}%</span>
+                        <span className="text-sm font-bold text-teal-600">{getPercent(opt.key)}%</span>
                       </div>
                       <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                          className="h-full bg-gradient-to-r from-teal-500 to-blue-500 rounded-full transition-all duration-500"
                           style={{ width: `${getPercent(opt.key)}%` }}
                         />
                       </div>
@@ -328,7 +328,7 @@ export function DnaMomentCard() {
       
       <Link href="/entertainment-dna">
         <div className="flex items-center justify-center gap-1.5 mt-4 pt-3 border-t border-gray-100 cursor-pointer hover:opacity-80 transition-opacity">
-          <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+          <Sparkles className="w-3.5 h-3.5 text-teal-500" />
           <span className="text-xs text-gray-600 font-medium">See your Entertainment DNA profile</span>
           <ArrowRight className="w-3 h-3 text-gray-400" />
         </div>
@@ -336,7 +336,7 @@ export function DnaMomentCard() {
 
       {answerMutation.isPending && (
         <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-2xl">
-          <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+          <Loader2 className="w-6 h-6 animate-spin text-teal-500" />
         </div>
       )}
     </Card>
