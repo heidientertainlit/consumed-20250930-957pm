@@ -236,10 +236,23 @@ export default function SeenItGame() {
               {Math.round((seenCount / currentSet.items.length) * 100)}% seen
             </span>
           </div>
-          <Button size="sm" className="bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs h-8">
-            <Users className="w-3 h-3 mr-1" />
-            Challenge Friend
-          </Button>
+          <div className="flex gap-2">
+            {sets && sets.length > 1 && currentSetIndex < sets.length - 1 && (
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => setCurrentSetIndex(prev => prev + 1)}
+                className="border-purple-400 text-purple-300 hover:bg-purple-800 text-xs h-8"
+              >
+                <ChevronRight className="w-3 h-3 mr-1" />
+                Next Set
+              </Button>
+            )}
+            <Button size="sm" className="bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs h-8">
+              <Users className="w-3 h-3 mr-1" />
+              Challenge
+            </Button>
+          </div>
         </div>
       )}
 
