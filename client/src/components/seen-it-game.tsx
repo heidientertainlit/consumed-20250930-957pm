@@ -356,10 +356,10 @@ export default function SeenItGame() {
       )}
 
       <Dialog open={showChallengeModal} onOpenChange={setShowChallengeModal}>
-        <DialogContent className="bg-[#1a1035] border-purple-500/30 max-w-sm">
+        <DialogContent className="bg-white border-gray-200 max-w-sm rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
-              <Users className="w-5 h-5 text-purple-400" />
+            <DialogTitle className="text-gray-900 flex items-center gap-2">
+              <Users className="w-5 h-5 text-purple-600" />
               Challenge a Friend
             </DialogTitle>
           </DialogHeader>
@@ -367,10 +367,10 @@ export default function SeenItGame() {
           <div className="space-y-3 max-h-64 overflow-y-auto">
             {isLoadingFriends ? (
               <div className="flex justify-center py-4">
-                <Loader2 className="w-5 h-5 animate-spin text-purple-400" />
+                <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
               </div>
             ) : !friendsData?.friends?.length ? (
-              <p className="text-purple-300 text-sm text-center py-4">
+              <p className="text-gray-500 text-sm text-center py-4">
                 Add friends to challenge them!
               </p>
             ) : (
@@ -379,28 +379,28 @@ export default function SeenItGame() {
                   key={friend.id}
                   onClick={() => challengeMutation.mutate(friend.id)}
                   disabled={challengeMutation.isPending}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-purple-900/30 hover:bg-purple-800/40 transition-colors"
+                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                 >
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold">
                     {(friend.display_name || friend.user_name || '?')[0].toUpperCase()}
                   </div>
                   <div className="flex-1 text-left">
-                    <p className="text-white font-medium text-sm">
+                    <p className="text-gray-900 font-medium text-sm">
                       {friend.display_name || friend.user_name}
                     </p>
-                    <p className="text-purple-400 text-xs">@{friend.user_name}</p>
+                    <p className="text-gray-500 text-xs">@{friend.user_name}</p>
                   </div>
                   {challengeMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
+                    <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
                   ) : (
-                    <ChevronRight className="w-4 h-4 text-purple-400" />
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
                   )}
                 </button>
               ))
             )}
           </div>
           
-          <p className="text-purple-300/60 text-xs text-center mt-2">
+          <p className="text-gray-400 text-xs text-center mt-2">
             Your score: {seenCount}/{currentSet?.items?.length || 0} ({Math.round((seenCount / (currentSet?.items?.length || 1)) * 100)}%)
           </p>
         </DialogContent>
