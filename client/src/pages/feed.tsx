@@ -18,7 +18,7 @@ import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { GamesCarousel } from "@/components/games-carousel";
-import { RanksGlimpse } from "@/components/ranks-glimpse";
+import { RanksCarousel } from "@/components/ranks-carousel";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
@@ -2854,9 +2854,9 @@ export default function Feed() {
                 <GamesCarousel />
               )}
 
-              {/* Ranks Glimpse - only in All view */}
+              {/* Consumed Rankings Carousel - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
-                <RanksGlimpse />
+                <RanksCarousel />
               )}
 
               {/* Social Posts - hidden when specific game filters are active */}
