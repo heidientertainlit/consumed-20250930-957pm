@@ -134,7 +134,7 @@ export default function ConsumptionCarousel({ items, title = "Community" }: Cons
             <div className="flex-1 min-w-0">
               <Link href={`/profile/${item.username}`}>
                 <span className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
-                  {(item.displayName && item.displayName !== 'Unknown') ? item.displayName : (item.username && item.username !== 'friend') ? item.username : 'A fan'}
+                  {(item.displayName && item.displayName !== 'Unknown' && item.displayName !== 'unknown') ? item.displayName : (item.username && item.username !== 'friend' && item.username !== 'Unknown' && item.username !== 'unknown') ? item.username : 'A fan'}
                 </span>
               </Link>
               <p className="text-[10px] text-gray-400 mb-1">{item.activityText || 'added'}</p>
