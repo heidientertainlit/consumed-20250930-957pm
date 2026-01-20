@@ -1163,6 +1163,9 @@ serve(async (req) => {
         _debug: {
           userIdsQueried: userIds.length,
           usersFound: users?.length,
+          usersError: usersError?.message || null,
+          hasServiceRoleKey: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
+          sampleUserIds: userIds.slice(0, 3),
           sampleUsers: users?.slice(0, 3).map(u => ({ id: u.id?.substring(0, 8), user_name: u.user_name, display_name: u.display_name }))
         }
       }), {
