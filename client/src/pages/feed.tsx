@@ -2893,9 +2893,9 @@ export default function Feed() {
 
               {/* Complete Your DNA Card */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && (
-                <div className="bg-gradient-to-br from-teal-500 via-cyan-500 to-blue-500 rounded-2xl p-4 shadow-lg">
+                <div className="bg-gradient-to-br from-purple-600 via-teal-500 to-cyan-500 rounded-2xl p-4 shadow-lg">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
                       <span className="text-xl">🧬</span>
                     </div>
                     <div>
@@ -2903,9 +2903,9 @@ export default function Feed() {
                       <p className="text-white/70 text-xs">Answer more questions to unlock personalized insights</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 ml-[52px]">
                     <Link href="/dna">
-                      <button className="bg-white text-teal-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-white/90 transition-colors">
+                      <button className="bg-white text-purple-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-white/90 transition-colors">
                         Take DNA Quiz
                       </button>
                     </Link>
