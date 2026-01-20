@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
-import { Trophy, ChevronLeft, ChevronRight, Loader2, ThumbsUp, ThumbsDown, Heart, MessageCircle } from 'lucide-react';
+import { BarChart3, ChevronLeft, ChevronRight, Loader2, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface RankItem {
   id: string;
@@ -69,31 +69,38 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
     enabled: !!session?.access_token
   });
 
-  const scroll = (direction: 'left' | 'right') => {
-    if (!scrollRef.current || !ranks) return;
-    const newIndex = direction === 'left' 
-      ? Math.max(0, currentIndex - 1)
-      : Math.min(ranks.length - 1, currentIndex + 1);
-    setCurrentIndex(newIndex);
-    
-    const cardWidth = scrollRef.current.offsetWidth;
-    scrollRef.current.scrollTo({
-      left: newIndex * cardWidth,
-      behavior: 'smooth'
-    });
+  const scrollToNext = () => {
+    if (scrollRef.current && ranks && currentIndex < ranks.length - 1) {
+      const cardWidth = scrollRef.current.children[0]?.clientWidth || 280;
+      scrollRef.current.scrollBy({ left: cardWidth + 12, behavior: 'smooth' });
+      setCurrentIndex(prev => Math.min(prev + 1, ranks.length - 1));
+    }
+  };
+
+  const scrollToPrev = () => {
+    if (scrollRef.current && currentIndex > 0) {
+      const cardWidth = scrollRef.current.children[0]?.clientWidth || 280;
+      scrollRef.current.scrollBy({ left: -(cardWidth + 12), behavior: 'smooth' });
+      setCurrentIndex(prev => Math.max(prev - 1, 0));
+    }
+  };
+
+  const handleScroll = () => {
+    if (scrollRef.current && ranks) {
+      const cardWidth = scrollRef.current.children[0]?.clientWidth || 280;
+      const scrollLeft = scrollRef.current.scrollLeft;
+      const newIndex = Math.round(scrollLeft / (cardWidth + 12));
+      setCurrentIndex(Math.min(Math.max(newIndex, 0), ranks.length - 1));
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-3 px-1">
-          <Trophy className="w-5 h-5 text-purple-400" />
-          <span className="text-white font-semibold text-sm">Consumed Rankings</span>
+      <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
         </div>
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
-        </div>
-      </div>
+      </Card>
     );
   }
 
@@ -102,123 +109,106 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
   }
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-3 px-1">
+    <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm overflow-hidden relative">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-purple-400" />
-          <span className="text-white font-semibold text-sm">Consumed Rankings</span>
-          <span className="bg-purple-600 text-white text-xs px-2 py-0.5 rounded-full font-medium">
-            {ranks.length}
+          <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center">
+            <BarChart3 className="w-3.5 h-3.5 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Consumed Rankings</p>
+            <p className="text-[10px] text-gray-500">Vote on the order</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-1">
+          {currentIndex > 0 && (
+            <button
+              onClick={scrollToPrev}
+              className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4 text-gray-600" />
+            </button>
+          )}
+          {currentIndex < ranks.length - 1 && (
+            <button
+              onClick={scrollToNext}
+              className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4 text-gray-600" />
+            </button>
+          )}
+          <span className="text-xs text-gray-500 ml-1">
+            {currentIndex + 1}/{ranks.length}
           </span>
         </div>
-        <Link href="/ranks" className="text-purple-400 text-xs hover:underline">
-          See all
-        </Link>
       </div>
 
-      <div className="relative">
-        {currentIndex > 0 && (
-          <button
-            onClick={() => scroll('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/60 hover:bg-black/80 rounded-full p-1.5 text-white"
-          >
-            <ChevronLeft size={18} />
-          </button>
-        )}
-        
-        {ranks && currentIndex < ranks.length - 1 && (
-          <button
-            onClick={() => scroll('right')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/60 hover:bg-black/80 rounded-full p-1.5 text-white"
-          >
-            <ChevronRight size={18} />
-          </button>
-        )}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
+      >
+        {ranks.map((rank) => (
+          <div key={rank.id} className="flex-shrink-0 w-full snap-center">
+            <h3 className="text-gray-900 font-semibold text-base mb-3">
+              {rank.title}
+            </h3>
 
-        <div
-          ref={scrollRef}
-          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {ranks.map((rank) => (
-            <Card
-              key={rank.id}
-              className="flex-shrink-0 w-full snap-center bg-white rounded-xl p-4 shadow-md"
-            >
-              <h3 className="text-gray-900 font-bold text-lg mb-4 flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-purple-500" />
-                {rank.title}
-              </h3>
-
-              <div className="space-y-3 mb-3">
-                {rank.items.slice(0, 3).map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-3"
-                  >
-                    <div className={`w-8 h-8 rounded flex items-center justify-center text-sm font-bold ${
-                      item.position === 1 ? 'bg-purple-100 text-purple-700' :
-                      item.position === 2 ? 'bg-purple-100 text-purple-700' :
-                      'bg-purple-100 text-purple-700'
-                    }`}>
-                      {item.position}
-                    </div>
-                    <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
-                      <div className="w-3 h-3 bg-gray-400 rounded-sm" />
-                    </div>
-                    <span className="text-gray-900 font-medium flex-1 truncate">
-                      {item.title}
-                    </span>
-                    <div className="flex items-center gap-3 text-sm">
-                      <span className="flex items-center gap-1 text-green-600">
-                        <ThumbsUp size={14} className={item.up_vote_count > 0 ? 'fill-green-600' : ''} />
-                        <span>{item.up_vote_count > 0 ? `+${item.up_vote_count}` : '+0'}</span>
-                      </span>
-                      <span className="flex items-center gap-1 text-red-500">
-                        <ThumbsDown size={14} className={item.down_vote_count > 0 ? 'fill-red-500' : ''} />
-                        <span>{item.down_vote_count > 0 ? `-${item.down_vote_count}` : '-0'}</span>
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {rank.items.length > 3 && (
-                <Link
-                  href={`/rank/${rank.id}`}
-                  className="text-purple-600 text-sm hover:underline block text-center mt-4"
+            <div className="space-y-2 mb-3">
+              {rank.items.slice(0, 3).map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 py-2 px-3 rounded-xl bg-gray-50 border border-gray-100"
                 >
-                  Show all {rank.items.length} items
-                </Link>
-              )}
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm font-bold ${
+                    item.position === 1 ? 'bg-gradient-to-br from-purple-600 to-purple-800 text-white' :
+                    item.position === 2 ? 'bg-gradient-to-br from-purple-500 to-purple-700 text-white' :
+                    'bg-gradient-to-br from-purple-400 to-purple-600 text-white'
+                  }`}>
+                    {item.position}
+                  </div>
+                  <span className="text-gray-900 font-medium flex-1 truncate text-sm">
+                    {item.title}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button className="flex items-center gap-0.5 text-green-600 hover:text-green-700 transition-colors">
+                      <ChevronUp size={16} strokeWidth={2.5} />
+                      <span className="text-xs font-medium">{item.up_vote_count}</span>
+                    </button>
+                    <button className="flex items-center gap-0.5 text-red-500 hover:text-red-600 transition-colors">
+                      <ChevronDown size={16} strokeWidth={2.5} />
+                      <span className="text-xs font-medium">{item.down_vote_count}</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-              <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-100">
-                <button className="flex items-center gap-1 text-gray-400 hover:text-gray-600">
-                  <Heart size={18} />
-                  <span className="text-sm">0</span>
-                </button>
-                <button className="flex items-center gap-1 text-gray-400 hover:text-gray-600">
-                  <MessageCircle size={18} />
-                  <span className="text-sm">0</span>
-                </button>
-              </div>
-            </Card>
+            {rank.items.length > 3 && (
+              <Link
+                href={`/rank/${rank.id}`}
+                className="text-purple-600 text-sm hover:underline block text-center"
+              >
+                Show all {rank.items.length} items
+              </Link>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {ranks.length > 1 && (
+        <div className="flex justify-center gap-1.5 mt-3">
+          {ranks.map((_, idx) => (
+            <div
+              key={idx}
+              className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                idx === currentIndex ? 'bg-purple-600' : 'bg-gray-300'
+              }`}
+            />
           ))}
         </div>
-
-        {ranks.length > 1 && (
-          <div className="flex justify-center gap-1.5 mt-3">
-            {ranks.map((_, idx) => (
-              <div
-                key={idx}
-                className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                  idx === currentIndex ? 'bg-purple-400' : 'bg-gray-600'
-                }`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+    </Card>
   );
 }
