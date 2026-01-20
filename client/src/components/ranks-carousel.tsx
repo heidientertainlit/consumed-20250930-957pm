@@ -85,9 +85,9 @@ function SortableItem({ item, index, totalVotes }: SortableItemProps) {
         <GripVertical size={16} />
       </button>
       <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${
-        index === 0 ? 'bg-gradient-to-br from-teal-500 to-cyan-600 text-white' :
-        index === 1 ? 'bg-gradient-to-br from-teal-400 to-cyan-500 text-white' :
-        'bg-gradient-to-br from-teal-300 to-cyan-400 text-white'
+        index === 0 ? 'bg-gradient-to-br from-emerald-500 to-green-600 text-white' :
+        index === 1 ? 'bg-gradient-to-br from-emerald-400 to-green-500 text-white' :
+        'bg-gradient-to-br from-emerald-300 to-green-400 text-white'
       }`}>
         {index + 1}
       </div>
@@ -294,7 +294,7 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
     return (
       <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-6 h-6 animate-spin text-teal-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
         </div>
       </Card>
     );
@@ -308,7 +308,7 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
     <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
             <BarChart3 className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
@@ -384,7 +384,7 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
                 {rank.items.length > 5 && (
                   <button
                     onClick={() => toggleExpanded(rank.id)}
-                    className="text-teal-600 text-sm hover:underline"
+                    className="text-emerald-600 text-sm hover:underline"
                   >
                     {isExpanded ? 'Show less' : `Show all ${rank.items.length}`}
                   </button>
@@ -401,7 +401,7 @@ export function RanksCarousel({ expanded = false }: RanksCarouselProps) {
             <div
               key={idx}
               className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                idx === currentIndex ? 'bg-teal-500' : 'bg-gray-300'
+                idx === currentIndex ? 'bg-emerald-500' : 'bg-gray-300'
               }`}
             />
           ))}
