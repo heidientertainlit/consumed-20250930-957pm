@@ -2781,7 +2781,7 @@ export default function Feed() {
                     onClick={() => setSelectedFilter(filter.id === selectedFilter ? 'All' : filter.id)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                       (filter.id === 'all' && selectedFilter === 'All') || filter.id === selectedFilter
-                        ? 'bg-gradient-to-r from-slate-800 via-slate-900 to-blue-950 text-white shadow-sm'
+                        ? 'bg-gradient-to-r from-slate-600 via-slate-700 to-blue-800 text-white shadow-sm'
                         : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                     }`}
                     data-testid={`feed-filter-${filter.id}`}
