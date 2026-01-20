@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, ChevronRight, Check, X, Users, Trophy, Plus, Star, Loader2 } from "lucide-react";
+import { Eye, ChevronRight, Check, X, Users, Trophy, Plus, Star, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -229,28 +229,50 @@ export default function SeenItGame() {
       </div>
 
       {isComplete && (
-        <div className="mt-3 pt-3 border-t border-purple-700/50 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-yellow-400" />
-            <span className="text-white text-sm font-medium">
-              {Math.round((seenCount / currentSet.items.length) * 100)}% seen
-            </span>
+        <div className="mt-4 bg-gradient-to-br from-purple-800/80 to-indigo-900/80 rounded-xl p-4 border border-purple-500/30">
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 mb-3">
+              <Trophy className="w-8 h-8 text-white" />
+            </div>
+            <h4 className="text-white font-bold text-xl mb-1">
+              {Math.round((seenCount / currentSet.items.length) * 100)}% Seen
+            </h4>
+            <p className="text-purple-300 text-sm">
+              {seenCount} of {currentSet.items.length} • {currentSet.title}
+            </p>
           </div>
-          <div className="flex gap-2">
-            {sets && sets.length > 1 && currentSetIndex < sets.length - 1 && (
+          
+          <div className="bg-purple-900/50 rounded-lg p-3 mb-4">
+            <div className="flex items-center gap-2 text-purple-200 text-sm">
+              <Sparkles className="w-4 h-4 text-yellow-400" />
+              <span>Added to your Entertainment DNA</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {sets && sets.length > 1 && currentSetIndex < sets.length - 1 ? (
               <Button 
-                size="sm" 
-                variant="outline"
                 onClick={() => setCurrentSetIndex(prev => prev + 1)}
-                className="border-purple-400 text-purple-300 hover:bg-purple-800 text-xs h-8"
+                className="bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-sm h-10"
               >
-                <ChevronRight className="w-3 h-3 mr-1" />
+                <ChevronRight className="w-4 h-4 mr-1" />
                 Next Set
               </Button>
+            ) : (
+              <Button 
+                variant="outline"
+                className="border-purple-400 text-purple-200 hover:bg-purple-800 text-sm h-10"
+              >
+                <Eye className="w-4 h-4 mr-1" />
+                View History
+              </Button>
             )}
-            <Button size="sm" className="bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs h-8">
-              <Users className="w-3 h-3 mr-1" />
-              Challenge
+            <Button 
+              variant="outline"
+              className="border-purple-400 text-purple-200 hover:bg-purple-800 text-sm h-10"
+            >
+              <Users className="w-4 h-4 mr-1" />
+              Challenge Friend
             </Button>
           </div>
         </div>
