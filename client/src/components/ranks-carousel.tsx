@@ -456,7 +456,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                     value={customAddInput}
                     onChange={(e) => setCustomAddInput(e.target.value)}
                     placeholder="Enter your pick..."
-                    className="flex-1 h-8 text-sm"
+                    className="flex-1 h-9 text-sm bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && customAddInput.trim()) {
                         addCustomItemMutation.mutate({ rankId: rank.id, title: customAddInput });
@@ -472,7 +472,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                       }
                     }}
                     disabled={!customAddInput.trim() || addCustomItemMutation.isPending}
-                    className="h-8 px-3 bg-teal-600 hover:bg-teal-700"
+                    className="h-9 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
                   >
                     {addCustomItemMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
                   </Button>
@@ -483,7 +483,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                       setAddingToRank(null);
                       setCustomAddInput('');
                     }}
-                    className="h-8 px-2"
+                    className="h-9 px-2 text-gray-500 hover:text-gray-700"
                   >
                     <X className="w-4 h-4" />
                   </Button>
