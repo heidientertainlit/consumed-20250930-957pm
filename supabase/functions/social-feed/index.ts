@@ -430,15 +430,45 @@ serve(async (req) => {
       let users: any[] = [];
       let usersError = null;
       if (userIds.length > 0) {
+        // Try users table first
         const result = await supabaseAdmin
           .from('users')
           .select('id, user_name, display_name, email, avatar')
           .in('id', userIds);
         users = result.data || [];
         usersError = result.error;
+        
+        // If users table didn't return enough results, try profiles table
+        const missingUserIds = userIds.filter(id => !users.find(u => u.id === id));
+        if (missingUserIds.length > 0) {
+          console.log('Missing users from users table, trying profiles:', missingUserIds.length);
+          const profilesResult = await supabaseAdmin
+            .from('profiles')
+            .select('id, username, display_name, email, avatar_url')
+            .in('id', missingUserIds);
+          
+          if (profilesResult.data && profilesResult.data.length > 0) {
+            // Map profiles fields to users format
+            const mappedProfiles = profilesResult.data.map(p => ({
+              id: p.id,
+              user_name: p.username || p.display_name || 'A fan',
+              display_name: p.display_name || p.username || 'A fan',
+              email: p.email || '',
+              avatar: p.avatar_url || ''
+            }));
+            users = [...users, ...mappedProfiles];
+            console.log('Found profiles:', mappedProfiles.length);
+          }
+        }
       }
 
-      console.log('User lookup result:', { users: users?.length, usersError });
+      console.log('User lookup result:', { 
+        userIdsQueried: userIds.length,
+        usersFound: users?.length, 
+        usersError,
+        sampleUserIds: userIds.slice(0, 3),
+        sampleUsersReturned: users?.slice(0, 3).map(u => ({ id: u.id, user_name: u.user_name, display_name: u.display_name }))
+      });
 
       // Get posts that the current user has liked
       const postIds = posts?.map(post => post.id) || [];
