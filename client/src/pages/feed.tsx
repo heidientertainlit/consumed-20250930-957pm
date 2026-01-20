@@ -2817,7 +2817,7 @@ export default function Feed() {
                 <DnaMomentCard />
               )}
 
-              {/* Your Circle - Friend Activity with reactions */}
+              {/* The Room - Friend Activity with reactions */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && (
                 <ConsumptionCarousel 
                   items={(socialPosts || [])
@@ -2835,7 +2835,7 @@ export default function Feed() {
                       mediaImage: p.mediaItems[0]?.imageUrl || '',
                       timestamp: p.createdAt || new Date().toISOString()
                     }))}
-                  title="Your Circle"
+                  title="The Room"
                 />
               )}
 
