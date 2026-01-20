@@ -189,46 +189,46 @@ export default function LeaderboardFeedCard({ className, variant = 'trivia' }: L
         </div>
       </div>
 
-      <div className="px-4 pb-3 space-y-2">
+      <div className="px-3 pb-2 space-y-1.5">
         {top3.map((entry) => (
           <div 
             key={entry.userId}
             className={cn(
-              "flex items-center gap-3 p-3 rounded-xl transition-colors",
+              "flex items-center gap-2 p-2 rounded-lg transition-colors",
               entry.isCurrentUser 
                 ? "bg-purple-100 border border-purple-200" 
                 : "bg-white/60"
             )}
           >
             <div className={cn(
-              "w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold",
+              "w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
               getRankBadgeColor(entry.rank)
             )}>
               {entry.rank}
             </div>
             
-            <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
               {entry.avatarUrl ? (
                 <img src={entry.avatarUrl} alt={entry.username} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">
+                <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
                   👤
                 </div>
               )}
             </div>
             
             {entry.isCurrentUser ? (
-              <span className="flex-1 text-sm font-medium truncate text-purple-700">You</span>
+              <span className="flex-1 text-xs font-medium truncate text-purple-700">You</span>
             ) : (
               <Link 
                 href={`/user/${entry.userId}`}
-                className="flex-1 text-sm font-medium truncate text-gray-800 hover:text-purple-600 transition-colors"
+                className="flex-1 text-xs font-medium truncate text-gray-800 hover:text-purple-600 transition-colors"
               >
                 {entry.username}
               </Link>
             )}
             
-            <span className="font-semibold text-gray-700">
+            <span className="text-xs font-semibold text-gray-700">
               {entry.points.toLocaleString()}
             </span>
           </div>
