@@ -184,7 +184,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         if (data && currentIndex < data.length - 1) {
           scrollToNext();
         }
-      }, 1500);
+      }, 4000);
     },
     onError: (error: Error) => {
       toast({

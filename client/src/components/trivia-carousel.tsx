@@ -221,7 +221,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
         if (data && currentIndex < data.length - 1) {
           scrollToNext();
         }
-      }, 2000);
+      }, 4000);
     },
     onError: (error: Error) => {
       toast({
