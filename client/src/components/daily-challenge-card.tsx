@@ -255,7 +255,7 @@ export function DailyChallengeCard() {
 
   if (challengeLoading) {
     return (
-      <Card className="p-4 bg-gradient-to-b from-slate-900 via-purple-950 to-indigo-950 border-0">
+      <Card className="p-4 bg-gradient-to-r from-slate-800 via-slate-900 to-blue-950 border-0">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-6 h-6 animate-spin text-white" />
         </div>
@@ -267,19 +267,19 @@ export function DailyChallengeCard() {
 
   return (
     <Card 
-      className="bg-gradient-to-b from-slate-900 via-purple-950 to-indigo-950 border border-purple-500/50 rounded-xl overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
+      className="bg-gradient-to-r from-slate-800 via-slate-900 to-blue-950 border border-blue-500/30 rounded-xl overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
       onClick={() => setIsExpanded(!isExpanded)}
       data-testid="daily-challenge-card"
     >
       {/* Collapsed Header - Simple design */}
       <div className="w-full p-4 flex items-center justify-between">
         <div className="flex items-center gap-3 flex-1">
-          <Play className="w-5 h-5 text-purple-400 fill-purple-400" />
+          <Play className="w-5 h-5 text-blue-400 fill-blue-400" />
           <div className="text-left flex-1">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-white">The Daily Call</span>
               {!alreadyCompleted && (
-                <span className="text-[10px] text-purple-400 font-medium">LIVE</span>
+                <span className="text-[10px] text-blue-400 font-medium">LIVE</span>
               )}
               {alreadyCompleted && (
                 <CheckCircle className="w-4 h-4 text-green-400" />
@@ -358,7 +358,7 @@ export function DailyChallengeCard() {
                   <Button
                     onClick={handleSubmit}
                     disabled={!customResponse.trim() || submitMutation.isPending}
-                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    className="w-full bg-blue-600 hover:bg-blue-700"
                     data-testid="submit-custom-challenge"
                   >
                     {submitMutation.isPending ? (
@@ -377,7 +377,7 @@ export function DailyChallengeCard() {
                       onClick={(e) => { e.stopPropagation(); setSelectedOption(option); }}
                       className={`w-full p-3 rounded-2xl text-left transition-all ${
                         selectedOption === option
-                          ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg ring-2 ring-white font-semibold'
+                          ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg ring-2 ring-white font-semibold'
                           : 'bg-white/30 text-white hover:bg-white/40'
                       }`}
                       data-testid={`challenge-option-${idx}`}
