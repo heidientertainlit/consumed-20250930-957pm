@@ -258,16 +258,19 @@ export default function SeenItGame() {
         {isComplete && (
           <div className="flex-shrink-0 w-32">
             <div className="w-32 h-48 rounded-lg bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-800 flex flex-col items-center justify-center p-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center mb-2">
-                <Trophy className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center mb-1">
+                <Trophy className="w-5 h-5 text-white" />
               </div>
               <span className="text-white font-bold text-lg">
                 {Math.round((seenCount / currentSet.items.length) * 100)}%
               </span>
-              <span className="text-purple-200 text-[10px] text-center mb-2">
-                Added to DNA
+              <span className="text-purple-200 text-[10px] text-center">
+                Seen
               </span>
-              <Sparkles className="w-4 h-4 text-yellow-400" />
+              <div className="flex items-center gap-1 mt-2">
+                <Sparkles className="w-3 h-3 text-yellow-400" />
+                <span className="text-yellow-300 text-[9px]">+ Added to DNA</span>
+              </div>
             </div>
             
             <p className="text-white text-sm font-medium mt-2 text-center">Complete!</p>
