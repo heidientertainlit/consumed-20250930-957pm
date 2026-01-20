@@ -5,13 +5,21 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/posthog";
-import { Search, Users, Loader2, ChevronLeft, ChevronRight, MessageSquare, Swords } from "lucide-react";
+import { Search, Users, Loader2, ChevronLeft, ChevronRight, MessageSquare, Swords, Send } from "lucide-react";
 import { Link } from "wouter";
+import { supabase } from "@/lib/supabase";
 
 interface Celebrity {
   id: string;
   name: string;
   image: string;
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  user: { id: string; user_name: string };
+  created_at: string;
 }
 
 interface FriendCastCardProps {
@@ -22,6 +30,7 @@ interface FriendCastCardProps {
     target_friend_name?: string;
     creator_pick_celeb_name: string;
     creator_pick_celeb_image: string;
+    comments_count?: number;
     responses: Array<{
       id: string;
       celeb_name: string;
@@ -35,10 +44,14 @@ export default function FriendCastCard({ cast }: FriendCastCardProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const [showRespond, setShowRespond] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const [celebrities, setCelebrities] = useState<Celebrity[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentInput, setCommentInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [celebScrollIndex, setCelebScrollIndex] = useState(0);
   const [hasResponded, setHasResponded] = useState(
     cast.responses.some(r => r.responder?.id === user?.id)
@@ -46,6 +59,53 @@ export default function FriendCastCard({ cast }: FriendCastCardProps) {
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const targetName = cast.target?.user_name || cast.target_friend_name || "them";
+
+  const loadComments = async () => {
+    setIsLoadingComments(true);
+    try {
+      const { data, error } = await supabase
+        .from('friend_cast_comments')
+        .select('id, content, created_at, user:users!friend_cast_comments_user_id_fkey(id, user_name)')
+        .eq('friend_cast_id', cast.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (!error && data) {
+        setComments(data.map((c: any) => ({
+          id: c.id,
+          content: c.content,
+          user: c.user,
+          created_at: c.created_at
+        })));
+      }
+    } catch (error) {
+      console.error('Failed to load comments:', error);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
+  const submitComment = async () => {
+    if (!session || !commentInput.trim()) return;
+    
+    try {
+      const { error } = await supabase
+        .from('friend_cast_comments')
+        .insert({
+          friend_cast_id: cast.id,
+          user_id: user?.id,
+          content: commentInput.trim()
+        });
+      
+      if (!error) {
+        setCommentInput("");
+        loadComments();
+        toast({ title: "Comment added!" });
+      }
+    } catch (error) {
+      toast({ title: "Failed to add comment", variant: "destructive" });
+    }
+  };
 
   const loadCelebrities = async (query?: string) => {
     setIsSearching(true);
@@ -261,6 +321,65 @@ export default function FriendCastCard({ cast }: FriendCastCardProps) {
           </Button>
         </div>
       )}
+
+      {/* Comments Section */}
+      <div className="mt-3 pt-3 border-t border-gray-100">
+        <button
+          onClick={() => {
+            setShowComments(!showComments);
+            if (!showComments && comments.length === 0) loadComments();
+          }}
+          className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+        >
+          <MessageSquare className="w-3 h-3" />
+          {cast.comments_count || comments.length || 0} comments
+        </button>
+
+        {showComments && (
+          <div className="mt-3 space-y-3">
+            {session && (
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add a comment..."
+                  value={commentInput}
+                  onChange={(e) => setCommentInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && submitComment()}
+                  className="text-sm"
+                />
+                <Button onClick={submitComment} size="sm" disabled={!commentInput.trim()}>
+                  <Send className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
+
+            {isLoadingComments ? (
+              <div className="flex justify-center py-2">
+                <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+              </div>
+            ) : comments.length > 0 ? (
+              <div className="space-y-2">
+                {comments.map((comment) => (
+                  <div key={comment.id} className="bg-gray-50 rounded-lg p-2">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Link href={`/profile/${comment.user?.user_name}`}>
+                        <span className="text-xs font-medium text-gray-700 hover:underline">
+                          @{comment.user?.user_name}
+                        </span>
+                      </Link>
+                      <span className="text-[10px] text-gray-400">
+                        {new Date(comment.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600">{comment.content}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400 text-center py-2">No comments yet</p>
+            )}
+          </div>
+        )}
+      </div>
     </Card>
   );
 }
