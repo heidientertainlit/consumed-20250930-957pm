@@ -86,15 +86,6 @@ export default function DNAVisualization() {
       time += 0.01;
       ctx.clearRect(0, 0, dimensions.width, dimensions.height);
 
-      const gradient = ctx.createRadialGradient(
-        centerX, centerY, 0,
-        centerX, centerY, dimensions.width * 0.7
-      );
-      gradient.addColorStop(0, '#1e1b4b');
-      gradient.addColorStop(0.5, '#0f0a1e');
-      gradient.addColorStop(1, '#050208');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, dimensions.width, dimensions.height);
 
       nodesRef.current.forEach((node, i) => {
         if (node.id !== '7') {
@@ -183,7 +174,7 @@ export default function DNAVisualization() {
   }, [dimensions]);
 
   return (
-    <div className="w-full rounded-2xl overflow-hidden" style={{ background: '#050208' }}>
+    <div className="w-full">
       <canvas
         ref={canvasRef}
         width={dimensions.width}
