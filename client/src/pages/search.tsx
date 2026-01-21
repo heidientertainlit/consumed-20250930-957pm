@@ -942,47 +942,47 @@ export default function Search() {
           <div className="flex gap-2 overflow-x-auto pb-2 -mt-2">
             <button
               onClick={() => setActiveTab('stats')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 activeTab === 'stats'
                   ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
                   : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
               }`}
             >
-              <BarChart3 size={16} />
+              <BarChart3 size={14} />
               Stats
             </button>
             <button
               onClick={() => setActiveTab('summary')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 activeTab === 'summary'
                   ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
                   : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
               }`}
             >
-              <Dna size={16} />
+              <Dna size={14} />
               Summary
             </button>
             <button
               onClick={() => setActiveTab('compare')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 activeTab === 'compare'
                   ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
                   : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
               }`}
             >
-              <Users size={16} />
+              <Users size={14} />
               Compare
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 activeTab === 'history'
                   ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
                   : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
               }`}
             >
-              <Clock size={16} />
-              Media History
+              <Clock size={14} />
+              History
             </button>
           </div>
         )}
