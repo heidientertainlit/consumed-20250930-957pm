@@ -555,14 +555,27 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] z-50 pb-safe">
         <div className="flex justify-center items-center gap-16 h-18 px-4 pt-3 pb-4">
-          {/* Arena (main game feed) */}
+          {/* Takes (main game feed) */}
           <Link
             href="/activity"
             className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
-            data-testid="nav-arena"
+            data-testid="nav-takes"
           >
             <Gamepad2 className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Arena</span>
+            <span className="text-xs font-medium text-white">Takes</span>
+          </Link>
+
+          {/* Add to DNA */}
+          <Link
+            href="/search"
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/search" ? "bg-white/15" : ""}`}
+            data-testid="nav-add-dna"
+          >
+            <div className="relative">
+              <Dna className="text-white" size={24} />
+              <Plus className="text-white absolute -right-1.5 -bottom-0.5 bg-[#0a0a0f] rounded-full" size={12} />
+            </div>
+            <span className="text-xs font-medium text-white">Add</span>
           </Link>
 
           {/* Leaderboard */}
