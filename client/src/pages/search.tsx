@@ -599,12 +599,9 @@ export default function Search() {
             </div>
           )}
 
-          {/* DNA Visualization - Glimpse of your Entertainment DNA */}
+          {/* DNA Visualization */}
           {!isAiMode && !searchQuery.trim() && (
             <div className="mt-6">
-              <h2 className="text-xl font-semibold text-white mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                Glimpse of your Entertainment DNA
-              </h2>
               <DNAVisualization />
             </div>
           )}
