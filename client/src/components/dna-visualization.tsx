@@ -170,11 +170,6 @@ export default function DNAVisualization() {
         }
       });
 
-      ctx.font = '500 11px Inter, system-ui, sans-serif';
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.textAlign = 'center';
-      ctx.fillText('Glimpse of your Entertainment DNA', centerX, 24);
-
       animationRef.current = requestAnimationFrame(animate);
     };
 
