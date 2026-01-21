@@ -548,8 +548,11 @@ export default function Search() {
           {/* Header */}
           <div className="text-center">
             <h1 className="text-3xl font-semibold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Search
+              Build your DNA
             </h1>
+            <p className="text-gray-400 text-sm max-w-xs mx-auto">
+              Add what you've watched, read, or listened to. We'll turn it into insights, stats, and better takes.
+            </p>
           </div>
 
           {/* Unified Search Bar with AI Mode Toggle */}
@@ -588,14 +591,12 @@ export default function Search() {
             </div>
           </div>
 
-          {/* Explanatory Text */}
-          <div className="text-center text-sm text-gray-400">
-            {isAiMode ? (
+          {/* Explanatory Text - only show when AI mode is on */}
+          {isAiMode && (
+            <div className="text-center text-sm text-gray-400">
               <p>Ask for recommendations like "movies similar to Inception" or "uplifting podcasts"</p>
-            ) : (
-              <p>Try <span className="font-medium text-purple-400">AI Mode</span> to ask things like "shows like The Bear" or "what are my friends watching"</p>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Quick Add - Right below explanatory text */}
           {!isAiMode && !searchQuery.trim() && (recommendedContent.length >= 2 || trendingTVShows.length >= 2) && (
@@ -1005,108 +1006,6 @@ export default function Search() {
             </div>
           )}
 
-        {/* Trending Content - Only show when no search results and not in AI mode */}
-        {!isAiMode && !searchQuery.trim() && (
-          <>
-            {/* Just Browsing Header */}
-            <div className="text-center pt-2">
-              <p className="text-gray-600 font-medium">Just browsing? Here's some ideas</p>
-            </div>
-
-            {/* Trending Content Sections */}
-            <div className="space-y-8">
-              {/* Personalized Recommendations - First Row */}
-              {recommendedContent.length > 0 && (
-                <MediaCarousel
-                  title="Recommended For You"
-                  mediaType="mixed"
-                  items={recommendedContent}
-                  onItemClick={handleMediaClick}
-                />
-              )}
-
-              {/* Top Shows Across All Streaming Platforms - Second Row */}
-              {(netflixTVShows.length > 0 || hboTVShows.length > 0) && (
-                <MediaCarousel
-                  title="Top Shows Across All Streaming Platforms"
-                  mediaType="tv"
-                  items={deduplicateMediaItems([...netflixTVShows.slice(0, 10), ...hboTVShows.slice(0, 10)])}
-                  onItemClick={handleMediaClick}
-                />
-              )}
-
-              {/* Netflix Top Movies */}
-              {netflixMovies.length > 0 && (
-                <MediaCarousel
-                  title="Top 10 Movies on Netflix"
-                  mediaType="movie"
-                  items={netflixMovies}
-                  onItemClick={handleMediaClick}
-                />
-              )}
-
-              {/* Paramount+ Top Movies */}
-              {paramountMovies.length > 0 && (
-                <MediaCarousel
-                  title="Top 10 Movies on Paramount+"
-                  mediaType="movie"
-                  items={paramountMovies}
-                  onItemClick={handleMediaClick}
-                />
-              )}
-
-              {/* Trending TV Shows */}
-              {trendingTVShows.length > 0 && (
-                <MediaCarousel
-                  title="Trending TV Shows"
-                  mediaType="tv"
-                  items={trendingTVShows}
-                  onItemClick={handleMediaClick}
-                />
-              )}
-
-              {/* Trending Movies */}
-              {trendingMovies.length > 0 && (
-                <MediaCarousel
-                  title="Trending Movies"
-                  mediaType="movie"
-                  items={trendingMovies}
-                  onItemClick={handleMediaClick}
-                />
-              )}
-
-              {/* Top Gaming */}
-              {topGames.length > 0 && (
-                <MediaCarousel
-                  title="Top Gaming"
-                  mediaType="game"
-                  items={topGames}
-                  onItemClick={handleMediaClick}
-                />
-              )}
-
-              {/* NY Times Bestsellers */}
-              {bestsellerBooks.length > 0 && (
-                <MediaCarousel
-                  title="NY Times Bestsellers"
-                  mediaType="book"
-                  items={bestsellerBooks}
-                  onItemClick={handleMediaClick}
-                />
-              )}
-
-              {/* Trending Podcasts */}
-              {trendingPodcasts.length > 0 && (
-                <MediaCarousel
-                  title="Trending Podcasts"
-                  mediaType="podcast"
-                  items={trendingPodcasts}
-                  onItemClick={handleMediaClick}
-                />
-              )}
-            </div>
-          </>
-        )}
       </div>
 
       <QuickAddListSheet
