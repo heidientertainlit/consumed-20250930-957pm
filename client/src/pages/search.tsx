@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
+import DNAVisualization from "@/components/dna-visualization";
 
 interface Recommendation {
   title: string;
@@ -651,6 +652,13 @@ export default function Search() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* DNA Visualization - Glimpse of your Entertainment DNA */}
+          {!isAiMode && !searchQuery.trim() && (
+            <div className="mt-6">
+              <DNAVisualization />
             </div>
           )}
         </div>
