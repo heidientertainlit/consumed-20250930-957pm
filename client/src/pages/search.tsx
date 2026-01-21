@@ -1524,6 +1524,13 @@ export default function Search() {
                   </button>
                   <button
                     className="bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium"
+                    onClick={() => setLocation('/track')}
+                  >
+                    <Download size={12} />
+                    Import
+                  </button>
+                  <button
+                    className="bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium"
                     onClick={() => setIsQuickAddOpen(true)}
                   >
                     <Plus size={12} />

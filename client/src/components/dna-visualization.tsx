@@ -27,20 +27,32 @@ export default function DNAVisualization() {
     queryFn: async () => {
       if (!session?.access_token || !user?.id) return [];
       
-      const { data, error } = await supabase
+      // First get friendships
+      const { data: friendships, error: fErr } = await supabase
         .from('friendships')
-        .select(`
-          friend_id,
-          friend:profiles!friendships_friend_id_fkey(id, user_name, display_name)
-        `)
-        .eq('user_id', user.id)
+        .select('user_id, friend_id')
+        .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
         .eq('status', 'accepted')
         .limit(5);
 
-      if (error) return [];
-      return data?.map(f => ({
-        id: f.friend_id,
-        name: f.friend?.display_name || f.friend?.user_name || 'Friend'
+      if (fErr || !friendships?.length) return [];
+      
+      // Get friend IDs
+      const friendIds = friendships.map(f => 
+        f.user_id === user.id ? f.friend_id : f.user_id
+      ).filter(id => id !== user.id);
+      
+      if (!friendIds.length) return [];
+      
+      // Fetch user details
+      const { data: usersData } = await supabase
+        .from('users')
+        .select('id, user_name, display_name')
+        .in('id', friendIds);
+
+      return usersData?.map(u => ({
+        id: u.id,
+        name: u.display_name || u.user_name || 'Friend'
       })) || [];
     },
     enabled: !!user?.id && !!session?.access_token,
