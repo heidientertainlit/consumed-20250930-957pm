@@ -153,7 +153,7 @@ export default function DNAVisualization() {
 
   return (
     <div className="w-full">
-      <p className="text-gray-500 text-xs mb-2">Your Entertainment DNA</p>
+      <h2 className="text-lg font-semibold text-gray-800 mb-3">Glimpse of your Entertainment DNA</h2>
       <div className="rounded-2xl overflow-hidden shadow-lg">
         <canvas
           ref={canvasRef}
