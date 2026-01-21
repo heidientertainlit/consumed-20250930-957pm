@@ -1518,11 +1518,11 @@ export default function Search() {
                   <h2 className="text-base font-semibold text-gray-900">Media History</h2>
                   <Button
                     size="sm"
-                    className="bg-purple-600 hover:bg-purple-700 text-xs h-8"
+                    className="bg-gradient-to-r from-purple-700 to-purple-600 hover:from-purple-800 hover:to-purple-700 text-white text-xs h-7 px-3 rounded-full"
                     onClick={() => setIsQuickAddOpen(true)}
                   >
-                    <Plus size={14} className="mr-1" />
-                    {historySubTab === 'lists' ? 'Create' : 'Add'}
+                    <Plus size={12} className="mr-1" />
+                    {historySubTab === 'lists' ? 'Create List' : 'Add'}
                   </Button>
                 </div>
 
