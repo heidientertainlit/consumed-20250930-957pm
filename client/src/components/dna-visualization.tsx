@@ -53,7 +53,7 @@ export default function DNAVisualization() {
       if (container) {
         setDimensions({
           width: container.offsetWidth,
-          height: 200
+          height: 160
         });
       }
     };
@@ -199,12 +199,12 @@ export default function DNAVisualization() {
           const dist = Math.sqrt(dx * dx + dy * dy);
           
           if (dist < connectionDistance) {
-            const opacity = (1 - dist / connectionDistance) * 0.35;
+            const opacity = (1 - dist / connectionDistance) * 0.6;
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
             ctx.strokeStyle = `rgba(167, 139, 250, ${opacity})`;
-            ctx.lineWidth = 0.6;
+            ctx.lineWidth = 1.2;
             ctx.stroke();
           }
         });
@@ -251,13 +251,13 @@ export default function DNAVisualization() {
   }, [dimensions, friends]);
 
   return (
-    <div className="w-full -mt-2">
+    <div className="w-full -mt-4 -mb-4">
       <canvas
         ref={canvasRef}
         width={dimensions.width}
         height={dimensions.height}
         className="w-full"
-        style={{ height: '200px' }}
+        style={{ height: '160px' }}
       />
     </div>
   );
