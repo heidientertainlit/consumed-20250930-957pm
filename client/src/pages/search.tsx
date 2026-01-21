@@ -982,7 +982,7 @@ export default function Search() {
               <SearchIcon className="text-gray-400 ml-2 flex-shrink-0" size={20} />
               <Input
                 type="text"
-                placeholder={isAiMode ? "Ask AI for recommendations..." : "Search friends, movies, TV shows..."}
+                placeholder={isAiMode ? "Ask AI for recommendations..." : "add a movie, book, game..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
