@@ -680,11 +680,8 @@ export default function Search() {
           {/* Header */}
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Build your DNA
+              Your Entertainment DNA
             </h1>
-            <p className="text-gray-400 text-sm max-w-xs mx-auto">
-              Add what you've watched, read, or listened to.
-            </p>
           </div>
 
           {/* Unified Search Bar with AI Mode Toggle */}
@@ -737,30 +734,50 @@ export default function Search() {
             </div>
           )}
 
-          {/* Pill Filters - only show when not searching */}
-          {!isAiMode && !searchQuery.trim() && (
-            <div className="flex gap-2 justify-center mt-4 overflow-x-auto pb-2">
-              {(['stats', 'summary', 'history'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                    activeTab === tab
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-white/10 text-white/70 hover:bg-white/20'
-                  }`}
-                >
-                  {tab === 'stats' ? 'Stats' : tab === 'summary' ? 'Summary' : 'Media History'}
-                </button>
-              ))}
-            </div>
-          )}
-
         </div>
       </div>
       
       {/* Main Content Area - Light Background */}
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+        {/* Pill Filters - styled like the screenshot */}
+        {!isAiMode && !searchQuery.trim() && (
+          <div className="flex gap-2 overflow-x-auto pb-2 -mt-2">
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all border ${
+                activeTab === 'stats'
+                  ? 'bg-purple-600 text-white border-purple-600'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-purple-300'
+              }`}
+            >
+              <BarChart3 size={16} />
+              Stats
+            </button>
+            <button
+              onClick={() => setActiveTab('summary')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all border ${
+                activeTab === 'summary'
+                  ? 'bg-purple-600 text-white border-purple-600'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-purple-300'
+              }`}
+            >
+              <Dna size={16} />
+              Summary
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all border ${
+                activeTab === 'history'
+                  ? 'bg-purple-600 text-white border-purple-600'
+                  : 'bg-white text-gray-700 border-gray-200 hover:border-purple-300'
+              }`}
+            >
+              <Clock size={16} />
+              Media History
+            </button>
+          </div>
+        )}
 
         {/* Tab Content - only show when not searching */}
         {!isAiMode && !searchQuery.trim() && (
