@@ -963,17 +963,6 @@ export default function Search() {
               Summary
             </button>
             <button
-              onClick={() => setActiveTab('compare')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                activeTab === 'compare'
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
-              }`}
-            >
-              <Users size={14} />
-              Compare
-            </button>
-            <button
               onClick={() => setActiveTab('history')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 activeTab === 'history'
@@ -983,6 +972,17 @@ export default function Search() {
             >
               <Clock size={14} />
               History
+            </button>
+            <button
+              onClick={() => setActiveTab('compare')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                activeTab === 'compare'
+                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+              }`}
+            >
+              <Users size={14} />
+              Compare
             </button>
           </div>
         )}
