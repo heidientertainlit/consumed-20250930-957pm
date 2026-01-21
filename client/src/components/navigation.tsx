@@ -539,6 +539,13 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             {!isSearchExpanded && (
               <div className="flex items-center gap-4">
                 <NotificationBell />
+                <Link
+                  href={user?.id ? `/user/${user.id}` : "/login"}
+                  className="hover:opacity-70 transition-opacity"
+                  data-testid="nav-profile"
+                >
+                  <User className="text-white" size={20} />
+                </Link>
               </div>
             )}
           </div>
@@ -566,19 +573,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <Trophy className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Leaders</span>
-          </Link>
-
-          {/* Me */}
-          <Link
-            href={user?.id ? `/user/${user.id}` : "/login"}
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location.includes("/user/") ? "bg-white/15" : ""}`}
-            data-testid="nav-me"
-          >
-            <div className="relative">
-              <User className="text-white" size={24} />
-              <Dna className="text-white absolute -right-1.5 -bottom-0.5" size={10} />
-            </div>
-            <span className="text-xs font-medium text-white">Me</span>
           </Link>
         </div>
       </nav>
