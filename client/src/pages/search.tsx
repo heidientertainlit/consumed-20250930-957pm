@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target, User, Plus, Users } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target, User, Plus, Users, Download, RefreshCw, Share2, Dna, Mic, Gamepad2, Clock, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import MediaCarousel from "@/components/media-carousel";
@@ -10,6 +10,8 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import DNAVisualization from "@/components/dna-visualization";
+import { supabase } from "@/lib/supabase";
+import html2canvas from "html2canvas";
 
 interface Recommendation {
   title: string;
@@ -86,10 +88,150 @@ export default function Search() {
   const [isAiMode, setIsAiMode] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'stats' | 'summary' | 'history'>('stats');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const summaryCardRef = useRef<HTMLDivElement>(null);
   const { session, user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch user stats
+  const { data: userStats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['user-stats-dna', user?.id],
+    queryFn: async () => {
+      if (!session?.access_token || !user?.id) return null;
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-stats?user_id=${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.stats;
+    },
+    enabled: !!session?.access_token && !!user?.id,
+    staleTime: 60000,
+  });
+
+  // Fetch DNA profile
+  const { data: dnaProfile, isLoading: isLoadingDna, refetch: refetchDna } = useQuery({
+    queryKey: ['dna-profile-summary', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('dna_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!user?.id,
+    staleTime: 60000,
+  });
+
+  // Fetch media history (items from lists)
+  const { data: mediaHistory = [], isLoading: isLoadingHistory } = useQuery({
+    queryKey: ['media-history-dna', user?.id],
+    queryFn: async () => {
+      if (!session?.access_token || !user?.id) return [];
+      const { data, error } = await supabase
+        .from('list_items')
+        .select(`
+          id,
+          title,
+          media_type,
+          image_url,
+          created_at,
+          lists!inner(user_id, title)
+        `)
+        .eq('lists.user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) return [];
+      return data || [];
+    },
+    enabled: !!session?.access_token && !!user?.id,
+    staleTime: 60000,
+  });
+
+  const handleDownloadSummary = async () => {
+    if (!summaryCardRef.current) return;
+    setIsDownloading(true);
+    try {
+      const canvas = await html2canvas(summaryCardRef.current, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: null,
+      });
+      const link = document.createElement('a');
+      link.download = 'my-entertainment-dna.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      toast({ title: "Saved!", description: "Your DNA summary is ready to share" });
+    } catch (error) {
+      toast({ title: "Error", description: "Could not save image", variant: "destructive" });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleShareSummary = async () => {
+    if (navigator.share && dnaProfile) {
+      try {
+        await navigator.share({
+          title: 'My Entertainment DNA',
+          text: `I'm a "${dnaProfile.label}" - ${dnaProfile.tagline}. Check out my entertainment DNA on Consumed!`,
+          url: window.location.origin,
+        });
+      } catch (error) {
+        navigator.clipboard.writeText(`I'm a "${dnaProfile?.label}" - ${dnaProfile?.tagline}. Check out my entertainment DNA on Consumed!`);
+        toast({ title: "Copied!", description: "Share text copied to clipboard" });
+      }
+    } else {
+      navigator.clipboard.writeText(`I'm a "${dnaProfile?.label}" - ${dnaProfile?.tagline}. Check out my entertainment DNA on Consumed!`);
+      toast({ title: "Copied!", description: "Share text copied to clipboard" });
+    }
+  };
+
+  const handleRegenerateDna = async () => {
+    setIsRegenerating(true);
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/generate-dna-profile', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: user?.id }),
+      });
+      if (response.ok) {
+        await refetchDna();
+        toast({ title: "Regenerated!", description: "Your DNA profile has been updated" });
+      } else {
+        throw new Error('Failed to regenerate');
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Could not regenerate DNA", variant: "destructive" });
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  const getMediaIcon = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case 'movie': return <Film size={14} className="text-pink-400" />;
+      case 'tv': return <Tv size={14} className="text-blue-400" />;
+      case 'music': return <Music size={14} className="text-green-400" />;
+      case 'book': return <BookOpen size={14} className="text-orange-400" />;
+      case 'podcast': return <Mic size={14} className="text-purple-400" />;
+      case 'game': return <Gamepad2 size={14} className="text-red-400" />;
+      default: return <Film size={14} className="text-gray-400" />;
+    }
+  };
 
   // Fetch Netflix Top TV Shows
   const { data: netflixTVShows = [] } = useQuery({
@@ -527,17 +669,6 @@ export default function Search() {
     }
   };
 
-  const getMediaIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case 'movie': return <Film size={16} className="text-purple-400" />;
-      case 'tv': return <Tv size={16} className="text-blue-400" />;
-      case 'music': return <Music size={16} className="text-pink-400" />;
-      case 'podcast': return <Music size={16} className="text-green-400" />;
-      case 'book': return <BookOpen size={16} className="text-orange-400" />;
-      default: return <Film size={16} className="text-gray-400" />;
-    }
-  };
-
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -606,11 +737,235 @@ export default function Search() {
             </div>
           )}
 
+          {/* Pill Filters - only show when not searching */}
+          {!isAiMode && !searchQuery.trim() && (
+            <div className="flex gap-2 justify-center mt-4 overflow-x-auto pb-2">
+              {(['stats', 'summary', 'history'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    activeTab === tab
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-white/10 text-white/70 hover:bg-white/20'
+                  }`}
+                >
+                  {tab === 'stats' ? 'Stats' : tab === 'summary' ? 'Summary' : 'Media History'}
+                </button>
+              ))}
+            </div>
+          )}
+
         </div>
       </div>
       
       {/* Main Content Area - Light Background */}
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+        {/* Tab Content - only show when not searching */}
+        {!isAiMode && !searchQuery.trim() && (
+          <>
+            {/* Stats Tab */}
+            {activeTab === 'stats' && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Your Stats</h2>
+                {isLoadingStats ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="animate-spin text-purple-600" size={32} />
+                  </div>
+                ) : userStats ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-2xl font-bold text-purple-600">{userStats.movies || 0}</p>
+                        <p className="text-sm text-gray-500">Movies</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-blue-600">{userStats.tv_shows || 0}</p>
+                        <p className="text-sm text-gray-500">TV Shows</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-green-600">{userStats.books || 0}</p>
+                        <p className="text-sm text-gray-500">Books</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-2xl font-bold text-pink-600">{userStats.music || '0h'}</p>
+                        <p className="text-sm text-gray-500">Music</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-orange-600">{userStats.podcasts || '0h'}</p>
+                        <p className="text-sm text-gray-500">Podcasts</p>
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-red-600">{userStats.games || 0}</p>
+                        <p className="text-sm text-gray-500">Games</p>
+                      </div>
+                    </div>
+                    <div className="border-t pt-4 grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-xl font-bold text-gray-900">{userStats.total_hours || 0}h</p>
+                        <p className="text-xs text-gray-500">Total Hours</p>
+                      </div>
+                      <div>
+                        <p className="text-xl font-bold text-gray-900">{userStats.avg_rating || '-'}</p>
+                        <p className="text-xs text-gray-500">Avg Rating</p>
+                      </div>
+                      <div>
+                        <p className="text-xl font-bold text-gray-900">{userStats.day_streak || 0}</p>
+                        <p className="text-xs text-gray-500">Day Streak</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <BarChart3 className="mx-auto mb-2 text-gray-300" size={40} />
+                    <p>Start tracking to see your stats</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Summary Tab */}
+            {activeTab === 'summary' && (
+              <div className="space-y-4">
+                {isLoadingDna ? (
+                  <div className="bg-white rounded-2xl p-6 flex justify-center">
+                    <Loader2 className="animate-spin text-purple-600" size={32} />
+                  </div>
+                ) : dnaProfile ? (
+                  <>
+                    {/* Shareable Card */}
+                    <div 
+                      ref={summaryCardRef}
+                      className="bg-white rounded-2xl overflow-hidden shadow-sm mx-auto max-w-sm"
+                    >
+                      <div className="h-1.5 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500"></div>
+                      <div className="p-5">
+                        <div className="text-center mb-4">
+                          <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <Dna className="text-white" size={28} />
+                          </div>
+                          <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                            {dnaProfile.label}
+                          </h2>
+                          <p className="text-gray-600 text-sm mt-1">{dnaProfile.tagline}</p>
+                        </div>
+                        
+                        {dnaProfile.profile_text && (
+                          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 mb-4">
+                            <p className="text-gray-700 text-sm leading-relaxed">{dnaProfile.profile_text}</p>
+                          </div>
+                        )}
+
+                        {dnaProfile.favorite_genres && dnaProfile.favorite_genres.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 justify-center mb-4">
+                            {dnaProfile.favorite_genres.slice(0, 5).map((genre: string, i: number) => (
+                              <span key={i} className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                                {genre}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="text-center pt-2 border-t border-gray-100">
+                          <p className="text-purple-600 text-xs font-medium">@consumedapp</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 justify-center">
+                      <Button
+                        onClick={handleDownloadSummary}
+                        disabled={isDownloading}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <Download size={16} />
+                        {isDownloading ? 'Saving...' : 'Download'}
+                      </Button>
+                      <Button
+                        onClick={handleShareSummary}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <Share2 size={16} />
+                        Share
+                      </Button>
+                      <Button
+                        onClick={handleRegenerateDna}
+                        disabled={isRegenerating}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <RefreshCw size={16} className={isRegenerating ? 'animate-spin' : ''} />
+                        {isRegenerating ? 'Updating...' : 'Regenerate'}
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="bg-white rounded-2xl p-6 text-center">
+                    <Dna className="mx-auto mb-3 text-purple-300" size={48} />
+                    <h3 className="font-semibold text-gray-900 mb-2">No DNA Profile Yet</h3>
+                    <p className="text-gray-500 text-sm mb-4">Take the DNA survey to generate your unique entertainment identity</p>
+                    <Button
+                      onClick={() => setLocation('/entertainment-dna')}
+                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      Take DNA Survey
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Media History Tab */}
+            {activeTab === 'history' && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Media History</h2>
+                {isLoadingHistory ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="animate-spin text-purple-600" size={32} />
+                  </div>
+                ) : mediaHistory.length > 0 ? (
+                  <div className="space-y-3">
+                    {mediaHistory.map((item: any) => (
+                      <div key={item.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                        <div className="w-12 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                          {item.image_url ? (
+                            <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              {getMediaIcon(item.media_type)}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">{item.title}</p>
+                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                            {getMediaIcon(item.media_type)}
+                            <span className="capitalize">{item.media_type || 'Media'}</span>
+                            <span>•</span>
+                            <Clock size={12} />
+                            <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Clock className="mx-auto mb-2 text-gray-300" size={40} />
+                    <p>No media tracked yet</p>
+                    <p className="text-sm mt-1">Add movies, shows, and more to see your history</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
 
         {/* AI Search Loading State */}
         {isAiMode && isSearching && (
