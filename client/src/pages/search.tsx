@@ -334,7 +334,8 @@ export default function Search() {
   };
 
   // Get user DNA level and item count
-  const itemCount = userStats?.totalItems || 0;
+  const itemCount = userStats ? 
+    (userStats.moviesWatched || 0) + (userStats.tvShowsWatched || 0) + (userStats.booksRead || 0) + (userStats.gamesPlayed || 0) : 0;
   const hasSurvey = !!dnaProfile;
   const dnaLevel = hasSurvey && itemCount >= 30 ? 2 : hasSurvey || itemCount >= 10 ? 1 : 0;
   const canCompare = hasSurvey && dnaLevel >= 2;
@@ -1097,43 +1098,43 @@ export default function Search() {
                   <div className="space-y-3">
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div>
-                        <p className="text-lg font-bold text-purple-600">{userStats.movies || 0}</p>
+                        <p className="text-lg font-bold text-purple-600">{userStats.moviesWatched || 0}</p>
                         <p className="text-xs text-gray-500">Movies</p>
                       </div>
                       <div>
-                        <p className="text-lg font-bold text-blue-600">{userStats.tv_shows || 0}</p>
+                        <p className="text-lg font-bold text-blue-600">{userStats.tvShowsWatched || 0}</p>
                         <p className="text-xs text-gray-500">TV Shows</p>
                       </div>
                       <div>
-                        <p className="text-lg font-bold text-green-600">{userStats.books || 0}</p>
+                        <p className="text-lg font-bold text-green-600">{userStats.booksRead || 0}</p>
                         <p className="text-xs text-gray-500">Books</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div>
-                        <p className="text-lg font-bold text-pink-600">{userStats.music || '0h'}</p>
+                        <p className="text-lg font-bold text-pink-600">{userStats.musicHours || 0}h</p>
                         <p className="text-xs text-gray-500">Music</p>
                       </div>
                       <div>
-                        <p className="text-lg font-bold text-orange-600">{userStats.podcasts || '0h'}</p>
+                        <p className="text-lg font-bold text-orange-600">{userStats.podcastHours || 0}h</p>
                         <p className="text-xs text-gray-500">Podcasts</p>
                       </div>
                       <div>
-                        <p className="text-lg font-bold text-red-600">{userStats.games || 0}</p>
+                        <p className="text-lg font-bold text-red-600">{userStats.gamesPlayed || 0}</p>
                         <p className="text-xs text-gray-500">Games</p>
                       </div>
                     </div>
                     <div className="border-t pt-3 grid grid-cols-3 gap-2 text-center">
                       <div>
-                        <p className="text-base font-bold text-gray-900">{userStats.total_hours || 0}h</p>
+                        <p className="text-base font-bold text-gray-900">{userStats.totalHours || 0}h</p>
                         <p className="text-xs text-gray-500">Total Hours</p>
                       </div>
                       <div>
-                        <p className="text-base font-bold text-gray-900">{userStats.avg_rating || '-'}</p>
+                        <p className="text-base font-bold text-gray-900">{userStats.averageRating || '-'}</p>
                         <p className="text-xs text-gray-500">Avg Rating</p>
                       </div>
                       <div>
-                        <p className="text-base font-bold text-gray-900">{userStats.day_streak || 0}</p>
+                        <p className="text-base font-bold text-gray-900">{userStats.dayStreak || 0}</p>
                         <p className="text-xs text-gray-500">Day Streak</p>
                       </div>
                     </div>
