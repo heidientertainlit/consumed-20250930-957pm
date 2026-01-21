@@ -785,7 +785,7 @@ export default function Search() {
             {/* Stats Tab */}
             {activeTab === 'stats' && (
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <h2 className="text-base font-bold text-gray-900 mb-3">Your Stats</h2>
+                <h2 className="text-base font-semibold text-gray-900 mb-3">Your Stats</h2>
                 {isLoadingStats ? (
                   <div className="flex justify-center py-4">
                     <Loader2 className="animate-spin text-purple-600" size={24} />
@@ -945,7 +945,7 @@ export default function Search() {
             {/* Media History Tab */}
             {activeTab === 'history' && (
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <h2 className="text-base font-bold text-gray-900 mb-3">Media History</h2>
+                <h2 className="text-base font-semibold text-gray-900 mb-3">Media History</h2>
                 {isLoadingHistory ? (
                   <div className="flex justify-center py-4">
                     <Loader2 className="animate-spin text-purple-600" size={24} />
