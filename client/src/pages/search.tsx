@@ -1514,13 +1514,20 @@ export default function Search() {
             {/* Media History Tab */}
             {activeTab === 'history' && (
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex items-center justify-end mb-3">
+                <div className="flex items-center justify-end gap-2 mb-3">
                   <button
-                    className="bg-gradient-to-r from-purple-800 to-purple-600 hover:from-purple-900 hover:to-purple-700 text-white text-xs h-7 px-4 rounded-full flex items-center gap-1 font-medium shadow-sm"
+                    className="bg-gradient-to-r from-purple-800 to-purple-600 hover:from-purple-900 hover:to-purple-700 text-white text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium shadow-sm"
                     onClick={() => setIsQuickAddOpen(true)}
                   >
                     <Plus size={12} />
-                    {historySubTab === 'lists' ? 'Create List' : 'Add'}
+                    Add Media
+                  </button>
+                  <button
+                    className="bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium"
+                    onClick={() => setIsQuickAddOpen(true)}
+                  >
+                    <Plus size={12} />
+                    Create List
                   </button>
                 </div>
 
