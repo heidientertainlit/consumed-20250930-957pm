@@ -440,8 +440,15 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
             
             return (
               <div key={item.id} className="flex-shrink-0 w-full snap-center h-auto">
-                <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
-                  <span className="text-xs text-green-700 font-medium">+{item.pointsReward} pts</span>
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
+                    <span className="text-xs text-green-700 font-medium">+{item.pointsReward} pts</span>
+                  </div>
+                  {item.title && item.title !== item.question && (
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200">
+                      <span className="text-xs text-purple-700 font-medium">{item.title}</span>
+                    </div>
+                  )}
                 </div>
                 
                 <h3 className="text-gray-900 font-semibold text-base mb-3">{item.question}</h3>
