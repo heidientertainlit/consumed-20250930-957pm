@@ -872,7 +872,7 @@ export default function Search() {
                         
                         {dnaProfile.profile_text && (
                           <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 mb-3">
-                            <p className="text-gray-700 text-xs leading-relaxed line-clamp-4">{dnaProfile.profile_text}</p>
+                            <p className="text-gray-700 text-xs leading-relaxed">{dnaProfile.profile_text}</p>
                           </div>
                         )}
 
