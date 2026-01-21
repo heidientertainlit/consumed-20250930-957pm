@@ -1161,7 +1161,6 @@ export default function Search() {
                       ref={summaryCardRef}
                       className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100"
                     >
-                      <div className="h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500"></div>
                       <div className="p-4">
                         <div className="text-center mb-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
