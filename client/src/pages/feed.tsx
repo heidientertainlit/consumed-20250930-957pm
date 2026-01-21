@@ -2711,11 +2711,8 @@ export default function Feed() {
         <div className="max-w-4xl mx-auto px-4 pt-4">
           <div className="text-center mb-4">
             <h1 className="text-white text-2xl md:text-3xl font-bold tracking-tight leading-snug">
-              See how you stack up.
-            </h1>
-            <p className="text-gray-400 text-sm mt-1">
               Answer, vote, and share your takes.
-            </p>
+            </h1>
           </div>
           
           {/* Daily Challenge */}

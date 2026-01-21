@@ -394,11 +394,8 @@ export default function Leaderboard() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-semibold text-black mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Leaders
+            See how you stack up.
           </h1>
-          <p className="text-base text-gray-600 max-w-xs mx-auto">
-            Most active fans and top contributors
-          </p>
         </div>
 
         <div className="flex justify-center gap-2 mb-4">
