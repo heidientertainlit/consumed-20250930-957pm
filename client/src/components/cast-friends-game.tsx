@@ -336,20 +336,21 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
                 placeholder="e.g. Tall, dark hair, funny, always the life of the party..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[70px] resize-none text-sm"
+                className="min-h-[70px] resize-none text-sm bg-white text-black border-gray-300 placeholder:text-gray-400"
               />
               <div className="flex gap-2">
                 <Button 
                   variant="outline"
                   size="sm"
                   onClick={() => setMode('browse')}
+                  className="rounded-full px-4 border-purple-600 text-purple-600 hover:bg-purple-50"
                 >
                   Cancel
                 </Button>
                 <Button 
                   onClick={suggestCelebrities}
                   disabled={isLoading || description.length < 5}
-                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                  className="flex-1 rounded-full bg-purple-600 hover:bg-purple-700"
                   size="sm"
                 >
                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 mr-1" />}
