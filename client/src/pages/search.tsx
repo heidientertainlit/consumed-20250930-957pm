@@ -551,7 +551,7 @@ export default function Search() {
               Build your DNA
             </h1>
             <p className="text-gray-400 text-sm max-w-xs mx-auto">
-              Add what you've watched, read, or listened to. We'll turn it into insights, stats, and better takes.
+              Add what you've watched, read, or listened to.
             </p>
           </div>
 
