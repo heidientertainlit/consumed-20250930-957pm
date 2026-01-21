@@ -2710,7 +2710,7 @@ export default function Feed() {
       <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e] pb-4 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
           <div className="text-center mb-4">
-            <h1 className="text-white text-xl md:text-2xl font-bold tracking-tight leading-snug">
+            <h1 className="text-white text-xl md:text-2xl font-bold tracking-tight leading-snug whitespace-nowrap">
               Answer, vote, and share your takes.
             </h1>
           </div>

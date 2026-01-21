@@ -393,7 +393,7 @@ export default function Leaderboard() {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-semibold text-black mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-2xl font-semibold text-black mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Leaderboard
           </h1>
           <p className="text-base text-gray-600">

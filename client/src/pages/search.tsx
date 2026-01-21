@@ -547,7 +547,7 @@ export default function Search() {
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-3xl font-semibold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h1 className="text-2xl font-semibold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
               Build your DNA
             </h1>
             <p className="text-gray-400 text-sm max-w-xs mx-auto">
