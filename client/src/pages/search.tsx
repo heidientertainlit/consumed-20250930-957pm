@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target, User, Plus, Users, Download, RefreshCw, Share2, Dna, Mic, Gamepad2, Clock, BarChart3, Send, Lock } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target, User, Plus, Users, Download, RefreshCw, Share2, Dna, Mic, Gamepad2, Clock, BarChart3, Send, Lock, List, ChevronRight, Calendar, Play, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import MediaCarousel from "@/components/media-carousel";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
@@ -94,6 +96,13 @@ export default function Search() {
   const [comparisonResult, setComparisonResult] = useState<any>(null);
   const [compareError, setCompareError] = useState<string | null>(null);
   const comparisonCardRef = useRef<HTMLDivElement>(null);
+  const [historySubTab, setHistorySubTab] = useState<'lists' | 'history'>('lists');
+  const [listSearch, setListSearch] = useState('');
+  const [mediaHistorySearch, setMediaHistorySearch] = useState('');
+  const [mediaHistoryType, setMediaHistoryType] = useState('all');
+  const [mediaHistoryYear, setMediaHistoryYear] = useState('all');
+  const [mediaHistoryRating, setMediaHistoryRating] = useState('all');
+  const [openFilter, setOpenFilter] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const summaryCardRef = useRef<HTMLDivElement>(null);
@@ -162,6 +171,92 @@ export default function Search() {
     enabled: !!session?.access_token && !!user?.id,
     staleTime: 60000,
   });
+
+  // Fetch user lists
+  const { data: userLists = [], isLoading: isLoadingLists } = useQuery({
+    queryKey: ['user-lists-dna', user?.id],
+    queryFn: async () => {
+      if (!session?.access_token || !user?.id) return [];
+      const { data, error } = await supabase
+        .from('lists')
+        .select(`
+          id,
+          title,
+          is_default,
+          visibility,
+          list_items(id)
+        `)
+        .eq('user_id', user.id)
+        .order('is_default', { ascending: false });
+      if (error) return [];
+      return (data || []).map((list: any) => ({
+        ...list,
+        items: list.list_items || [],
+      }));
+    },
+    enabled: !!session?.access_token && !!user?.id,
+    staleTime: 60000,
+  });
+
+  // Enhanced media history with list names
+  const { data: fullMediaHistory = [], isLoading: isLoadingFullHistory } = useQuery({
+    queryKey: ['full-media-history-dna', user?.id],
+    queryFn: async () => {
+      if (!session?.access_token || !user?.id) return [];
+      const { data, error } = await supabase
+        .from('list_items')
+        .select(`
+          id,
+          title,
+          media_type,
+          image_url,
+          created_at,
+          rating,
+          external_id,
+          external_source,
+          lists!inner(user_id, title)
+        `)
+        .eq('lists.user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (error) return [];
+      return (data || []).map((item: any) => ({
+        ...item,
+        listName: item.lists?.title || 'Unknown'
+      }));
+    },
+    enabled: !!session?.access_token && !!user?.id,
+    staleTime: 60000,
+  });
+
+  // Filter media history
+  const filteredMediaHistory = fullMediaHistory.filter((item: any) => {
+    const matchesSearch = !mediaHistorySearch || item.title?.toLowerCase().includes(mediaHistorySearch.toLowerCase());
+    const matchesType = mediaHistoryType === 'all' || item.media_type?.toLowerCase() === mediaHistoryType.toLowerCase();
+    const matchesYear = mediaHistoryYear === 'all' || new Date(item.created_at).getFullYear().toString() === mediaHistoryYear;
+    const matchesRating = mediaHistoryRating === 'all' || item.rating?.toString() === mediaHistoryRating;
+    return matchesSearch && matchesType && matchesYear && matchesRating;
+  });
+
+  const handleShareList = async (listId: string, listTitle: string) => {
+    const url = `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: listTitle, url });
+      } catch {
+        await navigator.clipboard.writeText(url);
+        toast({ title: "Copied!", description: "List link copied to clipboard" });
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Copied!", description: "List link copied to clipboard" });
+    }
+  };
+
+  const getDisplayTitle = (title: string) => {
+    if (title === 'All') return 'All';
+    return title;
+  };
 
   const handleDownloadSummary = async () => {
     if (!summaryCardRef.current) return;
@@ -1420,43 +1515,296 @@ export default function Search() {
             {/* Media History Tab */}
             {activeTab === 'history' && (
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <h2 className="text-base font-semibold text-gray-900 mb-3">Media History</h2>
-                {isLoadingHistory ? (
-                  <div className="flex justify-center py-4">
-                    <Loader2 className="animate-spin text-purple-600" size={24} />
-                  </div>
-                ) : mediaHistory.length > 0 ? (
-                  <div className="space-y-2">
-                    {mediaHistory.map((item: any) => (
-                      <div key={item.id} className="flex items-center gap-2.5 p-2 bg-gray-50 rounded-lg">
-                        <div className="w-10 h-14 bg-gray-200 rounded overflow-hidden flex-shrink-0">
-                          {item.image_url ? (
-                            <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              {getMediaIcon(item.media_type)}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
-                          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                            {getMediaIcon(item.media_type)}
-                            <span className="capitalize">{item.media_type || 'Media'}</span>
-                            <span>•</span>
-                            <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-base font-semibold text-gray-900">Media History</h2>
+                  <Button
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700 text-xs h-8"
+                    onClick={() => setIsQuickAddOpen(true)}
+                  >
+                    <Plus size={14} className="mr-1" />
+                    {historySubTab === 'lists' ? 'Create' : 'Add'}
+                  </Button>
+                </div>
+
+                <Tabs value={historySubTab} onValueChange={(v) => setHistorySubTab(v as 'lists' | 'history')} className="w-full">
+                  <TabsList className="w-full mb-3 bg-gray-100 border border-gray-200 p-0.5 h-9">
+                    <TabsTrigger 
+                      value="lists" 
+                      className="flex-1 text-xs data-[state=active]:bg-purple-600 data-[state=active]:text-white"
+                    >
+                      <List size={14} className="mr-1.5" />
+                      Lists
+                    </TabsTrigger>
+                    <TabsTrigger 
+                      value="history" 
+                      className="flex-1 text-xs data-[state=active]:bg-purple-600 data-[state=active]:text-white"
+                    >
+                      <Clock size={14} className="mr-1.5" />
+                      History
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="lists" className="mt-0">
+                    <div className="relative mb-3">
+                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                      <input
+                        type="text"
+                        placeholder="Search lists..."
+                        value={listSearch}
+                        onChange={(e) => setListSearch(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                      />
+                    </div>
+
+                    {isLoadingLists ? (
+                      <div className="space-y-2">
+                        {[1, 2, 3].map((n) => (
+                          <div key={n} className="bg-gray-50 rounded-lg p-3 animate-pulse">
+                            <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+                            <div className="h-3 bg-gray-100 rounded w-1/4"></div>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-gray-500">
-                    <Clock className="mx-auto mb-2 text-gray-300" size={28} />
-                    <p className="text-sm">No media tracked yet</p>
-                    <p className="text-xs mt-0.5">Add movies, shows, and more to see your history</p>
-                  </div>
-                )}
+                    ) : userLists.length === 0 ? (
+                      <div className="text-center py-6">
+                        <List className="mx-auto mb-2 text-gray-300" size={28} />
+                        <p className="text-sm text-gray-600">No lists yet</p>
+                        <p className="text-xs text-gray-500">Create your first list to start tracking</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {userLists
+                          .filter((list: any) => list.title.toLowerCase().includes(listSearch.toLowerCase()))
+                          .map((list: any) => (
+                          <div
+                            key={list.id}
+                            className="bg-gray-50 border border-gray-200 rounded-lg hover:border-purple-300 transition-colors cursor-pointer"
+                            onClick={() => {
+                              const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
+                              setLocation(`/list/${listSlug}`);
+                            }}
+                          >
+                            <div className="px-3 py-2.5 flex items-center justify-between">
+                              <div className="flex items-center gap-2.5 flex-1">
+                                <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
+                                  {list.is_default ? (
+                                    list.title === 'Want to Watch' ? <Play className="text-purple-600" size={14} /> :
+                                    list.title === 'Currently' ? <Clock className="text-blue-600" size={14} /> :
+                                    list.title === 'Completed' ? <Trophy className="text-green-600" size={14} /> :
+                                    <List className="text-gray-600" size={14} />
+                                  ) : (
+                                    <List className="text-purple-600" size={14} />
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <h4 className="font-medium text-gray-900 text-sm">{getDisplayTitle(list.title)}</h4>
+                                    {!list.is_default && list.visibility === 'private' && (
+                                      <Lock size={10} className="text-gray-400" />
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-gray-500">{list.items?.length || 0} items</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <Share2 
+                                  className="text-gray-400 hover:text-purple-600" 
+                                  size={14}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleShareList(list.id, list.title);
+                                  }}
+                                />
+                                <ChevronRight className="text-gray-400" size={16} />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="history" className="mt-0">
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                            mediaHistoryType !== 'all'
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                          }`}
+                        >
+                          <Film size={10} />
+                          {mediaHistoryType === 'all' ? 'Type' : mediaHistoryType}
+                          <ChevronRight size={10} className={`transition-transform ${openFilter === 'type' ? 'rotate-90' : ''}`} />
+                        </button>
+                        {openFilter === 'type' && (
+                          <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[100px]">
+                            {[
+                              { value: 'all', label: 'All Types' },
+                              { value: 'movie', label: 'Movies' },
+                              { value: 'tv', label: 'TV' },
+                              { value: 'book', label: 'Books' },
+                              { value: 'music', label: 'Music' },
+                            ].map(({ value, label }) => (
+                              <button
+                                key={value}
+                                onClick={() => { setMediaHistoryType(value); setOpenFilter(null); }}
+                                className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${
+                                  mediaHistoryType === value ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenFilter(openFilter === 'year' ? null : 'year')}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                            mediaHistoryYear !== 'all'
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                          }`}
+                        >
+                          <Calendar size={10} />
+                          {mediaHistoryYear === 'all' ? 'Year' : mediaHistoryYear}
+                          <ChevronRight size={10} className={`transition-transform ${openFilter === 'year' ? 'rotate-90' : ''}`} />
+                        </button>
+                        {openFilter === 'year' && (
+                          <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[80px] max-h-40 overflow-y-auto">
+                            <button
+                              onClick={() => { setMediaHistoryYear('all'); setOpenFilter(null); }}
+                              className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${
+                                mediaHistoryYear === 'all' ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
+                              }`}
+                            >
+                              All Years
+                            </button>
+                            {Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() - i).toString()).map((year) => (
+                              <button
+                                key={year}
+                                onClick={() => { setMediaHistoryYear(year); setOpenFilter(null); }}
+                                className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${
+                                  mediaHistoryYear === year ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
+                                }`}
+                              >
+                                {year}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenFilter(openFilter === 'rating' ? null : 'rating')}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors flex items-center gap-1 ${
+                            mediaHistoryRating !== 'all'
+                              ? 'bg-purple-600 text-white'
+                              : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                          }`}
+                        >
+                          ⭐
+                          {mediaHistoryRating === 'all' ? 'Rating' : `${mediaHistoryRating}★`}
+                          <ChevronRight size={10} className={`transition-transform ${openFilter === 'rating' ? 'rotate-90' : ''}`} />
+                        </button>
+                        {openFilter === 'rating' && (
+                          <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[80px]">
+                            <button
+                              onClick={() => { setMediaHistoryRating('all'); setOpenFilter(null); }}
+                              className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${
+                                mediaHistoryRating === 'all' ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
+                              }`}
+                            >
+                              All
+                            </button>
+                            {[5, 4, 3, 2, 1].map((rating) => (
+                              <button
+                                key={rating}
+                                onClick={() => { setMediaHistoryRating(rating.toString()); setOpenFilter(null); }}
+                                className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${
+                                  mediaHistoryRating === rating.toString() ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'
+                                }`}
+                              >
+                                {'⭐'.repeat(rating)}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="relative mb-3">
+                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                      <input
+                        type="text"
+                        placeholder="Search media history..."
+                        value={mediaHistorySearch}
+                        onChange={(e) => setMediaHistorySearch(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                      />
+                    </div>
+
+                    {isLoadingFullHistory ? (
+                      <div className="space-y-2">
+                        {[1, 2, 3].map((n) => (
+                          <div key={n} className="bg-gray-50 rounded-lg p-3 animate-pulse">
+                            <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"></div>
+                            <div className="h-3 bg-gray-100 rounded w-1/3"></div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : filteredMediaHistory.length === 0 ? (
+                      <div className="text-center py-6">
+                        <Clock className="mx-auto mb-2 text-gray-300" size={28} />
+                        <p className="text-sm text-gray-600">No media history yet</p>
+                        <p className="text-xs text-gray-500">Start tracking to see your history</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {filteredMediaHistory.map((item: any, index: number) => (
+                          <div
+                            key={`${item.id}-${index}`}
+                            className="bg-gray-50 border border-gray-200 rounded-lg p-2.5 hover:border-purple-300 transition-colors cursor-pointer"
+                            onClick={() => {
+                              if (item.external_id && item.external_source) {
+                                setLocation(`/media/${item.media_type}/${item.external_source}/${item.external_id}`);
+                              }
+                            }}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-9 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                                {item.image_url ? (
+                                  <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    {getMediaIcon(item.media_type)}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-gray-900 text-sm truncate">{item.title}</h4>
+                                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                  {getMediaIcon(item.media_type)}
+                                  <span className="capitalize">{item.media_type}</span>
+                                  <span>•</span>
+                                  <span>{item.listName}</span>
+                                </div>
+                                <p className="text-xs text-gray-400">{new Date(item.created_at).toLocaleDateString()}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+                </Tabs>
               </div>
             )}
           </>
