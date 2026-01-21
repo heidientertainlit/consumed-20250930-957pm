@@ -1516,14 +1516,13 @@ export default function Search() {
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-base font-semibold text-gray-900">Media History</h2>
-                  <Button
-                    size="sm"
-                    className="bg-gradient-to-r from-purple-700 to-purple-600 hover:from-purple-800 hover:to-purple-700 text-white text-xs h-7 px-3 rounded-full"
+                  <button
+                    className="bg-gradient-to-r from-purple-800 to-purple-600 hover:from-purple-900 hover:to-purple-700 text-white text-xs h-7 px-4 rounded-full flex items-center gap-1 font-medium shadow-sm"
                     onClick={() => setIsQuickAddOpen(true)}
                   >
-                    <Plus size={12} className="mr-1" />
+                    <Plus size={12} />
                     {historySubTab === 'lists' ? 'Create List' : 'Add'}
-                  </Button>
+                  </button>
                 </div>
 
                 <Tabs value={historySubTab} onValueChange={(v) => setHistorySubTab(v as 'lists' | 'history')} className="w-full">
