@@ -1034,7 +1034,7 @@ export default function Search() {
 
         {/* Pill Filters - styled like the screenshot */}
         {!isAiMode && !searchQuery.trim() && (
-          <div className="flex gap-2 overflow-x-auto pb-2 -mt-2">
+          <div className="flex gap-2 overflow-x-auto pb-2 -mt-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <button
               onClick={() => setActiveTab('stats')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
