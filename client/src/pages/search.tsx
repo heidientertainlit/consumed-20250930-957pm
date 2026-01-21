@@ -1514,8 +1514,7 @@ export default function Search() {
             {/* Media History Tab */}
             {activeTab === 'history' && (
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-base font-semibold text-gray-900">Media History</h2>
+                <div className="flex items-center justify-end mb-3">
                   <button
                     className="bg-gradient-to-r from-purple-800 to-purple-600 hover:from-purple-900 hover:to-purple-700 text-white text-xs h-7 px-4 rounded-full flex items-center gap-1 font-medium shadow-sm"
                     onClick={() => setIsQuickAddOpen(true)}
