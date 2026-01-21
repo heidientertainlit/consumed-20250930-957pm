@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import MediaCarousel from "@/components/media-carousel";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import DNAVisualization from "@/components/dna-visualization";
@@ -1522,13 +1522,12 @@ export default function Search() {
                     <Plus size={12} />
                     Add Media
                   </button>
-                  <button
-                    className="bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium"
-                    onClick={() => setLocation('/track')}
-                  >
-                    <Download size={12} />
-                    Import
-                  </button>
+                  <Link href="/track">
+                    <a className="bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium">
+                      <Download size={12} />
+                      Import
+                    </a>
+                  </Link>
                   <button
                     className="bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium"
                     onClick={() => setIsQuickAddOpen(true)}
