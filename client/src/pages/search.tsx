@@ -745,10 +745,10 @@ export default function Search() {
           <div className="flex gap-2 overflow-x-auto pb-2 -mt-2">
             <button
               onClick={() => setActiveTab('stats')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all border ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 activeTab === 'stats'
-                  ? 'bg-purple-600 text-white border-purple-600'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-purple-300'
+                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
               }`}
             >
               <BarChart3 size={16} />
@@ -756,10 +756,10 @@ export default function Search() {
             </button>
             <button
               onClick={() => setActiveTab('summary')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all border ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 activeTab === 'summary'
-                  ? 'bg-purple-600 text-white border-purple-600'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-purple-300'
+                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
               }`}
             >
               <Dna size={16} />
@@ -767,10 +767,10 @@ export default function Search() {
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all border ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 activeTab === 'history'
-                  ? 'bg-purple-600 text-white border-purple-600'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-purple-300'
+                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
               }`}
             >
               <Clock size={16} />
