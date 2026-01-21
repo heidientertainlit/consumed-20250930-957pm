@@ -655,17 +655,18 @@ export default function Search() {
             </div>
           )}
 
-          {/* DNA Visualization - Glimpse of your Entertainment DNA */}
-          {!isAiMode && !searchQuery.trim() && (
-            <div className="mt-6">
-              <DNAVisualization />
-            </div>
-          )}
         </div>
       </div>
       
       {/* Main Content Area - Light Background */}
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+        {/* DNA Visualization - Glimpse of your Entertainment DNA */}
+        {!isAiMode && !searchQuery.trim() && (
+          <div>
+            <DNAVisualization />
+          </div>
+        )}
 
         {/* AI Search Loading State */}
         {isAiMode && isSearching && (

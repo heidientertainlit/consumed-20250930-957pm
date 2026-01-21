@@ -152,8 +152,9 @@ export default function DNAVisualization() {
   }, [dimensions]);
 
   return (
-    <div className="w-full rounded-2xl overflow-hidden shadow-lg">
-      <div className="relative">
+    <div className="w-full">
+      <p className="text-gray-500 text-xs mb-2">Your Entertainment DNA</p>
+      <div className="rounded-2xl overflow-hidden shadow-lg">
         <canvas
           ref={canvasRef}
           width={dimensions.width}
@@ -161,9 +162,6 @@ export default function DNAVisualization() {
           className="w-full"
           style={{ height: '280px' }}
         />
-        <div className="absolute bottom-3 left-0 right-0 text-center">
-          <p className="text-gray-400 text-xs">Your Entertainment DNA</p>
-        </div>
       </div>
     </div>
   );
