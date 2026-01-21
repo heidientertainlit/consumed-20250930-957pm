@@ -1542,14 +1542,14 @@ export default function Search() {
                   <TabsList className="w-full mb-3 bg-gray-100 border border-gray-200 p-0.5 h-9">
                     <TabsTrigger 
                       value="lists" 
-                      className="flex-1 text-xs data-[state=active]:bg-purple-600 data-[state=active]:text-white"
+                      className="flex-1 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-500 data-[state=active]:text-white"
                     >
                       <List size={14} className="mr-1.5" />
                       Lists
                     </TabsTrigger>
                     <TabsTrigger 
                       value="history" 
-                      className="flex-1 text-xs data-[state=active]:bg-purple-600 data-[state=active]:text-white"
+                      className="flex-1 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-500 data-[state=active]:text-white"
                     >
                       <Clock size={14} className="mr-1.5" />
                       History
