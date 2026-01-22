@@ -2770,15 +2770,15 @@ export default function Feed() {
             <div className="text-center py-8">
               <p className="text-gray-600">Please sign in to view your social feed.</p>
             </div>
-          ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'games', 'track'].includes(selectedFilter) ? (
+          ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'challenges', 'track'].includes(selectedFilter) ? (
             <div className="space-y-4 pb-24">
               {/* Feed Filter Pills */}
               <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-4">
                 {[
                   { id: 'all', label: 'All', Icon: Sparkles },
-                  { id: 'games', label: 'Play', Icon: Gamepad2 },
                   { id: 'track', label: 'Track', Icon: ListPlus },
                   { id: 'trivia', label: 'Trivia', Icon: Brain },
+                  { id: 'challenges', label: 'Challenges', Icon: Trophy },
                   { id: 'polls', label: 'Polls', Icon: BarChart },
                   { id: 'predictions', label: 'Predictions', Icon: Target },
                   { id: 'dna', label: 'DNA', Icon: Dna },
