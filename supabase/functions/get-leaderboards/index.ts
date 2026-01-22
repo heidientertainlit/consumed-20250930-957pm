@@ -212,39 +212,69 @@ serve(async (req) => {
 
     // 2. TRIVIA CHAMPIONS - users who win trivia games
     if (category === 'all' || category === 'trivia') {
-      // Get trivia pools
-      const { data: triviaPools } = await supabase
-        .from('prediction_pools')
-        .select('id')
-        .eq('type', 'trivia');
+      // First try: Get from trivia_user_points table directly
+      const { data: triviaPoints, error: triviaPointsError } = await supabase
+        .from('trivia_user_points')
+        .select('user_id, total_trivia_points, correct_answers, total_answers');
       
-      const triviaPoolIds = (triviaPools || []).map(p => p.id);
-
-      if (triviaPoolIds.length > 0) {
-        const { data: predictions } = await supabase
-          .from('user_predictions')
-          .select('user_id, points_earned, is_winner, pool_id, created_at')
-          .in('pool_id', triviaPoolIds)
-          .gte('created_at', dateFilter || '1970-01-01');
-
-        const triviaMap: Record<string, { wins: number; points: number }> = {};
-        (predictions || []).forEach((p: any) => {
-          if (!triviaMap[p.user_id]) {
-            triviaMap[p.user_id] = { wins: 0, points: 0 };
-          }
-          if (p.is_winner) triviaMap[p.user_id].wins += 1;
-          triviaMap[p.user_id].points += p.points_earned || 0;
-        });
-
+      if (!triviaPointsError && triviaPoints && triviaPoints.length > 0) {
         results.trivia = formatEntries(
-          Object.entries(triviaMap).map(([user_id, data]) => ({ 
-            user_id, 
-            score: data.points,
-            detail: `${data.wins} wins`
+          triviaPoints.map((tp: any) => ({
+            user_id: tp.user_id,
+            score: tp.total_trivia_points || 0,
+            detail: `${tp.correct_answers || 0}/${tp.total_answers || 0} correct`
           }))
         );
       } else {
-        results.trivia = [];
+        // Fallback: Try user_predictions with trivia pools
+        const { data: triviaPools } = await supabase
+          .from('prediction_pools')
+          .select('id')
+          .eq('type', 'trivia');
+        
+        const triviaPoolIds = (triviaPools || []).map(p => p.id);
+
+        if (triviaPoolIds.length > 0) {
+          const { data: predictions } = await supabase
+            .from('user_predictions')
+            .select('user_id, points_earned, is_winner, pool_id, created_at')
+            .in('pool_id', triviaPoolIds)
+            .gte('created_at', dateFilter || '1970-01-01');
+
+          const triviaMap: Record<string, { wins: number; points: number }> = {};
+          (predictions || []).forEach((p: any) => {
+            if (!triviaMap[p.user_id]) {
+              triviaMap[p.user_id] = { wins: 0, points: 0 };
+            }
+            if (p.is_winner) triviaMap[p.user_id].wins += 1;
+            triviaMap[p.user_id].points += p.points_earned || 0;
+          });
+
+          results.trivia = formatEntries(
+            Object.entries(triviaMap).map(([user_id, data]) => ({ 
+              user_id, 
+              score: data.points,
+              detail: `${data.wins} wins`
+            }))
+          );
+        } else {
+          // Last fallback: Try user_points table
+          const { data: userPoints } = await supabase
+            .from('user_points')
+            .select('user_id, trivia_points');
+          
+          if (userPoints && userPoints.length > 0) {
+            results.trivia = formatEntries(
+              userPoints.filter((up: any) => up.trivia_points > 0).map((up: any) => ({
+                user_id: up.user_id,
+                score: up.trivia_points || 0,
+                detail: ''
+              }))
+            );
+          } else {
+            results.trivia = [];
+          }
+        }
       }
     }
 
