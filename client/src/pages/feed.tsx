@@ -23,7 +23,7 @@ import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { GamesCarousel } from "@/components/games-carousel";
 import { RanksCarousel } from "@/components/ranks-carousel";
 import { PointsGlimpse } from "@/components/points-glimpse";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -2777,12 +2777,10 @@ export default function Feed() {
               <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-2">
                 {[
                   { id: 'all', label: 'All', Icon: Sparkles },
-                  { id: 'track', label: 'Track', Icon: ListPlus },
                   { id: 'trivia', label: 'Trivia', Icon: Brain },
                   { id: 'challenges', label: 'Challenges', Icon: Trophy },
                   { id: 'polls', label: 'Polls', Icon: BarChart },
                   { id: 'predictions', label: 'Predictions', Icon: Target },
-                  { id: 'dna', label: 'DNA', Icon: Dna },
                 ].map((filter) => (
                   <button
                     key={filter.id}
@@ -2803,34 +2801,51 @@ export default function Feed() {
                     <span>{filter.label}</span>
                   </button>
                 ))}
-              </div>
 
-              {/* Category sub-filter pills - only show when a content filter is selected */}
-              {selectedFilter && selectedFilter !== 'All' && selectedFilter !== 'all' && selectedFilter !== 'track' && selectedFilter !== 'dna' && (
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-4">
-                  <span className="text-xs text-gray-400 mr-1 flex-shrink-0">Filter:</span>
-                  {[
-                    { id: null, label: 'All' },
-                    { id: 'movies', label: 'Movies' },
-                    { id: 'tv', label: 'TV' },
-                    { id: 'music', label: 'Music' },
-                    { id: 'books', label: 'Books' },
-                    { id: 'sports', label: 'Sports' },
-                  ].map((cat) => (
+                {/* Category Filter Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
                     <button
-                      key={cat.id || 'all'}
-                      onClick={() => setSelectedCategory(cat.id === selectedCategory ? null : cat.id)}
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                        cat.id === selectedCategory
-                          ? 'bg-purple-600 text-white'
-                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                        selectedCategory
+                          ? 'bg-purple-600 text-white shadow-sm'
+                          : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                       }`}
                     >
-                      {cat.label}
+                      <SlidersHorizontal size={14} />
+                      <span>{selectedCategory ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1) : 'Category'}</span>
                     </button>
-                  ))}
-                </div>
-              )}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem 
+                      onClick={() => setSelectedCategory(null)}
+                      className={!selectedCategory ? 'bg-purple-50 text-purple-700' : ''}
+                    >
+                      <Sparkles size={14} className="mr-2" />
+                      All Categories
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {[
+                      { id: 'movies', label: 'Movies', Icon: Film },
+                      { id: 'tv', label: 'TV', Icon: Tv2 },
+                      { id: 'music', label: 'Music', Icon: Music },
+                      { id: 'books', label: 'Books', Icon: Book },
+                      { id: 'sports', label: 'Sports', Icon: Trophy },
+                      { id: 'podcasts', label: 'Podcasts', Icon: Headphones },
+                    ].map((cat) => (
+                      <DropdownMenuItem 
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className={selectedCategory === cat.id ? 'bg-purple-50 text-purple-700' : ''}
+                      >
+                        <cat.Icon size={14} className="mr-2" />
+                        {cat.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
 
               {/* Empty state for filtered views */}
               {feedFilter === 'friends' && filteredPosts.length === 0 && (
