@@ -17,6 +17,7 @@ interface TriviaItem {
   options: string[];
   correctAnswer?: string;
   category?: string;
+  mediaTitle?: string;
   pointsReward: number;
   isChallenge: boolean;
   questionCount: number;
@@ -151,6 +152,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
           options: optionsList,
           correctAnswer: correctAns,
           category: pool.category,
+          mediaTitle: pool.media_title,
           pointsReward: pool.points_reward || 10,
           isChallenge,
           questionCount,
@@ -446,9 +448,11 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                   <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
                     <span className="text-xs text-green-700 font-medium">+{item.pointsReward} pts</span>
                   </div>
-                  {item.title && item.title !== item.question && (
+                  {item.mediaTitle && (
                     <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200">
-                      <span className="text-xs text-purple-700 font-medium">{item.title}</span>
+                      <span className="text-xs text-purple-700 font-medium">
+                        {item.category === 'Movies' ? '🎬' : item.category === 'TV' ? '📺' : item.category === 'Books' ? '📚' : item.category === 'Music' ? '🎵' : '🎯'} {item.mediaTitle}
+                      </span>
                     </div>
                   )}
                 </div>
