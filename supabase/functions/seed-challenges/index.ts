@@ -240,6 +240,56 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // Check if action is to create daily_runs table
+    let body = {};
+    try {
+      body = await req.json();
+    } catch {
+      body = {};
+    }
+
+    if (body.action === 'create_daily_runs_table') {
+      // Create daily_runs table if it doesn't exist
+      const { error } = await supabaseAdmin.rpc('exec_sql', {
+        sql: `
+          CREATE TABLE IF NOT EXISTS daily_runs (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            current_run INTEGER NOT NULL DEFAULT 0,
+            longest_run INTEGER NOT NULL DEFAULT 0,
+            last_play_date TIMESTAMP,
+            total_days_played INTEGER NOT NULL DEFAULT 0,
+            bonus_points_earned INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+            updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+            UNIQUE(user_id)
+          );
+        `
+      });
+
+      if (error) {
+        // Try direct insert to check if table exists
+        const { error: checkError } = await supabaseAdmin
+          .from('daily_runs')
+          .select('id')
+          .limit(1);
+        
+        if (checkError && checkError.code === '42P01') {
+          return new Response(JSON.stringify({ 
+            error: 'Table does not exist and could not be created. Please create it manually.',
+            details: error.message 
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+      }
+
+      return new Response(JSON.stringify({ message: 'daily_runs table ready' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const results = [];
 
     for (const challenge of multiQuestionChallenges) {

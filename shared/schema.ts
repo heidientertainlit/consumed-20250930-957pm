@@ -668,3 +668,20 @@ export const friendTriviaChallenges = pgTable("friend_trivia_challenges", {
 export const insertFriendTriviaChallengeSchema = createInsertSchema(friendTriviaChallenges).omit({ id: true, createdAt: true });
 export type FriendTriviaChallenge = typeof friendTriviaChallenges.$inferSelect;
 export type InsertFriendTriviaChallenge = z.infer<typeof insertFriendTriviaChallengeSchema>;
+
+// Daily Runs - track consecutive daily participation for rewards
+export const dailyRuns = pgTable("daily_runs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  currentRun: integer("current_run").notNull().default(0), // Current consecutive days
+  longestRun: integer("longest_run").notNull().default(0), // Best streak ever
+  lastPlayDate: timestamp("last_play_date"), // Last date they played (date only, no time)
+  totalDaysPlayed: integer("total_days_played").notNull().default(0),
+  bonusPointsEarned: integer("bonus_points_earned").notNull().default(0), // Total bonus from runs
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertDailyRunSchema = createInsertSchema(dailyRuns).omit({ id: true, createdAt: true, updatedAt: true });
+export type DailyRun = typeof dailyRuns.$inferSelect;
+export type InsertDailyRun = z.infer<typeof insertDailyRunSchema>;
