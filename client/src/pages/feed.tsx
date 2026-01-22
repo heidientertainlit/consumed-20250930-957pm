@@ -948,6 +948,7 @@ export default function Feed() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [selectedFilter, setSelectedFilter] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [expandedAddRecInput, setExpandedAddRecInput] = useState<Set<string>>(new Set()); // Track recs posts with add input expanded
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
@@ -2773,7 +2774,7 @@ export default function Feed() {
           ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'challenges', 'track'].includes(selectedFilter) ? (
             <div className="space-y-4 pb-24">
               {/* Feed Filter Pills */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-4">
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-2">
                 {[
                   { id: 'all', label: 'All', Icon: Sparkles },
                   { id: 'track', label: 'Track', Icon: ListPlus },
@@ -2785,7 +2786,12 @@ export default function Feed() {
                 ].map((filter) => (
                   <button
                     key={filter.id}
-                    onClick={() => setSelectedFilter(filter.id === selectedFilter ? 'All' : filter.id)}
+                    onClick={() => {
+                      setSelectedFilter(filter.id === selectedFilter ? 'All' : filter.id);
+                      if (filter.id === 'all' || filter.id === selectedFilter) {
+                        setSelectedCategory(null);
+                      }
+                    }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                       (filter.id === 'all' && selectedFilter === 'All') || filter.id === selectedFilter
                         ? 'bg-gradient-to-r from-indigo-600 via-purple-700 to-blue-700 text-white shadow-sm'
@@ -2798,6 +2804,35 @@ export default function Feed() {
                   </button>
                 ))}
               </div>
+
+              {/* Category sub-filter pills - shown for trivia, challenges, polls */}
+              {['trivia', 'challenges', 'polls'].includes(selectedFilter) && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-4">
+                  <span className="text-xs text-gray-500 font-medium whitespace-nowrap">Filter:</span>
+                  {[
+                    { id: null, label: 'All' },
+                    { id: 'movies', label: 'Movies' },
+                    { id: 'tv', label: 'TV' },
+                    { id: 'music', label: 'Music' },
+                    { id: 'books', label: 'Books' },
+                    { id: 'sports', label: 'Sports' },
+                    { id: 'podcasts', label: 'Podcasts' },
+                    { id: 'games', label: 'Games' },
+                  ].map((cat) => (
+                    <button
+                      key={cat.id || 'all'}
+                      onClick={() => setSelectedCategory(cat.id === selectedCategory ? null : cat.id)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                        cat.id === selectedCategory
+                          ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                          : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Empty state for filtered views */}
               {feedFilter === 'friends' && filteredPosts.length === 0 && (
@@ -4576,51 +4611,59 @@ export default function Feed() {
               {/* Category carousels for trivia filter */}
               {selectedFilter === 'trivia' && (
                 <div className="space-y-4 mt-4">
-                  <div className="text-center py-4">
-                    <p className="text-gray-700 font-semibold">Browse by Category</p>
-                  </div>
-                  <TriviaCarousel category="Movies" />
-                  <TriviaCarousel category="TV" />
-                  <TriviaCarousel category="Books" />
-                  <TriviaCarousel category="Music" />
-                  <TriviaCarousel category="Sports" />
-                  <TriviaCarousel category="Podcasts" />
-                  <TriviaCarousel category="Games" />
-                  <TriviaCarousel category="Other" />
+                  {selectedCategory ? (
+                    <TriviaCarousel category={selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} />
+                  ) : (
+                    <>
+                      <TriviaCarousel category="Movies" />
+                      <TriviaCarousel category="TV" />
+                      <TriviaCarousel category="Books" />
+                      <TriviaCarousel category="Music" />
+                      <TriviaCarousel category="Sports" />
+                      <TriviaCarousel category="Podcasts" />
+                      <TriviaCarousel category="Games" />
+                      <TriviaCarousel category="Other" />
+                    </>
+                  )}
                 </div>
               )}
 
               {/* Category carousels for challenges filter - shows multi-question trivia */}
               {selectedFilter === 'challenges' && (
                 <div className="space-y-4 mt-4">
-                  <div className="text-center py-4">
-                    <p className="text-gray-700 font-semibold">Trivia Challenges by Category</p>
-                    <p className="text-xs text-gray-500 mt-1">Multi-question challenges you can play with friends</p>
-                  </div>
-                  <TriviaCarousel category="Movies" challengesOnly />
-                  <TriviaCarousel category="TV" challengesOnly />
-                  <TriviaCarousel category="Books" challengesOnly />
-                  <TriviaCarousel category="Music" challengesOnly />
-                  <TriviaCarousel category="Sports" challengesOnly />
-                  <TriviaCarousel category="Podcasts" challengesOnly />
-                  <TriviaCarousel category="Games" challengesOnly />
-                  <TriviaCarousel category="Mixed" challengesOnly />
+                  {selectedCategory ? (
+                    <TriviaCarousel category={selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} challengesOnly />
+                  ) : (
+                    <>
+                      <TriviaCarousel category="Movies" challengesOnly />
+                      <TriviaCarousel category="TV" challengesOnly />
+                      <TriviaCarousel category="Books" challengesOnly />
+                      <TriviaCarousel category="Music" challengesOnly />
+                      <TriviaCarousel category="Sports" challengesOnly />
+                      <TriviaCarousel category="Podcasts" challengesOnly />
+                      <TriviaCarousel category="Games" challengesOnly />
+                      <TriviaCarousel category="Mixed" challengesOnly />
+                    </>
+                  )}
                 </div>
               )}
 
               {/* Category carousels for polls filter */}
               {selectedFilter === 'polls' && (
                 <div className="space-y-4 mt-4">
-                  <div className="text-center py-4">
-                    <p className="text-gray-700 font-semibold">Browse by Category</p>
-                  </div>
-                  <PollsCarousel category="Movies" />
-                  <PollsCarousel category="TV" />
-                  <PollsCarousel category="Books" />
-                  <PollsCarousel category="Music" />
-                  <PollsCarousel category="Sports" />
-                  <PollsCarousel category="Podcasts" />
-                  <PollsCarousel category="Other" />
+                  {selectedCategory ? (
+                    <PollsCarousel category={selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} />
+                  ) : (
+                    <>
+                      <PollsCarousel category="Movies" />
+                      <PollsCarousel category="TV" />
+                      <PollsCarousel category="Books" />
+                      <PollsCarousel category="Music" />
+                      <PollsCarousel category="Sports" />
+                      <PollsCarousel category="Podcasts" />
+                      <PollsCarousel category="Other" />
+                    </>
+                  )}
                 </div>
               )}
 
