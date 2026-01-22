@@ -238,52 +238,70 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
   });
 
   const voteMutation = useMutation({
-    mutationFn: async ({ itemId, direction }: { itemId: string; direction: 'up' | 'down' }) => {
+    mutationFn: async ({ itemId, direction, rankId }: { itemId: string; direction: 'up' | 'down'; rankId: string }) => {
       if (!user?.id) throw new Error('Must be logged in');
+      
+      console.log('🗳️ Voting:', { itemId, direction, userId: user.id });
       
       const currentVote = userVotes[itemId];
       
       if (currentVote === direction) {
-        await supabase
+        console.log('🗳️ Removing existing vote');
+        const { error: deleteError } = await supabase
           .from('rank_item_votes')
           .delete()
           .eq('rank_item_id', itemId)
           .eq('voter_id', user.id);
         
+        if (deleteError) console.error('Delete vote error:', deleteError);
+        
         const field = direction === 'up' ? 'up_vote_count' : 'down_vote_count';
-        const { data: item } = await supabase
+        const { data: item, error: fetchError } = await supabase
           .from('rank_items')
-          .select(field)
+          .select('up_vote_count, down_vote_count')
           .eq('id', itemId)
           .single();
         
-        await supabase
+        if (fetchError) console.error('Fetch item error:', fetchError);
+        
+        const newCount = Math.max(0, ((item as any)?.[field] || 1) - 1);
+        const { error: updateError } = await supabase
           .from('rank_items')
-          .update({ [field]: Math.max(0, (item?.[field] || 1) - 1) })
+          .update({ [field]: newCount })
           .eq('id', itemId);
         
-        return { itemId, direction: null };
+        if (updateError) console.error('Update count error:', updateError);
+        console.log('🗳️ Vote removed, new count:', newCount);
+        
+        return { itemId, direction: null as 'up' | 'down' | null, rankId };
       }
       
-      const { data: existing } = await supabase
+      const { data: existing, error: existingError } = await supabase
         .from('rank_item_votes')
         .select('id, direction')
         .eq('rank_item_id', itemId)
         .eq('voter_id', user.id)
         .maybeSingle();
       
+      if (existingError) console.error('Fetch existing vote error:', existingError);
+      console.log('🗳️ Existing vote:', existing);
+      
       if (existing) {
-        const oldDir = existing.direction;
-        await supabase
+        const oldDir = existing.direction as 'up' | 'down';
+        const { error: updateVoteError } = await supabase
           .from('rank_item_votes')
           .update({ direction })
           .eq('id', existing.id);
         
-        const { data: item } = await supabase
+        if (updateVoteError) console.error('Update vote error:', updateVoteError);
+        
+        const { data: item, error: fetchError } = await supabase
           .from('rank_items')
           .select('up_vote_count, down_vote_count')
           .eq('id', itemId)
           .single();
+        
+        if (fetchError) console.error('Fetch item error:', fetchError);
         
         const updates: Record<string, number> = {};
         if (oldDir === 'up') updates.up_vote_count = Math.max(0, (item?.up_vote_count || 1) - 1);
@@ -291,41 +309,97 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
         if (direction === 'up') updates.up_vote_count = (updates.up_vote_count ?? item?.up_vote_count ?? 0) + 1;
         if (direction === 'down') updates.down_vote_count = (updates.down_vote_count ?? item?.down_vote_count ?? 0) + 1;
         
-        await supabase.from('rank_items').update(updates).eq('id', itemId);
+        const { error: updateError } = await supabase.from('rank_items').update(updates).eq('id', itemId);
+        if (updateError) console.error('Update counts error:', updateError);
+        console.log('🗳️ Changed vote from', oldDir, 'to', direction, 'new counts:', updates);
       } else {
-        await supabase.from('rank_item_votes').insert({
+        console.log('🗳️ Inserting new vote');
+        const { error: insertError } = await supabase.from('rank_item_votes').insert({
           rank_item_id: itemId,
           voter_id: user.id,
           direction
         });
         
+        if (insertError) console.error('Insert vote error:', insertError);
+        
         const field = direction === 'up' ? 'up_vote_count' : 'down_vote_count';
-        const { data: item } = await supabase
+        const { data: item, error: fetchError } = await supabase
           .from('rank_items')
-          .select(field)
+          .select('up_vote_count, down_vote_count')
           .eq('id', itemId)
           .single();
         
-        await supabase
+        if (fetchError) console.error('Fetch item error:', fetchError);
+        
+        const newCount = ((item as any)?.[field] || 0) + 1;
+        const { error: updateError } = await supabase
           .from('rank_items')
-          .update({ [field]: (item?.[field] || 0) + 1 })
+          .update({ [field]: newCount })
           .eq('id', itemId);
+        
+        if (updateError) console.error('Update count error:', updateError);
+        console.log('🗳️ New vote inserted, new count:', newCount);
       }
       
-      return { itemId, direction };
+      return { itemId, direction, rankId };
+    },
+    onMutate: async ({ itemId, direction, rankId }) => {
+      await queryClient.cancelQueries({ queryKey: ['consumed-ranks-carousel'] });
+      
+      const previousRanks = queryClient.getQueryData(['consumed-ranks-carousel', offset]);
+      
+      setLocalRankings(prev => {
+        const items = prev[rankId] || [];
+        return {
+          ...prev,
+          [rankId]: items.map(item => {
+            if (item.id !== itemId) return item;
+            const currentVote = userVotes[itemId];
+            let upDelta = 0;
+            let downDelta = 0;
+            
+            if (currentVote === direction) {
+              if (direction === 'up') upDelta = -1;
+              else downDelta = -1;
+            } else if (currentVote) {
+              if (currentVote === 'up') upDelta = -1;
+              else downDelta = -1;
+              if (direction === 'up') upDelta += 1;
+              else downDelta += 1;
+            } else {
+              if (direction === 'up') upDelta = 1;
+              else downDelta = 1;
+            }
+            
+            return {
+              ...item,
+              up_vote_count: Math.max(0, item.up_vote_count + upDelta),
+              down_vote_count: Math.max(0, item.down_vote_count + downDelta)
+            };
+          })
+        };
+      });
+      
+      const newVote = userVotes[itemId] === direction ? null : direction;
+      setUserVotes(prev => ({ ...prev, [itemId]: newVote }));
+      
+      return { previousRanks };
     },
     onSuccess: ({ itemId, direction }) => {
-      setUserVotes(prev => ({ ...prev, [itemId]: direction }));
       queryClient.invalidateQueries({ queryKey: ['consumed-ranks-carousel'] });
       trackEvent('rank_item_voted', { item_id: itemId, direction });
+      console.log('🗳️ Vote success:', { itemId, direction });
     },
-    onError: () => {
-      console.error('Failed to vote');
+    onError: (err, variables, context) => {
+      console.error('Failed to vote:', err);
+      if (context?.previousRanks) {
+        queryClient.setQueryData(['consumed-ranks-carousel', offset], context.previousRanks);
+      }
     }
   });
 
-  const handleVote = (itemId: string, direction: 'up' | 'down') => {
-    voteMutation.mutate({ itemId, direction });
+  const handleVote = (itemId: string, direction: 'up' | 'down', rankId: string) => {
+    voteMutation.mutate({ itemId, direction, rankId });
   };
 
   const addCustomItemMutation = useMutation({
@@ -473,7 +547,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                     item={item} 
                     index={index}
                     userVote={userVotes[item.id] || null}
-                    onVote={handleVote}
+                    onVote={(itemId, direction) => handleVote(itemId, direction, rank.id)}
                     isVoting={voteMutation.isPending}
                   />
                 ))}
