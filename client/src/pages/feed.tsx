@@ -2841,13 +2841,31 @@ export default function Feed() {
               )}
 
               {/* Filtered views - show only the selected category */}
-              {/* TRIVIA filter - Movies/TV category */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && (
+              {/* TRIVIA filter - Movies category */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && 
+               (!selectedCategory || selectedCategory === 'movies') && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Movies" />
               )}
 
+              {/* TRIVIA - Other categories (show when that category is selected) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'music' && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Music" />
+              )}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'books' && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
+              )}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'sports' && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Sports" />
+              )}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'podcasts' && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Podcasts" />
+              )}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'games' && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
+              )}
+
               {/* Leaderboard - Trivia Champions */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
                 <LeaderboardFeedCard variant="trivia" />
               )}
 
@@ -2895,12 +2913,30 @@ export default function Feed() {
               )}
 
               {/* POLLS filter - Movies category */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
+               (!selectedCategory || selectedCategory === 'movies') && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Movies" />
               )}
 
+              {/* POLLS - Other categories (show when that category is selected) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'music' && (
+                <PollsCarousel expanded={selectedFilter === 'polls'} category="Music" />
+              )}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'books' && (
+                <PollsCarousel expanded={selectedFilter === 'polls'} category="Books" />
+              )}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'sports' && (
+                <PollsCarousel expanded={selectedFilter === 'polls'} category="Sports" />
+              )}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'podcasts' && (
+                <PollsCarousel expanded={selectedFilter === 'polls'} category="Podcasts" />
+              )}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'games' && (
+                <PollsCarousel expanded={selectedFilter === 'polls'} category="Games" />
+              )}
+
               {/* Leaderboard - Top Engagers */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
                 <LeaderboardFeedCard variant="overall" />
               )}
 
@@ -2933,7 +2969,8 @@ export default function Feed() {
               )}
 
               {/* TRIVIA filter - TV category */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && 
+               (!selectedCategory || selectedCategory === 'tv') && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
               )}
 
@@ -2943,7 +2980,8 @@ export default function Feed() {
               )}
 
               {/* POLLS filter - TV category */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
+               (!selectedCategory || selectedCategory === 'tv') && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
               )}
 
