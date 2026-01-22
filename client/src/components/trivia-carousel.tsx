@@ -46,6 +46,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<Record<string, string>>({});
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; stats: any; friendAnswers?: FriendAnswer[] }>>({});
+  const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: leaderboardData } = useQuery({
     queryKey: ['trivia-leaderboard-position', user?.id, session?.access_token],
@@ -200,6 +201,15 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     },
     enabled: !!session?.access_token
   });
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceTimerRef.current) {
+        clearTimeout(autoAdvanceTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const loadAnswered = async () => {
@@ -366,11 +376,19 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         description: result.isCorrect ? 'Nice work!' : 'Better luck next time!',
       });
       
+      // Clear any existing timer to prevent double-advancing
+      if (autoAdvanceTimerRef.current) {
+        clearTimeout(autoAdvanceTimerRef.current);
+      }
+      
       // Give users more time to see results before auto-advancing
-      setTimeout(() => {
-        if (data && currentIndex < data.length - 1) {
-          scrollToNext();
+      autoAdvanceTimerRef.current = setTimeout(() => {
+        if (scrollRef.current && data && currentIndex < data.length - 1) {
+          const cardWidth = scrollRef.current.children[0]?.clientWidth || 280;
+          scrollRef.current.scrollBy({ left: cardWidth + 12, behavior: 'smooth' });
+          setCurrentIndex(prev => Math.min(prev + 1, data.length - 1));
         }
+        autoAdvanceTimerRef.current = null;
       }, 7000);
     },
     onError: (error: Error) => {
