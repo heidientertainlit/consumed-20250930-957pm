@@ -44,8 +44,8 @@ export default function OnboardingPage() {
           </div>
         </div>
         
-        <h1 className="text-2xl font-bold text-white mb-3">
-          Everything here feeds your DNA
+        <h1 className="text-xl font-bold text-white mb-3">
+          Everything here feeds your Entertainment DNA
         </h1>
         
         <p className="text-purple-200 text-base mb-10 leading-relaxed">
