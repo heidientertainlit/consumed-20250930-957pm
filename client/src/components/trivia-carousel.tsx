@@ -420,7 +420,11 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     );
   }
 
-  if (isError || !data || data.length === 0) return null;
+  console.log('🎮 TriviaCarousel render:', { isError, dataLength: data?.length, category, challengesOnly });
+  if (isError || !data || data.length === 0) {
+    console.log('🎮 TriviaCarousel returning null - no data');
+    return null;
+  }
 
   const knownCategories = ['movies', 'tv', 'books', 'music', 'sports', 'podcasts', 'games'];
   
