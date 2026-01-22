@@ -49,7 +49,7 @@ export default function OnboardingPage() {
         </h1>
         
         <p className="text-purple-200 text-base mb-10 leading-relaxed">
-          Every answer, vote, and take helps shape how you watch, read, and listen.
+          Every answer, vote, take, and media item added tells the story of your taste.
         </p>
 
         <div className="space-y-3">
