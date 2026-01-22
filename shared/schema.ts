@@ -672,7 +672,7 @@ export type InsertFriendTriviaChallenge = z.infer<typeof insertFriendTriviaChall
 // Daily Runs - track consecutive daily participation for rewards
 export const dailyRuns = pgTable("daily_runs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull(), 
   currentRun: integer("current_run").notNull().default(0), // Current consecutive days
   longestRun: integer("longest_run").notNull().default(0), // Best streak ever
   lastPlayDate: timestamp("last_play_date"), // Last date they played (date only, no time)

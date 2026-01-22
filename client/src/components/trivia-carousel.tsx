@@ -138,9 +138,17 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
           const isObject = typeof firstOpt === 'object' && firstOpt !== null;
           const hasQuestion = isObject && 'question' in firstOpt;
           
-          if (pool.options.length > 0 && isObject && hasQuestion) {
-            isChallenge = pool.options.length > 1;
+          if (pool.options.length > 1 && isObject && hasQuestion) {
+            isChallenge = true;
             questionCount = pool.options.length;
+            const firstQ = pool.options[0];
+            questionText = firstQ.question || pool.title;
+            optionsList = firstQ.options || [];
+            correctAns = firstQ.answer || pool.correct_answer;
+          } else if (pool.options.length === 1 && isObject && hasQuestion) {
+            // Single question in object format - treat as one-question trivia
+            isChallenge = false;
+            questionCount = 1;
             const firstQ = pool.options[0];
             questionText = firstQ.question || pool.title;
             optionsList = firstQ.options || [];
@@ -493,23 +501,26 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
             
             return (
               <div key={item.id} className="flex-shrink-0 w-full snap-center h-auto relative">
-                {item.mediaTitle && (
-                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200 mb-3">
-                    <span className="text-xs text-purple-700 font-medium">{item.mediaTitle}</span>
+                <div className="flex justify-between items-start mb-2">
+                  <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold">
+                    +{item.pointsReward} pts
                   </div>
-                )}
+                  {item.mediaTitle && (
+                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-tight">{item.mediaTitle}</span>
+                  )}
+                </div>
                 
-                <h3 className="text-gray-900 font-semibold text-base mb-3">{item.question}</h3>
+                <h3 className="text-gray-900 font-bold text-lg leading-tight mb-4">{item.question}</h3>
                 
                 {!answered ? (
                   <div className="flex flex-col gap-2">
                     {item.options.slice(0, 4).map((option, idx) => (
                       <button
                         key={idx}
-                        className={`py-3 px-4 rounded-full border text-sm font-medium transition-all text-left ${
+                        className={`py-3.5 px-5 rounded-full border text-sm font-semibold transition-all text-left ${
                           selected === option 
-                            ? 'bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900 border-purple-500/50 text-white shadow-lg' 
-                            : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:border-gray-300'
+                            ? 'bg-purple-600 border-purple-600 text-white shadow-md' 
+                            : 'bg-slate-50 border-gray-100 text-gray-700 hover:bg-slate-100'
                         }`}
                         onClick={() => handleSelectAndSubmit(item, option)}
                         disabled={answerMutation.isPending}
@@ -519,7 +530,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {item.options.slice(0, 4).map((option, idx) => {
                       const isUserAnswer = answered.answer === option;
                       const isCorrect = item.correctAnswer === option;
@@ -528,26 +539,29 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                       return (
                         <div 
                           key={idx}
-                          className={`relative py-3 px-4 rounded-full border overflow-hidden ${
-                            isUserAnswer && isCorrect
-                              ? 'border-green-500 bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900'
-                              : isUserAnswer && !isCorrect
-                                ? 'border-red-500 bg-red-50'
-                                : isCorrect
-                                  ? 'border-green-500 bg-gradient-to-r from-slate-800 via-purple-900 to-indigo-900'
-                                  : 'border-gray-200 bg-gray-50'
+                          className={`relative py-3 px-4 rounded-full border overflow-hidden transition-all ${
+                            isCorrect
+                              ? 'border-green-500 bg-green-50/50'
+                              : isUserAnswer
+                                ? 'border-red-500 bg-red-50/50'
+                                : 'border-gray-100 bg-slate-50'
                           }`}
                         >
+                          <div 
+                            className={`absolute inset-0 transition-all duration-1000 ease-out ${
+                              isCorrect ? 'bg-green-100/50' : 'bg-gray-200/20'
+                            }`} 
+                            style={{ width: `${percentage}%` }} 
+                          />
                           <div className="relative flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                              {isCorrect && <Trophy className={`w-4 h-4 ${isCorrect ? 'text-white' : 'text-green-500'}`} />}
-                              {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-500" />}
-                              <span className={`text-sm ${isCorrect ? 'text-white font-medium' : 'text-gray-700'}`}>{option}</span>
+                              {isCorrect && <CheckCircle className="w-4 h-4 text-green-600" />}
+                              {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-600" />}
+                              <span className={`text-sm font-semibold ${isCorrect ? 'text-green-800' : 'text-gray-700'}`}>
+                                {option}
+                              </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Users className={`w-3 h-3 ${isCorrect ? 'text-white/70' : 'text-gray-400'}`} />
-                              <span className={`text-sm ${isCorrect ? 'text-white font-bold' : 'text-gray-400'}`}>{percentage}%</span>
-                            </div>
+                            <span className="text-xs font-bold text-gray-500">{percentage}%</span>
                           </div>
                         </div>
                       );
@@ -555,8 +569,9 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   </div>
                 )}
                 
-                <div className="flex justify-end mt-3">
-                  <span className="text-xs text-green-600 font-medium">+{item.pointsReward} pts</span>
+                <div className="flex items-center gap-2 mt-4 text-[10px] text-gray-400 font-medium">
+                  <Users className="w-3 h-3" />
+                  {answered ? 'Results are live' : 'Tap to answer'}
                 </div>
               </div>
             );
