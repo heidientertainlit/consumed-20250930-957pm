@@ -56,7 +56,7 @@ export default function OnboardingPage() {
         </div>
         
         <div className="mb-4">
-          <p className="text-purple-200 text-sm">Answer correctly to start building your DNA!</p>
+          <p className="text-purple-200 text-sm">Try a quick question!</p>
         </div>
 
         <div className="flex-1">
@@ -87,15 +87,15 @@ export default function OnboardingPage() {
         </div>
         
         <div className="mb-2">
-          <span className="text-4xl">🧬</span>
+          <span className="text-4xl">🎮</span>
         </div>
         
         <h1 className="text-2xl font-bold text-white mb-3">
-          Your taste is unique
+          Ready to play?
         </h1>
         
         <p className="text-purple-200 text-base mb-10 leading-relaxed">
-          Everything you play here shapes your <span className="text-cyan-400 font-medium">Entertainment DNA</span> — trivia, polls, predictions, all of it.
+          Test your entertainment knowledge with quick trivia, polls, and predictions.
         </p>
 
         <div className="space-y-3">

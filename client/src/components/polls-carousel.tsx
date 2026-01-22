@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
 import { BarChart3, Loader2, ChevronLeft, ChevronRight, Users, Check, Search, Plus, X } from 'lucide-react';
+import { incrementActivityCount } from '@/components/dna-survey-nudge';
 
 interface PollItem {
   id: string;
@@ -188,6 +189,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
       
       queryClient.invalidateQueries({ queryKey: ['polls-carousel'] });
       
+      incrementActivityCount();
       trackEvent('poll_voted', { poll_id: result.pollId, points_earned: result.points });
       
       toast({
