@@ -52,6 +52,10 @@ After playing, users see: friend answers → leaderboard movement → related po
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+### CRITICAL Data Rules
+- **NEVER add, seed, or modify data in Supabase without explicit user approval first.** Always double-check with the user before inserting, updating, or seeding any content (trivia, polls, predictions, etc.) to the production database.
+- All content data comes from user's spreadsheets - do not create fake/placeholder content.
+
 ### Design Preferences
 - **CRITICAL - Game Components Distinction**: 
   - **The Daily Call** (`DailyChallengeCard`) - Purple card at top of feed. Single featured daily game that expands when tapped. Uses command language ("PLAY NOW"), has urgency signal ("LIVE" badge). Whole card is tap target. Renamed from "Daily Challenge" to emphasize the prediction/opinion nature.
