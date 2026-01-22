@@ -49,7 +49,7 @@ export default function OnboardingPage() {
         </h1>
         
         <p className="text-purple-200 text-base mb-10 leading-relaxed">
-          Everything you play here shapes your <span className="text-cyan-400 font-medium">Entertainment DNA</span> — trivia, polls, predictions, all of it.
+          Everything you do here shapes your <span className="text-cyan-400 font-medium">Entertainment DNA</span> — trivia, polls, hot takes, ratings, adding to lists, predictions, all of it.
         </p>
 
         <div className="space-y-3">
