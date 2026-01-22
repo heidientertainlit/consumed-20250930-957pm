@@ -16,6 +16,7 @@ import { DnaMomentCard } from "@/components/dna-moment-card";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import { DnaSurveyNudge } from "@/components/dna-survey-nudge";
 import CastFriendsGame from "@/components/cast-friends-game";
+import CastApprovalCard from "@/components/cast-approval-card";
 import SeenItGame from "@/components/seen-it-game";
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
@@ -1801,6 +1802,31 @@ export default function Feed() {
     refetchOnWindowFocus: false,
   });
 
+  // Fetch pending friend casts for the current user
+  const { data: pendingCasts = [], refetch: refetchPendingCasts } = useQuery({
+    queryKey: ["/api/pending-casts", user?.id],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-friend-casts?forMe=true&pending=true`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.casts || [];
+    },
+    enabled: !!session?.access_token && !!user?.id,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
   // Like mutation with optimistic updates
   const likeMutation = useMutation({
     mutationFn: async ({ postId, wasLiked }: { postId: string; wasLiked: boolean }) => {
@@ -2902,6 +2928,22 @@ export default function Feed() {
               {/* DNA Moment Card - in All or DNA filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && (
                 <DnaMomentCard />
+              )}
+
+              {/* Pending Friend Casts - You've Been Cast! */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && pendingCasts.length > 0 && (
+                <div className="space-y-3 mb-4">
+                  <h3 className="text-lg font-semibold text-amber-400 flex items-center gap-2 px-1">
+                    🎬 You've Been Cast!
+                  </h3>
+                  {pendingCasts.map((cast: any) => (
+                    <CastApprovalCard 
+                      key={cast.id} 
+                      cast={cast}
+                      onRespond={() => refetchPendingCasts()}
+                    />
+                  ))}
+                </div>
               )}
 
               {/* Cast Your Friends Game */}
