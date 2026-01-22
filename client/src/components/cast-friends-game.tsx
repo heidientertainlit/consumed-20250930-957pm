@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/posthog";
-import { Users, Sparkles, Search, ChevronLeft, ChevronRight, Loader2, UserPlus, Share2, MessageSquare } from "lucide-react";
+import { Users, Sparkles, Search, ChevronLeft, ChevronRight, Loader2, UserPlus, Share2, Bell, Check } from "lucide-react";
 import { Link } from "wouter";
 
 interface Celebrity {
@@ -45,6 +45,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
   const [lastCastToken, setLastCastToken] = useState<string | null>(null);
   const [lastCastCeleb, setLastCastCeleb] = useState<Celebrity | null>(null);
   const [lastCastFriend, setLastCastFriend] = useState<string | null>(null);
+  const [lastCastWasToFriend, setLastCastWasToFriend] = useState(false);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
@@ -169,6 +170,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
       setLastCastToken(result.friendCast?.share_token || null);
       setLastCastCeleb(selectedCeleb);
       setLastCastFriend(customFriendName || selectedFriend?.user_name || null);
+      setLastCastWasToFriend(!!selectedFriend);
       setStep('success');
       
       toast({ title: "Cast shared! 🎬" });
@@ -471,9 +473,14 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
             </div>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-3 text-center">
-            <MessageSquare className="w-4 h-4 text-gray-400 mx-auto mb-1" />
-            <p className="text-xs text-gray-500">Friends can <span className="font-semibold text-amber-600">argue your pick</span> with their own!</p>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
+            <Bell className="w-4 h-4 text-amber-500 mx-auto mb-1" />
+            <p className="text-sm text-gray-700">
+              {selectedFriend 
+                ? <>This will send a notification to <span className="font-semibold text-amber-600">{selectedFriend.user_name}</span> to approve</>
+                : <>Share the link with <span className="font-semibold text-amber-600">{customFriendName}</span></>
+              }
+            </p>
           </div>
 
           <Button 
@@ -484,9 +491,9 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
             ) : (
-              <Share2 className="w-4 h-4 mr-2" />
+              <Bell className="w-4 h-4 mr-2" />
             )}
-            Share & Let Friends Argue
+            {selectedFriend ? `Send to ${selectedFriend.user_name}` : 'Create Cast'}
           </Button>
         </div>
       )}
@@ -495,28 +502,32 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
         <div className="space-y-4">
           <div className="text-center">
             <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span className="text-3xl">🎬</span>
+              <Check className="w-8 h-8 text-green-600" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900">Cast Shared!</h3>
+            <h3 className="text-lg font-bold text-gray-900">
+              {lastCastWasToFriend ? 'Notification Sent!' : 'Cast Created!'}
+            </h3>
             <p className="text-sm text-gray-600">
-              {selectedFriend ? "They'll get notified to approve!" : "Share the link so they can see!"}
+              {lastCastWasToFriend 
+                ? <>{lastCastFriend} will get a notification to approve or counter your pick</>
+                : <>Share the link so {lastCastFriend} can see!</>
+              }
             </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4">
+          <div className="flex items-center gap-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-3">
             <img 
               src={lastCastCeleb.image} 
               alt={lastCastCeleb.name}
-              className="w-14 h-18 rounded-lg object-cover"
+              className="w-12 h-14 rounded-lg object-cover"
             />
-            <div>
-              <p className="text-amber-600 font-bold text-lg">{lastCastCeleb.name}</p>
-              <p className="text-xs text-gray-500">would play</p>
-              <p className="text-gray-900 font-bold">{lastCastFriend}</p>
+            <div className="flex-1">
+              <p className="text-amber-600 font-bold">{lastCastCeleb.name}</p>
+              <p className="text-xs text-gray-500">as {lastCastFriend}</p>
             </div>
           </div>
 
-          {lastCastToken && (
+          {!lastCastWasToFriend && lastCastToken && (
             <Button 
               onClick={() => {
                 const url = `${window.location.origin}/cast/${lastCastToken}`;
@@ -541,8 +552,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
             </Button>
           )}
 
-          <Button 
-            variant="outline"
+          <button 
             onClick={() => {
               setStep('browse');
               setSelectedCeleb(null);
@@ -551,12 +561,13 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
               setLastCastToken(null);
               setLastCastCeleb(null);
               setLastCastFriend(null);
+              setLastCastWasToFriend(false);
               onComplete?.();
             }}
-            className="w-full"
+            className="w-full text-sm text-gray-500 hover:text-gray-700 py-2"
           >
-            Cast Another Friend
-          </Button>
+            Cast another friend
+          </button>
         </div>
       )}
     </Card>
