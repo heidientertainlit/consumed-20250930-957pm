@@ -2805,34 +2805,31 @@ export default function Feed() {
                 ))}
               </div>
 
-              {/* Category sub-filter pills - shown for trivia, challenges, polls */}
-              {['trivia', 'challenges', 'polls'].includes(selectedFilter) && (
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-4">
-                  <span className="text-xs text-gray-500 font-medium whitespace-nowrap">Filter:</span>
-                  {[
-                    { id: null, label: 'All' },
-                    { id: 'movies', label: 'Movies' },
-                    { id: 'tv', label: 'TV' },
-                    { id: 'music', label: 'Music' },
-                    { id: 'books', label: 'Books' },
-                    { id: 'sports', label: 'Sports' },
-                    { id: 'podcasts', label: 'Podcasts' },
-                    { id: 'games', label: 'Games' },
-                  ].map((cat) => (
-                    <button
-                      key={cat.id || 'all'}
-                      onClick={() => setSelectedCategory(cat.id === selectedCategory ? null : cat.id)}
-                      className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                        cat.id === selectedCategory
-                          ? 'bg-purple-100 text-purple-700 border border-purple-300'
-                          : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
-                      }`}
-                    >
-                      {cat.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* Category sub-filter pills - always visible */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-4">
+                {[
+                  { id: null, label: 'All' },
+                  { id: 'movies', label: 'Movies' },
+                  { id: 'tv', label: 'TV' },
+                  { id: 'music', label: 'Music' },
+                  { id: 'books', label: 'Books' },
+                  { id: 'sports', label: 'Sports' },
+                  { id: 'podcasts', label: 'Podcasts' },
+                  { id: 'games', label: 'Games' },
+                ].map((cat) => (
+                  <button
+                    key={cat.id || 'all'}
+                    onClick={() => setSelectedCategory(cat.id === selectedCategory ? null : cat.id)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                      cat.id === selectedCategory
+                        ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                        : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
 
               {/* Empty state for filtered views */}
               {feedFilter === 'friends' && filteredPosts.length === 0 && (
