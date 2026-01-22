@@ -412,9 +412,9 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
             if (item.isChallenge) {
               return (
                 <div key={item.id} className="flex-shrink-0 w-full snap-center h-auto">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
-                      <span className="text-xs text-green-700 font-medium">+{item.pointsReward} pts</span>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200">
+                      <span className="text-xs text-purple-700 font-medium">Trivia Challenge</span>
                     </div>
                     <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-200">
                       <span className="text-xs text-amber-700 font-medium">{item.questionCount} questions</span>
@@ -422,7 +422,6 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                   </div>
                   
                   <h3 className="text-gray-900 font-semibold text-base mb-3">{item.title}</h3>
-                  <p className="text-gray-500 text-sm mb-4">Challenge yourself with {item.questionCount} trivia questions!</p>
                   
                   {answered ? (
                     <div className="py-3 px-4 rounded-xl bg-green-50 border border-green-200 text-center">
@@ -430,14 +429,39 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                       <span className="text-sm text-green-600">Challenge Completed!</span>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setSelectedChallenge(item)}
-                      className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-slate-900 via-purple-900 to-indigo-900 hover:from-slate-800 hover:via-purple-800 hover:to-indigo-800 text-white font-medium flex items-center justify-center gap-2 transition-colors"
-                    >
-                      <Play className="w-4 h-4" />
-                      Start Challenge
-                    </button>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => setSelectedChallenge(item)}
+                        className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-slate-900 via-purple-900 to-indigo-900 hover:from-slate-800 hover:via-purple-800 hover:to-indigo-800 text-white font-medium flex items-center justify-center gap-2 transition-colors"
+                      >
+                        <Play className="w-4 h-4" />
+                        Start Challenge
+                      </button>
+                      <button 
+                        className="w-full flex items-center justify-center gap-1 text-xs text-purple-600 font-medium hover:text-purple-700 transition-colors py-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (navigator.share) {
+                            navigator.share({
+                              title: 'Trivia Challenge',
+                              text: `Think you can beat me? Try this ${item.questionCount}-question trivia challenge!`,
+                              url: window.location.origin
+                            });
+                          } else {
+                            navigator.clipboard.writeText(`Think you can beat me? Try this ${item.questionCount}-question trivia challenge! - Play at ${window.location.origin}`);
+                            toast({ title: "Link copied!", description: "Share it with your friends" });
+                          }
+                        }}
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        Challenge a friend
+                      </button>
+                    </div>
                   )}
+                  
+                  <div className="flex justify-end mt-2">
+                    <span className="text-xs text-green-600 font-medium">+{item.pointsReward} pts</span>
+                  </div>
                 </div>
               );
             }
@@ -506,26 +530,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                   </div>
                 )}
                 
-                <div className="flex justify-between items-center mt-3">
-                  <button 
-                    className="flex items-center gap-1 text-xs text-purple-600 font-medium hover:text-purple-700 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (navigator.share) {
-                        navigator.share({
-                          title: 'Trivia Challenge',
-                          text: `Can you answer this? ${item.question}`,
-                          url: window.location.origin
-                        });
-                      } else {
-                        navigator.clipboard.writeText(`Can you answer this? ${item.question} - Play at ${window.location.origin}`);
-                        toast({ title: "Link copied!", description: "Share it with your friends" });
-                      }
-                    }}
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    Challenge a friend
-                  </button>
+                <div className="flex justify-end mt-3">
                   <span className="text-xs text-green-600 font-medium">+{item.pointsReward} pts</span>
                 </div>
               </div>

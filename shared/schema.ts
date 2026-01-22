@@ -182,7 +182,6 @@ export const predictionPools = pgTable("prediction_pools", {
   rotationType: text("rotation_type"), // 'evergreen', 'trending', 'seasonal'
   difficulty: text("difficulty"), // 'easy', 'medium', 'chaotic' (for trivia)
   socialPrompt: text("social_prompt"), // Shown after vote/answer, e.g. "Tag the friend who'd argue this"
-  publishAt: timestamp("publish_at"), // When the item should go live (null = immediately)
   createdAt: timestamp("created_at"),
 });
 
@@ -649,3 +648,23 @@ export type FriendCast = typeof friendCasts.$inferSelect;
 export type InsertFriendCast = z.infer<typeof insertFriendCastSchema>;
 export type FriendCastResponse = typeof friendCastResponses.$inferSelect;
 export type InsertFriendCastResponse = z.infer<typeof insertFriendCastResponseSchema>;
+
+// Friend Trivia Challenges - 1v1 trivia competitions on multi-question sets
+export const friendTriviaChallenges = pgTable("friend_trivia_challenges", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  challengerId: varchar("challenger_id").notNull().references(() => users.id),
+  challengedId: varchar("challenged_id").notNull().references(() => users.id),
+  triviaPoolId: text("trivia_pool_id").notNull().references(() => predictionPools.id),
+  challengerScore: integer("challenger_score"),
+  challengedScore: integer("challenged_score"),
+  challengerCompletedAt: timestamp("challenger_completed_at"),
+  challengedCompletedAt: timestamp("challenged_completed_at"),
+  status: text("status").notNull().default('pending'), // 'pending', 'in_progress', 'completed', 'expired'
+  winnerId: varchar("winner_id").references(() => users.id),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertFriendTriviaChallengeSchema = createInsertSchema(friendTriviaChallenges).omit({ id: true, createdAt: true });
+export type FriendTriviaChallenge = typeof friendTriviaChallenges.$inferSelect;
+export type InsertFriendTriviaChallenge = z.infer<typeof insertFriendTriviaChallengeSchema>;
