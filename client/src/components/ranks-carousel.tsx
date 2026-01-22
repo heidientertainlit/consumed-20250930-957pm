@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
-import { BarChart3, ChevronLeft, ChevronRight, Loader2, ChevronUp, ChevronDown, Plus, X } from 'lucide-react';
+import { BarChart3, ChevronLeft, ChevronRight, Loader2, ArrowUp, ArrowDown, Plus, X } from 'lucide-react';
 
 interface RankItem {
   id: string;
@@ -31,17 +31,12 @@ interface RankData {
 interface VoteItemProps {
   item: RankItem;
   index: number;
-  totalVotes: number;
   userVote: 'up' | 'down' | null;
   onVote: (itemId: string, direction: 'up' | 'down') => void;
   isVoting: boolean;
 }
 
-function VoteItem({ item, index, totalVotes, userVote, onVote, isVoting }: VoteItemProps) {
-  const upPercentage = totalVotes > 0 
-    ? Math.round((item.up_vote_count / totalVotes) * 100) 
-    : 0;
-
+function VoteItem({ item, index, userVote, onVote, isVoting }: VoteItemProps) {
   return (
     <div className="flex items-center gap-2 py-2.5 px-3 rounded-xl bg-gray-50 border border-gray-100">
       <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${
@@ -54,31 +49,33 @@ function VoteItem({ item, index, totalVotes, userVote, onVote, isVoting }: VoteI
       <span className="text-gray-900 font-medium flex-1 truncate text-sm">
         {item.title}
       </span>
-      <div className="flex items-center gap-1">
-        <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded min-w-[32px] text-center">
-          {upPercentage}%
-        </span>
+      <div className="flex items-center gap-0.5">
         <button
           onClick={() => onVote(item.id, 'up')}
           disabled={isVoting}
-          className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${
+          className={`w-6 h-6 rounded-l flex items-center justify-center transition-colors ${
             userVote === 'up' 
               ? 'bg-teal-500 text-white' 
               : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-600'
           }`}
         >
-          <ChevronUp size={14} />
+          <ArrowUp size={14} strokeWidth={2.5} />
         </button>
+        <div className="flex items-center bg-gray-100 px-1.5 py-1 text-[10px] font-medium">
+          <span className="text-teal-600">+{item.up_vote_count || 0}</span>
+          <span className="text-gray-400 mx-0.5">/</span>
+          <span className="text-red-500">-{item.down_vote_count || 0}</span>
+        </div>
         <button
           onClick={() => onVote(item.id, 'down')}
           disabled={isVoting}
-          className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${
+          className={`w-6 h-6 rounded-r flex items-center justify-center transition-colors ${
             userVote === 'down' 
               ? 'bg-red-500 text-white' 
               : 'bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600'
           }`}
         >
-          <ChevronDown size={14} />
+          <ArrowDown size={14} strokeWidth={2.5} />
         </button>
       </div>
     </div>
@@ -462,7 +459,6 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
           const currentItems = localRankings[rank.id] || rank.items;
           const displayItems = isExpanded ? currentItems : currentItems.slice(0, 5);
           const isSubmitted = submittedRanks[rank.id];
-          const totalVotes = rank.items.reduce((sum, item) => sum + item.up_vote_count + item.down_vote_count, 0);
           
           return (
             <div key={rank.id} className="flex-shrink-0 w-full snap-center">
@@ -476,7 +472,6 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                     key={item.id} 
                     item={item} 
                     index={index}
-                    totalVotes={totalVotes}
                     userVote={userVotes[item.id] || null}
                     onVote={handleVote}
                     isVoting={voteMutation.isPending}
