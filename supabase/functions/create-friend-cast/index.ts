@@ -84,6 +84,36 @@ serve(async (req) => {
       await supabase.from('users').update({ points: (userData.points || 0) + 15 }).eq('id', user.id);
     }
 
+    // Send notification to target friend if they have an account
+    if (targetFriendId) {
+      const { data: creatorData } = await supabase
+        .from('users')
+        .select('user_name')
+        .eq('id', user.id)
+        .single();
+      
+      const creatorName = creatorData?.user_name || 'Someone';
+      
+      // Call send-notification edge function
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+      const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+      
+      await fetch(`${supabaseUrl}/functions/v1/send-notification`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${serviceRoleKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: targetFriendId,
+          type: 'cast',
+          triggeredByUserId: user.id,
+          message: `${creatorName} cast you as ${celebName} in their movie! 🎬`,
+          friendCastId: friendCast.id
+        })
+      });
+    }
+
     return new Response(JSON.stringify({ success: true, friendCast }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

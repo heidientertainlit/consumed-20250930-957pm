@@ -7,12 +7,13 @@ const corsHeaders = {
 
 interface NotificationRequest {
   userId: string;
-  type: 'comment' | 'comment_reply' | 'like' | 'friend_request' | 'friend_accepted' | 'follow' | 'mention' | 'inner_circle' | 'collaborator_added';
+  type: 'comment' | 'comment_reply' | 'like' | 'friend_request' | 'friend_accepted' | 'follow' | 'mention' | 'inner_circle' | 'collaborator_added' | 'cast';
   triggeredByUserId: string;
   message: string;
   postId?: string;
   commentId?: string;
   listId?: string;
+  friendCastId?: string;
 }
 
 Deno.serve(async (req) => {
@@ -27,7 +28,7 @@ Deno.serve(async (req) => {
     // Use service role to bypass RLS
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    const { userId, type, triggeredByUserId, message, postId, commentId, listId }: NotificationRequest = await req.json();
+    const { userId, type, triggeredByUserId, message, postId, commentId, listId, friendCastId }: NotificationRequest = await req.json();
 
     // Don't send notification to yourself
     if (userId === triggeredByUserId) {
@@ -38,18 +39,25 @@ Deno.serve(async (req) => {
     }
 
     // Insert notification
+    const notificationData: Record<string, unknown> = {
+      user_id: userId,
+      type,
+      triggered_by_user_id: triggeredByUserId,
+      message,
+      post_id: postId,
+      comment_id: commentId,
+      list_id: listId,
+      read: false,
+    };
+    
+    // Add friend_cast_id if provided
+    if (friendCastId) {
+      notificationData.friend_cast_id = friendCastId;
+    }
+    
     const { data, error } = await supabaseAdmin
       .from('notifications')
-      .insert({
-        user_id: userId,
-        type,
-        triggered_by_user_id: triggeredByUserId,
-        message,
-        post_id: postId,
-        comment_id: commentId,
-        list_id: listId,
-        read: false,
-      })
+      .insert(notificationData)
       .select()
       .single();
 
