@@ -80,10 +80,6 @@ export default function OnboardingPage() {
             Skip to feed →
           </button>
         </div>
-        
-        <p className="text-purple-400/50 text-xs mt-8">
-          No pressure. You can always take the full DNA survey later.
-        </p>
       </div>
     </div>
   );
