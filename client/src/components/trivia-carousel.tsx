@@ -132,6 +132,21 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
             for (let i = 0; i < pool.options.length; i++) {
               const q = pool.options[i];
               if (q.question && q.options && Array.isArray(q.options)) {
+                // Extract media title from question if not provided in pool
+                let mediaTitle = pool.media_title;
+                if (!mediaTitle && q.question) {
+                  // Try to extract movie/show name from question patterns:
+                  // "Movie Name - question?" or "Was Movie Name released before..."
+                  const dashMatch = q.question.match(/^(.+?)\s*[-–—]\s*.+\?$/);
+                  const wasReleasedMatch = q.question.match(/^Was\s+(.+?)\s+released\s+/i);
+                  
+                  if (dashMatch) {
+                    mediaTitle = dashMatch[1].trim();
+                  } else if (wasReleasedMatch) {
+                    mediaTitle = wasReleasedMatch[1].trim();
+                  }
+                }
+                
                 items.push({
                   id: `${pool.id}_q${i}`,
                   title: pool.title,
@@ -139,7 +154,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   options: q.options,
                   correctAnswer: q.answer || pool.correct_answer,
                   category: pool.category,
-                  mediaTitle: pool.media_title,
+                  mediaTitle: mediaTitle,
                   pointsReward: 10,
                   isChallenge: false,
                   questionCount: 1,
