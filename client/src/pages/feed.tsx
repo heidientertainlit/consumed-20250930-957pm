@@ -949,6 +949,7 @@ export default function Feed() {
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showCategoryPills, setShowCategoryPills] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
   const [expandedAddRecInput, setExpandedAddRecInput] = useState<Set<string>>(new Set()); // Track recs posts with add input expanded
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
@@ -2803,53 +2804,23 @@ export default function Feed() {
                 ))}
               </div>
 
-              {/* Category Filter Row - Collapsible */}
+              {/* Category Filter Toggle + Pills */}
               <div className="flex items-center gap-2 mb-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                        selectedCategory
-                          ? 'bg-purple-600 text-white shadow-sm'
-                          : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
-                      }`}
-                    >
-                      <SlidersHorizontal size={14} />
-                      <span>{selectedCategory ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1) : 'Media Type'}</span>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-44">
-                    <DropdownMenuItem 
-                      onClick={() => setSelectedCategory(null)}
-                      className={!selectedCategory ? 'bg-purple-50 text-purple-700' : ''}
-                    >
-                      <Sparkles size={14} className="mr-2" />
-                      All Media
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {[
-                      { id: 'movies', label: 'Movies', Icon: Film },
-                      { id: 'tv', label: 'TV Shows', Icon: Tv2 },
-                      { id: 'music', label: 'Music', Icon: Music },
-                      { id: 'books', label: 'Books', Icon: Book },
-                      { id: 'sports', label: 'Sports', Icon: Trophy },
-                      { id: 'podcasts', label: 'Podcasts', Icon: Headphones },
-                    ].map((cat) => (
-                      <DropdownMenuItem 
-                        key={cat.id}
-                        onClick={() => setSelectedCategory(cat.id)}
-                        className={selectedCategory === cat.id ? 'bg-purple-50 text-purple-700' : ''}
-                      >
-                        <cat.Icon size={14} className="mr-2" />
-                        {cat.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <button
+                  onClick={() => setShowCategoryPills(!showCategoryPills)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    selectedCategory || showCategoryPills
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                  }`}
+                >
+                  <SlidersHorizontal size={14} />
+                  <span>{selectedCategory ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1) : 'Media Type'}</span>
+                </button>
                 
                 {selectedCategory && (
                   <button
-                    onClick={() => setSelectedCategory(null)}
+                    onClick={() => { setSelectedCategory(null); setShowCategoryPills(false); }}
                     className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700"
                   >
                     <X size={12} />
@@ -2857,6 +2828,36 @@ export default function Feed() {
                   </button>
                 )}
               </div>
+
+              {/* Category Pills Row - Shown when toggled */}
+              {showCategoryPills && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-2">
+                  {[
+                    { id: null, label: 'All' },
+                    { id: 'movies', label: 'Movies' },
+                    { id: 'tv', label: 'TV' },
+                    { id: 'music', label: 'Music' },
+                    { id: 'books', label: 'Books' },
+                    { id: 'sports', label: 'Sports' },
+                    { id: 'podcasts', label: 'Podcasts' },
+                  ].map((cat) => (
+                    <button
+                      key={cat.id || 'all'}
+                      onClick={() => {
+                        setSelectedCategory(cat.id);
+                        if (cat.id === null) setShowCategoryPills(false);
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                        cat.id === selectedCategory
+                          ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                          : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              )}
 
 
               {/* Empty state for filtered views */}
