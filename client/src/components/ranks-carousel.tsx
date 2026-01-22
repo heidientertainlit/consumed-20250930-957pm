@@ -98,11 +98,9 @@ function SortableItem({ item, index, totalVotes }: SortableItemProps) {
       <span className="text-gray-900 font-medium flex-1 truncate text-sm">
         {item.title}
       </span>
-      {percentage > 0 && (
-        <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
-          {percentage}% agree
-        </span>
-      )}
+      <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+        {percentage}%
+      </span>
     </div>
   );
 }
@@ -272,10 +270,9 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
       setSubmittedRanks(prev => ({ ...prev, [rankId]: true }));
       queryClient.invalidateQueries({ queryKey: ['consumed-ranks-carousel'] });
       trackEvent('rank_submitted', { rank_id: rankId });
-      toast({ title: 'Ranking submitted!', description: 'Your vote has been recorded.' });
     },
     onError: () => {
-      toast({ title: 'Failed to submit', variant: 'destructive' });
+      console.error('Failed to submit rank');
     }
   });
 
