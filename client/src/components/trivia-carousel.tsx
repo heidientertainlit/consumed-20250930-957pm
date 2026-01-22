@@ -360,7 +360,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                   <Brain className="w-3.5 h-3.5 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{category} Trivia</p>
+                  <p className="text-sm font-semibold text-gray-900">{category === 'Movies' ? 'Movie' : category} Trivia</p>
                   <p className="text-[10px] text-gray-500">One question trivia</p>
                 </div>
               </>

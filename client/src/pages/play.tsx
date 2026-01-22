@@ -970,7 +970,7 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
           )}
 
           {/* Challenges Section */}
-          {(activeFilter === 'all' || activeFilter === 'challenges') && challengeGames.filter((g: any) => 
+          {(activeFilter === 'all' || activeFilter === 'challenges' || activeFilter === 'trivia') && challengeGames.filter((g: any) => 
             !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase())
           ).length > 0 && (
             <div>
