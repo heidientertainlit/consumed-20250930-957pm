@@ -201,7 +201,7 @@ export function DnaMomentCard() {
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-900">DNA Moments</p>
-            <p className="text-[10px] text-gray-500">Build your Entertainment DNA</p>
+            <p className="text-[10px] text-gray-500">This feeds your DNA</p>
           </div>
         </div>
         
