@@ -272,6 +272,31 @@ export default function ListDetail() {
     }
   }, [listData?.items?.length]);
 
+  // Save reordered items to database
+  const reorderMutation = useMutation({
+    mutationFn: async (orderedItems: any[]) => {
+      if (!session?.access_token || !listData?.id) throw new Error('Not authenticated');
+      
+      // Update each item's position
+      const updates = orderedItems.map((item, index) => 
+        supabase
+          .from('list_items')
+          .update({ position: index })
+          .eq('id', item.id)
+      );
+      
+      await Promise.all(updates);
+      return orderedItems;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+    },
+    onError: (error) => {
+      console.error('Failed to save order:', error);
+      toast({ title: 'Failed to save order', variant: 'destructive' });
+    }
+  });
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
@@ -279,7 +304,12 @@ export default function ListDetail() {
       setLocalItems((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
+        const newItems = arrayMove(items, oldIndex, newIndex);
+        
+        // Save the new order to database
+        reorderMutation.mutate(newItems);
+        
+        return newItems;
       });
     }
   };
