@@ -506,7 +506,26 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                   </div>
                 )}
                 
-                <div className="flex justify-end mt-3">
+                <div className="flex justify-between items-center mt-3">
+                  <button 
+                    className="flex items-center gap-1 text-xs text-purple-600 font-medium hover:text-purple-700 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (navigator.share) {
+                        navigator.share({
+                          title: 'Trivia Challenge',
+                          text: `Can you answer this? ${item.question}`,
+                          url: window.location.origin
+                        });
+                      } else {
+                        navigator.clipboard.writeText(`Can you answer this? ${item.question} - Play at ${window.location.origin}`);
+                        toast({ title: "Link copied!", description: "Share it with your friends" });
+                      }
+                    }}
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    Challenge a friend
+                  </button>
                   <span className="text-xs text-green-600 font-medium">+{item.pointsReward} pts</span>
                 </div>
               </div>
