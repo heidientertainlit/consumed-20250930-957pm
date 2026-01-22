@@ -229,7 +229,7 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
   const [leaderboardActiveTab, setLeaderboardActiveTab] = useState<string>('engagement');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [topTab, setTopTab] = useState<'play' | 'leaderboard'>('play');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'polls' | 'predictions' | 'trivia' | 'hot_takes'>(initialTab || 'all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'polls' | 'predictions' | 'trivia' | 'challenges' | 'hot_takes'>(initialTab || 'all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
 
@@ -557,6 +557,12 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
     return getUnplayedFirst(filtered, 5);
   }, [allGames, allPredictions]);
 
+  // Get trivia challenges (multi-question) - unplayed first
+  const challengeGames = useMemo(() => {
+    const filtered = allGames.filter((game: any) => game.type === 'trivia' && game.isLongForm);
+    return getUnplayedFirst(filtered, 5);
+  }, [allGames, allPredictions]);
+
   // Extract total consumption leaders array from leaderboard data (API returns object with categories)
   const totalConsumptionLeaders = leaderboardData?.categories?.total_consumption || [];
   const userRank = Array.isArray(totalConsumptionLeaders) 
@@ -763,6 +769,7 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
             { key: 'polls', label: 'Polls' },
             { key: 'predictions', label: 'Predictions' },
             { key: 'trivia', label: 'Trivia' },
+            { key: 'challenges', label: 'Challenges' },
             { key: 'hot_takes', label: 'Hot Takes' },
           ].map((filter) => (
             <button
@@ -962,11 +969,86 @@ export default function PlayPage({ initialTab }: { initialTab?: 'all' | 'polls' 
             </div>
           )}
 
+          {/* Challenges Section */}
+          {(activeFilter === 'all' || activeFilter === 'challenges') && challengeGames.filter((g: any) => 
+            !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase())
+          ).length > 0 && (
+            <div>
+              {activeFilter === 'all' && (
+                <div className="flex items-center justify-between mb-3 mt-6">
+                  <h2 className="text-lg font-semibold text-gray-900">Trivia Challenges</h2>
+                  <button 
+                    onClick={() => setActiveFilter('challenges')}
+                    className="text-sm text-purple-600 font-medium"
+                  >
+                    See all →
+                  </button>
+                </div>
+              )}
+              <div className="space-y-3">
+                {challengeGames
+                  .filter((g: any) => !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .slice(0, activeFilter === 'all' ? 3 : undefined)
+                  .map((game: any) => (
+                  <Card key={game.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-purple-100 text-purple-700 text-[10px] py-0 px-1.5">
+                            Trivia Challenge
+                          </Badge>
+                          <Badge className="bg-amber-100 text-amber-700 text-[10px] py-0 px-1.5">
+                            {game.options?.length || 10} questions
+                          </Badge>
+                        </div>
+                        <Badge className="bg-green-100 text-green-700 text-[10px] py-0 px-1.5">
+                          {game.points || 15} pts
+                        </Badge>
+                      </div>
+                      <h3 className="font-semibold text-gray-900 mb-3">{game.title}</h3>
+                      
+                      {userPredictionsData?.predictions?.[game.id] ? (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                          <div className="text-green-800 font-medium text-sm">✓ Completed</div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Button
+                            onClick={() => {
+                              setSelectedTriviaGame(game);
+                            }}
+                            className="w-full bg-gradient-to-r from-slate-900 via-purple-900 to-indigo-900 hover:from-slate-800 hover:via-purple-800 hover:to-indigo-800 text-white rounded-full"
+                          >
+                            <Play size={16} className="mr-2" />
+                            Start Challenge
+                          </Button>
+                          <button 
+                            className="w-full flex items-center justify-center gap-1 text-xs text-purple-600 font-medium hover:text-purple-700 transition-colors py-2"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const url = `${window.location.origin}/play?game=${game.id}`;
+                              navigator.clipboard.writeText(url);
+                              toast({ title: "Link copied!", description: "Challenge a friend!" });
+                            }}
+                          >
+                            <Users size={14} />
+                            Challenge a friend
+                          </button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Empty State */}
           {activeFilter !== 'all' && activeFilter !== 'hot_takes' && (
             (activeFilter === 'polls' && pollGames.filter((g: any) => !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0) ||
             (activeFilter === 'predictions' && predictionGames.filter((g: any) => !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0) ||
-            (activeFilter === 'trivia' && triviaGames.filter((g: any) => !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0)
+            (activeFilter === 'trivia' && triviaGames.filter((g: any) => !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0) ||
+            (activeFilter === 'challenges' && challengeGames.filter((g: any) => !searchQuery || g.title?.toLowerCase().includes(searchQuery.toLowerCase())).length === 0)
           ) && (
             <div className="text-center py-12">
               <p className="text-gray-500">No {activeFilter} found{searchQuery ? ` for "${searchQuery}"` : ''}</p>

@@ -360,8 +360,8 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                   <Brain className="w-3.5 h-3.5 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{category}</p>
-                  <p className="text-[10px] text-gray-500">{filteredData.length} trivia questions</p>
+                  <p className="text-sm font-semibold text-gray-900">{category} Trivia</p>
+                  <p className="text-[10px] text-gray-500">One question trivia</p>
                 </div>
               </>
             ) : (
@@ -371,7 +371,7 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900">Quick Trivia</p>
-                  <p className="text-[10px] text-gray-500">Test your knowledge</p>
+                  <p className="text-[10px] text-gray-500">One question trivia</p>
                 </div>
               </>
             )}
