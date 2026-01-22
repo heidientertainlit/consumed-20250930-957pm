@@ -171,16 +171,16 @@ const multiQuestionChallenges = [
     icon: "calendar",
     origin_type: "consumed",
     options: [
-      { question: "The Dark Knight - before or after 2010?", options: ["Before", "After", "Same Year", "N/A"], answer: "Before" },
-      { question: "Inception - before or after 2008?", options: ["Before", "After", "Same Year", "N/A"], answer: "After" },
-      { question: "Avatar - before or after 2010?", options: ["Before", "After", "Same Year", "N/A"], answer: "Before" },
-      { question: "The Avengers - before or after 2011?", options: ["Before", "After", "Same Year", "N/A"], answer: "After" },
-      { question: "Frozen - before or after 2012?", options: ["Before", "After", "Same Year", "N/A"], answer: "After" },
-      { question: "Titanic - before or after 2000?", options: ["Before", "After", "Same Year", "N/A"], answer: "Before" },
-      { question: "Black Panther - before or after 2017?", options: ["Before", "After", "Same Year", "N/A"], answer: "After" },
-      { question: "The Social Network - before or after 2009?", options: ["Before", "After", "Same Year", "N/A"], answer: "After" },
-      { question: "Mad Max: Fury Road - before or after 2014?", options: ["Before", "After", "Same Year", "N/A"], answer: "After" },
-      { question: "Interstellar - before or after 2015?", options: ["Before", "After", "Same Year", "N/A"], answer: "Before" }
+      { question: "The Dark Knight - before or after 2010?", options: ["Before", "After", "In 2010", "Way Before"], answer: "Before" },
+      { question: "Inception - before or after 2008?", options: ["Before", "After", "In 2008", "Way After"], answer: "After" },
+      { question: "Avatar - before or after 2010?", options: ["Before", "After", "In 2010", "Way Before"], answer: "Before" },
+      { question: "The Avengers - before or after 2011?", options: ["Before", "After", "In 2011", "Way After"], answer: "After" },
+      { question: "Frozen - before or after 2012?", options: ["Before", "After", "In 2012", "Way After"], answer: "After" },
+      { question: "Titanic - before or after 2000?", options: ["Before", "After", "In 2000", "Way Before"], answer: "Before" },
+      { question: "Black Panther - before or after 2017?", options: ["Before", "After", "In 2017", "Way After"], answer: "After" },
+      { question: "The Social Network - before or after 2009?", options: ["Before", "After", "In 2009", "Way After"], answer: "After" },
+      { question: "Mad Max: Fury Road - before or after 2014?", options: ["Before", "After", "In 2014", "Way After"], answer: "After" },
+      { question: "Interstellar - before or after 2015?", options: ["Before", "After", "In 2015", "Way Before"], answer: "Before" }
     ]
   },
   {
