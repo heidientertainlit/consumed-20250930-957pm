@@ -32,12 +32,11 @@ serve(async (req) => {
     if (action === 'getToday') {
       const today = new Date().toISOString().split('T')[0];
       
-      // Query prediction_pools with publish_at date = today
+      // Query prediction_pools with featured_date = today (Daily Call)
       const { data: challenge, error } = await supabaseAdmin
         .from('prediction_pools')
-        .select('id, publish_at, type, title, description, options, points_reward, status, category, icon, correct_answer')
-        .gte('publish_at', `${today}T00:00:00`)
-        .lt('publish_at', `${today}T23:59:59`)
+        .select('id, featured_date, type, title, description, options, points_reward, status, category, icon, correct_answer')
+        .eq('featured_date', today)
         .eq('status', 'open')
         .limit(1)
         .single();
@@ -52,7 +51,7 @@ serve(async (req) => {
       const mappedChallenge = challenge ? {
         ...challenge,
         challenge_type: challenge.type,
-        scheduled_date: challenge.publish_at?.split('T')[0] || challenge.publish_at
+        scheduled_date: challenge.featured_date
       } : null;
 
       return new Response(JSON.stringify({ challenge: mappedChallenge }), {
