@@ -972,8 +972,8 @@ export default function Search() {
         <div className="max-w-7xl mx-auto space-y-6">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Your Entertainment DNA
+            <h1 className="text-xl font-semibold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Feed your Entertainment DNA by adding books, movies, games, podcasts, and music to your media history and lists.
             </h1>
           </div>
 

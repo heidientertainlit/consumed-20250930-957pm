@@ -45,15 +45,11 @@ export default function OnboardingPage() {
         </div>
         
         <h1 className="text-2xl font-bold text-white mb-3">
-          Your taste is unique
+          Everything here feeds your DNA
         </h1>
         
-        <p className="text-purple-200 text-base mb-4 leading-relaxed">
-          Everything you do here shapes your <span className="text-cyan-400 font-medium">Entertainment DNA</span> — trivia, polls, hot takes, ratings, adding to lists, predictions, all of it.
-        </p>
-        
-        <p className="text-purple-300/70 text-sm mb-10 leading-relaxed">
-          It's like Goodreads + Spotify Wrapped + Fantasy Football but for all entertainment types.
+        <p className="text-purple-200 text-base mb-10 leading-relaxed">
+          Every answer, vote, and take helps shape how you watch, read, and listen.
         </p>
 
         <div className="space-y-3">
