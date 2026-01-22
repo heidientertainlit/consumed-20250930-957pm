@@ -2773,8 +2773,8 @@ export default function Feed() {
             </div>
           ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'challenges', 'track'].includes(selectedFilter) ? (
             <div className="space-y-4 pb-24">
-              {/* Feed Filter Pills */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-2">
+              {/* Feed Filter Pills - Game Types */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
                 {[
                   { id: 'all', label: 'All', Icon: Sparkles },
                   { id: 'trivia', label: 'Trivia', Icon: Brain },
@@ -2801,33 +2801,35 @@ export default function Feed() {
                     <span>{filter.label}</span>
                   </button>
                 ))}
+              </div>
 
-                {/* Category Filter Dropdown */}
+              {/* Category Filter Row - Collapsible */}
+              <div className="flex items-center gap-2 mb-2">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                         selectedCategory
                           ? 'bg-purple-600 text-white shadow-sm'
-                          : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                          : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
                       }`}
                     >
                       <SlidersHorizontal size={14} />
-                      <span>{selectedCategory ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1) : 'Category'}</span>
+                      <span>{selectedCategory ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1) : 'Media Type'}</span>
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuContent align="start" className="w-44">
                     <DropdownMenuItem 
                       onClick={() => setSelectedCategory(null)}
                       className={!selectedCategory ? 'bg-purple-50 text-purple-700' : ''}
                     >
                       <Sparkles size={14} className="mr-2" />
-                      All Categories
+                      All Media
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {[
                       { id: 'movies', label: 'Movies', Icon: Film },
-                      { id: 'tv', label: 'TV', Icon: Tv2 },
+                      { id: 'tv', label: 'TV Shows', Icon: Tv2 },
                       { id: 'music', label: 'Music', Icon: Music },
                       { id: 'books', label: 'Books', Icon: Book },
                       { id: 'sports', label: 'Sports', Icon: Trophy },
@@ -2844,6 +2846,16 @@ export default function Feed() {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                
+                {selectedCategory && (
+                  <button
+                    onClick={() => setSelectedCategory(null)}
+                    className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={12} />
+                    Clear
+                  </button>
+                )}
               </div>
 
 
