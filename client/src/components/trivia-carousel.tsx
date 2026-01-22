@@ -7,8 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
-import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, CheckCircle, XCircle, Play } from 'lucide-react';
-import { TriviaGameModal } from '@/components/trivia-game-modal';
+import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, CheckCircle, XCircle } from 'lucide-react';
 
 interface TriviaItem {
   id: string;
@@ -22,6 +21,8 @@ interface TriviaItem {
   isChallenge: boolean;
   questionCount: number;
   rawOptions: any;
+  poolId?: string;
+  questionIndex?: number;
 }
 
 interface TriviaCarouselProps {
@@ -37,7 +38,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<Record<string, string>>({});
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; stats: any }>>({});
-  const [selectedChallenge, setSelectedChallenge] = useState<TriviaItem | null>(null);
 
   const { data: leaderboardData } = useQuery({
     queryKey: ['trivia-leaderboard-position', user?.id, session?.access_token],
@@ -118,60 +118,60 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       
       const unansweredPools = (pools || []).filter(pool => !answeredPoolIds.includes(pool.id));
       
-      const uniqueTitles = new Map<string, any>();
-      for (const pool of unansweredPools) {
-        if (!uniqueTitles.has(pool.title)) {
-          uniqueTitles.set(pool.title, pool);
-        }
-      }
-      const uniquePools = Array.from(uniqueTitles.values());
+      // Flatten pools into individual trivia questions
+      const items: TriviaItem[] = [];
       
-      const items: TriviaItem[] = uniquePools.map(pool => {
-        let questionText = pool.title;
-        let optionsList: string[] = [];
-        let isChallenge = false;
-        let questionCount = 1;
-        let correctAns = pool.correct_answer;
-        
+      for (const pool of unansweredPools) {
         if (pool.options && Array.isArray(pool.options)) {
           const firstOpt = pool.options[0];
           const isObject = typeof firstOpt === 'object' && firstOpt !== null;
           const hasQuestion = isObject && 'question' in firstOpt;
           
-          if (pool.options.length > 1 && isObject && hasQuestion) {
-            isChallenge = true;
-            questionCount = pool.options.length;
-            const firstQ = pool.options[0];
-            questionText = firstQ.question || pool.title;
-            optionsList = firstQ.options || [];
-            correctAns = firstQ.answer || pool.correct_answer;
-          } else if (pool.options.length === 1 && isObject && hasQuestion) {
-            // Single question in object format - treat as one-question trivia
-            isChallenge = false;
-            questionCount = 1;
-            const firstQ = pool.options[0];
-            questionText = firstQ.question || pool.title;
-            optionsList = firstQ.options || [];
-            correctAns = firstQ.answer || pool.correct_answer;
+          if (isObject && hasQuestion) {
+            // Pool contains question objects - flatten each into individual trivia items
+            for (let i = 0; i < pool.options.length; i++) {
+              const q = pool.options[i];
+              if (q.question && q.options && Array.isArray(q.options)) {
+                items.push({
+                  id: `${pool.id}_q${i}`,
+                  title: pool.title,
+                  question: q.question,
+                  options: q.options,
+                  correctAnswer: q.answer || pool.correct_answer,
+                  category: pool.category,
+                  mediaTitle: pool.media_title,
+                  pointsReward: pool.points_reward || 10,
+                  isChallenge: false,
+                  questionCount: 1,
+                  rawOptions: pool.options,
+                  poolId: pool.id,
+                  questionIndex: i
+                });
+              }
+            }
           } else {
-            optionsList = pool.options.filter((o: any) => typeof o === 'string');
+            // Simple string options format - single question
+            const optionsList = pool.options.filter((o: any) => typeof o === 'string');
+            if (optionsList.length > 0) {
+              items.push({
+                id: pool.id,
+                title: pool.title,
+                question: pool.title,
+                options: optionsList,
+                correctAnswer: pool.correct_answer,
+                category: pool.category,
+                mediaTitle: pool.media_title,
+                pointsReward: pool.points_reward || 10,
+                isChallenge: false,
+                questionCount: 1,
+                rawOptions: pool.options,
+                poolId: pool.id,
+                questionIndex: 0
+              });
+            }
           }
         }
-        
-        return {
-          id: pool.id,
-          title: pool.title,
-          question: questionText,
-          options: optionsList,
-          correctAnswer: correctAns,
-          category: pool.category,
-          mediaTitle: pool.media_title,
-          pointsReward: pool.points_reward || 10,
-          isChallenge,
-          questionCount,
-          rawOptions: pool.options
-        };
-      }).filter(item => item.options.length > 0);
+      }
       
       return items;
     },
@@ -182,36 +182,45 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     const loadAnswered = async () => {
       if (!user?.id || !data || data.length === 0) return;
       
+      // Get unique pool IDs from our flattened items
+      const uniquePoolIds = [...new Set(data.map(q => q.poolId || q.id))];
+      
       const { data: predictions } = await supabase
         .from('user_predictions')
         .select('pool_id, prediction')
         .eq('user_id', user.id)
-        .in('pool_id', data.map(q => q.id));
+        .in('pool_id', uniquePoolIds);
       
       if (predictions && predictions.length > 0) {
         const answered: Record<string, { answer: string; isCorrect: boolean; stats: any }> = {};
         
         for (const p of predictions) {
-          const question = data.find(q => q.id === p.pool_id);
-          if (!question) continue;
+          // Find all questions from this pool
+          const poolQuestions = data.filter(q => (q.poolId || q.id) === p.pool_id);
           
-          const { data: allPredictions } = await supabase
-            .from('user_predictions')
-            .select('prediction')
-            .eq('pool_id', p.pool_id);
-          
-          const total = allPredictions?.length || 1;
-          const stats: Record<string, number> = {};
-          for (const opt of question?.options || []) {
-            const count = allPredictions?.filter(pred => pred.prediction === opt).length || 0;
-            stats[opt] = Math.round((count / total) * 100);
+          for (const question of poolQuestions) {
+            // Check if this prediction matches this question's answer
+            if (question.options.includes(p.prediction)) {
+              const { data: allPredictions } = await supabase
+                .from('user_predictions')
+                .select('prediction')
+                .eq('pool_id', p.pool_id);
+              
+              const total = allPredictions?.length || 1;
+              const stats: Record<string, number> = {};
+              for (const opt of question?.options || []) {
+                const count = allPredictions?.filter(pred => pred.prediction === opt).length || 0;
+                stats[opt] = Math.round((count / total) * 100);
+              }
+              
+              answered[question.id] = {
+                answer: p.prediction,
+                isCorrect: question?.correctAnswer === p.prediction,
+                stats
+              };
+              break; // Only match one question per prediction
+            }
           }
-          
-          answered[p.pool_id] = {
-            answer: p.prediction,
-            isCorrect: question?.correctAnswer === p.prediction,
-            stats
-          };
         }
         setAnsweredQuestions(answered);
       }
@@ -221,14 +230,14 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   }, [data, user?.id]);
 
   const answerMutation = useMutation({
-    mutationFn: async ({ questionId, answer, pointsReward, correctAnswer }: { questionId: string; answer: string; pointsReward: number; correctAnswer?: string }) => {
+    mutationFn: async ({ itemId, poolId, answer, pointsReward, correctAnswer, options }: { itemId: string; poolId: string; answer: string; pointsReward: number; correctAnswer?: string; options: string[] }) => {
       if (!user?.id) throw new Error('Not logged in');
       
       const { data: existingAnswer } = await supabase
         .from('user_predictions')
         .select('id')
         .eq('user_id', user.id)
-        .eq('pool_id', questionId)
+        .eq('pool_id', poolId)
         .single();
       
       if (existingAnswer) {
@@ -242,7 +251,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         .from('user_predictions')
         .insert({
           user_id: user.id,
-          pool_id: questionId,
+          pool_id: poolId,
           prediction: answer,
           points_earned: points
         });
@@ -259,22 +268,21 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       const { data: allPredictions } = await supabase
         .from('user_predictions')
         .select('prediction')
-        .eq('pool_id', questionId);
+        .eq('pool_id', poolId);
       
-      const question = data?.find(q => q.id === questionId);
       const total = allPredictions?.length || 1;
       const stats: Record<string, number> = {};
-      for (const opt of question?.options || []) {
+      for (const opt of options) {
         const count = allPredictions?.filter(p => p.prediction === opt).length || 0;
         stats[opt] = Math.round((count / total) * 100);
       }
       
-      return { questionId, answer, isCorrect, points, stats };
+      return { itemId, answer, isCorrect, points, stats };
     },
     onSuccess: (result) => {
       setAnsweredQuestions(prev => ({
         ...prev,
-        [result.questionId]: {
+        [result.itemId]: {
           answer: result.answer,
           isCorrect: result.isCorrect,
           stats: result.stats
@@ -331,10 +339,12 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const handleSelectAndSubmit = (item: TriviaItem, option: string) => {
     setSelectedAnswer(prev => ({ ...prev, [item.id]: option }));
     answerMutation.mutate({
-      questionId: item.id,
+      itemId: item.id,
+      poolId: item.poolId || item.id,
       answer: option,
       pointsReward: item.pointsReward,
-      correctAnswer: item.correctAnswer
+      correctAnswer: item.correctAnswer,
+      options: item.options
     });
   };
 
@@ -442,63 +452,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
             const answered = answeredQuestions[item.id];
             const selected = selectedAnswer[item.id];
             
-            if (item.isChallenge) {
-              return (
-                <div key={item.id} className="flex-shrink-0 w-full snap-center h-auto">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200">
-                      <span className="text-xs text-purple-700 font-medium">Trivia Challenge</span>
-                    </div>
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-200">
-                      <span className="text-xs text-amber-700 font-medium">{item.questionCount} questions</span>
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-gray-900 font-semibold text-base mb-3">{item.title}</h3>
-                  
-                  {answered ? (
-                    <div className="py-3 px-4 rounded-xl bg-green-50 border border-green-200 text-center">
-                      <CheckCircle className="w-5 h-5 text-green-500 mx-auto mb-1" />
-                      <span className="text-sm text-green-600">Challenge Completed!</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <button
-                        onClick={() => setSelectedChallenge(item)}
-                        className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-slate-900 via-purple-900 to-indigo-900 hover:from-slate-800 hover:via-purple-800 hover:to-indigo-800 text-white font-medium flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <Play className="w-4 h-4" />
-                        Start Challenge
-                      </button>
-                      <button 
-                        className="w-full flex items-center justify-center gap-1 text-xs text-purple-600 font-medium hover:text-purple-700 transition-colors py-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (navigator.share) {
-                            navigator.share({
-                              title: 'Trivia Challenge',
-                              text: `Think you can beat me? Try this ${item.questionCount}-question trivia challenge!`,
-                              url: window.location.origin
-                            });
-                          } else {
-                            navigator.clipboard.writeText(`Think you can beat me? Try this ${item.questionCount}-question trivia challenge! - Play at ${window.location.origin}`);
-                            toast({ title: "Link copied!", description: "Share it with your friends" });
-                          }
-                        }}
-                      >
-                        <Users className="w-3.5 h-3.5" />
-                        Challenge a friend
-                      </button>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-end mt-2">
-                    <span className="text-xs text-green-600 font-medium">+{item.pointsReward} pts</span>
-                  </div>
-                </div>
-              );
-            }
-            
             return (
               <div key={item.id} className="flex-shrink-0 w-full snap-center h-auto relative">
                 <div className="flex justify-between items-start mb-2">
@@ -599,20 +552,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         )}
       </Card>
 
-      {selectedChallenge && (
-        <TriviaGameModal
-          poolId={selectedChallenge.id}
-          title={selectedChallenge.title}
-          questions={selectedChallenge.rawOptions}
-          pointsReward={selectedChallenge.pointsReward}
-          correctAnswer={selectedChallenge.correctAnswer}
-          isOpen={true}
-          onClose={() => {
-            setSelectedChallenge(null);
-            queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
-          }}
-        />
-      )}
     </>
   );
 }
