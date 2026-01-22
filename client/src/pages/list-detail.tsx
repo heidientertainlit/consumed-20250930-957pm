@@ -272,34 +272,6 @@ export default function ListDetail() {
     }
   }, [listData?.items?.length]);
 
-  // Mutation to save reordered items
-  const reorderMutation = useMutation({
-    mutationFn: async (newOrder: string[]) => {
-      if (!session?.access_token || !listData?.id) throw new Error('Not authenticated');
-      
-      const { error } = await supabase
-        .from('list_items')
-        .upsert(
-          newOrder.map((itemId, index) => ({
-            id: itemId,
-            position: index
-          })),
-          { onConflict: 'id' }
-        );
-      
-      if (error) throw error;
-      return newOrder;
-    },
-    onError: (error) => {
-      console.error('Failed to save order:', error);
-      toast({ title: 'Failed to save order', variant: 'destructive' });
-      // Revert to original order
-      if (listData?.items) {
-        setLocalItems(listData.items);
-      }
-    }
-  });
-
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
@@ -307,12 +279,7 @@ export default function ListDetail() {
       setLocalItems((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
-        const newItems = arrayMove(items, oldIndex, newIndex);
-        
-        // Save the new order
-        reorderMutation.mutate(newItems.map((item) => item.id));
-        
-        return newItems;
+        return arrayMove(items, oldIndex, newIndex);
       });
     }
   };
