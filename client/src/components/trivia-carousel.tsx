@@ -652,24 +652,19 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                       </div>
                     )}
                     
-                    {/* Continue/Done button - Duolingo style */}
+                    {/* Continue/Done button */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         if (currentIndex < (filteredData?.length || 0) - 1) {
                           scrollToNext();
                         } else {
-                          // Last question - could refresh or just show completion
                           queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
                         }
                       }}
-                      className={`w-full mt-4 py-3 rounded-xl font-bold text-white transition-all ${
-                        answered.isCorrect 
-                          ? 'bg-green-500 hover:bg-green-600' 
-                          : 'bg-purple-600 hover:bg-purple-700'
-                      }`}
+                      className="w-full mt-4 py-2.5 rounded-xl font-semibold text-sm text-white transition-all bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:from-blue-600 hover:via-purple-600 hover:to-purple-700"
                     >
-                      {currentIndex < (filteredData?.length || 0) - 1 ? 'CONTINUE' : 'DONE'}
+                      {currentIndex < (filteredData?.length || 0) - 1 ? 'Continue' : 'Done'}
                     </button>
                   </div>
                 )}
