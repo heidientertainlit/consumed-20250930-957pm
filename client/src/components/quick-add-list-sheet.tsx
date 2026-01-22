@@ -58,23 +58,37 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
 
   const getListStyle = (title: string) => {
     const lower = title.toLowerCase();
-    if (lower.includes('currently') || lower.includes('watching') || lower.includes('reading')) {
-      return { bg: 'bg-purple-100', icon: <Play className="text-purple-600" size={20} />, desc: 'Currently consuming' };
-    }
     if (lower.includes('queue') || lower.includes('want')) {
-      return { bg: 'bg-blue-100', icon: <Clock className="text-blue-600" size={20} />, desc: 'Save for later' };
+      return { bg: 'bg-blue-100', icon: <Clock className="text-blue-600" size={20} />, desc: 'Read, Listen, Watch later', priority: 0 };
+    }
+    if (lower.includes('currently') || lower.includes('watching') || lower.includes('reading')) {
+      return { bg: 'bg-purple-100', icon: <Play className="text-purple-600" size={20} />, desc: 'Currently consuming', priority: 1 };
     }
     if (lower.includes('finished') || lower.includes('complete')) {
-      return { bg: 'bg-green-100', icon: <Check className="text-green-600" size={20} />, desc: 'Completed media' };
+      return { bg: 'bg-green-100', icon: <Check className="text-green-600" size={20} />, desc: 'Completed media', priority: 2 };
     }
     if (lower.includes('dnf') || lower.includes('not finish')) {
-      return { bg: 'bg-red-100', icon: <Ban className="text-red-600" size={20} />, desc: 'Stopped watching/reading' };
+      return { bg: 'bg-red-100', icon: <Ban className="text-red-600" size={20} />, desc: 'Stopped watching/reading', priority: 3 };
     }
     if (lower.includes('favorite')) {
-      return { bg: 'bg-yellow-100', icon: <Heart className="text-yellow-600" size={20} />, desc: 'Your favorites' };
+      return { bg: 'bg-yellow-100', icon: <Heart className="text-yellow-600" size={20} />, desc: 'Your favorites', priority: 4 };
     }
-    return { bg: 'bg-purple-100', icon: <Folder className="text-purple-600" size={20} />, desc: 'Custom list' };
+    return { bg: 'bg-purple-100', icon: <Folder className="text-purple-600" size={20} />, desc: 'Custom list', priority: 5 };
   };
+
+  const getDisplayName = (title: string) => {
+    const lower = title.toLowerCase();
+    if (lower.includes('queue') || lower.includes('want')) {
+      return 'Want To (Read, Listen, etc)';
+    }
+    return title;
+  };
+
+  const sortedLists = [...userLists].sort((a, b) => {
+    const aStyle = getListStyle(a.title || a.name);
+    const bStyle = getListStyle(b.title || b.name);
+    return aStyle.priority - bStyle.priority;
+  });
 
   const shouldShowFollowUp = (listName: string) => {
     const lower = listName.toLowerCase();
@@ -368,49 +382,34 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
               <p className="text-sm mt-1">Create a list to start tracking</p>
             </div>
           ) : (
-            <>
-              <button
-                onClick={handleClose}
-                className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
-                data-testid="list-option-cancel"
-              >
-                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                  <X className="text-gray-500" size={20} />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">Cancel</p>
-                  <p className="text-sm text-gray-500">Go back</p>
-                </div>
-              </button>
+            sortedLists.map((list: any) => {
+              const style = getListStyle(list.title || list.name);
+              const listName = list.title || list.name;
+              const displayName = getDisplayName(listName);
+              const isAddingThis = isAdding === list.id;
               
-              {userLists.map((list: any) => {
-                const style = getListStyle(list.title || list.name);
-                const listName = list.title || list.name;
-                const isAddingThis = isAdding === list.id;
-                
-                return (
-                  <button
-                    key={list.id}
-                    onClick={() => handleAddToList(list.id, listName)}
-                    disabled={isAdding !== null}
-                    className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors disabled:opacity-50"
-                    data-testid={`list-option-${list.id}`}
-                  >
-                    <div className={`w-10 h-10 ${style.bg} rounded-full flex items-center justify-center`}>
-                      {isAddingThis ? (
-                        <Loader2 className="animate-spin text-purple-600" size={20} />
-                      ) : (
-                        style.icon
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">{listName}</p>
-                      <p className="text-sm text-gray-500">{style.desc}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </>
+              return (
+                <button
+                  key={list.id}
+                  onClick={() => handleAddToList(list.id, listName)}
+                  disabled={isAdding !== null}
+                  className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors disabled:opacity-50"
+                  data-testid={`list-option-${list.id}`}
+                >
+                  <div className={`w-10 h-10 ${style.bg} rounded-full flex items-center justify-center`}>
+                    {isAddingThis ? (
+                      <Loader2 className="animate-spin text-purple-600" size={20} />
+                    ) : (
+                      style.icon
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{displayName}</p>
+                    <p className="text-sm text-gray-500">{style.desc}</p>
+                  </div>
+                </button>
+              );
+            })
           )}
         </div>
       </DrawerContent>
