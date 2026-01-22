@@ -8,25 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
-import { BarChart3, ChevronLeft, ChevronRight, Loader2, GripVertical, Plus, X } from 'lucide-react';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { BarChart3, ChevronLeft, ChevronRight, Loader2, ChevronUp, ChevronDown, Plus, X } from 'lucide-react';
 
 interface RankItem {
   id: string;
@@ -46,48 +28,22 @@ interface RankData {
   items: RankItem[];
 }
 
-interface SortableItemProps {
+interface VoteItemProps {
   item: RankItem;
   index: number;
   totalVotes: number;
+  userVote: 'up' | 'down' | null;
+  onVote: (itemId: string, direction: 'up' | 'down') => void;
+  isVoting: boolean;
 }
 
-function SortableItem({ item, index, totalVotes }: SortableItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: item.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 1000 : 1,
-  };
-
-  const percentage = totalVotes > 0 
+function VoteItem({ item, index, totalVotes, userVote, onVote, isVoting }: VoteItemProps) {
+  const upPercentage = totalVotes > 0 
     ? Math.round((item.up_vote_count / totalVotes) * 100) 
     : 0;
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`flex items-center gap-2 py-2.5 px-3 rounded-xl bg-gray-50 border border-gray-100 ${
-        isDragging ? 'shadow-lg bg-white' : ''
-      }`}
-    >
-      <button
-        {...attributes}
-        {...listeners}
-        className="touch-none cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
-      >
-        <GripVertical size={16} />
-      </button>
+    <div className="flex items-center gap-2 py-2.5 px-3 rounded-xl bg-gray-50 border border-gray-100">
       <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${
         index === 0 ? 'bg-gradient-to-br from-teal-500 to-emerald-600 text-white' :
         index === 1 ? 'bg-gradient-to-br from-teal-400 to-emerald-500 text-white' :
@@ -98,9 +54,33 @@ function SortableItem({ item, index, totalVotes }: SortableItemProps) {
       <span className="text-gray-900 font-medium flex-1 truncate text-sm">
         {item.title}
       </span>
-      <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
-        {percentage}%
-      </span>
+      <div className="flex items-center gap-1">
+        <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded min-w-[32px] text-center">
+          {upPercentage}%
+        </span>
+        <button
+          onClick={() => onVote(item.id, 'up')}
+          disabled={isVoting}
+          className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${
+            userVote === 'up' 
+              ? 'bg-teal-500 text-white' 
+              : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-600'
+          }`}
+        >
+          <ChevronUp size={14} />
+        </button>
+        <button
+          onClick={() => onVote(item.id, 'down')}
+          disabled={isVoting}
+          className={`w-6 h-6 rounded flex items-center justify-center transition-colors ${
+            userVote === 'down' 
+              ? 'bg-red-500 text-white' 
+              : 'bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600'
+          }`}
+        >
+          <ChevronDown size={14} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -120,23 +100,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
   const [submittedRanks, setSubmittedRanks] = useState<Record<string, boolean>>({});
   const [addingToRank, setAddingToRank] = useState<string | null>(null);
   const [customAddInput, setCustomAddInput] = useState('');
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 150,
-        tolerance: 5,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  const [userVotes, setUserVotes] = useState<Record<string, 'up' | 'down' | null>>({});
 
   const { data: ranks, isLoading } = useQuery({
     queryKey: ['consumed-ranks-carousel', offset],
@@ -276,6 +240,97 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
     }
   });
 
+  const voteMutation = useMutation({
+    mutationFn: async ({ itemId, direction }: { itemId: string; direction: 'up' | 'down' }) => {
+      if (!user?.id) throw new Error('Must be logged in');
+      
+      const currentVote = userVotes[itemId];
+      
+      if (currentVote === direction) {
+        await supabase
+          .from('rank_item_votes')
+          .delete()
+          .eq('rank_item_id', itemId)
+          .eq('voter_id', user.id);
+        
+        const field = direction === 'up' ? 'up_vote_count' : 'down_vote_count';
+        const { data: item } = await supabase
+          .from('rank_items')
+          .select(field)
+          .eq('id', itemId)
+          .single();
+        
+        await supabase
+          .from('rank_items')
+          .update({ [field]: Math.max(0, (item?.[field] || 1) - 1) })
+          .eq('id', itemId);
+        
+        return { itemId, direction: null };
+      }
+      
+      const { data: existing } = await supabase
+        .from('rank_item_votes')
+        .select('id, direction')
+        .eq('rank_item_id', itemId)
+        .eq('voter_id', user.id)
+        .maybeSingle();
+      
+      if (existing) {
+        const oldDir = existing.direction;
+        await supabase
+          .from('rank_item_votes')
+          .update({ direction })
+          .eq('id', existing.id);
+        
+        const { data: item } = await supabase
+          .from('rank_items')
+          .select('up_vote_count, down_vote_count')
+          .eq('id', itemId)
+          .single();
+        
+        const updates: Record<string, number> = {};
+        if (oldDir === 'up') updates.up_vote_count = Math.max(0, (item?.up_vote_count || 1) - 1);
+        if (oldDir === 'down') updates.down_vote_count = Math.max(0, (item?.down_vote_count || 1) - 1);
+        if (direction === 'up') updates.up_vote_count = (updates.up_vote_count ?? item?.up_vote_count ?? 0) + 1;
+        if (direction === 'down') updates.down_vote_count = (updates.down_vote_count ?? item?.down_vote_count ?? 0) + 1;
+        
+        await supabase.from('rank_items').update(updates).eq('id', itemId);
+      } else {
+        await supabase.from('rank_item_votes').insert({
+          rank_item_id: itemId,
+          voter_id: user.id,
+          direction
+        });
+        
+        const field = direction === 'up' ? 'up_vote_count' : 'down_vote_count';
+        const { data: item } = await supabase
+          .from('rank_items')
+          .select(field)
+          .eq('id', itemId)
+          .single();
+        
+        await supabase
+          .from('rank_items')
+          .update({ [field]: (item?.[field] || 0) + 1 })
+          .eq('id', itemId);
+      }
+      
+      return { itemId, direction };
+    },
+    onSuccess: ({ itemId, direction }) => {
+      setUserVotes(prev => ({ ...prev, [itemId]: direction }));
+      queryClient.invalidateQueries({ queryKey: ['consumed-ranks-carousel'] });
+      trackEvent('rank_item_voted', { item_id: itemId, direction });
+    },
+    onError: () => {
+      console.error('Failed to vote');
+    }
+  });
+
+  const handleVote = (itemId: string, direction: 'up' | 'down') => {
+    voteMutation.mutate({ itemId, direction });
+  };
+
   const addCustomItemMutation = useMutation({
     mutationFn: async ({ rankId, title }: { rankId: string; title: string }) => {
       if (!user?.id) throw new Error('Must be logged in');
@@ -347,23 +402,6 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
     }));
   };
 
-  const handleDragEnd = (rankId: string) => (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (over && active.id !== over.id) {
-      setLocalRankings(prev => {
-        const items = prev[rankId] || [];
-        const oldIndex = items.findIndex(item => item.id === active.id);
-        const newIndex = items.findIndex(item => item.id === over.id);
-        
-        return {
-          ...prev,
-          [rankId]: arrayMove(items, oldIndex, newIndex)
-        };
-      });
-    }
-  };
-
   if (isLoading) {
     return (
       <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
@@ -387,7 +425,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
           </div>
           <div>
             <p className="text-sm font-semibold text-gray-900">Debate the Rank</p>
-            <p className="text-[10px] text-gray-500">Drag to reorder</p>
+            <p className="text-[10px] text-gray-500">Vote to rank</p>
           </div>
         </div>
         
@@ -432,27 +470,19 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                 {rank.title}
               </h3>
 
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd(rank.id)}
-              >
-                <SortableContext
-                  items={displayItems.map(item => item.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-2 mb-3">
-                    {displayItems.map((item, index) => (
-                      <SortableItem 
-                        key={item.id} 
-                        item={item} 
-                        index={index}
-                        totalVotes={totalVotes}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
+              <div className="space-y-2 mb-3">
+                {displayItems.map((item, index) => (
+                  <VoteItem 
+                    key={item.id} 
+                    item={item} 
+                    index={index}
+                    totalVotes={totalVotes}
+                    userVote={userVotes[item.id] || null}
+                    onVote={handleVote}
+                    isVoting={voteMutation.isPending}
+                  />
+                ))}
+              </div>
 
               <div className="flex items-center gap-2 mt-3">
                 {rank.items.length > 5 && (
