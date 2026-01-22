@@ -17,7 +17,6 @@ import { TriviaCarousel } from "@/components/trivia-carousel";
 import { DnaSurveyNudge } from "@/components/dna-survey-nudge";
 import CastFriendsGame from "@/components/cast-friends-game";
 import SeenItGame from "@/components/seen-it-game";
-import TrackCard from "@/components/track-card";
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
@@ -2773,7 +2772,7 @@ export default function Feed() {
             <div className="text-center py-8">
               <p className="text-gray-600">Please sign in to view your social feed.</p>
             </div>
-          ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'challenges', 'track'].includes(selectedFilter) ? (
+          ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'challenges'].includes(selectedFilter) ? (
             <div className="space-y-4 pb-24">
               {/* Feed Filter Pills - Media Type + Game Types in one row */}
               <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-2">
@@ -2915,10 +2914,6 @@ export default function Feed() {
                 <SeenItGame />
               )}
 
-              {/* Quick Track Card */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'track') && (
-                <TrackCard />
-              )}
 
               {/* The Room - Friend Activity with reactions */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && (
