@@ -140,7 +140,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   correctAnswer: q.answer || pool.correct_answer,
                   category: pool.category,
                   mediaTitle: pool.media_title,
-                  pointsReward: pool.points_reward || 10,
+                  pointsReward: 10,
                   isChallenge: false,
                   questionCount: 1,
                   rawOptions: pool.options,
@@ -161,7 +161,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 correctAnswer: pool.correct_answer,
                 category: pool.category,
                 mediaTitle: pool.media_title,
-                pointsReward: pool.points_reward || 10,
+                pointsReward: 10,
                 isChallenge: false,
                 questionCount: 1,
                 rawOptions: pool.options,
@@ -469,7 +469,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 
                 {!answered ? (
                   <div className="flex flex-col gap-2">
-                    {item.options.slice(0, 4).map((option, idx) => (
+                    {item.options.map((option, idx) => (
                       <button
                         key={idx}
                         className={`py-3.5 px-5 rounded-full border text-sm font-semibold transition-all text-left ${
@@ -486,7 +486,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {item.options.slice(0, 4).map((option, idx) => {
+                    {item.options.map((option, idx) => {
                       const isUserAnswer = answered.answer === option;
                       const isCorrect = item.correctAnswer === option;
                       const percentage = answered.stats?.[option] || 0;
@@ -524,11 +524,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   </div>
                 )}
                 
-                <div className="flex items-center justify-between mt-4">
-                  <div className="flex items-center gap-2 text-[10px] text-gray-400 font-medium">
-                    <Users className="w-3 h-3" />
-                    {answered ? 'Results are live' : 'Tap to answer'}
-                  </div>
+                <div className="flex items-center mt-4">
                   <button 
                     className="flex items-center gap-1 text-xs text-purple-600 font-medium hover:text-purple-700 transition-colors"
                     onClick={(e) => {
