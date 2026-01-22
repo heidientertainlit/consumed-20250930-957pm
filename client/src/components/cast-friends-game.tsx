@@ -29,7 +29,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [step, setStep] = useState<'browse' | 'add-friend' | 'confirm'>('browse');
+  const [step, setStep] = useState<'browse' | 'add-friend' | 'confirm' | 'success'>('browse');
   const [celebrities, setCelebrities] = useState<Celebrity[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [gender, setGender] = useState<'all' | 'male' | 'female'>('all');
@@ -42,6 +42,9 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
   const [customFriendName, setCustomFriendName] = useState("");
   const [selectedCeleb, setSelectedCeleb] = useState<Celebrity | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [lastCastToken, setLastCastToken] = useState<string | null>(null);
+  const [lastCastCeleb, setLastCastCeleb] = useState<Celebrity | null>(null);
+  const [lastCastFriend, setLastCastFriend] = useState<string | null>(null);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
@@ -156,18 +159,19 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
 
       if (!response.ok) throw new Error('Failed to create cast');
 
+      const result = await response.json();
+      
       trackEvent('friend_cast_created', {
         has_friend_account: !!selectedFriend,
         celeb_name: selectedCeleb.name
       });
 
-      toast({ title: "Cast shared! Ask friends to argue your pick! 🎬" });
-      onComplete?.();
+      setLastCastToken(result.friendCast?.share_token || null);
+      setLastCastCeleb(selectedCeleb);
+      setLastCastFriend(customFriendName || selectedFriend?.user_name || null);
+      setStep('success');
       
-      setStep('browse');
-      setSelectedCeleb(null);
-      setSelectedFriend(null);
-      setCustomFriendName("");
+      toast({ title: "Cast shared! 🎬" });
     } catch (error) {
       toast({ title: "Failed to create cast", variant: "destructive" });
     } finally {
@@ -483,6 +487,75 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
               <Share2 className="w-4 h-4 mr-2" />
             )}
             Share & Let Friends Argue
+          </Button>
+        </div>
+      )}
+
+      {step === 'success' && lastCastCeleb && (
+        <div className="space-y-4">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
+              <span className="text-3xl">🎬</span>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">Cast Shared!</h3>
+            <p className="text-sm text-gray-600">
+              {selectedFriend ? "They'll get notified to approve!" : "Share the link so they can see!"}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4">
+            <img 
+              src={lastCastCeleb.image} 
+              alt={lastCastCeleb.name}
+              className="w-14 h-18 rounded-lg object-cover"
+            />
+            <div>
+              <p className="text-amber-600 font-bold text-lg">{lastCastCeleb.name}</p>
+              <p className="text-xs text-gray-500">would play</p>
+              <p className="text-gray-900 font-bold">{lastCastFriend}</p>
+            </div>
+          </div>
+
+          {lastCastToken && (
+            <Button 
+              onClick={() => {
+                const url = `${window.location.origin}/cast/${lastCastToken}`;
+                if (navigator.share) {
+                  navigator.share({
+                    title: 'Cast Your Friends - Consumed',
+                    text: `I cast ${lastCastFriend} as ${lastCastCeleb.name}! What do you think?`,
+                    url,
+                  }).catch(() => {
+                    navigator.clipboard.writeText(url);
+                    toast({ title: "Link copied!" });
+                  });
+                } else {
+                  navigator.clipboard.writeText(url);
+                  toast({ title: "Link copied!" });
+                }
+              }}
+              className="w-full bg-purple-600 hover:bg-purple-700"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Share Link
+            </Button>
+          )}
+
+          <Button 
+            variant="outline"
+            onClick={() => {
+              setStep('browse');
+              setSelectedCeleb(null);
+              setSelectedFriend(null);
+              setCustomFriendName("");
+              setLastCastToken(null);
+              setLastCastCeleb(null);
+              setLastCastFriend(null);
+              onComplete?.();
+            }}
+            className="w-full"
+          >
+            Cast Another Friend
           </Button>
         </div>
       )}

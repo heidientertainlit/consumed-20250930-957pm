@@ -72,6 +72,7 @@ import AwardsBallotShare from "@/pages/awards-ballot-share";
 import InvitePage from "@/pages/invite";
 import PublicProfilePage from "@/pages/public-profile";
 import FeedbackSurvey from "@/pages/feedback-survey";
+import CastSharePage from "@/pages/cast-share";
 
 function Router() {
   return (
@@ -96,6 +97,9 @@ function Router() {
         </Route>
         <Route path="/invite/:userId">
           <InvitePage />
+        </Route>
+        <Route path="/cast/:token">
+          <CastSharePage />
         </Route>
         <Route path="/u/:userId">
           <PublicProfilePage />
