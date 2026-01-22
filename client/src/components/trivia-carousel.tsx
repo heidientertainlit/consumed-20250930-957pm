@@ -480,17 +480,17 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   )}
                 </div>
                 
-                <h3 className="text-gray-900 font-bold text-lg leading-tight mb-4">{item.question}</h3>
+                <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{item.question}</h3>
                 
                 {!answered ? (
                   <div className="flex flex-col gap-2">
                     {item.options.map((option, idx) => (
                       <button
                         key={idx}
-                        className={`py-3.5 px-5 rounded-full border text-sm font-semibold transition-all text-left ${
+                        className={`py-3 px-4 rounded-full text-sm font-medium transition-all text-left ${
                           selected === option 
-                            ? 'bg-purple-600 border-purple-600 text-white shadow-md' 
-                            : 'bg-slate-50 border-gray-100 text-gray-700 hover:bg-slate-100'
+                            ? 'bg-purple-600 text-white shadow-md' 
+                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                         }`}
                         onClick={() => handleSelectAndSubmit(item, option)}
                         disabled={answerMutation.isPending}
@@ -500,7 +500,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="flex flex-col gap-2">
                     {item.options.map((option, idx) => {
                       const isUserAnswer = answered.answer === option;
                       const isCorrect = item.correctAnswer === option;
@@ -509,29 +509,29 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                       return (
                         <div 
                           key={idx}
-                          className={`relative py-3 px-4 rounded-full border overflow-hidden transition-all ${
+                          className={`relative py-3 px-4 rounded-full overflow-hidden transition-all ${
                             isCorrect
-                              ? 'border-green-500 bg-green-50/50'
+                              ? 'bg-green-100'
                               : isUserAnswer
-                                ? 'border-red-500 bg-red-50/50'
-                                : 'border-gray-100 bg-slate-50'
+                                ? 'bg-red-100'
+                                : 'bg-gray-100'
                           }`}
                         >
                           <div 
                             className={`absolute inset-0 transition-all duration-1000 ease-out ${
-                              isCorrect ? 'bg-green-100/50' : 'bg-gray-200/20'
+                              isCorrect ? 'bg-green-200/60' : 'bg-gray-200/40'
                             }`} 
                             style={{ width: `${percentage}%` }} 
                           />
                           <div className="relative flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               {isCorrect && <CheckCircle className="w-4 h-4 text-green-600" />}
-                              {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-600" />}
-                              <span className={`text-sm font-semibold ${isCorrect ? 'text-green-800' : 'text-gray-700'}`}>
+                              {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-500" />}
+                              <span className={`text-sm font-medium ${isCorrect ? 'text-green-800' : isUserAnswer ? 'text-red-800' : 'text-gray-800'}`}>
                                 {option}
                               </span>
                             </div>
-                            <span className="text-xs font-bold text-gray-500">{percentage}%</span>
+                            <span className="text-xs font-medium text-gray-600">{percentage}%</span>
                           </div>
                         </div>
                       );
