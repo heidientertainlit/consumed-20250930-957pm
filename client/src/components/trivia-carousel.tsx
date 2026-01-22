@@ -27,9 +27,10 @@ interface TriviaItem {
 interface TriviaCarouselProps {
   expanded?: boolean;
   category?: string;
+  challengesOnly?: boolean;
 }
 
-export function TriviaCarousel({ expanded = false, category }: TriviaCarouselProps) {
+export function TriviaCarousel({ expanded = false, category, challengesOnly = false }: TriviaCarouselProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -341,11 +342,24 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
 
   const knownCategories = ['movies', 'tv', 'books', 'music', 'sports', 'podcasts', 'games'];
   
-  const filteredData = category 
-    ? category.toLowerCase() === 'other'
-      ? data.filter(item => !item.category || !knownCategories.includes(item.category.toLowerCase()))
-      : data.filter(item => item.category?.toLowerCase() === category.toLowerCase())
-    : data;
+  let filteredData = data;
+  
+  // Filter by category
+  if (category) {
+    if (category.toLowerCase() === 'other') {
+      filteredData = filteredData.filter(item => !item.category || !knownCategories.includes(item.category.toLowerCase()));
+    } else if (category.toLowerCase() === 'mixed') {
+      // Mixed shows items without a specific category or multi-category
+      filteredData = filteredData.filter(item => !item.category || item.category.toLowerCase() === 'mixed' || item.category.toLowerCase() === 'entertainment');
+    } else {
+      filteredData = filteredData.filter(item => item.category?.toLowerCase() === category.toLowerCase());
+    }
+  }
+  
+  // Filter by challenges (multi-question trivia)
+  if (challengesOnly) {
+    filteredData = filteredData.filter(item => item.isChallenge);
+  }
 
   if (filteredData.length === 0) return null;
 
@@ -356,22 +370,22 @@ export function TriviaCarousel({ expanded = false, category }: TriviaCarouselPro
           <div className="flex items-center gap-2">
             {category ? (
               <>
-                <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center">
-                  <Brain className="w-3.5 h-3.5 text-white" />
+                <div className={`w-7 h-7 rounded-full ${challengesOnly ? 'bg-gradient-to-br from-amber-500 to-orange-600' : 'bg-purple-900'} flex items-center justify-center`}>
+                  {challengesOnly ? <Trophy className="w-3.5 h-3.5 text-white" /> : <Brain className="w-3.5 h-3.5 text-white" />}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{category === 'Movies' ? 'Movie' : category} Trivia</p>
-                  <p className="text-[10px] text-gray-500">One question trivia</p>
+                  <p className="text-sm font-semibold text-gray-900">{category === 'Movies' ? 'Movie' : category} {challengesOnly ? 'Challenges' : 'Trivia'}</p>
+                  <p className="text-[10px] text-gray-500">{challengesOnly ? 'Multi-question challenges' : 'One question trivia'}</p>
                 </div>
               </>
             ) : (
               <>
-                <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center">
-                  <Brain className="w-3.5 h-3.5 text-white" />
+                <div className={`w-7 h-7 rounded-full ${challengesOnly ? 'bg-gradient-to-br from-amber-500 to-orange-600' : 'bg-purple-900'} flex items-center justify-center`}>
+                  {challengesOnly ? <Trophy className="w-3.5 h-3.5 text-white" /> : <Brain className="w-3.5 h-3.5 text-white" />}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Quick Trivia</p>
-                  <p className="text-[10px] text-gray-500">One question trivia</p>
+                  <p className="text-sm font-semibold text-gray-900">{challengesOnly ? 'Trivia Challenges' : 'Quick Trivia'}</p>
+                  <p className="text-[10px] text-gray-500">{challengesOnly ? 'Multi-question challenges' : 'One question trivia'}</p>
                 </div>
               </>
             )}

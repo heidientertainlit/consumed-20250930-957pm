@@ -4585,7 +4585,26 @@ export default function Feed() {
                   <TriviaCarousel category="Music" />
                   <TriviaCarousel category="Sports" />
                   <TriviaCarousel category="Podcasts" />
+                  <TriviaCarousel category="Games" />
                   <TriviaCarousel category="Other" />
+                </div>
+              )}
+
+              {/* Category carousels for challenges filter - shows multi-question trivia */}
+              {selectedFilter === 'challenges' && (
+                <div className="space-y-4 mt-4">
+                  <div className="text-center py-4">
+                    <p className="text-gray-700 font-semibold">Trivia Challenges by Category</p>
+                    <p className="text-xs text-gray-500 mt-1">Multi-question challenges you can play with friends</p>
+                  </div>
+                  <TriviaCarousel category="Movies" challengesOnly />
+                  <TriviaCarousel category="TV" challengesOnly />
+                  <TriviaCarousel category="Books" challengesOnly />
+                  <TriviaCarousel category="Music" challengesOnly />
+                  <TriviaCarousel category="Sports" challengesOnly />
+                  <TriviaCarousel category="Podcasts" challengesOnly />
+                  <TriviaCarousel category="Games" challengesOnly />
+                  <TriviaCarousel category="Mixed" challengesOnly />
                 </div>
               )}
 
