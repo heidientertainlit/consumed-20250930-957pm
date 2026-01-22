@@ -61,16 +61,16 @@ const multiQuestionChallenges = [
     icon: "heart",
     origin_type: "consumed",
     options: [
-      { question: "Brad Pitt & Angelina Jolie", options: ["Together", "Split"], answer: "Split" },
-      { question: "Blake Lively & Ryan Reynolds", options: ["Together", "Split"], answer: "Together" },
-      { question: "Jennifer Lopez & Ben Affleck", options: ["Together", "Split"], answer: "Together" },
-      { question: "Johnny Depp & Amber Heard", options: ["Together", "Split"], answer: "Split" },
-      { question: "Beyoncé & Jay-Z", options: ["Together", "Split"], answer: "Together" },
-      { question: "Chris Pratt & Anna Faris", options: ["Together", "Split"], answer: "Split" },
-      { question: "Channing Tatum & Jenna Dewan", options: ["Together", "Split"], answer: "Split" },
-      { question: "Mila Kunis & Ashton Kutcher", options: ["Together", "Split"], answer: "Together" },
-      { question: "Miley Cyrus & Liam Hemsworth", options: ["Together", "Split"], answer: "Split" },
-      { question: "John Legend & Chrissy Teigen", options: ["Together", "Split"], answer: "Together" }
+      { question: "Brad Pitt & Angelina Jolie", options: ["Together", "Split", "It's Complicated", "Never Dated"], answer: "Split" },
+      { question: "Blake Lively & Ryan Reynolds", options: ["Together", "Split", "It's Complicated", "Never Dated"], answer: "Together" },
+      { question: "Jennifer Lopez & Ben Affleck", options: ["Together", "Split", "It's Complicated", "Never Dated"], answer: "Together" },
+      { question: "Johnny Depp & Amber Heard", options: ["Together", "Split", "It's Complicated", "Never Dated"], answer: "Split" },
+      { question: "Beyoncé & Jay-Z", options: ["Together", "Split", "It's Complicated", "Never Dated"], answer: "Together" },
+      { question: "Chris Pratt & Anna Faris", options: ["Together", "Split", "It's Complicated", "Never Dated"], answer: "Split" },
+      { question: "Channing Tatum & Jenna Dewan", options: ["Together", "Split", "It's Complicated", "Never Dated"], answer: "Split" },
+      { question: "Mila Kunis & Ashton Kutcher", options: ["Together", "Split", "It's Complicated", "Never Dated"], answer: "Together" },
+      { question: "Miley Cyrus & Liam Hemsworth", options: ["Together", "Split", "It's Complicated", "Never Dated"], answer: "Split" },
+      { question: "John Legend & Chrissy Teigen", options: ["Together", "Split", "It's Complicated", "Never Dated"], answer: "Together" }
     ]
   },
   {
@@ -171,16 +171,16 @@ const multiQuestionChallenges = [
     icon: "calendar",
     origin_type: "consumed",
     options: [
-      { question: "Was The Dark Knight released before or after 2010?", options: ["Before 2010", "After 2010"], answer: "Before 2010" },
-      { question: "Was Inception released before or after 2008?", options: ["Before 2008", "After 2008"], answer: "After 2008" },
-      { question: "Was Avatar released before or after 2010?", options: ["Before 2010", "After 2010"], answer: "Before 2010" },
-      { question: "Was The Avengers released before or after 2011?", options: ["Before 2011", "After 2011"], answer: "After 2011" },
-      { question: "Was Frozen released before or after 2012?", options: ["Before 2012", "After 2012"], answer: "After 2012" },
-      { question: "Was Titanic released before or after 2000?", options: ["Before 2000", "After 2000"], answer: "Before 2000" },
-      { question: "Was Black Panther released before or after 2017?", options: ["Before 2017", "After 2017"], answer: "After 2017" },
-      { question: "Was The Social Network released before or after 2009?", options: ["Before 2009", "After 2009"], answer: "After 2009" },
-      { question: "Was Mad Max: Fury Road released before or after 2014?", options: ["Before 2014", "After 2014"], answer: "After 2014" },
-      { question: "Was Interstellar released before or after 2015?", options: ["Before 2015", "After 2015"], answer: "Before 2015" }
+      { question: "The Dark Knight - before or after 2010?", options: ["Before", "After", "Same Year", "N/A"], answer: "Before" },
+      { question: "Inception - before or after 2008?", options: ["Before", "After", "Same Year", "N/A"], answer: "After" },
+      { question: "Avatar - before or after 2010?", options: ["Before", "After", "Same Year", "N/A"], answer: "Before" },
+      { question: "The Avengers - before or after 2011?", options: ["Before", "After", "Same Year", "N/A"], answer: "After" },
+      { question: "Frozen - before or after 2012?", options: ["Before", "After", "Same Year", "N/A"], answer: "After" },
+      { question: "Titanic - before or after 2000?", options: ["Before", "After", "Same Year", "N/A"], answer: "Before" },
+      { question: "Black Panther - before or after 2017?", options: ["Before", "After", "Same Year", "N/A"], answer: "After" },
+      { question: "The Social Network - before or after 2009?", options: ["Before", "After", "Same Year", "N/A"], answer: "After" },
+      { question: "Mad Max: Fury Road - before or after 2014?", options: ["Before", "After", "Same Year", "N/A"], answer: "After" },
+      { question: "Interstellar - before or after 2015?", options: ["Before", "After", "Same Year", "N/A"], answer: "Before" }
     ]
   },
   {
