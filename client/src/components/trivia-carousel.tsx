@@ -134,7 +134,11 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         let correctAns = pool.correct_answer;
         
         if (pool.options && Array.isArray(pool.options)) {
-          if (pool.options.length > 0 && typeof pool.options[0] === 'object' && pool.options[0]?.question) {
+          const firstOpt = pool.options[0];
+          const isObject = typeof firstOpt === 'object' && firstOpt !== null;
+          const hasQuestion = isObject && 'question' in firstOpt;
+          
+          if (pool.options.length > 0 && isObject && hasQuestion) {
             isChallenge = pool.options.length > 1;
             questionCount = pool.options.length;
             const firstQ = pool.options[0];
@@ -358,10 +362,17 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   
   // Filter by challenges (multi-question trivia)
   if (challengesOnly) {
+    console.log(`🎮 TriviaCarousel [${category}] challengesOnly - before filter:`, filteredData.length, 'challenges:', filteredData.filter(i => i.isChallenge).length);
     filteredData = filteredData.filter(item => item.isChallenge);
+    console.log(`🎮 TriviaCarousel [${category}] challengesOnly - after filter:`, filteredData.length);
   }
 
-  if (filteredData.length === 0) return null;
+  if (filteredData.length === 0) {
+    if (challengesOnly) {
+      console.log(`🎮 TriviaCarousel [${category}] - no challenges found, returning null`);
+    }
+    return null;
+  }
 
   return (
     <>

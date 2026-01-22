@@ -4666,6 +4666,10 @@ export default function Feed() {
               {/* Category carousels for challenges filter - shows multi-question trivia */}
               {selectedFilter === 'challenges' && (
                 <div className="space-y-4 mt-4">
+                  <div className="text-center py-2">
+                    <p className="text-sm font-medium text-gray-700">Multi-question Trivia Challenges</p>
+                    <p className="text-xs text-gray-500">Compete with friends on these challenge sets</p>
+                  </div>
                   {selectedCategory ? (
                     <TriviaCarousel category={selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} challengesOnly />
                   ) : (
@@ -4677,7 +4681,6 @@ export default function Feed() {
                       <TriviaCarousel category="Sports" challengesOnly />
                       <TriviaCarousel category="Podcasts" challengesOnly />
                       <TriviaCarousel category="Games" challengesOnly />
-                      <TriviaCarousel category="Mixed" challengesOnly />
                     </>
                   )}
                 </div>
