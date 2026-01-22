@@ -469,16 +469,13 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
             
             return (
               <div key={item.id} className="flex-shrink-0 w-full snap-center h-auto relative">
-                <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold">
-                    +{item.pointsReward} pts
-                  </div>
-                  {item.mediaTitle && (
+                {item.mediaTitle && (
+                  <div className="mb-2">
                     <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200">
                       <span className="text-[10px] text-purple-700 font-medium">{item.mediaTitle}</span>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
                 
                 <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{item.question}</h3>
                 
@@ -539,7 +536,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   </div>
                 )}
                 
-                <div className="flex items-center mt-4">
+                <div className="flex items-center justify-between mt-4">
                   <button 
                     className="flex items-center gap-1 text-xs text-purple-600 font-medium hover:text-purple-700 transition-colors"
                     onClick={(e) => {
@@ -559,6 +556,9 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     <Users className="w-3.5 h-3.5" />
                     Challenge a friend
                   </button>
+                  <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold">
+                    +{item.pointsReward} pts
+                  </div>
                 </div>
               </div>
             );
