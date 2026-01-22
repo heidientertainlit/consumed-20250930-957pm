@@ -311,11 +311,12 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         description: result.isCorrect ? 'Nice work!' : 'Better luck next time!',
       });
       
+      // Give users more time to see results before auto-advancing
       setTimeout(() => {
         if (data && currentIndex < data.length - 1) {
           scrollToNext();
         }
-      }, 4000);
+      }, 7000);
     },
     onError: (error: Error) => {
       toast({
