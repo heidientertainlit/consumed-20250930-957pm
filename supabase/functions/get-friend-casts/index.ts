@@ -25,12 +25,16 @@ serve(async (req) => {
       userId = user?.id || null;
     }
 
-    const { data: casts, error } = await supabase
+    const url = new URL(req.url);
+    const pendingOnly = url.searchParams.get('pending') === 'true';
+    const forMe = url.searchParams.get('forMe') === 'true';
+
+    let query = supabase
       .from('friend_casts')
       .select(`
         *,
-        creator:users!friend_casts_creator_id_fkey(id, user_name),
-        target:users!friend_casts_target_friend_id_fkey(id, user_name),
+        creator:users!friend_casts_creator_id_fkey(id, user_name, avatar_url),
+        target:users!friend_casts_target_friend_id_fkey(id, user_name, avatar_url),
         responses:friend_cast_responses(
           id,
           celeb_id,
@@ -39,9 +43,18 @@ serve(async (req) => {
           responder:users!friend_cast_responses_responder_id_fkey(id, user_name)
         )
       `)
-      .eq('is_public', true)
-      .order('created_at', { ascending: false })
-      .limit(10);
+      .order('created_at', { ascending: false });
+
+    if (forMe && userId) {
+      query = query.eq('target_friend_id', userId);
+      if (pendingOnly) {
+        query = query.eq('status', 'pending');
+      }
+    } else {
+      query = query.eq('is_public', true).eq('status', 'approved');
+    }
+
+    const { data: casts, error } = await query.limit(20);
 
     if (error) {
       console.error('Fetch error:', error);
