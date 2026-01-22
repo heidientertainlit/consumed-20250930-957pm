@@ -454,12 +454,14 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
             
             return (
               <div key={item.id} className="flex-shrink-0 w-full snap-center h-auto relative">
-                <div className="flex justify-between items-start mb-2">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
                   <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold">
                     +{item.pointsReward} pts
                   </div>
                   {item.mediaTitle && (
-                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-tight">{item.mediaTitle}</span>
+                    <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200">
+                      <span className="text-[10px] text-purple-700 font-medium">{item.mediaTitle}</span>
+                    </div>
                   )}
                 </div>
                 
@@ -522,9 +524,30 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   </div>
                 )}
                 
-                <div className="flex items-center gap-2 mt-4 text-[10px] text-gray-400 font-medium">
-                  <Users className="w-3 h-3" />
-                  {answered ? 'Results are live' : 'Tap to answer'}
+                <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center gap-2 text-[10px] text-gray-400 font-medium">
+                    <Users className="w-3 h-3" />
+                    {answered ? 'Results are live' : 'Tap to answer'}
+                  </div>
+                  <button 
+                    className="flex items-center gap-1 text-xs text-purple-600 font-medium hover:text-purple-700 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (navigator.share) {
+                        navigator.share({
+                          title: 'Trivia Question',
+                          text: `Can you answer this? ${item.question}`,
+                          url: window.location.origin
+                        });
+                      } else {
+                        navigator.clipboard.writeText(`Can you answer this? ${item.question} - Play at ${window.location.origin}`);
+                        toast({ title: "Link copied!", description: "Share it with your friends" });
+                      }
+                    }}
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    Challenge a friend
+                  </button>
                 </div>
               </div>
             );
