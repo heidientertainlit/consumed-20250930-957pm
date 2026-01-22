@@ -647,6 +647,23 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                         </div>
                       </div>
                     )}
+                    
+                    {/* Continue button - Duolingo style */}
+                    {currentIndex < (filteredData?.length || 0) - 1 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          scrollToNext();
+                        }}
+                        className={`w-full mt-4 py-3 rounded-xl font-bold text-white transition-all ${
+                          answered.isCorrect 
+                            ? 'bg-green-500 hover:bg-green-600' 
+                            : 'bg-purple-600 hover:bg-purple-700'
+                        }`}
+                      >
+                        CONTINUE
+                      </button>
+                    )}
                   </div>
                 )}
                 
