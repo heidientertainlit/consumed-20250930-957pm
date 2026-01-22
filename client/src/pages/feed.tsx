@@ -2774,8 +2774,34 @@ export default function Feed() {
             </div>
           ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'challenges', 'track'].includes(selectedFilter) ? (
             <div className="space-y-4 pb-24">
-              {/* Feed Filter Pills - Game Types */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+              {/* Feed Filter Pills - Media Type + Game Types in one row */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-2">
+                {/* Media Type Toggle - visually distinct */}
+                <button
+                  onClick={() => setShowCategoryPills(!showCategoryPills)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    selectedCategory
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : showCategoryPills
+                        ? 'bg-gray-200 text-gray-700 border border-gray-300'
+                        : 'bg-gray-100 text-gray-500 border border-dashed border-gray-300 hover:bg-gray-200'
+                  }`}
+                >
+                  <SlidersHorizontal size={14} />
+                  <span>{selectedCategory ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1) : 'Filter'}</span>
+                  {selectedCategory && (
+                    <X 
+                      size={12} 
+                      className="ml-1 hover:text-white/80"
+                      onClick={(e) => { e.stopPropagation(); setSelectedCategory(null); setShowCategoryPills(false); }}
+                    />
+                  )}
+                </button>
+
+                {/* Divider */}
+                <div className="w-px h-6 bg-gray-200 flex-shrink-0" />
+
+                {/* Game Type Pills */}
                 {[
                   { id: 'all', label: 'All', Icon: Sparkles },
                   { id: 'trivia', label: 'Trivia', Icon: Brain },
@@ -2802,31 +2828,6 @@ export default function Feed() {
                     <span>{filter.label}</span>
                   </button>
                 ))}
-              </div>
-
-              {/* Category Filter Toggle + Pills */}
-              <div className="flex items-center gap-2 mb-2">
-                <button
-                  onClick={() => setShowCategoryPills(!showCategoryPills)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                    selectedCategory || showCategoryPills
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
-                  }`}
-                >
-                  <SlidersHorizontal size={14} />
-                  <span>{selectedCategory ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1) : 'Media Type'}</span>
-                </button>
-                
-                {selectedCategory && (
-                  <button
-                    onClick={() => { setSelectedCategory(null); setShowCategoryPills(false); }}
-                    className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700"
-                  >
-                    <X size={12} />
-                    Clear
-                  </button>
-                )}
               </div>
 
               {/* Category Pills Row - Shown when toggled */}
