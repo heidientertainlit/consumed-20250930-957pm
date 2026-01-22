@@ -126,6 +126,10 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       
       const unansweredPools = (pools || []).filter(pool => !answeredPoolIds.includes(pool.id));
       
+      // Debug: Log Movies pools
+      const moviesPools = unansweredPools.filter(p => p.category === 'Movies');
+      console.log('🎬 Movies pools after filter:', moviesPools.length, moviesPools.map(p => ({ id: p.id, title: p.title })));
+      
       // Flatten pools into individual trivia questions
       const items: TriviaItem[] = [];
       
@@ -420,7 +424,8 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     );
   }
 
-  console.log('🎮 TriviaCarousel render:', { isError, dataLength: data?.length, category, challengesOnly });
+  const allCats = data ? [...new Set(data.map(i => i.category))] : [];
+  console.log('🎮 TriviaCarousel render:', { isError, dataLength: data?.length, category, challengesOnly, allCategories: allCats });
   if (isError || !data || data.length === 0) {
     console.log('🎮 TriviaCarousel returning null - no data');
     return null;
@@ -435,10 +440,15 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     if (category.toLowerCase() === 'other') {
       filteredData = filteredData.filter(item => !item.category || !knownCategories.includes(item.category.toLowerCase()));
     } else if (category.toLowerCase() === 'mixed') {
-      // Mixed shows items without a specific category or multi-category
       filteredData = filteredData.filter(item => !item.category || item.category.toLowerCase() === 'mixed' || item.category.toLowerCase() === 'entertainment');
     } else {
       filteredData = filteredData.filter(item => item.category?.toLowerCase() === category.toLowerCase());
+    }
+    console.log(`🎮 TriviaCarousel [${category}] after category filter:`, filteredData.length, 'items');
+    // Debug: Show what categories exist
+    if (filteredData.length === 0) {
+      const allCategories = [...new Set(data.map(item => item.category))];
+      console.log(`🎮 TriviaCarousel [${category}] available categories:`, allCategories);
     }
   }
   
