@@ -44,6 +44,7 @@ export function DailyChallengeCard() {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [submittedResult, setSubmittedResult] = useState<{ isCorrect: boolean; correctAnswer: string; userAnswer: string } | null>(null);
+  const [runInfo, setRunInfo] = useState<{ currentRun: number; bonusPoints: number; nextMilestone: number; longestRun: number } | null>(null);
 
   const { data: challenge, isLoading: challengeLoading } = useQuery({
     queryKey: ['daily-challenge'],
@@ -67,7 +68,7 @@ export function DailyChallengeCard() {
     }
   });
 
-  const { data: existingResponse } = useQuery({
+  const { data: existingResponseData } = useQuery({
     queryKey: ['daily-challenge-response', challenge?.id],
     queryFn: async () => {
       if (!challenge || !session?.access_token) return null;
@@ -86,12 +87,18 @@ export function DailyChallengeCard() {
       
       const data = await response.json();
       if (data.hasResponded) {
-        return data.response as DailyChallengeResponse;
+        // If we have run info from a previous session, set it
+        if (data.run && !runInfo) {
+          setRunInfo(data.run);
+        }
+        return { response: data.response as DailyChallengeResponse, run: data.run };
       }
       return null;
     },
     enabled: !!challenge && !!session?.access_token
   });
+
+  const existingResponse = existingResponseData?.response;
 
   const submitMutation = useMutation({
     mutationFn: async (responseData: any) => {
@@ -118,7 +125,8 @@ export function DailyChallengeCard() {
       return { 
         pointsEarned: data.pointsEarned, 
         isCorrect: data.isCorrect,
-        correctAnswer: data.correctAnswer
+        correctAnswer: data.correctAnswer,
+        run: data.run
       };
     },
     onSuccess: (result) => {
@@ -128,6 +136,9 @@ export function DailyChallengeCard() {
         correctAnswer: result.correctAnswer || '',
         userAnswer: selectedOption || ''
       });
+      if (result.run) {
+        setRunInfo(result.run);
+      }
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
       
       trackEvent('daily_challenge_completed', { 
@@ -351,6 +362,35 @@ export function DailyChallengeCard() {
                   +{existingResponse?.points_earned || displayChallenge.points_reward} points earned
                 </span>
               </div>
+              
+              {/* Daily Run Info */}
+              {(runInfo || existingResponseData?.run) && (
+                <div className="mt-3 pt-3 border-t border-white/20 text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Flame className="w-4 h-4 text-orange-400" />
+                    <span className="text-sm font-bold text-orange-300">
+                      {(runInfo?.currentRun || existingResponseData?.run?.currentRun || 1)} day{(runInfo?.currentRun || existingResponseData?.run?.currentRun || 1) !== 1 ? 's' : ''} in a row!
+                    </span>
+                  </div>
+                  {runInfo?.bonusPoints && runInfo.bonusPoints > 0 && (
+                    <div className="text-xs text-yellow-300 font-medium mb-1">
+                      🎉 Milestone bonus: +{runInfo.bonusPoints} points!
+                    </div>
+                  )}
+                  <p className="text-xs text-white/60">
+                    {(() => {
+                      const currentRun = runInfo?.currentRun || existingResponseData?.run?.currentRun || 1;
+                      const nextMilestone = runInfo?.nextMilestone || existingResponseData?.run?.nextMilestone || 3;
+                      const longestRun = runInfo?.longestRun || existingResponseData?.run?.longestRun || 1;
+                      if (currentRun < nextMilestone) {
+                        const daysLeft = nextMilestone - currentRun;
+                        return `Keep it up! ${daysLeft} more day${daysLeft !== 1 ? 's' : ''} until bonus points`;
+                      }
+                      return `You're on fire! Best run: ${longestRun} days`;
+                    })()}
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <>

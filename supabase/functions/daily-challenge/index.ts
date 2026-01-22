@@ -29,6 +29,36 @@ serve(async (req) => {
 
     const { action, ...params } = await req.json();
 
+    // Ensure daily_runs table exists
+    if (action === 'ensureTable') {
+      try {
+        // Try to query the table first
+        const { error: checkError } = await supabaseAdmin
+          .from('daily_runs')
+          .select('id')
+          .limit(1);
+        
+        if (checkError && checkError.code === '42P01') {
+          // Table doesn't exist - inform caller
+          return new Response(JSON.stringify({ 
+            exists: false, 
+            message: 'Table does not exist. Please create it in Supabase dashboard.' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        
+        return new Response(JSON.stringify({ exists: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
     if (action === 'getToday') {
       const today = new Date().toISOString().split('T')[0];
       
@@ -78,9 +108,31 @@ serve(async (req) => {
         .eq('user_id', user.id)
         .single();
 
+      // Also fetch run info if they've responded
+      let runInfo = null;
+      if (response && !error) {
+        const { data: runData } = await supabaseAdmin
+          .from('daily_runs')
+          .select('current_run, longest_run')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (runData) {
+          const milestones = [3, 7, 14, 30];
+          const nextMilestone = milestones.find(m => m > runData.current_run) || 30;
+          runInfo = {
+            currentRun: runData.current_run,
+            longestRun: runData.longest_run,
+            bonusPoints: 0,
+            nextMilestone
+          };
+        }
+      }
+
       return new Response(JSON.stringify({ 
         hasResponded: !!response && !error,
-        response: response 
+        response: response,
+        run: runInfo
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -150,91 +202,103 @@ serve(async (req) => {
         });
       }
 
-      // Track daily run
-      let runInfo = { currentRun: 1, bonusPoints: 0, nextMilestone: 3, longestRun: 1 };
+      // Track daily run (gracefully handle if table doesn't exist)
+      let runInfo: { currentRun: number; bonusPoints: number; nextMilestone: number; longestRun: number } | null = null;
       
-      const todayDate = new Date().toISOString().split('T')[0];
-      const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-      
-      // Get or create daily run record
-      const { data: existingRun } = await supabaseAdmin
-        .from('daily_runs')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (existingRun) {
-        const lastPlayStr = existingRun.last_play_date ? 
-          new Date(existingRun.last_play_date).toISOString().split('T')[0] : null;
+      try {
+        const todayDate = new Date().toISOString().split('T')[0];
+        const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        runInfo = { currentRun: 1, bonusPoints: 0, nextMilestone: 3, longestRun: 1 };
         
-        if (lastPlayStr === todayDate) {
-          // Already played today - return existing run info
-          runInfo.currentRun = existingRun.current_run;
-          runInfo.longestRun = existingRun.longest_run;
-        } else if (lastPlayStr === yesterdayDate) {
-          // Consecutive day! Increment run
-          const newRun = existingRun.current_run + 1;
-          const newLongest = Math.max(newRun, existingRun.longest_run);
-          
-          // Calculate bonus points at milestones
-          const milestones = [
-            { days: 3, points: 25 },
-            { days: 7, points: 75 },
-            { days: 14, points: 150 },
-            { days: 30, points: 500 }
-          ];
-          
-          const milestone = milestones.find(m => m.days === newRun);
-          const bonusPoints = milestone?.points || 0;
-          
-          await supabaseAdmin
-            .from('daily_runs')
-            .update({
-              current_run: newRun,
-              longest_run: newLongest,
-              last_play_date: new Date().toISOString(),
-              total_days_played: existingRun.total_days_played + 1,
-              bonus_points_earned: existingRun.bonus_points_earned + bonusPoints,
-              updated_at: new Date().toISOString()
-            })
-            .eq('user_id', user.id);
-          
-          runInfo.currentRun = newRun;
-          runInfo.longestRun = newLongest;
-          runInfo.bonusPoints = bonusPoints;
-          pointsEarned += bonusPoints;
-        } else {
-          // Streak broken - reset to 1
-          await supabaseAdmin
-            .from('daily_runs')
-            .update({
-              current_run: 1,
-              last_play_date: new Date().toISOString(),
-              total_days_played: existingRun.total_days_played + 1,
-              updated_at: new Date().toISOString()
-            })
-            .eq('user_id', user.id);
-          
-          runInfo.currentRun = 1;
-          runInfo.longestRun = existingRun.longest_run;
-        }
-      } else {
-        // First time playing - create record
-        await supabaseAdmin
+        // Get or create daily run record
+        const { data: existingRun, error: runQueryError } = await supabaseAdmin
           .from('daily_runs')
-          .insert({
-            user_id: user.id,
-            current_run: 1,
-            longest_run: 1,
-            last_play_date: new Date().toISOString(),
-            total_days_played: 1,
-            bonus_points_earned: 0
-          });
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        // If table doesn't exist, skip run tracking
+        if (runQueryError && runQueryError.code === '42P01') {
+          console.log('daily_runs table does not exist, skipping run tracking');
+          runInfo = null;
+        } else if (existingRun) {
+          const lastPlayStr = existingRun.last_play_date ? 
+            new Date(existingRun.last_play_date).toISOString().split('T')[0] : null;
+          
+          if (lastPlayStr === todayDate) {
+            // Already played today - return existing run info
+            runInfo.currentRun = existingRun.current_run;
+            runInfo.longestRun = existingRun.longest_run;
+          } else if (lastPlayStr === yesterdayDate) {
+            // Consecutive day! Increment run
+            const newRun = existingRun.current_run + 1;
+            const newLongest = Math.max(newRun, existingRun.longest_run);
+            
+            // Calculate bonus points at milestones
+            const milestones = [
+              { days: 3, points: 25 },
+              { days: 7, points: 75 },
+              { days: 14, points: 150 },
+              { days: 30, points: 500 }
+            ];
+            
+            const milestone = milestones.find(m => m.days === newRun);
+            const bonusPoints = milestone?.points || 0;
+            
+            await supabaseAdmin
+              .from('daily_runs')
+              .update({
+                current_run: newRun,
+                longest_run: newLongest,
+                last_play_date: new Date().toISOString(),
+                total_days_played: existingRun.total_days_played + 1,
+                bonus_points_earned: existingRun.bonus_points_earned + bonusPoints,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user.id);
+            
+            runInfo.currentRun = newRun;
+            runInfo.longestRun = newLongest;
+            runInfo.bonusPoints = bonusPoints;
+            pointsEarned += bonusPoints;
+          } else {
+            // Streak broken - reset to 1
+            await supabaseAdmin
+              .from('daily_runs')
+              .update({
+                current_run: 1,
+                last_play_date: new Date().toISOString(),
+                total_days_played: existingRun.total_days_played + 1,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user.id);
+            
+            runInfo.currentRun = 1;
+            runInfo.longestRun = existingRun.longest_run;
+          }
+        } else if (!runQueryError || runQueryError.code === 'PGRST116') {
+          // No record found (PGRST116) - first time playing, create record
+          await supabaseAdmin
+            .from('daily_runs')
+            .insert({
+              user_id: user.id,
+              current_run: 1,
+              longest_run: 1,
+              last_play_date: new Date().toISOString(),
+              total_days_played: 1,
+              bonus_points_earned: 0
+            });
+        }
+        
+        // Find next milestone
+        if (runInfo) {
+          const milestoneDays = [3, 7, 14, 30];
+          runInfo.nextMilestone = milestoneDays.find(m => m > runInfo!.currentRun) || 30;
+        }
+      } catch (runTrackingError) {
+        console.log('Error tracking daily run:', runTrackingError);
+        runInfo = null;
       }
-      
-      // Find next milestone
-      const milestones = [3, 7, 14, 30];
-      runInfo.nextMilestone = milestones.find(m => m > runInfo.currentRun) || 30;
 
       if (pointsEarned > 0) {
         const { data: currentUser } = await supabaseAdmin
