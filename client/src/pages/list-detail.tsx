@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical, LayoutGrid, List, Search, Film, Tv, BookOpen, Music, ChevronRight, Star } from "lucide-react";
+import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical, LayoutGrid, List, Search, Film, Tv, BookOpen, Music, ChevronRight, Star, GripVertical } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useLocation, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,6 +16,97 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import UserSearch from "@/components/user-search";
 import { ProgressTracker } from "@/components/progress-tracker";
+import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+interface SortableListItemProps {
+  item: any;
+  onRemove: (id: string) => void;
+  isOwner: boolean;
+}
+
+function SortableListItem({ item, onRemove, isOwner }: SortableListItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const isClickable = item.external_id && item.external_source;
+  const mediaUrl = isClickable ? `/media/${item.type?.toLowerCase()}/${item.external_source}/${item.external_id}` : null;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 p-3 bg-white rounded-lg border border-gray-200 hover:border-purple-300 transition-colors group"
+    >
+      {isOwner && (
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 touch-none"
+        >
+          <GripVertical size={18} />
+        </div>
+      )}
+      {isClickable ? (
+        <Link href={mediaUrl!} className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-100">
+            {item.artwork && item.artwork !== "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop" ? (
+              <img src={item.artwork} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                {item.type?.charAt(0) || '?'}
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-gray-900 truncate text-sm">{item.title}</p>
+            <p className="text-xs text-gray-500 truncate">{item.creator} · {item.type}</p>
+          </div>
+        </Link>
+      ) : (
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-100">
+            {item.artwork && item.artwork !== "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop" ? (
+              <img src={item.artwork} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                {item.type?.charAt(0) || '?'}
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-gray-900 truncate text-sm">{item.title}</p>
+            <p className="text-xs text-gray-500 truncate">{item.creator} · {item.type}</p>
+          </div>
+        </div>
+      )}
+      {isOwner && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onRemove(item.id)}
+          className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 h-auto"
+          data-testid={`button-remove-${item.id}`}
+        >
+          <Trash2 size={16} />
+        </Button>
+      )}
+    </div>
+  );
+}
 
 export default function ListDetail() {
   const [, setLocation] = useLocation();
@@ -29,6 +120,18 @@ export default function ListDetail() {
   const [yearFilter, setYearFilter] = useState("all");
   const [ratingFilter, setRatingFilter] = useState("all");
   const [openFilter, setOpenFilter] = useState<'type' | 'year' | 'rating' | null>(null);
+  
+  // Drag and drop state
+  const [localItems, setLocalItems] = useState<any[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    })
+  );
 
   const queryClient = useQueryClient();
   const { session } = useAuth();
@@ -161,6 +264,58 @@ export default function ListDetail() {
     totalItems: sharedListData.items?.length || 0,
     likes: 0
   } : null;
+
+  // Sync local items with list data
+  useEffect(() => {
+    if (listData?.items) {
+      setLocalItems(listData.items);
+    }
+  }, [listData?.items?.length]);
+
+  // Mutation to save reordered items
+  const reorderMutation = useMutation({
+    mutationFn: async (newOrder: string[]) => {
+      if (!session?.access_token || !listData?.id) throw new Error('Not authenticated');
+      
+      const { error } = await supabase
+        .from('list_items')
+        .upsert(
+          newOrder.map((itemId, index) => ({
+            id: itemId,
+            position: index
+          })),
+          { onConflict: 'id' }
+        );
+      
+      if (error) throw error;
+      return newOrder;
+    },
+    onError: (error) => {
+      console.error('Failed to save order:', error);
+      toast({ title: 'Failed to save order', variant: 'destructive' });
+      // Revert to original order
+      if (listData?.items) {
+        setLocalItems(listData.items);
+      }
+    }
+  });
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setLocalItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        const newItems = arrayMove(items, oldIndex, newIndex);
+        
+        // Save the new order
+        reorderMutation.mutate(newItems.map((item) => item.id));
+        
+        return newItems;
+      });
+    }
+  };
 
   // All lists are public for MVP - removed state update logic
 
@@ -788,91 +943,52 @@ export default function ListDetail() {
           </div>
         </div>
 
-        {/* List View - Minimalist */}
+        {/* List View - Draggable */}
         {viewMode === 'list' && (
-          <div className="space-y-2">
-            {(listData?.items || [])
-              .filter((item: any) => {
-                // Search filter
-                if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
-                    !item.creator?.toLowerCase().includes(searchQuery.toLowerCase())) {
-                  return false;
-                }
-                // Type filter
-                if (typeFilter !== 'all' && item.type?.toLowerCase() !== typeFilter.toLowerCase()) {
-                  return false;
-                }
-                // Year filter - check addedDate year
-                if (yearFilter !== 'all') {
-                  const itemYear = item.addedDate ? new Date(item.addedDate).getFullYear().toString() : null;
-                  if (itemYear !== yearFilter) return false;
-                }
-                // Rating filter
-                if (ratingFilter !== 'all' && item.rating) {
-                  if (item.rating < parseInt(ratingFilter)) return false;
-                }
-                return true;
-              })
-              .map((item: any) => {
-              const isClickable = item.external_id && item.external_source;
-              const mediaUrl = isClickable ? `/media/${item.type?.toLowerCase()}/${item.external_source}/${item.external_id}` : null;
-              
-              return (
-                <div 
-                  key={item.id} 
-                  className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-purple-300 transition-colors group"
-                >
-                  {isClickable ? (
-                    <Link href={mediaUrl!} className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-100">
-                        {item.artwork && item.artwork !== "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop" ? (
-                          <img src={item.artwork} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                            {item.type?.charAt(0) || '?'}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate text-sm">{item.title}</p>
-                        <p className="text-xs text-gray-500 truncate">{item.creator} · {item.type}</p>
-                      </div>
-                    </Link>
-                  ) : (
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0 bg-gray-100">
-                        {item.artwork && item.artwork !== "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=80&h=80&fit=crop" ? (
-                          <img src={item.artwork} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                            {item.type?.charAt(0) || '?'}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate text-sm">{item.title}</p>
-                        <p className="text-xs text-gray-500 truncate">{item.creator} · {item.type}</p>
-                      </div>
-                    </div>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveItem(item.id)}
-                    className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 h-auto"
-                    data-testid={`button-remove-${item.id}`}
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                </div>
-              );
-            })}
-            {(listData?.items || []).length === 0 && (
-              <div className="text-center py-12 text-gray-500">
-                <p>No items yet. Click "+ Add" to add media!</p>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={localItems.map(item => item.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-2">
+                {localItems
+                  .filter((item: any) => {
+                    if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
+                        !item.creator?.toLowerCase().includes(searchQuery.toLowerCase())) {
+                      return false;
+                    }
+                    if (typeFilter !== 'all' && item.type?.toLowerCase() !== typeFilter.toLowerCase()) {
+                      return false;
+                    }
+                    if (yearFilter !== 'all') {
+                      const itemYear = item.addedDate ? new Date(item.addedDate).getFullYear().toString() : null;
+                      if (itemYear !== yearFilter) return false;
+                    }
+                    if (ratingFilter !== 'all' && item.rating) {
+                      if (item.rating < parseInt(ratingFilter)) return false;
+                    }
+                    return true;
+                  })
+                  .map((item: any) => (
+                    <SortableListItem
+                      key={item.id}
+                      item={item}
+                      onRemove={handleRemoveItem}
+                      isOwner={!sharedUserId}
+                    />
+                  ))}
+                {localItems.length === 0 && (
+                  <div className="text-center py-12 text-gray-500">
+                    <p>No items yet. Click "+ Add" to add media!</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </SortableContext>
+          </DndContext>
         )}
 
         {/* Grid View - Posters */}
