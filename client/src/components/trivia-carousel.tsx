@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
 import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, CheckCircle, XCircle } from 'lucide-react';
+import { incrementActivityCount } from '@/components/dna-survey-nudge';
 
 interface TriviaItem {
   id: string;
@@ -363,8 +364,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         }
       }));
       
-      // Don't invalidate queries here - it causes the answered question to disappear immediately
-      // Query will refresh on next page visit
+      incrementActivityCount();
     },
     onError: (error: Error) => {
       toast({

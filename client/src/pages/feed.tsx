@@ -14,6 +14,7 @@ import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { TriviaCarousel } from "@/components/trivia-carousel";
+import { DnaSurveyNudge } from "@/components/dna-survey-nudge";
 import CastFriendsGame from "@/components/cast-friends-game";
 import SeenItGame from "@/components/seen-it-game";
 import TrackCard from "@/components/track-card";
@@ -3002,6 +3003,11 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && 
                (!selectedCategory || selectedCategory === 'tv') && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
+              )}
+
+              {/* DNA Survey Nudge - shows after user has done 5+ activities */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+                <DnaSurveyNudge />
               )}
 
               {/* Leaderboard - Poll Masters */}

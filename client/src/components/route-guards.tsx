@@ -1,27 +1,49 @@
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface RouteGuardProps {
   children: React.ReactNode;
 }
 
+const ONBOARDING_KEY = 'consumed_onboarding_completed';
+
+export function isOnboardingComplete(): boolean {
+  return localStorage.getItem(ONBOARDING_KEY) === 'true';
+}
+
+export function markOnboardingComplete(): void {
+  localStorage.setItem(ONBOARDING_KEY, 'true');
+}
+
 export function ProtectedRoute({ children }: RouteGuardProps) {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
-      // Capture full URL including hash fragment for redirect after login
       const fullPath = window.location.pathname + window.location.hash;
       if (fullPath !== '/login') {
         sessionStorage.setItem('returnUrl', fullPath);
       }
       setLocation('/login');
+      return;
+    }
+
+    if (!loading && user) {
+      const currentPath = window.location.pathname;
+      const onboardingDone = isOnboardingComplete();
+      
+      if (!onboardingDone && currentPath !== '/onboarding') {
+        setLocation('/onboarding');
+      } else {
+        setReady(true);
+      }
     }
   }, [user, loading, setLocation]);
 
-  if (loading || !user) {
+  if (loading || !ready) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center">
         <div className="text-center">
@@ -30,6 +52,10 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return <>{children}</>;
@@ -41,19 +67,12 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
 
   useEffect(() => {
     if (!loading && user) {
-      // STASHED: Onboarding redirect disabled for now - always go straight to activity
-      // To restore onboarding, uncomment the block below:
-      // const pendingOnboarding = sessionStorage.getItem('pendingOnboarding');
-      // if (pendingOnboarding === 'true') {
-      //   sessionStorage.removeItem('pendingOnboarding');
-      //   setLocation('/onboarding');
-      // } else {
-      //   setLocation('/activity');
-      // }
-      
-      // Clear any pending onboarding flag and go straight to activity
-      sessionStorage.removeItem('pendingOnboarding');
-      setLocation('/activity');
+      const onboardingDone = isOnboardingComplete();
+      if (onboardingDone) {
+        setLocation('/activity');
+      } else {
+        setLocation('/onboarding');
+      }
     }
   }, [user, loading, setLocation]);
 
