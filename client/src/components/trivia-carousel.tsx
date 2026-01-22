@@ -359,14 +359,8 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         }
       }));
       
-      queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
-      
-      toast({
-        title: result.isCorrect ? `Correct! +${result.points} points` : 'Wrong!',
-        description: result.isCorrect ? 'Nice work!' : 'Better luck next time!',
-      });
-      
-      // No auto-advance - user swipes manually to see next question
+      // Don't invalidate queries here - it causes the answered question to disappear immediately
+      // Query will refresh on next page visit
     },
     onError: (error: Error) => {
       toast({
