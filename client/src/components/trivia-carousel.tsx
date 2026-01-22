@@ -25,6 +25,14 @@ interface TriviaItem {
   questionIndex?: number;
 }
 
+interface FriendAnswer {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  answer: string;
+  isCorrect: boolean;
+}
+
 interface TriviaCarouselProps {
   expanded?: boolean;
   category?: string;
@@ -37,7 +45,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<Record<string, string>>({});
-  const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; stats: any }>>({});
+  const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; stats: any; friendAnswers?: FriendAnswer[] }>>({});
 
   const { data: leaderboardData } = useQuery({
     queryKey: ['trivia-leaderboard-position', user?.id, session?.access_token],
@@ -282,7 +290,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       
       const { data: allPredictions } = await supabase
         .from('user_predictions')
-        .select('prediction')
+        .select('prediction, user_id')
         .eq('pool_id', poolId);
       
       const total = allPredictions?.length || 1;
@@ -292,7 +300,53 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         stats[opt] = Math.round((count / total) * 100);
       }
       
-      return { itemId, answer, isCorrect, points, stats };
+      // Fetch friend answers
+      let friendAnswers: FriendAnswer[] = [];
+      try {
+        // Get user's friends
+        const { data: friendships } = await supabase
+          .from('friendships')
+          .select('user_id, friend_id')
+          .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
+          .eq('status', 'accepted');
+        
+        const friendIds = (friendships || []).map(f => 
+          f.user_id === user.id ? f.friend_id : f.user_id
+        );
+        
+        if (friendIds.length > 0) {
+          // Get friend predictions for this question
+          const friendPredictions = (allPredictions || []).filter(p => 
+            friendIds.includes(p.user_id) && p.user_id !== user.id
+          );
+          
+          if (friendPredictions.length > 0) {
+            // Get friend user info
+            const { data: friendUsers } = await supabase
+              .from('users')
+              .select('id, display_name, first_name, last_name, avatar_url')
+              .in('id', friendPredictions.map(p => p.user_id));
+            
+            friendAnswers = friendPredictions.map(p => {
+              const friendUser = friendUsers?.find(u => u.id === p.user_id);
+              const displayName = friendUser?.first_name 
+                ? `${friendUser.first_name}${friendUser.last_name ? ' ' + friendUser.last_name : ''}`
+                : friendUser?.display_name || 'Friend';
+              return {
+                userId: p.user_id,
+                displayName,
+                avatarUrl: friendUser?.avatar_url,
+                answer: p.prediction,
+                isCorrect: p.prediction === correctAnswer
+              };
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching friend answers:', err);
+      }
+      
+      return { itemId, answer, isCorrect, points, stats, friendAnswers };
     },
     onSuccess: (result) => {
       setAnsweredQuestions(prev => ({
@@ -300,7 +354,8 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         [result.itemId]: {
           answer: result.answer,
           isCorrect: result.isCorrect,
-          stats: result.stats
+          stats: result.stats,
+          friendAnswers: result.friendAnswers
         }
       }));
       
@@ -534,6 +589,75 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                         </div>
                       );
                     })}
+                    
+                    {/* Friend answers section */}
+                    {answered.friendAnswers && answered.friendAnswers.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-gray-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Users className="w-4 h-4 text-purple-600" />
+                          <span className="text-xs font-semibold text-gray-700">Friends who played</span>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                          {/* Friends who got it right */}
+                          {answered.friendAnswers.filter(f => f.isCorrect).length > 0 && (
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex -space-x-2">
+                                {answered.friendAnswers.filter(f => f.isCorrect).slice(0, 4).map((friend, idx) => (
+                                  <div 
+                                    key={friend.userId}
+                                    className="w-7 h-7 rounded-full bg-green-100 border-2 border-white flex items-center justify-center overflow-hidden"
+                                    title={friend.displayName}
+                                  >
+                                    {friend.avatarUrl ? (
+                                      <img src={friend.avatarUrl} alt={friend.displayName} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <span className="text-xs font-medium text-green-700">{friend.displayName.charAt(0).toUpperCase()}</span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3 text-green-600" />
+                                <span className="text-xs text-green-700 font-medium">
+                                  {answered.friendAnswers.filter(f => f.isCorrect).length === 1 
+                                    ? answered.friendAnswers.find(f => f.isCorrect)?.displayName
+                                    : `${answered.friendAnswers.filter(f => f.isCorrect).length} got it right`}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Friends who got it wrong */}
+                          {answered.friendAnswers.filter(f => !f.isCorrect).length > 0 && (
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex -space-x-2">
+                                {answered.friendAnswers.filter(f => !f.isCorrect).slice(0, 4).map((friend, idx) => (
+                                  <div 
+                                    key={friend.userId}
+                                    className="w-7 h-7 rounded-full bg-red-100 border-2 border-white flex items-center justify-center overflow-hidden"
+                                    title={friend.displayName}
+                                  >
+                                    {friend.avatarUrl ? (
+                                      <img src={friend.avatarUrl} alt={friend.displayName} className="w-full h-full object-cover" />
+                                    ) : (
+                                      <span className="text-xs font-medium text-red-700">{friend.displayName.charAt(0).toUpperCase()}</span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <XCircle className="w-3 h-3 text-red-500" />
+                                <span className="text-xs text-red-600 font-medium">
+                                  {answered.friendAnswers.filter(f => !f.isCorrect).length === 1 
+                                    ? answered.friendAnswers.find(f => !f.isCorrect)?.displayName
+                                    : `${answered.friendAnswers.filter(f => !f.isCorrect).length} missed it`}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 
