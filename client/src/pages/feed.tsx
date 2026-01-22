@@ -2805,31 +2805,32 @@ export default function Feed() {
                 ))}
               </div>
 
-              {/* Category sub-filter pills - always visible */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-4">
-                {[
-                  { id: null, label: 'All' },
-                  { id: 'movies', label: 'Movies' },
-                  { id: 'tv', label: 'TV' },
-                  { id: 'music', label: 'Music' },
-                  { id: 'books', label: 'Books' },
-                  { id: 'sports', label: 'Sports' },
-                  { id: 'podcasts', label: 'Podcasts' },
-                  { id: 'games', label: 'Games' },
-                ].map((cat) => (
-                  <button
-                    key={cat.id || 'all'}
-                    onClick={() => setSelectedCategory(cat.id === selectedCategory ? null : cat.id)}
-                    className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                      cat.id === selectedCategory
-                        ? 'bg-purple-100 text-purple-700 border border-purple-300'
-                        : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
+              {/* Category sub-filter pills - only show when a content filter is selected */}
+              {selectedFilter && selectedFilter !== 'All' && selectedFilter !== 'all' && selectedFilter !== 'track' && selectedFilter !== 'dna' && (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-4">
+                  <span className="text-xs text-gray-400 mr-1 flex-shrink-0">Filter:</span>
+                  {[
+                    { id: null, label: 'All' },
+                    { id: 'movies', label: 'Movies' },
+                    { id: 'tv', label: 'TV' },
+                    { id: 'music', label: 'Music' },
+                    { id: 'books', label: 'Books' },
+                    { id: 'sports', label: 'Sports' },
+                  ].map((cat) => (
+                    <button
+                      key={cat.id || 'all'}
+                      onClick={() => setSelectedCategory(cat.id === selectedCategory ? null : cat.id)}
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                        cat.id === selectedCategory
+                          ? 'bg-purple-600 text-white'
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Empty state for filtered views */}
               {feedFilter === 'friends' && filteredPosts.length === 0 && (
@@ -4667,8 +4668,8 @@ export default function Feed() {
               {selectedFilter === 'challenges' && (
                 <div className="space-y-4 mt-4">
                   <div className="text-center py-2">
-                    <p className="text-sm font-medium text-gray-700">Multi-question Trivia Challenges</p>
-                    <p className="text-xs text-gray-500">Compete with friends on these challenge sets</p>
+                    <p className="text-sm font-medium text-gray-700">Challenge Sets</p>
+                    <p className="text-xs text-gray-500">Compete with friends or alone on these challenge sets</p>
                   </div>
                   {selectedCategory ? (
                     <TriviaCarousel category={selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} challengesOnly />
