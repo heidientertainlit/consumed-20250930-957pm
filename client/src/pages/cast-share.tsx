@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Users, Share2, Loader2 } from "lucide-react";
+import { ArrowLeft, Users, Share2, Loader2, Download, Sparkles } from "lucide-react";
 
 interface CastData {
   id: string;
@@ -108,29 +108,23 @@ export default function CastSharePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 p-4">
       <div className="max-w-md mx-auto pt-8">
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="text-gray-400 mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Consumed
-          </Button>
-        </Link>
-
         <Card className="overflow-hidden bg-gradient-to-br from-amber-900/40 to-orange-900/40 border-amber-500/30">
           <div className="p-6">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center justify-center gap-2 mb-6">
               <Users className="w-6 h-6 text-amber-400" />
-              <span className="text-amber-400 font-semibold">Cast Your Friends</span>
+              <span className="text-amber-400 font-bold text-lg">Cast Your Friends</span>
             </div>
 
             <div className="text-center mb-6">
-              <p className="text-gray-300 text-lg mb-4">
-                <span className="font-semibold text-white">{creatorName}</span> thinks
+              <p className="text-xl text-white font-semibold mb-2">
+                {creatorName} cast you as...
               </p>
               
               <div className="relative inline-block mb-4">
                 <img 
                   src={cast.creator_pick_celeb_image || '/placeholder-avatar.png'} 
                   alt={cast.creator_pick_celeb_name}
-                  className="w-32 h-40 rounded-xl object-cover mx-auto shadow-xl"
+                  className="w-36 h-44 rounded-xl object-cover mx-auto shadow-2xl border-2 border-amber-400/50"
                 />
                 {cast.status === 'approved' && (
                   <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
@@ -144,12 +138,12 @@ export default function CastSharePage() {
                 )}
               </div>
               
-              <p className="text-2xl font-bold text-amber-300 mb-2">
+              <p className="text-3xl font-bold text-amber-300 mb-3">
                 {cast.creator_pick_celeb_name}
               </p>
               
               <p className="text-gray-300 text-lg">
-                should play <span className="font-semibold text-white">{targetName}</span> in a movie!
+                in a movie! 🎬
               </p>
             </div>
 
@@ -176,24 +170,34 @@ export default function CastSharePage() {
               </div>
             )}
 
-            <div className="flex gap-2">
+            <div className="space-y-3">
               <Button 
                 onClick={shareLink}
-                className="flex-1 bg-amber-600 hover:bg-amber-700"
+                className="w-full bg-amber-600 hover:bg-amber-700 py-3"
               >
-                <Share2 className="w-4 h-4 mr-2" /> Share
+                <Share2 className="w-4 h-4 mr-2" /> Share This
               </Button>
-              <Link href="/" className="flex-1">
-                <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                  Cast Your Friends
-                </Button>
-              </Link>
+              
+              <div className="bg-purple-600/30 rounded-xl p-4 text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Sparkles className="w-5 h-5 text-purple-300" />
+                  <span className="text-purple-200 font-semibold">Want to cast your friends?</span>
+                </div>
+                <p className="text-gray-400 text-sm mb-3">
+                  Find your Entertainment DNA and play games with friends on Consumed!
+                </p>
+                <Link href="/">
+                  <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                    <Users className="w-4 h-4 mr-2" /> Cast Your Friends Too
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </Card>
 
         <p className="text-center text-gray-500 text-sm mt-6">
-          Powered by <span className="text-purple-400">Consumed</span> - Where Fans Come to Play
+          <span className="text-purple-400 font-semibold">Consumed</span> - Where Fans Come to Play
         </p>
       </div>
     </div>

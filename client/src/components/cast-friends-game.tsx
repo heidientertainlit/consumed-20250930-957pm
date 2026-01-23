@@ -484,9 +484,19 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
                     <Loader2 className="w-3 h-3 animate-spin" />
                     Searching...
                   </div>
-                ) : searchedUsers.length > 0 ? (
+                ) : (
                   <>
-                    {searchedUsers.slice(0, 6).map(userResult => (
+                    <button
+                      onClick={() => setStep('confirm')}
+                      className="w-full px-3 py-3 text-left bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 text-purple-700 text-sm font-medium flex items-center gap-2 border-b border-purple-100"
+                    >
+                      <Link2 className="w-4 h-4 text-purple-500" />
+                      <span>Send "{customFriendName}" a link to cast them</span>
+                    </button>
+                    {searchedUsers.length > 0 && (
+                      <div className="py-1 px-2 text-xs text-gray-400 bg-gray-50">Or pick a Consumed user:</div>
+                    )}
+                    {searchedUsers.slice(0, 5).map(userResult => (
                       <button
                         key={userResult.id}
                         onClick={() => {
@@ -500,22 +510,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
                         {userResult.user_name}
                       </button>
                     ))}
-                    <button
-                      onClick={() => setStep('confirm')}
-                      className="w-full px-3 py-2 text-left hover:bg-purple-50 text-purple-700 text-sm flex items-center gap-2 border-t border-gray-100"
-                    >
-                      <Link2 className="w-3 h-3" />
-                      Not here? Send "{customFriendName}" a link
-                    </button>
                   </>
-                ) : (
-                  <button
-                    onClick={() => setStep('confirm')}
-                    className="w-full px-3 py-2 text-left hover:bg-purple-50 text-purple-700 text-sm flex items-center gap-2"
-                  >
-                    <Link2 className="w-3 h-3" />
-                    Send "{customFriendName}" a link instead
-                  </button>
                 )}
               </div>
             )}
