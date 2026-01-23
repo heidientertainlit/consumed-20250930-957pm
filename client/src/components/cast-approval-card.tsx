@@ -285,15 +285,15 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
   }
 
   return (
-    <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="flex items-stretch">
+    <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-3">
+      <div className="flex items-start gap-3">
         <img 
           src={cast.creator_pick_celeb_image || '/placeholder-avatar.png'} 
           alt={cast.creator_pick_celeb_name}
-          className="w-24 h-auto object-cover flex-shrink-0"
+          className="w-16 h-20 rounded-xl object-cover flex-shrink-0"
         />
         
-        <div className="flex-1 p-3 min-w-0">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-1">
             <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
               🎬 You've Been Cast!
