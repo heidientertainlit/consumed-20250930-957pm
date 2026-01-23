@@ -575,6 +575,21 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                       );
                     })}
                     
+                    {/* Continue/Done button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (currentIndex < (filteredData?.length || 0) - 1) {
+                          scrollToNext();
+                        } else {
+                          queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
+                        }
+                      }}
+                      className="w-full mt-4 py-2.5 rounded-xl font-semibold text-sm text-white transition-all bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:from-blue-600 hover:via-purple-600 hover:to-purple-700"
+                    >
+                      {currentIndex < (filteredData?.length || 0) - 1 ? 'Continue' : 'Done'}
+                    </button>
+                    
                     {/* Friend answers section */}
                     {answered.friendAnswers && answered.friendAnswers.length > 0 && (
                       <div className="mt-4 pt-3 border-t border-gray-200">
@@ -643,21 +658,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                         </div>
                       </div>
                     )}
-                    
-                    {/* Continue/Done button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (currentIndex < (filteredData?.length || 0) - 1) {
-                          scrollToNext();
-                        } else {
-                          queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
-                        }
-                      }}
-                      className="w-full mt-4 py-2.5 rounded-xl font-semibold text-sm text-white transition-all bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:from-blue-600 hover:via-purple-600 hover:to-purple-700"
-                    >
-                      {currentIndex < (filteredData?.length || 0) - 1 ? 'Continue' : 'Done'}
-                    </button>
                   </div>
                 )}
                 
