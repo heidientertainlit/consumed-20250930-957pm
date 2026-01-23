@@ -136,20 +136,29 @@ serve(async (req) => {
     if (action === 'approve') {
       const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
       
+      console.log('Creating cast_approved post for creator:', friendCast.creator_id);
+      
       const { data: feedPost, error: postError } = await supabaseAdmin
         .from('social_posts')
         .insert({
           user_id: friendCast.creator_id,
           content: targetName,
           post_type: 'cast_approved',
-          is_consumed_content: false,
           media_title: friendCast.creator_pick_celeb_name,
           image_url: friendCast.creator_pick_celeb_image,
           media_type: 'cast',
-          media_external_id: friendCast.creator_pick_celeb_id
+          media_external_id: friendCast.creator_pick_celeb_id,
+          likes_count: 0,
+          comments_count: 0
         })
         .select()
         .single();
+
+      if (postError) {
+        console.error('Error creating cast_approved post:', postError);
+      } else {
+        console.log('Created cast_approved post:', feedPost?.id);
+      }
 
       if (!postError && feedPost) {
         await supabase
