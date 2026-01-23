@@ -2966,7 +2966,11 @@ export default function Feed() {
 
 
               {/* The Room - Friend Activity with reactions */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && (
+              {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && (() => {
+                const roomItems = (socialPosts || []).filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved');
+                console.log('🏠 THE ROOM items:', roomItems.length, 'Total socialPosts:', socialPosts.length, 'with media:', socialPosts.filter((p: any) => p.mediaItems?.length > 0).length);
+                return roomItems.length > 0;
+              })() && (
                 <ConsumptionCarousel 
                   items={(socialPosts || [])
                     .filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved')
