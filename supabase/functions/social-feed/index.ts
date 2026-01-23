@@ -128,8 +128,7 @@ serve(async (req) => {
           prediction_pool_id,
           list_id,
           rank_id,
-          rec_category,
-          metadata
+          rec_category
         `)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
@@ -1070,7 +1069,6 @@ serve(async (req) => {
             totalCount: listData.totalCount
           } : null,
           recCategory: post.rec_category || null,
-          metadata: post.metadata || null,
           mediaItems: hasMedia ? [{
             id: `embedded_${post.id}`,
             title: post.media_title,
