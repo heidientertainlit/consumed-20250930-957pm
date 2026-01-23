@@ -267,7 +267,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
   }
 
   return (
-    <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm overflow-hidden">
+    <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm overflow-visible">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-amber-500 flex items-center justify-center">
@@ -449,7 +449,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
       )}
 
       {step === 'add-friend' && selectedCeleb && (
-        <div className="space-y-3 overflow-visible pb-32">
+        <div className="space-y-3">
           <div className="flex items-center gap-3 bg-amber-50 rounded-xl p-3">
             <img 
               src={selectedCeleb.image} 
@@ -464,7 +464,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
 
           <p className="text-sm text-gray-600">Who does this remind you of?</p>
           
-          <div className="relative">
+          <div className="relative" style={{ isolation: 'isolate' }}>
             <Input
               placeholder="Search by name or username..."
               value={customFriendName}
@@ -472,11 +472,18 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
                 setCustomFriendName(e.target.value);
                 setSelectedFriend(null);
               }}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
               className="text-sm bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
             />
             
             {customFriendName.length >= 2 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+              <div 
+                className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-64 overflow-y-auto"
+                style={{ top: '100%', zIndex: 9999, position: 'absolute' }}
+              >
                 {isSearching ? (
                   <div className="px-3 py-2 text-gray-500 text-sm flex items-center gap-2">
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -487,20 +494,28 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
                     {searchedUsers.slice(0, 5).map(userResult => (
                       <button
                         key={userResult.id}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           setSelectedFriend(userResult);
                           setCustomFriendName("");
                           setStep('confirm');
                         }}
                         className="w-full px-3 py-2.5 text-left hover:bg-amber-50 text-gray-900 text-sm flex items-center gap-2"
+                        type="button"
                       >
                         <span className="text-amber-600 font-medium">@</span>
                         <span className="font-medium">{userResult.user_name}</span>
                       </button>
                     ))}
                     <button
-                      onClick={() => setStep('confirm')}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setStep('confirm');
+                      }}
                       className="w-full px-3 py-2.5 text-left hover:bg-purple-50 text-purple-600 text-sm flex items-center gap-2 border-t border-gray-100"
+                      type="button"
                     >
                       <Link2 className="w-4 h-4" />
                       <span>"{customFriendName}" not on Consumed? Send a link</span>
