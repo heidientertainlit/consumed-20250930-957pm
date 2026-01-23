@@ -2750,6 +2750,22 @@ export default function Feed() {
             <DailyChallengeCard />
           </div>
           
+          {/* Pending Friend Casts - You've Been Cast! - TOP PRIORITY */}
+          {pendingCasts.length > 0 && (
+            <div className="space-y-3 mb-4 mt-4">
+              <h3 className="text-lg font-semibold text-amber-400 flex items-center gap-2 px-1">
+                🎬 You've Been Cast!
+              </h3>
+              {pendingCasts.map((cast: any) => (
+                <CastApprovalCard 
+                  key={cast.id} 
+                  cast={cast}
+                  onRespond={() => refetchPendingCasts()}
+                />
+              ))}
+            </div>
+          )}
+          
         </div>
       </div>
 
@@ -2932,21 +2948,6 @@ export default function Feed() {
                 <DnaMomentCard />
               )}
 
-              {/* Pending Friend Casts - You've Been Cast! */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && pendingCasts.length > 0 && (
-                <div className="space-y-3 mb-4">
-                  <h3 className="text-lg font-semibold text-amber-400 flex items-center gap-2 px-1">
-                    🎬 You've Been Cast!
-                  </h3>
-                  {pendingCasts.map((cast: any) => (
-                    <CastApprovalCard 
-                      key={cast.id} 
-                      cast={cast}
-                      onRespond={() => refetchPendingCasts()}
-                    />
-                  ))}
-                </div>
-              )}
 
               {/* Cast Your Friends Game */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (

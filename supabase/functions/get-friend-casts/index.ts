@@ -70,15 +70,19 @@ serve(async (req) => {
 
     // Fetch creator info for each cast
     const castsWithCreators = await Promise.all((casts || []).map(async (cast: any) => {
-      const { data: creator } = await supabase
+      const { data: creator, error: creatorError } = await supabase
         .from('users')
-        .select('id, user_name, avatar_url')
+        .select('id, user_name, display_name, avatar_url')
         .eq('id', cast.creator_id)
         .single();
       
+      if (creatorError) {
+        console.log('Creator lookup error for', cast.creator_id, ':', creatorError.message);
+      }
+      
       return {
         ...cast,
-        creator: creator || { id: cast.creator_id, user_name: 'Unknown' }
+        creator: creator || { id: cast.creator_id, user_name: 'Unknown', display_name: cast.target_friend_name }
       };
     }));
 
