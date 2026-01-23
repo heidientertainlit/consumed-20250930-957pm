@@ -142,6 +142,10 @@ serve(async (req) => {
       }
 
       console.log('Found posts:', posts?.length || 0);
+      
+      // Debug: check for cast_approved posts
+      const castApprovedPosts = posts?.filter(p => p.post_type === 'cast_approved') || [];
+      console.log('Cast approved posts found:', castApprovedPosts.length, castApprovedPosts.map(p => ({ id: p.id, media_title: p.media_title })));
 
       // Fetch prediction pools for posts with prediction_pool_id
       let predictionPoolMap = new Map<string, any>();

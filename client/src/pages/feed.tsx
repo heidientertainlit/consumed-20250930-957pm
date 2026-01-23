@@ -199,6 +199,10 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
     currentAppUserId = data.currentUserId;
     console.log('📌 Current app user ID set to:', currentAppUserId);
     
+    // Debug: Check for cast_approved posts before filtering
+    const castApprovedBefore = data.posts.filter((p: any) => p.type === 'cast_approved');
+    console.log('🎬 Cast_approved posts BEFORE filter:', castApprovedBefore.length, castApprovedBefore.map((p: any) => ({ id: p.id, type: p.type, content: p.content, hasMedia: !!p.mediaItems?.length })));
+    
     // Filter out empty posts (no content, no rating, no media, no list)
     const filteredPosts = data.posts.filter((post: any) => {
       const hasContent = post.content && post.content.trim().length > 0;
@@ -209,6 +213,10 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
       // Keep post if it has any meaningful content
       return hasContent || hasRating || hasMedia || hasList || hasGame;
     });
+    
+    // Debug: Check for cast_approved posts after filtering
+    const castApprovedAfter = filteredPosts.filter((p: any) => p.type === 'cast_approved');
+    console.log('🎬 Cast_approved posts AFTER filter:', castApprovedAfter.length);
     
     // Debug: Log posts with missing or problematic imageUrls
     filteredPosts.forEach((post: any, idx: number) => {
@@ -3602,6 +3610,7 @@ export default function Feed() {
 
                 // Check if this item is a cast_approved post (friend casting)
                 if (post.type === 'cast_approved') {
+                  console.log('🎭 RENDERING cast_approved post:', post.id, post.content, post.mediaItems?.[0]?.title);
                   const celebName = post.mediaItems?.[0]?.title || 'a celebrity';
                   const celebImage = post.mediaItems?.[0]?.imageUrl;
                   const targetUserName = post.content || 'their friend';
