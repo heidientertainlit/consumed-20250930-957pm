@@ -40,20 +40,10 @@ serve(async (req) => {
     const pendingOnly = url.searchParams.get('pending') === 'true';
     const forMe = url.searchParams.get('forMe') === 'true';
 
+    // First get the casts without joins (no FK relationships)
     let query = supabase
       .from('friend_casts')
-      .select(`
-        *,
-        creator:users!friend_casts_creator_id_fkey(id, user_name, avatar_url),
-        target:users!friend_casts_target_friend_id_fkey(id, user_name, avatar_url),
-        responses:friend_cast_responses(
-          id,
-          celeb_id,
-          celeb_name,
-          celeb_image,
-          responder:users!friend_cast_responses_responder_id_fkey(id, user_name)
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (forMe && userId) {
@@ -78,7 +68,21 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ casts: casts || [] }), {
+    // Fetch creator info for each cast
+    const castsWithCreators = await Promise.all((casts || []).map(async (cast: any) => {
+      const { data: creator } = await supabase
+        .from('users')
+        .select('id, user_name, avatar_url')
+        .eq('id', cast.creator_id)
+        .single();
+      
+      return {
+        ...cast,
+        creator: creator || { id: cast.creator_id, user_name: 'Unknown' }
+      };
+    }));
+
+    return new Response(JSON.stringify({ casts: castsWithCreators }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error) {
