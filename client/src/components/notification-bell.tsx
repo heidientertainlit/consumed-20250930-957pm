@@ -188,8 +188,8 @@ export function NotificationBell() {
         break;
 
       case 'cast':
-        // Someone cast you - go to the Play page where Cast Your Friends is
-        setLocation('/play');
+        // Someone cast you - go to the Activity/Takes page (feed)
+        setLocation('/activity');
         break;
 
       default:
