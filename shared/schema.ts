@@ -620,6 +620,7 @@ export type InsertScheduledPersonaPost = z.infer<typeof insertScheduledPersonaPo
 export const friendCasts = pgTable("friend_casts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   creatorId: varchar("creator_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  creatorName: text("creator_name"), // Store creator username for display
   targetFriendId: varchar("target_friend_id").references(() => users.id, { onDelete: "cascade" }),
   targetFriendName: text("target_friend_name"), // For non-user friends
   prompt: text("prompt").notNull().default("Who would play them in a movie?"),

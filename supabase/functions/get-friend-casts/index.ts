@@ -68,25 +68,40 @@ serve(async (req) => {
       });
     }
 
-    // Fetch creator info for each cast
-    const castsWithCreators = await Promise.all((casts || []).map(async (cast: any) => {
-      const { data: creator, error: creatorError } = await supabase
+    // Get unique creator IDs for casts that don't have creator_name stored
+    const castsNeedingLookup = (casts || []).filter((c: any) => !c.creator_name);
+    const creatorIds = [...new Set(castsNeedingLookup.map((c: any) => c.creator_id))];
+    
+    // Batch fetch creators for legacy casts
+    let creatorMap = new Map();
+    if (creatorIds.length > 0) {
+      const { data: creators } = await supabase
         .from('users')
-        .select('id, user_name, display_name, avatar_url')
-        .eq('id', cast.creator_id)
-        .single();
+        .select('id, user_name, display_name')
+        .in('id', creatorIds);
       
-      if (creatorError) {
-        console.log('Creator lookup error for', cast.creator_id, ':', creatorError.message);
-      } else {
-        console.log('Found creator:', creator?.user_name, creator?.display_name);
+      if (creators) {
+        creatorMap = new Map(creators.map(c => [c.id, c]));
+        console.log('Looked up creators:', creators.map(c => c.user_name));
       }
+    }
+    
+    // Add creator info to each cast
+    const castsWithCreators = (casts || []).map((cast: any) => {
+      // Use stored creator_name first, then lookup, then fallback
+      const storedName = cast.creator_name;
+      const lookedUp = creatorMap.get(cast.creator_id);
+      const displayName = storedName || lookedUp?.user_name || lookedUp?.display_name || 'a friend';
       
       return {
         ...cast,
-        creator: creator || { id: cast.creator_id, user_name: 'a friend', display_name: 'A friend' }
+        creator: {
+          id: cast.creator_id,
+          user_name: displayName,
+          display_name: displayName
+        }
       };
-    }));
+    });
 
     return new Response(JSON.stringify({ casts: castsWithCreators }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
