@@ -38,7 +38,6 @@ import FriendsUpdates from "@/pages/friendsupdates";
 import Search from "@/pages/search";
 import Conversations from "@/pages/conversations";
 import Leaderboard from "@/pages/leaderboard";
-import Play from "@/pages/play";
 import PlayTrivia from "@/pages/play-trivia";
 import PlayPolls from "@/pages/play-polls";
 import PlayPredictions from "@/pages/play-predictions";
@@ -173,9 +172,7 @@ function Router() {
           </ProtectedRoute>
         </Route>
         <Route path="/play">
-          <ProtectedRoute>
-            <Play />
-          </ProtectedRoute>
+          <RedirectTo to="/activity" />
         </Route>
         <Route path="/my-library">
           <ProtectedRoute>
@@ -186,34 +183,22 @@ function Router() {
           <RedirectTo to="/my-library" />
         </Route>
         <Route path="/trivia">
-          <ProtectedRoute>
-            <Play initialTab="trivia" />
-          </ProtectedRoute>
+          <RedirectTo to="/activity" />
         </Route>
         <Route path="/play/trivia">
-          <ProtectedRoute>
-            <Play initialTab="trivia" />
-          </ProtectedRoute>
+          <RedirectTo to="/activity" />
         </Route>
         <Route path="/polls">
-          <ProtectedRoute>
-            <Play initialTab="polls" />
-          </ProtectedRoute>
+          <RedirectTo to="/activity" />
         </Route>
         <Route path="/play/polls">
-          <ProtectedRoute>
-            <Play initialTab="polls" />
-          </ProtectedRoute>
+          <RedirectTo to="/activity" />
         </Route>
         <Route path="/play/predictions">
-          <ProtectedRoute>
-            <Play initialTab="predictions" />
-          </ProtectedRoute>
+          <RedirectTo to="/activity" />
         </Route>
         <Route path="/play/awards">
-          <ProtectedRoute>
-            <Play initialTab="predictions" />
-          </ProtectedRoute>
+          <RedirectTo to="/activity" />
         </Route>
         <Route path="/play/awards/:slug">
           <ProtectedRoute>
@@ -221,9 +206,7 @@ function Router() {
           </ProtectedRoute>
         </Route>
         <Route path="/awards">
-          <ProtectedRoute>
-            <Play initialTab="predictions" />
-          </ProtectedRoute>
+          <RedirectTo to="/activity" />
         </Route>
         <Route path="/awards/:eventId">
           <ProtectedRoute>
@@ -247,9 +230,7 @@ function Router() {
           </ProtectedRoute>
         </Route>
         <Route path="/predictions">
-          <ProtectedRoute>
-            <Play initialTab="predictions" />
-          </ProtectedRoute>
+          <RedirectTo to="/activity" />
         </Route>
         <Route path="/play/hot-takes">
           <ProtectedRoute>
