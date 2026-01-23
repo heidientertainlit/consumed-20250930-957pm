@@ -224,8 +224,6 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
       setLastCastFriend(customFriendName || selectedFriend?.user_name || null);
       setLastCastWasToFriend(!!selectedFriend);
       setStep('success');
-      
-      toast({ title: "Cast shared! 🎬" });
     } catch (error) {
       toast({ title: "Failed to create cast", variant: "destructive" });
     } finally {
