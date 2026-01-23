@@ -854,15 +854,18 @@ serve(async (req) => {
         
         const hasMedia = post.media_title && post.media_title.trim() !== '' && post.media_external_id;
         
-        // rank_share posts need special handling - don't group them with media
+        // These post types need special handling - don't group them with media
+        const specialPostTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'cast_approved'];
+        const isSpecialType = specialPostTypes.includes(post.post_type);
+        
         // When grouping is disabled, treat all media posts as single posts (groupPosts.length === 1 path)
-        if (ENABLE_MEDIA_GROUPING && hasMedia && post.post_type !== 'prediction' && post.post_type !== 'poll' && post.post_type !== 'trivia' && post.post_type !== 'rank_share') {
+        if (ENABLE_MEDIA_GROUPING && hasMedia && !isSpecialType) {
           const mediaKey = `${post.media_external_source}:${post.media_external_id}`;
           if (!mediaGroups.has(mediaKey)) {
             mediaGroups.set(mediaKey, []);
           }
           mediaGroups.get(mediaKey)!.push(post);
-        } else if (hasMedia && post.post_type !== 'prediction' && post.post_type !== 'poll' && post.post_type !== 'trivia' && post.post_type !== 'rank_share') {
+        } else if (hasMedia && !isSpecialType) {
           // Grouping disabled - put each media post in its own group so it goes through the single-post path
           const uniqueKey = `${post.media_external_source}:${post.media_external_id}:${post.id}`;
           mediaGroups.set(uniqueKey, [post]);

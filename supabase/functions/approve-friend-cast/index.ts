@@ -148,6 +148,7 @@ serve(async (req) => {
           image_url: friendCast.creator_pick_celeb_image,
           media_type: 'cast',
           media_external_id: friendCast.creator_pick_celeb_id,
+          media_external_source: 'tmdb',
           likes_count: 0,
           comments_count: 0
         })
