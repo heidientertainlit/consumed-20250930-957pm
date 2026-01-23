@@ -451,7 +451,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
       )}
 
       {step === 'add-friend' && selectedCeleb && (
-        <div className="space-y-3">
+        <div className="space-y-3 overflow-visible pb-32">
           <div className="flex items-center gap-3 bg-amber-50 rounded-xl p-3">
             <img 
               src={selectedCeleb.image} 
@@ -478,7 +478,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
             />
             
             {customFriendName.length >= 2 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
                 {isSearching ? (
                   <div className="px-3 py-2 text-gray-500 text-sm flex items-center gap-2">
                     <Loader2 className="w-3 h-3 animate-spin" />
