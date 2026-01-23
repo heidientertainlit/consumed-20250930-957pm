@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/posthog";
-import { Users, Sparkles, Search, ChevronLeft, ChevronRight, Loader2, UserPlus, Share2, Bell, Check } from "lucide-react";
+import { Users, Sparkles, Search, ChevronLeft, ChevronRight, Loader2, UserPlus, Share2, Bell, Check, Link2 } from "lucide-react";
 import { Link } from "wouter";
 
 interface Celebrity {
@@ -485,35 +485,54 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
                     Searching...
                   </div>
                 ) : searchedUsers.length > 0 ? (
-                  searchedUsers.slice(0, 6).map(userResult => (
+                  <>
+                    {searchedUsers.slice(0, 6).map(userResult => (
+                      <button
+                        key={userResult.id}
+                        onClick={() => {
+                          setSelectedFriend(userResult);
+                          setCustomFriendName("");
+                          setStep('confirm');
+                        }}
+                        className="w-full px-3 py-2 text-left hover:bg-amber-50 text-gray-900 text-sm flex items-center gap-2"
+                      >
+                        <span className="text-amber-600">@</span>
+                        {userResult.user_name}
+                      </button>
+                    ))}
                     <button
-                      key={userResult.id}
-                      onClick={() => {
-                        setSelectedFriend(userResult);
-                        setCustomFriendName("");
-                        setStep('confirm');
-                      }}
-                      className="w-full px-3 py-2 text-left hover:bg-amber-50 text-gray-900 text-sm flex items-center gap-2"
+                      onClick={() => setStep('confirm')}
+                      className="w-full px-3 py-2 text-left hover:bg-purple-50 text-purple-700 text-sm flex items-center gap-2 border-t border-gray-100"
                     >
-                      <span className="text-amber-600">@</span>
-                      {userResult.user_name}
+                      <Link2 className="w-3 h-3" />
+                      Not here? Send "{customFriendName}" a link
                     </button>
-                  ))
+                  </>
                 ) : (
-                  <div className="px-3 py-2 text-gray-500 text-sm">No users found - you can still use this name</div>
+                  <button
+                    onClick={() => setStep('confirm')}
+                    className="w-full px-3 py-2 text-left hover:bg-purple-50 text-purple-700 text-sm flex items-center gap-2"
+                  >
+                    <Link2 className="w-3 h-3" />
+                    Send "{customFriendName}" a link instead
+                  </button>
                 )}
               </div>
             )}
           </div>
 
-          <Button 
-            onClick={() => customFriendName && setStep('confirm')}
-            disabled={!customFriendName && !selectedFriend}
-            className="w-full bg-amber-500 hover:bg-amber-600"
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Use "{customFriendName || 'this name'}"
-          </Button>
+          <div className="text-center">
+            <button
+              onClick={() => {
+                setCustomFriendName('');
+                setSelectedFriend(null);
+              }}
+              className="text-xs text-gray-500 hover:text-gray-700 flex items-center justify-center gap-1 mx-auto"
+            >
+              <Link2 className="w-3 h-3" />
+              Friend not on Consumed? Type their name above to send a link
+            </button>
+          </div>
         </div>
       )}
 
