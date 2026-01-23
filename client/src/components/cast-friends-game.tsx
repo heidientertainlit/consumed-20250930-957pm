@@ -420,7 +420,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && searchCelebrities()}
-                  className="text-sm"
+                  className="text-sm bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
                 />
                 <Button 
                   onClick={searchCelebrities}

@@ -133,12 +133,6 @@ export function DnaMomentCard() {
         title: `+${result.pointsEarned} points!`,
         description: result.message,
       });
-      
-      setTimeout(() => {
-        if (data?.moments && currentIndex < data.moments.length - 1) {
-          scrollToNext();
-        }
-      }, 4000);
     },
     onError: (error: Error) => {
       toast({
