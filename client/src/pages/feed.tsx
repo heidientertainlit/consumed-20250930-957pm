@@ -2969,7 +2969,7 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && (
                 <ConsumptionCarousel 
                   items={(socialPosts || [])
-                    .filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown')
+                    .filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved')
                     .slice(0, 10)
                     .map((p: any) => ({
                       id: p.id,
