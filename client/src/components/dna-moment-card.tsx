@@ -128,11 +128,6 @@ export function DnaMomentCard() {
       
       incrementActivityCount();
       trackEvent('dna_moment_answered', { moment_id: momentId, points_earned: result.pointsEarned });
-      
-      toast({
-        title: `+${result.pointsEarned} points!`,
-        description: result.message,
-      });
     },
     onError: (error: Error) => {
       toast({
@@ -261,13 +256,13 @@ export function DnaMomentCard() {
               </div>
               
               {!isAnswered ? (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 transition-opacity duration-300">
                   {allOptions.map(opt => {
                     const isSelected = selected.includes(opt.key);
                     return (
                       <button
                         key={opt.key}
-                        className={`py-2.5 px-4 rounded-xl border text-sm font-medium transition-all text-left flex items-center gap-2 ${
+                        className={`py-2.5 px-4 rounded-xl border text-sm font-medium transition-all duration-200 text-left flex items-center gap-2 ${
                           isMulti && isSelected 
                             ? 'bg-teal-100 border-teal-400 text-teal-900' 
                             : 'bg-gray-50 border-gray-200 text-gray-900 hover:bg-teal-50 hover:border-teal-300'
@@ -282,7 +277,7 @@ export function DnaMomentCard() {
                         disabled={answerMutation.isPending}
                       >
                         {isMulti && (
-                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
                             isSelected ? 'bg-teal-500 border-teal-500' : 'border-gray-300'
                           }`}>
                             {isSelected && <span className="text-white text-xs">✓</span>}
@@ -303,16 +298,20 @@ export function DnaMomentCard() {
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col gap-2">
-                  {allOptions.map(opt => (
-                    <div key={opt.key} className="p-2.5 rounded-xl bg-gray-50 border border-gray-200">
+                <div className="flex flex-col gap-2 animate-in fade-in duration-300">
+                  {allOptions.map((opt, optIndex) => (
+                    <div 
+                      key={opt.key} 
+                      className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 animate-in slide-in-from-bottom-2 duration-300"
+                      style={{ animationDelay: `${optIndex * 50}ms` }}
+                    >
                       <div className="flex justify-between items-center mb-1.5">
                         <span className="text-xs text-gray-700">{opt.label}</span>
                         <span className="text-sm font-bold text-teal-600">{getPercent(opt.key)}%</span>
                       </div>
                       <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-gradient-to-r from-teal-500 to-blue-500 rounded-full transition-all duration-500"
+                          className="h-full bg-gradient-to-r from-teal-500 to-blue-500 rounded-full transition-all duration-700 ease-out"
                           style={{ width: `${getPercent(opt.key)}%` }}
                         />
                       </div>
