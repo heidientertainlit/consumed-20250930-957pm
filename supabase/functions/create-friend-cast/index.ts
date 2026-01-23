@@ -86,6 +86,8 @@ serve(async (req) => {
 
     // Send notification to target friend if they have an account
     if (targetFriendId) {
+      console.log('Sending notification to target friend:', targetFriendId);
+      
       const { data: creatorData } = await supabase
         .from('users')
         .select('user_name')
@@ -93,25 +95,32 @@ serve(async (req) => {
         .single();
       
       const creatorName = creatorData?.user_name || 'Someone';
+      console.log('Creator name:', creatorName);
       
       // Call send-notification edge function
       const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
       const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
       
-      await fetch(`${supabaseUrl}/functions/v1/send-notification`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${serviceRoleKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId: targetFriendId,
-          type: 'cast',
-          triggeredByUserId: user.id,
-          message: `${creatorName} cast you as ${celebName} in their movie! 🎬`,
-          friendCastId: friendCast.id
-        })
-      });
+      try {
+        const notifResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${serviceRoleKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: targetFriendId,
+            type: 'cast',
+            triggeredByUserId: user.id,
+            message: `${creatorName} cast you as ${celebName} in their movie! 🎬`,
+            friendCastId: friendCast.id
+          })
+        });
+        const notifResult = await notifResponse.json();
+        console.log('Notification response:', notifResult);
+      } catch (notifError) {
+        console.error('Failed to send notification:', notifError);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, friendCast }), {
