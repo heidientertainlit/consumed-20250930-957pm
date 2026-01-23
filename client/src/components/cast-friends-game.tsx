@@ -135,7 +135,6 @@ function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
       if (data.celebrities?.length > 0) {
         setCelebrities(data.celebrities);
         setCurrentIndex(0);
-        setMode('browse');
       }
     } catch (error) {
       console.error('Search failed:', error);
@@ -419,26 +418,67 @@ function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
           {mode === 'search' && (
             <div className="space-y-3">
               <p className="text-sm text-gray-600">Search for a specific celebrity</p>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="e.g. Ryan Gosling"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && searchCelebrities()}
-                  className="text-sm bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
-                />
-                <Button 
-                  onClick={searchCelebrities}
-                  disabled={isLoading || !searchQuery.trim()}
-                  size="sm"
-                >
-                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                </Button>
+              <div className="relative">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="e.g. Catherine O'Hara"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    spellCheck={false}
+                    className="text-sm bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+                  />
+                  <Button 
+                    onClick={() => {
+                      if (celebrities.length > 0) {
+                        setMode('browse');
+                      }
+                    }}
+                    disabled={isLoading || celebrities.length === 0}
+                    size="sm"
+                  >
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  </Button>
+                </div>
+                
+                {searchQuery.length >= 2 && celebrities.length > 0 && (
+                  <div 
+                    className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-64 overflow-y-auto"
+                    style={{ top: '100%', zIndex: 9999 }}
+                  >
+                    {celebrities.slice(0, 6).map((celeb) => (
+                      <button
+                        key={celeb.id}
+                        onClick={() => {
+                          setSelectedCeleb(celeb);
+                          setStep('add-friend');
+                          setMode('browse');
+                          setSearchQuery('');
+                        }}
+                        className="w-full px-3 py-2 text-left hover:bg-amber-50 flex items-center gap-3"
+                        type="button"
+                      >
+                        <img 
+                          src={celeb.image} 
+                          alt={celeb.name}
+                          className="w-8 h-10 rounded object-cover"
+                        />
+                        <span className="text-gray-900 font-medium text-sm">{celeb.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <Button 
                 variant="ghost"
                 size="sm"
-                onClick={() => setMode('browse')}
+                onClick={() => {
+                  setMode('browse');
+                  setSearchQuery('');
+                  loadPopularCelebs();
+                }}
                 className="w-full text-gray-500"
               >
                 Cancel
