@@ -13,7 +13,15 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get('Authorization');
+    
+    // Use service role for database operations
     const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+    
+    // Use anon client for auth
+    const authClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader || '' } } }
@@ -21,9 +29,12 @@ serve(async (req) => {
 
     let userId: string | null = null;
     if (authHeader) {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await authClient.auth.getUser();
       userId = user?.id || null;
     }
+    
+    console.log('=== GET FRIEND CASTS ===');
+    console.log('userId:', userId);
 
     const url = new URL(req.url);
     const pendingOnly = url.searchParams.get('pending') === 'true';
@@ -55,6 +66,9 @@ serve(async (req) => {
     }
 
     const { data: casts, error } = await query.limit(20);
+    
+    console.log('Query result count:', casts?.length || 0);
+    console.log('Query error:', error);
 
     if (error) {
       console.error('Fetch error:', error);
