@@ -85,21 +85,38 @@ serve(async (req) => {
     }
 
     // Send notification to target friend if they have an account
+    console.log('=== NOTIFICATION CHECK ===');
+    console.log('targetFriendId:', targetFriendId);
+    console.log('friendCast created:', friendCast?.id);
+    
     if (targetFriendId) {
       console.log('Sending notification to target friend:', targetFriendId);
       
-      const { data: creatorData } = await supabase
+      const { data: creatorData, error: creatorError } = await supabase
         .from('users')
         .select('user_name')
         .eq('id', user.id)
         .single();
       
+      console.log('Creator data:', creatorData, 'Error:', creatorError);
       const creatorName = creatorData?.user_name || 'Someone';
       console.log('Creator name:', creatorName);
       
       // Call send-notification edge function
       const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
       const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+      
+      console.log('Supabase URL:', supabaseUrl);
+      console.log('Has service role key:', !!serviceRoleKey);
+      
+      const notifPayload = {
+        userId: targetFriendId,
+        type: 'cast',
+        triggeredByUserId: user.id,
+        message: `${creatorName} cast you as ${celebName} in their movie! 🎬`,
+        friendCastId: friendCast.id
+      };
+      console.log('Notification payload:', JSON.stringify(notifPayload));
       
       try {
         const notifResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification`, {
@@ -108,19 +125,17 @@ serve(async (req) => {
             'Authorization': `Bearer ${serviceRoleKey}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            userId: targetFriendId,
-            type: 'cast',
-            triggeredByUserId: user.id,
-            message: `${creatorName} cast you as ${celebName} in their movie! 🎬`,
-            friendCastId: friendCast.id
-          })
+          body: JSON.stringify(notifPayload)
         });
+        
+        console.log('Notification response status:', notifResponse.status);
         const notifResult = await notifResponse.json();
-        console.log('Notification response:', notifResult);
+        console.log('Notification response body:', JSON.stringify(notifResult));
       } catch (notifError) {
         console.error('Failed to send notification:', notifError);
       }
+    } else {
+      console.log('No targetFriendId - skipping notification (off-platform cast)');
     }
 
     return new Response(JSON.stringify({ success: true, friendCast }), {
