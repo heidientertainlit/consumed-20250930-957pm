@@ -1412,7 +1412,7 @@ export default function Feed() {
     ];
     
     // Game/engagement posts should NEVER be consumption posts - always show prominently
-    const gameTypes = ['trivia', 'poll', 'prediction', 'vote', 'ask_for_recs', 'rank_share', 'media_group'];
+    const gameTypes = ['trivia', 'poll', 'prediction', 'vote', 'ask_for_recs', 'rank_share', 'media_group', 'cast_approved'];
     if (gameTypes.includes(postType)) return false;
     
     // Check explicit consumption types
@@ -3110,8 +3110,11 @@ export default function Feed() {
               )}
 
               {/* Cast Your Friends - Approved Casts */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && filteredPosts
-                .filter((item: any) => item.type === 'cast_approved')
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (() => {
+                const castPosts = filteredPosts.filter((item: any) => item.type === 'cast_approved');
+                console.log('🎭 RENDERING cast section, found:', castPosts.length, castPosts.map((p: any) => ({ id: p.id, type: p.type })));
+                return castPosts;
+              })()
                 .map((post: any) => {
                   const celebName = post.mediaItems?.[0]?.title || 'a celebrity';
                   const celebImage = post.mediaItems?.[0]?.imageUrl;
