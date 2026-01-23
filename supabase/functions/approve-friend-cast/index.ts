@@ -20,19 +20,24 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    
+    const authClient = createClient(
+      supabaseUrl,
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const { 
       friendCastId, 
@@ -41,6 +46,8 @@ serve(async (req) => {
       counterCelebName,
       counterCelebImage
     } = await req.json();
+
+    console.log('Approve friend cast request:', { friendCastId, action, userId: user.id });
 
     if (!friendCastId || !action) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -58,7 +65,7 @@ serve(async (req) => {
 
     const { data: friendCast, error: fetchError } = await supabase
       .from('friend_casts')
-      .select('*, creator:users!friend_casts_creator_id_fkey(id, user_name)')
+      .select('*')
       .eq('id', friendCastId)
       .single();
 
@@ -117,9 +124,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
-
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
     const { data: targetUserData } = await supabase
       .from('users')

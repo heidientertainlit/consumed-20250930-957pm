@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, RefreshCw, Loader2, Search, Share2, Download, ChevronRight } from "lucide-react";
+import { X, RefreshCw, Loader2, Search, Share2, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 interface FriendCast {
@@ -36,12 +36,12 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
   const { session } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [showCounter, setShowCounter] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Celebrity[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedCounter, setSelectedCounter] = useState<Celebrity | null>(null);
-  const [expanded, setExpanded] = useState(false);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
@@ -54,6 +54,7 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
     }
 
     setIsLoading(true);
+    setLoadingAction(action);
     try {
       const body: Record<string, unknown> = {
         friendCastId: cast.id,
@@ -75,9 +76,10 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
         body: JSON.stringify(body)
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to respond');
+        throw new Error(result.error || 'Failed to respond');
       }
 
       toast({ 
@@ -89,10 +91,12 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
       });
       
       onRespond?.();
-    } catch (error) {
-      toast({ title: "Failed to respond", variant: "destructive" });
+    } catch (error: any) {
+      console.error('Action error:', error);
+      toast({ title: error.message || "Failed to respond", variant: "destructive" });
     } finally {
       setIsLoading(false);
+      setLoadingAction(null);
     }
   };
 
@@ -102,13 +106,18 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
     try {
       const response = await fetch(`${supabaseUrl}/functions/v1/search-celebrities`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || ''}`
+        },
         body: JSON.stringify({ query: searchQuery })
       });
       const data = await response.json();
+      console.log('Celebrity search results:', data);
       setSearchResults(data.celebrities || []);
     } catch (error) {
       console.error('Search failed:', error);
+      toast({ title: "Search failed", variant: "destructive" });
     } finally {
       setIsSearching(false);
     }
@@ -268,7 +277,7 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
             disabled={isLoading || !selectedCounter}
             className="flex-1 bg-purple-600 hover:bg-purple-700"
           >
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Counter"}
+            {isLoading && loadingAction === 'counter' ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send Counter"}
           </Button>
         </div>
       </Card>
@@ -277,60 +286,52 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
 
   return (
     <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-      <div 
-        className="flex items-center gap-4 p-3 cursor-pointer"
-        onClick={() => setExpanded(!expanded)}
-      >
+      <div className="flex items-stretch">
         <img 
           src={cast.creator_pick_celeb_image || '/placeholder-avatar.png'} 
           alt={cast.creator_pick_celeb_name}
-          className="w-16 h-20 rounded-xl object-cover flex-shrink-0"
+          className="w-24 h-auto object-cover flex-shrink-0"
         />
         
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
+        <div className="flex-1 p-3 min-w-0">
+          <div className="flex items-center gap-1.5 mb-1">
             <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
               🎬 You've Been Cast!
             </span>
           </div>
-          <p className="text-sm font-semibold text-gray-900 truncate">
+          <p className="text-base font-semibold text-gray-900 truncate">
             {cast.creator_pick_celeb_name}
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 mb-3">
             {creatorName} thinks this celebrity would play you
           </p>
-        </div>
 
-        <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`} />
-      </div>
-
-      {expanded && (
-        <div className="px-3 pb-3 pt-1 border-t border-gray-100">
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2 mb-2">
             <Button 
               size="sm"
               onClick={() => handleAction('approve')}
               disabled={isLoading}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs"
+              className="flex-1 text-white text-xs"
+              style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)' }}
             >
-              {isLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Share2 className="w-3 h-3 mr-1" /> Share to Feed</>}
+              {isLoading && loadingAction === 'approve' ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Share2 className="w-3 h-3 mr-1" /> Share to Feed</>}
             </Button>
             <Button 
               size="sm"
               variant="outline"
               onClick={handleDownload}
-              className="border-gray-200 text-gray-600 text-xs"
+              className="border-gray-200 text-gray-600 text-xs px-2"
             >
               <Download className="w-3 h-3" />
             </Button>
           </div>
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2">
             <Button 
               size="sm"
               variant="ghost"
               onClick={() => setShowCounter(true)}
               disabled={isLoading}
-              className="flex-1 text-purple-600 hover:bg-purple-50 text-xs"
+              className="flex-1 text-purple-600 hover:bg-purple-50 text-xs h-8"
             >
               <RefreshCw className="w-3 h-3 mr-1" /> Suggest Different
             </Button>
@@ -339,13 +340,13 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
               variant="ghost"
               onClick={() => handleAction('decline')}
               disabled={isLoading}
-              className="text-gray-400 hover:text-red-500 hover:bg-red-50 text-xs"
+              className="text-gray-400 hover:text-red-500 hover:bg-red-50 text-xs h-8"
             >
-              <X className="w-3 h-3 mr-1" /> Decline
+              {isLoading && loadingAction === 'decline' ? <Loader2 className="w-3 h-3 animate-spin" /> : <><X className="w-3 h-3 mr-1" /> Decline</>}
             </Button>
           </div>
         </div>
-      )}
+      </div>
     </Card>
   );
 }
