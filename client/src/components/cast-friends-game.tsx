@@ -521,16 +521,17 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
             )}
           </div>
 
-          <div className="text-center">
+          <div className="pt-2 border-t border-gray-100">
             <button
               onClick={() => {
-                setCustomFriendName('');
                 setSelectedFriend(null);
+                setCustomFriendName('A friend');
+                setStep('confirm');
               }}
-              className="text-xs text-gray-500 hover:text-gray-700 flex items-center justify-center gap-1 mx-auto"
+              className="w-full py-2.5 px-4 rounded-xl border-2 border-dashed border-purple-300 text-purple-600 text-sm font-medium hover:bg-purple-50 transition-all flex items-center justify-center gap-2"
             >
-              <Link2 className="w-3 h-3" />
-              Friend not on Consumed? Type their name above to send a link
+              <Link2 className="w-4 h-4" />
+              Share with someone not on Consumed
             </button>
           </div>
         </div>
