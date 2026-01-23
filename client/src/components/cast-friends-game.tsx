@@ -486,16 +486,6 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
                   </div>
                 ) : (
                   <>
-                    <button
-                      onClick={() => setStep('confirm')}
-                      className="w-full px-3 py-3 text-left bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 text-purple-700 text-sm font-medium flex items-center gap-2 border-b border-purple-100"
-                    >
-                      <Link2 className="w-4 h-4 text-purple-500" />
-                      <span>Send "{customFriendName}" a link to cast them</span>
-                    </button>
-                    {searchedUsers.length > 0 && (
-                      <div className="py-1 px-2 text-xs text-gray-400 bg-gray-50">Or pick a Consumed user:</div>
-                    )}
                     {searchedUsers.slice(0, 5).map(userResult => (
                       <button
                         key={userResult.id}
@@ -504,12 +494,19 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
                           setCustomFriendName("");
                           setStep('confirm');
                         }}
-                        className="w-full px-3 py-2 text-left hover:bg-amber-50 text-gray-900 text-sm flex items-center gap-2"
+                        className="w-full px-3 py-2.5 text-left hover:bg-amber-50 text-gray-900 text-sm flex items-center gap-2"
                       >
-                        <span className="text-amber-600">@</span>
-                        {userResult.user_name}
+                        <span className="text-amber-600 font-medium">@</span>
+                        <span className="font-medium">{userResult.user_name}</span>
                       </button>
                     ))}
+                    <button
+                      onClick={() => setStep('confirm')}
+                      className="w-full px-3 py-2.5 text-left hover:bg-purple-50 text-purple-600 text-sm flex items-center gap-2 border-t border-gray-100"
+                    >
+                      <Link2 className="w-4 h-4" />
+                      <span>"{customFriendName}" not on Consumed? Send a link</span>
+                    </button>
                   </>
                 )}
               </div>
