@@ -83,13 +83,13 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
         throw new Error(result.error || 'Failed to respond');
       }
 
-      toast({ 
-        title: action === 'approve' 
-          ? "Posted to feed! 🎬" 
-          : action === 'decline' 
-            ? "Casting declined" 
+      if (action !== 'decline') {
+        toast({ 
+          title: action === 'approve' 
+            ? "Posted to feed! 🎬" 
             : "Counter-suggestion sent! 🎭"
-      });
+        });
+      }
       
       onRespond?.();
     } catch (error: any) {
@@ -310,16 +310,14 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
         />
         
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-              You've Been Cast!
-            </span>
-          </div>
+          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full inline-block mb-1">
+            You've Been Cast!
+          </span>
           <p className="text-base font-semibold text-gray-900 truncate">
             {cast.creator_pick_celeb_name}
           </p>
           <p className="text-xs text-gray-500 mb-3">
-            {creatorName} thinks this celebrity would play you
+            @{creatorName} thinks this celebrity would play you
           </p>
 
           <div className="flex gap-2 mb-2">

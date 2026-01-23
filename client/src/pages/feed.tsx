@@ -1548,7 +1548,7 @@ export default function Feed() {
     // Hide malformed posts: short content (looks like just a title), no media items, 
     // and not a special post type (prediction/poll/trivia/rank_share)
     // Note: 'add-to-list' (from track-media) is also a valid type
-    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'friend_list_group'];
+    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'friend_list_group', 'cast_approved'];
     const isSpecialType = specialTypes.includes(post.type || '');
     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
     const hasListData = !!(post as any).listData;
@@ -3597,6 +3597,96 @@ export default function Feed() {
                         setActiveBetPost({ postId, mediaTitle, userName, targetUserId, externalId, externalSource, mediaType })
                       }
                     />
+                  );
+                }
+
+                // Check if this item is a cast_approved post (friend casting)
+                if (post.type === 'cast_approved') {
+                  const metadata = (post as any).metadata || {};
+                  const celebName = metadata.celeb_name || 'a celebrity';
+                  const celebImage = metadata.celeb_image;
+                  const targetUserName = metadata.target_user_name || 'their friend';
+                  
+                  return (
+                    <div key={`cast-${post.id}`} id={`post-${post.id}`}>
+                      {carouselElements}
+                      <div className="mb-4">
+                        <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
+                          <div className="p-4">
+                            {/* Header */}
+                            <div className="flex items-center gap-3 mb-3">
+                              {post.user && (
+                                <Link href={`/user/${post.user.id}`}>
+                                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
+                                    {post.user.avatar ? (
+                                      <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                                    ) : (
+                                      <span className="text-sm">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
+                                    )}
+                                  </div>
+                                </Link>
+                              )}
+                              <div className="flex-1">
+                                <p className="text-sm text-gray-900">
+                                  <Link href={`/user/${post.user?.id}`}>
+                                    <span className="font-semibold hover:text-purple-600 cursor-pointer">@{post.user?.username}</span>
+                                  </Link>
+                                  {' '}cast{' '}
+                                  <span className="font-semibold">@{targetUserName}</span>
+                                  {' '}as
+                                </p>
+                                <span className="text-xs text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
+                              </div>
+                            </div>
+                            
+                            {/* Celebrity Card */}
+                            <div className="flex items-center gap-4 p-3 bg-gradient-to-r from-purple-50 to-amber-50 rounded-xl">
+                              {celebImage && (
+                                <img 
+                                  src={celebImage} 
+                                  alt={celebName}
+                                  className="w-16 h-20 rounded-xl object-cover"
+                                />
+                              )}
+                              <div className="flex-1">
+                                <p className="font-bold text-lg text-gray-900">{celebName}</p>
+                                <p className="text-xs text-gray-500">would play @{targetUserName} in a movie</p>
+                              </div>
+                            </div>
+                            
+                            {/* CTA */}
+                            <Link href="/play">
+                              <button className="mt-3 w-full py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white text-sm font-medium rounded-xl hover:opacity-90 transition-opacity">
+                                Cast Your Friends
+                              </button>
+                            </Link>
+                          </div>
+                          
+                          {/* Actions */}
+                          <div className="flex items-center gap-4 px-4 py-3 border-t border-gray-100">
+                            <button
+                              onClick={() => handleLike(post.id)}
+                              className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                            >
+                              <Heart size={16} fill={likedPosts.has(post.id) ? 'currentColor' : 'none'} />
+                              <span>{post.likes || 0}</span>
+                            </button>
+                            <button
+                              onClick={() => setExpandedComments(prev => {
+                                const newSet = new Set(prev);
+                                if (newSet.has(post.id)) newSet.delete(post.id);
+                                else newSet.add(post.id);
+                                return newSet;
+                              })}
+                              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
+                            >
+                              <MessageCircle size={16} />
+                              <span>{post.comments || 0}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   );
                 }
 
