@@ -140,17 +140,13 @@ serve(async (req) => {
         .from('social_posts')
         .insert({
           user_id: friendCast.creator_id,
-          content: `🎬 Cast approved! ${targetName} will be played by ${friendCast.creator_pick_celeb_name} in their movie!`,
+          content: targetName,
           post_type: 'cast_approved',
           is_consumed_content: false,
-          metadata: {
-            friend_cast_id: friendCastId,
-            target_user_id: user.id,
-            target_user_name: targetName,
-            celeb_id: friendCast.creator_pick_celeb_id,
-            celeb_name: friendCast.creator_pick_celeb_name,
-            celeb_image: friendCast.creator_pick_celeb_image
-          }
+          media_title: friendCast.creator_pick_celeb_name,
+          image_url: friendCast.creator_pick_celeb_image,
+          media_type: 'cast',
+          media_external_id: friendCast.creator_pick_celeb_id
         })
         .select()
         .single();

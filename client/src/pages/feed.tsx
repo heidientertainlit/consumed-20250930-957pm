@@ -3602,10 +3602,9 @@ export default function Feed() {
 
                 // Check if this item is a cast_approved post (friend casting)
                 if (post.type === 'cast_approved') {
-                  const metadata = (post as any).metadata || {};
-                  const celebName = metadata.celeb_name || 'a celebrity';
-                  const celebImage = metadata.celeb_image;
-                  const targetUserName = metadata.target_user_name || 'their friend';
+                  const celebName = post.mediaItems?.[0]?.title || 'a celebrity';
+                  const celebImage = post.mediaItems?.[0]?.imageUrl;
+                  const targetUserName = post.content || 'their friend';
                   
                   return (
                     <div key={`cast-${post.id}`} id={`post-${post.id}`}>
