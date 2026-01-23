@@ -1816,8 +1816,12 @@ export default function Feed() {
         }
       );
       
-      if (!response.ok) return [];
+      if (!response.ok) {
+        console.log('🎭 Pending casts fetch failed:', response.status);
+        return [];
+      }
       const data = await response.json();
+      console.log('🎭 Pending casts fetched:', data.casts?.length || 0, data.casts);
       return data.casts || [];
     },
     enabled: !!session?.access_token && !!user?.id,
