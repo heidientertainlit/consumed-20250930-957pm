@@ -187,6 +187,11 @@ export function NotificationBell() {
         }
         break;
 
+      case 'cast':
+        // Someone cast you - go to the Play page where Cast Your Friends is
+        setLocation('/play');
+        break;
+
       default:
         // Fallback: if there's a post_id, go to feed; if list_id, go to that list
         if (notification.post_id) {
@@ -222,6 +227,8 @@ export function NotificationBell() {
         return <Star className={`${iconClass} text-yellow-400`} />;
       case 'collaborator_added':
         return <FileEdit className={`${iconClass} text-orange-400`} />;
+      case 'cast':
+        return <Users className={`${iconClass} text-amber-400`} />;
       case 'leaderboard_position':
         return <Trophy className={`${iconClass} text-yellow-400`} />;
       case 'points_to_rank':
