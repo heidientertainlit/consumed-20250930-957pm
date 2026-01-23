@@ -44,6 +44,7 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
   const [selectedCounter, setSelectedCounter] = useState<Celebrity | null>(null);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const creatorName = cast.creator?.display_name || cast.creator?.user_name || 'A friend';
 
   const handleAction = async (action: 'approve' | 'decline' | 'counter') => {
     if (!session) return;
@@ -132,14 +133,16 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
       if (!ctx) return;
 
       canvas.width = 600;
-      canvas.height = 800;
+      canvas.height = 750;
 
-      const gradient = ctx.createLinearGradient(0, 0, 600, 800);
-      gradient.addColorStop(0, '#1a1a2e');
-      gradient.addColorStop(1, '#16213e');
+      // Dark gradient background
+      const gradient = ctx.createLinearGradient(0, 0, 600, 750);
+      gradient.addColorStop(0, '#1e1b4b');
+      gradient.addColorStop(1, '#312e81');
       ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 600, 800);
+      ctx.fillRect(0, 0, 600, 750);
 
+      // Load and draw celebrity image - centered and smaller
       const img = new Image();
       img.crossOrigin = 'anonymous';
       
@@ -149,52 +152,65 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
         img.src = cast.creator_pick_celeb_image;
       });
 
-      const imgX = 100;
-      const imgY = 150;
-      const imgWidth = 400;
-      const imgHeight = 400;
+      const imgWidth = 280;
+      const imgHeight = 350;
+      const imgX = (600 - imgWidth) / 2;
+      const imgY = 80;
       
+      // Draw rounded image
       ctx.save();
       ctx.beginPath();
-      ctx.roundRect(imgX, imgY, imgWidth, imgHeight, 20);
+      ctx.roundRect(imgX, imgY, imgWidth, imgHeight, 16);
       ctx.clip();
       ctx.drawImage(img, imgX, imgY, imgWidth, imgHeight);
       ctx.restore();
 
-      ctx.fillStyle = '#fbbf24';
-      ctx.font = 'bold 28px system-ui, sans-serif';
+      // "I've been cast as" text
+      ctx.fillStyle = '#a5b4fc';
+      ctx.font = '22px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('🎬 You\'ve Been Cast!', 300, 80);
+      ctx.fillText("I've been cast as", 300, 480);
 
+      // Celebrity name - bold and white
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 36px system-ui, sans-serif';
-      ctx.fillText(cast.creator_pick_celeb_name, 300, 620);
+      ctx.font = 'bold 32px system-ui, sans-serif';
+      ctx.fillText(cast.creator_pick_celeb_name, 300, 520);
 
-      ctx.fillStyle = '#9ca3af';
-      ctx.font = '20px system-ui, sans-serif';
-      ctx.fillText(`would play you in a movie`, 300, 660);
+      // Cast by line - use creator name properly
+      const casterName = cast.creator?.user_name && cast.creator.user_name !== 'Unknown' 
+        ? cast.creator.user_name 
+        : cast.creator?.display_name || creatorName;
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '18px system-ui, sans-serif';
+      ctx.fillText(`Cast by @${casterName}`, 300, 560);
 
-      ctx.fillStyle = '#6b7280';
-      ctx.font = '16px system-ui, sans-serif';
-      ctx.fillText(`Cast by @${cast.creator?.user_name || 'a friend'}`, 300, 700);
+      // Draw consumed logo circle
+      ctx.beginPath();
+      ctx.arc(300, 640, 25, 0, Math.PI * 2);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fill();
+      
+      // "C" letter in logo
+      ctx.fillStyle = '#1e1b4b';
+      ctx.font = 'bold 28px system-ui, sans-serif';
+      ctx.fillText('C', 300, 650);
 
-      ctx.fillStyle = '#fbbf24';
-      ctx.font = 'bold 18px system-ui, sans-serif';
-      ctx.fillText('consumed', 300, 760);
+      // CTA text
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '14px system-ui, sans-serif';
+      ctx.fillText('Cast your friends on @consumedapp', 300, 710);
 
       const link = document.createElement('a');
       link.download = `cast-${cast.creator_pick_celeb_name.replace(/\s+/g, '-').toLowerCase()}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
 
-      toast({ title: "Image downloaded! 📸" });
+      toast({ title: "Image downloaded!" });
     } catch (error) {
       console.error('Download failed:', error);
       toast({ title: "Couldn't download image", variant: "destructive" });
     }
   };
-
-  const creatorName = cast.creator?.display_name || cast.creator?.user_name || 'A friend';
 
   if (showCounter) {
     return (
@@ -286,17 +302,17 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
 
   return (
     <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden p-3">
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         <img 
           src={cast.creator_pick_celeb_image || '/placeholder-avatar.png'} 
           alt={cast.creator_pick_celeb_name}
-          className="w-16 h-20 rounded-xl object-cover flex-shrink-0"
+          className="w-16 h-20 rounded-xl object-cover object-center flex-shrink-0"
         />
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-1">
             <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-              🎬 You've Been Cast!
+              You've Been Cast!
             </span>
           </div>
           <p className="text-base font-semibold text-gray-900 truncate">
