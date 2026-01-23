@@ -66,6 +66,13 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
   }, [customFriendName, session]);
 
   useEffect(() => {
+    if (mode === 'search' && searchQuery.length >= 2) {
+      const timer = setTimeout(() => searchCelebrities(), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [searchQuery, mode]);
+
+  useEffect(() => {
     loadPopularCelebs();
   }, [gender]);
 
