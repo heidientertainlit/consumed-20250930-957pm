@@ -468,7 +468,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
           
           <div className="relative">
             <Input
-              placeholder="Search by username..."
+              placeholder="Search by name or username..."
               value={customFriendName}
               onChange={(e) => {
                 setCustomFriendName(e.target.value);
