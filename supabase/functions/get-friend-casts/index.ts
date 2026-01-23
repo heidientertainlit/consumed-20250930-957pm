@@ -78,11 +78,13 @@ serve(async (req) => {
       
       if (creatorError) {
         console.log('Creator lookup error for', cast.creator_id, ':', creatorError.message);
+      } else {
+        console.log('Found creator:', creator?.user_name, creator?.display_name);
       }
       
       return {
         ...cast,
-        creator: creator || { id: cast.creator_id, user_name: 'Unknown', display_name: cast.target_friend_name }
+        creator: creator || { id: cast.creator_id, user_name: 'a friend', display_name: 'A friend' }
       };
     }));
 
