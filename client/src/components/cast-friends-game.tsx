@@ -46,6 +46,8 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
   const [lastCastCeleb, setLastCastCeleb] = useState<Celebrity | null>(null);
   const [lastCastFriend, setLastCastFriend] = useState<string | null>(null);
   const [lastCastWasToFriend, setLastCastWasToFriend] = useState(false);
+  const [searchedUsers, setSearchedUsers] = useState<Friend[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
@@ -53,6 +55,15 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
     loadPopularCelebs();
     if (session) loadFriends();
   }, [session]);
+
+  useEffect(() => {
+    if (customFriendName.length >= 2 && session) {
+      const timer = setTimeout(() => searchUsers(customFriendName), 300);
+      return () => clearTimeout(timer);
+    } else {
+      setSearchedUsers([]);
+    }
+  }, [customFriendName, session]);
 
   useEffect(() => {
     loadPopularCelebs();
@@ -135,7 +146,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ action: 'friends' })
+        body: JSON.stringify({ action: 'getFriends' })
       });
       const data = await response.json();
       const friendsList = (data.friends || []).map((f: { friend?: { id: string; user_name: string } }) => ({
@@ -145,6 +156,31 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
       setFriends(friendsList);
     } catch (error) {
       console.error('Failed to load friends:', error);
+    }
+  };
+
+  const searchUsers = async (query: string) => {
+    if (!session || query.length < 2) return;
+    setIsSearching(true);
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'searchUsers', query })
+      });
+      const data = await response.json();
+      const usersList = (data.users || []).map((u: { id: string; user_name: string }) => ({
+        id: u.id,
+        user_name: u.user_name
+      })).filter((u: Friend) => u.id && u.user_name);
+      setSearchedUsers(usersList);
+    } catch (error) {
+      console.error('Failed to search users:', error);
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -425,7 +461,7 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
           
           <div className="relative">
             <Input
-              placeholder="Search friends or type a name..."
+              placeholder="Search by username..."
               value={customFriendName}
               onChange={(e) => {
                 setCustomFriendName(e.target.value);
@@ -434,27 +470,30 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
               className="text-sm bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
             />
             
-            {customFriendName && friends.length > 0 && (
+            {customFriendName.length >= 2 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
-                {friends
-                  .filter(f => f.user_name.toLowerCase().includes(customFriendName.toLowerCase()))
-                  .slice(0, 5)
-                  .map(friend => (
+                {isSearching ? (
+                  <div className="px-3 py-2 text-gray-500 text-sm flex items-center gap-2">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Searching...
+                  </div>
+                ) : searchedUsers.length > 0 ? (
+                  searchedUsers.slice(0, 6).map(userResult => (
                     <button
-                      key={friend.id}
+                      key={userResult.id}
                       onClick={() => {
-                        setSelectedFriend(friend);
+                        setSelectedFriend(userResult);
                         setCustomFriendName("");
                         setStep('confirm');
                       }}
                       className="w-full px-3 py-2 text-left hover:bg-amber-50 text-gray-900 text-sm flex items-center gap-2"
                     >
                       <span className="text-amber-600">@</span>
-                      {friend.user_name}
+                      {userResult.user_name}
                     </button>
-                  ))}
-                {friends.filter(f => f.user_name.toLowerCase().includes(customFriendName.toLowerCase())).length === 0 && (
-                  <div className="px-3 py-2 text-gray-500 text-sm">No friends found</div>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-gray-500 text-sm">No users found - you can still use this name</div>
                 )}
               </div>
             )}
