@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,7 @@ interface CastFriendsGameProps {
   onComplete?: () => void;
 }
 
-export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
+function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -648,3 +648,5 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
     </Card>
   );
 }
+
+export default memo(CastFriendsGame);

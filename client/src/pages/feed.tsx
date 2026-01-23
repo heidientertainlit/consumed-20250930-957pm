@@ -1003,7 +1003,6 @@ export default function Feed() {
   
   // Feature flag for comment likes
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
-  console.log('🎯 Feed: VITE_FEED_COMMENT_LIKES =', import.meta.env.VITE_FEED_COMMENT_LIKES, 'enabled =', commentLikesEnabled);
   
   // Debug session state
   useEffect(() => {
