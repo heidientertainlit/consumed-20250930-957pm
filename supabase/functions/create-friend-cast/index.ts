@@ -67,21 +67,10 @@ serve(async (req) => {
       });
     }
 
-    // Get creator username first
-    const { data: creatorData } = await supabase
-      .from('users')
-      .select('user_name, display_name')
-      .eq('id', user.id)
-      .single();
-    
-    const creatorUserName = creatorData?.user_name || creatorData?.display_name || null;
-    console.log('Creator username for cast:', creatorUserName);
-
     const { data: friendCast, error: insertError } = await supabase
       .from('friend_casts')
       .insert({
         creator_id: user.id,
-        creator_name: creatorUserName,
         target_friend_id: targetFriendId || null,
         target_friend_name: targetFriendName || null,
         prompt: prompt || 'Who would play them in a movie?',
