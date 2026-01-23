@@ -129,11 +129,20 @@ export default function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
   const loadFriends = async () => {
     if (!session) return;
     try {
-      const response = await fetch(`${supabaseUrl}/functions/v1/get-friends`, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      const response = await fetch(`${supabaseUrl}/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: 'friends' })
       });
       const data = await response.json();
-      setFriends(data.friends || []);
+      const friendsList = (data.friends || []).map((f: { friend?: { id: string; user_name: string } }) => ({
+        id: f.friend?.id || '',
+        user_name: f.friend?.user_name || ''
+      })).filter((f: Friend) => f.id && f.user_name);
+      setFriends(friendsList);
     } catch (error) {
       console.error('Failed to load friends:', error);
     }
