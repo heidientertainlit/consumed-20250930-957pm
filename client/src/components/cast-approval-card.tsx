@@ -310,7 +310,7 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
         />
         
         <div className="flex-1 min-w-0">
-          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full inline-block mb-1">
+          <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mb-1">
             You've Been Cast!
           </span>
           <p className="text-base font-semibold text-gray-900 truncate">
@@ -345,7 +345,7 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
               variant="ghost"
               onClick={() => setShowCounter(true)}
               disabled={isLoading}
-              className="flex-1 text-purple-600 hover:bg-purple-50 text-xs h-8"
+              className="flex-1 text-purple-600 hover:text-purple-700 hover:bg-transparent text-xs h-8"
             >
               <RefreshCw className="w-3 h-3 mr-1" /> Suggest Different
             </Button>
