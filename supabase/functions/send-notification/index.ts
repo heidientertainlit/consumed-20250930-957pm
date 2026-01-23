@@ -38,22 +38,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Insert notification
+    console.log('Creating notification:', { userId, type, triggeredByUserId, message, friendCastId });
+
+    // Insert notification - don't include friend_cast_id as the column may not exist
     const notificationData: Record<string, unknown> = {
       user_id: userId,
       type,
       triggered_by_user_id: triggeredByUserId,
       message,
-      post_id: postId,
-      comment_id: commentId,
-      list_id: listId,
+      post_id: postId || null,
+      comment_id: commentId || null,
+      list_id: listId || null,
       read: false,
     };
     
-    // Add friend_cast_id if provided
-    if (friendCastId) {
-      notificationData.friend_cast_id = friendCastId;
-    }
+    console.log('Notification data to insert:', notificationData);
     
     const { data, error } = await supabaseAdmin
       .from('notifications')
@@ -63,11 +62,14 @@ Deno.serve(async (req) => {
 
     if (error) {
       console.error('Error creating notification:', error);
+      console.error('Error details:', JSON.stringify(error));
       return new Response(
-        JSON.stringify({ error: error.message }),
+        JSON.stringify({ error: error.message, details: error }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log('Notification created successfully:', data);
 
     return new Response(
       JSON.stringify({ success: true, notification: data }),
