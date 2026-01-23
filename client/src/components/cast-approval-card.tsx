@@ -1,9 +1,9 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, RefreshCw, Loader2, Search, Share2, Download, Sparkles } from "lucide-react";
+import { Check, X, RefreshCw, Loader2, Search, Share2, Download, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 interface FriendCast {
@@ -16,6 +16,7 @@ interface FriendCast {
   creator?: {
     id: string;
     user_name: string;
+    display_name?: string;
     avatar_url?: string;
   };
 }
@@ -40,7 +41,7 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
   const [searchResults, setSearchResults] = useState<Celebrity[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedCounter, setSelectedCounter] = useState<Celebrity | null>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 
@@ -184,12 +185,14 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
     }
   };
 
+  const creatorName = cast.creator?.display_name || cast.creator?.user_name || 'A friend';
+
   if (showCounter) {
     return (
-      <Card className="p-4 bg-gradient-to-br from-purple-900/40 to-indigo-900/40 border-purple-500/30">
+      <Card className="p-4 bg-white rounded-2xl shadow-sm border border-gray-100">
         <div className="flex items-center gap-2 mb-3">
-          <RefreshCw className="w-5 h-5 text-purple-400" />
-          <span className="font-semibold text-white">Who should play you instead?</span>
+          <RefreshCw className="w-5 h-5 text-purple-600" />
+          <span className="font-semibold text-gray-800">Who should play you instead?</span>
         </div>
 
         <div className="flex gap-2 mb-3">
@@ -198,7 +201,7 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && searchCelebrities()}
-            className="bg-white/10 border-white/20"
+            className="bg-gray-50 border-gray-200"
           />
           <Button 
             size="sm" 
@@ -211,7 +214,7 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
         </div>
 
         {searchResults.length > 0 && (
-          <div className="grid grid-cols-3 gap-2 mb-3 max-h-48 overflow-y-auto">
+          <div className="grid grid-cols-4 gap-2 mb-3 max-h-40 overflow-y-auto">
             {searchResults.map((celeb) => (
               <button
                 key={celeb.id}
@@ -228,7 +231,7 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
                   className="w-full aspect-[3/4] object-cover"
                 />
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-1">
-                  <p className="text-xs text-white truncate">{celeb.name}</p>
+                  <p className="text-[10px] text-white truncate">{celeb.name}</p>
                 </div>
               </button>
             ))}
@@ -236,13 +239,13 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
         )}
 
         {selectedCounter && (
-          <div className="flex items-center gap-2 p-2 bg-purple-600/30 rounded-lg mb-3">
+          <div className="flex items-center gap-2 p-2 bg-purple-50 rounded-lg mb-3">
             <img 
               src={selectedCounter.image} 
               alt={selectedCounter.name}
               className="w-10 h-10 rounded object-cover"
             />
-            <span className="text-white font-medium">{selectedCounter.name}</span>
+            <span className="text-gray-800 font-medium">{selectedCounter.name}</span>
           </div>
         )}
 
@@ -273,70 +276,76 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
   }
 
   return (
-    <Card ref={cardRef} className="overflow-hidden bg-gradient-to-br from-amber-900/60 to-orange-900/60 border-amber-500/40">
-      <div className="p-3 bg-gradient-to-r from-amber-500 to-orange-500 text-center">
-        <div className="flex items-center justify-center gap-2">
-          <Sparkles className="w-4 h-4 text-white" />
-          <span className="text-white font-bold text-sm">You've Been Cast!</span>
-          <Sparkles className="w-4 h-4 text-white" />
+    <Card className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div 
+        className="flex items-center gap-4 p-3 cursor-pointer"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <img 
+          src={cast.creator_pick_celeb_image || '/placeholder-avatar.png'} 
+          alt={cast.creator_pick_celeb_name}
+          className="w-16 h-20 rounded-xl object-cover flex-shrink-0"
+        />
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+              🎬 You've Been Cast!
+            </span>
+          </div>
+          <p className="text-sm font-semibold text-gray-900 truncate">
+            {cast.creator_pick_celeb_name}
+          </p>
+          <p className="text-xs text-gray-500">
+            {creatorName} thinks this celebrity would play you
+          </p>
         </div>
-        <p className="text-amber-100 text-xs mt-0.5">
-          @{cast.creator?.user_name || 'A friend'} thinks this celebrity should play you
-        </p>
+
+        <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`} />
       </div>
 
-      <div className="p-4">
-        <div className="relative mx-auto w-48 h-64 mb-4">
-          <img 
-            src={cast.creator_pick_celeb_image || '/placeholder-avatar.png'} 
-            alt={cast.creator_pick_celeb_name}
-            className="w-full h-full rounded-xl object-cover shadow-2xl ring-4 ring-amber-500/50"
-          />
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-amber-500 px-4 py-1 rounded-full shadow-lg">
-            <p className="text-white font-bold text-sm whitespace-nowrap">{cast.creator_pick_celeb_name}</p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex gap-2">
+      {expanded && (
+        <div className="px-3 pb-3 pt-1 border-t border-gray-100">
+          <div className="flex gap-2 mt-2">
             <Button 
+              size="sm"
               onClick={() => handleAction('approve')}
               disabled={isLoading}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs"
             >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Share2 className="w-4 h-4 mr-2" /> Share to Feed</>}
+              {isLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Share2 className="w-3 h-3 mr-1" /> Share to Feed</>}
             </Button>
             <Button 
+              size="sm"
               variant="outline"
               onClick={handleDownload}
-              className="border-amber-500 text-amber-400 hover:bg-amber-500/20"
+              className="border-gray-200 text-gray-600 text-xs"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-3 h-3" />
             </Button>
           </div>
-
-          <div className="flex gap-2">
+          <div className="flex gap-2 mt-2">
             <Button 
               size="sm"
               variant="ghost"
               onClick={() => setShowCounter(true)}
               disabled={isLoading}
-              className="flex-1 text-purple-400 hover:bg-purple-500/20"
+              className="flex-1 text-purple-600 hover:bg-purple-50 text-xs"
             >
-              <RefreshCw className="w-4 h-4 mr-1" /> Suggest Different
+              <RefreshCw className="w-3 h-3 mr-1" /> Suggest Different
             </Button>
             <Button 
               size="sm"
               variant="ghost"
               onClick={() => handleAction('decline')}
               disabled={isLoading}
-              className="text-gray-400 hover:text-red-400 hover:bg-red-500/20"
+              className="text-gray-400 hover:text-red-500 hover:bg-red-50 text-xs"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3 h-3 mr-1" /> Decline
             </Button>
           </div>
         </div>
-      </div>
+      )}
     </Card>
   );
 }

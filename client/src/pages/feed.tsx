@@ -2750,26 +2750,23 @@ export default function Feed() {
             <DailyChallengeCard />
           </div>
           
-          {/* Pending Friend Casts - You've Been Cast! - TOP PRIORITY */}
-          {pendingCasts.length > 0 && (
-            <div className="space-y-3 mb-4 mt-4">
-              <h3 className="text-lg font-semibold text-amber-400 flex items-center gap-2 px-1">
-                🎬 You've Been Cast!
-              </h3>
-              {pendingCasts.map((cast: any) => (
-                <CastApprovalCard 
-                  key={cast.id} 
-                  cast={cast}
-                  onRespond={() => refetchPendingCasts()}
-                />
-              ))}
-            </div>
-          )}
           
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-4 pb-6" data-feed-content>
+        {/* Pending Friend Casts - You've Been Cast! - At top of white feed area */}
+        {pendingCasts.length > 0 && (
+          <div className="space-y-3 mb-4">
+            {pendingCasts.map((cast: any) => (
+              <CastApprovalCard 
+                key={cast.id} 
+                cast={cast}
+                onRespond={() => refetchPendingCasts()}
+              />
+            ))}
+          </div>
+        )}
         {/* Activity Stream */}
         <div className="space-y-6">
 
