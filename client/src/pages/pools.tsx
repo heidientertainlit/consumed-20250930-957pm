@@ -220,7 +220,7 @@ export default function PoolsPage() {
                   Create
                 </Button>
               </DialogTrigger>
-                <DialogContent className="bg-white border-gray-200 max-w-sm rounded-2xl">
+                <DialogContent className="bg-white border-gray-200 max-w-sm rounded-2xl max-h-[85vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="text-gray-900">Create a Pool</DialogTitle>
                   </DialogHeader>
