@@ -160,17 +160,14 @@ export default function PoolDetailPage() {
 
   const deletePoolMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-pool`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ pool_id: params.id }),
-        }
-      );
+      const response = await fetch('/api/pools/delete', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ pool_id: params.id }),
+      });
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to delete pool');

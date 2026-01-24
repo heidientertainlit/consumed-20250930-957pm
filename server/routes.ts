@@ -1,7 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { createClient } from "@supabase/supabase-js";
 // All user data is handled by Supabase Edge Functions
 // These routes only proxy external APIs (TMDB, NYT, Spotify) that need server-side API keys
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -325,6 +329,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // All user data, lists, consumption logs, recommendations etc. are handled by Supabase Edge Functions
   // The routes above are only for proxying external APIs (TMDB, NYT, Spotify) that need server-side API keys
+
+  // Delete pool endpoint (handles cascade deletion)
+  app.post("/api/pools/delete", async (req, res) => {
+    try {
+      const { pool_id } = req.body;
+      const authHeader = req.headers.authorization;
+      
+      if (!authHeader) {
+        return res.status(401).json({ error: 'No authorization header' });
+      }
+      
+      if (!pool_id) {
+        return res.status(400).json({ error: 'Pool ID is required' });
+      }
+      
+      if (!supabaseUrl || !supabaseServiceKey) {
+        return res.status(500).json({ error: 'Supabase not configured' });
+      }
+      
+      const userSupabase = createClient(supabaseUrl, process.env.VITE_SUPABASE_ANON_KEY || '', {
+        global: { headers: { Authorization: authHeader } }
+      });
+      
+      const { data: { user }, error: userError } = await userSupabase.auth.getUser();
+      if (userError || !user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      
+      const serviceSupabase = createClient(supabaseUrl, supabaseServiceKey);
+      
+      const { data: appUser } = await serviceSupabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single();
+      
+      if (!appUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      const { data: pool } = await serviceSupabase
+        .from('pools')
+        .select('id, host_id')
+        .eq('id', pool_id)
+        .single();
+      
+      if (!pool) {
+        return res.status(404).json({ error: 'Pool not found' });
+      }
+      
+      if (pool.host_id !== appUser.id) {
+        return res.status(403).json({ error: 'Only the host can delete this pool' });
+      }
+      
+      const { data: prompts } = await serviceSupabase
+        .from('pool_prompts')
+        .select('id')
+        .eq('pool_id', pool_id);
+      
+      const promptIds = prompts?.map((p: { id: string }) => p.id) || [];
+      
+      if (promptIds.length > 0) {
+        await serviceSupabase
+          .from('pool_answers')
+          .delete()
+          .in('prompt_id', promptIds);
+      }
+      
+      await serviceSupabase
+        .from('pool_prompts')
+        .delete()
+        .eq('pool_id', pool_id);
+      
+      await serviceSupabase
+        .from('pool_members')
+        .delete()
+        .eq('pool_id', pool_id);
+      
+      const { error: deleteError } = await serviceSupabase
+        .from('pools')
+        .delete()
+        .eq('id', pool_id);
+      
+      if (deleteError) {
+        throw deleteError;
+      }
+      
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('Delete pool error:', error);
+      res.status(500).json({ error: error.message || 'Failed to delete pool' });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
