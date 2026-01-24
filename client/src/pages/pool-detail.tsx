@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Plus, Loader2, ChevronDown, ChevronUp, Send, BookOpen, Library } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Plus, Loader2, ChevronDown, ChevronUp, Send, BookOpen, Library, X, HelpCircle, TrendingUp, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -84,6 +84,8 @@ export default function PoolDetailPage() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [isAddPromptOpen, setIsAddPromptOpen] = useState(false);
   const [newPromptText, setNewPromptText] = useState('');
+  const [questionType, setQuestionType] = useState<'poll' | 'prediction' | 'trivia'>('prediction');
+  const [questionOptions, setQuestionOptions] = useState<string[]>(['', '']);
   const [expandedPrompts, setExpandedPrompts] = useState<Set<string>>(new Set());
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [resolveAnswers, setResolveAnswers] = useState<Record<string, string>>({});
@@ -115,6 +117,7 @@ export default function PoolDetailPage() {
 
   const addPromptMutation = useMutation({
     mutationFn: async () => {
+      const filledOptions = questionOptions.filter(o => o.trim() !== '');
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-pool-prompt`,
         {
@@ -126,7 +129,8 @@ export default function PoolDetailPage() {
           body: JSON.stringify({
             pool_id: params.id,
             prompt_text: newPromptText,
-            prompt_type: 'free_text',
+            prompt_type: questionType,
+            options: filledOptions.length >= 2 ? filledOptions : null,
           }),
         }
       );
@@ -140,7 +144,8 @@ export default function PoolDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['pool-detail', params.id] });
       setIsAddPromptOpen(false);
       setNewPromptText('');
-      toast({ title: 'Prompt added!' });
+      setQuestionType('prediction');
+      setQuestionOptions(['', '']);
     },
     onError: (error: Error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -349,30 +354,127 @@ export default function PoolDetailPage() {
         {is_host && pool.status === 'open' && (
           <Dialog open={isAddPromptOpen} onOpenChange={setIsAddPromptOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full mb-4 bg-purple-600 hover:bg-purple-700 text-white">
+              <Button className="w-full mb-4 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white">
                 <Plus size={16} className="mr-2" />
-                Add Prompt
+                Add Question
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-white border-gray-200 max-w-sm rounded-2xl">
+            <DialogContent className="bg-white border-gray-200 max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="text-gray-900">Add a Prompt</DialogTitle>
+                <DialogTitle className="text-gray-900">Add a Question</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-4">
-                <Textarea
-                  placeholder="e.g. Who will be eliminated next? Who wins the finale? Best performance of the night?"
-                  value={newPromptText}
-                  onChange={(e) => setNewPromptText(e.target.value)}
-                  className="bg-gray-50 border-gray-300 text-gray-900 resize-none placeholder:text-gray-400"
-                  rows={3}
-                />
+                {/* Question Type Selector */}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setQuestionType('prediction')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-full text-sm font-medium transition-all ${
+                      questionType === 'prediction'
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <TrendingUp size={14} />
+                    Prediction
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuestionType('poll')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-full text-sm font-medium transition-all ${
+                      questionType === 'poll'
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <BarChart3 size={14} />
+                    Poll
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuestionType('trivia')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-full text-sm font-medium transition-all ${
+                      questionType === 'trivia'
+                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <HelpCircle size={14} />
+                    Trivia
+                  </button>
+                </div>
+
+                <p className="text-xs text-gray-500">
+                  {questionType === 'prediction' && 'Members predict the answer. Points when resolved.'}
+                  {questionType === 'poll' && 'Members vote. No right or wrong answer.'}
+                  {questionType === 'trivia' && 'One correct answer. Points for getting it right.'}
+                </p>
+
+                {/* Question Text */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">Your question</label>
+                  <Textarea
+                    placeholder={
+                      questionType === 'prediction' ? 'Who will win the finale?' :
+                      questionType === 'poll' ? 'Who is playing the best game?' :
+                      'What year did this show premiere?'
+                    }
+                    value={newPromptText}
+                    onChange={(e) => setNewPromptText(e.target.value)}
+                    className="bg-gray-50 border-gray-300 text-gray-900 resize-none placeholder:text-gray-400"
+                    rows={2}
+                  />
+                </div>
+
+                {/* Answer Options */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Answer options</label>
+                  <div className="space-y-2">
+                    {questionOptions.map((option, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          placeholder={`Option ${index + 1}`}
+                          value={option}
+                          onChange={(e) => {
+                            const newOptions = [...questionOptions];
+                            newOptions[index] = e.target.value;
+                            setQuestionOptions(newOptions);
+                          }}
+                          className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
+                        />
+                        {questionOptions.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setQuestionOptions(questionOptions.filter((_, i) => i !== index));
+                            }}
+                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <X size={18} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {questionOptions.length < 6 && (
+                    <button
+                      type="button"
+                      onClick={() => setQuestionOptions([...questionOptions, ''])}
+                      className="mt-2 text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
+                    >
+                      <Plus size={14} />
+                      Add option
+                    </button>
+                  )}
+                </div>
+
                 <Button
                   onClick={() => addPromptMutation.mutate()}
-                  disabled={!newPromptText.trim() || addPromptMutation.isPending}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  disabled={!newPromptText.trim() || questionOptions.filter(o => o.trim()).length < 2 || addPromptMutation.isPending}
+                  className="w-full rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
                 >
                   {addPromptMutation.isPending ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
-                  Add Prompt
+                  Add Question
                 </Button>
               </div>
             </DialogContent>
