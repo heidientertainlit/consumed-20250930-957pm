@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation } from 'wouter';
-import { Plus, Users, Trophy, ChevronRight, Copy, Check, Loader2, BookOpen } from 'lucide-react';
+import { Plus, Users, Trophy, ChevronRight, Copy, Check, Loader2, BookOpen, Tv, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -44,6 +44,7 @@ export default function PoolsPage() {
   const [newPoolName, setNewPoolName] = useState('');
   const [newPoolDescription, setNewPoolDescription] = useState('');
   const [createSharedList, setCreateSharedList] = useState(false);
+  const [poolType, setPoolType] = useState<'eliminations' | 'tournament' | 'questions'>('eliminations');
   const [joinCode, setJoinCode] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
@@ -218,19 +219,78 @@ export default function PoolsPage() {
                   </DialogHeader>
                   <div className="space-y-4 pt-4">
                     <Input
-                      placeholder="Pool name (e.g., Bachelor Watch Party)"
+                      placeholder="Pool name (e.g., Traitors Season 3)"
                       value={newPoolName}
                       onChange={(e) => setNewPoolName(e.target.value)}
                       className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
                     />
-                    <Textarea
-                      placeholder="Description (optional)"
-                      value={newPoolDescription}
-                      onChange={(e) => setNewPoolDescription(e.target.value)}
-                      className="bg-gray-50 border-gray-300 text-gray-900 resize-none placeholder:text-gray-400"
-                      rows={3}
-                    />
-                    <label className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl border border-purple-200 cursor-pointer hover:bg-purple-100 transition-colors">
+                    
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-700">Pool type</p>
+                      <div className="grid grid-cols-1 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPoolType('eliminations')}
+                          className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
+                            poolType === 'eliminations'
+                              ? 'border-purple-500 bg-purple-50'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                        >
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            poolType === 'eliminations' ? 'bg-purple-600' : 'bg-gray-100'
+                          }`}>
+                            <Tv size={18} className={poolType === 'eliminations' ? 'text-white' : 'text-gray-500'} />
+                          </div>
+                          <div>
+                            <p className={`text-sm font-semibold ${poolType === 'eliminations' ? 'text-purple-900' : 'text-gray-900'}`}>Eliminations</p>
+                            <p className="text-xs text-gray-500">Weekly picks - who goes home?</p>
+                          </div>
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => setPoolType('tournament')}
+                          className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
+                            poolType === 'tournament'
+                              ? 'border-purple-500 bg-purple-50'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                        >
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            poolType === 'tournament' ? 'bg-purple-600' : 'bg-gray-100'
+                          }`}>
+                            <Trophy size={18} className={poolType === 'tournament' ? 'text-white' : 'text-gray-500'} />
+                          </div>
+                          <div>
+                            <p className={`text-sm font-semibold ${poolType === 'tournament' ? 'text-purple-900' : 'text-gray-900'}`}>Tournament</p>
+                            <p className="text-xs text-gray-500">Bracket-style matchups</p>
+                          </div>
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => setPoolType('questions')}
+                          className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
+                            poolType === 'questions'
+                              ? 'border-purple-500 bg-purple-50'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                        >
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            poolType === 'questions' ? 'bg-purple-600' : 'bg-gray-100'
+                          }`}>
+                            <MessageCircle size={18} className={poolType === 'questions' ? 'text-white' : 'text-gray-500'} />
+                          </div>
+                          <div>
+                            <p className={`text-sm font-semibold ${poolType === 'questions' ? 'text-purple-900' : 'text-gray-900'}`}>Questions</p>
+                            <p className="text-xs text-gray-500">Polls, predictions, trivia</p>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+
+                    <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
                       <input
                         type="checkbox"
                         checked={createSharedList}
@@ -238,14 +298,15 @@ export default function PoolsPage() {
                         className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                       />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Add a shared list to this pool</p>
-                        <p className="text-xs text-gray-500">Perfect for book clubs - members can add media together</p>
+                        <p className="text-sm font-medium text-gray-900">Add a shared list</p>
+                        <p className="text-xs text-gray-500">Members can add media together</p>
                       </div>
                     </label>
+                    
                     <Button
                       onClick={() => createPoolMutation.mutate()}
                       disabled={!newPoolName.trim() || createPoolMutation.isPending}
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                      className="w-full rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
                     >
                       {createPoolMutation.isPending ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
                       Create Pool
