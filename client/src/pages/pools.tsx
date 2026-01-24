@@ -393,19 +393,6 @@ export default function PoolsPage() {
                       </div>
                     )}
 
-                    <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={createSharedList}
-                        onChange={(e) => setCreateSharedList(e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-                      />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">Add a shared list</p>
-                        <p className="text-xs text-gray-500">Members can add media together</p>
-                      </div>
-                    </label>
-                    
                     <Button
                       onClick={() => createPoolMutation.mutate()}
                       disabled={!newPoolName.trim() || createPoolMutation.isPending}
