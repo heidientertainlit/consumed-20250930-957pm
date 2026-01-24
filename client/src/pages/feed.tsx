@@ -2785,10 +2785,10 @@ export default function Feed() {
         <div className="max-w-4xl mx-auto px-4 pt-4">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              For those who know it all.
+              For the true aficionados.
             </h1>
             <p className="text-sm text-gray-400 max-w-xs mx-auto leading-relaxed">
-              You remember the lines, you spot the cameos, you predicted the twist. Finally, a place that keeps up with you.
+              Your taste is refined, your memory is sharp, and you appreciate the details others miss. Finally, a place that values your expertise.
             </p>
           </div>
           
