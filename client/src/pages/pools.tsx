@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation } from 'wouter';
-import { Plus, Users, Trophy, ChevronRight, Copy, Check, Loader2, BookOpen, Tv, MessageCircle } from 'lucide-react';
+import { Plus, Users, Trophy, ChevronRight, Copy, Check, Loader2, BookOpen, Tv, MessageCircle, X, TrendingUp, BarChart3, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -45,6 +45,9 @@ export default function PoolsPage() {
   const [newPoolDescription, setNewPoolDescription] = useState('');
   const [createSharedList, setCreateSharedList] = useState(false);
   const [poolType, setPoolType] = useState<'eliminations' | 'tournament' | 'questions'>('eliminations');
+  const [questionType, setQuestionType] = useState<'prediction' | 'poll' | 'trivia'>('prediction');
+  const [firstQuestion, setFirstQuestion] = useState('');
+  const [questionOptions, setQuestionOptions] = useState<string[]>(['', '']);
   const [joinCode, setJoinCode] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
@@ -96,7 +99,11 @@ export default function PoolsPage() {
       setNewPoolName('');
       setNewPoolDescription('');
       setCreateSharedList(false);
-            setLocation(`/pool/${data.pool.id}`);
+      setPoolType('eliminations');
+      setQuestionType('prediction');
+      setFirstQuestion('');
+      setQuestionOptions(['', '']);
+      setLocation(`/pool/${data.pool.id}`);
     },
     onError: (error: Error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -289,6 +296,102 @@ export default function PoolsPage() {
                         </button>
                       </div>
                     </div>
+
+                    {/* Question Builder - shows when Questions type selected */}
+                    {poolType === 'questions' && (
+                      <div className="space-y-3 p-4 bg-purple-50 rounded-xl border border-purple-200">
+                        <p className="text-sm font-semibold text-purple-900">Add your first question</p>
+                        
+                        {/* Question Type Pills */}
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setQuestionType('prediction')}
+                            className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-full text-xs font-medium transition-all ${
+                              questionType === 'prediction'
+                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                                : 'bg-white text-gray-600 border border-gray-200'
+                            }`}
+                          >
+                            <TrendingUp size={12} />
+                            Prediction
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQuestionType('poll')}
+                            className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-full text-xs font-medium transition-all ${
+                              questionType === 'poll'
+                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                                : 'bg-white text-gray-600 border border-gray-200'
+                            }`}
+                          >
+                            <BarChart3 size={12} />
+                            Poll
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQuestionType('trivia')}
+                            className={`flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-full text-xs font-medium transition-all ${
+                              questionType === 'trivia'
+                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                                : 'bg-white text-gray-600 border border-gray-200'
+                            }`}
+                          >
+                            <HelpCircle size={12} />
+                            Trivia
+                          </button>
+                        </div>
+
+                        {/* Question Text */}
+                        <Input
+                          placeholder={
+                            questionType === 'prediction' ? 'Who will win the finale?' :
+                            questionType === 'poll' ? 'Who is playing the best game?' :
+                            'What year did this show premiere?'
+                          }
+                          value={firstQuestion}
+                          onChange={(e) => setFirstQuestion(e.target.value)}
+                          className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
+                        />
+
+                        {/* Answer Options */}
+                        <div className="space-y-2">
+                          {questionOptions.map((option, index) => (
+                            <div key={index} className="flex gap-2">
+                              <Input
+                                placeholder={`Option ${index + 1}`}
+                                value={option}
+                                onChange={(e) => {
+                                  const newOptions = [...questionOptions];
+                                  newOptions[index] = e.target.value;
+                                  setQuestionOptions(newOptions);
+                                }}
+                                className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
+                              />
+                              {questionOptions.length > 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setQuestionOptions(questionOptions.filter((_, i) => i !== index))}
+                                  className="p-2 text-gray-400 hover:text-red-500"
+                                >
+                                  <X size={16} />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          {questionOptions.length < 6 && (
+                            <button
+                              type="button"
+                              onClick={() => setQuestionOptions([...questionOptions, ''])}
+                              className="text-xs text-purple-600 font-medium flex items-center gap-1"
+                            >
+                              <Plus size={12} />
+                              Add option
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     <label className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
                       <input
