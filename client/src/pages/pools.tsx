@@ -70,6 +70,8 @@ export default function PoolsPage() {
   // Friend selection
   const [friendSearch, setFriendSearch] = useState('');
   const [selectedFriends, setSelectedFriends] = useState<SelectedFriend[]>([]);
+  const [friendSearchResults, setFriendSearchResults] = useState<any[]>([]);
+  const [isSearchingFriends, setIsSearchingFriends] = useState(false);
   
   // Media selection
   const [mediaSearch, setMediaSearch] = useState('');
@@ -179,36 +181,45 @@ export default function PoolsPage() {
     },
   });
 
-  // Friend search - searches from existing friends using friendships table
-  const { data: friendSearchResults = [] } = useQuery({
-    queryKey: ['friend-search-pools', friendSearch, user?.id],
-    queryFn: async () => {
-      if (!friendSearch || friendSearch.length < 2) return [];
-      if (!session?.access_token || !user?.id) return [];
-      
-      // Get user's friends from friendships table
-      const { data: friendships, error: friendshipsError } = await supabase
+  // Friend search function - searches from accepted friends only
+  const searchFriends = async (query: string) => {
+    if (!query || query.length < 2 || !session?.access_token || !user?.id) {
+      setFriendSearchResults([]);
+      return;
+    }
+    
+    setIsSearchingFriends(true);
+    try {
+      // Get user's accepted friends from friendships table
+      const { data: friendships, error } = await supabase
         .from('friendships')
-        .select('friend_id, users!friendships_friend_id_fkey(id, user_name, display_name)')
+        .select('friend_id, users:friend_id(id, user_name, display_name)')
         .eq('user_id', user.id)
         .eq('status', 'accepted');
       
-      if (friendshipsError || !friendships) return [];
+      if (error || !friendships) {
+        setFriendSearchResults([]);
+        return;
+      }
       
-      // Filter friends by search term
-      const friends = friendships
+      // Filter friends by search query and exclude already selected
+      const queryLower = query.toLowerCase();
+      const filtered = friendships
         .map((f: any) => f.users)
         .filter((u: any) => u && (
-          u.user_name?.toLowerCase().includes(friendSearch.toLowerCase()) ||
-          u.display_name?.toLowerCase().includes(friendSearch.toLowerCase())
+          u.user_name?.toLowerCase().includes(queryLower) ||
+          u.display_name?.toLowerCase().includes(queryLower)
         ))
         .filter((u: any) => !selectedFriends.find(f => f.id === u.id))
-        .slice(0, 8);
+        .slice(0, 10);
       
-      return friends;
-    },
-    enabled: friendSearch.length >= 2 && !!session?.access_token && !!user?.id,
-  });
+      setFriendSearchResults(filtered);
+    } catch (e) {
+      console.error('Friend search error:', e);
+    } finally {
+      setIsSearchingFriends(false);
+    }
+  };
 
   // Media search function
   const searchMedia = async (query: string) => {
@@ -413,9 +424,15 @@ export default function PoolsPage() {
                           <Input
                             placeholder="Search friends..."
                             value={friendSearch}
-                            onChange={(e) => setFriendSearch(e.target.value)}
+                            onChange={(e) => {
+                              setFriendSearch(e.target.value);
+                              searchFriends(e.target.value);
+                            }}
                             className="pl-9 bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
                           />
+                          {isSearchingFriends && (
+                            <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-purple-600 animate-spin" size={16} />
+                          )}
                         </div>
                         {friendSearchResults.length > 0 && (
                           <div className="mt-2 border border-gray-200 rounded-lg max-h-32 overflow-y-auto">
@@ -425,6 +442,7 @@ export default function PoolsPage() {
                                 onClick={() => {
                                   setSelectedFriends([...selectedFriends, { id: u.id, user_name: u.user_name, display_name: u.display_name }]);
                                   setFriendSearch('');
+                                  setFriendSearchResults([]);
                                 }}
                                 className="w-full flex items-center gap-2 p-2 hover:bg-gray-50 text-left text-sm"
                               >

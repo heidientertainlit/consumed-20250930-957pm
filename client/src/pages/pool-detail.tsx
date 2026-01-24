@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Plus, Loader2, ChevronDown, ChevronUp, Send, BookOpen, Library, X, HelpCircle, TrendingUp, BarChart3, Sparkles } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Plus, Loader2, ChevronDown, ChevronUp, Send, BookOpen, Library, X, HelpCircle, TrendingUp, BarChart3, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import Navigation from '@/components/navigation';
@@ -149,10 +150,38 @@ export default function PoolDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pool-detail', params.id] });
-      setIsAddPromptOpen(false);
       setNewPromptText('');
-      setQuestionType('prediction');
       setQuestionOptions(['', '']);
+      toast({ title: 'Question added!', description: 'Add another or close the dialog.' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const deletePoolMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-pool`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ pool_id: params.id }),
+        }
+      );
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete pool');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-pools'] });
+      toast({ title: 'Pool deleted' });
+      setLocation('/pools');
     },
     onError: (error: Error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -299,13 +328,41 @@ export default function PoolDetailPage() {
                 {pool.description && <p className="text-sm text-gray-500">{pool.description}</p>}
               </div>
             </div>
-            <span className={`px-2 py-1 text-xs rounded font-medium ${
-              pool.status === 'open' ? 'bg-green-100 text-green-700' :
-              pool.status === 'locked' ? 'bg-yellow-100 text-yellow-700' :
-              'bg-gray-100 text-gray-600'
-            }`}>
-              {pool.status.toUpperCase()}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className={`px-2 py-1 text-xs rounded font-medium ${
+                pool.status === 'open' ? 'bg-green-100 text-green-700' :
+                pool.status === 'locked' ? 'bg-yellow-100 text-yellow-700' :
+                'bg-gray-100 text-gray-600'
+              }`}>
+                {pool.status.toUpperCase()}
+              </span>
+              {is_host && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 h-auto">
+                      <Trash2 size={16} />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete this pool?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete the pool, all questions, and all member answers. This cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => deletePoolMutation.mutate()}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        {deletePoolMutation.isPending ? 'Deleting...' : 'Delete Pool'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
@@ -502,14 +559,23 @@ export default function PoolDetailPage() {
                   )}
                 </div>
 
-                <Button
-                  onClick={() => addPromptMutation.mutate()}
-                  disabled={!newPromptText.trim() || questionOptions.filter(o => o.trim()).length < 2 || addPromptMutation.isPending}
-                  className="w-full rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
-                >
-                  {addPromptMutation.isPending ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
-                  Add Question
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => addPromptMutation.mutate()}
+                    disabled={!newPromptText.trim() || questionOptions.filter(o => o.trim()).length < 2 || addPromptMutation.isPending}
+                    className="flex-1 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
+                  >
+                    {addPromptMutation.isPending ? <Loader2 className="animate-spin mr-2" size={16} /> : <Plus size={16} className="mr-2" />}
+                    Add Question
+                  </Button>
+                  <Button
+                    onClick={() => setIsAddPromptOpen(false)}
+                    variant="outline"
+                    className="rounded-full border-gray-300"
+                  >
+                    Done
+                  </Button>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
