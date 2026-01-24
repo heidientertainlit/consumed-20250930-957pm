@@ -2785,7 +2785,7 @@ export default function Feed() {
         <div className="max-w-4xl mx-auto px-4 pt-4">
           <div className="text-center mb-4">
             <h1 className="text-xl font-semibold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Answer, vote, and share your takes.
+              Answer, vote, and share<br />your takes.
             </h1>
           </div>
           
