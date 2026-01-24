@@ -45,7 +45,21 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { name, description, category, deadline, points_per_correct, is_public, create_shared_list } = body;
+    const { 
+      name, 
+      description, 
+      category, 
+      deadline, 
+      points_per_correct, 
+      is_public, 
+      create_shared_list,
+      pool_type,
+      invited_friends,
+      media_id,
+      media_title,
+      media_image,
+      media_type
+    } = body;
 
     if (!name || name.trim().length === 0) {
       return new Response(JSON.stringify({ error: 'Pool name is required' }), {
@@ -90,7 +104,12 @@ serve(async (req) => {
           deadline: deadline || null,
           points_per_correct: points_per_correct || 10,
           is_public: is_public || false,
-          status: 'open'
+          status: 'open',
+          pool_type: pool_type || 'questions',
+          media_id: media_id || null,
+          media_title: media_title || null,
+          media_image: media_image || null,
+          media_type: media_type || null
         })
         .select()
         .single();
@@ -149,6 +168,36 @@ serve(async (req) => {
 
     if (memberError) {
       console.error('Member creation error:', memberError);
+    }
+
+    // Add invited friends as members (with validation)
+    if (invited_friends && Array.isArray(invited_friends) && invited_friends.length > 0) {
+      // Validate that invited users are actually friends of the creator
+      const { data: validFriendships } = await serviceSupabase
+        .from('friendships')
+        .select('friend_id')
+        .eq('user_id', appUser.id)
+        .eq('status', 'accepted')
+        .in('friend_id', invited_friends);
+
+      const validFriendIds = validFriendships?.map((f: any) => f.friend_id) || [];
+      
+      if (validFriendIds.length > 0) {
+        const friendMembers = validFriendIds.map((friendId: string) => ({
+          pool_id: pool.id,
+          user_id: friendId,
+          role: 'member',
+          total_points: 0
+        }));
+
+        const { error: inviteError } = await serviceSupabase
+          .from('pool_members')
+          .insert(friendMembers);
+
+        if (inviteError) {
+          console.error('Friend invite error:', inviteError);
+        }
+      }
     }
 
     return new Response(JSON.stringify({

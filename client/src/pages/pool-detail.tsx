@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Plus, Loader2, ChevronDown, ChevronUp, Send, BookOpen, Library, X, HelpCircle, TrendingUp, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Plus, Loader2, ChevronDown, ChevronUp, Send, BookOpen, Library, X, HelpCircle, TrendingUp, BarChart3, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -60,6 +60,11 @@ interface PoolDetail {
     is_public: boolean;
     created_at: string;
     list_id: number | null;
+    pool_type: string | null;
+    media_id: string | null;
+    media_title: string | null;
+    media_image: string | null;
+    media_type: string | null;
     host: {
       id: string;
       user_name: string;
@@ -90,6 +95,8 @@ export default function PoolDetailPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [resolveAnswers, setResolveAnswers] = useState<Record<string, string>>({});
   const [showLeaderboard, setShowLeaderboard] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedQuestions, setGeneratedQuestions] = useState<Array<{question: string; type: string; options: string[]}>>([]);
 
   const { data: poolData, isLoading, error } = useQuery<PoolDetail>({
     queryKey: ['pool-detail', params.id],
@@ -352,13 +359,16 @@ export default function PoolDetailPage() {
         )}
 
         {is_host && pool.status === 'open' && (
-          <Dialog open={isAddPromptOpen} onOpenChange={setIsAddPromptOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full mb-4 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white">
-                <Plus size={16} className="mr-2" />
-                Add Question
-              </Button>
-            </DialogTrigger>
+          <>
+          {/* Action Buttons */}
+          <div className="flex gap-2 mb-4">
+            <Dialog open={isAddPromptOpen} onOpenChange={setIsAddPromptOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex-1 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white">
+                  <Plus size={16} className="mr-2" />
+                  Add Question
+                </Button>
+              </DialogTrigger>
             <DialogContent className="bg-white border-gray-200 max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-gray-900">Add a Question</DialogTitle>
@@ -503,6 +513,111 @@ export default function PoolDetailPage() {
               </div>
             </DialogContent>
           </Dialog>
+          
+          {/* AI Generate Button */}
+          <Button
+            onClick={async () => {
+              setIsGenerating(true);
+              try {
+                const response = await fetch(
+                  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-pool-questions`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${session?.access_token}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      pool_id: pool.id,
+                      media_title: pool.media_title,
+                      media_type: pool.media_type,
+                      pool_type: pool.pool_type,
+                    }),
+                  }
+                );
+                if (response.ok) {
+                  const data = await response.json();
+                  if (data.questions?.length > 0) {
+                    setGeneratedQuestions(data.questions);
+                  } else {
+                    toast({ title: 'No questions generated', variant: 'destructive' });
+                  }
+                } else {
+                  toast({ title: 'Failed to generate questions', variant: 'destructive' });
+                }
+              } catch (e) {
+                console.error(e);
+                toast({ title: 'Error generating questions', variant: 'destructive' });
+              } finally {
+                setIsGenerating(false);
+              }
+            }}
+            disabled={isGenerating}
+            variant="outline"
+            className="flex-1 rounded-full border-purple-300 text-purple-700 hover:bg-purple-50"
+          >
+            {isGenerating ? <Loader2 className="animate-spin mr-2" size={16} /> : <Sparkles size={16} className="mr-2" />}
+            {isGenerating ? 'Generating...' : pool.media_title ? 'AI Ideas' : 'AI Ideas (Generic)'}
+          </Button>
+          </div>
+
+          {/* Generated Questions */}
+          {generatedQuestions.length > 0 && (
+            <Card className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-purple-900 flex items-center gap-2">
+                  <Sparkles size={14} className="text-purple-600" />
+                  AI-Generated Questions
+                </h3>
+                <button onClick={() => setGeneratedQuestions([])} className="text-gray-400 hover:text-gray-600">
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {generatedQuestions.map((q, i) => (
+                  <div key={i} className="flex items-start gap-2 p-3 bg-white rounded-lg border border-purple-100">
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900">{q.question}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {q.type} • {q.options.slice(0, 3).join(', ')}{q.options.length > 3 ? '...' : ''}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        const response = await fetch(
+                          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-pool-prompt`,
+                          {
+                            method: 'POST',
+                            headers: {
+                              'Authorization': `Bearer ${session?.access_token}`,
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              pool_id: pool.id,
+                              prompt_text: q.question,
+                              prompt_type: q.type,
+                              options: q.options,
+                            }),
+                          }
+                        );
+                        if (response.ok) {
+                          queryClient.invalidateQueries({ queryKey: ['pool-detail', pool.id] });
+                          setGeneratedQuestions(generatedQuestions.filter((_, idx) => idx !== i));
+                          toast({ title: 'Question added!' });
+                        }
+                      }}
+                      className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3"
+                    >
+                      <Plus size={12} className="mr-1" />
+                      Add
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+          </>
         )}
 
         {openPrompts.length > 0 && (
