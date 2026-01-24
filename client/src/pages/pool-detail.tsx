@@ -364,6 +364,30 @@ export default function PoolDetailPage() {
                 <DialogTitle className="text-gray-900">Add a Question</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-4">
+                {/* Template Ideas */}
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-2">Quick ideas</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      'Who gets eliminated?',
+                      'Who wins?',
+                      'Who makes the finale?',
+                      'Best performance tonight?',
+                      'Biggest twist prediction?',
+                      'Fan favorite?',
+                    ].map((template) => (
+                      <button
+                        key={template}
+                        type="button"
+                        onClick={() => setNewPromptText(template)}
+                        className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-medium rounded-full border border-purple-200 transition-colors"
+                      >
+                        {template}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Question Type Selector */}
                 <div className="flex gap-2">
                   <button
