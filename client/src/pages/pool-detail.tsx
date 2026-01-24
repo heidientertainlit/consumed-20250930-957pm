@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Plus, Loader2, ChevronDown, ChevronUp, Send, BookOpen, Library, X, HelpCircle, TrendingUp, BarChart3, Sparkles, Trash2 } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Plus, Loader2, ChevronDown, ChevronUp, Send, BookOpen, Library, X, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -90,8 +90,7 @@ export default function PoolDetailPage() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [isAddPromptOpen, setIsAddPromptOpen] = useState(false);
   const [newPromptText, setNewPromptText] = useState('');
-  const [questionType, setQuestionType] = useState<'poll' | 'prediction' | 'trivia'>('prediction');
-  const [questionOptions, setQuestionOptions] = useState<string[]>(['', '']);
+    const [questionOptions, setQuestionOptions] = useState<string[]>(['', '']);
   const [expandedPrompts, setExpandedPrompts] = useState<Set<string>>(new Set());
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [resolveAnswers, setResolveAnswers] = useState<Record<string, string>>({});
@@ -137,7 +136,7 @@ export default function PoolDetailPage() {
           body: JSON.stringify({
             pool_id: params.id,
             prompt_text: newPromptText,
-            prompt_type: questionType,
+            prompt_type: 'prediction',
             options: filledOptions.length >= 2 ? filledOptions : null,
           }),
         }
@@ -455,61 +454,11 @@ export default function PoolDetailPage() {
                   </div>
                 </div>
 
-                {/* Question Type Selector */}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setQuestionType('prediction')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-full text-sm font-medium transition-all ${
-                      questionType === 'prediction'
-                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <TrendingUp size={14} />
-                    Prediction
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setQuestionType('poll')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-full text-sm font-medium transition-all ${
-                      questionType === 'poll'
-                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <BarChart3 size={14} />
-                    Poll
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setQuestionType('trivia')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-full text-sm font-medium transition-all ${
-                      questionType === 'trivia'
-                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    <HelpCircle size={14} />
-                    Trivia
-                  </button>
-                </div>
-
-                <p className="text-xs text-gray-500">
-                  {questionType === 'prediction' && 'Members predict the answer. Points when resolved.'}
-                  {questionType === 'poll' && 'Members vote. No right or wrong answer.'}
-                  {questionType === 'trivia' && 'One correct answer. Points for getting it right.'}
-                </p>
-
                 {/* Question Text */}
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-1 block">Your question</label>
                   <Textarea
-                    placeholder={
-                      questionType === 'prediction' ? 'Who will win the finale?' :
-                      questionType === 'poll' ? 'Who is playing the best game?' :
-                      'What year did this show premiere?'
-                    }
+                    placeholder={pool.pool_type === 'eliminations' ? 'Who gets eliminated this week?' : 'Who wins this matchup?'}
                     value={newPromptText}
                     onChange={(e) => setNewPromptText(e.target.value)}
                     className="bg-gray-50 border-gray-300 text-gray-900 resize-none placeholder:text-gray-400"

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useLocation } from 'wouter';
-import { Plus, Users, Trophy, ChevronRight, Copy, Check, Loader2, BookOpen, Tv, MessageCircle, X, TrendingUp, BarChart3, HelpCircle, Search, ArrowLeft, Film } from 'lucide-react';
+import { Plus, Users, Trophy, ChevronRight, Copy, Check, Loader2, Tv, X, Search, ArrowLeft, Film, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -60,10 +60,7 @@ export default function PoolsPage() {
   const [newPoolName, setNewPoolName] = useState('');
   const [newPoolDescription, setNewPoolDescription] = useState('');
   const [createSharedList, setCreateSharedList] = useState(false);
-  const [poolType, setPoolType] = useState<'eliminations' | 'tournament' | 'questions'>('eliminations');
-  const [questionType, setQuestionType] = useState<'prediction' | 'poll' | 'trivia'>('prediction');
-  const [firstQuestion, setFirstQuestion] = useState('');
-  const [questionOptions, setQuestionOptions] = useState<string[]>(['', '']);
+  const [poolType, setPoolType] = useState<'eliminations' | 'tournament'>('eliminations');
   const [joinCode, setJoinCode] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   
@@ -134,9 +131,6 @@ export default function PoolsPage() {
       setNewPoolDescription('');
       setCreateSharedList(false);
       setPoolType('eliminations');
-      setQuestionType('prediction');
-      setFirstQuestion('');
-      setQuestionOptions(['', '']);
       setCreateStep(1);
       setSelectedFriends([]);
       setSelectedMedia(null);
@@ -372,20 +366,6 @@ export default function PoolsPage() {
                           <div>
                             <p className="text-sm font-semibold text-gray-900">Tournament</p>
                             <p className="text-xs text-gray-500">Bracket-style matchups</p>
-                          </div>
-                        </button>
-                        
-                        <button
-                          type="button"
-                          onClick={() => { setPoolType('questions'); setCreateStep(2); }}
-                          className="flex items-center gap-3 p-3 rounded-xl border-2 border-gray-200 bg-white hover:border-purple-500 hover:bg-purple-50 transition-all text-left"
-                        >
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100">
-                            <MessageCircle size={18} className="text-gray-500" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">Questions</p>
-                            <p className="text-xs text-gray-500">Polls, predictions, trivia</p>
                           </div>
                         </button>
                       </div>
