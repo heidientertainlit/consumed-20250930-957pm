@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2 } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus } from "lucide-react";
+import { FeedbackDialog } from "./feedback-dialog";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   // Prefetch Collections data on hover/touch
   const prefetchCollections = useCallback(async () => {
@@ -342,6 +344,13 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           </Link>
           
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsFeedbackOpen(true)}
+              className="hover:opacity-70 transition-opacity"
+              aria-label="Give feedback"
+            >
+              <MessageSquarePlus className="text-white" size={20} />
+            </button>
             <NotificationBell />
             <Link
               href={user?.id ? `/user/${user.id}` : "/login"}
@@ -396,6 +405,12 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       <QuickActionSheet
         isOpen={isQuickActionOpen}
         onClose={() => setIsQuickActionOpen(false)}
+      />
+
+      {/* Feedback Dialog */}
+      <FeedbackDialog
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
       />
     </>
   );
