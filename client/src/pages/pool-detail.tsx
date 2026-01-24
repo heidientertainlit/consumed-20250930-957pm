@@ -360,7 +360,7 @@ export default function PoolDetailPage() {
               </DialogHeader>
               <div className="space-y-4 pt-4">
                 <Textarea
-                  placeholder="What's your prediction or question?"
+                  placeholder="e.g. Who will be eliminated next? Who wins the finale? Best performance of the night?"
                   value={newPromptText}
                   onChange={(e) => setNewPromptText(e.target.value)}
                   className="bg-gray-50 border-gray-300 text-gray-900 resize-none placeholder:text-gray-400"

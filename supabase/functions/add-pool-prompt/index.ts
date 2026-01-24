@@ -97,27 +97,16 @@ serve(async (req) => {
       });
     }
 
-    const { data: existingPrompts } = await serviceSupabase
-      .from('pool_prompts')
-      .select('order')
-      .eq('pool_id', pool_id)
-      .order('order', { ascending: false })
-      .limit(1);
-
-    const nextOrder = existingPrompts && existingPrompts.length > 0 
-      ? existingPrompts[0].order + 1 
-      : 0;
-
     const { data: prompt, error: promptError } = await serviceSupabase
       .from('pool_prompts')
       .insert({
         pool_id,
         prompt_text: prompt_text.trim(),
-        prompt_type: prompt_type || 'free_text',
+        prompt_type: prompt_type || 'prediction',
         options: options || null,
         points_value: points_value || 10,
         deadline: deadline || null,
-        order: nextOrder,
+        created_by: appUser.id,
         status: 'open'
       })
       .select()
@@ -141,7 +130,6 @@ serve(async (req) => {
         options: prompt.options,
         points_value: prompt.points_value,
         deadline: prompt.deadline,
-        order: prompt.order,
         status: prompt.status,
         created_at: prompt.created_at
       }

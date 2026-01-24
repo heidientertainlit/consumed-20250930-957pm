@@ -95,8 +95,7 @@ export default function PoolsPage() {
       setNewPoolName('');
       setNewPoolDescription('');
       setCreateSharedList(false);
-      toast({ title: 'Pool created!', description: `Share code: ${data.pool.invite_code}` });
-      setLocation(`/pool/${data.pool.id}`);
+            setLocation(`/pool/${data.pool.id}`);
     },
     onError: (error: Error) => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
@@ -239,7 +238,7 @@ export default function PoolsPage() {
                         className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                       />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Create shared list</p>
+                        <p className="text-sm font-medium text-gray-900">Add a shared list to this pool</p>
                         <p className="text-xs text-gray-500">Perfect for book clubs - members can add media together</p>
                       </div>
                     </label>
