@@ -166,23 +166,22 @@ export default function PoolsPage() {
       
       <div className="max-w-2xl mx-auto px-4 pt-6">
         <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm mb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center">
-                <Users className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-gray-900">Your Pools</h1>
-                <p className="text-xs text-gray-500">Compete with friends on predictions</p>
-              </div>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center flex-shrink-0">
+              <Users className="w-6 h-6 text-white" />
             </div>
-            <div className="flex gap-2">
-              <Dialog open={isJoinOpen} onOpenChange={setIsJoinOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-100">
-                    Join
-                  </Button>
-                </DialogTrigger>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">Your Pools</h1>
+              <p className="text-xs text-gray-500">Compete with friends on predictions</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Dialog open={isJoinOpen} onOpenChange={setIsJoinOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="flex-1 rounded-full border-purple-300 text-purple-700 hover:bg-purple-50">
+                  Join
+                </Button>
+              </DialogTrigger>
                 <DialogContent className="bg-white border-gray-200 max-w-sm rounded-2xl">
                   <DialogHeader>
                     <DialogTitle className="text-gray-900">Join a Pool</DialogTitle>
@@ -207,13 +206,13 @@ export default function PoolsPage() {
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
-                    <Plus size={16} className="mr-1" />
-                    Create
-                  </Button>
-                </DialogTrigger>
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="flex-1 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white">
+                  <Plus size={16} className="mr-1" />
+                  Create
+                </Button>
+              </DialogTrigger>
                 <DialogContent className="bg-white border-gray-200 max-w-sm rounded-2xl">
                   <DialogHeader>
                     <DialogTitle className="text-gray-900">Create a Pool</DialogTitle>
@@ -254,8 +253,7 @@ export default function PoolsPage() {
                     </Button>
                   </div>
                 </DialogContent>
-              </Dialog>
-            </div>
+            </Dialog>
           </div>
         </Card>
 
@@ -272,7 +270,7 @@ export default function PoolsPage() {
             </div>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">No pools yet</h2>
             <p className="text-gray-500 text-sm mb-6">Create a pool for your book club, watch party, or prediction game</p>
-            <Button onClick={() => setIsCreateOpen(true)} className="bg-purple-600 hover:bg-purple-700 text-white">
+            <Button onClick={() => setIsCreateOpen(true)} className="rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white">
               <Plus size={16} className="mr-2" />
               Create Your First Pool
             </Button>
