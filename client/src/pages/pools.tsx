@@ -225,15 +225,8 @@ export default function PoolsPage() {
                     <DialogTitle className="text-gray-900">Create a Pool</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 pt-4">
-                    <Input
-                      placeholder="Pool name (e.g., Traitors Season 3)"
-                      value={newPoolName}
-                      onChange={(e) => setNewPoolName(e.target.value)}
-                      className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
-                    />
-                    
                     <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-700">Pool type</p>
+                      <p className="text-sm font-medium text-gray-700">What kind of pool?</p>
                       <div className="grid grid-cols-1 gap-2">
                         <button
                           type="button"
@@ -296,6 +289,13 @@ export default function PoolsPage() {
                         </button>
                       </div>
                     </div>
+
+                    <Input
+                      placeholder="Pool name (e.g., Traitors Season 3)"
+                      value={newPoolName}
+                      onChange={(e) => setNewPoolName(e.target.value)}
+                      className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
+                    />
 
                     <Button
                       onClick={() => createPoolMutation.mutate()}
