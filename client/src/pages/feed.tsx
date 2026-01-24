@@ -2783,13 +2783,10 @@ export default function Feed() {
       {/* Header Section - Track First */}
       <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e] pb-4 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              For the true aficionados.
+          <div className="text-center mb-4">
+            <h1 className="text-2xl font-semibold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Answer, vote, and share<br />your takes.
             </h1>
-            <p className="text-sm text-gray-400 max-w-xs mx-auto leading-relaxed">
-              Your taste is refined, your memory is sharp, and you appreciate the details others miss. Finally, a place that values your expertise.
-            </p>
           </div>
           
           {/* Daily Challenge */}
