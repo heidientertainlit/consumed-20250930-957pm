@@ -72,6 +72,9 @@ import InvitePage from "@/pages/invite";
 import PublicProfilePage from "@/pages/public-profile";
 import FeedbackSurvey from "@/pages/feedback-survey";
 import CastSharePage from "@/pages/cast-share";
+import PoolsPage from "@/pages/pools";
+import PoolDetailPage from "@/pages/pool-detail";
+import PoolJoinPage from "@/pages/pool-join";
 
 function Router() {
   return (
@@ -169,6 +172,19 @@ function Router() {
         <Route path="/friends">
           <ProtectedRoute>
             <Friends />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/pools">
+          <ProtectedRoute>
+            <PoolsPage />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/pool/join/:code">
+          <PoolJoinPage />
+        </Route>
+        <Route path="/pool/:id">
+          <ProtectedRoute>
+            <PoolDetailPage />
           </ProtectedRoute>
         </Route>
         <Route path="/play">

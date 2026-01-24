@@ -99,6 +99,7 @@ Preferred communication style: Simple, everyday language.
 - AI Builder (`/library-ai`): Customization of lists and tracking via visual builder and AI chat.
 - DNA Levels System: Two-tier "Entertainment DNA" (survey-based) with friend comparison and unified insights.
 - DNA Moments: Quick binary questions in the feed that build Entertainment DNA while feeling like games. Shows % splits, friend answers, and earns points. Data stored in `dna_moments` and `dna_moment_responses` tables. Edge functions: `get-dna-moment`, `answer-dna-moment`.
+- **Pools System**: Group prediction/trivia competitions where a host creates a pool, shares invite code with friends, adds prompts (questions), members submit answers, and host resolves prompts to award points. Features leaderboard per pool. Tables: `pools`, `pool_members`, `pool_prompts`, `pool_answers`. Edge functions: `create-pool`, `join-pool`, `add-pool-prompt`, `submit-pool-answer`, `resolve-pool-prompt`, `get-pool-details`, `get-pool-leaderboard`, `get-user-pools`. Routes: `/pools` (list), `/pool/:id` (detail), `/pool/join/:code` (shareable invite link).
 
 ### Feature Specifications
 - Friend Profile Viewing: Friends can view Stats, DNA, Collections with appropriate URL parameters.

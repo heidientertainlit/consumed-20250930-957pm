@@ -48,6 +48,7 @@ export default function FeedFiltersDialog({ filters, onFiltersChange }: FeedFilt
     { id: "poll", label: "Polls" },
     { id: "rate-review", label: "Rate/Review" },
     { id: "trivia", label: "Trivia" },
+    { id: "pools", label: "Pools" },
   ];
 
   const handleAudienceSelect = (audienceId: string) => {

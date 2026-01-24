@@ -230,6 +230,68 @@ export const predictionCommentLikes = pgTable("prediction_comment_likes", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// ============================================
+// POOLS SYSTEM - Group predictions/trivia
+// ============================================
+
+// Pools - Container for group predictions/trivia games
+export const pools = pgTable("pools", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  hostId: varchar("host_id").notNull().references(() => users.id),
+  inviteCode: varchar("invite_code").notNull().unique(), // Short code for sharing
+  status: text("status").notNull().default('open'), // 'open', 'locked', 'completed'
+  deadline: timestamp("deadline"), // Optional overall deadline
+  pointsPerCorrect: integer("points_per_correct").notNull().default(10),
+  isPublic: boolean("is_public").notNull().default(false),
+  category: text("category"), // 'tv', 'movies', 'sports', 'custom'
+  coverImage: text("cover_image"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Pool Members - Users who joined a pool
+export const poolMembers = pgTable("pool_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  poolId: varchar("pool_id").notNull().references(() => pools.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  role: text("role").notNull().default('member'), // 'host', 'member'
+  totalPoints: integer("total_points").notNull().default(0),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+});
+
+// Pool Prompts - Individual questions/predictions within a pool
+export const poolPrompts = pgTable("pool_prompts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  poolId: varchar("pool_id").notNull().references(() => pools.id, { onDelete: "cascade" }),
+  promptText: text("prompt_text").notNull(),
+  promptType: text("prompt_type").notNull().default('free_text'), // 'free_text', 'multiple_choice', 'yes_no'
+  options: jsonb("options"), // For multiple choice: ["Option A", "Option B", ...]
+  correctAnswer: text("correct_answer"), // Set when resolved
+  pointsValue: integer("points_value").notNull().default(10),
+  status: text("status").notNull().default('open'), // 'open', 'locked', 'resolved'
+  deadline: timestamp("deadline"), // Optional per-prompt deadline
+  order: integer("order").notNull().default(0), // For ordering prompts
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+// Pool Answers - User submissions for prompts
+export const poolAnswers = pgTable("pool_answers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  promptId: varchar("prompt_id").notNull().references(() => poolPrompts.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  answer: text("answer").notNull(),
+  isCorrect: boolean("is_correct"), // Set when prompt is resolved
+  pointsEarned: integer("points_earned"), // Set when prompt is resolved
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+});
+
+// ============================================
+// END POOLS SYSTEM
+// ============================================
+
 // Bets table - for betting on friends' reactions to media
 export const bets = pgTable("bets", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -417,6 +479,29 @@ export const insertBetSchema = createInsertSchema(bets).omit({
   id: true,
   createdAt: true,
   resolvedAt: true,
+});
+
+// Pool schemas
+export const insertPoolSchema = createInsertSchema(pools).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPoolMemberSchema = createInsertSchema(poolMembers).omit({
+  id: true,
+  joinedAt: true,
+});
+
+export const insertPoolPromptSchema = createInsertSchema(poolPrompts).omit({
+  id: true,
+  createdAt: true,
+  resolvedAt: true,
+});
+
+export const insertPoolAnswerSchema = createInsertSchema(poolAnswers).omit({
+  id: true,
+  submittedAt: true,
 });
 
 export const insertUserRecommendationsSchema = createInsertSchema(userRecommendations).omit({
@@ -613,6 +698,17 @@ export type DnfReason = typeof dnfReasons.$inferSelect;
 export type InsertDnfReason = z.infer<typeof insertDnfReasonSchema>;
 export type Bet = typeof bets.$inferSelect;
 export type InsertBet = z.infer<typeof insertBetSchema>;
+
+// Pool types
+export type Pool = typeof pools.$inferSelect;
+export type InsertPool = z.infer<typeof insertPoolSchema>;
+export type PoolMember = typeof poolMembers.$inferSelect;
+export type InsertPoolMember = z.infer<typeof insertPoolMemberSchema>;
+export type PoolPrompt = typeof poolPrompts.$inferSelect;
+export type InsertPoolPrompt = z.infer<typeof insertPoolPromptSchema>;
+export type PoolAnswer = typeof poolAnswers.$inferSelect;
+export type InsertPoolAnswer = z.infer<typeof insertPoolAnswerSchema>;
+
 export type ScheduledPersonaPost = typeof scheduledPersonaPosts.$inferSelect;
 export type InsertScheduledPersonaPost = z.infer<typeof insertScheduledPersonaPostSchema>;
 
