@@ -148,6 +148,27 @@ serve(async (req) => {
       .eq('id', pool.host_id)
       .single();
 
+    let sharedList = null;
+    if (pool.list_id) {
+      const { data: listData } = await serviceSupabase
+        .from('lists')
+        .select('id, title')
+        .eq('id', pool.list_id)
+        .single();
+      
+      if (listData) {
+        const { count: itemCount } = await serviceSupabase
+          .from('list_items')
+          .select('*', { count: 'exact', head: true })
+          .eq('list_id', pool.list_id);
+        
+        sharedList = {
+          ...listData,
+          item_count: itemCount || 0
+        };
+      }
+    }
+
     return new Response(JSON.stringify({
       pool: {
         ...pool,
@@ -157,7 +178,8 @@ serve(async (req) => {
       members: members || [],
       user_role: membership?.role || null,
       is_host: isHost,
-      is_member: isMember
+      is_member: isMember,
+      shared_list: sharedList
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

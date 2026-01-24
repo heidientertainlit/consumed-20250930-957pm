@@ -45,7 +45,7 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { name, description, category, deadline, points_per_correct, is_public } = body;
+    const { name, description, category, deadline, points_per_correct, is_public, create_shared_list } = body;
 
     if (!name || name.trim().length === 0) {
       return new Response(JSON.stringify({ error: 'Pool name is required' }), {
@@ -113,6 +113,31 @@ serve(async (req) => {
       });
     }
 
+    let sharedList = null;
+
+    if (create_shared_list) {
+      const { data: newList, error: listError } = await serviceSupabase
+        .from('lists')
+        .insert({
+          title: `${name.trim()} - Shared List`,
+          user_id: appUser.id,
+          is_private: false
+        })
+        .select()
+        .single();
+
+      if (!listError && newList) {
+        sharedList = newList;
+
+        await serviceSupabase
+          .from('pools')
+          .update({ list_id: newList.id })
+          .eq('id', pool.id);
+      } else {
+        console.error('Shared list creation error:', listError);
+      }
+    }
+
     const { error: memberError } = await serviceSupabase
       .from('pool_members')
       .insert({
@@ -138,8 +163,10 @@ serve(async (req) => {
         deadline: pool.deadline,
         points_per_correct: pool.points_per_correct,
         is_public: pool.is_public,
-        created_at: pool.created_at
-      }
+        created_at: pool.created_at,
+        list_id: sharedList?.id || null
+      },
+      shared_list: sharedList ? { id: sharedList.id, title: sharedList.title } : null
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

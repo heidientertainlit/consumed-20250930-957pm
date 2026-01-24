@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Plus, Loader2, ChevronDown, ChevronUp, Send } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Plus, Loader2, ChevronDown, ChevronUp, Send, BookOpen, Library } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -41,6 +42,12 @@ interface Member {
   };
 }
 
+interface SharedList {
+  id: number;
+  title: string;
+  item_count: number;
+}
+
 interface PoolDetail {
   pool: {
     id: string;
@@ -52,6 +59,7 @@ interface PoolDetail {
     deadline: string | null;
     is_public: boolean;
     created_at: string;
+    list_id: number | null;
     host: {
       id: string;
       user_name: string;
@@ -64,6 +72,7 @@ interface PoolDetail {
   is_host: boolean;
   is_member: boolean;
   user_role: string | null;
+  shared_list: SharedList | null;
 }
 
 export default function PoolDetailPage() {
@@ -219,10 +228,10 @@ export default function PoolDetailPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] to-[#1a1a2e]">
+      <div className="min-h-screen bg-gray-50">
         <Navigation />
         <div className="flex flex-col items-center justify-center h-[70vh] px-4 text-center">
-          <p className="text-gray-400">Sign in to view this pool</p>
+          <p className="text-gray-500">Sign in to view this pool</p>
         </div>
       </div>
     );
@@ -230,10 +239,10 @@ export default function PoolDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] to-[#1a1a2e]">
+      <div className="min-h-screen bg-gray-50">
         <Navigation />
         <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-purple-500" size={32} />
+          <Loader2 className="animate-spin text-purple-600" size={32} />
         </div>
       </div>
     );
@@ -241,11 +250,11 @@ export default function PoolDetailPage() {
 
   if (error || !poolData) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] to-[#1a1a2e]">
+      <div className="min-h-screen bg-gray-50">
         <Navigation />
         <div className="flex flex-col items-center justify-center h-[70vh] px-4 text-center">
-          <p className="text-gray-400 mb-4">{(error as Error)?.message || 'Pool not found'}</p>
-          <Button onClick={() => setLocation('/pools')} variant="outline">
+          <p className="text-gray-500 mb-4">{(error as Error)?.message || 'Pool not found'}</p>
+          <Button onClick={() => setLocation('/pools')} variant="outline" className="border-gray-300">
             Back to Pools
           </Button>
         </div>
@@ -253,36 +262,41 @@ export default function PoolDetailPage() {
     );
   }
 
-  const { pool, prompts, members, is_host } = poolData;
+  const { pool, prompts, members, is_host, shared_list } = poolData;
   const openPrompts = prompts.filter(p => p.status === 'open');
   const resolvedPrompts = prompts.filter(p => p.status === 'resolved');
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0a0f] to-[#1a1a2e] pb-24">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
 
       <div className="max-w-2xl mx-auto px-4 pt-4">
-        <button onClick={() => setLocation('/pools')} className="flex items-center gap-1 text-gray-400 hover:text-white mb-4">
-          <ArrowLeft size={18} />
+        <button onClick={() => setLocation('/pools')} className="flex items-center gap-1 text-gray-500 hover:text-gray-900 mb-4 text-sm">
+          <ArrowLeft size={16} />
           <span>Back to Pools</span>
         </button>
 
-        <div className="bg-[#1a1a2e] rounded-xl p-4 border border-gray-700/50 mb-4">
+        <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm mb-4">
           <div className="flex items-start justify-between mb-3">
-            <div>
-              <h1 className="text-xl font-bold text-white">{pool.name}</h1>
-              {pool.description && <p className="text-sm text-gray-400 mt-1">{pool.description}</p>}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-purple-900 flex items-center justify-center">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">{pool.name}</h1>
+                {pool.description && <p className="text-sm text-gray-500">{pool.description}</p>}
+              </div>
             </div>
-            <span className={`px-2 py-1 text-xs rounded ${
-              pool.status === 'open' ? 'bg-green-500/20 text-green-400' :
-              pool.status === 'locked' ? 'bg-yellow-500/20 text-yellow-400' :
-              'bg-gray-500/20 text-gray-400'
+            <span className={`px-2 py-1 text-xs rounded font-medium ${
+              pool.status === 'open' ? 'bg-green-100 text-green-700' :
+              pool.status === 'locked' ? 'bg-yellow-100 text-yellow-700' :
+              'bg-gray-100 text-gray-600'
             }`}>
               {pool.status.toUpperCase()}
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-sm text-gray-400 mb-4">
+          <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
             <span className="flex items-center gap-1">
               <Users size={14} />
               {members.length} members
@@ -294,45 +308,68 @@ export default function PoolDetailPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex-1 bg-[#0a0a0f] rounded-lg px-3 py-2 flex items-center justify-between">
-              <span className="text-gray-400 text-sm">Invite Code:</span>
-              <span className="font-mono text-white font-bold">{pool.invite_code}</span>
+            <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2 flex items-center justify-between border border-gray-200">
+              <span className="text-gray-500 text-sm">Invite Code:</span>
+              <span className="font-mono text-gray-900 font-bold">{pool.invite_code}</span>
             </div>
             <Button
               onClick={() => copyInviteCode(pool.invite_code)}
               size="sm"
               variant="outline"
-              className="border-purple-500 text-purple-400"
+              className="border-gray-300"
             >
-              {copiedCode ? <Check size={16} /> : <Copy size={16} />}
+              {copiedCode ? <Check size={16} className="text-green-600" /> : <Copy size={16} className="text-gray-500" />}
             </Button>
           </div>
-        </div>
+        </Card>
+
+        {shared_list && (
+          <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl p-4 shadow-sm mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
+                  <Library className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">{shared_list.title}</h3>
+                  <p className="text-xs text-gray-500">{shared_list.item_count} items added</p>
+                </div>
+              </div>
+              <Button
+                onClick={() => setLocation(`/list/${shared_list.id}`)}
+                size="sm"
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                View List
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {is_host && pool.status === 'open' && (
           <Dialog open={isAddPromptOpen} onOpenChange={setIsAddPromptOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full mb-4 bg-purple-600 hover:bg-purple-700">
+              <Button className="w-full mb-4 bg-purple-600 hover:bg-purple-700 text-white">
                 <Plus size={16} className="mr-2" />
                 Add Prompt
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-[#1a1a2e] border-gray-700">
+            <DialogContent className="bg-white border-gray-200 max-w-sm rounded-2xl">
               <DialogHeader>
-                <DialogTitle className="text-white">Add a Prompt</DialogTitle>
+                <DialogTitle className="text-gray-900">Add a Prompt</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 pt-4">
                 <Textarea
                   placeholder="What's your prediction or question?"
                   value={newPromptText}
                   onChange={(e) => setNewPromptText(e.target.value)}
-                  className="bg-[#0a0a0f] border-gray-600 text-white resize-none"
+                  className="bg-gray-50 border-gray-300 text-gray-900 resize-none placeholder:text-gray-400"
                   rows={3}
                 />
                 <Button
                   onClick={() => addPromptMutation.mutate()}
                   disabled={!newPromptText.trim() || addPromptMutation.isPending}
-                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
                 >
                   {addPromptMutation.isPending ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
                   Add Prompt
@@ -343,43 +380,43 @@ export default function PoolDetailPage() {
         )}
 
         {openPrompts.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-              <Clock size={18} className="text-yellow-400" />
+          <div className="mb-4">
+            <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <Clock size={16} className="text-amber-500" />
               Open Prompts
             </h2>
             <div className="space-y-3">
               {openPrompts.map((prompt) => (
-                <div key={prompt.id} className="bg-[#1a1a2e] rounded-xl border border-gray-700/50 overflow-hidden">
+                <Card key={prompt.id} className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                   <button
                     onClick={() => togglePrompt(prompt.id)}
                     className="w-full p-4 flex items-start justify-between text-left"
                   >
                     <div className="flex-1">
-                      <p className="text-white font-medium">{prompt.prompt_text}</p>
+                      <p className="text-gray-900 font-medium">{prompt.prompt_text}</p>
                       <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
                         <span className="flex items-center gap-1">
-                          <Trophy size={12} className="text-amber-400" />
+                          <Trophy size={12} className="text-amber-500" />
                           {prompt.points_value} pts
                         </span>
                         {prompt.user_answer && (
-                          <span className="text-green-400">You answered</span>
+                          <span className="text-green-600 font-medium">You answered</span>
                         )}
                       </div>
                     </div>
                     {expandedPrompts.has(prompt.id) ? (
-                      <ChevronUp size={20} className="text-gray-500" />
+                      <ChevronUp size={20} className="text-gray-400" />
                     ) : (
-                      <ChevronDown size={20} className="text-gray-500" />
+                      <ChevronDown size={20} className="text-gray-400" />
                     )}
                   </button>
 
                   {expandedPrompts.has(prompt.id) && (
-                    <div className="px-4 pb-4 border-t border-gray-700/50 pt-3">
+                    <div className="px-4 pb-4 border-t border-gray-100 pt-3">
                       {prompt.user_answer ? (
-                        <div className="bg-[#0a0a0f] rounded-lg p-3">
+                        <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
                           <p className="text-xs text-gray-500 mb-1">Your answer:</p>
-                          <p className="text-white">{prompt.user_answer.answer}</p>
+                          <p className="text-gray-900 font-medium">{prompt.user_answer.answer}</p>
                         </div>
                       ) : (
                         <div className="flex gap-2">
@@ -387,7 +424,7 @@ export default function PoolDetailPage() {
                             placeholder="Your answer..."
                             value={answers[prompt.id] || ''}
                             onChange={(e) => setAnswers(prev => ({ ...prev, [prompt.id]: e.target.value }))}
-                            className="bg-[#0a0a0f] border-gray-600 text-white flex-1"
+                            className="bg-gray-50 border-gray-300 text-gray-900 flex-1 placeholder:text-gray-400"
                           />
                           <Button
                             onClick={() => submitAnswerMutation.mutate({ promptId: prompt.id, answer: answers[prompt.id] || '' })}
@@ -395,27 +432,27 @@ export default function PoolDetailPage() {
                             size="icon"
                             className="bg-purple-600 hover:bg-purple-700"
                           >
-                            <Send size={16} />
+                            <Send size={16} className="text-white" />
                           </Button>
                         </div>
                       )}
 
                       {is_host && (
-                        <div className="mt-4 pt-3 border-t border-gray-700/50">
+                        <div className="mt-4 pt-3 border-t border-gray-100">
                           <p className="text-xs text-gray-500 mb-2">Resolve this prompt (host only):</p>
                           <div className="flex gap-2">
                             <Input
                               placeholder="Correct answer..."
                               value={resolveAnswers[prompt.id] || ''}
                               onChange={(e) => setResolveAnswers(prev => ({ ...prev, [prompt.id]: e.target.value }))}
-                              className="bg-[#0a0a0f] border-gray-600 text-white flex-1"
+                              className="bg-gray-50 border-gray-300 text-gray-900 flex-1 placeholder:text-gray-400"
                             />
                             <Button
                               onClick={() => resolvePromptMutation.mutate({ promptId: prompt.id, correctAnswer: resolveAnswers[prompt.id] || '' })}
                               disabled={!resolveAnswers[prompt.id]?.trim() || resolvePromptMutation.isPending}
                               size="sm"
                               variant="outline"
-                              className="border-amber-500 text-amber-400"
+                              className="border-amber-500 text-amber-600 hover:bg-amber-50"
                             >
                               Resolve
                             </Button>
@@ -424,78 +461,78 @@ export default function PoolDetailPage() {
                       )}
                     </div>
                   )}
-                </div>
+                </Card>
               ))}
             </div>
           </div>
         )}
 
         {resolvedPrompts.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-              <Check size={18} className="text-green-400" />
+          <div className="mb-4">
+            <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <Check size={16} className="text-green-600" />
               Resolved ({resolvedPrompts.length})
             </h2>
             <div className="space-y-3">
               {resolvedPrompts.map((prompt) => (
-                <div key={prompt.id} className="bg-[#1a1a2e] rounded-xl border border-gray-700/50 p-4">
-                  <p className="text-white font-medium mb-2">{prompt.prompt_text}</p>
+                <Card key={prompt.id} className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4">
+                  <p className="text-gray-900 font-medium mb-2">{prompt.prompt_text}</p>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs text-gray-500">Correct answer:</p>
-                      <p className="text-green-400 font-medium">{prompt.correct_answer}</p>
+                      <p className="text-green-600 font-medium">{prompt.correct_answer}</p>
                     </div>
                     {prompt.user_answer && (
-                      <div className={`text-right px-3 py-1 rounded-lg ${
+                      <div className={`text-right px-3 py-2 rounded-xl ${
                         prompt.user_answer.is_correct 
-                          ? 'bg-green-500/20' 
-                          : 'bg-red-500/20'
+                          ? 'bg-green-50 border border-green-200' 
+                          : 'bg-red-50 border border-red-200'
                       }`}>
-                        <p className="text-xs text-gray-400">You said:</p>
-                        <p className={prompt.user_answer.is_correct ? 'text-green-400' : 'text-red-400'}>
+                        <p className="text-xs text-gray-500">You said:</p>
+                        <p className={prompt.user_answer.is_correct ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
                           {prompt.user_answer.answer}
                         </p>
                         {prompt.user_answer.is_correct && (
-                          <p className="text-xs text-green-400">+{prompt.user_answer.points_earned} pts</p>
+                          <p className="text-xs text-green-600">+{prompt.user_answer.points_earned} pts</p>
                         )}
                       </div>
                     )}
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           </div>
         )}
 
-        <div className="mb-6">
+        <Card className="bg-white border border-gray-200 rounded-2xl shadow-sm mb-4">
           <button 
             onClick={() => setShowLeaderboard(!showLeaderboard)}
-            className="w-full flex items-center justify-between text-lg font-semibold text-white mb-3"
+            className="w-full flex items-center justify-between p-4"
           >
-            <span className="flex items-center gap-2">
-              <Trophy size={18} className="text-amber-400" />
+            <span className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+              <Trophy size={16} className="text-amber-500" />
               Leaderboard
             </span>
-            {showLeaderboard ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            {showLeaderboard ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
           </button>
           
           {showLeaderboard && (
-            <div className="bg-[#1a1a2e] rounded-xl border border-gray-700/50 overflow-hidden">
+            <div className="border-t border-gray-100">
               {members.length === 0 ? (
-                <div className="p-4 text-center text-gray-400">No members yet</div>
+                <div className="p-4 text-center text-gray-500">No members yet</div>
               ) : (
                 members.map((member, index) => (
                   <div 
                     key={member.user_id}
                     className={`flex items-center gap-3 p-3 ${
-                      index !== members.length - 1 ? 'border-b border-gray-700/50' : ''
+                      index !== members.length - 1 ? 'border-b border-gray-100' : ''
                     }`}
                   >
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      index === 0 ? 'bg-amber-500 text-black' :
-                      index === 1 ? 'bg-gray-300 text-black' :
-                      index === 2 ? 'bg-amber-700 text-white' :
-                      'bg-gray-700 text-gray-300'
+                      index === 0 ? 'bg-amber-400 text-amber-900' :
+                      index === 1 ? 'bg-gray-300 text-gray-700' :
+                      index === 2 ? 'bg-amber-600 text-white' :
+                      'bg-gray-100 text-gray-600'
                     }`}>
                       {index + 1}
                     </div>
@@ -506,38 +543,41 @@ export default function PoolDetailPage() {
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-purple-500/30 flex items-center justify-center">
-                        <span className="text-purple-300 text-sm font-medium">
+                      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                        <span className="text-purple-600 text-sm font-medium">
                           {(member.users.display_name || member.users.user_name || '?')[0].toUpperCase()}
                         </span>
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-medium truncate">
+                      <p className="text-gray-900 font-medium truncate">
                         {member.users.display_name || member.users.user_name}
                       </p>
                       {member.role === 'host' && (
-                        <span className="text-[10px] text-amber-400">HOST</span>
+                        <span className="text-[10px] text-amber-600 font-medium">HOST</span>
                       )}
                     </div>
                     <div className="text-right">
-                      <span className="text-amber-400 font-bold">{member.total_points}</span>
-                      <span className="text-gray-500 text-xs ml-1">pts</span>
+                      <span className="text-amber-600 font-bold">{member.total_points}</span>
+                      <span className="text-gray-400 text-xs ml-1">pts</span>
                     </div>
                   </div>
                 ))
               )}
             </div>
           )}
-        </div>
+        </Card>
 
         {prompts.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-400 mb-2">No prompts yet</p>
+          <Card className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+              <BookOpen className="text-gray-400" size={24} />
+            </div>
+            <p className="text-gray-500 mb-1">No prompts yet</p>
             {is_host && (
-              <p className="text-sm text-gray-500">Add a prompt to get started!</p>
+              <p className="text-sm text-gray-400">Add a prompt to get started!</p>
             )}
-          </div>
+          </Card>
         )}
       </div>
     </div>

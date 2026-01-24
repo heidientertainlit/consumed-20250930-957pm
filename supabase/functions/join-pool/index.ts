@@ -122,6 +122,25 @@ serve(async (req) => {
       });
     }
 
+    if (pool.list_id) {
+      const { data: existingCollab } = await serviceSupabase
+        .from('list_collaborators')
+        .select('id')
+        .eq('list_id', pool.list_id)
+        .eq('user_id', appUser.id)
+        .single();
+
+      if (!existingCollab) {
+        await serviceSupabase
+          .from('list_collaborators')
+          .insert({
+            list_id: pool.list_id,
+            user_id: appUser.id,
+            role: 'editor'
+          });
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       pool: {
