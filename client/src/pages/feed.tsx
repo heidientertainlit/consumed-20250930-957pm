@@ -3065,7 +3065,9 @@ export default function Feed() {
 
               {/* Cast Your Friends Game */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
-                <CastFriendsGame />
+                <div id="cast-friends-game">
+                  <CastFriendsGame />
+                </div>
               )}
 
               {/* Seen It Game */}
@@ -3109,9 +3111,12 @@ export default function Feed() {
                       </div>
                       <h3 className="font-semibold text-gray-900">Cast Your Friends</h3>
                     </div>
-                    <Link href="/cast" className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                    <button 
+                      onClick={() => document.getElementById('cast-friends-game')?.scrollIntoView({ behavior: 'smooth' })}
+                      className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                    >
                       Play →
-                    </Link>
+                    </button>
                   </div>
                   <div 
                     className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4"
@@ -3190,13 +3195,16 @@ export default function Feed() {
                       })}
                     
                     {/* Play Card at the end */}
-                    <Link href="/cast" className="flex-shrink-0">
+                    <button 
+                      onClick={() => document.getElementById('cast-friends-game')?.scrollIntoView({ behavior: 'smooth' })}
+                      className="flex-shrink-0"
+                    >
                       <div className="w-48 h-full rounded-xl bg-gradient-to-br from-purple-600 to-amber-500 overflow-hidden shadow-sm flex flex-col items-center justify-center p-4 min-h-[140px]">
                         <Users size={28} className="text-white mb-2" />
                         <p className="text-white font-bold text-center">Cast Your Friends</p>
                         <p className="text-white/80 text-xs text-center mt-1">Who would play them in a movie?</p>
                       </div>
-                    </Link>
+                    </button>
                   </div>
                 </div>
               )}
