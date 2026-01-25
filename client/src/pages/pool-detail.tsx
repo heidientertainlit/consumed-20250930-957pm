@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Loader2, Trash2, Share2, ChevronRight, Star, MessageCircle, Send } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Loader2, Trash2, Share2, ChevronRight, Star, MessageCircle, Send, Heart, Reply } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -67,11 +67,35 @@ export default function PoolDetailPage() {
   const [showPickView, setShowPickView] = useState(false);
   const [hasLocked, setHasLocked] = useState(false);
   const [newTake, setNewTake] = useState('');
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
   const [takes, setTakes] = useState([
-    { id: '1', user: 'Sarah M.', avatar: null, text: "No way Tyler survives next week! He's been playing too safe", time: '2h ago' },
-    { id: '2', user: 'Mike R.', avatar: null, text: "Called it - Emma was way too nice to last", time: '5h ago' },
-    { id: '3', user: 'Jess K.', avatar: null, text: "Alex is the dark horse. Mark my words 🐴", time: '1d ago' },
+    { id: '1', user: 'Sarah M.', avatar: null, text: "No way Tyler survives next week! He's been playing too safe", time: '2h ago', likes: 5, liked: false, replies: [
+      { id: '1a', user: 'Mike R.', text: "Facts! He's coasting", time: '1h ago', likes: 2, liked: false }
+    ]},
+    { id: '2', user: 'Mike R.', avatar: null, text: "Called it - Emma was way too nice to last", time: '5h ago', likes: 12, liked: true, replies: [] },
+    { id: '3', user: 'Jess K.', avatar: null, text: "Alex is the dark horse. Mark my words 🐴", time: '1d ago', likes: 3, liked: false, replies: [] },
   ]);
+
+  const toggleLike = (takeId: string) => {
+    setTakes(takes.map(take => 
+      take.id === takeId 
+        ? { ...take, liked: !take.liked, likes: take.liked ? take.likes - 1 : take.likes + 1 }
+        : take
+    ));
+  };
+
+  const addReply = (takeId: string) => {
+    if (!replyText.trim()) return;
+    setTakes(takes.map(take => 
+      take.id === takeId 
+        ? { ...take, replies: [...take.replies, { id: Date.now().toString(), user: 'You', text: replyText, time: 'Just now', likes: 0, liked: false }] }
+        : take
+    ));
+    setReplyText('');
+    setReplyingTo(null);
+    toast({ title: 'Reply posted!' });
+  };
 
   // Mock contestants for demo
   const contestants: Contestant[] = [
@@ -395,7 +419,7 @@ export default function PoolDetailPage() {
                 className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-purple-400"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter' && newTake.trim()) {
-                    setTakes([{ id: Date.now().toString(), user: 'You', avatar: null, text: newTake, time: 'Just now' }, ...takes]);
+                    setTakes([{ id: Date.now().toString(), user: 'You', avatar: null, text: newTake, time: 'Just now', likes: 0, liked: false, replies: [] }, ...takes]);
                     setNewTake('');
                     toast({ title: 'Take posted!' });
                   }
@@ -405,7 +429,7 @@ export default function PoolDetailPage() {
                 size="sm"
                 onClick={() => {
                   if (newTake.trim()) {
-                    setTakes([{ id: Date.now().toString(), user: 'You', avatar: null, text: newTake, time: 'Just now' }, ...takes]);
+                    setTakes([{ id: Date.now().toString(), user: 'You', avatar: null, text: newTake, time: 'Just now', likes: 0, liked: false, replies: [] }, ...takes]);
                     setNewTake('');
                     toast({ title: 'Take posted!' });
                   }
@@ -418,7 +442,7 @@ export default function PoolDetailPage() {
           </div>
           
           {/* Takes List */}
-          <div className="divide-y divide-gray-50 max-h-64 overflow-y-auto">
+          <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
             {takes.map((take) => (
               <div key={take.id} className="px-4 py-3">
                 <div className="flex items-start gap-3">
@@ -430,7 +454,67 @@ export default function PoolDetailPage() {
                       <span className="text-gray-900 font-medium text-sm">{take.user}</span>
                       <span className="text-gray-400 text-xs">{take.time}</span>
                     </div>
-                    <p className="text-gray-600 text-sm">{take.text}</p>
+                    <p className="text-gray-600 text-sm mb-2">{take.text}</p>
+                    
+                    {/* Like & Reply Actions */}
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={() => toggleLike(take.id)}
+                        className={`flex items-center gap-1 text-xs ${take.liked ? 'text-red-500' : 'text-gray-400'}`}
+                      >
+                        <Heart size={14} className={take.liked ? 'fill-current' : ''} />
+                        {take.likes}
+                      </button>
+                      <button 
+                        onClick={() => setReplyingTo(replyingTo === take.id ? null : take.id)}
+                        className="flex items-center gap-1 text-xs text-gray-400"
+                      >
+                        <Reply size={14} />
+                        {take.replies.length > 0 ? take.replies.length : 'Reply'}
+                      </button>
+                    </div>
+                    
+                    {/* Replies */}
+                    {take.replies.length > 0 && (
+                      <div className="mt-3 pl-4 border-l-2 border-gray-100 space-y-2">
+                        {take.replies.map((reply) => (
+                          <div key={reply.id} className="flex items-start gap-2">
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                              {reply.user.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-800 font-medium text-xs">{reply.user}</span>
+                                <span className="text-gray-400 text-[10px]">{reply.time}</span>
+                              </div>
+                              <p className="text-gray-600 text-xs">{reply.text}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* Reply Input */}
+                    {replyingTo === take.id && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder="Write a reply..."
+                          className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 text-xs focus:outline-none focus:border-purple-400"
+                          onKeyPress={(e) => e.key === 'Enter' && addReply(take.id)}
+                          autoFocus
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => addReply(take.id)}
+                          className="bg-purple-600 hover:bg-purple-700 rounded-full h-7 px-2"
+                        >
+                          <Send size={12} />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
