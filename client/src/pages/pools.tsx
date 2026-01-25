@@ -544,45 +544,35 @@ export default function PoolsPage() {
             </Button>
           </Card>
         ) : (
-          <div className="space-y-6">
-            {pools.map((pool, index) => {
+          <div className="space-y-8">
+            {pools.map((pool) => {
               const userRank = Math.floor(Math.random() * 5) + 1;
               const rankSuffix = userRank === 1 ? 'st' : userRank === 2 ? 'nd' : userRank === 3 ? 'rd' : 'th';
               
-              // Different gradient colors for each pool
-              const gradients = [
-                'from-purple-600 via-purple-700 to-indigo-800',
-                'from-pink-500 via-rose-600 to-purple-700',
-                'from-amber-500 via-orange-600 to-red-700',
-                'from-emerald-500 via-teal-600 to-cyan-700',
-                'from-blue-500 via-indigo-600 to-purple-700',
-              ];
-              const gradient = gradients[index % gradients.length];
-              
               return (
                 <Link key={pool.id} href={`/pool/${pool.id}`}>
-                  <div className="flex items-center gap-4 cursor-pointer group">
-                    {/* Poster thumbnail on left */}
-                    <div className={`bg-gradient-to-br ${gradient} rounded-xl w-20 h-28 flex-shrink-0 shadow-lg group-hover:shadow-xl transition-all relative overflow-hidden`}>
-                      <div className="absolute inset-0 flex items-center justify-center opacity-30">
-                        <Trophy size={32} className="text-white" />
+                  <div className="bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-900 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all cursor-pointer">
+                    <div className="flex items-center gap-4">
+                      {/* Media poster on left */}
+                      <div className="w-16 h-24 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex-shrink-0 shadow-md flex items-center justify-center overflow-hidden">
+                        <Trophy size={24} className="text-white/60" />
                       </div>
+                      
+                      {/* Info on right */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-bold text-white truncate mb-1">
+                          {pool.name}
+                        </h3>
+                        <p className="text-sm text-purple-200 mb-1">
+                          {pool.member_count} players
+                        </p>
+                        <p className="text-sm text-purple-300">
+                          You're {userRank === 1 ? 'tied for' : 'in'} {userRank}{rankSuffix} place
+                        </p>
+                      </div>
+                      
+                      <ChevronRight size={20} className="text-purple-300 flex-shrink-0" />
                     </div>
-                    
-                    {/* Info on right */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-bold text-gray-900 truncate mb-1">
-                        {pool.name}
-                      </h3>
-                      <p className="text-sm text-gray-500 mb-1">
-                        {pool.member_count} players
-                      </p>
-                      <p className="text-sm text-purple-600 font-medium">
-                        You're {userRank === 1 ? 'tied for' : 'in'} {userRank}{rankSuffix} place
-                      </p>
-                    </div>
-                    
-                    <ChevronRight size={20} className="text-gray-400 flex-shrink-0" />
                   </div>
                 </Link>
               );
