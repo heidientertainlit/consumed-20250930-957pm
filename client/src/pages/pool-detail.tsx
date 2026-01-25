@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Loader2, Trash2, Share2, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Loader2, Trash2, Share2, ChevronRight, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -320,7 +320,7 @@ export default function PoolDetailPage() {
           
           {/* Pool Info */}
           <div className="flex-1 min-w-0 pt-1">
-            <h1 className="text-xl font-bold text-gray-900 mb-1">
+            <h1 className="text-lg font-semibold text-gray-900 mb-1">
               {pool.name}
             </h1>
             <p className="text-gray-500 text-sm mb-3">
@@ -340,7 +340,17 @@ export default function PoolDetailPage() {
           onClick={() => setShowPickView(true)}
           className="w-full py-6 text-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl shadow-lg mb-2"
         >
-          {hasLocked ? '✓ Change Your Pick' : '🎯 Make Your Pick'}
+          {hasLocked ? (
+            <>
+              <Check size={20} className="mr-2" />
+              Change Your Pick
+            </>
+          ) : (
+            <>
+              <Target size={20} className="mr-2" />
+              Make Your Pick
+            </>
+          )}
         </Button>
         <p className="text-gray-400 text-xs text-center mb-6">
           <Clock size={12} className="inline mr-1" />
