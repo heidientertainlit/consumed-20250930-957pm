@@ -120,32 +120,32 @@ export default function RatingModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] bg-white max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-[600px] mx-4 bg-white max-h-[85vh] overflow-y-auto rounded-lg">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-gray-900">
+          <DialogTitle className="text-xl sm:text-2xl font-bold text-gray-900">
             Rate & Review
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-4 sm:space-y-6 py-2 sm:py-4">
           {/* Selected Media Display */}
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
             <div className="flex items-center space-x-3">
               {mediaImage ? (
                 <img
                   src={mediaImage}
                   alt={mediaTitle}
-                  className="w-12 h-12 object-cover rounded flex-shrink-0"
+                  className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded flex-shrink-0"
                 />
               ) : (
-                <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
-                  <Star className="text-gray-400" size={20} />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                  <Star className="text-gray-400" size={18} />
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 truncate">{mediaTitle}</p>
+                <p className="font-medium text-gray-900 text-sm sm:text-base truncate">{mediaTitle}</p>
                 {mediaCreator && (
-                  <p className="text-sm text-gray-500 truncate">by {mediaCreator}</p>
+                  <p className="text-xs sm:text-sm text-gray-500 truncate">by {mediaCreator}</p>
                 )}
                 <p className="text-xs text-purple-600 capitalize">{mediaType}</p>
               </div>
@@ -154,19 +154,19 @@ export default function RatingModal({
 
           {/* Rating Section */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Rate this media (optional)</h3>
-            <div className="flex items-center space-x-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Rate this media (optional)</h3>
+            <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
               {/* Star Display */}
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center gap-0.5 sm:gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
                     onClick={() => setRating(star === rating ? 0 : star)}
-                    className="p-1 hover:scale-110 transition-transform"
+                    className="p-0.5 sm:p-1 hover:scale-110 transition-transform"
                     data-testid={`star-${star}`}
                   >
                     <Star
-                      size={24}
+                      size={22}
                       className={`${
                         star <= Math.floor(rating)
                           ? 'fill-yellow-400 text-yellow-400'
@@ -180,7 +180,7 @@ export default function RatingModal({
               </div>
 
               {/* Rating Input */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <Input
                   type="number"
                   min="0"
@@ -195,34 +195,35 @@ export default function RatingModal({
                       setRating(0);
                     }
                   }}
-                  className="w-16 text-center bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500"
+                  className="w-14 text-center bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500"
                   placeholder="0"
                   data-testid="rating-input"
                 />
-                <span className="text-sm text-gray-500">(0-5)</span>
+                <span className="text-xs sm:text-sm text-gray-500">(0-5)</span>
               </div>
             </div>
           </div>
 
           {/* Review Section */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Thoughts (Review)</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Your Thoughts (Review)</h3>
             <Textarea
               value={review}
               onChange={(e) => setReview(e.target.value)}
               placeholder="Share your thoughts about this media..."
-              className="min-h-[120px] resize-none bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500 placeholder:text-gray-500"
+              className="min-h-[100px] sm:min-h-[120px] resize-none bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500 placeholder:text-gray-500"
               data-testid="textarea-review"
             />
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end gap-3 pt-3 sm:pt-4 border-t">
           <Button
             onClick={handleClose}
             variant="outline"
             disabled={submitRatingMutation.isPending}
+            className="text-sm px-3 sm:px-4"
             data-testid="button-cancel"
           >
             Cancel
@@ -230,10 +231,10 @@ export default function RatingModal({
           <Button
             onClick={handleSubmit}
             disabled={submitRatingMutation.isPending}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
+            className="bg-purple-600 hover:bg-purple-700 text-white text-sm px-3 sm:px-4"
             data-testid="button-submit-rating"
           >
-            {submitRatingMutation.isPending ? "Submitting..." : "Submit Rating"}
+            {submitRatingMutation.isPending ? "Submitting..." : "Submit"}
           </Button>
         </div>
       </DialogContent>
