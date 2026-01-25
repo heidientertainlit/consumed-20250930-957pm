@@ -2992,8 +2992,10 @@ export default function Feed() {
               )}
 
               {/* Hot Takes Feed - Show posted hot takes */}
+              {console.log('🔥 HOT TAKES RENDER - socialPosts count:', socialPosts.length, 
+                'hotTakes:', socialPosts.filter((p: any) => p.type === 'hot_take').length)}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'hottakes') && 
-                filteredPosts
+                socialPosts
                   .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
                   .slice(0, selectedFilter === 'hottakes' ? 20 : 3)
                   .map((post: any) => (

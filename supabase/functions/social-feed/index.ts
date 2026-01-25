@@ -103,6 +103,7 @@ serve(async (req) => {
       const offset = parseInt(url.searchParams.get('offset') || '0', 10);
       
       console.log('Pagination:', { limit, offset });
+      console.log('🔥 EDGE FUNCTION VERSION: 2026-01-25-v2 - hot_take support');
       
       const { data: posts, error } = await supabase
         .from('social_posts')
