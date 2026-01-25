@@ -3112,7 +3112,13 @@ export default function Feed() {
                       <h3 className="font-semibold text-gray-900">Cast Your Friends</h3>
                     </div>
                     <button 
-                      onClick={() => document.getElementById('cast-friends-game')?.scrollIntoView({ behavior: 'smooth' })}
+                      onClick={() => {
+                        const el = document.getElementById('cast-friends-game');
+                        if (el) {
+                          const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
+                          window.scrollTo({ top: y, behavior: 'smooth' });
+                        }
+                      }}
                       className="text-sm text-purple-600 hover:text-purple-700 font-medium"
                     >
                       Play →
@@ -3196,7 +3202,13 @@ export default function Feed() {
                     
                     {/* Play Card at the end */}
                     <button 
-                      onClick={() => document.getElementById('cast-friends-game')?.scrollIntoView({ behavior: 'smooth' })}
+                      onClick={() => {
+                        const el = document.getElementById('cast-friends-game');
+                        if (el) {
+                          const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
+                          window.scrollTo({ top: y, behavior: 'smooth' });
+                        }
+                      }}
                       className="flex-shrink-0"
                     >
                       <div className="w-48 h-full rounded-xl bg-gradient-to-br from-purple-600 to-amber-500 overflow-hidden shadow-sm flex flex-col items-center justify-center p-4 min-h-[140px]">
