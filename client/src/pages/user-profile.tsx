@@ -3068,7 +3068,9 @@ export default function UserProfile() {
             {dnaLevel >= 2 && dnaProfileStatus === 'has_profile' && (
               <FriendDNACompareButton 
                 friendId={viewingUserId || ''}
-                friendName={profileData?.display_name || 'Friend'}
+                friendName={userProfileData?.first_name || userProfileData?.user_name || 'Friend'}
+                userDnaLevel={dnaLevel}
+                userItemCount={dnaItemCount}
               />
             )}
           </div>
@@ -3673,7 +3675,7 @@ export default function UserProfile() {
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  {isOwnProfile ? 'Media History' : `${profileData?.display_name || 'Their'}'s Media History`}
+                  Media History
                 </h3>
                 {isOwnProfile && (
                   <Button

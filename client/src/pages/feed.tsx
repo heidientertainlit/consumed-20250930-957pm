@@ -3168,7 +3168,7 @@ export default function Feed() {
                             </div>
                           </div>
                           
-                          <Link href="/play">
+                          <Link href="/cast">
                             <button className="mt-3 w-full py-2.5 bg-gradient-to-r from-purple-600 to-blue-500 text-white text-sm font-medium rounded-xl hover:opacity-90 transition-opacity">
                               Cast Your Friends
                             </button>
@@ -4141,7 +4141,7 @@ export default function Feed() {
                             </div>
                             
                             {/* CTA */}
-                            <Link href="/play">
+                            <Link href="/cast">
                               <button className="mt-3 w-full py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white text-sm font-medium rounded-xl hover:opacity-90 transition-opacity">
                                 Cast Your Friends
                               </button>

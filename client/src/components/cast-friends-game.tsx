@@ -314,12 +314,6 @@ function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
                 <div className="flex-1" />
                 
                 <button
-                  onClick={() => setMode('describe')}
-                  className="px-2 py-1.5 rounded-full bg-purple-100 text-purple-700 text-xs font-medium flex items-center gap-1"
-                >
-                  <Sparkles className="w-3 h-3" /> AI
-                </button>
-                <button
                   onClick={() => setMode('search')}
                   className="px-2 py-1.5 rounded-full bg-gray-100 text-gray-600 text-xs font-medium flex items-center gap-1"
                 >
