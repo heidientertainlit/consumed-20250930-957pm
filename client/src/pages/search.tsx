@@ -1071,8 +1071,15 @@ export default function Search() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       
+      {/* Page Title */}
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-4 pb-2 px-4 -mt-px">
+        <h1 className="text-lg font-semibold text-white text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          Track media to shape your entertainment DNA
+        </h1>
+      </div>
+      
       {/* Currently Consuming Section */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-3 pb-2 -mt-px">
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-2 pb-2 -mt-px">
         <div className="px-4 mb-2">
           <h2 className="text-sm font-semibold text-white">Currently Consuming</h2>
           <p className="text-xs text-gray-400">Update your progress</p>
@@ -1120,12 +1127,6 @@ export default function Search() {
       {/* Dark Gradient Header Section - matches Activity page nav blend */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-3 pb-6 px-4 -mt-px">
         <div className="max-w-7xl mx-auto space-y-3">
-          {/* Header */}
-          <div className="text-center">
-            <h1 className="text-sm font-medium text-gray-300" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Add media to shape your Entertainment DNA
-            </h1>
-          </div>
 
           {/* Unified Search Bar with AI Mode Toggle */}
           <div className="bg-white rounded-2xl p-3 shadow-lg">
