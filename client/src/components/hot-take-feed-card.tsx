@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Flame, Snowflake, MessageCircle, Trash2 } from 'lucide-react';
+import { Flame, Snowflake, MessageCircle, Trash2, Plus } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -144,12 +144,27 @@ export function HotTakeFeedCard({ post, onComment, onDelete, currentUserId }: Ho
             />
             <div className="flex-1 min-w-0">
               {post.media_title && (
-                <p className="font-medium text-gray-900 text-sm truncate">{post.media_title}</p>
+                <p className="font-medium text-gray-900 text-sm line-clamp-2">{post.media_title}</p>
               )}
               {post.media_type && (
                 <p className="text-xs text-purple-600 capitalize">{post.media_type}</p>
               )}
             </div>
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined' && (window as any).openQuickAddModal) {
+                  (window as any).openQuickAddModal({
+                    title: post.media_title,
+                    mediaType: post.media_type,
+                    imageUrl: post.image_url,
+                  });
+                }
+              }}
+              className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors flex-shrink-0"
+              aria-label="Add to list"
+            >
+              <Plus size={18} />
+            </button>
           </div>
         )}
 
