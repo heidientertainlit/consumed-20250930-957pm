@@ -1390,6 +1390,7 @@ export default function UserProfile() {
       if (response.ok) {
         const data = await response.json();
         console.log('📋 Lists loaded for', userId, '- count:', data.lists?.length);
+        console.log('📋 Lists data sample:', data.lists?.slice(0, 3).map((l: any) => ({ title: l.title, itemCount: l.items?.length })));
         setUserLists(data.lists || []);
       } else {
         console.error('Failed to fetch user lists');
@@ -3028,31 +3029,41 @@ export default function UserProfile() {
               </h4>
               {userLists && userLists.length > 0 ? (
                 <div className="space-y-2">
-                  {userLists.slice(0, 4).map((list: any) => (
-                    <div 
-                      key={list.id}
-                      className="flex items-center justify-between py-1.5 px-2 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                  {userLists.slice(0, 4).map((list: any) => {
+                    const itemCount = list.items?.length ?? list.item_count ?? 0;
+                    return (
+                      <div 
+                        key={list.id}
+                        className="flex items-center justify-between py-1.5 px-2 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => {
+                          const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
+                          const userParam = viewingUserId ? `?user=${viewingUserId}` : '';
+                          setLocation(`/list/${listSlug}${userParam}`);
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-gradient-to-br from-purple-100 to-blue-100 rounded flex items-center justify-center">
+                            {list.title === 'Want to Watch' || list.title === 'Want To' ? <Play className="text-purple-600" size={12} /> :
+                             list.title === 'Currently' ? <Clock className="text-blue-600" size={12} /> :
+                             list.title === 'Completed' || list.title === 'Finished' ? <Trophy className="text-green-600" size={12} /> :
+                             <List className="text-purple-600" size={12} />}
+                          </div>
+                          <span className="text-sm font-medium text-gray-800">{list.title}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs text-gray-500">{itemCount}</span>
+                          <ChevronRight size={14} className="text-gray-400" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {userLists.length > 4 && (
+                    <button 
                       onClick={() => {
-                        const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
+                        const listSlug = userLists[0]?.title?.toLowerCase().replace(/\s+/g, '-') || 'all';
                         const userParam = viewingUserId ? `?user=${viewingUserId}` : '';
                         setLocation(`/list/${listSlug}${userParam}`);
                       }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-gradient-to-br from-purple-100 to-blue-100 rounded flex items-center justify-center">
-                          {list.title === 'Want to Watch' ? <Play className="text-purple-600" size={12} /> :
-                           list.title === 'Currently' ? <Clock className="text-blue-600" size={12} /> :
-                           list.title === 'Completed' ? <Trophy className="text-green-600" size={12} /> :
-                           <List className="text-purple-600" size={12} />}
-                        </div>
-                        <span className="text-sm font-medium text-gray-800">{list.title}</span>
-                      </div>
-                      <span className="text-xs text-gray-500">{list.items?.length || 0}</span>
-                    </div>
-                  ))}
-                  {userLists.length > 4 && (
-                    <button 
-                      onClick={() => setActiveSection('collections')}
                       className="text-xs text-purple-600 font-medium w-full text-center pt-1 hover:text-purple-700"
                     >
                       View all {userLists.length} lists →
