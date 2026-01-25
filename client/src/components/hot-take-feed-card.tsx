@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { QuickAddModal } from './quick-add-modal';
+import { QuickAddListSheet } from './quick-add-list-sheet';
 
 interface HotTakeFeedCardProps {
   post: {
@@ -201,10 +201,10 @@ export function HotTakeFeedCard({ post, onComment, onDelete, currentUserId }: Ho
         </div>
       </div>
 
-      <QuickAddModal
+      <QuickAddListSheet
         isOpen={isQuickAddOpen}
         onClose={() => setIsQuickAddOpen(false)}
-        preSelectedMedia={post.image_url ? {
+        media={post.image_url ? {
           title: post.media_title || '',
           mediaType: post.media_type || 'movie',
           imageUrl: post.image_url,
