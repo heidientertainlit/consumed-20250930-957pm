@@ -360,15 +360,15 @@ export default function PoolDetailPage() {
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <Card className="bg-gradient-to-br from-purple-700 via-purple-800 to-indigo-900 border-0 rounded-2xl p-4 text-center shadow-lg">
-            <div className="text-3xl font-black text-white mb-1">
+          <Card className="bg-gradient-to-br from-purple-900 via-purple-950 to-slate-950 border border-purple-800/30 rounded-2xl p-5 text-center shadow-xl">
+            <div className="text-3xl font-bold text-white mb-1 tracking-tight">
               {userRank === 1 ? '1st' : userRank === 2 ? '2nd' : userRank === 3 ? '3rd' : `${userRank}th`}
             </div>
-            <p className="text-purple-200 text-sm">Your Rank</p>
+            <p className="text-purple-300/70 text-sm font-medium">Your Rank</p>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-700 via-purple-800 to-indigo-900 border-0 rounded-2xl p-4 text-center shadow-lg">
-            <div className="text-3xl font-black text-green-400 mb-1">+37</div>
-            <p className="text-purple-200 text-sm">Points</p>
+          <Card className="bg-gradient-to-br from-purple-900 via-purple-950 to-slate-950 border border-purple-800/30 rounded-2xl p-5 text-center shadow-xl">
+            <div className="text-3xl font-bold text-emerald-400 mb-1 tracking-tight">+37</div>
+            <p className="text-purple-300/70 text-sm font-medium">Points</p>
           </Card>
         </div>
 
