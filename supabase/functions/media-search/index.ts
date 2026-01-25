@@ -296,23 +296,42 @@ serve(async (req) => {
               const accessToken = authData.access_token;
               
               const spotifyResponse = await fetchWithTimeout(
-                `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=show&limit=10`,
+                `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=show,episode&limit=10`,
                 { headers: { 'Authorization': `Bearer ${accessToken}` } },
                 3000
               );
               
               if (spotifyResponse.ok) {
                 const spotifyData = await spotifyResponse.json();
-                spotifyData.shows?.items?.forEach((podcast: any) => {
+                
+                // Add podcast shows
+                spotifyData.shows?.items?.slice(0, 5).forEach((podcast: any) => {
                   if (isContentAppropriate(podcast, 'podcast')) {
                     podcastResults.push({
                       title: podcast.name,
                       type: 'podcast',
+                      media_subtype: 'show',
                       creator: podcast.publisher,
                       poster_url: podcast.images?.[0]?.url || '',
                       external_id: podcast.id,
                       external_source: 'spotify',
                       description: podcast.description
+                    });
+                  }
+                });
+                
+                // Add individual podcast episodes
+                spotifyData.episodes?.items?.slice(0, 5).forEach((episode: any) => {
+                  if (isContentAppropriate(episode, 'podcast')) {
+                    podcastResults.push({
+                      title: episode.name,
+                      type: 'podcast',
+                      media_subtype: 'episode',
+                      creator: episode.show?.publisher || episode.show?.name || 'Unknown Show',
+                      poster_url: episode.images?.[0]?.url || episode.show?.images?.[0]?.url || '',
+                      external_id: episode.id,
+                      external_source: 'spotify',
+                      description: `Episode • ${episode.show?.name || 'Unknown Show'} • ${episode.release_date || ''}`
                     });
                   }
                 });
