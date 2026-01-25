@@ -278,7 +278,7 @@ export default function PoolsPage() {
       <div className="max-w-2xl mx-auto px-4 pt-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Your Games</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Your Pools</h1>
           <p className="text-gray-500 text-sm">See how you stack up</p>
         </div>
 
