@@ -3855,6 +3855,15 @@ export default function Feed() {
                                 </p>
                                 <span className="text-xs text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
                               </div>
+                              {user?.id && post.user?.id === user.id && (
+                                <button
+                                  onClick={() => handleDeletePost(post.id)}
+                                  className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                                  aria-label="Delete cast"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              )}
                             </div>
                             
                             {/* Celebrity Card */}

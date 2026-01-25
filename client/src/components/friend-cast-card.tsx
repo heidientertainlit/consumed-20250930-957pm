@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { trackEvent } from "@/lib/posthog";
-import { Search, Users, Loader2, ChevronLeft, ChevronRight, MessageSquare, Swords, Send } from "lucide-react";
+import { Search, Users, Loader2, ChevronLeft, ChevronRight, MessageSquare, Swords, Send, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import { supabase } from "@/lib/supabase";
 
@@ -38,9 +38,11 @@ interface FriendCastCardProps {
       responder: { id: string; user_name: string };
     }>;
   };
+  onDelete?: (castId: string) => void;
+  currentUserId?: string;
 }
 
-export default function FriendCastCard({ cast }: FriendCastCardProps) {
+export default function FriendCastCard({ cast, onDelete, currentUserId }: FriendCastCardProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const [showRespond, setShowRespond] = useState(false);
@@ -173,6 +175,15 @@ export default function FriendCastCard({ cast }: FriendCastCardProps) {
             {' '}says...
           </p>
         </div>
+        {currentUserId && cast.creator?.id === currentUserId && onDelete && (
+          <button
+            onClick={() => onDelete(cast.id)}
+            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+            aria-label="Delete cast"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
       </div>
 
       <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-3 mb-3">
