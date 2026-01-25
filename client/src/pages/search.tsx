@@ -247,8 +247,12 @@ export default function Search() {
       });
       if (response.ok) {
         const data = await response.json();
+        console.log('📺 Currently Consuming - All lists:', data.lists?.map((l: any) => ({ title: l.title, itemCount: l.items?.length })));
         const currentlyList = (data.lists || []).find((list: any) => list.title === 'Currently');
+        console.log('📺 Currently list found:', currentlyList?.title, 'Items:', currentlyList?.items?.length);
         setCurrentlyItems(currentlyList?.items?.slice(0, 10) || []);
+      } else {
+        console.error('📺 Failed to fetch lists:', response.status);
       }
     } catch (error) {
       console.error('Error fetching currently items:', error);
@@ -1069,12 +1073,12 @@ export default function Search() {
       <Navigation />
       
       {/* Currently Consuming Section */}
-      {currentlyItems.length > 0 && (
-        <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-6 pb-4 -mt-px">
-          <div className="px-4 mb-3">
-            <h2 className="text-lg font-semibold text-white">Currently Consuming</h2>
-            <p className="text-sm text-gray-400">Update your progress</p>
-          </div>
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-6 pb-4 -mt-px">
+        <div className="px-4 mb-3">
+          <h2 className="text-lg font-semibold text-white">Currently Consuming</h2>
+          <p className="text-sm text-gray-400">Update your progress</p>
+        </div>
+        {currentlyItems.length > 0 ? (
           <div 
             className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 px-4"
             style={{ WebkitOverflowScrolling: 'touch' }}
@@ -1103,8 +1107,16 @@ export default function Search() {
               />
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="px-4 pb-2">
+            <div className="bg-white/10 border border-white/20 rounded-xl p-4 text-center">
+              <Clock className="mx-auto mb-2 text-purple-300" size={24} />
+              <p className="text-white/80 text-sm">No items in your Currently list yet</p>
+              <p className="text-gray-400 text-xs mt-1">Search for something and add it to "Currently" to track your progress</p>
+            </div>
+          </div>
+        )}
+      </div>
       
       {/* Dark Gradient Header Section - matches Activity page nav blend */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-8 px-4 -mt-px">
