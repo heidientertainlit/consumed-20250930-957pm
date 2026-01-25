@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Flame, Search, Send, X, ChevronRight, Grid } from 'lucide-react';
+import { Flame, Search, Send, X, ChevronRight, Grid, Star, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
+import { useLocation } from 'wouter';
 
 interface PreselectedMedia {
   id: string;
@@ -21,6 +23,7 @@ interface QuickReactCardProps {
 export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps) {
   const { session } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [isExpanded, setIsExpanded] = useState(!!preselectedMedia);
   const [step, setStep] = useState<'search' | 'react'>(preselectedMedia ? 'react' : 'search');
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,6 +33,8 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [recentMedia, setRecentMedia] = useState<any[]>([]);
+  const [showPostDialog, setShowPostDialog] = useState(false);
+  const [postedMedia, setPostedMedia] = useState<any>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const popularMedia = [
@@ -144,12 +149,10 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
 
       if (error) throw error;
 
-      toast({
-        title: "Hot take posted!",
-        description: "Your take is now live.",
-      });
-      
+      // Save the media for the dialog and show it
+      setPostedMedia(selectedMedia);
       handleClose();
+      setShowPostDialog(true);
       onPost?.();
     } catch (error) {
       console.error('Post error:', error);
@@ -174,6 +177,7 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
   if (!session) return null;
 
   return (
+    <>
     <Card className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-2xl overflow-hidden shadow-sm transition-all">
       {/* Header - always visible, tap to expand/collapse */}
       <div 
@@ -337,5 +341,62 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
         </div>
       )}
     </Card>
+
+    {/* Post-submission dialog */}
+    <Dialog open={showPostDialog} onOpenChange={setShowPostDialog}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-center text-lg">Take posted!</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col items-center py-4">
+          {postedMedia?.image && (
+            <img 
+              src={postedMedia.image} 
+              alt={postedMedia?.title} 
+              className="w-20 h-28 object-cover rounded-lg mb-3 shadow-md"
+            />
+          )}
+          <p className="text-center text-gray-600 mb-4">
+            Want to rate <span className="font-medium text-gray-900">{postedMedia?.title}</span> or add it to a list?
+          </p>
+          <div className="flex gap-3 w-full">
+            <Button
+              variant="outline"
+              className="flex-1 gap-2"
+              onClick={() => {
+                setShowPostDialog(false);
+                // Navigate to media page for rating
+                if (postedMedia?.external_id && postedMedia?.external_source) {
+                  setLocation(`/media/${postedMedia.external_source}/${postedMedia.external_id}`);
+                }
+              }}
+            >
+              <Star className="w-4 h-4" />
+              Rate it
+            </Button>
+            <Button
+              className="flex-1 gap-2 bg-purple-600 hover:bg-purple-700"
+              onClick={() => {
+                setShowPostDialog(false);
+                // Navigate to quick add / lists
+                if (postedMedia?.external_id && postedMedia?.external_source) {
+                  setLocation(`/media/${postedMedia.external_source}/${postedMedia.external_id}?action=add`);
+                }
+              }}
+            >
+              <List className="w-4 h-4" />
+              Add to list
+            </Button>
+          </div>
+          <button
+            className="mt-4 text-sm text-gray-500 hover:text-gray-700"
+            onClick={() => setShowPostDialog(false)}
+          >
+            Maybe later
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
