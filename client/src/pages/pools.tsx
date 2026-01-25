@@ -277,9 +277,14 @@ export default function PoolsPage() {
       
       <div className="max-w-2xl mx-auto px-4 pt-6">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Your Pools</h1>
-          <p className="text-gray-500 text-sm">See how you stack up</p>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+            <Trophy size={20} className="text-purple-600" />
+          </div>
+          <div className="flex-1">
+            <h1 className="text-lg font-semibold text-gray-900">Your Pools</h1>
+            <p className="text-gray-400 text-sm">See how you stack up</p>
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -544,7 +549,7 @@ export default function PoolsPage() {
             </Button>
           </Card>
         ) : (
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-5">
             {pools.map((pool) => {
               const userRank = Math.floor(Math.random() * 5) + 1;
               const rankSuffix = userRank === 1 ? 'st' : userRank === 2 ? 'nd' : userRank === 3 ? 'rd' : 'th';
