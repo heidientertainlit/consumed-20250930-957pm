@@ -311,10 +311,10 @@ export default function PoolDetailPage() {
           {/* Pool Info */}
           <div className="flex-1 min-w-0 pt-1">
             <h1 className="text-xl font-bold text-gray-900 mb-1">
-              {pool.media_title || pool.name.split(' ')[0]}
+              {pool.name}
             </h1>
             <p className="text-gray-500 text-sm mb-3">
-              {pool.name.includes('Season') ? pool.name.split(' ').slice(-2).join(' ') : 'Season 1'}
+              {members.length} players · {userRank === 1 ? '1st' : userRank === 2 ? '2nd' : userRank === 3 ? '3rd' : `${userRank}th`} place
             </p>
             
             {/* Make Your Pick Button */}
@@ -336,6 +336,16 @@ export default function PoolDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Invite Friends Button */}
+        <Button
+          onClick={() => copyInviteCode(pool.invite_code)}
+          variant="outline"
+          className="w-full mb-6 py-3 rounded-xl border-purple-200 text-purple-600 hover:bg-purple-50 font-medium"
+        >
+          <Users size={16} className="mr-2" />
+          Invite Friends to Play
+        </Button>
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-4 mb-6">
