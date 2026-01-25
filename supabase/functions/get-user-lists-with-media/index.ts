@@ -313,10 +313,10 @@ serve(async (req) => {
     if (targetUserId) {
       const { data: items, error: itemsError } = await queryClient
         .from('list_items')
-        .select('id, list_id, title, type, media_type, creator, image_url, notes, created_at, media_id, external_id, external_source, progress, total, progress_mode, position')
-        .eq('user_id', targetUserId)
-        .order('position', { ascending: true, nullsFirst: false })
-        .order('created_at', { ascending: false });
+        .select('*')
+        .eq('user_id', targetUserId);
+      
+      console.log('list_items query result:', { itemCount: items?.length, error: itemsError });
       
       if (itemsError) {
         console.error('Error fetching user items:', itemsError);
