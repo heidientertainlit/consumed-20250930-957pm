@@ -1,6 +1,9 @@
 import { useState, useRef, useMemo } from 'react';
 import { Link } from 'wouter';
-import { ChevronLeft, ChevronRight, Users, ThumbsUp, ThumbsDown, HelpCircle, BarChart3, Sparkles, Film, Tv, BookOpen, Music, Star, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ThumbsUp, ThumbsDown, HelpCircle, BarChart3, Sparkles, Film, Tv, BookOpen, Music, Star, Plus, Trash2 } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
 
 const getStablePercent = (id: string, min = 40, max = 80) => {
   let hash = 0;
@@ -38,6 +41,7 @@ interface FriendActivityItem {
 interface ConsumptionCarouselProps {
   items: FriendActivityItem[];
   title?: string;
+  onItemDeleted?: () => void;
 }
 
 const getMediaIcon = (mediaType?: string) => {
@@ -69,10 +73,43 @@ const getTypeIcon = (type: string) => {
   }
 };
 
-export default function ConsumptionCarousel({ items, title = "Community" }: ConsumptionCarouselProps) {
+export default function ConsumptionCarousel({ items, title = "Community", onItemDeleted }: ConsumptionCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reactions, setReactions] = useState<Record<string, 'agree' | 'disagree'>>({});
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const handleDelete = async (itemId: string) => {
+    if (!user?.id) return;
+    
+    setDeletingId(itemId);
+    try {
+      const { error } = await supabase
+        .from('list_items')
+        .delete()
+        .eq('id', itemId)
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Removed",
+        description: "Item deleted from your activity.",
+      });
+      
+      onItemDeleted?.();
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Couldn't delete",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+    setDeletingId(null);
+  };
 
   // Group items into pages
   const ITEMS_PER_PAGE = 3;
@@ -182,6 +219,16 @@ export default function ConsumptionCarousel({ items, title = "Community" }: Cons
               >
                 <Plus className="w-3 h-3 text-gray-600" />
               </button>
+              {user?.id === item.userId && (
+                <button
+                  onClick={() => handleDelete(item.id)}
+                  disabled={deletingId === item.id}
+                  className="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50"
+                  title="Delete"
+                >
+                  <Trash2 className="w-3 h-3 text-gray-600" />
+                </button>
+              )}
             </div>
           </div>
         </div>
