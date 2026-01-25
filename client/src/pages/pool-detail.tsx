@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Loader2, Lock, Sparkles, Trash2, Crown, X as XIcon, Share2, Zap } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Loader2, Trash2, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -12,27 +12,8 @@ import Navigation from '@/components/navigation';
 interface Contestant {
   id: string;
   name: string;
-  image_url: string;
   eliminated: boolean;
   eliminated_week?: number;
-}
-
-interface Prompt {
-  id: string;
-  prompt_text: string;
-  prompt_type: string;
-  options: string[] | null;
-  points_value: number;
-  deadline: string | null;
-  status: string;
-  correct_answer: string | null;
-  resolved_at: string | null;
-  user_answer: {
-    answer: string;
-    is_correct: boolean | null;
-    points_earned: number | null;
-    submitted_at: string;
-  } | null;
 }
 
 interface Member {
@@ -59,12 +40,8 @@ interface PoolDetail {
     deadline: string | null;
     is_public: boolean;
     created_at: string;
-    list_id: number | null;
     pool_type: string | null;
-    media_id: string | null;
     media_title: string | null;
-    media_image: string | null;
-    media_type: string | null;
     host: {
       id: string;
       user_name: string;
@@ -72,16 +49,11 @@ interface PoolDetail {
       avatar_url: string | null;
     };
   };
-  prompts: Prompt[];
+  prompts: any[];
   members: Member[];
   is_host: boolean;
   is_member: boolean;
   user_role: string | null;
-  shared_list: {
-    id: number;
-    title: string;
-    item_count: number;
-  } | null;
 }
 
 export default function PoolDetailPage() {
@@ -92,26 +64,20 @@ export default function PoolDetailPage() {
   const [, setLocation] = useLocation();
   const [copiedCode, setCopiedCode] = useState(false);
   const [selectedContestant, setSelectedContestant] = useState<string | null>(null);
-  const [winnerPick, setWinnerPick] = useState<string | null>(null);
-  const [isLocking, setIsLocking] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(true);
-  const [showFriendPicks, setShowFriendPicks] = useState(false);
+  const [showPickView, setShowPickView] = useState(false);
+  const [hasLocked, setHasLocked] = useState(false);
 
-  // Mock data for contestants - in production this would come from the pool
-  const [contestants, setContestants] = useState<Contestant[]>([
-    { id: '1', name: 'Alex', image_url: '', eliminated: false },
-    { id: '2', name: 'Jordan', image_url: '', eliminated: false },
-    { id: '3', name: 'Taylor', image_url: '', eliminated: false },
-    { id: '4', name: 'Morgan', image_url: '', eliminated: false },
-    { id: '5', name: 'Casey', image_url: '', eliminated: true, eliminated_week: 1 },
-    { id: '6', name: 'Riley', image_url: '', eliminated: false },
-    { id: '7', name: 'Quinn', image_url: '', eliminated: true, eliminated_week: 2 },
-    { id: '8', name: 'Avery', image_url: '', eliminated: false },
-  ]);
+  // Mock contestants for demo
+  const contestants: Contestant[] = [
+    { id: '1', name: 'Alex', eliminated: false },
+    { id: '2', name: 'Sam', eliminated: false },
+    { id: '3', name: 'Jordan', eliminated: false },
+    { id: '4', name: 'Chris', eliminated: false },
+    { id: '5', name: 'Emma', eliminated: true, eliminated_week: 2 },
+    { id: '6', name: 'Taylor', eliminated: false },
+  ];
 
-  const currentWeek = 3;
-  const totalWeeks = 10;
+  const activeContestants = contestants.filter(c => !c.eliminated);
 
   const { data: poolData, isLoading, error } = useQuery<PoolDetail>({
     queryKey: ['pool-detail', params.id],
@@ -170,75 +136,26 @@ export default function PoolDetailPage() {
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
-
-  const handleContestantTap = (id: string) => {
-    if (contestants.find(c => c.id === id)?.eliminated) return;
-    
-    if (selectedContestant === id) {
-      setSelectedContestant(null);
-    } else {
-      setSelectedContestant(id);
-    }
+  const handleSelectContestant = (id: string) => {
+    setSelectedContestant(id);
   };
 
-  const handlePressStart = (id: string) => {
-    if (contestants.find(c => c.id === id)?.eliminated) return;
-    const timer = setTimeout(() => {
-      setWinnerPick(winnerPick === id ? null : id);
-      toast({ title: winnerPick === id ? 'Winner pick removed' : '👑 Winner pick set!' });
-    }, 600);
-    setPressTimer(timer);
-  };
-
-  const handlePressEnd = () => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      setPressTimer(null);
-    }
-  };
-
-  const handleLockIn = async () => {
+  const handleLockIn = () => {
     if (!selectedContestant) return;
-    
-    setIsLocking(true);
-    
-    // Dramatic delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    setShowConfetti(true);
+    setHasLocked(true);
+    setShowPickView(false);
     toast({ 
-      title: '🔒 LOCKED IN!',
-      description: `You picked ${contestants.find(c => c.id === selectedContestant)?.name} going home`,
+      title: 'Pick locked in!',
+      description: `You picked ${contestants.find(c => c.id === selectedContestant)?.name}`,
     });
-    
-    // Show friend picks after locking
-    setTimeout(() => {
-      setShowFriendPicks(true);
-      setIsLocking(false);
-    }, 1000);
-    
-    setTimeout(() => setShowConfetti(false), 2000);
   };
-
-  const activeContestants = contestants.filter(c => !c.eliminated);
-  const eliminatedContestants = contestants.filter(c => c.eliminated);
-
-  // Mock friend picks data
-  const friendPicks = [
-    { name: 'Sarah', pick: 'Alex', avatar: '' },
-    { name: 'Mike', pick: 'Alex', avatar: '' },
-    { name: 'Emma', pick: 'Jordan', avatar: '' },
-  ];
-
-  const samePick = friendPicks.filter(f => f.pick === contestants.find(c => c.id === selectedContestant)?.name);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-900">
+      <div className="min-h-screen bg-gray-50">
         <Navigation />
         <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-purple-500" size={32} />
+          <Loader2 className="animate-spin text-purple-600" size={32} />
         </div>
       </div>
     );
@@ -246,11 +163,11 @@ export default function PoolDetailPage() {
 
   if (error || !poolData) {
     return (
-      <div className="min-h-screen bg-gray-900">
+      <div className="min-h-screen bg-gray-50">
         <Navigation />
         <div className="flex flex-col items-center justify-center h-[70vh] px-4 text-center">
-          <p className="text-gray-400 mb-4">{(error as Error)?.message || 'Pool not found'}</p>
-          <Button onClick={() => setLocation('/pools')} variant="outline" className="border-gray-600 text-white">
+          <p className="text-gray-500 mb-4">{(error as Error)?.message || 'Pool not found'}</p>
+          <Button onClick={() => setLocation('/pools')} variant="outline">
             Back to Pools
           </Button>
         </div>
@@ -260,63 +177,115 @@ export default function PoolDetailPage() {
 
   const { pool, members, is_host } = poolData;
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900/20 to-gray-900 pb-32">
-      <Navigation />
+  // Mock user rank
+  const userRank: number = 3;
+  const lastEliminated = contestants.find(c => c.eliminated)?.name || 'No one yet';
 
-      {/* Confetti effect */}
-      {showConfetti && (
-        <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute animate-bounce"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `-20px`,
-                animationDelay: `${Math.random() * 0.5}s`,
-                animationDuration: '1s',
-              }}
+  // Pick View - Full screen selection
+  if (showPickView) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 pb-24">
+        <div className="max-w-lg mx-auto px-4 pt-4">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <button 
+              onClick={() => setShowPickView(false)} 
+              className="flex items-center gap-1 text-white/70 hover:text-white text-sm"
             >
-              <span className="text-2xl">{['🎉', '✨', '🔥', '⭐'][Math.floor(Math.random() * 4)]}</span>
+              <ArrowLeft size={16} />
+              <span>Back</span>
+            </button>
+          </div>
+
+          {/* Question */}
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-white mb-2">Who goes home this week?</h1>
+            <p className="text-white/60 text-sm">Tap to select your pick</p>
+          </div>
+
+          {/* Contestant Buttons */}
+          <div className="space-y-3 mb-8">
+            {activeContestants.map((contestant, index) => {
+              const gradients = [
+                'from-purple-400 to-purple-600',
+                'from-indigo-400 to-purple-500',
+                'from-purple-500 to-pink-500',
+                'from-pink-400 to-rose-500',
+                'from-rose-400 to-orange-400',
+                'from-orange-400 to-amber-400',
+              ];
+              const gradient = gradients[index % gradients.length];
+              const isSelected = selectedContestant === contestant.id;
+
+              return (
+                <button
+                  key={contestant.id}
+                  onClick={() => handleSelectContestant(contestant.id)}
+                  className={`w-full py-4 px-6 rounded-xl text-white font-semibold text-lg transition-all duration-200 bg-gradient-to-r ${gradient} ${
+                    isSelected 
+                      ? 'ring-4 ring-white shadow-lg scale-[1.02]' 
+                      : 'hover:scale-[1.01] hover:shadow-md'
+                  }`}
+                >
+                  {contestant.name}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Lock In Button */}
+          {selectedContestant && (
+            <div className="text-center">
+              <Button
+                onClick={handleLockIn}
+                className="w-full py-6 text-lg font-bold bg-green-500 hover:bg-green-600 text-white rounded-xl"
+              >
+                Lock In Pick
+              </Button>
+              <p className="text-white/50 text-sm mt-3">How sure are you? 🤔😎</p>
             </div>
-          ))}
+          )}
         </div>
-      )}
+      </div>
+    );
+  }
+
+  // Main Pool View
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 pb-24">
+      <Navigation />
 
       <div className="max-w-lg mx-auto px-4 pt-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <button onClick={() => setLocation('/pools')} className="flex items-center gap-1 text-gray-400 hover:text-white text-sm">
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => setLocation('/pools')} className="flex items-center gap-1 text-white/70 hover:text-white text-sm">
             <ArrowLeft size={16} />
-            <span>Back</span>
           </button>
           <div className="flex items-center gap-2">
             <Button
               onClick={() => copyInviteCode(pool.invite_code)}
               size="sm"
               variant="ghost"
-              className="text-gray-400 hover:text-white"
+              className="text-white/70 hover:text-white hover:bg-white/10"
             >
-              <Share2 size={16} className="mr-1" />
-              Invite
+              {copiedCode ? <Check size={16} /> : <Share2 size={16} />}
             </Button>
             {is_host && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-900/20">
+                  <Button variant="ghost" size="sm" className="text-red-300 hover:text-red-200 hover:bg-red-500/20">
                     <Trash2 size={16} />
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="bg-gray-800 border-gray-700">
+                <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle className="text-white">Delete this pool?</AlertDialogTitle>
-                    <AlertDialogDescription className="text-gray-400">
+                    <AlertDialogTitle>Delete this pool?</AlertDialogTitle>
+                    <AlertDialogDescription>
                       This will permanently delete the pool and all picks.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel className="bg-gray-700 text-white border-gray-600">Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => deletePoolMutation.mutate()}
                       className="bg-red-600 hover:bg-red-700 text-white"
@@ -330,260 +299,126 @@ export default function PoolDetailPage() {
           </div>
         </div>
 
-        {/* Design Preview Badge */}
-        <div className="flex justify-center mb-4">
-          <span className="px-3 py-1 bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 text-xs font-bold uppercase rounded-full">
-            ✨ Design Preview
-          </span>
-        </div>
-
-        {/* Pool Title Card */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-white mb-1">{pool.name}</h1>
-          <p className="text-purple-400 text-sm">{pool.description || 'Season Picks'}</p>
-        </div>
-
-        {/* Week Progress */}
+        {/* Title */}
         <div className="mb-6">
-          <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-gray-400">Week {currentWeek} of {totalWeeks}</span>
-            <span className="text-purple-400 font-medium flex items-center gap-1">
-              <Clock size={14} />
-              Picks lock in 2h 30m
-            </span>
-          </div>
-          <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
-              style={{ width: `${(currentWeek / totalWeeks) * 100}%` }}
-            />
+          <h1 className="text-2xl font-bold text-white">
+            {pool.media_title || pool.name.split(' ')[0]}: <span className="font-normal">{pool.name.includes('Season') ? pool.name.split(' ').slice(-2).join(' ') : 'Season 1'}</span>
+          </h1>
+          <div className="flex items-center gap-2 text-white/60 text-sm mt-1">
+            <Clock size={14} />
+            <span>Next picks close in 2 days</span>
           </div>
         </div>
 
-        {/* Main Question */}
-        <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 rounded-2xl p-4 mb-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Zap className="text-yellow-400" size={18} />
-            <span className="text-yellow-400 text-xs font-bold uppercase tracking-wide">This Week's Pick</span>
-          </div>
-          <h2 className="text-xl font-bold text-white">Who gets eliminated?</h2>
-          <p className="text-gray-400 text-sm mt-1">Tap to select • Long-press to pick winner</p>
-        </div>
-
-        {/* Contestant Grid */}
-        <div className="grid grid-cols-4 gap-3 mb-6">
-          {activeContestants.map((contestant) => (
-            <button
-              key={contestant.id}
-              onClick={() => handleContestantTap(contestant.id)}
-              onMouseDown={() => handlePressStart(contestant.id)}
-              onMouseUp={handlePressEnd}
-              onMouseLeave={handlePressEnd}
-              onTouchStart={() => handlePressStart(contestant.id)}
-              onTouchEnd={handlePressEnd}
-              className={`relative aspect-square rounded-2xl overflow-hidden transition-all duration-200 ${
-                selectedContestant === contestant.id 
-                  ? 'ring-4 ring-red-500 scale-105 shadow-lg shadow-red-500/30' 
-                  : winnerPick === contestant.id
-                  ? 'ring-4 ring-yellow-400 scale-105 shadow-lg shadow-yellow-400/30'
-                  : 'ring-2 ring-gray-700 hover:ring-purple-500'
-              }`}
-            >
-              {/* Placeholder avatar with gradient */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${
-                selectedContestant === contestant.id 
-                  ? 'from-red-600 to-red-800' 
-                  : winnerPick === contestant.id
-                  ? 'from-yellow-500 to-orange-600'
-                  : 'from-purple-600 to-indigo-700'
-              }`}>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-2xl font-bold text-white/80">{contestant.name.charAt(0)}</span>
-                </div>
-              </div>
-
-              {/* Name label */}
-              <div className="absolute bottom-0 inset-x-0 bg-black/60 py-1 px-1">
-                <p className="text-white text-xs font-medium text-center truncate">{contestant.name}</p>
-              </div>
-
-              {/* Selection indicators */}
-              {selectedContestant === contestant.id && (
-                <div className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                  <XIcon size={14} className="text-white" />
-                </div>
-              )}
-              {winnerPick === contestant.id && (
-                <div className="absolute top-1 right-1 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <Crown size={14} className="text-gray-900" />
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Eliminated Row */}
-        {eliminatedContestants.length > 0 && (
-          <div className="mb-6">
-            <p className="text-gray-500 text-xs uppercase tracking-wide mb-3">Eliminated</p>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {eliminatedContestants.map((contestant) => (
-                <div 
-                  key={contestant.id}
-                  className="relative w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 opacity-50 grayscale"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-600 to-gray-800">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-lg font-bold text-white/50">{contestant.name.charAt(0)}</span>
-                    </div>
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                    <XIcon className="text-red-400" size={24} />
-                  </div>
-                  <div className="absolute bottom-0 inset-x-0 bg-black/60 py-0.5">
-                    <p className="text-gray-400 text-[10px] text-center">Wk {contestant.eliminated_week}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Lock In Button */}
-        <div className="mb-6">
-          <button
-            onClick={handleLockIn}
-            disabled={!selectedContestant || isLocking}
-            className={`w-full py-4 rounded-2xl font-bold text-lg uppercase tracking-wide transition-all duration-300 ${
-              selectedContestant && !isLocking
-                ? 'bg-gradient-to-r from-red-500 via-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/40 hover:scale-[1.02] active:scale-95'
-                : 'bg-gray-800 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            {isLocking ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader2 className="animate-spin" size={20} />
-                Locking...
-              </span>
-            ) : selectedContestant ? (
-              <span className="flex items-center justify-center gap-2">
-                <Lock size={20} />
-                Lock It In
-              </span>
-            ) : (
-              'Select who goes home'
-            )}
-          </button>
-          {selectedContestant && (
-            <p className="text-center text-gray-400 text-sm mt-2">
-              Your pick: <span className="text-red-400 font-semibold">{contestants.find(c => c.id === selectedContestant)?.name}</span> going home
-            </p>
-          )}
-        </div>
-
-        {/* Friend Picks Reveal */}
-        {showFriendPicks && (
-          <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-4 mb-6 animate-in slide-in-from-bottom-4">
-            <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-              <Users size={18} className="text-purple-400" />
-              Your Circle's Picks
-            </h3>
+        {/* Make Your Pick Card */}
+        <Card className="bg-[#f5f0e8] border-0 rounded-2xl p-6 mb-6 shadow-lg relative overflow-hidden">
+          {/* Paper texture effect */}
+          <div className="absolute inset-0 opacity-30" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          }} />
+          
+          <div className="relative">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Make Your Pick</h2>
+            <p className="text-gray-600 mb-4">Who's getting eliminated next?</p>
             
-            {samePick.length > 0 && (
-              <div className="bg-green-500/20 border border-green-500/30 rounded-xl p-3 mb-3">
-                <p className="text-green-400 text-sm">
-                  🔥 <span className="font-bold">{samePick.length} friends</span> made the same pick!
-                </p>
-              </div>
-            )}
+            <Button
+              onClick={() => setShowPickView(true)}
+              className="w-full py-5 text-lg font-semibold bg-green-500 hover:bg-green-600 text-white rounded-xl"
+            >
+              {hasLocked ? 'Change Pick' : 'Pick Now'}
+            </Button>
 
-            <div className="space-y-2">
-              {friendPicks.map((friend, i) => (
-                <div key={i} className="flex items-center justify-between bg-gray-900/50 rounded-xl px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">{friend.name.charAt(0)}</span>
-                    </div>
-                    <span className="text-white text-sm">{friend.name}</span>
-                  </div>
-                  <span className={`text-sm font-medium ${
-                    friend.pick === contestants.find(c => c.id === selectedContestant)?.name 
-                      ? 'text-green-400' 
-                      : 'text-gray-400'
-                  }`}>
-                    {friend.pick}
-                    {friend.pick === contestants.find(c => c.id === selectedContestant)?.name && ' ✓'}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {hasLocked && selectedContestant && (
+              <p className="text-center text-gray-500 text-sm mt-3">
+                Your pick: <span className="font-semibold text-gray-700">{contestants.find(c => c.id === selectedContestant)?.name}</span>
+              </p>
+            )}
           </div>
-        )}
+        </Card>
+
+        {/* Your Status */}
+        <div className="mb-6">
+          <h3 className="text-xl font-bold text-white mb-2">
+            You're in <span className="text-green-400">{userRank === 1 ? '1st' : userRank === 2 ? '2nd' : userRank === 3 ? '3rd' : `${userRank}th`}</span> place
+          </h3>
+          <div className="flex items-center gap-2 text-white/60 text-sm">
+            <div className="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-xs text-white">
+              {lastEliminated.charAt(0)}
+            </div>
+            <span>{lastEliminated} was eliminated</span>
+          </div>
+        </div>
 
         {/* Leaderboard */}
-        <div className="bg-gray-800/50 border border-gray-700 rounded-2xl overflow-hidden">
-          <button
-            onClick={() => setShowLeaderboard(!showLeaderboard)}
-            className="w-full px-4 py-3 flex items-center justify-between text-white"
-          >
-            <span className="flex items-center gap-2 font-semibold">
-              <Trophy size={18} className="text-yellow-400" />
-              Leaderboard
-            </span>
-            <span className="text-gray-400 text-sm">{members.length} players</span>
-          </button>
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden">
+          <div className="px-4 py-3 border-b border-white/10">
+            <h3 className="text-white/80 font-medium">Group leaderboard</h3>
+          </div>
           
-          {showLeaderboard && (
-            <div className="px-4 pb-4 space-y-2">
-              {members.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-4">No members yet</p>
-              ) : (
-                members
-                  .sort((a, b) => b.total_points - a.total_points)
-                  .slice(0, 5)
-                  .map((member, index) => (
+          <div className="divide-y divide-white/10">
+            {members.length === 0 ? (
+              <div className="px-4 py-8 text-center text-white/50">
+                No members yet. Share the invite code!
+              </div>
+            ) : (
+              members
+                .sort((a, b) => b.total_points - a.total_points)
+                .map((member, index) => {
+                  const isCurrentUser = member.users.user_name === 'You'; // Would need real logic
+                  const pointsChange = Math.floor(Math.random() * 20) + 5; // Mock
+
+                  return (
                     <div
                       key={member.user_id}
-                      className="flex items-center justify-between bg-gray-900/50 rounded-xl px-3 py-2"
+                      className={`flex items-center justify-between px-4 py-3 ${isCurrentUser ? 'bg-white/5' : ''}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                          index === 0 ? 'bg-yellow-400 text-gray-900' :
-                          index === 1 ? 'bg-gray-300 text-gray-900' :
-                          index === 2 ? 'bg-orange-400 text-gray-900' :
-                          'bg-gray-700 text-gray-400'
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                          index === 0 ? 'bg-yellow-400 text-yellow-900' :
+                          index === 1 ? 'bg-gray-300 text-gray-700' :
+                          index === 2 ? 'bg-orange-400 text-orange-900' :
+                          'bg-white/20 text-white'
                         }`}>
-                          {index + 1}
-                        </div>
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center overflow-hidden">
                           {member.users.avatar_url ? (
-                            <img src={member.users.avatar_url} alt="" className="w-full h-full object-cover" />
+                            <img src={member.users.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
                           ) : (
-                            <span className="text-white text-sm font-bold">
-                              {(member.users.display_name || member.users.user_name).charAt(0).toUpperCase()}
+                            (member.users.display_name || member.users.user_name).charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <span className="text-white font-medium">
+                            {member.users.display_name || member.users.user_name}
+                          </span>
+                          {index === 0 && (
+                            <span className="ml-2 text-yellow-400">
+                              <Trophy size={14} className="inline" />
                             </span>
                           )}
                         </div>
-                        <span className="text-white text-sm font-medium">
-                          {member.users.display_name || member.users.user_name}
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <span className="text-white font-semibold">{member.total_points} pts</span>
+                        <span className="text-green-400 text-sm font-medium">+{pointsChange}</span>
+                        <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs font-bold">
+                          +{pointsChange}
                         </span>
                       </div>
-                      <span className="text-purple-400 font-bold">{member.total_points} pts</span>
                     </div>
-                  ))
-              )}
-            </div>
-          )}
+                  );
+                })
+            )}
+          </div>
         </div>
 
-        {/* Invite Code Footer */}
+        {/* Invite Code */}
         <div className="mt-6 text-center">
           <button
             onClick={() => copyInviteCode(pool.invite_code)}
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-purple-400 transition-colors text-sm"
+            className="inline-flex items-center gap-2 text-white/50 hover:text-white/80 transition-colors text-sm"
           >
             {copiedCode ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
-            <span className="font-mono">{pool.invite_code}</span>
+            <span>Invite Code: <span className="font-mono font-bold">{pool.invite_code}</span></span>
           </button>
         </div>
       </div>

@@ -276,16 +276,23 @@ export default function PoolsPage() {
       <Navigation />
       
       <div className="max-w-2xl mx-auto px-4 pt-6">
-        <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm mb-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center flex-shrink-0">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">Your Pools</h1>
-              <p className="text-xs text-gray-500">Compete with friends on predictions</p>
-            </div>
-          </div>
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Your Games</h1>
+          <p className="text-gray-500 text-sm">See how you stack up</p>
+        </div>
+
+        {/* Start Picks Button */}
+        <Button 
+          onClick={() => setIsCreateOpen(true)}
+          className="w-full py-5 rounded-full bg-white border-2 border-gray-200 text-gray-900 hover:bg-gray-50 hover:border-purple-300 shadow-sm font-semibold text-base mb-6"
+        >
+          <Plus size={18} className="mr-2 text-purple-600" />
+          Start Picks
+        </Button>
+
+        {/* Action Buttons */}
+        <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm mb-6">
           <div className="flex gap-2">
             <Dialog open={isJoinOpen} onOpenChange={setIsJoinOpen}>
               <DialogTrigger asChild>
@@ -547,61 +554,45 @@ export default function PoolsPage() {
           </Card>
         ) : (
           <div className="space-y-3">
-            {pools.map((pool) => (
-              <Link key={pool.id} href={`/pool/${pool.id}`}>
-                <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:border-purple-300 transition-colors cursor-pointer">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-900 truncate">{pool.name}</h3>
-                        {pool.is_host && (
-                          <span className="px-1.5 py-0.5 text-[10px] bg-amber-100 text-amber-700 rounded font-medium">HOST</span>
-                        )}
-                        <span className={`px-1.5 py-0.5 text-[10px] rounded font-medium ${
-                          pool.status === 'open' ? 'bg-green-100 text-green-700' :
-                          pool.status === 'locked' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-gray-100 text-gray-600'
-                        }`}>
-                          {pool.status.toUpperCase()}
-                        </span>
+            {pools.map((pool) => {
+              // Mock data for demo
+              const userRank = Math.floor(Math.random() * 5) + 1;
+              const rankSuffix = userRank === 1 ? 'st' : userRank === 2 ? 'nd' : userRank === 3 ? 'rd' : 'th';
+              const daysLeft = Math.floor(Math.random() * 7) + 1;
+              
+              return (
+                <Link key={pool.id} href={`/pool/${pool.id}`}>
+                  <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:border-purple-300 transition-colors cursor-pointer">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-lg font-bold text-gray-900">
+                            {pool.name.split(' ')[0]}: <span className="font-normal">{pool.name.split(' ').slice(1).join(' ') || 'Season 1'}</span>
+                          </h3>
+                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
+                            pool.status === 'open' ? 'bg-green-100 text-green-700 border border-green-200' :
+                            pool.status === 'locked' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {pool.status === 'open' ? 'Picks open' : pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-500">
+                          <Users size={12} className="inline mr-1" />
+                          {pool.member_count} &nbsp;You're {userRank === 1 ? 'tied for' : 'in'} {userRank}{rankSuffix} place
+                        </p>
                       </div>
-                      {pool.description && (
-                        <p className="text-sm text-gray-500 line-clamp-1 mb-2">{pool.description}</p>
-                      )}
-                      <div className="flex items-center gap-4 text-xs text-gray-400">
-                        <span className="flex items-center gap-1">
-                          <Users size={12} />
-                          {pool.member_count}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Trophy size={12} className="text-amber-500" />
-                          {pool.user_points} pts
-                        </span>
-                        <span>{pool.resolved_count}/{pool.prompt_count} resolved</span>
+                      <div className="flex items-center gap-2">
+                        {pool.status === 'open' && (
+                          <span className="text-green-600 text-sm font-medium">{daysLeft} days left</span>
+                        )}
+                        <ChevronRight size={20} className="text-gray-400" />
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          copyInviteCode(pool.invite_code);
-                        }}
-                        className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                        title="Copy invite code"
-                      >
-                        {copiedCode === pool.invite_code ? (
-                          <Check size={14} className="text-green-600" />
-                        ) : (
-                          <Copy size={14} className="text-gray-500" />
-                        )}
-                      </button>
-                      <ChevronRight size={20} className="text-gray-400" />
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
