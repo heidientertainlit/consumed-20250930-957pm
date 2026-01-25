@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home } from "lucide-react";
 import { FeedbackDialog } from "./feedback-dialog";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
@@ -366,14 +366,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] z-50 pb-safe">
         <div className="flex justify-center items-center gap-16 h-18 px-4 pt-3 pb-4">
-          {/* Takes (main game feed) */}
+          {/* Home (main game feed) */}
           <Link
             href="/activity"
             className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
-            data-testid="nav-takes"
+            data-testid="nav-home"
           >
-            <Flame className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Takes</span>
+            <Home className="text-white" size={24} />
+            <span className="text-xs font-medium text-white">Home</span>
           </Link>
 
           {/* Add to DNA */}
