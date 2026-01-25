@@ -130,9 +130,10 @@ export default function PoolDetailPage() {
   });
 
   const copyInviteCode = (code: string) => {
-    navigator.clipboard.writeText(code);
+    const joinLink = `${window.location.origin}/pool/join/${code}`;
+    navigator.clipboard.writeText(joinLink);
     setCopiedCode(true);
-    toast({ title: 'Invite code copied!' });
+    toast({ title: 'Invite link copied!' });
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
