@@ -3177,25 +3177,56 @@ export default function Feed() {
                               
                               <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-100">
                                 <button
-                                  onClick={() => handleLike(post.id)}
+                                  onClick={(e) => { e.stopPropagation(); handleLike(post.id); }}
                                   className={`flex items-center gap-1 text-xs ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
                                 >
                                   <Heart size={12} fill={likedPosts.has(post.id) ? 'currentColor' : 'none'} />
-                                  <span>{post.likes || 0}</span>
+                                  <span>{(post.likes_count ?? post.likes) || 0}</span>
                                 </button>
                                 <button
-                                  onClick={() => setExpandedComments(prev => {
-                                    const newSet = new Set(prev);
-                                    if (newSet.has(post.id)) newSet.delete(post.id);
-                                    else newSet.add(post.id);
-                                    return newSet;
-                                  })}
-                                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedComments(prev => {
+                                      const newSet = new Set(prev);
+                                      if (newSet.has(post.id)) newSet.delete(post.id);
+                                      else newSet.add(post.id);
+                                      return newSet;
+                                    });
+                                  }}
+                                  className={`flex items-center gap-1 text-xs ${expandedComments.has(post.id) ? 'text-purple-600' : 'text-gray-400 hover:text-gray-600'}`}
                                 >
                                   <MessageCircle size={12} />
-                                  <span>{post.comments || 0}</span>
+                                  <span>{(post.comments_count ?? post.comments) || 0}</span>
                                 </button>
                               </div>
+                              
+                              {/* Inline comment input when expanded */}
+                              {expandedComments.has(post.id) && (
+                                <div className="mt-2 pt-2 border-t border-gray-100">
+                                  <div className="flex gap-2">
+                                    <input
+                                      type="text"
+                                      placeholder="Add a comment..."
+                                      value={commentInputs[post.id] || ''}
+                                      onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                          e.preventDefault();
+                                          handleComment(post.id);
+                                        }
+                                      }}
+                                      className="flex-1 text-xs px-2 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                    />
+                                    <button
+                                      onClick={() => handleComment(post.id)}
+                                      disabled={!commentInputs[post.id]?.trim() || commentMutation.isPending}
+                                      className="px-2 py-1 bg-purple-600 text-white text-xs rounded-lg disabled:opacity-50"
+                                    >
+                                      Post
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         );
