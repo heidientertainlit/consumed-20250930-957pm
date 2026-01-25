@@ -1061,10 +1061,23 @@ serve(async (req) => {
           shares: 0,
           likedByCurrentUser: likedPostIds.has(post.id),
           containsSpoilers: post.contains_spoilers || false,
+          fire_votes: post.fire_votes || 0,
+          ice_votes: post.ice_votes || 0,
           rating: post.rating,
           progress: post.progress,
           rankId: post.rank_id || null,
           rankData: rankData || null,
+          mediaItems: hasMedia ? [{
+            id: `embedded_${post.id}`,
+            title: post.media_title,
+            creator: post.media_creator || '',
+            mediaType: post.media_type || '',
+            imageUrl: ensureImageUrl(post.image_url, post.media_external_id, post.media_external_source, post.id),
+            rating: post.rating,
+            externalId: post.media_external_id || '',
+            externalSource: post.media_external_source || '',
+            description: post.media_description || ''
+          }] : [],
           listId: effectiveListId || null,
           listData: listData ? {
             title: listData.title,

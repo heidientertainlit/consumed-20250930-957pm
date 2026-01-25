@@ -220,6 +220,10 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
     const castApprovedAfter = filteredPosts.filter((p: any) => p.type === 'cast_approved');
     console.log('🎬 Cast_approved posts AFTER filter:', castApprovedAfter.length);
     
+    // Debug: Check for hot_take posts
+    const hotTakePosts = data.posts.filter((p: any) => p.type === 'hot_take');
+    console.log('🔥 Hot take posts in feed:', hotTakePosts.length, hotTakePosts.map((p: any) => ({ id: p.id, type: p.type, content: p.content })));
+    
     // Debug: Log posts with missing or problematic imageUrls
     filteredPosts.forEach((post: any, idx: number) => {
       if (post.mediaItems?.length > 0) {
