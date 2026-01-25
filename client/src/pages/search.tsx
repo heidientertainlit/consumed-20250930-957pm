@@ -1073,7 +1073,7 @@ export default function Search() {
       
       {/* Page Title */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-4 pb-2 px-4 -mt-px">
-        <h1 className="text-lg font-semibold text-white text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <h1 className="text-xl font-semibold text-white text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
           Track media to shape your entertainment DNA
         </h1>
       </div>
@@ -1081,8 +1081,7 @@ export default function Search() {
       {/* Currently Consuming Section */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-2 pb-2 -mt-px">
         <div className="px-4 mb-2">
-          <h2 className="text-sm font-semibold text-white">Currently Consuming</h2>
-          <p className="text-xs text-gray-400">Update your progress</p>
+          <h2 className="text-sm font-semibold text-white">In Progress</h2>
         </div>
         {currentlyItems.length > 0 ? (
           <div 
