@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Loader2, Trash2, Share2, ChevronRight, Star } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Loader2, Trash2, Share2, ChevronRight, Star, MessageCircle, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -66,6 +66,12 @@ export default function PoolDetailPage() {
   const [selectedContestant, setSelectedContestant] = useState<string | null>(null);
   const [showPickView, setShowPickView] = useState(false);
   const [hasLocked, setHasLocked] = useState(false);
+  const [newTake, setNewTake] = useState('');
+  const [takes, setTakes] = useState([
+    { id: '1', user: 'Sarah M.', avatar: null, text: "No way Tyler survives next week! He's been playing too safe", time: '2h ago' },
+    { id: '2', user: 'Mike R.', avatar: null, text: "Called it - Emma was way too nice to last", time: '5h ago' },
+    { id: '3', user: 'Jess K.', avatar: null, text: "Alex is the dark horse. Mark my words 🐴", time: '1d ago' },
+  ]);
 
   // Mock contestants for demo
   const contestants: Contestant[] = [
@@ -368,16 +374,67 @@ export default function PoolDetailPage() {
           </Card>
         </div>
 
-        {/* Last Result */}
-        <Card className="bg-white border border-gray-100 rounded-2xl p-4 mb-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-              <span className="text-lg">🎭</span>
+        {/* Quick Takes */}
+        <Card className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm mb-4">
+          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="text-gray-900 font-semibold flex items-center gap-2">
+              <MessageCircle size={16} className="text-purple-500" />
+              Quick Takes
+            </h3>
+            <span className="text-gray-400 text-sm">{takes.length} takes</span>
+          </div>
+          
+          {/* Add Take Input */}
+          <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newTake}
+                onChange={(e) => setNewTake(e.target.value)}
+                placeholder="Drop your take..."
+                className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-purple-400"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && newTake.trim()) {
+                    setTakes([{ id: Date.now().toString(), user: 'You', avatar: null, text: newTake, time: 'Just now' }, ...takes]);
+                    setNewTake('');
+                    toast({ title: 'Take posted!' });
+                  }
+                }}
+              />
+              <Button
+                size="sm"
+                onClick={() => {
+                  if (newTake.trim()) {
+                    setTakes([{ id: Date.now().toString(), user: 'You', avatar: null, text: newTake, time: 'Just now' }, ...takes]);
+                    setNewTake('');
+                    toast({ title: 'Take posted!' });
+                  }
+                }}
+                className="bg-purple-600 hover:bg-purple-700 rounded-full px-3"
+              >
+                <Send size={16} />
+              </Button>
             </div>
-            <div>
-              <p className="text-gray-900 font-medium">Last Eliminated</p>
-              <p className="text-gray-500 text-sm">{lastEliminated} went home</p>
-            </div>
+          </div>
+          
+          {/* Takes List */}
+          <div className="divide-y divide-gray-50 max-h-64 overflow-y-auto">
+            {takes.map((take) => (
+              <div key={take.id} className="px-4 py-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                    {take.user.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-gray-900 font-medium text-sm">{take.user}</span>
+                      <span className="text-gray-400 text-xs">{take.time}</span>
+                    </div>
+                    <p className="text-gray-600 text-sm">{take.text}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
 
