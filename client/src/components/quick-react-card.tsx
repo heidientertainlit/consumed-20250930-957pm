@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { useLocation } from 'wouter';
 import { QuickAddListSheet } from './quick-add-list-sheet';
+import RatingModal from './rating-modal';
 
 interface PreselectedMedia {
   id: string;
@@ -37,6 +38,7 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [postedMedia, setPostedMedia] = useState<any>(null);
   const [showListSheet, setShowListSheet] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const popularMedia = [
@@ -366,8 +368,7 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
               className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full border-2 border-purple-200 bg-purple-50 text-purple-700 font-medium text-sm hover:bg-purple-100 transition-colors"
               onClick={() => {
                 setShowPostDialog(false);
-                // Open the list sheet directly - rating is part of that flow
-                setShowListSheet(true);
+                setShowRatingModal(true);
               }}
             >
               <Star className="w-4 h-4" />
@@ -405,6 +406,17 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
         externalId: postedMedia.external_id || postedMedia.id,
         externalSource: postedMedia.external_source || 'tmdb',
       } : null}
+    />
+
+    {/* Rating Modal */}
+    <RatingModal
+      isOpen={showRatingModal}
+      onClose={() => setShowRatingModal(false)}
+      mediaTitle={postedMedia?.title || ''}
+      mediaType={postedMedia?.type || 'movie'}
+      mediaImage={postedMedia?.image}
+      mediaExternalId={postedMedia?.external_id || postedMedia?.id}
+      mediaExternalSource={postedMedia?.external_source || 'tmdb'}
     />
     </>
   );
