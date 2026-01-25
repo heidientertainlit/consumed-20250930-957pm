@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Loader2, Trash2, Share2, ChevronRight, Target } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Loader2, Trash2, Share2, ChevronRight, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -339,19 +339,9 @@ export default function PoolDetailPage() {
         {/* Make Your Pick Button - Main CTA */}
         <Button
           onClick={() => setShowPickView(true)}
-          className="w-full py-6 text-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl shadow-lg mb-2"
+          className="w-full py-6 text-lg font-bold bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-2xl shadow-lg mb-2"
         >
-          {hasLocked ? (
-            <>
-              <Check size={20} className="mr-2" />
-              Change Your Pick
-            </>
-          ) : (
-            <>
-              <Target size={20} className="mr-2" />
-              Make Your Pick
-            </>
-          )}
+          {hasLocked ? 'Change Your Pick' : 'Make Your Pick'}
         </Button>
         <p className="text-gray-400 text-xs text-center mb-6">
           <Clock size={12} className="inline mr-1" />
@@ -364,11 +354,17 @@ export default function PoolDetailPage() {
             <div className="text-3xl font-bold text-white mb-1 tracking-tight">
               {userRank === 1 ? '1st' : userRank === 2 ? '2nd' : userRank === 3 ? '3rd' : `${userRank}th`}
             </div>
-            <p className="text-purple-300/70 text-sm font-medium">Your Rank</p>
+            <p className="text-purple-300/70 text-sm font-medium flex items-center justify-center gap-1">
+              <Trophy size={14} />
+              Your Rank
+            </p>
           </Card>
           <Card className="bg-gradient-to-br from-purple-900 via-purple-950 to-slate-950 border border-purple-800/30 rounded-2xl p-5 text-center shadow-xl">
             <div className="text-3xl font-bold text-emerald-400 mb-1 tracking-tight">+37</div>
-            <p className="text-purple-300/70 text-sm font-medium">Points</p>
+            <p className="text-purple-300/70 text-sm font-medium flex items-center justify-center gap-1">
+              <Star size={14} />
+              Points
+            </p>
           </Card>
         </div>
 
