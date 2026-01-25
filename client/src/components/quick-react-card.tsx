@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Flame, Search, Send, X, ChevronRight, Plus, Grid } from 'lucide-react';
+import { Flame, Search, Send, X, ChevronRight, Grid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth';
@@ -193,9 +193,10 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
                 </div>
                 <div className="space-y-2">
                   {searchResults.map((result) => (
-                    <div
+                    <button
                       key={result.id || result.external_id}
-                      className="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-100"
+                      onClick={() => handleSelectMedia(result)}
+                      className="w-full flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-100 active:bg-gray-50 text-left transition-colors"
                     >
                       <img 
                         src={result.poster_url || result.image_url || 'https://via.placeholder.com/48x72'} 
@@ -208,13 +209,8 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
                           {result.type} {result.year && `• ${result.year}`}
                         </p>
                       </div>
-                      <button
-                        onClick={() => handleSelectMedia(result)}
-                        className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 active:bg-purple-700"
-                      >
-                        <Plus className="w-5 h-5 text-white" />
-                      </button>
-                    </div>
+                      <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    </button>
                   ))}
                 </div>
               </div>
