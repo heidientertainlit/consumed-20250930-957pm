@@ -3089,7 +3089,9 @@ export default function Feed() {
                       mediaTitle: p.mediaItems[0]?.title || '',
                       mediaType: p.mediaItems[0]?.type || 'movie',
                       mediaImage: p.mediaItems[0]?.imageUrl || '',
-                      activityText: p.activityText || 'added',
+                      activityText: p.rating ? `rated ${p.rating}/5` : (p.activityText || 'added'),
+                      rating: p.rating || null,
+                      review: p.content || p.review || null,
                       timestamp: p.createdAt || new Date().toISOString()
                     }))}
                   title="The Room"
