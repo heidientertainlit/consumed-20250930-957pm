@@ -388,7 +388,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
               <button 
                 onClick={(e) => { e.stopPropagation(); setIsProgressSheetOpen(true); }}
                 disabled={isUpdating}
-                className="flex-1 h-5 text-[9px] bg-purple-600/80 hover:bg-purple-600 text-white font-medium rounded px-1.5 transition-colors"
+                className="flex-1 h-5 text-[9px] bg-white/25 hover:bg-white/35 text-white font-medium rounded px-1.5 transition-colors"
                 data-testid={`button-edit-progress-${item.id}`}
               >
                 {getProgressDisplay()}
