@@ -2889,6 +2889,7 @@ export default function Feed() {
                   { id: 'challenges', label: 'Challenges', Icon: Trophy },
                   { id: 'polls', label: 'Polls', Icon: BarChart },
                   { id: 'predictions', label: 'Predictions', Icon: Target },
+                  { id: 'hottakes', label: 'Hot Takes', Icon: Flame },
                 ].map((filter) => (
                   <button
                     key={filter.id}
@@ -2980,6 +2981,11 @@ export default function Feed() {
                 <LeaderboardFeedCard variant="trivia" />
               )}
 
+              {/* Hot Takes Card - Share a thought about what you're consuming */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'hottakes') && (
+                <QuickReactCard />
+              )}
+
               {/* DNA Moment Card - in All or DNA filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && (
                 <DnaMomentCard />
@@ -2994,11 +3000,6 @@ export default function Feed() {
               {/* Seen It Game */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
                 <SeenItGame />
-              )}
-
-              {/* Quick React Card - Share a thought about what you're watching */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && (
-                <QuickReactCard />
               )}
 
               {/* The Room - Friend Activity with reactions */}

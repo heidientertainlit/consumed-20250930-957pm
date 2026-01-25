@@ -111,18 +111,18 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
   if (!isExpanded) {
     return (
       <Card 
-        className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+        className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-2xl p-4 shadow-sm cursor-pointer active:scale-[0.98] transition-transform"
         onClick={() => setIsExpanded(true)}
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
             <MessageCircle className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
-            <p className="text-gray-500 text-sm">What are you watching?</p>
-            <p className="text-gray-400 text-xs">Drop a quick reaction...</p>
+            <p className="text-white font-semibold text-sm">What are you consuming?</p>
+            <p className="text-white/70 text-xs">Share a hot take.</p>
           </div>
-          <ChevronRight className="w-5 h-5 text-gray-300" />
+          <ChevronRight className="w-5 h-5 text-white/50" />
         </div>
       </Card>
     );
