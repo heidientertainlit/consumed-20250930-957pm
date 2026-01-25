@@ -11,7 +11,6 @@ import { useAuth } from "@/lib/auth";
 import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
-import DNAVisualization from "@/components/dna-visualization";
 import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
@@ -1171,12 +1170,6 @@ export default function Search() {
             </div>
           )}
 
-          {/* DNA Visualization */}
-          {!isAiMode && !searchQuery.trim() && (
-            <div className="mt-6">
-              <DNAVisualization />
-            </div>
-          )}
 
         </div>
       </div>
