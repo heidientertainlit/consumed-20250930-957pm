@@ -544,14 +544,14 @@ export default function PoolsPage() {
             </Button>
           </Card>
         ) : (
-          <div className="space-y-12">
+          <div className="flex flex-col gap-8">
             {pools.map((pool) => {
               const userRank = Math.floor(Math.random() * 5) + 1;
               const rankSuffix = userRank === 1 ? 'st' : userRank === 2 ? 'nd' : userRank === 3 ? 'rd' : 'th';
               
               return (
                 <Link key={pool.id} href={`/pool/${pool.id}`}>
-                  <div className="bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-900 rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all cursor-pointer">
+                  <div className="bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-900 rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all cursor-pointer">
                     <div className="flex items-center gap-4">
                       {/* Media poster on left */}
                       <div className="w-16 h-24 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex-shrink-0 shadow-md flex items-center justify-center overflow-hidden">
