@@ -299,42 +299,43 @@ export default function PoolDetailPage() {
           </div>
         </div>
 
-        {/* Game Header Card */}
-        <Card className="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 border-0 rounded-3xl p-6 mb-6 shadow-xl relative overflow-hidden">
-          {/* Game badge */}
-          <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
-            <span className="text-white text-xs font-bold">🎮 LIVE</span>
-          </div>
+        {/* Pool Header with Poster */}
+        <div className="flex items-start gap-4 mb-6">
+          {/* Media Poster */}
+          <img 
+            src="https://image.tmdb.org/t/p/w200/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg"
+            alt={pool.name}
+            className="w-20 h-28 rounded-xl shadow-lg object-cover flex-shrink-0"
+          />
           
-          <div className="text-center pt-4">
-            <h1 className="text-2xl font-black text-white mb-1">
+          {/* Pool Info */}
+          <div className="flex-1 min-w-0 pt-1">
+            <h1 className="text-xl font-bold text-gray-900 mb-1">
               {pool.media_title || pool.name.split(' ')[0]}
             </h1>
-            <p className="text-purple-200 text-sm mb-6">
-              {pool.name.includes('Season') ? pool.name.split(' ').slice(-2).join(' ') : 'Season 1'} • Elimination Picks
+            <p className="text-gray-500 text-sm mb-3">
+              {pool.name.includes('Season') ? pool.name.split(' ').slice(-2).join(' ') : 'Season 1'}
             </p>
             
             {/* Make Your Pick Button */}
             <Button
               onClick={() => setShowPickView(true)}
-              className="w-full py-6 text-lg font-bold bg-white text-purple-700 hover:bg-purple-50 rounded-2xl shadow-lg"
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold px-6 py-2 rounded-full shadow-md"
             >
-              {hasLocked ? '✓ Change Your Pick' : '🎯 Make Your Pick'}
+              {hasLocked ? 'Change Pick' : 'Make Your Pick'}
             </Button>
-            
-            <p className="text-purple-200/70 text-sm mt-3">
-              <Clock size={14} className="inline mr-1" />
+            <p className="text-gray-400 text-xs mt-2">
+              <Clock size={12} className="inline mr-1" />
               Picks close in 2 days
             </p>
 
             {hasLocked && selectedContestant && (
-              <div className="mt-3 bg-white/10 rounded-xl px-4 py-2 inline-block">
-                <span className="text-purple-100 text-sm">Your pick: </span>
-                <span className="text-white font-bold">{contestants.find(c => c.id === selectedContestant)?.name}</span>
-              </div>
+              <p className="text-gray-500 text-sm mt-2">
+                Your pick: <span className="font-semibold text-purple-600">{contestants.find(c => c.id === selectedContestant)?.name}</span>
+              </p>
             )}
           </div>
-        </Card>
+        </div>
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-4 mb-6">
