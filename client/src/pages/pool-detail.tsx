@@ -252,13 +252,13 @@ export default function PoolDetailPage() {
 
   // Main Pool View
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 pb-24">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
 
       <div className="max-w-lg mx-auto px-4 pt-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <button onClick={() => setLocation('/pools')} className="flex items-center gap-1 text-white/70 hover:text-white text-sm">
+          <button onClick={() => setLocation('/pools')} className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm">
             <ArrowLeft size={16} />
           </button>
           <div className="flex items-center gap-2">
@@ -266,14 +266,14 @@ export default function PoolDetailPage() {
               onClick={() => copyInviteCode(pool.invite_code)}
               size="sm"
               variant="ghost"
-              className="text-white/70 hover:text-white hover:bg-white/10"
+              className="text-gray-500 hover:text-gray-700"
             >
               {copiedCode ? <Check size={16} /> : <Share2 size={16} />}
             </Button>
             {is_host && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-red-300 hover:text-red-200 hover:bg-red-500/20">
+                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-red-500">
                     <Trash2 size={16} />
                   </Button>
                 </AlertDialogTrigger>
@@ -299,50 +299,26 @@ export default function PoolDetailPage() {
           </div>
         </div>
 
-        {/* Title */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">
-            {pool.media_title || pool.name.split(' ')[0]}: <span className="font-normal">{pool.name.includes('Season') ? pool.name.split(' ').slice(-2).join(' ') : 'Season 1'}</span>
+        {/* Pool Name Card */}
+        <Card className="bg-white border border-gray-100 rounded-2xl p-5 mb-6 shadow-sm">
+          <h1 className="text-xl font-bold text-gray-900 mb-3">
+            <span className="font-black">{pool.media_title || pool.name.split(' ')[0]}</span> {pool.name.includes('Season') ? pool.name.split(' ').slice(-2).join(' ') : 'Season 1'}
           </h1>
-          <div className="flex items-center gap-2 text-white/60 text-sm mt-1">
-            <Clock size={14} />
-            <span>Next picks close in 2 days</span>
-          </div>
-        </div>
-
-        {/* Make Your Pick Card */}
-        <Card className="bg-[#f5f0e8] border-0 rounded-2xl p-6 mb-6 shadow-lg relative overflow-hidden">
-          {/* Paper texture effect */}
-          <div className="absolute inset-0 opacity-30" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          }} />
-          
-          <div className="relative">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Make Your Pick</h2>
-            <p className="text-gray-600 mb-4">Who's getting eliminated next?</p>
-            
-            <Button
-              onClick={() => setShowPickView(true)}
-              className="w-full py-5 text-lg font-semibold bg-green-500 hover:bg-green-600 text-white rounded-xl"
-            >
-              {hasLocked ? 'Change Pick' : 'Pick Now'}
-            </Button>
-
-            {hasLocked && selectedContestant && (
-              <p className="text-center text-gray-500 text-sm mt-3">
-                Your pick: <span className="font-semibold text-gray-700">{contestants.find(c => c.id === selectedContestant)?.name}</span>
-              </p>
-            )}
+          <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-3 text-gray-400">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span className="text-sm">Search shows, sports, awards...</span>
           </div>
         </Card>
 
         {/* Your Status */}
-        <div className="mb-6">
-          <h3 className="text-xl font-bold text-white mb-2">
-            You're in <span className="text-green-400">{userRank === 1 ? '1st' : userRank === 2 ? '2nd' : userRank === 3 ? '3rd' : `${userRank}th`}</span> place
+        <div className="mb-4">
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            You're in <span className="text-green-500">{userRank === 1 ? '1st' : userRank === 2 ? '2nd' : userRank === 3 ? '3rd' : `${userRank}th`}</span> place
           </h3>
-          <div className="flex items-center gap-2 text-white/60 text-sm">
-            <div className="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-xs text-white">
+          <div className="flex items-center gap-2 text-gray-500 text-sm">
+            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-xs text-purple-600 font-medium">
               {lastEliminated.charAt(0)}
             </div>
             <span>{lastEliminated} was eliminated</span>
@@ -350,34 +326,32 @@ export default function PoolDetailPage() {
         </div>
 
         {/* Leaderboard */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-white/10">
-            <h3 className="text-white/80 font-medium">Group leaderboard</h3>
+        <Card className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+          <div className="px-4 py-3 border-b border-gray-100">
+            <h3 className="text-gray-500 font-medium">Group leaderboard</h3>
           </div>
           
-          <div className="divide-y divide-white/10">
+          <div className="divide-y divide-gray-100">
             {members.length === 0 ? (
-              <div className="px-4 py-8 text-center text-white/50">
+              <div className="px-4 py-8 text-center text-gray-400">
                 No members yet. Share the invite code!
               </div>
             ) : (
               members
                 .sort((a, b) => b.total_points - a.total_points)
                 .map((member, index) => {
-                  const isCurrentUser = member.users.user_name === 'You'; // Would need real logic
-                  const pointsChange = Math.floor(Math.random() * 20) + 5; // Mock
+                  const isCurrentUser = member.users.user_name === 'You';
+                  const pointsChange = Math.floor(Math.random() * 20) + 5;
 
                   return (
                     <div
                       key={member.user_id}
-                      className={`flex items-center justify-between px-4 py-3 ${isCurrentUser ? 'bg-white/5' : ''}`}
+                      className={`flex items-center justify-between px-4 py-3 ${isCurrentUser ? 'bg-purple-50' : ''}`}
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                          index === 0 ? 'bg-yellow-400 text-yellow-900' :
-                          index === 1 ? 'bg-gray-300 text-gray-700' :
-                          index === 2 ? 'bg-orange-400 text-orange-900' :
-                          'bg-white/20 text-white'
+                          index === 0 ? 'bg-purple-100 text-purple-600' :
+                          'bg-gray-100 text-gray-600'
                         }`}>
                           {member.users.avatar_url ? (
                             <img src={member.users.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
@@ -385,39 +359,37 @@ export default function PoolDetailPage() {
                             (member.users.display_name || member.users.user_name).charAt(0).toUpperCase()
                           )}
                         </div>
-                        <div>
-                          <span className="text-white font-medium">
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900 font-medium">
                             {member.users.display_name || member.users.user_name}
                           </span>
                           {index === 0 && (
-                            <span className="ml-2 text-yellow-400">
-                              <Trophy size={14} className="inline" />
-                            </span>
+                            <Trophy size={14} className="text-purple-500" />
+                          )}
+                          {index === 0 && (
+                            <span className="text-purple-500 text-xs">5</span>
                           )}
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-3">
-                        <span className="text-white font-semibold">{member.total_points} pts</span>
-                        <span className="text-green-400 text-sm font-medium">+{pointsChange}</span>
-                        <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs font-bold">
-                          +{pointsChange}
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-600">+{member.total_points}</span>
+                        <span className="text-green-500 text-sm font-medium">+{pointsChange}</span>
                       </div>
                     </div>
                   );
                 })
             )}
           </div>
-        </div>
+        </Card>
 
         {/* Invite Code */}
         <div className="mt-6 text-center">
           <button
             onClick={() => copyInviteCode(pool.invite_code)}
-            className="inline-flex items-center gap-2 text-white/50 hover:text-white/80 transition-colors text-sm"
+            className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-600 transition-colors text-sm"
           >
-            {copiedCode ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+            {copiedCode ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
             <span>Invite Code: <span className="font-mono font-bold">{pool.invite_code}</span></span>
           </button>
         </div>
