@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 import { useLocation } from 'wouter';
+import { QuickAddListSheet } from './quick-add-list-sheet';
 
 interface PreselectedMedia {
   id: string;
@@ -35,6 +36,7 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
   const [recentMedia, setRecentMedia] = useState<any[]>([]);
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [postedMedia, setPostedMedia] = useState<any>(null);
+  const [showListSheet, setShowListSheet] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const popularMedia = [
@@ -344,28 +346,26 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
 
     {/* Post-submission dialog */}
     <Dialog open={showPostDialog} onOpenChange={setShowPostDialog}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-sm rounded-3xl">
         <DialogHeader>
-          <DialogTitle className="text-center text-lg">Take posted!</DialogTitle>
+          <DialogTitle className="text-center text-lg font-semibold">Take posted! 🔥</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col items-center py-4">
+        <div className="flex flex-col items-center py-2">
           {postedMedia?.image && (
             <img 
               src={postedMedia.image} 
               alt={postedMedia?.title} 
-              className="w-20 h-28 object-cover rounded-lg mb-3 shadow-md"
+              className="w-16 h-24 object-cover rounded-xl mb-3 shadow-md"
             />
           )}
-          <p className="text-center text-gray-600 mb-4">
-            Want to rate <span className="font-medium text-gray-900">{postedMedia?.title}</span> or add it to a list?
+          <p className="text-center text-gray-600 text-sm mb-5">
+            Want to rate or track <span className="font-medium text-gray-900">{postedMedia?.title}</span>?
           </p>
-          <div className="flex gap-3 w-full">
-            <Button
-              variant="outline"
-              className="flex-1 gap-2"
+          <div className="flex gap-3 w-full px-2">
+            <button
+              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full border-2 border-purple-200 bg-purple-50 text-purple-700 font-medium text-sm hover:bg-purple-100 transition-colors"
               onClick={() => {
                 setShowPostDialog(false);
-                // Navigate to media page for rating
                 if (postedMedia?.external_id && postedMedia?.external_source) {
                   setLocation(`/media/${postedMedia.external_source}/${postedMedia.external_id}`);
                 }
@@ -373,23 +373,20 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
             >
               <Star className="w-4 h-4" />
               Rate it
-            </Button>
-            <Button
-              className="flex-1 gap-2 bg-purple-600 hover:bg-purple-700"
+            </button>
+            <button
+              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium text-sm hover:from-purple-700 hover:to-indigo-700 transition-colors shadow-md"
               onClick={() => {
                 setShowPostDialog(false);
-                // Navigate to quick add / lists
-                if (postedMedia?.external_id && postedMedia?.external_source) {
-                  setLocation(`/media/${postedMedia.external_source}/${postedMedia.external_id}?action=add`);
-                }
+                setShowListSheet(true);
               }}
             >
               <List className="w-4 h-4" />
               Add to list
-            </Button>
+            </button>
           </div>
           <button
-            className="mt-4 text-sm text-gray-500 hover:text-gray-700"
+            className="mt-5 text-sm text-gray-400 hover:text-gray-600"
             onClick={() => setShowPostDialog(false)}
           >
             Maybe later
@@ -397,6 +394,19 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Add to List Sheet */}
+    <QuickAddListSheet
+      isOpen={showListSheet}
+      onClose={() => setShowListSheet(false)}
+      media={postedMedia ? {
+        title: postedMedia.title,
+        mediaType: postedMedia.type || 'movie',
+        imageUrl: postedMedia.image,
+        externalId: postedMedia.external_id || postedMedia.id,
+        externalSource: postedMedia.external_source || 'tmdb',
+      } : null}
+    />
     </>
   );
 }
