@@ -1121,6 +1121,156 @@ export default function Search() {
         )}
       </div>
       
+      {/* Search Results Section - Shows right under search bar when searching */}
+      {!isAiMode && searchQuery.trim() && (
+        <div className="bg-white px-4 py-4 -mt-px space-y-4">
+          {/* Loading */}
+          {(isLoadingMedia || isLoadingUsers) && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="animate-spin text-purple-600" size={24} />
+              <span className="ml-2 text-gray-600">Searching...</span>
+            </div>
+          )}
+
+          {/* User Results */}
+          {!isLoadingUsers && quickUserResults.length > 0 && (
+            <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+              <div className="px-4 py-2 bg-gray-100 border-b border-gray-200">
+                <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
+                  <Users size={14} className="text-purple-600" />
+                  People
+                </h3>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {quickUserResults.slice(0, 3).map((userResult: UserResult) => (
+                  <div
+                    key={userResult.id}
+                    className="flex items-center justify-between gap-3 p-3 hover:bg-white"
+                    data-testid={`user-result-inline-${userResult.id}`}
+                  >
+                    <div
+                      onClick={() => setLocation(`/user/${userResult.id}`)}
+                      className="flex items-center gap-3 flex-1 cursor-pointer"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                        {userResult.display_name?.[0] || userResult.user_name[0]}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 text-sm truncate">
+                          {userResult.display_name || userResult.user_name}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">@{userResult.user_name}</p>
+                      </div>
+                    </div>
+                    {userResult.id !== user?.id && (
+                      friendIds.has(userResult.id) ? (
+                        <span className="text-xs text-green-600 font-medium px-2 py-0.5 bg-green-50 rounded-full">
+                          Friends
+                        </span>
+                      ) : pendingIds.has(userResult.id) ? (
+                        <span className="text-xs text-gray-500 font-medium px-2 py-0.5 bg-gray-100 rounded-full">
+                          Pending
+                        </span>
+                      ) : (
+                        <Button
+                          onClick={() => sendFriendRequestMutation.mutate(userResult.id)}
+                          size="sm"
+                          variant="outline"
+                          className="border-purple-300 text-purple-700 hover:bg-purple-50 text-xs px-2 py-1 h-7"
+                          disabled={sendFriendRequestMutation.isPending}
+                          data-testid={`add-friend-inline-${userResult.id}`}
+                        >
+                          <Plus size={12} className="mr-1" />
+                          Add
+                        </Button>
+                      )
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Media Results */}
+          {!isLoadingMedia && quickMediaResults.length > 0 && (
+            <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+              <div className="px-4 py-2 bg-gray-100 border-b border-gray-200">
+                <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
+                  <Film size={14} className="text-purple-600" />
+                  Media
+                </h3>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {quickMediaResults.slice(0, 5).map((result: any, idx: number) => (
+                  <div
+                    key={`inline-${result.external_id || result.id}-${idx}`}
+                    className="flex items-center gap-3 p-3 hover:bg-white"
+                    data-testid={`media-result-inline-${idx}`}
+                  >
+                    <div 
+                      className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                      onClick={() => {
+                        const type = result.type || 'movie';
+                        const source = result.source || result.external_source || 'tmdb';
+                        const id = result.external_id || result.id;
+                        if (type && source && id) {
+                          setLocation(`/media/${type}/${source}/${id}`);
+                        }
+                      }}
+                    >
+                      {(result.image_url || result.poster_path || result.image) ? (
+                        <img
+                          src={result.image_url || result.poster_path || result.image}
+                          alt={result.title}
+                          className="w-10 h-14 object-cover rounded-lg flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-14 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          {getMediaIcon(result.type || 'movie')}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 text-sm truncate">{result.title}</p>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <span className="capitalize">{result.type}</span>
+                          {result.year && <span>• {result.year}</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuickAddMedia({
+                          title: result.title,
+                          mediaType: result.type || 'movie',
+                          imageUrl: result.image_url || result.poster_path || result.image,
+                          externalId: result.external_id || result.id,
+                          externalSource: result.source || result.external_source || 'tmdb',
+                          creator: result.creator,
+                        });
+                        setIsQuickAddOpen(true);
+                      }}
+                      className="w-8 h-8 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-colors flex-shrink-0"
+                      aria-label="Add to list"
+                      data-testid={`quick-add-inline-${idx}`}
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No Results */}
+          {!isLoadingMedia && !isLoadingUsers && quickMediaResults.length === 0 && quickUserResults.length === 0 && (
+            <div className="text-center py-4 text-gray-500 text-sm">
+              No results found for "{searchQuery}"
+            </div>
+          )}
+        </div>
+      )}
+
       {/* In Progress Section */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-2 pb-2 -mt-px">
         <div className="px-4 mb-2">
