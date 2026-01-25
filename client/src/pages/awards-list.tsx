@@ -42,13 +42,17 @@ export default function AwardsList() {
     });
   };
 
-  const getStatusBadge = (status: string, hasNominees: boolean = true) => {
+  const getStatusBadge = (status: string, eventSlug: string, hasNominees: boolean = true) => {
     if (status === 'locked' && !hasNominees) {
       return <span className="px-2 py-1 bg-purple-500/20 text-purple-400 text-xs rounded-full">Coming Soon</span>;
     }
+    // Show Trending for newly opened Oscars 2026
+    const isTrending = status === 'open' && eventSlug === 'oscars-2026';
     switch (status) {
       case 'open':
-        return <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">Open</span>;
+        return isTrending 
+          ? <span className="px-2 py-1 bg-orange-500/20 text-orange-500 text-xs rounded-full font-semibold">🔥 Trending</span>
+          : <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">Open</span>;
       case 'locked':
         return <span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded-full">Locked</span>;
       case 'completed':
@@ -131,7 +135,7 @@ export default function AwardsList() {
                             }`}>
                               {event.name} {event.year}
                             </h3>
-                            {getStatusBadge(event.status, !comingSoon)}
+                            {getStatusBadge(event.status, event.slug, !comingSoon)}
                           </div>
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
                             {!comingSoon && event.deadline && (
