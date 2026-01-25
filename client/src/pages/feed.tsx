@@ -1562,7 +1562,7 @@ export default function Feed() {
     // Hide malformed posts: short content (looks like just a title), no media items, 
     // and not a special post type (prediction/poll/trivia/rank_share)
     // Note: 'add-to-list' (from track-media) is also a valid type
-    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'friend_list_group', 'cast_approved'];
+    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'friend_list_group', 'cast_approved', 'hot_take'];
     const isSpecialType = specialTypes.includes(post.type || '');
     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
     const hasListData = !!(post as any).listData;
