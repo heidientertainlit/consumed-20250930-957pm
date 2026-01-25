@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card } from '@/components/ui/card';
@@ -9,6 +9,17 @@ import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
 import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, CheckCircle, XCircle } from 'lucide-react';
 import { incrementActivityCount } from '@/components/dna-survey-nudge';
+
+function shuffleArray<T>(array: T[], seed: number): T[] {
+  const shuffled = [...array];
+  let currentSeed = seed;
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    currentSeed = (currentSeed * 9301 + 49297) % 233280;
+    const j = Math.floor((currentSeed / 233280) * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 interface TriviaItem {
   id: string;
@@ -426,6 +437,12 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
 
   const knownCategories = ['movies', 'tv', 'books', 'music', 'sports', 'podcasts', 'games'];
   
+  // Generate a session-based seed that changes daily
+  const sessionSeed = useMemo(() => {
+    const today = new Date();
+    return today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  }, []);
+
   let filteredData = data;
   
   // Filter by category
@@ -443,6 +460,10 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   if (challengesOnly) {
     filteredData = filteredData.filter(item => item.isChallenge);
   }
+
+  // Randomize the order using session seed (changes daily)
+  const categoryOffset = category ? category.charCodeAt(0) : 0;
+  filteredData = shuffleArray(filteredData, sessionSeed + categoryOffset);
 
   if (filteredData.length === 0) {
     return null;
