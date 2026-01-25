@@ -3099,108 +3099,97 @@ export default function Feed() {
                 />
               )}
 
-              {/* Cast Your Friends - Approved Casts (positioned after The Room for visibility) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && filteredPosts
-                .filter((item: any) => item.type === 'cast_approved')
-                .map((post: any) => {
-                  const celebName = post.mediaItems?.[0]?.title || 'a celebrity';
-                  const celebImage = post.mediaItems?.[0]?.imageUrl;
-                  const targetUserName = post.content || 'their friend';
-                  const isOwnPost = post.user?.id === session?.user?.id;
-                  
-                  return (
-                    <div key={`cast-feed-${post.id}`} id={`post-${post.id}`} className="mb-4">
-                      <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
-                        <div className="p-4">
-                          <div className="flex items-center gap-3 mb-3">
-                            {post.user && (
-                              <Link href={`/user/${post.user.id}`}>
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer flex-shrink-0">
-                                  {post.user.avatar ? (
-                                    <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                                  ) : (
-                                    <span className="text-sm">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
-                                  )}
-                                </div>
-                              </Link>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm text-gray-700">
-                                <Link href={`/user/${post.user?.id}`}>
-                                  <span className="font-medium text-gray-900 hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
-                                </Link>
-                                <span className="text-gray-500"> cast </span>
-                                <span className="font-medium text-gray-900">{targetUserName}</span>
-                                <span className="text-gray-500"> as</span>
-                              </p>
-                              <span className="text-xs text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
-                            </div>
-                            {isOwnPost && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                                    <MoreVertical size={16} />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="bg-white">
-                                  <DropdownMenuItem 
-                                    onClick={() => handleDeletePost(post.id)}
-                                    className="text-red-600 cursor-pointer"
-                                  >
-                                    <Trash2 size={14} className="mr-2" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center gap-4 p-3 bg-gradient-to-r from-purple-50 to-amber-50 rounded-xl">
-                            {celebImage && (
-                              <img 
-                                src={celebImage} 
-                                alt={celebName}
-                                className="w-16 h-20 rounded-xl object-cover shadow-sm"
-                              />
-                            )}
-                            <div className="flex-1">
-                              <p className="font-bold text-lg text-gray-900">{celebName}</p>
-                              <p className="text-xs text-gray-500">would play {targetUserName} in a movie</p>
-                            </div>
-                          </div>
-                          
-                          <Link href="/cast">
-                            <button className="mt-3 w-full py-2.5 bg-gradient-to-r from-purple-600 to-blue-500 text-white text-sm font-medium rounded-xl hover:opacity-90 transition-opacity">
-                              Cast Your Friends
-                            </button>
-                          </Link>
-                        </div>
-                        
-                        <div className="flex items-center gap-4 px-4 py-3 border-t border-gray-100">
-                          <button
-                            onClick={() => handleLike(post.id)}
-                            className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
-                          >
-                            <Heart size={16} fill={likedPosts.has(post.id) ? 'currentColor' : 'none'} />
-                            <span>{post.likes || 0}</span>
-                          </button>
-                          <button
-                            onClick={() => setExpandedComments(prev => {
-                              const newSet = new Set(prev);
-                              if (newSet.has(post.id)) newSet.delete(post.id);
-                              else newSet.add(post.id);
-                              return newSet;
-                            })}
-                            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
-                          >
-                            <MessageCircle size={16} />
-                            <span>{post.comments || 0}</span>
-                          </button>
-                        </div>
+              {/* Cast Your Friends - Approved Casts Carousel */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && filteredPosts.filter((item: any) => item.type === 'cast_approved').length > 0 && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-amber-500 flex items-center justify-center">
+                        <Users size={16} className="text-white" />
                       </div>
+                      <h3 className="font-semibold text-gray-900">Cast Your Friends</h3>
                     </div>
-                  );
-                })}
+                    <Link href="/cast" className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                      Play →
+                    </Link>
+                  </div>
+                  <div 
+                    className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+                  >
+                    {filteredPosts
+                      .filter((item: any) => item.type === 'cast_approved')
+                      .slice(0, 10)
+                      .map((post: any) => {
+                        const celebName = post.mediaItems?.[0]?.title || 'a celebrity';
+                        const celebImage = post.mediaItems?.[0]?.imageUrl;
+                        const targetUserName = post.content || 'their friend';
+                        
+                        return (
+                          <div 
+                            key={`cast-carousel-${post.id}`}
+                            className="flex-shrink-0 w-56 rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm"
+                          >
+                            <div className="p-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                {post.user && (
+                                  <Link href={`/user/${post.user.id}`}>
+                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer flex-shrink-0">
+                                      {post.user.avatar ? (
+                                        <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                                      ) : (
+                                        post.user.username?.[0]?.toUpperCase() || '?'
+                                      )}
+                                    </div>
+                                  </Link>
+                                )}
+                                <span className="text-xs text-gray-600 truncate">
+                                  {post.user?.displayName || post.user?.username}
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center gap-3 p-2 bg-gradient-to-r from-purple-50 to-amber-50 rounded-lg">
+                                {celebImage && (
+                                  <img 
+                                    src={celebImage} 
+                                    alt={celebName}
+                                    className="w-12 h-16 rounded-lg object-cover shadow-sm flex-shrink-0"
+                                  />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-sm text-gray-900 line-clamp-2">{celebName}</p>
+                                  <p className="text-[10px] text-gray-500 truncate">as {targetUserName}</p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-100">
+                                <button
+                                  onClick={() => handleLike(post.id)}
+                                  className={`flex items-center gap-1 text-xs ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                                >
+                                  <Heart size={12} fill={likedPosts.has(post.id) ? 'currentColor' : 'none'} />
+                                  <span>{post.likes || 0}</span>
+                                </button>
+                                <button
+                                  onClick={() => setExpandedComments(prev => {
+                                    const newSet = new Set(prev);
+                                    if (newSet.has(post.id)) newSet.delete(post.id);
+                                    else newSet.add(post.id);
+                                    return newSet;
+                                  })}
+                                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+                                >
+                                  <MessageCircle size={12} />
+                                  <span>{post.comments || 0}</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
 
               {/* POLLS filter - Movies category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
