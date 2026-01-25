@@ -345,6 +345,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           
           <div className="flex items-center gap-4">
             <button
+              onClick={handleSearchToggle}
+              className="hover:opacity-70 transition-opacity"
+              aria-label="Search"
+              data-testid="nav-search-toggle"
+            >
+              {isSearchExpanded ? <X className="text-white" size={20} /> : <Search className="text-white" size={20} />}
+            </button>
+            <button
               onClick={() => setIsFeedbackOpen(true)}
               className="hover:opacity-70 transition-opacity"
               aria-label="Give feedback"
@@ -352,15 +360,107 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
               <MessageSquarePlus className="text-white" size={20} />
             </button>
             <NotificationBell />
-            <Link
-              href={user?.id ? `/user/${user.id}` : "/login"}
-              className="hover:opacity-70 transition-opacity"
-              data-testid="nav-profile"
-            >
-              <User className="text-white" size={20} />
-            </Link>
           </div>
         </div>
+
+        {/* Expandable Search Bar */}
+        {isSearchExpanded && (
+          <div className="px-4 pb-3">
+            <div className="relative">
+              <Input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search friends or media..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-white/10 border-white/20 text-white placeholder:text-gray-400 rounded-xl"
+                data-testid="nav-search-input"
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            </div>
+
+            {/* Search Results Dropdown */}
+            {searchQuery.trim() && (
+              <div className="mt-2 bg-[#1a1a2e] border border-white/10 rounded-xl max-h-80 overflow-y-auto">
+                {isLoading && (
+                  <div className="p-4 text-center text-gray-400 text-sm">Searching...</div>
+                )}
+                
+                {hasError && !isLoading && (
+                  <div className="p-4 text-center text-red-400 text-sm">Search failed. Please try again.</div>
+                )}
+
+                {!isLoading && !hasError && !hasResults && searchQuery.length > 1 && (
+                  <div className="p-4 text-center text-gray-400 text-sm">No results found</div>
+                )}
+
+                {/* Users Section */}
+                {userResults.length > 0 && (
+                  <div>
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-white/10">
+                      People
+                    </div>
+                    {userResults.slice(0, 5).map((person) => (
+                      <div
+                        key={person.id}
+                        onClick={() => handleUserClick(person.id)}
+                        className="flex items-center justify-between px-3 py-2 hover:bg-white/5 cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-sm font-medium">
+                            {(person.display_name || person.user_name)?.[0]?.toUpperCase() || '?'}
+                          </div>
+                          <div>
+                            <p className="text-white text-sm font-medium">{person.display_name || person.user_name}</p>
+                            <p className="text-gray-400 text-xs">@{person.user_name}</p>
+                          </div>
+                        </div>
+                        {person.id !== user?.id && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => handleSendFriendRequest(person.id, e)}
+                            className="text-xs h-7 border-purple-500 text-purple-400 hover:bg-purple-500/20"
+                          >
+                            Add
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Media Section */}
+                {mediaResults.length > 0 && (
+                  <div>
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-white/10">
+                      Media
+                    </div>
+                    {mediaResults.slice(0, 8).map((media, idx) => (
+                      <div
+                        key={`${media.external_id}-${idx}`}
+                        onClick={() => handleMediaClick(media)}
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-white/5 cursor-pointer"
+                      >
+                        {media.image ? (
+                          <img src={media.image} alt={media.title} className="w-10 h-14 object-cover rounded" />
+                        ) : (
+                          <div className="w-10 h-14 bg-gray-700 rounded flex items-center justify-center">
+                            <Activity size={16} className="text-gray-500" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-sm font-medium truncate">{media.title}</p>
+                          <p className="text-gray-400 text-xs">{media.type} {media.year && `• ${media.year}`}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Bottom navigation */}
@@ -397,6 +497,16 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <Trophy className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Leaders</span>
+          </Link>
+
+          {/* Profile */}
+          <Link
+            href={user?.id ? `/user/${user.id}` : "/login"}
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location.startsWith("/user/") && location.includes(user?.id || "") ? "bg-white/15" : ""}`}
+            data-testid="nav-profile"
+          >
+            <User className="text-white" size={24} />
+            <span className="text-xs font-medium text-white">Me</span>
           </Link>
         </div>
       </nav>

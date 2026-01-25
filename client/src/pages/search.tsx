@@ -1119,12 +1119,12 @@ export default function Search() {
       </div>
       
       {/* Dark Gradient Header Section - matches Activity page nav blend */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-4 pb-8 px-4 -mt-px">
-        <div className="max-w-7xl mx-auto space-y-4">
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-3 pb-6 px-4 -mt-px">
+        <div className="max-w-7xl mx-auto space-y-3">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-xl font-semibold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Shape your Entertainment DNA by adding media.
+            <h1 className="text-sm font-medium text-gray-300" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Add media to shape your Entertainment DNA
             </h1>
           </div>
 
