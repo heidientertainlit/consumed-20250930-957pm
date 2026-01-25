@@ -267,7 +267,7 @@ export default function PoolDetailPage() {
               onClick={() => copyInviteCode(pool.invite_code)}
               size="sm"
               variant="ghost"
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:bg-transparent hover:text-gray-500 active:text-purple-600"
               title="Invite Friends"
             >
               <Users size={18} />
@@ -276,10 +276,10 @@ export default function PoolDetailPage() {
               onClick={() => copyInviteCode(pool.invite_code)}
               size="sm"
               variant="ghost"
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:bg-transparent hover:text-gray-500 active:text-purple-600"
               title="Share"
             >
-              {copiedCode ? <Check size={18} /> : <Share2 size={18} />}
+              {copiedCode ? <Check size={18} className="text-purple-600" /> : <Share2 size={18} />}
             </Button>
             {is_host && (
               <AlertDialog>
