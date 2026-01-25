@@ -3014,6 +3014,8 @@ export default function Feed() {
                           comments_count: post.comments || post.comments_count || 0,
                           created_at: post.createdAt || post.created_at || post.timestamp,
                         }}
+                        currentUserId={user?.id}
+                        onDelete={handleDeletePost}
                         onComment={(postId) => {
                           setExpandedComments(prev => {
                             const newSet = new Set(prev);

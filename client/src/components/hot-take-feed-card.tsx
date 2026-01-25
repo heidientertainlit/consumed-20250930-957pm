@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Flame, Snowflake, MessageCircle } from 'lucide-react';
+import { Flame, Snowflake, MessageCircle, Trash2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
@@ -24,9 +24,11 @@ interface HotTakeFeedCardProps {
     created_at?: string;
   };
   onComment?: (postId: string) => void;
+  onDelete?: (postId: string) => void;
+  currentUserId?: string;
 }
 
-export function HotTakeFeedCard({ post, onComment }: HotTakeFeedCardProps) {
+export function HotTakeFeedCard({ post, onComment, onDelete, currentUserId }: HotTakeFeedCardProps) {
   const { session } = useAuth();
   const { toast } = useToast();
   const [fireVotes, setFireVotes] = useState(post.fire_votes || 0);
@@ -120,6 +122,15 @@ export function HotTakeFeedCard({ post, onComment }: HotTakeFeedCardProps) {
               </div>
             )}
           </div>
+          {currentUserId && post.user?.id === currentUserId && onDelete && (
+            <button
+              onClick={() => onDelete(post.id)}
+              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+              aria-label="Delete hot take"
+            >
+              <Trash2 size={16} />
+            </button>
+          )}
         </div>
 
         <p className="text-gray-900 text-sm mb-4 leading-relaxed">{post.content}</p>
