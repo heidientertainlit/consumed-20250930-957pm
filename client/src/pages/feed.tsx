@@ -3124,6 +3124,7 @@ export default function Feed() {
                         const celebName = post.mediaItems?.[0]?.title || 'a celebrity';
                         const celebImage = post.mediaItems?.[0]?.imageUrl;
                         const targetUserName = post.content || 'their friend';
+                        const userName = post.user?.displayName || post.user?.username || 'Someone';
                         
                         return (
                           <div 
@@ -3143,8 +3144,8 @@ export default function Feed() {
                                     </div>
                                   </Link>
                                 )}
-                                <span className="text-xs text-gray-600 truncate">
-                                  {post.user?.displayName || post.user?.username}
+                                <span className="text-xs text-gray-700">
+                                  <span className="font-medium">{userName}</span> cast
                                 </span>
                               </div>
                               
@@ -3157,8 +3158,8 @@ export default function Feed() {
                                   />
                                 )}
                                 <div className="flex-1 min-w-0">
+                                  <p className="text-xs text-gray-500 mb-0.5">{targetUserName} as</p>
                                   <p className="font-semibold text-sm text-gray-900 line-clamp-2">{celebName}</p>
-                                  <p className="text-[10px] text-gray-500 truncate">as {targetUserName}</p>
                                 </div>
                               </div>
                               
@@ -3187,6 +3188,15 @@ export default function Feed() {
                           </div>
                         );
                       })}
+                    
+                    {/* Play Card at the end */}
+                    <Link href="/cast" className="flex-shrink-0">
+                      <div className="w-48 h-full rounded-xl bg-gradient-to-br from-purple-600 to-amber-500 overflow-hidden shadow-sm flex flex-col items-center justify-center p-4 min-h-[140px]">
+                        <Users size={28} className="text-white mb-2" />
+                        <p className="text-white font-bold text-center">Cast Your Friends</p>
+                        <p className="text-white/80 text-xs text-center mt-1">Who would play them in a movie?</p>
+                      </div>
+                    </Link>
                   </div>
                 </div>
               )}
