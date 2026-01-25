@@ -24,6 +24,7 @@ import { GamesCarousel } from "@/components/games-carousel";
 import { RanksCarousel } from "@/components/ranks-carousel";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
+import { HotTakeFeedCard } from "@/components/hot-take-feed-card";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -2985,6 +2986,33 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'hottakes') && (
                 <QuickReactCard />
               )}
+
+              {/* Hot Takes Feed - Show posted hot takes */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'hottakes') && 
+                filteredPosts
+                  .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
+                  .slice(0, selectedFilter === 'hottakes' ? 20 : 3)
+                  .map((post: any) => (
+                    <HotTakeFeedCard
+                      key={`hottake-${post.id}`}
+                      post={{
+                        id: post.id,
+                        user: post.user,
+                        content: post.content,
+                        media_title: post.mediaItems?.[0]?.title || post.media_title,
+                        media_type: post.mediaItems?.[0]?.type || post.media_type,
+                        image_url: post.mediaItems?.[0]?.imageUrl || post.image_url,
+                        fire_votes: post.fire_votes || 0,
+                        ice_votes: post.ice_votes || 0,
+                        comments_count: post.comments_count || 0,
+                        created_at: post.createdAt || post.created_at,
+                      }}
+                      onComment={(postId) => {
+                        setExpandedComments(prev => ({ ...prev, [postId]: !prev[postId] }));
+                      }}
+                    />
+                  ))
+              }
 
               {/* DNA Moment Card - in All or DNA filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && (

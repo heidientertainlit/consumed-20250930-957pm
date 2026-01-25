@@ -29,13 +29,51 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
   const [isPosting, setIsPosting] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [recentMedia, setRecentMedia] = useState<any[]>([]);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  const recentMedia = [
-    { id: '1', title: 'Severance', type: 'TV', image: 'https://image.tmdb.org/t/p/w92/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg' },
-    { id: '2', title: 'The Bear', type: 'TV', image: 'https://image.tmdb.org/t/p/w92/sHFlbKS3WLqMnp9t2ghADIJFnuQ.jpg' },
-    { id: '3', title: 'Dune: Part Two', type: 'Movie', image: 'https://image.tmdb.org/t/p/w92/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg' },
+  const popularMedia = [
+    { id: 'tmdb-1396', title: 'Breaking Bad', type: 'TV', image: 'https://image.tmdb.org/t/p/w92/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg', external_id: '1396', external_source: 'tmdb' },
+    { id: 'tmdb-1399', title: 'Game of Thrones', type: 'TV', image: 'https://image.tmdb.org/t/p/w92/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg', external_id: '1399', external_source: 'tmdb' },
+    { id: 'tmdb-238', title: 'The Godfather', type: 'Movie', image: 'https://image.tmdb.org/t/p/w92/3bhkrj58Vtu7enYsRolD1fZdja1.jpg', external_id: '238', external_source: 'tmdb' },
   ];
+
+  useEffect(() => {
+    const fetchRecentMedia = async () => {
+      if (!session?.access_token) return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        
+        const { data: listItems } = await supabase
+          .from('list_items')
+          .select('title, media_type, image_url, external_id, external_source')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        if (listItems && listItems.length > 0) {
+          setRecentMedia(listItems.map((item: any) => ({
+            id: item.external_id,
+            title: item.title,
+            type: item.media_type || 'Movie',
+            image: item.image_url,
+            external_id: item.external_id,
+            external_source: item.external_source || 'tmdb',
+          })));
+        } else {
+          setRecentMedia(popularMedia);
+        }
+      } catch (error) {
+        console.error('Failed to fetch recent media:', error);
+        setRecentMedia(popularMedia);
+      }
+    };
+    
+    if (isExpanded && recentMedia.length === 0) {
+      fetchRecentMedia();
+    }
+  }, [isExpanded, session?.access_token]);
 
   useEffect(() => {
     if (debounceRef.current) {
@@ -95,12 +133,13 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
         content: reactText,
         post_type: 'hot_take',
         visibility: 'public',
-        media_items: [{
-          id: selectedMedia.id || selectedMedia.external_id,
-          title: selectedMedia.title,
-          type: selectedMedia.type,
-          imageUrl: selectedMedia.image || selectedMedia.poster_url || selectedMedia.image_url,
-        }],
+        media_title: selectedMedia.title,
+        media_type: selectedMedia.type?.toLowerCase() || 'movie',
+        media_external_id: selectedMedia.external_id || selectedMedia.id,
+        media_external_source: selectedMedia.external_source || 'tmdb',
+        image_url: selectedMedia.image || selectedMedia.poster_url || selectedMedia.image_url || '',
+        fire_votes: 0,
+        ice_votes: 0,
       });
 
       if (error) throw error;
@@ -223,12 +262,14 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
               </div>
             )}
 
-            {/* Recent - only show when no search query */}
+            {/* Recent/Popular - only show when no search query */}
             {searchResults.length === 0 && !isSearching && !searchQuery && (
               <>
-                <p className="text-xs text-gray-500 font-medium mb-2">Recent</p>
+                <p className="text-xs text-gray-500 font-medium mb-2">
+                  {recentMedia.length > 0 && recentMedia[0]?.id !== 'tmdb-1396' ? 'Recent' : 'Popular'}
+                </p>
                 <div className="flex gap-3 overflow-x-auto pb-2">
-                  {recentMedia.map((media) => (
+                  {(recentMedia.length > 0 ? recentMedia : popularMedia).map((media) => (
                     <button
                       key={media.id}
                       onClick={() => handleSelectMedia(media)}
@@ -272,7 +313,7 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
               value={reactText}
               onChange={(e) => setReactText(e.target.value)}
               placeholder="What's your take? No spoilers without warning..."
-              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-purple-400 resize-none"
+              className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-purple-400 resize-none"
               rows={3}
               autoFocus
             />
