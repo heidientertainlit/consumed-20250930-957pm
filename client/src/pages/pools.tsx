@@ -544,40 +544,30 @@ export default function PoolsPage() {
             </Button>
           </Card>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {pools.map((pool) => {
-              // Mock data for demo
               const userRank = Math.floor(Math.random() * 5) + 1;
               const rankSuffix = userRank === 1 ? 'st' : userRank === 2 ? 'nd' : userRank === 3 ? 'rd' : 'th';
               const daysLeft = Math.floor(Math.random() * 7) + 1;
               
               return (
                 <Link key={pool.id} href={`/pool/${pool.id}`}>
-                  <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:border-purple-300 transition-colors cursor-pointer">
+                  <Card className="bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all cursor-pointer border-0">
                     <div className="flex items-center justify-between">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="text-lg font-bold text-gray-900">
-                            {pool.name.split(' ')[0]}: <span className="font-normal">{pool.name.split(' ').slice(1).join(' ') || 'Season 1'}</span>
-                          </h3>
-                          <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
-                            pool.status === 'open' ? 'bg-green-100 text-green-700 border border-green-200' :
-                            pool.status === 'locked' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
-                            'bg-gray-100 text-gray-600'
-                          }`}>
-                            {pool.status === 'open' ? 'Picks open' : pool.status.charAt(0).toUpperCase() + pool.status.slice(1)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-500">
+                        <h3 className="text-lg font-bold text-white mb-1">
+                          {pool.name}
+                        </h3>
+                        <p className="text-sm text-purple-200">
                           <Users size={12} className="inline mr-1" />
-                          {pool.member_count} &nbsp;You're {userRank === 1 ? 'tied for' : 'in'} {userRank}{rankSuffix} place
+                          {pool.member_count} players · You're {userRank === 1 ? 'tied for' : 'in'} {userRank}{rankSuffix} place
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
                         {pool.status === 'open' && (
-                          <span className="text-green-600 text-sm font-medium">{daysLeft} days left</span>
+                          <span className="text-green-400 text-sm font-medium">{daysLeft} days left</span>
                         )}
-                        <ChevronRight size={20} className="text-gray-400" />
+                        <ChevronRight size={20} className="text-purple-300" />
                       </div>
                     </div>
                   </Card>
