@@ -125,6 +125,8 @@ serve(async (req) => {
           media_external_source, 
           media_description,
           contains_spoilers,
+          fire_votes,
+          ice_votes,
           prediction_pool_id,
           list_id,
           rank_id,
@@ -910,6 +912,8 @@ serve(async (req) => {
             rating: post.rating,
             progress: post.progress,
             containsSpoilers: post.contains_spoilers || false,
+            fire_votes: post.fire_votes || 0,
+            ice_votes: post.ice_votes || 0,
             listId: effectiveListId || null,
             listData: listData ? {
               title: listData.title,
