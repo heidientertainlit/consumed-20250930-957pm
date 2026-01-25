@@ -14,6 +14,7 @@ import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import DNAVisualization from "@/components/dna-visualization";
 import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
+import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
 
 interface Recommendation {
   title: string;
@@ -227,6 +228,106 @@ export default function Search() {
     },
     enabled: !!session?.access_token && !!user?.id,
     staleTime: 60000,
+  });
+
+  // Fetch user lists with media for Currently Consuming
+  const [currentlyItems, setCurrentlyItems] = useState<any[]>([]);
+  const [isLoadingCurrently, setIsLoadingCurrently] = useState(false);
+
+  const fetchCurrentlyItems = async () => {
+    if (!session?.access_token || !user?.id) return;
+    setIsLoadingCurrently(true);
+    try {
+      const url = `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${user.id}`;
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const currentlyList = (data.lists || []).find((list: any) => list.title === 'Currently');
+        setCurrentlyItems(currentlyList?.items?.slice(0, 10) || []);
+      }
+    } catch (error) {
+      console.error('Error fetching currently items:', error);
+    } finally {
+      setIsLoadingCurrently(false);
+    }
+  };
+
+  useEffect(() => {
+    if (session?.access_token && user?.id) {
+      fetchCurrentlyItems();
+    }
+  }, [session?.access_token, user?.id]);
+
+  // Update progress mutation for Currently Consuming items
+  const updateProgressMutation = useMutation({
+    mutationFn: async ({ itemId, progress, total, mode, progressDisplay }: { itemId: string; progress: number; total?: number; mode: string; progressDisplay: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      const response = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-item-progress',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            item_id: itemId,
+            progress,
+            progress_total: total,
+            progress_mode: mode,
+          }),
+        }
+      );
+      if (!response.ok) throw new Error('Failed to update progress');
+      return { ...await response.json(), progressDisplay };
+    },
+    onSuccess: (data) => {
+      toast({ title: `Progress updated to ${data.progressDisplay}` });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      fetchCurrentlyItems();
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update progress", variant: "destructive" });
+    },
+  });
+
+  // Move item to different list mutation
+  const moveToListMutation = useMutation({
+    mutationFn: async ({ itemId, targetList, listName }: { itemId: string; targetList: string; listName: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      const response = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/move-item-to-list',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            item_id: itemId,
+            target_list: targetList,
+          }),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to move item');
+      }
+      return { ...await response.json(), listName };
+    },
+    onSuccess: (data) => {
+      toast({ title: `Moved to ${data.listName}` });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      fetchCurrentlyItems();
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to move item", variant: "destructive" });
+    },
   });
 
   // Filter media history
@@ -966,6 +1067,44 @@ export default function Search() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
+      
+      {/* Currently Consuming Section */}
+      {currentlyItems.length > 0 && (
+        <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-6 pb-4 -mt-px">
+          <div className="px-4 mb-3">
+            <h2 className="text-lg font-semibold text-white">Currently Consuming</h2>
+            <p className="text-sm text-gray-400">Update your progress</p>
+          </div>
+          <div 
+            className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 px-4"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            {currentlyItems.map((item: any) => (
+              <CurrentlyConsumingCard 
+                key={item.id} 
+                item={item}
+                onUpdateProgress={(progress, total, mode, progressDisplay) => {
+                  updateProgressMutation.mutate({
+                    itemId: item.id,
+                    progress,
+                    total,
+                    mode,
+                    progressDisplay
+                  });
+                }}
+                onMoveToList={(targetList, listName) => {
+                  moveToListMutation.mutate({
+                    itemId: item.id,
+                    targetList,
+                    listName
+                  });
+                }}
+                isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
+              />
+            ))}
+          </div>
+        </div>
+      )}
       
       {/* Dark Gradient Header Section - matches Activity page nav blend */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-8 px-4 -mt-px">
