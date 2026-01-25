@@ -46,7 +46,6 @@ import { DNALevelBadge, DNAFeatureLock } from "@/components/dna-level-badge";
 import { FriendDNAComparison } from "@/components/friend-dna-comparison";
 import { FriendDNACompareButton } from "@/components/friend-dna-comparison";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
-import { FeedbackDialog } from "@/components/feedback-dialog";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { supabase } from "@/lib/supabase";
 
@@ -98,7 +97,6 @@ export default function UserProfile() {
   const [isSearchingFriends, setIsSearchingFriends] = useState(false);
   const [isSendingRequest, setIsSendingRequest] = useState(false);
   const [friendshipStatus, setFriendshipStatus] = useState<'none' | 'friends' | 'pending_sent' | 'pending_received' | 'loading'>('loading');
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   // Public profile - no restrictions for viewing
@@ -2727,14 +2725,6 @@ export default function UserProfile() {
                       <Settings size={16} />
                       Edit Profile
                     </button>
-                    <button 
-                      className="bg-gradient-to-r from-purple-400 to-purple-500 hover:from-purple-500 hover:to-purple-600 text-white px-5 py-2.5 rounded-full font-medium flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
-                      onClick={() => setIsFeedbackOpen(true)}
-                      data-testid="button-feedback"
-                    >
-                      <MessageCircle size={16} />
-                      Feedback
-                    </button>
                   </div>
                 )}
               </div>
@@ -4900,8 +4890,6 @@ export default function UserProfile() {
         </DialogContent>
       </Dialog>
 
-      {/* Feedback Dialog */}
-      <FeedbackDialog isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
 
       {/* Quick Add Modal */}
       <QuickAddModal 
