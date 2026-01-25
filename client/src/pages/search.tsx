@@ -1071,14 +1071,57 @@ export default function Search() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       
-      {/* Page Title */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-4 pb-2 px-4 -mt-px">
-        <h1 className="text-xl font-semibold text-white text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      {/* Page Title + Search */}
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-4 pb-4 px-4 -mt-px">
+        <h1 className="text-xl font-semibold text-white text-center mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
           Track media to shape your entertainment DNA
         </h1>
+        
+        {/* Search Bar */}
+        <div className="bg-white rounded-2xl p-3 shadow-lg max-w-xl mx-auto">
+          <div className="flex items-center gap-2">
+            <SearchIcon className="text-gray-400 ml-2 flex-shrink-0" size={20} />
+            <Input
+              type="text"
+              placeholder={isAiMode ? "Ask AI for recommendations..." : "add a movie, book, game..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && isAiMode && !isSearching) {
+                  handleSearch();
+                }
+              }}
+              className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 placeholder:text-gray-400"
+              autoFocus
+              data-testid="unified-search-input"
+            />
+            <button
+              onClick={() => {
+                setIsAiMode(!isAiMode);
+                setSearchResults(null);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all flex-shrink-0 ${
+                isAiMode 
+                  ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white" 
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+              data-testid="toggle-ai-mode"
+            >
+              <Sparkles size={14} />
+              AI Mode
+            </button>
+          </div>
+        </div>
+        
+        {/* AI Mode hint */}
+        {isAiMode && (
+          <div className="text-center text-sm text-gray-400 mt-2">
+            <p>Ask for recommendations like "movies similar to Inception"</p>
+          </div>
+        )}
       </div>
       
-      {/* Currently Consuming Section */}
+      {/* In Progress Section */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-2 pb-2 -mt-px">
         <div className="px-4 mb-2">
           <h2 className="text-sm font-semibold text-white">In Progress</h2>
@@ -1123,52 +1166,9 @@ export default function Search() {
         )}
       </div>
       
-      {/* Dark Gradient Header Section - matches Activity page nav blend */}
+      {/* Content Section */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-3 pb-6 px-4 -mt-px">
         <div className="max-w-7xl mx-auto space-y-3">
-
-          {/* Unified Search Bar with AI Mode Toggle */}
-          <div className="bg-white rounded-2xl p-3 shadow-lg">
-            <div className="flex items-center gap-2">
-              <SearchIcon className="text-gray-400 ml-2 flex-shrink-0" size={20} />
-              <Input
-                type="text"
-                placeholder={isAiMode ? "Ask AI for recommendations..." : "add a movie, book, game..."}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && isAiMode && !isSearching) {
-                    handleSearch();
-                  }
-                }}
-                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 placeholder:text-gray-400"
-                autoFocus
-                data-testid="unified-search-input"
-              />
-              <button
-                onClick={() => {
-                  setIsAiMode(!isAiMode);
-                  setSearchResults(null); // Clear AI results when toggling
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all flex-shrink-0 ${
-                  isAiMode 
-                    ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white" 
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-                data-testid="toggle-ai-mode"
-              >
-                <Sparkles size={14} />
-                AI Mode
-              </button>
-            </div>
-          </div>
-
-          {/* Explanatory Text - only show when AI mode is on */}
-          {isAiMode && (
-            <div className="text-center text-sm text-gray-400">
-              <p>Ask for recommendations like "movies similar to Inception" or "uplifting podcasts"</p>
-            </div>
-          )}
 
 
         </div>

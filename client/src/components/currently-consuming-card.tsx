@@ -377,9 +377,9 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
           )}
           
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-6 pb-1.5 px-1.5">
-            <div className="h-0.5 bg-gray-700/50 rounded-full mb-1.5 overflow-hidden">
+            <div className="h-0.5 bg-gray-700/30 rounded-full mb-1.5 overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all rounded-full"
+                className="h-full bg-white/40 transition-all rounded-full"
                 style={{ width: `${getProgressPercent()}%` }}
               />
             </div>
