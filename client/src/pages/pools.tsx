@@ -556,29 +556,26 @@ export default function PoolsPage() {
               
               return (
                 <Link key={pool.id} href={`/pool/${pool.id}`}>
-                  <div className="bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-900 rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all cursor-pointer">
-                    <div className="flex items-center gap-4">
-                      {/* Media poster on left */}
-                      <div className="w-16 h-24 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex-shrink-0 shadow-md flex items-center justify-center overflow-hidden">
-                        <Trophy size={24} className="text-white/60" />
+                  <Card className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      {/* Icon on left */}
+                      <div className="w-12 h-12 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center">
+                        <Trophy size={20} className="text-purple-600" />
                       </div>
                       
-                      {/* Info on right */}
+                      {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-bold text-white truncate mb-1">
+                        <h3 className="text-base font-semibold text-gray-900 truncate">
                           {pool.name}
                         </h3>
-                        <p className="text-sm text-purple-200 mb-1">
-                          {pool.member_count} players
-                        </p>
-                        <p className="text-sm text-purple-300">
-                          You're {userRank === 1 ? 'tied for' : 'in'} {userRank}{rankSuffix} place
+                        <p className="text-sm text-gray-400">
+                          {pool.member_count} players · {userRank}{rankSuffix} place
                         </p>
                       </div>
                       
-                      <ChevronRight size={20} className="text-purple-300 flex-shrink-0" />
+                      <ChevronRight size={18} className="text-gray-300 flex-shrink-0" />
                     </div>
-                  </div>
+                  </Card>
                 </Link>
               );
             })}
