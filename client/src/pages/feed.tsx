@@ -23,6 +23,7 @@ import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { GamesCarousel } from "@/components/games-carousel";
 import { RanksCarousel } from "@/components/ranks-carousel";
 import { PointsGlimpse } from "@/components/points-glimpse";
+import { QuickReactCard } from "@/components/quick-react-card";
 import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -2948,6 +2949,11 @@ export default function Feed() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">No Friend Activity</h3>
                   <p className="text-gray-500 text-sm">Follow more friends to see their activity!</p>
                 </div>
+              )}
+
+              {/* Quick React Card - Share a thought about what you're watching */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+                <QuickReactCard />
               )}
 
               {/* Filtered views - show only the selected category */}
