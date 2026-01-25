@@ -1119,8 +1119,8 @@ export default function Search() {
       </div>
       
       {/* Dark Gradient Header Section - matches Activity page nav blend */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-8 px-4 -mt-px">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-4 pb-8 px-4 -mt-px">
+        <div className="max-w-7xl mx-auto space-y-4">
           {/* Header */}
           <div className="text-center">
             <h1 className="text-xl font-semibold text-white mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
