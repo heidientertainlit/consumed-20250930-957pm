@@ -346,9 +346,9 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
 
     {/* Post-submission dialog */}
     <Dialog open={showPostDialog} onOpenChange={setShowPostDialog}>
-      <DialogContent className="sm:max-w-sm rounded-3xl">
+      <DialogContent className="sm:max-w-sm rounded-3xl bg-white border-0">
         <DialogHeader>
-          <DialogTitle className="text-center text-lg font-semibold">Take posted! 🔥</DialogTitle>
+          <DialogTitle className="text-center text-lg font-semibold text-gray-900">Take posted! 🔥</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center py-2">
           {postedMedia?.image && (
@@ -366,9 +366,8 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
               className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full border-2 border-purple-200 bg-purple-50 text-purple-700 font-medium text-sm hover:bg-purple-100 transition-colors"
               onClick={() => {
                 setShowPostDialog(false);
-                if (postedMedia?.external_id && postedMedia?.external_source) {
-                  setLocation(`/media/${postedMedia.external_source}/${postedMedia.external_id}`);
-                }
+                // Open the list sheet directly - rating is part of that flow
+                setShowListSheet(true);
               }}
             >
               <Star className="w-4 h-4" />
