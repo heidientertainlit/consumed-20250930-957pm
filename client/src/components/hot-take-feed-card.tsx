@@ -136,12 +136,20 @@ export function HotTakeFeedCard({ post, onComment, onDelete, currentUserId }: Ho
         <p className="text-gray-900 text-sm mb-4 leading-relaxed">{post.content}</p>
 
         {post.image_url && (
-          <div className="mb-4 rounded-xl overflow-hidden">
+          <div className="mb-4 flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
             <img 
               src={post.image_url} 
               alt={post.media_title || ''} 
-              className="w-full h-32 object-cover"
+              className="w-16 h-20 rounded-lg object-cover flex-shrink-0"
             />
+            <div className="flex-1 min-w-0">
+              {post.media_title && (
+                <p className="font-medium text-gray-900 text-sm truncate">{post.media_title}</p>
+              )}
+              {post.media_type && (
+                <p className="text-xs text-purple-600 capitalize">{post.media_type}</p>
+              )}
+            </div>
           </div>
         )}
 
