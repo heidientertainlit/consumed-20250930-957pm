@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { MessageCircle, Search, Send, X, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Flame, Search, Send, X, ChevronRight, Plus, Grid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth';
@@ -29,6 +29,7 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
   const [isPosting, setIsPosting] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const recentMedia = [
     { id: '1', title: 'Severance', type: 'TV', image: 'https://image.tmdb.org/t/p/w92/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg' },
@@ -36,28 +37,44 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
     { id: '3', title: 'Dune: Part Two', type: 'Movie', image: 'https://image.tmdb.org/t/p/w92/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg' },
   ];
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    setIsSearching(true);
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-search`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ query: searchQuery, types: ['movie', 'tv'] }),
-        }
-      );
-      const data = await response.json();
-      setSearchResults(data.results?.slice(0, 5) || []);
-    } catch (error) {
-      console.error('Search error:', error);
+  useEffect(() => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
     }
-    setIsSearching(false);
-  };
+
+    if (!searchQuery.trim() || searchQuery.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/media-search`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session?.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ query: searchQuery, types: ['movie', 'tv'] }),
+          }
+        );
+        const data = await response.json();
+        setSearchResults(data.results?.slice(0, 5) || []);
+      } catch (error) {
+        console.error('Search error:', error);
+      }
+      setIsSearching(false);
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [searchQuery, session?.access_token]);
 
   const handleSelectMedia = (media: any) => {
     setSelectedMedia(media);
@@ -70,29 +87,38 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
     if (!reactText.trim() || !selectedMedia) return;
     setIsPosting(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const { error } = await supabase.from('social_posts').insert({
-        user_id: session?.user?.id,
+        user_id: user.id,
         content: reactText,
         post_type: 'hot_take',
+        visibility: 'public',
         media_items: [{
+          id: selectedMedia.id || selectedMedia.external_id,
           title: selectedMedia.title,
-          media_type: selectedMedia.type?.toLowerCase() || 'movie',
-          image_url: selectedMedia.image || selectedMedia.poster_url,
-          external_id: selectedMedia.id || selectedMedia.external_id,
-          external_source: 'tmdb'
-        }]
+          type: selectedMedia.type,
+          imageUrl: selectedMedia.image || selectedMedia.poster_url || selectedMedia.image_url,
+        }],
       });
 
       if (error) throw error;
 
-      toast({ title: 'Posted!', description: `Your take on ${selectedMedia.title} is live` });
-      setReactText('');
-      setSelectedMedia(null);
-      setStep('search');
-      setIsExpanded(false);
+      toast({
+        title: "Hot take posted!",
+        description: "Your take is now live.",
+      });
+      
+      handleClose();
       onPost?.();
-    } catch (error: any) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } catch (error) {
+      console.error('Post error:', error);
+      toast({
+        title: "Couldn't post",
+        description: "Please try again.",
+        variant: "destructive",
+      });
     }
     setIsPosting(false);
   };
@@ -116,7 +142,7 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-            <MessageCircle className="w-5 h-5 text-white" />
+            <Flame className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
             <p className="text-white font-semibold text-sm">What are you consuming?</p>
@@ -132,10 +158,10 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
     <Card className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-lg">
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <MessageCircle className="w-5 h-5 text-white" />
-          <span className="text-white font-semibold">Quick React</span>
+          <Flame className="w-5 h-5 text-white" />
+          <span className="text-white font-semibold">Hot Take</span>
         </div>
-        <button onClick={handleClose} className="text-white/70 hover:text-white">
+        <button onClick={handleClose} className="text-white/70 active:text-white">
           <X size={20} />
         </button>
       </div>
@@ -143,52 +169,64 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
       <div className="p-4">
         {step === 'search' && (
           <>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Search for what you're watching..."
-                  className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-purple-400"
-                  autoFocus
-                />
-              </div>
-              <Button 
-                onClick={handleSearch}
-                disabled={isSearching}
-                className="bg-purple-600 hover:bg-purple-700 rounded-xl"
-              >
-                {isSearching ? '...' : 'Search'}
-              </Button>
+            {/* Search Input */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search movies, shows..."
+                className="w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-purple-400"
+                autoFocus
+              />
             </div>
 
+            {/* Search Results - Add page style */}
             {searchResults.length > 0 && (
-              <div className="space-y-2 mb-4">
-                <p className="text-xs text-gray-500 font-medium">Results</p>
-                {searchResults.map((result) => (
-                  <button
-                    key={result.id || result.external_id}
-                    onClick={() => handleSelectMedia(result)}
-                    className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 text-left"
-                  >
-                    <img 
-                      src={result.poster_url || result.image_url || 'https://via.placeholder.com/40x60'} 
-                      alt={result.title}
-                      className="w-10 h-14 rounded-lg object-cover"
-                    />
-                    <div>
-                      <p className="text-gray-900 font-medium text-sm">{result.title}</p>
-                      <p className="text-gray-500 text-xs">{result.type} {result.year && `• ${result.year}`}</p>
+              <div className="bg-gray-50 rounded-xl p-3 mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Grid className="w-4 h-4 text-gray-500" />
+                  <span className="text-gray-700 font-semibold text-sm">Media</span>
+                </div>
+                <div className="space-y-2">
+                  {searchResults.map((result) => (
+                    <div
+                      key={result.id || result.external_id}
+                      className="flex items-center gap-3 bg-white rounded-xl p-3 border border-gray-100"
+                    >
+                      <img 
+                        src={result.poster_url || result.image_url || 'https://via.placeholder.com/48x72'} 
+                        alt={result.title}
+                        className="w-12 h-16 rounded-lg object-cover flex-shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-900 font-semibold text-sm truncate">{result.title}</p>
+                        <p className="text-gray-500 text-xs capitalize">
+                          {result.type} {result.year && `• ${result.year}`}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleSelectMedia(result)}
+                        className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 active:bg-purple-700"
+                      >
+                        <Plus className="w-5 h-5 text-white" />
+                      </button>
                     </div>
-                  </button>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
 
-            {searchResults.length === 0 && (
+            {/* Loading State */}
+            {isSearching && (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                Searching...
+              </div>
+            )}
+
+            {/* Recent - only show when no search query */}
+            {searchResults.length === 0 && !isSearching && !searchQuery && (
               <>
                 <p className="text-xs text-gray-500 font-medium mb-2">Recent</p>
                 <div className="flex gap-3 overflow-x-auto pb-2">
@@ -216,17 +254,17 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
           <>
             <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
               <img 
-                src={selectedMedia.image || selectedMedia.poster_url} 
+                src={selectedMedia.image || selectedMedia.poster_url || selectedMedia.image_url} 
                 alt={selectedMedia.title}
                 className="w-12 h-16 rounded-lg object-cover"
               />
               <div className="flex-1">
                 <p className="text-gray-900 font-medium">{selectedMedia.title}</p>
-                <p className="text-gray-500 text-xs">{selectedMedia.type}</p>
+                <p className="text-gray-500 text-xs capitalize">{selectedMedia.type}</p>
               </div>
               <button 
                 onClick={() => { setStep('search'); setSelectedMedia(null); }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 active:text-gray-600"
               >
                 <X size={18} />
               </button>
@@ -245,7 +283,7 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
               <Button
                 onClick={handlePost}
                 disabled={!reactText.trim() || isPosting}
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-xl"
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 active:from-purple-700 active:to-indigo-700 rounded-xl"
               >
                 {isPosting ? 'Posting...' : (
                   <>
