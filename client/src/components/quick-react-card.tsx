@@ -6,17 +6,25 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
 
-interface QuickReactCardProps {
-  onPost?: () => void;
+interface PreselectedMedia {
+  id: string;
+  title: string;
+  type: string;
+  image?: string;
 }
 
-export function QuickReactCard({ onPost }: QuickReactCardProps) {
+interface QuickReactCardProps {
+  onPost?: () => void;
+  preselectedMedia?: PreselectedMedia;
+}
+
+export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps) {
   const { session } = useAuth();
   const { toast } = useToast();
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [step, setStep] = useState<'search' | 'react'>('search');
+  const [isExpanded, setIsExpanded] = useState(!!preselectedMedia);
+  const [step, setStep] = useState<'search' | 'react'>(preselectedMedia ? 'react' : 'search');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  const [selectedMedia, setSelectedMedia] = useState<any>(preselectedMedia || null);
   const [reactText, setReactText] = useState('');
   const [isPosting, setIsPosting] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);

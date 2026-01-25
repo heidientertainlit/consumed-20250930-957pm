@@ -12,6 +12,7 @@ import RatingModal from "@/components/rating-modal";
 import CreateListDialog from "@/components/create-list-dialog";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickActionSheet } from "@/components/quick-action-sheet";
+import { QuickReactCard } from "@/components/quick-react-card";
 import { supabase } from "@/lib/supabase";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -986,6 +987,18 @@ export default function MediaDetail() {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Quick React - Share a thought about this title */}
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <QuickReactCard 
+              preselectedMedia={mediaItem ? {
+                id: mediaItem.id || `${params?.source}-${params?.id}`,
+                title: mediaItem.title,
+                type: mediaItem.type || params?.type || 'movie',
+                image: mediaItem.poster_path || mediaItem.poster || mediaItem.image
+              } : undefined}
+            />
           </div>
 
           {/* Reviews & Ratings - stacked collapsible */}

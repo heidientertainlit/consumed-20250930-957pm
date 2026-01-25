@@ -2951,11 +2951,6 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* Quick React Card - Share a thought about what you're watching */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && (
-                <QuickReactCard />
-              )}
-
               {/* Filtered views - show only the selected category */}
               {/* TRIVIA filter - Movies category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && 
@@ -3001,6 +2996,10 @@ export default function Feed() {
                 <SeenItGame />
               )}
 
+              {/* Quick React Card - Share a thought about what you're watching */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+                <QuickReactCard />
+              )}
 
               {/* The Room - Friend Activity with reactions */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && (socialPosts || []).filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved').length > 0 && (

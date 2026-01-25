@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { QuickReactCard } from "@/components/quick-react-card";
 
 export default function QuickLog() {
   const [, setLocation] = useLocation();
@@ -214,6 +215,16 @@ export default function QuickLog() {
             </p>
           </>
         )}
+
+        {/* Divider */}
+        <div className="flex items-center gap-4 my-6">
+          <div className="flex-1 h-px bg-gray-200"></div>
+          <span className="text-gray-400 text-sm">or just share a thought</span>
+          <div className="flex-1 h-px bg-gray-200"></div>
+        </div>
+
+        {/* Quick React Card - share without tracking */}
+        <QuickReactCard />
       </div>
     </div>
   );
