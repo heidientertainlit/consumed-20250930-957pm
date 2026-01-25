@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { QuickAddModal } from './quick-add-modal';
 
 interface HotTakeFeedCardProps {
   post: {
@@ -35,6 +36,7 @@ export function HotTakeFeedCard({ post, onComment, onDelete, currentUserId }: Ho
   const [iceVotes, setIceVotes] = useState(post.ice_votes || 0);
   const [userVote, setUserVote] = useState<'fire' | 'ice' | null>(null);
   const [isVoting, setIsVoting] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
 
   const handleVote = async (voteType: 'fire' | 'ice') => {
     if (!session || isVoting) return;
@@ -151,19 +153,11 @@ export function HotTakeFeedCard({ post, onComment, onDelete, currentUserId }: Ho
               )}
             </div>
             <button
-              onClick={() => {
-                if (typeof window !== 'undefined' && (window as any).openQuickAddModal) {
-                  (window as any).openQuickAddModal({
-                    title: post.media_title,
-                    mediaType: post.media_type,
-                    imageUrl: post.image_url,
-                  });
-                }
-              }}
-              className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors flex-shrink-0"
+              onClick={() => setIsQuickAddOpen(true)}
+              className="w-8 h-8 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-colors flex-shrink-0"
               aria-label="Add to list"
             >
-              <Plus size={18} />
+              <Plus size={16} />
             </button>
           </div>
         )}
@@ -206,6 +200,16 @@ export function HotTakeFeedCard({ post, onComment, onDelete, currentUserId }: Ho
           </button>
         </div>
       </div>
+
+      <QuickAddModal
+        isOpen={isQuickAddOpen}
+        onClose={() => setIsQuickAddOpen(false)}
+        preSelectedMedia={post.image_url ? {
+          title: post.media_title || '',
+          mediaType: post.media_type || 'movie',
+          imageUrl: post.image_url,
+        } : null}
+      />
     </Card>
   );
 }
