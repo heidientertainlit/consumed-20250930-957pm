@@ -27,6 +27,8 @@ interface FriendActivityItem {
   mediaType?: string;
   mediaImage?: string;
   activityText?: string; // e.g., "rated it ⭐⭐⭐⭐", "added it to their list", "finished it"
+  rating?: number;
+  review?: string;
   
   // For poll/trivia/dna
   questionTitle?: string;
@@ -152,83 +154,128 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
     pages.push(items.slice(i, i + ITEMS_PER_PAGE));
   }
 
+  const [expandedReview, setExpandedReview] = useState<string | null>(null);
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`w-3 h-3 ${star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+          />
+        ))}
+      </div>
+    );
+  };
+
   const renderItem = (item: FriendActivityItem, index: number) => {
     const hasReacted = reactions[item.id];
+    const isExpanded = expandedReview === item.id;
     
     if (item.type === 'media_added') {
       return (
-        <div key={item.id || index} className="py-2 border-b border-gray-100 last:border-b-0">
-          <div className="flex items-start gap-3">
+        <div key={item.id || index} className="py-3 border-b border-gray-100 last:border-b-0">
+          <div className="flex gap-3">
+            {/* Left: Media Image */}
             {item.mediaImage ? (
-              <div className="w-12 h-16 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+              <div className="w-14 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0 shadow-sm">
                 <img src={item.mediaImage} alt={item.mediaTitle} className="w-full h-full object-cover" />
               </div>
             ) : (
-              <div className="w-12 h-16 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0 shadow-sm">
                 {getMediaIcon(item.mediaType)}
               </div>
             )}
+            
+            {/* Right: Content */}
             <div className="flex-1 min-w-0">
-              <Link href={`/user/${item.userId}`}>
-                <span className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
-                  {(item.username && item.username !== 'friend' && item.username !== 'Unknown' && item.username !== 'unknown') ? item.username : 'A fan'}
-                </span>
-              </Link>
-              <p className="text-[10px] text-gray-400 mb-1">{item.activityText || 'added'}</p>
-              <p className="text-gray-900 text-sm font-semibold line-clamp-1">
+              {/* Header row with user and delete */}
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5">
+                  <Link href={`/user/${item.userId}`}>
+                    <span className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
+                      {(item.username && item.username !== 'friend' && item.username !== 'Unknown' && item.username !== 'unknown') ? item.username : 'A fan'}
+                    </span>
+                  </Link>
+                  <span className="text-[10px] text-gray-400">{item.activityText || 'added'}</span>
+                </div>
+                {user?.id === item.userId && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
+                    disabled={deletingId === item.id}
+                    className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-red-100 transition-colors disabled:opacity-50"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-3 h-3 text-gray-500" />
+                  </button>
+                )}
+              </div>
+              
+              {/* Title */}
+              <p className="text-gray-900 text-sm font-semibold line-clamp-1 mb-1">
                 {item.mediaTitle}
               </p>
-              <p className="text-[10px] text-gray-500 mt-0.5">
-                {item.communityPercent || getStablePercent(item.id, 50, 80)}% of fans have this
-              </p>
-            </div>
-            <div className="flex gap-1 flex-shrink-0">
-              {!hasReacted ? (
-                <>
-                  <button
-                    onClick={() => handleReaction(item.id, 'agree')}
-                    className="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-green-100 hover:border-green-300 transition-colors"
-                    title="Great pick"
-                  >
-                    <ThumbsUp className="w-3 h-3 text-gray-600" />
-                  </button>
-                  <button
-                    onClick={() => handleReaction(item.id, 'disagree')}
-                    className="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-red-100 hover:border-red-300 transition-colors"
-                    title="Overrated"
-                  >
-                    <ThumbsDown className="w-3 h-3 text-gray-600" />
-                  </button>
-                </>
-              ) : (
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center ${hasReacted === 'agree' ? 'bg-green-500' : 'bg-red-500'}`}>
-                  {hasReacted === 'agree' ? <ThumbsUp className="w-3 h-3 text-white" /> : <ThumbsDown className="w-3 h-3 text-white" />}
+              
+              {/* Rating if exists */}
+              {item.rating && item.rating > 0 && (
+                <div className="mb-1">
+                  {renderStars(item.rating)}
                 </div>
               )}
-              <button
-                onClick={() => {/* TODO: Open rating modal */}}
-                className="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-yellow-100 hover:border-yellow-300 transition-colors"
-                title="Rate it"
-              >
-                <Star className="w-3 h-3 text-gray-600" />
-              </button>
-              <button
-                onClick={() => {/* TODO: Open add to list modal */}}
-                className="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-purple-100 hover:border-purple-300 transition-colors"
-                title="Add to list"
-              >
-                <Plus className="w-3 h-3 text-gray-600" />
-              </button>
-              {user?.id === item.userId && (
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  disabled={deletingId === item.id}
-                  className="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50"
-                  title="Delete"
+              
+              {/* Review snippet - clickable to expand */}
+              {item.review && (
+                <div 
+                  className="cursor-pointer"
+                  onClick={() => setExpandedReview(isExpanded ? null : item.id)}
                 >
-                  <Trash2 className="w-3 h-3 text-gray-600" />
-                </button>
+                  <p className={`text-xs text-gray-600 ${isExpanded ? '' : 'line-clamp-2'}`}>
+                    "{item.review}"
+                  </p>
+                  {item.review.length > 80 && !isExpanded && (
+                    <span className="text-[10px] text-purple-500 font-medium">Read more</span>
+                  )}
+                </div>
               )}
+              
+              {/* Stats and actions row */}
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-[10px] text-gray-400">
+                  {item.communityPercent || getStablePercent(item.id, 50, 80)}% of fans have this
+                </p>
+                <div className="flex gap-1">
+                  {!hasReacted ? (
+                    <>
+                      <button
+                        onClick={() => handleReaction(item.id, 'agree')}
+                        className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-green-100 transition-colors"
+                        title="Great pick"
+                      >
+                        <ThumbsUp className="w-3 h-3 text-gray-500" />
+                      </button>
+                      <button
+                        onClick={() => handleReaction(item.id, 'disagree')}
+                        className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-red-100 transition-colors"
+                        title="Overrated"
+                      >
+                        <ThumbsDown className="w-3 h-3 text-gray-500" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${hasReacted === 'agree' ? 'bg-green-500' : 'bg-red-500'}`}>
+                      {hasReacted === 'agree' ? <ThumbsUp className="w-3 h-3 text-white" /> : <ThumbsDown className="w-3 h-3 text-white" />}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => {/* TODO: Open add to list modal */}}
+                    className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-purple-100 transition-colors"
+                    title="Add to list"
+                  >
+                    <Plus className="w-3 h-3 text-gray-500" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
