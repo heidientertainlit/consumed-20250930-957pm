@@ -2896,7 +2896,8 @@ export default function UserProfile() {
           ) : null;
         })()}
 
-        {/* Section Navigation Pills - Tab-like behavior */}
+        {/* Section Navigation Pills - Tab-like behavior (only for own profile) */}
+        {isOwnProfile && (
         <div className="sticky top-16 z-20 bg-gray-50 border-b border-gray-200 px-4 py-3 -mx-0">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
             <button
@@ -2921,37 +2922,160 @@ export default function UserProfile() {
             >
               Badges
             </button>
-            {isOwnProfile && (
-              <button
-                onClick={() => setActiveSection('friends')}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  activeSection === 'friends'
-                    ? 'bg-purple-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-                data-testid="nav-friends"
-              >
-                Friends
-              </button>
-            )}
-            {(isOwnProfile || friendshipStatus === 'friends') && (
-              <button
-                onClick={() => setActiveSection('collections')}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  activeSection === 'collections'
-                    ? 'bg-purple-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                }`}
-                data-testid="nav-collections"
-              >
-                {isOwnProfile ? 'Media History' : `${profileData?.display_name?.split(' ')[0] || 'Their'}'s Media History`}
-              </button>
-            )}
+            <button
+              onClick={() => setActiveSection('friends')}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                activeSection === 'friends'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+              data-testid="nav-friends"
+            >
+              Friends
+            </button>
+            <button
+              onClick={() => setActiveSection('collections')}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                activeSection === 'collections'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+              data-testid="nav-collections"
+            >
+              Media History
+            </button>
           </div>
         </div>
+        )}
 
-        {/* My Entertainment DNA (includes Stats) */}
-        {activeSection === 'dna' && (
+        {/* GLANCEABLE VIEW FOR FRIEND PROFILES - Shows all key sections at once */}
+        {!isOwnProfile && friendshipStatus === 'friends' && (
+          <div className="px-4 py-4 space-y-4">
+            {/* Compact Stats Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <BarChart3 size={14} className="text-purple-600" />
+                Stats
+              </h4>
+              {userStats ? (
+                <div className="grid grid-cols-6 gap-2">
+                  <div className="text-center">
+                    <div className="text-base font-bold text-purple-700">{userStats.moviesWatched}</div>
+                    <div className="text-[10px] text-gray-500">Movies</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-base font-bold text-pink-600">{userStats.tvShowsWatched}</div>
+                    <div className="text-[10px] text-gray-500">TV</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-base font-bold text-cyan-600">{userStats.booksRead}</div>
+                    <div className="text-[10px] text-gray-500">Books</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-base font-bold text-green-600">{userStats.musicHours}h</div>
+                    <div className="text-[10px] text-gray-500">Music</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-base font-bold text-blue-600">{userStats.podcastHours}h</div>
+                    <div className="text-[10px] text-gray-500">Pods</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-base font-bold text-orange-600">{userStats.gamesPlayed}</div>
+                    <div className="text-[10px] text-gray-500">Games</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500 text-center py-2">No stats yet</div>
+              )}
+            </div>
+
+            {/* Compact DNA Card */}
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-200 p-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="text-white" size={14} />
+                </div>
+                <h4 className="text-sm font-semibold text-gray-700">Entertainment DNA</h4>
+              </div>
+              {dnaProfileStatus === 'has_profile' && dnaProfile ? (
+                <div>
+                  <h5 className="text-base font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent mb-1">
+                    {dnaProfile.label || 'DNA Profile'}
+                  </h5>
+                  {dnaProfile.tagline && (
+                    <p className="text-xs text-gray-600 italic mb-2">{dnaProfile.tagline}</p>
+                  )}
+                  <p className="text-xs text-gray-600 line-clamp-2">
+                    {dnaProfile.profile_text?.slice(0, 120)}...
+                  </p>
+                  <button 
+                    onClick={() => setActiveSection('dna')}
+                    className="text-xs text-purple-600 font-medium mt-2 hover:text-purple-700"
+                  >
+                    View Full DNA →
+                  </button>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500">No DNA profile yet</p>
+              )}
+            </div>
+
+            {/* Compact Lists Card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <List size={14} className="text-purple-600" />
+                Lists
+              </h4>
+              {userLists && userLists.length > 0 ? (
+                <div className="space-y-2">
+                  {userLists.slice(0, 4).map((list: any) => (
+                    <div 
+                      key={list.id}
+                      className="flex items-center justify-between py-1.5 px-2 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => {
+                        const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
+                        const userParam = viewingUserId ? `?user=${viewingUserId}` : '';
+                        setLocation(`/list/${listSlug}${userParam}`);
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-gradient-to-br from-purple-100 to-blue-100 rounded flex items-center justify-center">
+                          {list.title === 'Want to Watch' ? <Play className="text-purple-600" size={12} /> :
+                           list.title === 'Currently' ? <Clock className="text-blue-600" size={12} /> :
+                           list.title === 'Completed' ? <Trophy className="text-green-600" size={12} /> :
+                           <List className="text-purple-600" size={12} />}
+                        </div>
+                        <span className="text-sm font-medium text-gray-800">{list.title}</span>
+                      </div>
+                      <span className="text-xs text-gray-500">{list.items?.length || 0}</span>
+                    </div>
+                  ))}
+                  {userLists.length > 4 && (
+                    <button 
+                      onClick={() => setActiveSection('collections')}
+                      className="text-xs text-purple-600 font-medium w-full text-center pt-1 hover:text-purple-700"
+                    >
+                      View all {userLists.length} lists →
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 text-center py-2">No lists yet</p>
+              )}
+            </div>
+
+            {/* Compare DNA Button */}
+            {dnaLevel >= 2 && dnaProfileStatus === 'has_profile' && (
+              <FriendDNACompareButton 
+                friendId={viewingUserId || ''}
+                friendName={profileData?.display_name || 'Friend'}
+              />
+            )}
+          </div>
+        )}
+
+        {/* My Entertainment DNA (includes Stats) - FULL VIEW for own profile */}
+        {isOwnProfile && activeSection === 'dna' && (
         <div ref={dnaRef} className="px-4 mb-8">
           {/* Stats Section */}
           <div className="mb-6">
@@ -3542,8 +3666,8 @@ export default function UserProfile() {
           </div>
         )}
 
-        {/* Collections Section - Library view with Lists/History tabs */}
-        {activeSection === 'collections' && (isOwnProfile || friendshipStatus === 'friends') && (
+        {/* Collections Section - Library view with Lists/History tabs (own profile only) */}
+        {activeSection === 'collections' && isOwnProfile && (
           <div ref={listsRef} className="px-4 mb-8">
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
               {/* Header */}
