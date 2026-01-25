@@ -3027,7 +3027,7 @@ export default function Feed() {
                         }}
                       />
                       {expandedComments.has(post.id) && (
-                        <div className="mt-2 bg-white rounded-xl border border-gray-100 p-4">
+                        <div className="mt-2 bg-white rounded-xl border border-gray-100 p-3">
                           <CommentsSection
                             postId={post.id}
                             isLiked={likedPosts.has(post.id)}
@@ -3044,6 +3044,8 @@ export default function Feed() {
                             onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
                             onVoteComment={handleVoteComment}
                             likedComments={likedComments}
+                            session={session}
+                            hotTakeMode={true}
                           />
                         </div>
                       )}

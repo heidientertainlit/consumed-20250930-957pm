@@ -55,6 +55,8 @@ interface CommentsSectionProps {
   recCategory?: string;
   // Control add rec input from parent
   forceShowAddInput?: boolean;
+  // Hot Take mode - cleaner styling
+  hotTakeMode?: boolean;
 }
 
 interface CommentItemProps {
@@ -487,6 +489,7 @@ export default function CommentsSection({
   isRecsMode = false,
   recCategory,
   forceShowAddInput = false,
+  hotTakeMode = false,
 }: CommentsSectionProps) {
   // Feature flag for comment likes (defaults to OFF for safety)
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
@@ -522,7 +525,9 @@ export default function CommentsSection({
   const categoryLabel = categoryLabels[recCategory || ''] || 'recommendation';
   const placeholder = isRecsMode 
     ? `Recommend a ${categoryLabel} 👇` 
-    : 'Add a comment';
+    : hotTakeMode 
+      ? 'Drop your take...'
+      : 'Add a comment';
 
   // Count for social proof
   const commentCount = comments?.length || 0;
@@ -543,7 +548,7 @@ export default function CommentsSection({
   };
 
   return (
-    <div className={`rounded-lg ${isRecsMode ? 'p-2 space-y-2 bg-gray-50' : 'p-4 space-y-3 bg-gray-50'}`}>
+    <div className={`rounded-lg ${isRecsMode ? 'p-2 space-y-2 bg-gray-50' : hotTakeMode ? 'space-y-3 bg-white' : 'p-4 space-y-3 bg-gray-50'}`}>
       {/* Top-level Comment Input - only show in recs mode when forceShowAddInput is true */}
       {isRecsMode ? (
         showAddRecInput && (
@@ -565,14 +570,19 @@ export default function CommentsSection({
         )
       ) : (
         <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-            <User size={16} className="text-gray-600" />
-          </div>
+          {!hotTakeMode && (
+            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+              <User size={16} className="text-gray-600" />
+            </div>
+          )}
           <MentionInput
             placeholder={placeholder}
             value={commentInput}
             onChange={onCommentInputChange}
-            className="bg-white text-black placeholder:text-gray-500"
+            className={hotTakeMode 
+              ? "flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-black placeholder:text-gray-400 focus:border-purple-400 focus:outline-none"
+              : "bg-white text-black placeholder:text-gray-500"
+            }
             disabled={isSubmitting}
             session={session}
             testId="input-new-comment"
@@ -581,7 +591,10 @@ export default function CommentsSection({
             type="submit"
             size="sm"
             disabled={!commentInput.trim() || isSubmitting}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1"
+            className={hotTakeMode 
+              ? "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-full w-10 h-10 p-0 flex items-center justify-center"
+              : "bg-purple-600 hover:bg-purple-700 text-white px-3 py-1"
+            }
             data-testid="button-submit-comment"
           >
             <Send size={16} />
@@ -639,10 +652,12 @@ export default function CommentsSection({
           )}
         </>
       ) : (
-        <div className="text-center text-gray-500 text-sm py-2">
+        <div className="text-center text-gray-400 text-sm py-2">
           {isRecsMode 
             ? "No recs yet • Be the first →" 
-            : "No comments yet. Be the first to comment!"}
+            : hotTakeMode
+              ? "No takes yet. Be the first!"
+              : "No comments yet. Be the first to comment!"}
         </div>
       )}
     </div>
