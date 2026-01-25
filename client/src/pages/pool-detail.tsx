@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Loader2, Trash2, Share2 } from 'lucide-react';
+import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Loader2, Trash2, Share2, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -252,29 +252,43 @@ export default function PoolDetailPage() {
 
   // Main Pool View
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen pb-24 relative overflow-hidden" style={{
+      background: 'linear-gradient(135deg, #1a0533 0%, #2d1b4e 25%, #4a1942 50%, #2d1b4e 75%, #1a0533 100%)'
+    }}>
+      {/* Stars/sparkle overlay */}
+      <div className="absolute inset-0 opacity-40" style={{
+        backgroundImage: `radial-gradient(2px 2px at 20px 30px, white, transparent),
+          radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+          radial-gradient(1px 1px at 90px 40px, white, transparent),
+          radial-gradient(2px 2px at 160px 120px, rgba(255,255,255,0.9), transparent),
+          radial-gradient(1px 1px at 230px 80px, white, transparent),
+          radial-gradient(2px 2px at 300px 150px, rgba(255,255,255,0.7), transparent),
+          radial-gradient(1px 1px at 350px 60px, white, transparent)`,
+        backgroundSize: '400px 200px'
+      }} />
+      
       <Navigation />
 
-      <div className="max-w-lg mx-auto px-4 pt-4">
+      <div className="max-w-lg mx-auto px-4 pt-4 relative z-10">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <button onClick={() => setLocation('/pools')} className="flex items-center gap-1 text-gray-500 hover:text-gray-700 text-sm">
-            <ArrowLeft size={16} />
+        <div className="flex items-center justify-between mb-8">
+          <button onClick={() => setLocation('/pools')} className="text-white/70 hover:text-white">
+            <ArrowLeft size={20} />
           </button>
           <div className="flex items-center gap-2">
             <Button
               onClick={() => copyInviteCode(pool.invite_code)}
               size="sm"
               variant="ghost"
-              className="text-gray-500 hover:text-gray-700"
+              className="text-white/70 hover:text-white hover:bg-white/10"
             >
-              {copiedCode ? <Check size={16} /> : <Share2 size={16} />}
+              {copiedCode ? <Check size={18} /> : <Share2 size={18} />}
             </Button>
             {is_host && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-red-500">
-                    <Trash2 size={16} />
+                  <Button variant="ghost" size="sm" className="text-white/50 hover:text-red-400 hover:bg-white/10">
+                    <Trash2 size={18} />
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -299,41 +313,63 @@ export default function PoolDetailPage() {
           </div>
         </div>
 
-        {/* Pool Name Card */}
-        <Card className="bg-white border border-gray-100 rounded-2xl p-5 mb-6 shadow-sm">
-          <h1 className="text-xl font-bold text-gray-900 mb-3">
-            <span className="font-black">{pool.media_title || pool.name.split(' ')[0]}</span> {pool.name.includes('Season') ? pool.name.split(' ').slice(-2).join(' ') : 'Season 1'}
+        {/* Title */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-white mb-1">
+            {pool.media_title || pool.name.split(' ')[0]} — {pool.name.includes('Season') ? pool.name.split(' ').slice(-2).join(' ') : 'Season 1'}
           </h1>
-          <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-4 py-3 text-gray-400">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <span className="text-sm">Search shows, sports, awards...</span>
-          </div>
-        </Card>
+          <p className="text-white/60 text-sm">Season Picks</p>
+        </div>
 
-        {/* Your Status */}
-        <div className="mb-4">
-          <h3 className="text-xl font-bold text-gray-900 mb-2">
-            You're in <span className="text-green-500">{userRank === 1 ? '1st' : userRank === 2 ? '2nd' : userRank === 3 ? '3rd' : `${userRank}th`}</span> place
-          </h3>
-          <div className="flex items-center gap-2 text-gray-500 text-sm">
-            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-xs text-purple-600 font-medium">
-              {lastEliminated.charAt(0)}
-            </div>
+        {/* Make Your Pick Card */}
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-6 mb-8">
+          <h2 className="text-white font-bold text-lg text-center mb-1">Make Your Pick</h2>
+          <p className="text-white/70 text-center mb-4">Who's getting eliminated next?</p>
+          
+          <Button
+            onClick={() => setShowPickView(true)}
+            className="w-full py-5 text-lg font-semibold bg-purple-600 hover:bg-purple-700 text-white rounded-full"
+          >
+            {hasLocked ? 'Change Pick' : 'Pick Now'}
+          </Button>
+          
+          <p className="text-white/50 text-center text-sm mt-3">Picks close in 2 days</p>
+
+          {hasLocked && selectedContestant && (
+            <p className="text-center text-white/60 text-sm mt-2">
+              Your pick: <span className="font-semibold text-white">{contestants.find(c => c.id === selectedContestant)?.name}</span>
+            </p>
+          )}
+        </div>
+
+        {/* Last Result */}
+        <div className="mb-6">
+          <h3 className="text-white font-bold text-lg mb-2">Last Result</h3>
+          <div className="flex items-center gap-2 text-white/70 text-sm">
+            <span className="text-lg">🎭</span>
             <span>{lastEliminated} was eliminated</span>
           </div>
         </div>
 
+        {/* Group Leaderboard Button */}
+        <button className="w-full flex items-center justify-between bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl px-4 py-4 mb-6 hover:bg-white/15 transition-colors">
+          <span className="text-white font-medium">Group leaderboard</span>
+          <ChevronRight size={20} className="text-white/50" />
+        </button>
+
+        {/* Your Status */}
+        <div className="mb-4">
+          <h3 className="text-xl font-bold text-white mb-1">
+            You're in <span className="text-green-400">{userRank === 1 ? '1st' : userRank === 2 ? '2nd' : userRank === 3 ? '3rd' : `${userRank}th`}</span> place
+          </h3>
+          <p className="text-white/50 text-sm">4 pts behind 2nd</p>
+        </div>
+
         {/* Leaderboard */}
-        <Card className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-          <div className="px-4 py-3 border-b border-gray-100">
-            <h3 className="text-gray-500 font-medium">Group leaderboard</h3>
-          </div>
-          
-          <div className="divide-y divide-gray-100">
+        <div className="bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl overflow-hidden mb-6">
+          <div className="divide-y divide-white/10">
             {members.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-400">
+              <div className="px-4 py-8 text-center text-white/50">
                 No members yet. Share the invite code!
               </div>
             ) : (
@@ -346,12 +382,12 @@ export default function PoolDetailPage() {
                   return (
                     <div
                       key={member.user_id}
-                      className={`flex items-center justify-between px-4 py-3 ${isCurrentUser ? 'bg-purple-50' : ''}`}
+                      className={`flex items-center justify-between px-4 py-3 ${isCurrentUser ? 'bg-white/5' : ''}`}
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                          index === 0 ? 'bg-purple-100 text-purple-600' :
-                          'bg-gray-100 text-gray-600'
+                          index === 0 ? 'bg-purple-400/30 text-purple-200' :
+                          'bg-white/10 text-white/70'
                         }`}>
                           {member.users.avatar_url ? (
                             <img src={member.users.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
@@ -360,36 +396,33 @@ export default function PoolDetailPage() {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-900 font-medium">
+                          <span className="text-white font-medium">
                             {member.users.display_name || member.users.user_name}
                           </span>
                           {index === 0 && (
-                            <Trophy size={14} className="text-purple-500" />
-                          )}
-                          {index === 0 && (
-                            <span className="text-purple-500 text-xs">5</span>
+                            <Trophy size={14} className="text-purple-300" />
                           )}
                         </div>
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-600">+{member.total_points}</span>
-                        <span className="text-green-500 text-sm font-medium">+{pointsChange}</span>
+                        <span className="text-white/70">+{member.total_points}</span>
+                        <span className="text-green-400 text-sm font-medium">+{pointsChange}</span>
                       </div>
                     </div>
                   );
                 })
             )}
           </div>
-        </Card>
+        </div>
 
         {/* Invite Code */}
-        <div className="mt-6 text-center">
+        <div className="text-center">
           <button
             onClick={() => copyInviteCode(pool.invite_code)}
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-gray-600 transition-colors text-sm"
+            className="inline-flex items-center gap-2 text-white/40 hover:text-white/70 transition-colors text-sm"
           >
-            {copiedCode ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+            {copiedCode ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
             <span>Invite Code: <span className="font-mono font-bold">{pool.invite_code}</span></span>
           </button>
         </div>
