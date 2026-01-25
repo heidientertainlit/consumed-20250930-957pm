@@ -261,12 +261,22 @@ export default function PoolDetailPage() {
           <button onClick={() => setLocation('/pools')} className="text-gray-500 hover:text-gray-700">
             <ArrowLeft size={20} />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Button
               onClick={() => copyInviteCode(pool.invite_code)}
               size="sm"
               variant="ghost"
               className="text-gray-500 hover:text-gray-700"
+              title="Invite Friends"
+            >
+              <Users size={18} />
+            </Button>
+            <Button
+              onClick={() => copyInviteCode(pool.invite_code)}
+              size="sm"
+              variant="ghost"
+              className="text-gray-500 hover:text-gray-700"
+              title="Share"
             >
               {copiedCode ? <Check size={18} /> : <Share2 size={18} />}
             </Button>
@@ -317,47 +327,37 @@ export default function PoolDetailPage() {
               {members.length} players · {userRank === 1 ? '1st' : userRank === 2 ? '2nd' : userRank === 3 ? '3rd' : `${userRank}th`} place
             </p>
             
-            {/* Make Your Pick Button */}
-            <Button
-              onClick={() => setShowPickView(true)}
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold px-6 py-2 rounded-full shadow-md"
-            >
-              {hasLocked ? 'Change Pick' : 'Make Your Pick'}
-            </Button>
-            <p className="text-gray-400 text-xs mt-2">
-              <Clock size={12} className="inline mr-1" />
-              Picks close in 2 days
-            </p>
-
             {hasLocked && selectedContestant && (
-              <p className="text-gray-500 text-sm mt-2">
+              <p className="text-gray-500 text-sm mt-1">
                 Your pick: <span className="font-semibold text-purple-600">{contestants.find(c => c.id === selectedContestant)?.name}</span>
               </p>
             )}
           </div>
         </div>
 
-        {/* Invite Friends Button */}
+        {/* Make Your Pick Button - Main CTA */}
         <Button
-          onClick={() => copyInviteCode(pool.invite_code)}
-          variant="outline"
-          className="w-full mb-6 py-3 rounded-xl border-purple-200 text-purple-600 hover:bg-purple-50 font-medium"
+          onClick={() => setShowPickView(true)}
+          className="w-full py-6 text-lg font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-2xl shadow-lg mb-2"
         >
-          <Users size={16} className="mr-2" />
-          Invite Friends to Play
+          {hasLocked ? '✓ Change Your Pick' : '🎯 Make Your Pick'}
         </Button>
+        <p className="text-gray-400 text-xs text-center mb-6">
+          <Clock size={12} className="inline mr-1" />
+          Picks close in 2 days
+        </p>
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <Card className="bg-white border border-gray-100 rounded-2xl p-4 text-center shadow-sm">
-            <div className="text-3xl font-black text-purple-600 mb-1">
+          <Card className="bg-gradient-to-br from-purple-700 via-purple-800 to-indigo-900 border-0 rounded-2xl p-4 text-center shadow-lg">
+            <div className="text-3xl font-black text-white mb-1">
               {userRank === 1 ? '1st' : userRank === 2 ? '2nd' : userRank === 3 ? '3rd' : `${userRank}th`}
             </div>
-            <p className="text-gray-500 text-sm">Your Rank</p>
+            <p className="text-purple-200 text-sm">Your Rank</p>
           </Card>
-          <Card className="bg-white border border-gray-100 rounded-2xl p-4 text-center shadow-sm">
-            <div className="text-3xl font-black text-green-500 mb-1">+37</div>
-            <p className="text-gray-500 text-sm">Points</p>
+          <Card className="bg-gradient-to-br from-purple-700 via-purple-800 to-indigo-900 border-0 rounded-2xl p-4 text-center shadow-lg">
+            <div className="text-3xl font-black text-green-400 mb-1">+37</div>
+            <p className="text-purple-200 text-sm">Points</p>
           </Card>
         </div>
 
