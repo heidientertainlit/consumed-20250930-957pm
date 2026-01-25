@@ -544,7 +544,7 @@ export default function PoolsPage() {
             </Button>
           </Card>
         ) : (
-          <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-6">
             {pools.map((pool, index) => {
               const userRank = Math.floor(Math.random() * 5) + 1;
               const rankSuffix = userRank === 1 ? 'st' : userRank === 2 ? 'nd' : userRank === 3 ? 'rd' : 'th';
@@ -561,36 +561,28 @@ export default function PoolsPage() {
               
               return (
                 <Link key={pool.id} href={`/pool/${pool.id}`}>
-                  <div className="cursor-pointer group">
-                    {/* Poster Card */}
-                    <div className={`bg-gradient-to-br ${gradient} rounded-2xl aspect-[3/4] p-4 shadow-lg group-hover:shadow-xl transition-all relative overflow-hidden`}>
-                      {/* Decorative elements */}
-                      <div className="absolute top-3 right-3 flex gap-2">
-                        <div className="w-8 h-8 rounded-full bg-black/30 flex items-center justify-center">
-                          <Users size={14} className="text-white" />
-                        </div>
-                      </div>
-                      
-                      {/* Pool type icon */}
-                      <div className="absolute inset-0 flex items-center justify-center opacity-20">
-                        <Trophy size={80} className="text-white" />
-                      </div>
-                      
-                      {/* Bottom info */}
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <div className="text-white/80 text-xs font-medium mb-1">
-                          {pool.member_count} players
-                        </div>
-                        <div className="text-white text-xs">
-                          {userRank}{rankSuffix} place
-                        </div>
+                  <div className="flex items-center gap-4 cursor-pointer group">
+                    {/* Poster thumbnail on left */}
+                    <div className={`bg-gradient-to-br ${gradient} rounded-xl w-20 h-28 flex-shrink-0 shadow-lg group-hover:shadow-xl transition-all relative overflow-hidden`}>
+                      <div className="absolute inset-0 flex items-center justify-center opacity-30">
+                        <Trophy size={32} className="text-white" />
                       </div>
                     </div>
                     
-                    {/* Title below poster */}
-                    <h3 className="text-base font-semibold text-gray-900 mt-3 truncate">
-                      {pool.name}
-                    </h3>
+                    {/* Info on right */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-gray-900 truncate mb-1">
+                        {pool.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 mb-1">
+                        {pool.member_count} players
+                      </p>
+                      <p className="text-sm text-purple-600 font-medium">
+                        You're {userRank === 1 ? 'tied for' : 'in'} {userRank}{rankSuffix} place
+                      </p>
+                    </div>
+                    
+                    <ChevronRight size={20} className="text-gray-400 flex-shrink-0" />
                   </div>
                 </Link>
               );
