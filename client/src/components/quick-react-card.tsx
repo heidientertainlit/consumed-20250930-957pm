@@ -147,10 +147,10 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
           </div>
           <div className="flex-1">
             <p className="text-white font-semibold text-sm">
-              {isExpanded ? 'Hot Take' : 'What are you consuming?'}
+              {isExpanded ? 'Hot Take' : 'Got a hot take?'}
             </p>
             <p className="text-white/70 text-xs">
-              {isExpanded ? 'Share what you\'re consuming' : 'Share a hot take.'}
+              {isExpanded ? 'Pick what it\'s about' : 'Share it.'}
             </p>
           </div>
           {isExpanded ? (
