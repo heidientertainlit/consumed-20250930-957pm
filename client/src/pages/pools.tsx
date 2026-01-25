@@ -569,7 +569,16 @@ export default function PoolsPage() {
                   <Card className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer">
                     <div className="flex items-center gap-4">
                       {/* Media poster on left */}
-                      <div className={`w-16 h-24 rounded-xl bg-gradient-to-br ${gradient} flex-shrink-0 shadow-md flex items-center justify-center`}>
+                      <img 
+                        src={`https://image.tmdb.org/t/p/w200${index === 0 ? '/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg' : index === 1 ? '/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg' : '/1E5baAaEse26fej7uHcjOgEE2t2.jpg'}`}
+                        alt={pool.name}
+                        className="w-20 h-28 rounded-xl flex-shrink-0 shadow-md object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                      <div className={`w-20 h-28 rounded-xl bg-gradient-to-br ${gradient} flex-shrink-0 shadow-md flex items-center justify-center hidden`}>
                         <Trophy size={24} className="text-white/70" />
                       </div>
                       
