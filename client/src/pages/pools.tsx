@@ -282,15 +282,6 @@ export default function PoolsPage() {
           <p className="text-gray-500 text-sm">See how you stack up</p>
         </div>
 
-        {/* Start Picks Button */}
-        <Button 
-          onClick={() => setIsCreateOpen(true)}
-          className="w-full py-5 rounded-full bg-white border-2 border-gray-200 text-gray-900 hover:bg-gray-50 hover:border-purple-300 shadow-sm font-semibold text-base mb-6"
-        >
-          <Plus size={18} className="mr-2 text-purple-600" />
-          Start Picks
-        </Button>
-
         {/* Action Buttons */}
         <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm mb-6">
           <div className="flex gap-2">
