@@ -2999,24 +2999,55 @@ export default function Feed() {
                   .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
                   .slice(0, selectedFilter === 'hottakes' ? 20 : 3)
                   .map((post: any) => (
-                    <HotTakeFeedCard
-                      key={`hottake-${post.id}`}
-                      post={{
-                        id: post.id,
-                        user: post.user,
-                        content: post.content,
-                        media_title: post.mediaItems?.[0]?.title || post.media_title,
-                        media_type: post.mediaItems?.[0]?.type || post.media_type,
-                        image_url: post.mediaItems?.[0]?.imageUrl || post.image_url,
-                        fire_votes: post.fire_votes || 0,
-                        ice_votes: post.ice_votes || 0,
-                        comments_count: post.comments_count || 0,
-                        created_at: post.createdAt || post.created_at,
-                      }}
-                      onComment={(postId) => {
-                        setExpandedComments(prev => ({ ...prev, [postId]: !prev[postId] }));
-                      }}
-                    />
+                    <div key={`hottake-wrapper-${post.id}`}>
+                      <HotTakeFeedCard
+                        key={`hottake-${post.id}`}
+                        post={{
+                          id: post.id,
+                          user: post.user,
+                          content: post.content,
+                          media_title: post.mediaItems?.[0]?.title || post.media_title,
+                          media_type: post.mediaItems?.[0]?.type || post.media_type,
+                          image_url: post.mediaItems?.[0]?.imageUrl || post.image_url,
+                          fire_votes: post.fire_votes || 0,
+                          ice_votes: post.ice_votes || 0,
+                          comments_count: post.comments || post.comments_count || 0,
+                          created_at: post.createdAt || post.created_at || post.timestamp,
+                        }}
+                        onComment={(postId) => {
+                          setExpandedComments(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(postId)) {
+                              newSet.delete(postId);
+                            } else {
+                              newSet.add(postId);
+                            }
+                            return newSet;
+                          });
+                        }}
+                      />
+                      {expandedComments.has(post.id) && (
+                        <div className="mt-2 bg-white rounded-xl border border-gray-100 p-4">
+                          <CommentsSection
+                            postId={post.id}
+                            isLiked={likedPosts.has(post.id)}
+                            onLike={handleLike}
+                            expandedComments={true}
+                            onToggleComments={() => {}}
+                            fetchComments={fetchComments}
+                            commentInput={commentInputs[post.id] || ''}
+                            onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                            onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                            isSubmitting={commentMutation.isPending}
+                            currentUserId={user?.id}
+                            onDeleteComment={handleDeleteComment}
+                            onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                            onVoteComment={handleVoteComment}
+                            likedComments={likedComments}
+                          />
+                        </div>
+                      )}
+                    </div>
                   ))
               }
 
