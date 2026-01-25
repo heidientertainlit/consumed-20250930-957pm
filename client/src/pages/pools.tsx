@@ -550,17 +550,27 @@ export default function PoolsPage() {
           </Card>
         ) : (
           <div className="flex flex-col gap-5">
-            {pools.map((pool) => {
+            {pools.map((pool, index) => {
               const userRank = Math.floor(Math.random() * 5) + 1;
               const rankSuffix = userRank === 1 ? 'st' : userRank === 2 ? 'nd' : userRank === 3 ? 'rd' : 'th';
+              
+              // Different gradient colors for poster thumbnails
+              const gradients = [
+                'from-purple-500 to-indigo-600',
+                'from-pink-500 to-rose-600',
+                'from-amber-500 to-orange-600',
+                'from-emerald-500 to-teal-600',
+                'from-blue-500 to-cyan-600',
+              ];
+              const gradient = gradients[index % gradients.length];
               
               return (
                 <Link key={pool.id} href={`/pool/${pool.id}`}>
                   <Card className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      {/* Icon on left */}
-                      <div className="w-12 h-12 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center">
-                        <Trophy size={20} className="text-purple-600" />
+                    <div className="flex items-center gap-4">
+                      {/* Media poster on left */}
+                      <div className={`w-16 h-24 rounded-xl bg-gradient-to-br ${gradient} flex-shrink-0 shadow-md flex items-center justify-center`}>
+                        <Trophy size={24} className="text-white/70" />
                       </div>
                       
                       {/* Info */}
