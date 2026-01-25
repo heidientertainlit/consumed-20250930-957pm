@@ -357,11 +357,11 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
   return (
     <>
       <div 
-        className="w-36 flex-shrink-0"
+        className="w-24 flex-shrink-0"
         data-testid={`currently-card-${item.id}`}
       >
         <div 
-          className="relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer mb-2"
+          className="relative aspect-[2/3] rounded-lg overflow-hidden cursor-pointer mb-1"
           onClick={() => setLocation(`/media/${item.media_type}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`)}
         >
           {item.image_url ? (
@@ -376,22 +376,19 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
             </div>
           )}
           
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-8 pb-2 px-2">
-            <div className="h-1 bg-gray-700/50 rounded-full mb-2 overflow-hidden">
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-6 pb-1.5 px-1.5">
+            <div className="h-0.5 bg-gray-700/50 rounded-full mb-1.5 overflow-hidden">
               <div 
                 className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all rounded-full"
                 style={{ width: `${getProgressPercent()}%` }}
               />
             </div>
             
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-1 text-white/80">
-                {getMediaIcon()}
-              </div>
+            <div className="flex items-center gap-1">
               <button 
                 onClick={(e) => { e.stopPropagation(); setIsProgressSheetOpen(true); }}
                 disabled={isUpdating}
-                className="flex-1 h-6 text-[11px] bg-purple-600/80 hover:bg-purple-600 text-white font-medium rounded-md px-2 transition-colors"
+                className="flex-1 h-5 text-[9px] bg-purple-600/80 hover:bg-purple-600 text-white font-medium rounded px-1.5 transition-colors"
                 data-testid={`button-edit-progress-${item.id}`}
               >
                 {getProgressDisplay()}
@@ -399,16 +396,16 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
               <button
                 onClick={(e) => { e.stopPropagation(); setIsMoveSheetOpen(true); }}
                 disabled={isUpdating}
-                className="h-6 w-6 bg-white/20 hover:bg-white/30 text-white rounded-md flex items-center justify-center"
+                className="h-5 w-5 bg-white/20 hover:bg-white/30 text-white rounded flex items-center justify-center"
                 data-testid={`button-more-${item.id}`}
               >
-                <MoreHorizontal size={12} />
+                <MoreHorizontal size={10} />
               </button>
             </div>
           </div>
         </div>
 
-        <h4 className="text-sm font-medium text-gray-700 truncate px-0.5">{item.title}</h4>
+        <h4 className="text-xs font-medium text-white truncate px-0.5">{item.title}</h4>
       </div>
 
       <Sheet open={isProgressSheetOpen} onOpenChange={setIsProgressSheetOpen}>

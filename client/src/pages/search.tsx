@@ -1073,14 +1073,14 @@ export default function Search() {
       <Navigation />
       
       {/* Currently Consuming Section */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-6 pb-4 -mt-px">
-        <div className="px-4 mb-3">
-          <h2 className="text-lg font-semibold text-white">Currently Consuming</h2>
-          <p className="text-sm text-gray-400">Update your progress</p>
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-3 pb-2 -mt-px">
+        <div className="px-4 mb-2">
+          <h2 className="text-sm font-semibold text-white">Currently Consuming</h2>
+          <p className="text-xs text-gray-400">Update your progress</p>
         </div>
         {currentlyItems.length > 0 ? (
           <div 
-            className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 px-4"
+            className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-4"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             {currentlyItems.map((item: any) => (
@@ -1108,11 +1108,11 @@ export default function Search() {
             ))}
           </div>
         ) : (
-          <div className="px-4 pb-2">
-            <div className="bg-white/10 border border-white/20 rounded-xl p-4 text-center">
-              <Clock className="mx-auto mb-2 text-purple-300" size={24} />
-              <p className="text-white/80 text-sm">No items in your Currently list yet</p>
-              <p className="text-gray-400 text-xs mt-1">Search for something and add it to "Currently" to track your progress</p>
+          <div className="px-4 pb-1">
+            <div className="bg-white/10 border border-white/20 rounded-lg p-3 text-center">
+              <Clock className="mx-auto mb-1 text-purple-300" size={18} />
+              <p className="text-white/80 text-xs">No items in your Currently list yet</p>
+              <p className="text-gray-400 text-[10px] mt-0.5">Search and add to "Currently" to track progress</p>
             </div>
           </div>
         )}
