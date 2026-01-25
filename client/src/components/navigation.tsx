@@ -346,7 +346,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           <div className="flex items-center gap-4">
             <button
               onClick={handleSearchToggle}
-              className="hover:opacity-70 transition-opacity mr-1"
+              className="hover:opacity-70 transition-opacity mr-3"
               aria-label="Search"
               data-testid="nav-search-toggle"
             >
