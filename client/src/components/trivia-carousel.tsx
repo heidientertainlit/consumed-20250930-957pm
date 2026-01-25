@@ -419,6 +419,12 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     });
   };
 
+  // Generate a session-based seed that changes daily (must be before any returns)
+  const sessionSeed = useMemo(() => {
+    const today = new Date();
+    return today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  }, []);
+
   if (!session) return null;
 
   if (isLoading) {
@@ -436,12 +442,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   }
 
   const knownCategories = ['movies', 'tv', 'books', 'music', 'sports', 'podcasts', 'games'];
-  
-  // Generate a session-based seed that changes daily
-  const sessionSeed = useMemo(() => {
-    const today = new Date();
-    return today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-  }, []);
 
   let filteredData = data;
   
