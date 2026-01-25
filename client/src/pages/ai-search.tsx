@@ -1,10 +1,14 @@
-import { useState } from "react";
-import { Search, Sparkles, Loader2, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Sparkles, Loader2, X, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
+import { useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
+import { queryClient } from "@/lib/queryClient";
 
 interface Recommendation {
   title: string;
@@ -43,8 +47,119 @@ export default function AISearch() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  
+  // Currently Consuming state
+  const [userLists, setUserLists] = useState<any[]>([]);
+  const [isLoadingLists, setIsLoadingLists] = useState(false);
+
+  // Fetch user's lists for Currently Consuming
+  const fetchUserLists = async () => {
+    if (!session?.access_token || !user?.id) return;
+    
+    setIsLoadingLists(true);
+    try {
+      const url = `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${user.id}`;
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserLists(data.lists || []);
+      }
+    } catch (error) {
+      console.error('Error fetching user lists:', error);
+    } finally {
+      setIsLoadingLists(false);
+    }
+  };
+
+  useEffect(() => {
+    if (session?.access_token && user?.id) {
+      fetchUserLists();
+    }
+  }, [session?.access_token, user?.id]);
+
+  // Update progress mutation for Currently Consuming items
+  const updateProgressMutation = useMutation({
+    mutationFn: async ({ itemId, progress, total, mode, progressDisplay }: { itemId: string; progress: number; total?: number; mode: string; progressDisplay: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-item-progress',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            item_id: itemId,
+            progress,
+            progress_total: total,
+            progress_mode: mode,
+          }),
+        }
+      );
+      
+      if (!response.ok) throw new Error('Failed to update progress');
+      return { ...await response.json(), progressDisplay };
+    },
+    onSuccess: (data) => {
+      toast({ title: `Progress updated to ${data.progressDisplay}` });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      fetchUserLists();
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update progress", variant: "destructive" });
+    },
+  });
+
+  // Move item to different list mutation
+  const moveToListMutation = useMutation({
+    mutationFn: async ({ itemId, targetList, listName }: { itemId: string; targetList: string; listName: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      
+      const response = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/move-item-to-list',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            item_id: itemId,
+            target_list: targetList,
+          }),
+        }
+      );
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to move item');
+      }
+      return { ...await response.json(), listName };
+    },
+    onSuccess: (data) => {
+      toast({ title: `Moved to ${data.listName}` });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      fetchUserLists();
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to move item", variant: "destructive" });
+    },
+  });
+
+  // Get Currently Consuming items
+  const currentlyList = userLists.find(list => list.title === 'Currently');
+  const currentlyItems = currentlyList?.items?.slice(0, 10) || [];
 
   const handleSearch = async () => {
     if (!searchQuery.trim() || !session?.access_token) return;
@@ -103,6 +218,45 @@ export default function AISearch() {
     <>
       <Navigation />
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 pt-16 pb-24">
+        
+        {/* Currently Consuming Section */}
+        {currentlyItems.length > 0 && (
+          <div className="mb-6 pt-6">
+            <div className="px-4 mb-3">
+              <h2 className="text-lg font-semibold text-gray-900">Currently Consuming</h2>
+              <p className="text-sm text-gray-600">Update your progress</p>
+            </div>
+            <div 
+              className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 px-4"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              {currentlyItems.map((item: any) => (
+                <CurrentlyConsumingCard 
+                  key={item.id} 
+                  item={item}
+                  onUpdateProgress={(progress, total, mode, progressDisplay) => {
+                    updateProgressMutation.mutate({
+                      itemId: item.id,
+                      progress,
+                      total,
+                      mode,
+                      progressDisplay
+                    });
+                  }}
+                  onMoveToList={(targetList, listName) => {
+                    moveToListMutation.mutate({
+                      itemId: item.id,
+                      targetList,
+                      listName
+                    });
+                  }}
+                  isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="max-w-4xl mx-auto px-4 py-8">
           
           {/* Hero Section */}
