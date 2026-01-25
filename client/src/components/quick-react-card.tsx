@@ -134,40 +134,41 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
 
   if (!session) return null;
 
-  if (!isExpanded) {
-    return (
-      <Card 
-        className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-2xl p-4 shadow-sm cursor-pointer active:scale-[0.98] transition-transform"
-        onClick={() => setIsExpanded(true)}
+  return (
+    <Card className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-2xl overflow-hidden shadow-sm transition-all">
+      {/* Header - always visible, tap to expand/collapse */}
+      <div 
+        className={`p-4 cursor-pointer ${isExpanded ? '' : 'active:scale-[0.99]'}`}
+        onClick={() => !isExpanded && setIsExpanded(true)}
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
             <Flame className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
-            <p className="text-white font-semibold text-sm">What are you consuming?</p>
-            <p className="text-white/70 text-xs">Share a hot take.</p>
+            <p className="text-white font-semibold text-sm">
+              {isExpanded ? 'Hot Take' : 'What are you consuming?'}
+            </p>
+            <p className="text-white/70 text-xs">
+              {isExpanded ? 'Share what you\'re consuming' : 'Share a hot take.'}
+            </p>
           </div>
-          <ChevronRight className="w-5 h-5 text-white/50" />
+          {isExpanded ? (
+            <button 
+              onClick={(e) => { e.stopPropagation(); handleClose(); }}
+              className="text-white/70 active:text-white"
+            >
+              <X size={20} />
+            </button>
+          ) : (
+            <ChevronRight className="w-5 h-5 text-white/50" />
+          )}
         </div>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-lg">
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Flame className="w-5 h-5 text-white" />
-          <span className="text-white font-semibold">Hot Take</span>
-          <span className="text-white/70 text-sm">- share what you're consuming</span>
-        </div>
-        <button onClick={handleClose} className="text-white/70 active:text-white">
-          <X size={20} />
-        </button>
       </div>
 
-      <div className="p-4">
+      {/* Expandable content */}
+      {isExpanded && (
+        <div className="bg-white rounded-t-2xl p-4">
         {step === 'search' && (
           <>
             {/* Search Input */}
@@ -296,7 +297,8 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
             </div>
           </>
         )}
-      </div>
+        </div>
+      )}
     </Card>
   );
 }
