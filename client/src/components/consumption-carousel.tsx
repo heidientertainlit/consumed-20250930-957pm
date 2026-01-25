@@ -88,18 +88,23 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
     
     setDeletingId(itemId);
     try {
-      const { error } = await supabase
-        .from('list_items')
+      // Try deleting from social_posts first (these are feed items)
+      const { error: socialError } = await supabase
+        .from('social_posts')
         .delete()
         .eq('id', itemId)
         .eq('user_id', user.id);
       
-      if (error) throw error;
-      
-      toast({
-        title: "Removed",
-        description: "Item deleted from your activity.",
-      });
+      if (socialError) {
+        // Fallback to list_items if not a social post
+        const { error: listError } = await supabase
+          .from('list_items')
+          .delete()
+          .eq('id', itemId)
+          .eq('user_id', user.id);
+        
+        if (listError) throw listError;
+      }
       
       onItemDeleted?.();
     } catch (error) {

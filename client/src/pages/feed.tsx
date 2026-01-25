@@ -3095,6 +3095,7 @@ export default function Feed() {
                       timestamp: p.createdAt || new Date().toISOString()
                     }))}
                   title="The Room"
+                  onItemDeleted={() => queryClient.invalidateQueries({ queryKey: ["social-feed"] })}
                 />
               )}
 
