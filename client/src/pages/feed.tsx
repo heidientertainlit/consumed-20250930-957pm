@@ -3200,31 +3200,27 @@ export default function Feed() {
                                 </button>
                               </div>
                               
-                              {/* Inline comment input when expanded */}
+                              {/* Inline comments section when expanded */}
                               {expandedComments.has(post.id) && (
                                 <div className="mt-2 pt-2 border-t border-gray-100">
-                                  <div className="flex gap-2">
-                                    <input
-                                      type="text"
-                                      placeholder="Add a comment..."
-                                      value={commentInputs[post.id] || ''}
-                                      onChange={(e) => handleCommentInputChange(post.id, e.target.value)}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && !e.shiftKey) {
-                                          e.preventDefault();
-                                          handleComment(post.id);
-                                        }
-                                      }}
-                                      className="flex-1 text-xs px-2 py-1.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                                    />
-                                    <button
-                                      onClick={() => handleComment(post.id)}
-                                      disabled={!commentInputs[post.id]?.trim() || commentMutation.isPending}
-                                      className="px-2 py-1 bg-purple-600 text-white text-xs rounded-lg disabled:opacity-50"
-                                    >
-                                      Post
-                                    </button>
-                                  </div>
+                                  <CommentsSection
+                                    postId={post.id}
+                                    isLiked={likedPosts.has(post.id)}
+                                    onLike={handleLike}
+                                    expandedComments={true}
+                                    onToggleComments={() => {}}
+                                    fetchComments={fetchComments}
+                                    commentInput={commentInputs[post.id] || ''}
+                                    onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                                    onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                                    isSubmitting={commentMutation.isPending}
+                                    currentUserId={user?.id}
+                                    onDeleteComment={handleDeleteComment}
+                                    onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                                    onVoteComment={handleVoteComment}
+                                    likedComments={likedComments}
+                                    session={session}
+                                  />
                                 </div>
                               )}
                             </div>
