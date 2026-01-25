@@ -343,7 +343,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             />
           </Link>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={handleSearchToggle}
               className="hover:opacity-70 transition-opacity"
