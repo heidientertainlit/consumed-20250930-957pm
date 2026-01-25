@@ -44,6 +44,7 @@ interface ConsumptionCarouselProps {
   items: FriendActivityItem[];
   title?: string;
   onItemDeleted?: () => void;
+  currentUserId?: string | null;
 }
 
 const getMediaIcon = (mediaType?: string) => {
@@ -75,7 +76,7 @@ const getTypeIcon = (type: string) => {
   }
 };
 
-export default function ConsumptionCarousel({ items, title = "Community", onItemDeleted }: ConsumptionCarouselProps) {
+export default function ConsumptionCarousel({ items, title = "Community", onItemDeleted, currentUserId }: ConsumptionCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reactions, setReactions] = useState<Record<string, 'agree' | 'disagree'>>({});
@@ -84,7 +85,8 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
   const { toast } = useToast();
 
   const handleDelete = async (itemId: string) => {
-    if (!user?.id) return;
+    const deleteUserId = currentUserId || user?.id;
+    if (!deleteUserId) return;
     
     setDeletingId(itemId);
     try {
@@ -93,7 +95,7 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
         .from('social_posts')
         .delete()
         .eq('id', itemId)
-        .eq('user_id', user.id);
+        .eq('user_id', deleteUserId);
       
       if (socialError) {
         // Fallback to list_items if not a social post
@@ -101,7 +103,7 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
           .from('list_items')
           .delete()
           .eq('id', itemId)
-          .eq('user_id', user.id);
+          .eq('user_id', deleteUserId);
         
         if (listError) throw listError;
       }
@@ -205,7 +207,7 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
                   </Link>
                   <span className="text-[10px] text-gray-400">{item.activityText || 'added'}</span>
                 </div>
-                {user?.id === item.userId && (
+                {currentUserId && item.userId === currentUserId && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}
                     disabled={deletingId === item.id}

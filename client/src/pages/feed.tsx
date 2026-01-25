@@ -3098,6 +3098,7 @@ export default function Feed() {
                     }))}
                   title="The Room"
                   onItemDeleted={() => queryClient.invalidateQueries({ queryKey: ["social-feed"] })}
+                  currentUserId={currentAppUserId}
                 />
               )}
 
