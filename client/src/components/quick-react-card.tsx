@@ -160,6 +160,7 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
         <div className="flex items-center gap-2">
           <Flame className="w-5 h-5 text-white" />
           <span className="text-white font-semibold">Hot Take</span>
+          <span className="text-white/70 text-sm">- share what you're consuming</span>
         </div>
         <button onClick={handleClose} className="text-white/70 active:text-white">
           <X size={20} />
@@ -177,7 +178,7 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search movies, shows..."
-                className="w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-purple-400"
+                className="w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-purple-400"
                 autoFocus
               />
             </div>
