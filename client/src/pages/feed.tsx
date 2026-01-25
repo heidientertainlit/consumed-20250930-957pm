@@ -2991,13 +2991,11 @@ export default function Feed() {
                 <QuickReactCard />
               )}
 
-              {/* Hot Takes Feed - Show posted hot takes */}
-              {console.log('🔥 HOT TAKES RENDER - socialPosts count:', socialPosts.length, 
-                'hotTakes:', socialPosts.filter((p: any) => p.type === 'hot_take').length)}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'hottakes') && 
+              {/* Hot Take 1 - First hot take after QuickReactCard (only in All view) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && 
                 socialPosts
                   .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
-                  .slice(0, selectedFilter === 'hottakes' ? 20 : 3)
+                  .slice(0, 1)
                   .map((post: any) => (
                     <div key={`hottake-wrapper-${post.id}`}>
                       <HotTakeFeedCard
@@ -3060,6 +3058,10 @@ export default function Feed() {
                 <DnaMomentCard />
               )}
 
+              {/* TV Polls - after DNA Moment */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
+                <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
+              )}
 
               {/* Cast Your Friends Game */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
@@ -3259,6 +3261,64 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
               )}
 
+              {/* Hot Take 2 - After TV trivia (only in All view) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && 
+                socialPosts
+                  .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
+                  .slice(1, 2)
+                  .map((post: any) => (
+                    <div key={`hottake2-wrapper-${post.id}`}>
+                      <HotTakeFeedCard
+                        key={`hottake2-${post.id}`}
+                        post={{
+                          id: post.id,
+                          user: post.user,
+                          content: post.content,
+                          media_title: post.mediaItems?.[0]?.title || post.media_title,
+                          media_type: post.mediaItems?.[0]?.type || post.media_type,
+                          image_url: post.mediaItems?.[0]?.imageUrl || post.image_url,
+                          fire_votes: post.fire_votes || 0,
+                          ice_votes: post.ice_votes || 0,
+                          comments_count: post.comments || post.comments_count || 0,
+                          created_at: post.createdAt || post.created_at || post.timestamp,
+                        }}
+                        currentUserId={user?.id}
+                        onDelete={handleDeletePost}
+                        onComment={(postId) => {
+                          setExpandedComments(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(postId)) newSet.delete(postId);
+                            else newSet.add(postId);
+                            return newSet;
+                          });
+                        }}
+                      />
+                      {expandedComments.has(post.id) && (
+                        <div className="mt-2 bg-white rounded-xl border border-gray-100 p-3">
+                          <CommentsSection
+                            postId={post.id}
+                            isLiked={likedPosts.has(post.id)}
+                            onLike={handleLike}
+                            expandedComments={true}
+                            onToggleComments={() => {}}
+                            fetchComments={fetchComments}
+                            commentInput={commentInputs[post.id] || ''}
+                            onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                            onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                            isSubmitting={commentMutation.isPending}
+                            currentUserId={user?.id}
+                            onDeleteComment={handleDeleteComment}
+                            onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                            onVoteComment={handleVoteComment}
+                            likedComments={likedComments}
+                            session={session}
+                            hotTakeMode={true}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))
+              }
 
               {/* Leaderboard - Poll Masters */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
@@ -3318,6 +3378,203 @@ export default function Feed() {
                 <RecommendationsGlimpse />
               )}
 
+
+              {/* TRIVIA - Books category */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
+              )}
+
+              {/* Hot Take 3 - After Books trivia */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && 
+                socialPosts
+                  .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
+                  .slice(2, 3)
+                  .map((post: any) => (
+                    <div key={`hottake3-wrapper-${post.id}`}>
+                      <HotTakeFeedCard
+                        key={`hottake3-${post.id}`}
+                        post={{
+                          id: post.id,
+                          user: post.user,
+                          content: post.content,
+                          media_title: post.mediaItems?.[0]?.title || post.media_title,
+                          media_type: post.mediaItems?.[0]?.type || post.media_type,
+                          image_url: post.mediaItems?.[0]?.imageUrl || post.image_url,
+                          fire_votes: post.fire_votes || 0,
+                          ice_votes: post.ice_votes || 0,
+                          comments_count: post.comments || post.comments_count || 0,
+                          created_at: post.createdAt || post.created_at || post.timestamp,
+                        }}
+                        currentUserId={user?.id}
+                        onDelete={handleDeletePost}
+                        onComment={(postId) => {
+                          setExpandedComments(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(postId)) newSet.delete(postId);
+                            else newSet.add(postId);
+                            return newSet;
+                          });
+                        }}
+                      />
+                      {expandedComments.has(post.id) && (
+                        <div className="mt-2 bg-white rounded-xl border border-gray-100 p-3">
+                          <CommentsSection
+                            postId={post.id}
+                            isLiked={likedPosts.has(post.id)}
+                            onLike={handleLike}
+                            expandedComments={true}
+                            onToggleComments={() => {}}
+                            fetchComments={fetchComments}
+                            commentInput={commentInputs[post.id] || ''}
+                            onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                            onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                            isSubmitting={commentMutation.isPending}
+                            currentUserId={user?.id}
+                            onDeleteComment={handleDeleteComment}
+                            onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                            onVoteComment={handleVoteComment}
+                            likedComments={likedComments}
+                            session={session}
+                            hotTakeMode={true}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))
+              }
+
+              {/* TRIVIA - Podcasts category */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Podcasts" />
+              )}
+
+              {/* TRIVIA - Gaming category */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
+              )}
+
+              {/* Hot Take 4 - After Gaming trivia */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && 
+                socialPosts
+                  .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
+                  .slice(3, 4)
+                  .map((post: any) => (
+                    <div key={`hottake4-wrapper-${post.id}`}>
+                      <HotTakeFeedCard
+                        key={`hottake4-${post.id}`}
+                        post={{
+                          id: post.id,
+                          user: post.user,
+                          content: post.content,
+                          media_title: post.mediaItems?.[0]?.title || post.media_title,
+                          media_type: post.mediaItems?.[0]?.type || post.media_type,
+                          image_url: post.mediaItems?.[0]?.imageUrl || post.image_url,
+                          fire_votes: post.fire_votes || 0,
+                          ice_votes: post.ice_votes || 0,
+                          comments_count: post.comments || post.comments_count || 0,
+                          created_at: post.createdAt || post.created_at || post.timestamp,
+                        }}
+                        currentUserId={user?.id}
+                        onDelete={handleDeletePost}
+                        onComment={(postId) => {
+                          setExpandedComments(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(postId)) newSet.delete(postId);
+                            else newSet.add(postId);
+                            return newSet;
+                          });
+                        }}
+                      />
+                      {expandedComments.has(post.id) && (
+                        <div className="mt-2 bg-white rounded-xl border border-gray-100 p-3">
+                          <CommentsSection
+                            postId={post.id}
+                            isLiked={likedPosts.has(post.id)}
+                            onLike={handleLike}
+                            expandedComments={true}
+                            onToggleComments={() => {}}
+                            fetchComments={fetchComments}
+                            commentInput={commentInputs[post.id] || ''}
+                            onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                            onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                            isSubmitting={commentMutation.isPending}
+                            currentUserId={user?.id}
+                            onDeleteComment={handleDeleteComment}
+                            onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                            onVoteComment={handleVoteComment}
+                            likedComments={likedComments}
+                            session={session}
+                            hotTakeMode={true}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))
+              }
+
+              {/* Full Hot Takes list - when hottakes filter is selected */}
+              {selectedFilter === 'hottakes' && 
+                socialPosts
+                  .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
+                  .slice(0, 20)
+                  .map((post: any) => (
+                    <div key={`hottake-full-${post.id}`}>
+                      <HotTakeFeedCard
+                        key={`hottake-full-card-${post.id}`}
+                        post={{
+                          id: post.id,
+                          user: post.user,
+                          content: post.content,
+                          media_title: post.mediaItems?.[0]?.title || post.media_title,
+                          media_type: post.mediaItems?.[0]?.type || post.media_type,
+                          image_url: post.mediaItems?.[0]?.imageUrl || post.image_url,
+                          fire_votes: post.fire_votes || 0,
+                          ice_votes: post.ice_votes || 0,
+                          comments_count: post.comments || post.comments_count || 0,
+                          created_at: post.createdAt || post.created_at || post.timestamp,
+                        }}
+                        currentUserId={user?.id}
+                        onDelete={handleDeletePost}
+                        onComment={(postId) => {
+                          setExpandedComments(prev => {
+                            const newSet = new Set(prev);
+                            if (newSet.has(postId)) newSet.delete(postId);
+                            else newSet.add(postId);
+                            return newSet;
+                          });
+                        }}
+                      />
+                      {expandedComments.has(post.id) && (
+                        <div className="mt-2 bg-white rounded-xl border border-gray-100 p-3">
+                          <CommentsSection
+                            postId={post.id}
+                            isLiked={likedPosts.has(post.id)}
+                            onLike={handleLike}
+                            expandedComments={true}
+                            onToggleComments={() => {}}
+                            fetchComments={fetchComments}
+                            commentInput={commentInputs[post.id] || ''}
+                            onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
+                            onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
+                            isSubmitting={commentMutation.isPending}
+                            currentUserId={user?.id}
+                            onDeleteComment={handleDeleteComment}
+                            onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                            onVoteComment={handleVoteComment}
+                            likedComments={likedComments}
+                            session={session}
+                            hotTakeMode={true}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))
+              }
+
+              {/* TRIVIA - Sports category */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Sports" />
+              )}
 
               {/* End of Feed Message */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
