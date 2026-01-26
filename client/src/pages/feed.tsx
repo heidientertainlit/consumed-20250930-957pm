@@ -2961,19 +2961,19 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'predictions' || selectedFilter === 'games') && 
                (!selectedCategory || selectedCategory === 'movies') && (
                 <Link href="/play/awards/oscars-2026">
-                  <div className="bg-gradient-to-r from-amber-900 via-yellow-800 to-amber-900 rounded-2xl p-4 shadow-lg border border-amber-500/30 cursor-pointer hover:scale-[1.02] transition-transform">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-lg">
-                        <Trophy className="w-6 h-6 text-white" />
+                  <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-3 shadow-md border border-blue-400/30 cursor-pointer hover:scale-[1.01] transition-transform">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center flex-shrink-0">
+                        <Trophy className="w-4 h-4 text-white" />
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-white font-bold text-lg">2026 Academy Awards</h3>
-                          <span className="px-2 py-0.5 bg-orange-500/30 text-orange-300 text-[10px] font-bold rounded-full">🔥 TRENDING</span>
+                          <h3 className="text-white font-semibold text-sm">2026 Oscars</h3>
+                          <span className="px-1.5 py-0.5 bg-blue-400/30 text-blue-200 text-[9px] font-bold rounded-full">🔥 TRENDING</span>
                         </div>
-                        <p className="text-amber-200/80 text-sm">Sinners leads with 16 nominations - make your picks now!</p>
+                        <p className="text-blue-200/80 text-xs truncate">Sinners leads with 16 noms - make your picks!</p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-amber-400" />
+                      <ChevronRight className="w-4 h-4 text-blue-300" />
                     </div>
                   </div>
                 </Link>
@@ -5407,19 +5407,19 @@ export default function Feed() {
                 <div className="space-y-3">
                   {/* 2026 Academy Awards - Live Now! */}
                   <Link href="/play/awards/oscars-2026">
-                    <div className="bg-gradient-to-r from-amber-900 via-yellow-800 to-amber-900 rounded-2xl p-4 shadow-lg border border-amber-500/30 cursor-pointer hover:scale-[1.02] transition-transform">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-lg">
-                          <Trophy className="w-6 h-6 text-white" />
+                    <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-3 shadow-md border border-blue-400/30 cursor-pointer hover:scale-[1.01] transition-transform">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center flex-shrink-0">
+                          <Trophy className="w-4 h-4 text-white" />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h3 className="text-white font-bold text-lg">2026 Academy Awards</h3>
-                            <span className="px-2 py-0.5 bg-orange-500/30 text-orange-300 text-[10px] font-bold rounded-full">🔥 TRENDING</span>
+                            <h3 className="text-white font-semibold text-sm">2026 Oscars</h3>
+                            <span className="px-1.5 py-0.5 bg-blue-400/30 text-blue-200 text-[9px] font-bold rounded-full">🔥 TRENDING</span>
                           </div>
-                          <p className="text-amber-200/80 text-sm">Sinners leads with 16 nominations - make your picks now!</p>
+                          <p className="text-blue-200/80 text-xs truncate">Sinners leads with 16 noms - make your picks!</p>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-amber-400" />
+                        <ChevronRight className="w-4 h-4 text-blue-300" />
                       </div>
                     </div>
                   </Link>
