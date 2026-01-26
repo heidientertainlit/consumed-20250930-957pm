@@ -2961,19 +2961,19 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'predictions' || selectedFilter === 'games') && 
                (!selectedCategory || selectedCategory === 'movies') && (
                 <Link href="/play/awards/oscars-2026">
-                  <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 rounded-2xl p-4 shadow-xl border-2 border-purple-400/50 cursor-pointer hover:scale-[1.02] transition-all hover:shadow-purple-500/20 hover:shadow-2xl">
+                  <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-                        <Trophy className="w-6 h-6 text-white" />
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center flex-shrink-0">
+                        <Trophy className="w-5 h-5 text-purple-600" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <h3 className="text-white font-bold text-base">2026 Oscars Ballot</h3>
-                          <span className="px-2 py-0.5 bg-white/20 text-white text-[10px] font-bold rounded-full uppercase tracking-wide">Trending</span>
+                          <h3 className="text-gray-900 font-bold text-base">2026 Oscars Ballot</h3>
+                          <span className="px-2 py-0.5 bg-purple-100 text-purple-600 text-[10px] font-semibold rounded-full">Trending</span>
                         </div>
-                        <p className="text-purple-200 text-sm">127 fans made picks - add yours & climb the leaderboard!</p>
+                        <p className="text-gray-500 text-sm">127 fans made picks - add yours & climb the leaderboard!</p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-purple-200" />
+                      <ChevronRight className="w-5 h-5 text-gray-400" />
                     </div>
                   </div>
                 </Link>
@@ -5407,19 +5407,19 @@ export default function Feed() {
                 <div className="space-y-3">
                   {/* 2026 Academy Awards - Live Now! */}
                   <Link href="/play/awards/oscars-2026">
-                    <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 rounded-2xl p-4 shadow-xl border-2 border-purple-400/50 cursor-pointer hover:scale-[1.02] transition-all hover:shadow-purple-500/20 hover:shadow-2xl">
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-                          <Trophy className="w-6 h-6 text-white" />
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center flex-shrink-0">
+                          <Trophy className="w-5 h-5 text-purple-600" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
-                            <h3 className="text-white font-bold text-base">2026 Oscars Ballot</h3>
-                            <span className="px-2 py-0.5 bg-white/20 text-white text-[10px] font-bold rounded-full uppercase tracking-wide">Trending</span>
+                            <h3 className="text-gray-900 font-bold text-base">2026 Oscars Ballot</h3>
+                            <span className="px-2 py-0.5 bg-purple-100 text-purple-600 text-[10px] font-semibold rounded-full">Trending</span>
                           </div>
-                          <p className="text-purple-200 text-sm">127 fans made picks - add yours & climb the leaderboard!</p>
+                          <p className="text-gray-500 text-sm">127 fans made picks - add yours & climb the leaderboard!</p>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-purple-200" />
+                        <ChevronRight className="w-5 h-5 text-gray-400" />
                       </div>
                     </div>
                   </Link>
