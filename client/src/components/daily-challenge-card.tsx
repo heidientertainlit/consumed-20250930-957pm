@@ -37,15 +37,29 @@ interface DailyChallengeResponse {
   points_earned: number;
 }
 
+// Helper to get today's date string for localStorage key
+const getTodayKey = () => {
+  const today = new Date();
+  return `daily-call-fallback-${today.toISOString().split('T')[0]}`;
+};
+
 export function DailyChallengeCard() {
   const { user, session } = useAuth();
   const { toast } = useToast();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [customResponse, setCustomResponse] = useState('');
-  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [submittedResult, setSubmittedResult] = useState<{ isCorrect: boolean; correctAnswer: string; userAnswer: string } | null>(null);
   const [runInfo, setRunInfo] = useState<{ currentRun: number; bonusPoints: number; nextMilestone: number; longestRun: number } | null>(null);
+  
+  // Check localStorage for fallback completion status
+  const [hasSubmitted, setHasSubmitted] = useState(() => {
+    const stored = localStorage.getItem(getTodayKey());
+    return stored ? JSON.parse(stored).completed : false;
+  });
+  const [submittedResult, setSubmittedResult] = useState<{ isCorrect: boolean; correctAnswer: string; userAnswer: string } | null>(() => {
+    const stored = localStorage.getItem(getTodayKey());
+    return stored ? JSON.parse(stored).result : null;
+  });
 
   const { data: challenge, isLoading: challengeLoading } = useQuery({
     queryKey: ['daily-challenge'],
@@ -187,12 +201,15 @@ export function DailyChallengeCard() {
   const handleSubmit = () => {
     if (isFallback) {
       const isCorrect = selectedOption === fallbackChallenge.correct_answer;
-      setHasSubmitted(true);
-      setSubmittedResult({
+      const result = {
         isCorrect,
         correctAnswer: fallbackChallenge.correct_answer || '',
         userAnswer: selectedOption || ''
-      });
+      };
+      setHasSubmitted(true);
+      setSubmittedResult(result);
+      // Persist to localStorage so it survives page navigation
+      localStorage.setItem(getTodayKey(), JSON.stringify({ completed: true, result }));
       // Feedback shown inline - no toast needed
       return;
     }
