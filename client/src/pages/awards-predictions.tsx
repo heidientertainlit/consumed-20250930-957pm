@@ -519,7 +519,7 @@ export default function AwardsPredictions() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">{category.name}</h2>
+              <h2 className="text-2xl font-normal text-gray-900 mb-6">{category.name}</h2>
 
               <div className="grid grid-cols-1 gap-4">
                 {category.nominees.map(nominee => {
@@ -532,7 +532,7 @@ export default function AwardsPredictions() {
                       key={nominee.id}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handlePick(category.id, nominee.id)}
-                      className={`relative flex items-center px-5 py-4 rounded-full cursor-pointer transition-all ${
+                      className={`relative flex items-center px-4 py-3 rounded-2xl cursor-pointer transition-all ${
                         isPicked 
                           ? 'bg-purple-100 border-2 border-purple-500' 
                           : 'bg-gray-100 border border-gray-200 hover:bg-gray-200'
@@ -546,11 +546,28 @@ export default function AwardsPredictions() {
                         </div>
                       )}
                       
+                      {/* Poster thumbnail */}
+                      <div className="w-12 h-16 rounded-lg overflow-hidden flex-shrink-0 mr-3 bg-gray-200">
+                        {nominee.poster_url ? (
+                          <img 
+                            src={nominee.poster_url} 
+                            alt={nominee.title || nominee.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Trophy size={16} className="text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      
                       <div className="flex-1 min-w-0">
                         <p className={`font-medium text-base ${isPicked ? 'text-purple-900' : 'text-gray-900'}`}>
                           {nominee.name}
-                          {nominee.title && <span className={`ml-1 ${isPicked ? 'text-purple-600' : 'text-gray-500'}`}>• {nominee.title}</span>}
                         </p>
+                        {nominee.title && (
+                          <p className={`text-sm ${isPicked ? 'text-purple-600' : 'text-gray-500'}`}>{nominee.title}</p>
+                        )}
                         
                         {event.status === 'completed' && isPicked && (
                           <div className={`mt-1 flex items-center text-xs font-bold uppercase tracking-wide ${userWasCorrect ? 'text-green-600' : 'text-red-500'}`}>
