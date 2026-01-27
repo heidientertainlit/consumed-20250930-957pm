@@ -434,8 +434,8 @@ export default function AwardsPredictions() {
         </button>
 
         {/* Who's Playing Section */}
-        <div className="mb-6 bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
+        <div className="mb-3 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-bold text-gray-900 flex items-center">
               <Users size={18} className="mr-2 text-purple-600" />
               Who's Playing
@@ -510,7 +510,7 @@ export default function AwardsPredictions() {
         className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm"
       >
         <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex px-4 py-4 space-x-2 min-w-max">
+          <div className="flex px-4 py-3 space-x-2 min-w-max">
             {event.categories.map(category => {
               const hasPick = localPicks.has(category.id);
               const isActive = activeCategory === category.id;
