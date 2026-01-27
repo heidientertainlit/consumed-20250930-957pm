@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Trophy, Check, X, ChevronDown, ChevronUp, Redo2, 
+  Trophy, Check, X, ChevronDown, ChevronUp, 
   Users, TrendingUp, Info, ArrowLeft, ChevronLeft,
   Sparkles, Lock, Clock, Loader2
 } from "lucide-react";
@@ -414,8 +414,8 @@ export default function AwardsPredictions() {
             <Trophy className="w-7 h-7 text-white" />
           </div>
           
-          <h1 className="text-2xl font-bold text-white mb-1 inline-flex items-center justify-center gap-2">
-            <span>{event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}</span>
+          <h1 className="text-2xl font-bold text-white mb-1">
+            {event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}
             <button
               onClick={() => {
                 const shareUrl = `${window.location.origin}/play/awards/${eventSlug}`;
@@ -430,9 +430,12 @@ export default function AwardsPredictions() {
                   toast({ title: "Link copied!", description: "Share it with your friends" });
                 }
               }}
-              className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+              className="inline-flex items-center justify-center ml-2 align-middle hover:opacity-80 transition-opacity"
+              style={{ verticalAlign: 'middle' }}
             >
-              <Redo2 size={20} className="text-white/70 hover:text-white" />
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="text-white">
+                <path d="M21 12l-7-7v4C7 10 4 15 3 20c2.5-3.5 6-5.1 11-5.1V19l7-7z"/>
+              </svg>
             </button>
           </h1>
           <p className="text-gray-400 max-w-md mx-auto text-sm">
