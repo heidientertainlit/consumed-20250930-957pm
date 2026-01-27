@@ -428,12 +428,12 @@ export default function EntertainmentDNAPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-purple-950/80 to-purple-900 px-6 pt-6 pb-8">
+    <div className="min-h-screen bg-white px-6 pt-6 pb-8">
       <div className="max-w-lg mx-auto">
         {/* Back Button */}
         <button
           onClick={() => window.history.back()}
-          className="flex items-center gap-2 text-purple-300 hover:text-white mb-6 transition-colors"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
         >
           <ArrowLeft size={20} />
           <span className="text-sm">Back</span>
@@ -444,11 +444,11 @@ export default function EntertainmentDNAPage() {
           <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-purple-500 to-purple-700 rounded-full flex items-center justify-center mb-4">
             <Dna className="text-white" size={28} />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Your entertainment DNA starts here</h1>
-          <p className="text-purple-200 text-sm">Answer a few quick questions to shape your taste profile.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Your entertainment DNA starts here</h1>
+          <p className="text-gray-600 text-sm">Answer a few quick questions to shape your taste profile.</p>
           <button
             onClick={() => window.location.href = '/activity'}
-            className="text-xs text-purple-300/60 hover:text-purple-200 mt-3 underline"
+            className="text-xs text-purple-500 hover:text-purple-700 mt-3 underline"
           >
             Skip for now
           </button>
@@ -460,15 +460,15 @@ export default function EntertainmentDNAPage() {
             const currentAnswer = getAnswer(question.id);
             
             return (
-              <div key={question.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/10" data-testid={`question-${question.id}`}>
+              <div key={question.id} className="bg-gray-50 rounded-xl p-5 border border-gray-200" data-testid={`question-${question.id}`}>
                 {question.question_type === 'text' ? (
                   <>
-                    <h3 className="text-base font-semibold text-white mb-1 leading-tight">
+                    <h3 className="text-base font-semibold text-gray-900 mb-1 leading-tight">
                       What do you love?
                     </h3>
-                    <p className="text-purple-200/80 text-sm leading-snug mb-2">
+                    <p className="text-gray-600 text-sm leading-snug mb-2">
                       Drop anything you're into lately or always come back to — books, shows, teams, creators, comfort rewatches, guilty pleasures. Whatever feels you.
-                      <span className="text-purple-300/60 ml-1">(optional)</span>
+                      <span className="text-gray-400 ml-1">(optional)</span>
                     </p>
                     <textarea
                       value={(currentAnswer as string) || ""}
@@ -477,12 +477,12 @@ export default function EntertainmentDNAPage() {
                       className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:border-purple-400 focus:ring-purple-400 min-h-[100px] resize-vertical text-black placeholder:text-gray-400 text-sm"
                       data-testid={`text-input-${question.id}`}
                     />
-                    <p className="text-purple-300/60 text-xs mt-2 text-center">Scroll down to continue</p>
+                    <p className="text-gray-400 text-xs mt-2 text-center">Scroll down to continue</p>
                   </>
                 ) : (
-                  <h3 className="text-base font-semibold text-white mb-2 leading-snug">
+                  <h3 className="text-base font-semibold text-gray-900 mb-2 leading-snug">
                     {question.question_text}
-                    {!question.is_required && <span className="text-purple-300/60 text-sm font-normal ml-2">(optional)</span>}
+                    {!question.is_required && <span className="text-gray-400 text-sm font-normal ml-2">(optional)</span>}
                   </h3>
                 )}
 
