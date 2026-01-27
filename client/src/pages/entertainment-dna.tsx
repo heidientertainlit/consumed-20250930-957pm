@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Dna, Loader2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles, Check } from "lucide-react";
+import { Dna, Loader2, Download, Tv, Film, BookOpen, Music, Mic, Gamepad2, Trophy, Sparkles, Check, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import html2canvas from "html2canvas";
@@ -428,8 +428,17 @@ export default function EntertainmentDNAPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-purple-950/80 to-purple-900 px-6 pt-12 pb-8">
+    <div className="min-h-screen bg-gradient-to-b from-black via-purple-950/80 to-purple-900 px-6 pt-6 pb-8">
       <div className="max-w-lg mx-auto">
+        {/* Back Button */}
+        <button
+          onClick={() => window.history.back()}
+          className="flex items-center gap-2 text-purple-300 hover:text-white mb-6 transition-colors"
+        >
+          <ArrowLeft size={20} />
+          <span className="text-sm">Back</span>
+        </button>
+        
         {/* Header */}
         <div className="mb-8">
           <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-purple-500 to-purple-700 rounded-full flex items-center justify-center mb-4">
