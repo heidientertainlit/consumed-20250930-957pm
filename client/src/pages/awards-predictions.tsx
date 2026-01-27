@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Trophy, Check, X, ChevronDown, ChevronUp, Share2, 
+  Trophy, Check, X, ChevronDown, ChevronUp, Redo2, 
   Users, TrendingUp, Info, ArrowLeft, ChevronLeft,
   Sparkles, Lock, Clock, Loader2
 } from "lucide-react";
@@ -432,7 +432,7 @@ export default function AwardsPredictions() {
               }}
               className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
             >
-              <Share2 size={18} className="text-white/70 hover:text-white" />
+              <Redo2 size={20} className="text-white/70 hover:text-white" />
             </button>
           </h1>
           <p className="text-gray-400 max-w-md mx-auto text-sm">
