@@ -153,10 +153,10 @@ export default function AwardsPredictions() {
     is_friend: boolean;
   }
   
-  const { data: participants } = useQuery<{ friends: Participant[]; totalCount: number }>({
+  const { data: participants } = useQuery<{ players: Participant[]; friendCount: number; totalCount: number }>({
     queryKey: ['awards-participants', event?.id, userId],
     queryFn: async () => {
-      if (!event?.id) return { friends: [], totalCount: 0 };
+      if (!event?.id) return { players: [], friendCount: 0, totalCount: 0 };
       
       const categoryIds = event.categories.map(c => c.id);
       
@@ -174,10 +174,10 @@ export default function AwardsPredictions() {
         return acc;
       }, {} as Record<string, number>);
       
-      const uniqueUserIds = Object.keys(userPickCounts);
+      const uniqueUserIds = Object.keys(userPickCounts).filter(id => id !== userId);
       const totalCount = uniqueUserIds.length;
       
-      if (totalCount === 0) return { friends: [], totalCount: 0 };
+      if (totalCount === 0) return { players: [], friendCount: 0, totalCount: 0 };
       
       // Get user profiles
       const { data: profiles, error: profilesError } = await supabase
@@ -201,17 +201,21 @@ export default function AwardsPredictions() {
         );
       }
       
-      const friends: Participant[] = (profiles || [])
-        .filter(p => friendIds.includes(p.id))
+      // Map all players with is_friend flag
+      const allPlayers: Participant[] = (profiles || [])
         .map(p => ({
           user_id: p.id,
           picks_count: userPickCounts[p.id] || 0,
           display_name: p.display_name,
           avatar_url: p.avatar_url,
-          is_friend: true
-        }));
+          is_friend: friendIds.includes(p.id)
+        }))
+        // Sort friends first
+        .sort((a, b) => (b.is_friend ? 1 : 0) - (a.is_friend ? 1 : 0));
       
-      return { friends, totalCount };
+      const friendCount = allPlayers.filter(p => p.is_friend).length;
+      
+      return { players: allPlayers, friendCount, totalCount };
     },
     enabled: !!event?.id,
   });
@@ -450,55 +454,42 @@ export default function AwardsPredictions() {
             </button>
           </div>
           
-          {participants?.friends && participants.friends.length > 0 ? (
+          {participants?.players && participants.players.length > 0 ? (
             <div className="flex items-center gap-3">
               <div className="flex -space-x-2">
-                {participants.friends.slice(0, 5).map((friend) => (
+                {participants.players.slice(0, 5).map((player) => (
                   <div
-                    key={friend.user_id}
-                    className="w-10 h-10 rounded-full border-2 border-white overflow-hidden bg-purple-100 flex items-center justify-center"
-                    title={friend.display_name || 'Friend'}
+                    key={player.user_id}
+                    className={`w-10 h-10 rounded-full border-2 overflow-hidden flex items-center justify-center ${
+                      player.is_friend ? 'border-purple-300 bg-purple-100' : 'border-gray-200 bg-gray-100'
+                    }`}
+                    title={player.display_name || 'Player'}
                   >
-                    {friend.avatar_url ? (
-                      <img src={friend.avatar_url} alt="" className="w-full h-full object-cover" />
+                    {player.avatar_url ? (
+                      <img src={player.avatar_url} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-xs text-purple-600 font-bold">
-                        {(friend.display_name || '?')[0].toUpperCase()}
+                      <span className={`text-xs font-bold ${player.is_friend ? 'text-purple-600' : 'text-gray-500'}`}>
+                        {(player.display_name || '?')[0].toUpperCase()}
                       </span>
                     )}
                   </div>
                 ))}
-                {participants.friends.length > 5 && (
-                  <div className="w-10 h-10 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center">
-                    <span className="text-xs text-gray-500 font-bold">+{participants.friends.length - 5}</span>
+                {participants.totalCount > 5 && (
+                  <div className="w-10 h-10 rounded-full border-2 border-gray-200 bg-gray-100 flex items-center justify-center">
+                    <span className="text-xs text-gray-500 font-bold">+{participants.totalCount - 5}</span>
                   </div>
                 )}
               </div>
               <p className="text-xs text-gray-500 font-medium">
-                {participants.friends.length} friend{participants.friends.length !== 1 ? 's' : ''} playing
-                {participants.totalCount ? ` • ${participants.totalCount} total ballots` : ''}
+                {participants.friendCount > 0 
+                  ? `${participants.friendCount} friend${participants.friendCount !== 1 ? 's' : ''} • ${participants.totalCount} total`
+                  : `${participants.totalCount} player${participants.totalCount !== 1 ? 's' : ''}`
+                }
               </p>
             </div>
           ) : (
-            <p className="text-xs text-gray-500 italic">
-              No friends playing yet.{" "}
-              <button 
-                onClick={() => {
-                  const shareUrl = `${window.location.origin}/play/awards/${eventSlug}`;
-                  if (navigator.share) {
-                    navigator.share({
-                      title: `${event.year} ${event.name} Predictions`,
-                      text: "Make your predictions and compete with me!",
-                      url: shareUrl
-                    });
-                  } else {
-                    navigator.clipboard.writeText(shareUrl);
-                  }
-                }}
-                className="text-purple-600 font-medium hover:underline"
-              >
-                Invite them to join!
-              </button>
+            <p className="text-xs text-gray-400">
+              Be the first to play!
             </p>
           )}
         </div>
