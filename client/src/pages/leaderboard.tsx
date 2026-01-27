@@ -219,10 +219,16 @@ export default function Leaderboard() {
         
         const userIds = Object.keys(userPickCounts);
         
-        // Get user profiles
+        // Get user profiles - try both profiles and users tables
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, display_name, username')
+          .select('id, display_name, username, avatar_url')
+          .in('id', userIds);
+        
+        // Also check users table as fallback for display info
+        const { data: users } = await supabase
+          .from('users')
+          .select('id, display_name, username, email')
           .in('id', userIds);
         
         // If friends scope, filter to friends only
@@ -245,10 +251,16 @@ export default function Leaderboard() {
         const entries: AwardsLeaderEntry[] = filteredUserIds
           .map(userId => {
             const profile = profiles?.find(p => p.id === userId);
+            const user = users?.find(u => u.id === userId);
+            // Use best available display name: profile > user > username > email prefix
+            const displayName = profile?.display_name || user?.display_name || 
+              profile?.username || user?.username || 
+              (user?.email ? user.email.split('@')[0] : null) || 'Player';
+            const username = profile?.username || user?.username || 'player';
             return {
               user_id: userId,
-              display_name: profile?.display_name || 'Anonymous',
-              username: profile?.username || 'anonymous',
+              display_name: displayName,
+              username: username,
               picks_count: userPickCounts[userId] || 0,
               correct_count: 0, // TODO: Calculate after results
             };
