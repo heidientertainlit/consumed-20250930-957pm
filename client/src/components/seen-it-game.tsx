@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Eye, ChevronRight, Check, X, Users, Trophy, Plus, Star, Loader2, Sparkles, Search } from "lucide-react";
+import { Eye, ChevronRight, Check, X, Users, Trophy, Plus, Star, Loader2, Sparkles, Search, BookOpen, Headphones, Gamepad2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -24,8 +24,23 @@ interface SeenItItem {
 interface SeenItSet {
   id: string;
   title: string;
+  media_type: string;
   items: SeenItItem[];
 }
+
+const getMediaTypeConfig = (mediaType: string) => {
+  switch (mediaType) {
+    case 'book':
+      return { icon: BookOpen, prompt: 'Read It?', actionYes: 'Read It', actionDone: 'Read', iconColor: 'text-emerald-400' };
+    case 'music':
+    case 'podcast':
+      return { icon: Headphones, prompt: 'Listened to It?', actionYes: 'Heard It', actionDone: 'Heard', iconColor: 'text-pink-400' };
+    case 'game':
+      return { icon: Gamepad2, prompt: 'Played It?', actionYes: 'Played It', actionDone: 'Played', iconColor: 'text-blue-400' };
+    default:
+      return { icon: Eye, prompt: 'Seen It?', actionYes: 'Seen It', actionDone: 'Seen', iconColor: 'text-yellow-400' };
+  }
+};
 
 export default function SeenItGame() {
   const { session, user } = useAuth();
@@ -44,7 +59,7 @@ export default function SeenItGame() {
         .select('*')
         .eq('visibility', 'public')
         .order('created_at', { ascending: false })
-        .limit(3);
+        .limit(10);
       
       if (error) throw error;
       
@@ -59,6 +74,7 @@ export default function SeenItGame() {
         setsWithItems.push({
           id: set.id,
           title: set.title,
+          media_type: set.media_type || 'movie',
           items: items || []
         });
       }
@@ -211,13 +227,16 @@ export default function SeenItGame() {
   const seenCount = currentSet.items.filter(item => responses[item.id] === true).length;
   const answeredCount = currentSet.items.filter(item => responses[item.id] !== null && responses[item.id] !== undefined).length;
   const isComplete = answeredCount === currentSet.items.length;
+  
+  const mediaConfig = getMediaTypeConfig(currentSet.media_type);
+  const MediaIcon = mediaConfig.icon;
 
   return (
     <Card className="bg-gradient-to-br from-[#2d1b4e] via-[#1a1035] to-[#0f0a1a] border-0 p-4 rounded-xl">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Eye className="w-4 h-4 text-yellow-400" />
-          <h3 className="text-white font-medium text-sm">Seen It?</h3>
+          <MediaIcon className={`w-4 h-4 ${mediaConfig.iconColor}`} />
+          <h3 className="text-white font-medium text-sm">{mediaConfig.prompt}</h3>
           <span className="text-purple-400 text-xs">• {currentSet.title}</span>
         </div>
         <div className="flex items-center gap-2">
@@ -282,14 +301,14 @@ export default function SeenItGame() {
                     onClick={() => handleResponse(currentSet.id, item, true)}
                     className="flex-1 py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all"
                   >
-                    Seen It
+                    {mediaConfig.actionYes}
                   </button>
                 </div>
               ) : (
                 <div className={`mt-2 py-1.5 rounded-full text-center text-xs font-medium ${
                   response ? 'bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white' : 'bg-white/10 text-white/60'
                 }`}>
-                  {response ? '✓ Seen' : '✗ Nope'}
+                  {response ? `✓ ${mediaConfig.actionDone}` : '✗ Nope'}
                 </div>
               )}
             </div>
@@ -306,7 +325,7 @@ export default function SeenItGame() {
                 {Math.round((seenCount / currentSet.items.length) * 100)}%
               </span>
               <span className="text-purple-200 text-[10px] text-center">
-                Seen
+                {mediaConfig.actionDone}
               </span>
               <div className="flex items-center gap-1 mt-2">
                 <Sparkles className="w-3 h-3 text-yellow-400" />
