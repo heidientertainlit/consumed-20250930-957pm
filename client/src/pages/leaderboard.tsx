@@ -547,129 +547,173 @@ export default function Leaderboard() {
                 true
               )}
               
-              {/* Awards Section */}
+              {/* Prediction Pros Section with Awards inside */}
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
-                <div className="bg-gradient-to-r from-amber-500 to-yellow-500 p-4">
+                <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Award className="text-white" size={20} />
-                      <h3 className="text-base font-bold text-white">Awards</h3>
+                      <Trophy className="text-white" size={20} />
+                      <h3 className="text-base font-bold text-white">Prediction Pros</h3>
                     </div>
                     <Link 
-                      href="/play/awards"
+                      href="/play/predictions"
                       className="text-white/90 hover:text-white text-sm font-medium flex items-center gap-1"
-                      data-testid="link-awards-action"
+                      data-testid="link-predictions-action"
                     >
-                      All Awards →
+                      Do Predictions →
                     </Link>
                   </div>
                 </div>
                 
-                {awardsEvents && awardsEvents.filter(e => e.name.toLowerCase().includes('academy') || e.name.toLowerCase().includes('oscar')).length > 0 ? (
-                  <div className="divide-y divide-gray-100">
-                    {awardsEvents.filter(e => e.name.toLowerCase().includes('academy') || e.name.toLowerCase().includes('oscar')).map(event => {
-                      const isExpanded = expandedAwards.has(event.id);
-                      const leaders = awardsLeaderboards?.[event.id] || [];
-                      
-                      return (
-                        <div key={event.id}>
-                          <button
-                            onClick={() => toggleAwardsExpanded(event.id)}
-                            className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-                            data-testid={`button-expand-${event.slug}`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <Trophy size={18} className="text-amber-500" />
-                              <span className="font-medium text-gray-900">{event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}</span>
-                              {event.status === 'open' && (
-                                <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Open</span>
-                              )}
-                              {event.status === 'locked' && (
-                                <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full">Locked</span>
-                              )}
-                            </div>
-                            {isExpanded ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
-                          </button>
-                          
-                          {isExpanded && (
-                            <div className="bg-gray-50 border-t border-gray-100">
-                              {leaders.length > 0 ? (
-                                <div className="divide-y divide-gray-100">
-                                  {leaders.map((entry, index) => {
-                                    const isCurrentUser = entry.user_id === currentUserId;
-                                    const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
-                                    
-                                    return (
-                                      <div
-                                        key={entry.user_id}
-                                        className={`flex items-center gap-4 p-4 ${isCurrentUser ? 'bg-purple-50' : ''}`}
-                                      >
-                                        <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-                                          {index < 3 ? (
-                                            <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
-                                              {index + 1}
-                                            </div>
-                                          ) : (
-                                            <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
-                                          )}
-                                        </div>
-                                        
-                                        <Link 
-                                          href={`/user/${entry.user_id}`}
-                                          className="flex-1 min-w-0"
+                {/* Awards Sub-section */}
+                {awardsEvents && awardsEvents.filter(e => e.name.toLowerCase().includes('academy') || e.name.toLowerCase().includes('oscar')).length > 0 && (
+                  <div className="border-b border-gray-100">
+                    <div className="px-4 py-2 bg-amber-50 border-b border-amber-100 flex items-center gap-2">
+                      <Award size={16} className="text-amber-600" />
+                      <span className="text-sm font-semibold text-amber-800">Awards Predictions</span>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {awardsEvents.filter(e => e.name.toLowerCase().includes('academy') || e.name.toLowerCase().includes('oscar')).map(event => {
+                        const isExpanded = expandedAwards.has(event.id);
+                        const leaders = awardsLeaderboards?.[event.id] || [];
+                        
+                        return (
+                          <div key={event.id}>
+                            <button
+                              onClick={() => toggleAwardsExpanded(event.id)}
+                              className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                              data-testid={`button-expand-${event.slug}`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <Trophy size={18} className="text-amber-500" />
+                                <span className="font-medium text-gray-900">{event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}</span>
+                                {event.status === 'open' && (
+                                  <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Open</span>
+                                )}
+                                {event.status === 'locked' && (
+                                  <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full">Locked</span>
+                                )}
+                              </div>
+                              {isExpanded ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
+                            </button>
+                            
+                            {isExpanded && (
+                              <div className="bg-gray-50 border-t border-gray-100">
+                                {leaders.length > 0 ? (
+                                  <div className="divide-y divide-gray-100">
+                                    {leaders.map((entry, index) => {
+                                      const isCurrentUser = entry.user_id === currentUserId;
+                                      const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
+                                      
+                                      return (
+                                        <div
+                                          key={entry.user_id}
+                                          className={`flex items-center gap-4 p-4 ${isCurrentUser ? 'bg-purple-50' : ''}`}
                                         >
-                                          <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
-                                            {entry.display_name}
-                                            {isCurrentUser && <span className="ml-2 text-xs text-purple-600">(You)</span>}
-                                          </p>
-                                          <p className="text-xs text-gray-500">@{entry.username}</p>
-                                        </Link>
-                                        
-                                        <div className="text-right">
-                                          <p className="font-bold text-amber-600">{entry.picks_count} picks</p>
+                                          <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                                            {index < 3 ? (
+                                              <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                                                {index + 1}
+                                              </div>
+                                            ) : (
+                                              <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
+                                            )}
+                                          </div>
+                                          
+                                          <Link 
+                                            href={`/user/${entry.user_id}`}
+                                            className="flex-1 min-w-0"
+                                          >
+                                            <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
+                                              {entry.display_name}
+                                              {isCurrentUser && <span className="ml-2 text-xs text-purple-600">(You)</span>}
+                                            </p>
+                                            <p className="text-xs text-gray-500">@{entry.username}</p>
+                                          </Link>
+                                          
+                                          <div className="text-right">
+                                            <p className="font-bold text-amber-600">{entry.picks_count} picks</p>
+                                          </div>
                                         </div>
-                                      </div>
-                                    );
-                                  })}
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <div className="p-6 text-center text-gray-500 text-sm">
+                                    No ballots submitted yet. Be the first!
+                                  </div>
+                                )}
+                                
+                                <div className="p-3 border-t border-gray-100 bg-white">
+                                  <Link 
+                                    href={`/play/awards/${event.slug}`}
+                                    className="w-full block text-center py-2 text-sm text-amber-600 hover:text-amber-700 font-medium"
+                                    data-testid={`link-make-picks-${event.slug}`}
+                                  >
+                                    Make Your Picks →
+                                  </Link>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Regular Predictions Leaderboard */}
+                {leaderboardData?.categories?.predictions && leaderboardData.categories.predictions.length > 0 ? (
+                  <div>
+                    <div className="px-4 py-2 bg-green-50 border-b border-green-100 flex items-center gap-2">
+                      <Target size={16} className="text-green-600" />
+                      <span className="text-sm font-semibold text-green-800">General Predictions</span>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {leaderboardData.categories.predictions.slice(0, 10).map((entry: any, index: number) => {
+                        const isCurrentUser = entry.user_id === currentUserId;
+                        const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
+                        
+                        return (
+                          <div
+                            key={entry.user_id}
+                            className={`flex items-center gap-4 p-4 ${isCurrentUser ? 'bg-purple-50' : ''}`}
+                          >
+                            <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                              {index < 3 ? (
+                                <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                                  {index + 1}
                                 </div>
                               ) : (
-                                <div className="p-6 text-center text-gray-500 text-sm">
-                                  No ballots submitted yet. Be the first!
-                                </div>
+                                <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
                               )}
-                              
-                              <div className="p-3 border-t border-gray-100 bg-white">
-                                <Link 
-                                  href={`/play/awards/${event.slug}`}
-                                  className="w-full block text-center py-2 text-sm text-amber-600 hover:text-amber-700 font-medium"
-                                  data-testid={`link-make-picks-${event.slug}`}
-                                >
-                                  Make Your Picks →
-                                </Link>
-                              </div>
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                            
+                            <Link 
+                              href={`/user/${entry.user_id}`}
+                              className="flex-1 min-w-0"
+                            >
+                              <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
+                                {entry.display_name || entry.username}
+                                {isCurrentUser && <span className="ml-2 text-xs text-purple-600">(You)</span>}
+                              </p>
+                              <p className="text-xs text-gray-500">@{entry.username}</p>
+                            </Link>
+                            
+                            <div className="text-right">
+                              <p className="font-bold text-green-600">{entry.points || entry.score || 0} pts</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 ) : (
-                  <div className="p-8 text-center text-gray-500">
-                    <p className="text-sm">No awards events available yet.</p>
+                  <div className="p-6 text-center text-gray-500 text-sm">
+                    No predictions resolved yet. Make some predictions!
                   </div>
                 )}
               </div>
-              
-              {renderCategoryCard(
-                'Prediction Pros',
-                Trophy,
-                leaderboardData?.categories?.predictions,
-                'Predictions',
-                'No predictions resolved yet. Make some predictions!',
-                'from-green-500 to-emerald-500',
-                { label: 'Do Predictions', href: '/play/predictions' },
-                true
-              )}
               
             </TabsContent>
 
