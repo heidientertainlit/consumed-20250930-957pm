@@ -75,6 +75,9 @@ import CastSharePage from "@/pages/cast-share";
 import PoolsPage from "@/pages/pools";
 import PoolDetailPage from "@/pages/pool-detail";
 import PoolJoinPage from "@/pages/pool-join";
+import PrivacyPolicy from "@/pages/privacy-policy";
+import TermsOfService from "@/pages/terms-of-service";
+import ResponsibleGaming from "@/pages/responsible-gaming";
 
 function Router() {
   return (
@@ -91,6 +94,15 @@ function Router() {
         </Route>
         <Route path="/about">
           <About />
+        </Route>
+        <Route path="/privacy">
+          <PrivacyPolicy />
+        </Route>
+        <Route path="/terms">
+          <TermsOfService />
+        </Route>
+        <Route path="/responsible-gaming">
+          <ResponsibleGaming />
         </Route>
         <Route path="/feedback-survey">
           <ProtectedRoute>

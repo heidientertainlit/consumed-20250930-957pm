@@ -1,4 +1,5 @@
 import { Trophy } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Footer() {
   return (
@@ -37,9 +38,9 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Legal</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><a href="#" className="hover:text-purple-primary transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-purple-primary transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-purple-primary transition-colors">Responsible Gaming</a></li>
+              <li><Link href="/terms" className="hover:text-purple-primary transition-colors">Terms of Service</Link></li>
+              <li><Link href="/privacy" className="hover:text-purple-primary transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/responsible-gaming" className="hover:text-purple-primary transition-colors">Responsible Gaming</Link></li>
             </ul>
           </div>
         </div>
