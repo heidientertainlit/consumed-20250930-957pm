@@ -369,16 +369,16 @@ export default function AwardsPredictions() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       
-      {/* Hero Header - Light lavender theme matching feed */}
-      <div className="bg-gradient-to-b from-purple-100 via-purple-50 to-gray-50 pb-8 pt-6 -mt-px text-center">
+      {/* Hero Header - Light blue theme matching feed */}
+      <div className="bg-gradient-to-b from-sky-100 via-sky-50 to-gray-50 pb-8 pt-6 -mt-px text-center">
           <div className="mb-3">
             <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider">
               Consumed
             </Badge>
           </div>
 
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-200 to-purple-300 mb-3 shadow-sm">
-            <Trophy className="w-7 h-7 text-purple-600" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-sky-200 to-sky-300 mb-3 shadow-sm">
+            <Trophy className="w-7 h-7 text-sky-600" />
           </div>
           
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
@@ -387,13 +387,13 @@ export default function AwardsPredictions() {
           <p className="text-gray-500 max-w-md mx-auto text-sm">
             {event.deadline && event.status === 'open' ? (
               <span className="flex items-center justify-center">
-                <Clock size={14} className="mr-1 text-purple-500" />
+                <Clock size={14} className="mr-1 text-sky-500" />
                 Closes: {new Date(event.deadline).toLocaleDateString('en-US', { 
                   month: 'short', day: 'numeric', year: 'numeric'
                 })}
               </span>
             ) : event.status === 'locked' ? (
-              <span className="flex items-center justify-center text-purple-600">
+              <span className="flex items-center justify-center text-sky-600">
                 <Lock size={14} className="mr-1" />
                 Predictions Locked
               </span>
@@ -406,16 +406,16 @@ export default function AwardsPredictions() {
       <div className="max-w-4xl mx-auto px-4 -mt-2">
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-purple-50 p-3 rounded-2xl border border-purple-100 text-center">
-            <p className="text-[10px] uppercase font-bold text-purple-400 mb-1">Picks</p>
+          <div className="bg-sky-50 p-3 rounded-2xl border border-sky-100 text-center">
+            <p className="text-[10px] uppercase font-bold text-sky-400 mb-1">Picks</p>
             <p className="text-lg font-bold text-gray-900">{picksCount}/{totalCategories}</p>
           </div>
-          <div className="bg-purple-50 p-3 rounded-2xl border border-purple-100 text-center">
-            <p className="text-[10px] uppercase font-bold text-purple-400 mb-1">Points</p>
-            <p className="text-lg font-bold text-purple-600">{event.points_per_correct * picksCount}</p>
+          <div className="bg-sky-50 p-3 rounded-2xl border border-sky-100 text-center">
+            <p className="text-[10px] uppercase font-bold text-sky-400 mb-1">Points</p>
+            <p className="text-lg font-bold text-sky-600">{event.points_per_correct * picksCount}</p>
           </div>
-          <div className="bg-purple-50 p-3 rounded-2xl border border-purple-100 text-center">
-            <p className="text-[10px] uppercase font-bold text-purple-400 mb-1">Status</p>
+          <div className="bg-sky-50 p-3 rounded-2xl border border-sky-100 text-center">
+            <p className="text-[10px] uppercase font-bold text-sky-400 mb-1">Status</p>
             <p className="text-lg font-bold text-green-600 capitalize">{event.status}</p>
           </div>
         </div>
