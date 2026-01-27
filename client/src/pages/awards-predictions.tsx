@@ -489,14 +489,14 @@ export default function AwardsPredictions() {
                   onClick={() => switchToCategory(category.id)}
                   className={`relative flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
                     isActive 
-                      ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-md' 
-                      : 'bg-gradient-to-r from-purple-100 to-purple-50 text-purple-700 hover:from-purple-200 hover:to-purple-100 border border-purple-200'
+                      ? 'bg-gradient-to-r from-purple-700 to-purple-500 text-white shadow-md' 
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
                   }`}
                   data-testid={`tab-category-${category.id}`}
                 >
                   {category.short_name}
                   {hasPick && (
-                    <span className={`ml-2 w-4 h-4 rounded-full flex items-center justify-center ${isActive ? 'bg-white' : 'bg-purple-500'}`}>
+                    <span className={`ml-2 w-4 h-4 rounded-full flex items-center justify-center ${isActive ? 'bg-white' : 'bg-green-500'}`}>
                       <Check size={10} className={isActive ? 'text-purple-600' : 'text-white'} />
                     </span>
                   )}
