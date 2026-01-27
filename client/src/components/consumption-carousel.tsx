@@ -26,6 +26,8 @@ interface FriendActivityItem {
   mediaTitle?: string;
   mediaType?: string;
   mediaImage?: string;
+  mediaExternalId?: string;
+  mediaExternalSource?: string;
   activityText?: string; // e.g., "rated it ⭐⭐⭐⭐", "added it to their list", "finished it"
   rating?: number;
   review?: string;
@@ -181,19 +183,24 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
     const isExpanded = expandedReview === item.id;
     
     if (item.type === 'media_added') {
+      const mediaDetailLink = item.mediaExternalId 
+        ? `/media/${item.mediaType || 'movie'}/${item.mediaExternalSource || 'tmdb'}/${item.mediaExternalId}`
+        : `/search?q=${encodeURIComponent(item.mediaTitle || '')}`;
       return (
         <div key={item.id || index} className="py-3 border-b border-gray-100 last:border-b-0">
           <div className="flex gap-3">
-            {/* Left: Media Image */}
-            {item.mediaImage ? (
-              <div className="w-14 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0 shadow-sm">
-                <img src={item.mediaImage} alt={item.mediaTitle} className="w-full h-full object-cover" />
-              </div>
-            ) : (
-              <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0 shadow-sm">
-                {getMediaIcon(item.mediaType)}
-              </div>
-            )}
+            {/* Left: Media Image - Clickable */}
+            <Link href={mediaDetailLink}>
+              {item.mediaImage ? (
+                <div className="w-14 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0 shadow-sm cursor-pointer hover:opacity-80 transition-opacity">
+                  <img src={item.mediaImage} alt={item.mediaTitle} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0 shadow-sm cursor-pointer hover:opacity-80 transition-opacity">
+                  {getMediaIcon(item.mediaType)}
+                </div>
+              )}
+            </Link>
             
             {/* Right: Content */}
             <div className="flex-1 min-w-0">
@@ -219,10 +226,12 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
                 )}
               </div>
               
-              {/* Title */}
-              <p className="text-gray-900 text-sm font-semibold line-clamp-1 mb-1">
-                {item.mediaTitle}
-              </p>
+              {/* Title - Clickable */}
+              <Link href={mediaDetailLink}>
+                <p className="text-gray-900 text-sm font-semibold line-clamp-1 mb-1 hover:text-purple-600 cursor-pointer transition-colors">
+                  {item.mediaTitle}
+                </p>
+              </Link>
               
               {/* Rating if exists */}
               {item.rating && item.rating > 0 && (

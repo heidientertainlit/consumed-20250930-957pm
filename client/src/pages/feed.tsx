@@ -3154,6 +3154,8 @@ export default function Feed() {
                       mediaTitle: p.mediaItems[0]?.title || '',
                       mediaType: p.mediaItems[0]?.type || 'movie',
                       mediaImage: p.mediaItems[0]?.imageUrl || '',
+                      mediaExternalId: p.mediaItems[0]?.externalId || p.mediaItems[0]?.external_id || '',
+                      mediaExternalSource: p.mediaItems[0]?.externalSource || p.mediaItems[0]?.external_source || 'tmdb',
                       activityText: p.rating ? `rated ${p.rating}/5` : (p.activityText || 'added'),
                       rating: p.rating || null,
                       review: p.content || p.review || null,

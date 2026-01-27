@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { trackEvent } from "@/lib/posthog";
 import { useFriendsManagement } from "@/hooks/use-friends-management";
+import { Link } from "wouter";
 
 interface SeenItItem {
   id: string;
@@ -256,16 +257,19 @@ export default function SeenItGame() {
           const response = responses[item.id];
           const answered = response !== null && response !== undefined;
           
+          const mediaDetailLink = `/media/${item.media_type || currentSet.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`;
           return (
             <div key={item.id} className="flex-shrink-0 w-32">
               <div className="relative">
-                <img 
-                  src={item.image_url} 
-                  alt={item.title}
-                  className={`w-32 h-48 rounded-lg object-cover transition-all ${
-                    answered ? 'opacity-60' : ''
-                  }`}
-                />
+                <Link href={mediaDetailLink}>
+                  <img 
+                    src={item.image_url} 
+                    alt={item.title}
+                    className={`w-32 h-48 rounded-lg object-cover transition-all cursor-pointer hover:opacity-80 ${
+                      answered ? 'opacity-60' : ''
+                    }`}
+                  />
+                </Link>
                 <div className="absolute top-2 right-2 flex flex-col gap-1">
                   <button className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all">
                     <Plus className="w-4 h-4 text-white" />
