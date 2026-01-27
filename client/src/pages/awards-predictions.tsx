@@ -3,13 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Trophy, Check, X, ChevronDown, ChevronUp, 
+  Trophy, Check, X, ChevronDown, ChevronUp, ChevronRight,
   Users, TrendingUp, Info, ArrowLeft, ChevronLeft,
   Sparkles, Lock, Clock, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import Navigation from "@/components/navigation";
 
@@ -52,7 +51,6 @@ export default function AwardsPredictions() {
   const [, navigate] = useLocation();
   const [matchPlay, paramsPlay] = useRoute('/play/awards/:slug');
   const [matchAwards, paramsAwards] = useRoute('/awards/:eventId');
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [session, setSession] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState<string>("");
@@ -256,29 +254,10 @@ export default function AwardsPredictions() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['awards-picks'] });
-      
-      // Show points feedback for new picks
-      if (data?.pointsAwarded > 0) {
-        toast({
-          title: "+1 point!",
-          description: "Prediction submitted",
-        });
-      }
-      
-      // Celebrate ballot completion
-      if (data?.ballotComplete && data?.progress?.picked === data?.progress?.total) {
-        toast({
-          title: "Ballot Complete!",
-          description: `All ${data.progress.total} predictions locked in. Good luck!`,
-        });
-      }
+      // Visual feedback is shown inline - no toasts needed
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
+      console.error('Pick error:', error.message);
     }
   });
 
@@ -287,23 +266,7 @@ export default function AwardsPredictions() {
 
   const handlePick = (categoryId: string, nomineeId: string) => {
     if (!event || event.status !== 'open') return;
-    
-    if (isAuthLoading) {
-      toast({
-        title: "Loading...",
-        description: "Please wait while we load your profile",
-      });
-      return;
-    }
-    
-    if (!userId) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to make predictions",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (isAuthLoading || !userId) return;
     
     // Optimistic update
     setLocalPicks(prev => {
@@ -357,7 +320,6 @@ export default function AwardsPredictions() {
       }
     } else {
       navigator.clipboard.writeText(shareUrl);
-      toast({ title: "Link copied!", description: "Share your ballot with friends" });
     }
   };
 
@@ -413,7 +375,6 @@ export default function AwardsPredictions() {
                   });
                 } else {
                   navigator.clipboard.writeText(shareUrl);
-                  toast({ title: "Link copied!", description: "Share it with your friends" });
                 }
               }}
               className="inline-flex items-center justify-center ml-2 align-middle hover:opacity-80 transition-opacity"
@@ -520,7 +481,6 @@ export default function AwardsPredictions() {
                     });
                   } else {
                     navigator.clipboard.writeText(shareUrl);
-                    toast({ title: "Link copied!", description: "Share it with your friends" });
                   }
                 }}
                 className="text-purple-600 font-medium hover:underline"
@@ -571,6 +531,8 @@ export default function AwardsPredictions() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {event.categories.filter(c => c.id === activeCategory).map(category => {
           const userPickId = localPicks.get(category.id);
+          const currentIndex = event.categories.findIndex(c => c.id === activeCategory);
+          const nextCategory = event.categories[currentIndex + 1];
           
           return (
             <motion.div 
@@ -579,7 +541,36 @@ export default function AwardsPredictions() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <h2 className="text-2xl font-normal text-gray-900 mb-6">{category.name}</h2>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-2xl font-normal text-gray-900">{category.name}</h2>
+                <span className="text-sm text-gray-400">{currentIndex + 1} of {event.categories.length}</span>
+              </div>
+              
+              {/* Instructions - shown when no pick made */}
+              {event.status === 'open' && !userPickId && (
+                <p className="text-sm text-gray-500 mb-4">
+                  {userId ? 'Tap your pick to predict the winner' : 'Sign in to make predictions'}
+                </p>
+              )}
+              
+              {/* Picked confirmation - shown when pick is made */}
+              {event.status === 'open' && userPickId && (
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm text-purple-600 font-medium flex items-center">
+                    <Check size={16} className="mr-1" />
+                    Prediction saved
+                  </p>
+                  {nextCategory && (
+                    <button
+                      onClick={() => setActiveCategory(nextCategory.id)}
+                      className="text-sm text-purple-600 font-medium hover:underline flex items-center"
+                    >
+                      Next: {nextCategory.short_name || nextCategory.name.replace('Best ', '')}
+                      <ChevronRight size={16} />
+                    </button>
+                  )}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 gap-4">
                 {category.nominees.map(nominee => {
