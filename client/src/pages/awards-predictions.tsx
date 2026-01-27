@@ -405,6 +405,34 @@ export default function AwardsPredictions() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 -mt-2">
+        {/* Stats Row with Ballot Progress */}
+        <button 
+          onClick={() => setShowBallotModal(true)}
+          className="w-full grid grid-cols-3 gap-3 mb-4"
+          data-testid="button-view-ballot-inline"
+        >
+          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center hover:bg-gray-50 transition-colors">
+            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Your Ballot</p>
+            <p className="text-lg font-bold text-purple-600">{picksCount}/{totalCategories}</p>
+            <div className="w-full h-1.5 bg-gray-200 rounded-full mt-2 overflow-hidden">
+              <div 
+                className="h-full bg-purple-600 rounded-full transition-all" 
+                style={{ width: `${(picksCount / totalCategories) * 100}%` }}
+              />
+            </div>
+          </div>
+          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
+            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Potential</p>
+            <p className="text-lg font-bold text-amber-500">{event.points_per_correct * totalCategories}</p>
+            <p className="text-[10px] text-gray-400 mt-1">points</p>
+          </div>
+          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
+            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Status</p>
+            <p className="text-lg font-bold text-green-600 capitalize">{event.status}</p>
+            <p className="text-[10px] text-gray-400 mt-1">tap to view</p>
+          </div>
+        </button>
+
         {/* Who's Playing Section */}
         <div className="mb-6 bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -509,34 +537,6 @@ export default function AwardsPredictions() {
             })}
           </div>
         </div>
-      </div>
-
-      {/* Ballot Progress Bar - Tap to view full ballot */}
-      <div className="max-w-4xl mx-auto px-4 mb-4">
-        <button 
-          onClick={() => setShowBallotModal(true)}
-          className="w-full bg-white border border-gray-200 rounded-2xl p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-          data-testid="button-view-ballot-inline"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-              <Trophy size={18} className="text-purple-600" />
-            </div>
-            <div className="text-left">
-              <p className="font-semibold text-gray-900">Your Ballot</p>
-              <p className="text-sm text-gray-500">{picksCount} of {totalCategories} predictions made</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-purple-600 rounded-full transition-all" 
-                style={{ width: `${(picksCount / totalCategories) * 100}%` }}
-              />
-            </div>
-            <ChevronRight size={20} className="text-gray-400" />
-          </div>
-        </button>
       </div>
 
       {/* Active Category Panel */}
