@@ -1074,7 +1074,7 @@ export default function Search() {
       {/* Page Title + Search */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-4 pb-4 px-4 -mt-px">
         <h1 className="text-xl font-semibold text-white text-center mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          Track media to shape your entertainment DNA
+          Feed your entertainment DNA by adding what you are consuming
         </h1>
         
         {/* Search Bar */}

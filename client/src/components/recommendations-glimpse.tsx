@@ -80,7 +80,7 @@ function RecommendationItemCard({
 
   return (
     <div className="flex-shrink-0 w-28">
-      <Link href={`/media/${item.type || 'movie'}/tmdb/${item.id}`}>
+      <Link href={`/media/${item.type || 'movie'}/${item.externalSource || 'tmdb'}/${item.id}`}>
         <div className="relative aspect-[2/3] rounded-lg overflow-hidden bg-gray-800 mb-1.5 cursor-pointer">
           {item.imageUrl ? (
             <img
@@ -95,23 +95,23 @@ function RecommendationItemCard({
           )}
         </div>
       </Link>
-      <Link href={`/media/${item.type || 'movie'}/tmdb/${item.id}`}>
+      <Link href={`/media/${item.type || 'movie'}/${item.externalSource || 'tmdb'}/${item.id}`}>
         <p className="text-xs font-medium text-white line-clamp-2 leading-tight cursor-pointer h-8 hover:text-purple-300">
           {item.title}
         </p>
       </Link>
-      <div className="relative flex items-center mt-1" onClick={(e) => e.stopPropagation()}>
-        <div className="flex gap-0.5">
+      <div className="relative flex items-center mt-1.5" onClick={(e) => e.stopPropagation()}>
+        <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
-            <div key={star} className="relative" style={{ width: 14, height: 14 }}>
-              <Star size={14} className="absolute inset-0 text-purple-400" />
+            <div key={star} className="relative" style={{ width: 18, height: 18 }}>
+              <Star size={18} className="absolute inset-0 text-purple-400" />
               <div 
                 className="absolute inset-0 overflow-hidden pointer-events-none"
                 style={{ 
                   width: displayRating >= star ? '100%' : displayRating >= star - 0.5 ? '50%' : '0%'
                 }}
               >
-                <Star size={14} className="fill-yellow-400 text-yellow-400" />
+                <Star size={18} className="fill-yellow-400 text-yellow-400" />
               </div>
             </div>
           ))}
@@ -125,7 +125,7 @@ function RecommendationItemCard({
           onChange={handleSliderChange}
           onClick={(e) => e.stopPropagation()}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-          style={{ margin: 0 }}
+          style={{ margin: 0, height: '24px' }}
           disabled={rateMutation.isPending || submittedRating !== null}
         />
         {submittedRating !== null && (
