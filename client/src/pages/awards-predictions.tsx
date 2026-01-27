@@ -15,11 +15,10 @@ import Navigation from "@/components/navigation";
 
 interface Nominee {
   id: string;
-  name: string;
-  title: string | null;
-  subtitle?: string | null;
+  title: string;
+  person_name: string | null;
+  media_type: string;
   poster_url: string | null;
-  tmdb_popularity: number;
   display_order: number;
 }
 
@@ -350,7 +349,7 @@ export default function AwardsPredictions() {
         picks.push({
           categoryId,
           nomineeId,
-          nomineeName: nominee.name,
+          nomineeName: nominee.person_name || nominee.title,
           categoryName: category.short_name
         });
       }
@@ -415,29 +414,27 @@ export default function AwardsPredictions() {
             <Trophy className="w-7 h-7 text-white" />
           </div>
           
-          <h1 className="text-2xl font-bold text-white mb-1">
-            {event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}
+          <h1 className="text-2xl font-bold text-white mb-1 inline-flex items-center justify-center gap-2">
+            <span>{event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}</span>
+            <button
+              onClick={() => {
+                const shareUrl = `${window.location.origin}/play/awards/${eventSlug}`;
+                if (navigator.share) {
+                  navigator.share({
+                    title: `${event.year} ${event.name} Predictions`,
+                    text: "Make your Oscar predictions and compete with me!",
+                    url: shareUrl
+                  });
+                } else {
+                  navigator.clipboard.writeText(shareUrl);
+                  toast({ title: "Link copied!", description: "Share it with your friends" });
+                }
+              }}
+              className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+            >
+              <Share2 size={18} className="text-white/70 hover:text-white" />
+            </button>
           </h1>
-          
-          <button
-            onClick={() => {
-              const shareUrl = `${window.location.origin}/play/awards/${eventSlug}`;
-              if (navigator.share) {
-                navigator.share({
-                  title: `${event.year} ${event.name} Predictions`,
-                  text: "Make your Oscar predictions and compete with me!",
-                  url: shareUrl
-                });
-              } else {
-                navigator.clipboard.writeText(shareUrl);
-                toast({ title: "Link copied!", description: "Share it with your friends" });
-              }
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2 mt-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white text-sm font-medium"
-          >
-            <Share2 size={16} />
-            Share with Friends
-          </button>
           <p className="text-gray-400 max-w-md mx-auto text-sm">
             {event.deadline && event.status === 'open' ? (
               <span className="flex items-center justify-center">
@@ -625,7 +622,7 @@ export default function AwardsPredictions() {
                         {nominee.poster_url ? (
                           <img 
                             src={nominee.poster_url} 
-                            alt={nominee.title || nominee.name}
+                            alt={nominee.person_name || nominee.title}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -637,9 +634,9 @@ export default function AwardsPredictions() {
                       
                       <div className="flex-1 min-w-0">
                         <p className={`font-medium text-base ${isPicked ? 'text-purple-900' : 'text-gray-900'}`}>
-                          {nominee.name}
+                          {nominee.person_name || nominee.title}
                         </p>
-                        {nominee.title && (
+                        {nominee.person_name && (
                           <p className={`text-sm ${isPicked ? 'text-purple-600' : 'text-gray-500'}`}>{nominee.title}</p>
                         )}
                         
