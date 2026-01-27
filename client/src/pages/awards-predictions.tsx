@@ -492,7 +492,27 @@ export default function AwardsPredictions() {
               </p>
             </div>
           ) : (
-            <p className="text-xs text-gray-500 italic">No friends playing yet. Invite them to join!</p>
+            <p className="text-xs text-gray-500 italic">
+              No friends playing yet.{" "}
+              <button 
+                onClick={() => {
+                  const shareUrl = `${window.location.origin}/play/awards/${eventSlug}`;
+                  if (navigator.share) {
+                    navigator.share({
+                      title: `${event.year} ${event.name} Predictions`,
+                      text: "Make your predictions and compete with me!",
+                      url: shareUrl
+                    });
+                  } else {
+                    navigator.clipboard.writeText(shareUrl);
+                    toast({ title: "Link copied!", description: "Share it with your friends" });
+                  }
+                }}
+                className="text-purple-600 font-medium hover:underline"
+              >
+                Invite them to join!
+              </button>
+            </p>
           )}
         </div>
       </div>
