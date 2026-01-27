@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, Award, Dices } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,12 +44,14 @@ export default function Leaderboard() {
   const searchString = useSearch();
   const urlParams = new URLSearchParams(searchString);
   const tabParam = urlParams.get('tab');
+  const eventParam = urlParams.get('event');
   
   const [scope, setScope] = useState<'global' | 'friends'>('global');
   const [period, setPeriod] = useState<'weekly' | 'monthly' | 'all_time'>('weekly');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<string>(
-    tabParam === 'games' || tabParam === 'consumption' ? tabParam : 'engagement'
+    tabParam === 'games' || tabParam === 'consumption' || tabParam === 'predictions' ? 
+      (tabParam === 'predictions' ? 'games' : tabParam) : 'engagement'
   );
 
   const toggleExpanded = (categoryName: string) => {
@@ -159,6 +161,16 @@ export default function Leaderboard() {
   });
 
   const [expandedAwards, setExpandedAwards] = useState<Set<string>>(new Set());
+
+  // Auto-expand the specified event from URL param
+  useEffect(() => {
+    if (eventParam && awardsEvents) {
+      const targetEvent = awardsEvents.find(e => e.slug === eventParam);
+      if (targetEvent && !expandedAwards.has(targetEvent.id)) {
+        setExpandedAwards(new Set([targetEvent.id]));
+      }
+    }
+  }, [eventParam, awardsEvents]);
 
   const toggleAwardsExpanded = (eventId: string) => {
     setExpandedAwards(prev => {
