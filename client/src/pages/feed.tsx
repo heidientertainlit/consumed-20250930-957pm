@@ -5451,9 +5451,25 @@ export default function Feed() {
               {/* Predictions Filter - Show all awards */}
               {selectedFilter === 'predictions' && (
                 <div className="space-y-3">
-                  {/* 2026 Academy Awards - Live Now! (hidden if completed) */}
-                  {!hasCompletedOscarBallot && (
-                    <Link href="/play/awards/oscars-2026">
+                  {/* 2026 Academy Awards - Show different state based on completion */}
+                  <Link href="/play/awards/oscars-2026">
+                    {hasCompletedOscarBallot ? (
+                      <div className="bg-gradient-to-r from-green-900 to-emerald-800 rounded-2xl p-4 shadow-lg border border-green-500/30 cursor-pointer hover:shadow-xl hover:border-green-400/40 transition-all">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                            <Check className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <h3 className="text-white font-bold text-base">2026 Oscars Ballot</h3>
+                              <span className="px-2 py-0.5 bg-green-500/30 text-green-300 text-[10px] font-semibold rounded-full">Complete</span>
+                            </div>
+                            <p className="text-green-200/80 text-sm">Your picks are locked in! View or share your ballot</p>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-green-400" />
+                        </div>
+                      </div>
+                    ) : (
                       <div className="bg-gradient-to-r from-[#12121f] to-[#2d1f4e] rounded-2xl p-4 shadow-lg border border-purple-500/20 cursor-pointer hover:shadow-xl hover:border-purple-400/40 transition-all">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
@@ -5469,8 +5485,8 @@ export default function Feed() {
                           <ChevronRight className="w-5 h-5 text-purple-400" />
                         </div>
                       </div>
-                    </Link>
-                  )}
+                    )}
+                  </Link>
 
                   {/* 2026 Grammy Awards - Coming Soon */}
                   <div className="bg-gradient-to-r from-rose-900 via-pink-800 to-rose-900 rounded-2xl p-4 shadow-lg border border-rose-500/30">
