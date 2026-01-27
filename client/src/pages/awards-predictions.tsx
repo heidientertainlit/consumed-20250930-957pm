@@ -489,7 +489,7 @@ export default function AwardsPredictions() {
                   onClick={() => switchToCategory(category.id)}
                   className={`relative flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
                     isActive 
-                      ? 'bg-gradient-to-r from-purple-700 to-purple-500 text-white shadow-md' 
+                      ? 'bg-gradient-to-r from-[#5b21b6] to-[#a855f7] text-white shadow-md' 
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
                   }`}
                   data-testid={`tab-category-${category.id}`}
