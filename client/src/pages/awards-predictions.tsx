@@ -73,6 +73,23 @@ export default function AwardsPredictions() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Get the app user ID (from users table, not auth)
+  const { data: currentUser } = useQuery({
+    queryKey: ['current-user', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      const { data } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_id', session.user.id)
+        .single();
+      return data;
+    },
+    enabled: !!session?.user?.id
+  });
+
+  const userId = currentUser?.id;
+
   // Fetch event data directly from Supabase
   const { data: event, isLoading, error } = useQuery<AwardsEvent>({
     queryKey: ['awards-event', eventSlug],
@@ -128,19 +145,19 @@ export default function AwardsPredictions() {
 
   // Fetch user picks
   const { data: userPicks } = useQuery<UserPick[]>({
-    queryKey: ['awards-picks', session?.user?.id],
+    queryKey: ['awards-picks', userId],
     queryFn: async () => {
-      if (!session?.user?.id) return [];
+      if (!userId) return [];
       
       const { data, error } = await supabase
         .from('awards_picks')
         .select('category_id, nominee_id')
-        .eq('user_id', session.user.id);
+        .eq('user_id', userId);
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!session?.user?.id,
+    enabled: !!userId,
   });
 
   // Fetch participants (users who have submitted ballots)
@@ -153,7 +170,7 @@ export default function AwardsPredictions() {
   }
   
   const { data: participants } = useQuery<{ friends: Participant[]; totalCount: number }>({
-    queryKey: ['awards-participants', event?.id],
+    queryKey: ['awards-participants', event?.id, userId],
     queryFn: async () => {
       if (!event?.id) return { friends: [], totalCount: 0 };
       
@@ -186,17 +203,17 @@ export default function AwardsPredictions() {
       
       if (profilesError) throw profilesError;
       
-      // Get current user's friends
+      // Get current user's friends (using app userId, not auth ID)
       let friendIds: string[] = [];
-      if (session?.user?.id) {
+      if (userId) {
         const { data: friendships } = await supabase
           .from('friendships')
           .select('friend_id, user_id')
-          .or(`user_id.eq.${session.user.id},friend_id.eq.${session.user.id}`)
+          .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
           .eq('status', 'accepted');
         
         friendIds = (friendships || []).map(f => 
-          f.user_id === session.user.id ? f.friend_id : f.user_id
+          f.user_id === userId ? f.friend_id : f.user_id
         );
       }
       
@@ -233,28 +250,42 @@ export default function AwardsPredictions() {
     }
   }, [event?.categories, activeCategory]);
 
-  // Mutation for saving picks
+  // Mutation for saving picks via edge function (awards points)
   const savePick = useMutation({
     mutationFn: async ({ categoryId, nomineeId }: { categoryId: string; nomineeId: string }) => {
-      if (!session?.user?.id) {
+      if (!userId) {
         throw new Error('Must be logged in to make picks');
       }
       
-      const { error } = await supabase
-        .from('awards_picks')
-        .upsert({
-          user_id: session.user.id,
+      const response = await supabase.functions.invoke('awards-pick', {
+        body: {
+          user_id: userId,
           category_id: categoryId,
-          nominee_id: nomineeId,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,category_id'
-        });
+          nominee_id: nomineeId
+        }
+      });
       
-      if (error) throw error;
+      if (response.error) throw response.error;
+      return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['awards-picks'] });
+      
+      // Show points feedback for new picks
+      if (data?.pointsAwarded > 0) {
+        toast({
+          title: "+1 point!",
+          description: "Prediction submitted",
+        });
+      }
+      
+      // Celebrate ballot completion
+      if (data?.ballotComplete && data?.progress?.picked === data?.progress?.total) {
+        toast({
+          title: "Ballot Complete!",
+          description: `All ${data.progress.total} predictions locked in. Good luck!`,
+        });
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -271,7 +302,7 @@ export default function AwardsPredictions() {
   const handlePick = (categoryId: string, nomineeId: string) => {
     if (!event || event.status !== 'open') return;
     
-    if (!session?.user?.id) {
+    if (!userId) {
       toast({
         title: "Sign in required",
         description: "Please sign in to make predictions",
@@ -321,7 +352,7 @@ export default function AwardsPredictions() {
   const handleShare = async () => {
     if (!event) return;
     
-    const shareUrl = `${window.location.origin}/awards/${event.slug}/ballot?user=${session?.user?.id}`;
+    const shareUrl = `${window.location.origin}/awards/${event.slug}/ballot?user=${userId}`;
     const shareText = `Check out my ${event.year} ${event.name} predictions!`;
     
     if (navigator.share) {

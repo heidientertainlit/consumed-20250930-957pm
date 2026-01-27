@@ -75,6 +75,16 @@ serve(async (req) => {
       );
     }
 
+    // Check if user already has a pick for this category
+    const { data: existingPick } = await supabaseClient
+      .from("awards_picks")
+      .select("id")
+      .eq("user_id", user_id)
+      .eq("category_id", category_id)
+      .single();
+
+    const isNewPick = !existingPick;
+
     // Upsert the pick (insert or update if exists)
     const { data: pick, error: pickError } = await supabaseClient
       .from("awards_picks")
@@ -97,6 +107,79 @@ serve(async (req) => {
       );
     }
 
+    // Award 1 point for new predictions only (not changes) - atomic update via RPC
+    let pointsAwarded = 0;
+    if (isNewPick) {
+      pointsAwarded = 1;
+      
+      // Use raw SQL for atomic increment to avoid race conditions
+      const { error: pointsError } = await supabaseClient.rpc('add_user_points', { 
+        target_user_id: user_id, 
+        points_to_add: 1 
+      });
+      
+      // If RPC doesn't exist, fall back to direct update (less safe but works)
+      if (pointsError?.message?.includes('function') || pointsError?.message?.includes('does not exist')) {
+        const { data: userData } = await supabaseClient
+          .from("users")
+          .select("points")
+          .eq("id", user_id)
+          .single();
+        
+        await supabaseClient
+          .from("users")
+          .update({ points: (userData?.points || 0) + 1 })
+          .eq("id", user_id);
+      }
+    }
+
+    // Get the event ID from the category
+    const { data: categoryWithEvent } = await supabaseClient
+      .from("awards_categories")
+      .select("event_id")
+      .eq("id", category_id)
+      .single();
+
+    const eventId = categoryWithEvent?.event_id;
+
+    // Check if user has completed their full ballot (for tiebreaker timestamp)
+    const { data: allCategories } = await supabaseClient
+      .from("awards_categories")
+      .select("id")
+      .eq("event_id", eventId);
+
+    const categoryIds = allCategories?.map(c => c.id) || [];
+
+    const { data: userPicks } = await supabaseClient
+      .from("awards_picks")
+      .select("category_id")
+      .eq("user_id", user_id)
+      .in("category_id", categoryIds);
+
+    const totalCategories = allCategories?.length || 0;
+    const userPickCount = userPicks?.length || 0;
+    const ballotComplete = userPickCount >= totalCategories && totalCategories > 0;
+
+    // Record ballot completion timestamp for tiebreaker (first time only)
+    if (ballotComplete && eventId) {
+      const { data: existingCompletion } = await supabaseClient
+        .from("awards_ballot_completions")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("event_id", eventId)
+        .single();
+
+      if (!existingCompletion) {
+        await supabaseClient
+          .from("awards_ballot_completions")
+          .insert({
+            user_id,
+            event_id: eventId,
+            completed_at: new Date().toISOString()
+          });
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -104,6 +187,12 @@ serve(async (req) => {
           id: pick.id,
           categoryId: pick.category_id,
           nomineeId: pick.nominee_id
+        },
+        pointsAwarded,
+        ballotComplete,
+        progress: {
+          picked: userPickCount,
+          total: totalCategories
         }
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
