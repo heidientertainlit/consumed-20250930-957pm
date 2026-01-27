@@ -547,28 +547,6 @@ export default function Leaderboard() {
                 true
               )}
               
-              {renderCategoryCard(
-                'Prediction Pros',
-                Trophy,
-                leaderboardData?.categories?.predictions,
-                'Predictions',
-                'No predictions resolved yet. Make some predictions!',
-                'from-green-500 to-emerald-500',
-                { label: 'Do Predictions', href: '/play/predictions' },
-                true
-              )}
-              
-              {renderCategoryCard(
-                'Betting Experts',
-                Dices,
-                leaderboardData?.categories?.bets,
-                'Bets',
-                'No bets won yet. Bet on your friends\' reactions!',
-                'from-emerald-500 to-teal-500',
-                undefined,
-                true
-              )}
-
               {/* Awards Section */}
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
                 <div className="bg-gradient-to-r from-amber-500 to-yellow-500 p-4">
@@ -681,6 +659,28 @@ export default function Leaderboard() {
                   </div>
                 )}
               </div>
+              
+              {renderCategoryCard(
+                'Prediction Pros',
+                Trophy,
+                leaderboardData?.categories?.predictions,
+                'Predictions',
+                'No predictions resolved yet. Make some predictions!',
+                'from-green-500 to-emerald-500',
+                { label: 'Do Predictions', href: '/play/predictions' },
+                true
+              )}
+              
+              {renderCategoryCard(
+                'Betting Experts',
+                Dices,
+                leaderboardData?.categories?.bets,
+                'Bets',
+                'No bets won yet. Bet on your friends\' reactions!',
+                'from-emerald-500 to-teal-500',
+                undefined,
+                true
+              )}
             </TabsContent>
 
             <TabsContent value="consumption">
