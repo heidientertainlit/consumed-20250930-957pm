@@ -346,7 +346,7 @@ export default function EntertainmentDNAPage() {
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-2.5 rounded-full shadow-lg text-sm"
             data-testid="complete-onboarding-button"
           >
-            Start Exploring Consumed!
+            Generate My DNA Profile
           </Button>
         </div>
       </div>
@@ -468,6 +468,7 @@ export default function EntertainmentDNAPage() {
                       className="w-full p-3 bg-white border border-gray-200 rounded-lg focus:border-purple-400 focus:ring-purple-400 min-h-[100px] resize-vertical text-black placeholder:text-gray-400 text-sm"
                       data-testid={`text-input-${question.id}`}
                     />
+                    <p className="text-purple-300/60 text-xs mt-2 text-center">Scroll down to continue</p>
                   </>
                 ) : (
                   <h3 className="text-base font-semibold text-white mb-2 leading-snug">
