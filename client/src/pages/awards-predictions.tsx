@@ -174,8 +174,12 @@ export default function AwardsPredictions() {
         return acc;
       }, {} as Record<string, number>);
       
-      const uniqueUserIds = Object.keys(userPickCounts).filter(id => id !== userId);
-      const totalCount = uniqueUserIds.length;
+      // Only include users who have completed ALL categories
+      const totalCategoryCount = categoryIds.length;
+      const completedUserIds = Object.keys(userPickCounts).filter(
+        id => id !== userId && userPickCounts[id] >= totalCategoryCount
+      );
+      const totalCount = completedUserIds.length;
       
       if (totalCount === 0) return { players: [], friendCount: 0, totalCount: 0 };
       
@@ -183,7 +187,7 @@ export default function AwardsPredictions() {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id, display_name, avatar_url')
-        .in('id', uniqueUserIds.slice(0, 20)); // Limit to first 20
+        .in('id', completedUserIds.slice(0, 20)); // Limit to first 20
       
       if (profilesError) throw profilesError;
       
@@ -500,7 +504,7 @@ export default function AwardsPredictions() {
             </div>
           ) : (
             <p className="text-xs text-gray-400">
-              Be the first to play!
+              Be the first to complete your ballot!
             </p>
           )}
         </div>
