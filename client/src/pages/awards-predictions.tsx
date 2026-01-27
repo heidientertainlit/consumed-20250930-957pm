@@ -266,7 +266,10 @@ export default function AwardsPredictions() {
   });
 
   const totalCategories = event?.categories?.length || 0;
-  const picksCount = localPicks.size;
+  // Only count picks for categories that exist in this event
+  const validCategoryIds = new Set(event?.categories?.map(c => c.id) || []);
+  const picksCount = Array.from(localPicks.keys()).filter(catId => validCategoryIds.has(catId)).length;
+  const isBallotComplete = picksCount >= totalCategories && totalCategories > 0;
 
   const handlePick = (categoryId: string, nomineeId: string) => {
     if (!event || event.status !== 'open') return;
@@ -415,13 +418,21 @@ export default function AwardsPredictions() {
           className="w-full grid grid-cols-3 gap-3 mb-4"
           data-testid="button-view-ballot-inline"
         >
-          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center hover:bg-gray-50 transition-colors">
-            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Your Ballot</p>
-            <p className="text-lg font-bold text-purple-600">{picksCount}/{totalCategories}</p>
+          <div className={`p-3 rounded-2xl border shadow-sm text-center hover:bg-gray-50 transition-colors ${
+            isBallotComplete 
+              ? 'bg-gradient-to-br from-purple-50 to-amber-50 border-purple-300' 
+              : 'bg-white border-gray-200'
+          }`}>
+            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">
+              {isBallotComplete ? '✓ Complete!' : 'Your Ballot'}
+            </p>
+            <p className={`text-lg font-bold ${isBallotComplete ? 'text-green-600' : 'text-purple-600'}`}>
+              {picksCount}/{totalCategories}
+            </p>
             <div className="w-full h-1.5 bg-gray-200 rounded-full mt-2 overflow-hidden">
               <div 
-                className="h-full bg-purple-600 rounded-full transition-all" 
-                style={{ width: `${(picksCount / totalCategories) * 100}%` }}
+                className={`h-full rounded-full transition-all ${isBallotComplete ? 'bg-green-500' : 'bg-purple-600'}`}
+                style={{ width: `${Math.min((picksCount / totalCategories) * 100, 100)}%` }}
               />
             </div>
           </div>
@@ -647,11 +658,26 @@ export default function AwardsPredictions() {
                         )}
                       </div>
                       
-                      {event.status === 'open' && isPicked && (
-                        <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
-                          <Check size={12} className="text-white" />
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {/* Info button to view on TMDB */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const searchTerm = nominee.title;
+                            window.open(`https://www.themoviedb.org/search?query=${encodeURIComponent(searchTerm)}`, '_blank');
+                          }}
+                          className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
+                          title="View on TMDB"
+                        >
+                          <Info size={12} className="text-gray-600" />
+                        </button>
+                        
+                        {event.status === 'open' && isPicked && (
+                          <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
+                            <Check size={12} className="text-white" />
+                          </div>
+                        )}
+                      </div>
                     </motion.div>
                   );
                 })}
