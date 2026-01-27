@@ -72,23 +72,9 @@ export default function AwardsPredictions() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Get the app user ID (from users table, not auth)
-  const { data: currentUser, isLoading: isUserLoading } = useQuery({
-    queryKey: ['current-user', session?.user?.id],
-    queryFn: async () => {
-      if (!session?.user?.id) return null;
-      const { data } = await supabase
-        .from('users')
-        .select('id')
-        .eq('auth_id', session.user.id)
-        .single();
-      return data;
-    },
-    enabled: !!session?.user?.id
-  });
-
-  const userId = currentUser?.id;
-  const isAuthLoading = !session && isUserLoading;
+  // The users table uses id = auth.uid() directly (no separate auth_id column)
+  const userId = session?.user?.id;
+  const isAuthLoading = !session;
 
   // Fetch event data directly from Supabase
   const { data: event, isLoading, error } = useQuery<AwardsEvent>({
@@ -302,7 +288,7 @@ export default function AwardsPredictions() {
   const handlePick = (categoryId: string, nomineeId: string) => {
     if (!event || event.status !== 'open') return;
     
-    if (isUserLoading) {
+    if (isAuthLoading) {
       toast({
         title: "Loading...",
         description: "Please wait while we load your profile",
