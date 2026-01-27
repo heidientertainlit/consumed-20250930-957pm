@@ -565,9 +565,9 @@ export default function Leaderboard() {
                   </div>
                 </div>
                 
-                {awardsEvents && awardsEvents.filter(e => !e.name.toLowerCase().includes('golden')).length > 0 ? (
+                {awardsEvents && awardsEvents.filter(e => e.name.toLowerCase().includes('academy') || e.name.toLowerCase().includes('oscar')).length > 0 ? (
                   <div className="divide-y divide-gray-100">
-                    {awardsEvents.filter(e => !e.name.toLowerCase().includes('golden')).map(event => {
+                    {awardsEvents.filter(e => e.name.toLowerCase().includes('academy') || e.name.toLowerCase().includes('oscar')).map(event => {
                       const isExpanded = expandedAwards.has(event.id);
                       const leaders = awardsLeaderboards?.[event.id] || [];
                       
