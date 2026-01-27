@@ -402,12 +402,6 @@ export default function AwardsPredictions() {
       
       {/* Hero Header - Dark purple gradient matching app */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-12 pt-6 -mt-px text-center">
-          <div className="mb-3">
-            <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider">
-              Consumed
-            </Badge>
-          </div>
-
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 mb-3 shadow-lg">
             <Trophy className="w-7 h-7 text-white" />
           </div>
