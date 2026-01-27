@@ -183,13 +183,20 @@ export default function AwardsPredictions() {
       
       if (totalCount === 0) return { players: [], friendCount: 0, totalCount: 0 };
       
-      // Get user profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, display_name, avatar_url')
+      // Get user info from users table (not profiles - awards_picks uses users table IDs)
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('id, display_name, user_name, avatar_url')
         .in('id', completedUserIds.slice(0, 20)); // Limit to first 20
       
-      if (profilesError) throw profilesError;
+      if (usersError) throw usersError;
+      
+      // Map users to profiles format for consistency
+      const profiles = (usersData || []).map(u => ({
+        id: u.id,
+        display_name: u.display_name || u.user_name,
+        avatar_url: u.avatar_url
+      }));
       
       // Get current user's friends (using app userId, not auth ID)
       let friendIds: string[] = [];
