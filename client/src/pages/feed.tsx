@@ -2813,11 +2813,6 @@ export default function Feed() {
             ))}
           </div>
         )}
-        {/* Oscar Ballot Completions */}
-        <div className="mb-4">
-          <AwardsCompletionFeed />
-        </div>
-
         {/* Activity Stream */}
         <div className="space-y-6">
 
@@ -3313,6 +3308,11 @@ export default function Feed() {
               {/* Consumed Rankings Carousel - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (
                 <RanksCarousel offset={0} />
+              )}
+
+              {/* Oscar Ballot Completions - only in All view */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+                <AwardsCompletionFeed />
               )}
 
               {/* TRIVIA filter - TV category */}
