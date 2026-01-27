@@ -225,10 +225,10 @@ export default function Leaderboard() {
           .select('id, display_name, username, avatar_url')
           .in('id', userIds);
         
-        // Also check users table as fallback for display info
+        // Also check users table for display info (user_name is the column name)
         const { data: users } = await supabase
           .from('users')
-          .select('id, display_name, username')
+          .select('id, user_name')
           .in('id', userIds);
         
         // If friends scope, filter to friends only
@@ -251,11 +251,11 @@ export default function Leaderboard() {
         const entries: AwardsLeaderEntry[] = filteredUserIds
           .map(userId => {
             const profile = profiles?.find(p => p.id === userId);
-            const user = users?.find(u => u.id === userId);
-            // Use best available display name: profile > user > username
-            const displayName = profile?.display_name || user?.display_name || 
-              profile?.username || user?.username || 'Player';
-            const username = profile?.username || user?.username || 'player';
+            const user = users?.find((u: any) => u.id === userId);
+            // Use best available display name: profile > user_name from users table
+            const displayName = profile?.display_name || user?.user_name || 
+              profile?.username || 'Player';
+            const username = profile?.username || user?.user_name || 'player';
             return {
               user_id: userId,
               display_name: displayName,
