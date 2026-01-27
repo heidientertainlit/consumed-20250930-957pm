@@ -195,19 +195,43 @@ export default function AwardsPredictions() {
       if (totalCount === 0) return { players: [], friendCount: 0, totalCount: 0 };
       
       // Get user info from users table (not profiles - awards_picks uses users table IDs)
-      const { data: usersData, error: usersError } = await supabase
-        .from('users')
-        .select('id, display_name, user_name, avatar_url')
-        .in('id', completedUserIds.slice(0, 20)); // Limit to first 20
+      let usersData: any[] = [];
+      let usersError: any = null;
       
-      if (usersError) throw usersError;
+      try {
+        const result = await supabase
+          .from('users')
+          .select('id, display_name, user_name, avatar')
+          .in('id', completedUserIds.slice(0, 20)); // Limit to first 20
+        
+        usersData = result.data || [];
+        usersError = result.error;
+        console.log('🎯 Users lookup:', { usersData, usersError, queriedIds: completedUserIds.slice(0, 20) });
+      } catch (err) {
+        console.error('🎯 Users query exception:', err);
+      }
+      
+      // If users query failed, return basic data with just IDs
+      if (usersError || usersData.length === 0) {
+        console.log('🎯 Users query failed or empty, returning basic participant data');
+        const basicPlayers = completedUserIds.map(id => ({
+          user_id: id,
+          picks_count: userPickCounts[id] || 0,
+          display_name: 'Player',
+          avatar_url: null,
+          is_friend: false
+        }));
+        return { players: basicPlayers, friendCount: 0, totalCount };
+      }
       
       // Map users to profiles format for consistency
       const profiles = (usersData || []).map(u => ({
         id: u.id,
         display_name: u.display_name || u.user_name,
-        avatar_url: u.avatar_url
+        avatar_url: u.avatar
       }));
+      
+      console.log('🎯 Mapped profiles:', profiles);
       
       // Get current user's friends (using app userId, not auth ID)
       let friendIds: string[] = [];
