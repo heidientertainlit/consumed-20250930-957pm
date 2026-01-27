@@ -16,22 +16,22 @@ interface SetConfig {
 }
 
 const SET_CONFIGS: SetConfig[] = [
-  { id: 'horror-classics', title: 'Horror Classics', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 27, sort_by: 'vote_count.desc', before_year: 2000 } },
-  { id: '90s-comedies', title: '90s Comedies', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_decade', fetch_params: { genre_id: 35, start_year: 1990, end_year: 1999 } },
-  { id: 'sci-fi-essentials', title: 'Sci-Fi Essentials', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 878, sort_by: 'vote_count.desc' } },
-  { id: 'action-blockbusters', title: 'Action Blockbusters', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 28, sort_by: 'revenue.desc' } },
-  { id: 'animated-favorites', title: 'Animated Favorites', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 16, sort_by: 'vote_count.desc' } },
-  { id: 'romantic-classics', title: 'Romantic Classics', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 10749, sort_by: 'vote_count.desc' } },
-  { id: 'thriller-picks', title: 'Must-See Thrillers', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 53, sort_by: 'vote_count.desc' } },
-  { id: 'drama-kings', title: 'Drama Kings', category: 'tv', media_type: 'tv', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 18, sort_by: 'vote_count.desc', is_tv: true } },
-  { id: 'comedy-series', title: 'Comedy Series', category: 'tv', media_type: 'tv', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 35, sort_by: 'vote_count.desc', is_tv: true } },
-  { id: 'true-crime-podcasts', title: 'True Crime Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'spotify_podcast', fetch_params: { query: 'true crime' } },
-  { id: 'comedy-podcasts', title: 'Comedy Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'spotify_podcast', fetch_params: { query: 'comedy podcast' } },
-  { id: 'interview-podcasts', title: 'Interview Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'spotify_podcast', fetch_params: { query: 'interview podcast' } },
-  { id: 'classic-albums', title: 'Classic Albums', category: 'music', media_type: 'music', fetch_type: 'spotify_albums', fetch_params: { query: 'greatest albums classic rock' } },
-  { id: 'hip-hop-essentials', title: 'Hip-Hop Essentials', category: 'music', media_type: 'music', fetch_type: 'spotify_albums', fetch_params: { query: 'classic hip hop album' } },
-  { id: 'fantasy-books', title: 'Fantasy Epics', category: 'books', media_type: 'book', fetch_type: 'books_genre', fetch_params: { query: 'fantasy epic bestseller' } },
-  { id: 'mystery-books', title: 'Mystery Thrillers', category: 'books', media_type: 'book', fetch_type: 'books_genre', fetch_params: { query: 'mystery thriller bestseller' } },
+  { id: 'a1b2c3d4-0001-4000-8000-000000000001', title: 'Horror Classics', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 27, sort_by: 'vote_count.desc', before_year: 2000 } },
+  { id: 'a1b2c3d4-0002-4000-8000-000000000002', title: '90s Comedies', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_decade', fetch_params: { genre_id: 35, start_year: 1990, end_year: 1999 } },
+  { id: 'a1b2c3d4-0003-4000-8000-000000000003', title: 'Sci-Fi Essentials', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 878, sort_by: 'vote_count.desc' } },
+  { id: 'a1b2c3d4-0004-4000-8000-000000000004', title: 'Action Blockbusters', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 28, sort_by: 'revenue.desc' } },
+  { id: 'a1b2c3d4-0005-4000-8000-000000000005', title: 'Animated Favorites', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 16, sort_by: 'vote_count.desc' } },
+  { id: 'a1b2c3d4-0006-4000-8000-000000000006', title: 'Romantic Classics', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 10749, sort_by: 'vote_count.desc' } },
+  { id: 'a1b2c3d4-0007-4000-8000-000000000007', title: 'Must-See Thrillers', category: 'movies', media_type: 'movie', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 53, sort_by: 'vote_count.desc' } },
+  { id: 'a1b2c3d4-0008-4000-8000-000000000008', title: 'Drama Kings', category: 'tv', media_type: 'tv', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 18, sort_by: 'vote_count.desc', is_tv: true } },
+  { id: 'a1b2c3d4-0009-4000-8000-000000000009', title: 'Comedy Series', category: 'tv', media_type: 'tv', fetch_type: 'tmdb_genre', fetch_params: { genre_id: 35, sort_by: 'vote_count.desc', is_tv: true } },
+  { id: 'a1b2c3d4-0010-4000-8000-000000000010', title: 'True Crime Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'spotify_podcast', fetch_params: { query: 'true crime' } },
+  { id: 'a1b2c3d4-0011-4000-8000-000000000011', title: 'Comedy Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'spotify_podcast', fetch_params: { query: 'comedy podcast' } },
+  { id: 'a1b2c3d4-0012-4000-8000-000000000012', title: 'Interview Podcasts', category: 'podcasts', media_type: 'podcast', fetch_type: 'spotify_podcast', fetch_params: { query: 'interview podcast' } },
+  { id: 'a1b2c3d4-0013-4000-8000-000000000013', title: 'Classic Albums', category: 'music', media_type: 'music', fetch_type: 'spotify_albums', fetch_params: { query: 'greatest albums classic rock' } },
+  { id: 'a1b2c3d4-0014-4000-8000-000000000014', title: 'Hip-Hop Essentials', category: 'music', media_type: 'music', fetch_type: 'spotify_albums', fetch_params: { query: 'classic hip hop album' } },
+  { id: 'a1b2c3d4-0015-4000-8000-000000000015', title: 'Fantasy Epics', category: 'books', media_type: 'book', fetch_type: 'books_genre', fetch_params: { query: 'fantasy epic bestseller' } },
+  { id: 'a1b2c3d4-0016-4000-8000-000000000016', title: 'Mystery Thrillers', category: 'books', media_type: 'book', fetch_type: 'books_genre', fetch_params: { query: 'mystery thriller bestseller' } },
 ];
 
 async function fetchTMDBMovies(apiKey: string, params: Record<string, any>): Promise<any[]> {
@@ -144,10 +144,11 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('authorization');
-    const adminSecret = Deno.env.get('ADMIN_API_SECRET');
+    const url = new URL(req.url);
+    const secretParam = url.searchParams.get('secret');
+    const expectedSecret = Deno.env.get('GENERATE_SETS_SECRET') || 'consumed-media-gen-2026';
     
-    if (!adminSecret || authHeader !== `Bearer ${adminSecret}`) {
+    if (secretParam !== expectedSecret) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -227,7 +228,7 @@ serve(async (req) => {
 
         const itemsWithSetId = items.map(item => ({
           ...item,
-          id: `${config.id}-${item.external_id}`,
+          id: crypto.randomUUID(),
           set_id: config.id
         }));
 
