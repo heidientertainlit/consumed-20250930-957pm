@@ -228,7 +228,7 @@ export default function Leaderboard() {
         // Also check users table as fallback for display info
         const { data: users } = await supabase
           .from('users')
-          .select('id, display_name, username, email')
+          .select('id, display_name, username')
           .in('id', userIds);
         
         // If friends scope, filter to friends only
@@ -252,10 +252,9 @@ export default function Leaderboard() {
           .map(userId => {
             const profile = profiles?.find(p => p.id === userId);
             const user = users?.find(u => u.id === userId);
-            // Use best available display name: profile > user > username > email prefix
+            // Use best available display name: profile > user > username
             const displayName = profile?.display_name || user?.display_name || 
-              profile?.username || user?.username || 
-              (user?.email ? user.email.split('@')[0] : null) || 'Player';
+              profile?.username || user?.username || 'Player';
             const username = profile?.username || user?.username || 'player';
             return {
               user_id: userId,
