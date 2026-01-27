@@ -671,16 +671,6 @@ export default function Leaderboard() {
                 true
               )}
               
-              {renderCategoryCard(
-                'Betting Experts',
-                Dices,
-                leaderboardData?.categories?.bets,
-                'Bets',
-                'No bets won yet. Bet on your friends\' reactions!',
-                'from-emerald-500 to-teal-500',
-                undefined,
-                true
-              )}
             </TabsContent>
 
             <TabsContent value="consumption">
