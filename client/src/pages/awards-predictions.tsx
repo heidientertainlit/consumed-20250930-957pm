@@ -534,8 +534,8 @@ export default function AwardsPredictions() {
                       onClick={() => handlePick(category.id, nominee.id)}
                       className={`relative flex items-center p-4 rounded-2xl cursor-pointer transition-all ${
                         isPicked 
-                          ? 'bg-purple-50 border-2 border-purple-500 shadow-md' 
-                          : 'bg-white border border-gray-200 hover:border-gray-300'
+                          ? 'bg-sky-50 border-2 border-sky-500 shadow-md' 
+                          : 'bg-white border border-gray-100 hover:border-sky-200 hover:bg-sky-50/30'
                       } ${event.status !== 'open' ? 'cursor-default' : ''}`}
                       data-testid={`card-nominee-${nominee.id}`}
                     >
@@ -546,7 +546,7 @@ export default function AwardsPredictions() {
                         </div>
                       )}
                       
-                      <div className="w-16 h-20 rounded-xl overflow-hidden shadow-sm flex-shrink-0 mr-4 bg-gray-100">
+                      <div className="w-16 h-20 rounded-xl overflow-hidden shadow-sm flex-shrink-0 mr-4 bg-sky-50 border border-sky-100">
                         {nominee.poster_url ? (
                           <img 
                             src={nominee.poster_url} 
@@ -555,15 +555,15 @@ export default function AwardsPredictions() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Trophy size={20} className="text-gray-300" />
+                            <Trophy size={20} className="text-sky-300" />
                           </div>
                         )}
                       </div>
                       
                       <div className="flex-1 min-w-0 pr-8">
-                        <h3 className={`font-bold text-lg ${isPicked ? 'text-purple-900' : 'text-gray-900'}`}>{nominee.name}</h3>
+                        <h3 className={`font-bold text-lg ${isPicked ? 'text-sky-900' : 'text-gray-900'}`}>{nominee.name}</h3>
                         {nominee.title && (
-                          <p className={`text-sm font-medium ${isPicked ? 'text-purple-700/80' : 'text-gray-500'}`}>{nominee.title}</p>
+                          <p className={`text-sm font-medium ${isPicked ? 'text-sky-700/80' : 'text-gray-500'}`}>{nominee.title}</p>
                         )}
                         
                         {event.status === 'completed' && isPicked && (
@@ -586,8 +586,8 @@ export default function AwardsPredictions() {
                       {event.status === 'open' && (
                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
                           isPicked 
-                            ? 'border-purple-500 bg-purple-500' 
-                            : 'border-gray-200'
+                            ? 'border-sky-500 bg-sky-500' 
+                            : 'border-gray-200 hover:border-sky-300'
                         }`}>
                           {isPicked && <Check size={14} className="text-white" />}
                         </div>
