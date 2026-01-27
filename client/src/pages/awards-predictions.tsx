@@ -405,22 +405,6 @@ export default function AwardsPredictions() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 -mt-2">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
-            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Picks</p>
-            <p className="text-lg font-bold text-gray-900">{picksCount}/{totalCategories}</p>
-          </div>
-          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
-            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Points</p>
-            <p className="text-lg font-bold text-purple-600">{event.points_per_correct * picksCount}</p>
-          </div>
-          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
-            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Status</p>
-            <p className="text-lg font-bold text-amber-600 capitalize">{event.status}</p>
-          </div>
-        </div>
-
         {/* Who's Playing Section */}
         <div className="mb-6 bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4">
