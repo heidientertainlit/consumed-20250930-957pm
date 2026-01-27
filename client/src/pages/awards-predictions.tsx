@@ -416,7 +416,7 @@ export default function AwardsPredictions() {
           </div>
           
           <h1 className="text-2xl font-bold text-white mb-1">
-            {event.year} {event.name}
+            {event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}
           </h1>
           <p className="text-gray-400 max-w-md mx-auto text-sm">
             {event.deadline && event.status === 'open' ? (
@@ -690,7 +690,7 @@ export default function AwardsPredictions() {
               <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900 flex items-center">
                   <Trophy size={24} className="mr-2 text-amber-500" />
-                  My {event.year} {event.name} Ballot
+                  My {event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''} Ballot
                 </h2>
                 <button onClick={() => setShowBallotModal(false)} className="text-gray-400 hover:text-gray-600">
                   <X size={24} />

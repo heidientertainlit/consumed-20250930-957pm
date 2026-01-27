@@ -177,7 +177,7 @@ export default function AwardsBallotShare() {
             </div>
             <div>
               <h2 className="font-semibold text-lg">{user?.displayName || user?.username || 'Anonymous'}'s Ballot</h2>
-              <p className="text-gray-400 text-sm">{event.year} {event.name}</p>
+              <p className="text-gray-400 text-sm">{event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}</p>
             </div>
           </div>
 

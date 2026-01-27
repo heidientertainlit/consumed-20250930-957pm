@@ -591,7 +591,7 @@ export default function Leaderboard() {
                           >
                             <div className="flex items-center gap-3">
                               <Trophy size={18} className="text-amber-500" />
-                              <span className="font-medium text-gray-900">{event.year} {event.name}</span>
+                              <span className="font-medium text-gray-900">{event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}</span>
                               {event.status === 'open' && (
                                 <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Open</span>
                               )}
