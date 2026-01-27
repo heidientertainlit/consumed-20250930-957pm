@@ -22,6 +22,7 @@ import { PollsCarousel } from "@/components/polls-carousel";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { GamesCarousel } from "@/components/games-carousel";
 import { RanksCarousel } from "@/components/ranks-carousel";
+import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 import { HotTakeFeedCard } from "@/components/hot-take-feed-card";
@@ -2812,6 +2813,11 @@ export default function Feed() {
             ))}
           </div>
         )}
+        {/* Oscar Ballot Completions */}
+        <div className="mb-4">
+          <AwardsCompletionFeed />
+        </div>
+
         {/* Activity Stream */}
         <div className="space-y-6">
 
