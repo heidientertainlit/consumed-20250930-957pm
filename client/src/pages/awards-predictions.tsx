@@ -74,7 +74,7 @@ export default function AwardsPredictions() {
   }, []);
 
   // Get the app user ID (from users table, not auth)
-  const { data: currentUser } = useQuery({
+  const { data: currentUser, isLoading: isUserLoading } = useQuery({
     queryKey: ['current-user', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
@@ -89,6 +89,7 @@ export default function AwardsPredictions() {
   });
 
   const userId = currentUser?.id;
+  const isAuthLoading = !session && isUserLoading;
 
   // Fetch event data directly from Supabase
   const { data: event, isLoading, error } = useQuery<AwardsEvent>({
@@ -232,6 +233,94 @@ export default function AwardsPredictions() {
     enabled: !!event?.id,
   });
 
+  // Awards Leaderboard Query
+  interface LeaderboardEntry {
+    user_id: string;
+    display_name: string;
+    avatar_url: string | null;
+    picks_count: number;
+    correct_count: number;
+    completion_time: string | null;
+    rank: number;
+  }
+  
+  const { data: leaderboard } = useQuery<LeaderboardEntry[]>({
+    queryKey: ['awards-leaderboard', event?.id],
+    queryFn: async () => {
+      if (!event?.id) return [];
+      
+      const categoryIds = event.categories.map(c => c.id);
+      const totalCategories = categoryIds.length;
+      
+      // Get all picks for this event
+      const { data: picksData } = await supabase
+        .from('awards_picks')
+        .select('user_id, is_correct')
+        .in('category_id', categoryIds);
+      
+      if (!picksData || picksData.length === 0) return [];
+      
+      // Aggregate by user
+      const userStats = (picksData).reduce((acc, pick) => {
+        if (!acc[pick.user_id]) {
+          acc[pick.user_id] = { picks: 0, correct: 0 };
+        }
+        acc[pick.user_id].picks++;
+        if (pick.is_correct) acc[pick.user_id].correct++;
+        return acc;
+      }, {} as Record<string, { picks: number; correct: number }>);
+      
+      // Get user profiles
+      const userIds = Object.keys(userStats);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', userIds);
+      
+      // Get completion times
+      const { data: completions } = await supabase
+        .from('awards_ballot_completions')
+        .select('user_id, completed_at')
+        .eq('event_id', event.id);
+      
+      const completionMap = (completions || []).reduce((acc, c) => {
+        acc[c.user_id] = c.completed_at;
+        return acc;
+      }, {} as Record<string, string>);
+      
+      // Build leaderboard entries
+      const entries = userIds.map(uid => {
+        const profile = profiles?.find(p => p.id === uid);
+        const stats = userStats[uid];
+        return {
+          user_id: uid,
+          display_name: profile?.display_name || 'Anonymous',
+          avatar_url: profile?.avatar_url || null,
+          picks_count: stats.picks,
+          correct_count: stats.correct,
+          completion_time: completionMap[uid] || null,
+          rank: 0
+        };
+      });
+      
+      // Sort by: correct predictions (desc), then completion time (asc for tiebreaker)
+      entries.sort((a, b) => {
+        if (b.correct_count !== a.correct_count) return b.correct_count - a.correct_count;
+        if (b.picks_count !== a.picks_count) return b.picks_count - a.picks_count;
+        if (a.completion_time && b.completion_time) {
+          return new Date(a.completion_time).getTime() - new Date(b.completion_time).getTime();
+        }
+        return a.completion_time ? -1 : 1;
+      });
+      
+      // Assign ranks
+      entries.forEach((e, i) => { e.rank = i + 1; });
+      
+      return entries.slice(0, 20);
+    },
+    enabled: !!event?.id,
+  });
+
   // Initialize local picks from fetched data
   useEffect(() => {
     if (userPicks) {
@@ -301,6 +390,14 @@ export default function AwardsPredictions() {
 
   const handlePick = (categoryId: string, nomineeId: string) => {
     if (!event || event.status !== 'open') return;
+    
+    if (isUserLoading) {
+      toast({
+        title: "Loading...",
+        description: "Please wait while we load your profile",
+      });
+      return;
+    }
     
     if (!userId) {
       toast({
@@ -453,7 +550,9 @@ export default function AwardsPredictions() {
               Who's Playing
             </h3>
             <button
-              onClick={() => navigate('/leaderboard?tab=games')}
+              onClick={() => {
+                document.getElementById('awards-leaderboard')?.scrollIntoView({ behavior: 'smooth' });
+              }}
               className="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center"
               data-testid="button-see-leaderboard"
             >
@@ -515,6 +614,72 @@ export default function AwardsPredictions() {
             </p>
           )}
         </div>
+      </div>
+
+      {/* Academy Awards Leaderboard */}
+      <div id="awards-leaderboard" className="mb-6 bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-bold text-gray-900 flex items-center">
+            <Trophy size={18} className="mr-2 text-amber-500" />
+            {event.year} {event.name} Leaderboard
+          </h3>
+        </div>
+        
+        {leaderboard && leaderboard.length > 0 ? (
+          <div className="space-y-2">
+            {leaderboard.slice(0, 10).map((entry, index) => (
+              <div 
+                key={entry.user_id}
+                className={`flex items-center justify-between p-3 rounded-xl ${
+                  entry.user_id === userId 
+                    ? 'bg-purple-50 border border-purple-200' 
+                    : 'bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
+                    index === 0 ? 'bg-amber-400 text-white' :
+                    index === 1 ? 'bg-gray-300 text-gray-700' :
+                    index === 2 ? 'bg-amber-600 text-white' :
+                    'bg-gray-200 text-gray-600'
+                  }`}>
+                    {entry.rank}
+                  </div>
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-purple-100 flex items-center justify-center">
+                    {entry.avatar_url ? (
+                      <img src={entry.avatar_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm text-purple-600 font-bold">
+                        {entry.display_name[0]?.toUpperCase() || '?'}
+                      </span>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {entry.display_name}
+                      {entry.user_id === userId && <span className="text-purple-600 ml-1">(You)</span>}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {entry.picks_count}/{totalCategories} picks
+                      {entry.completion_time && ' • Completed'}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  {event.status === 'completed' ? (
+                    <p className="text-lg font-bold text-purple-600">{entry.correct_count}</p>
+                  ) : (
+                    <p className="text-sm font-medium text-gray-400">TBD</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 text-center py-4">
+            No predictions yet. Be the first to make your picks!
+          </p>
+        )}
       </div>
 
       {/* Sticky Category Tabs */}
