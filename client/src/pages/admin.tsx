@@ -3,7 +3,9 @@ import { useAuth } from '@/lib/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Users, Activity, Target, Zap, Heart, Eye, MousePointer } from 'lucide-react';
+import { TrendingUp, Users, Activity, Target, Zap, Heart, Eye, MousePointer, Shield, AlertTriangle, CheckCircle, XCircle, Ban, Flag } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface DashboardSummary {
@@ -337,6 +339,69 @@ export default function AdminDashboard() {
     refetchInterval: 60000,
   });
 
+  // Moderation queue query
+  interface ModerationReport {
+    id: string;
+    reporter_id: string;
+    content_type: string;
+    content_id: string;
+    reason: string;
+    description: string | null;
+    status: string;
+    created_at: string;
+    reporter: { id: string; display_name: string; username: string; avatar_url: string | null };
+    content: { id: string; content: string; created_at: string } | null;
+    content_author: { id: string; display_name: string; username: string } | null;
+  }
+
+  const queryClient = useQueryClient();
+
+  const { data: moderationData, isLoading: moderationLoading } = useQuery<{ reports: ModerationReport[]; stats: { pending: number; resolved: number } }>({
+    queryKey: ['admin-moderation'],
+    enabled: !!session,
+    queryFn: async () => {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-moderation-queue?status=pending`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch moderation queue');
+      return await response.json();
+    },
+    refetchInterval: 30000,
+  });
+
+  const moderateMutation = useMutation({
+    mutationFn: async ({ action, report_id, content_type, content_id, target_user_id, reason }: {
+      action: string;
+      report_id: string;
+      content_type: string;
+      content_id: string;
+      target_user_id?: string;
+      reason?: string;
+    }) => {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/moderate-content`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ action, report_id, content_type, content_id, target_user_id, reason }),
+        }
+      );
+      if (!response.ok) throw new Error('Failed to moderate content');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-moderation'] });
+    },
+  });
+
   if (partnershipsError) {
     console.error('[PARTNERSHIPS] Query error:', partnershipsError);
   }
@@ -564,6 +629,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="activation" data-testid="tab-activation">Activation</TabsTrigger>
             <TabsTrigger value="partnerships" data-testid="tab-partnerships">Partnership Insights</TabsTrigger>
             <TabsTrigger value="behavior" data-testid="tab-behavior">Behavior</TabsTrigger>
+            <TabsTrigger value="moderation" data-testid="tab-moderation">Moderation</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
