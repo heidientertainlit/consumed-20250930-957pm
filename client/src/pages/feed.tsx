@@ -3459,7 +3459,7 @@ export default function Feed() {
                     </div>
                   </div>
                   <div className="flex gap-2 ml-[52px]">
-                    <Link href="/dna">
+                    <Link href="/entertainment-dna">
                       <button className="bg-white text-purple-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-white/90 transition-colors">
                         Take DNA Quiz
                       </button>
