@@ -280,7 +280,15 @@ export function DailyChallengeCard() {
                 <span className="text-[10px] text-blue-400 font-medium">LIVE</span>
               )}
               {alreadyCompleted && (
-                <CheckCircle className="w-4 h-4 text-green-400" />
+                <>
+                  <CheckCircle className="w-4 h-4 text-green-400" />
+                  {(runInfo?.currentRun || existingResponseData?.run?.currentRun) && (
+                    <span className="flex items-center gap-0.5 text-[10px] text-orange-400 font-semibold">
+                      <Flame className="w-3 h-3" />
+                      {runInfo?.currentRun || existingResponseData?.run?.currentRun}
+                    </span>
+                  )}
+                </>
               )}
             </div>
             <p className="text-xs text-gray-400 line-clamp-1">{displayChallenge.title}</p>
