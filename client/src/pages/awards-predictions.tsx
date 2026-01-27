@@ -415,30 +415,29 @@ export default function AwardsPredictions() {
             <Trophy className="w-7 h-7 text-white" />
           </div>
           
-          <div className="flex items-center justify-center gap-3 mb-1">
-            <h1 className="text-2xl font-bold text-white">
-              {event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}
-            </h1>
-            <button
-              onClick={() => {
-                const shareUrl = `${window.location.origin}/play/awards/${eventSlug}`;
-                if (navigator.share) {
-                  navigator.share({
-                    title: `${event.year} ${event.name} Predictions`,
-                    text: "Make your Oscar predictions and compete with me!",
-                    url: shareUrl
-                  });
-                } else {
-                  navigator.clipboard.writeText(shareUrl);
-                  toast({ title: "Link copied!", description: "Share it with your friends" });
-                }
-              }}
-              className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-              title="Share"
-            >
-              <Share2 size={18} className="text-white" />
-            </button>
-          </div>
+          <h1 className="text-2xl font-bold text-white mb-1">
+            {event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}
+          </h1>
+          
+          <button
+            onClick={() => {
+              const shareUrl = `${window.location.origin}/play/awards/${eventSlug}`;
+              if (navigator.share) {
+                navigator.share({
+                  title: `${event.year} ${event.name} Predictions`,
+                  text: "Make your Oscar predictions and compete with me!",
+                  url: shareUrl
+                });
+              } else {
+                navigator.clipboard.writeText(shareUrl);
+                toast({ title: "Link copied!", description: "Share it with your friends" });
+              }
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 mt-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white text-sm font-medium"
+          >
+            <Share2 size={16} />
+            Share with Friends
+          </button>
           <p className="text-gray-400 max-w-md mx-auto text-sm">
             {event.deadline && event.status === 'open' ? (
               <span className="flex items-center justify-center">
