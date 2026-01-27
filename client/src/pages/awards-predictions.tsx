@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Trophy, Check, X, ChevronDown, ChevronUp, ChevronRight,
   Users, TrendingUp, Info, ArrowLeft, ChevronLeft,
-  Sparkles, Lock, Clock, Loader2
+  Sparkles, Lock, Clock, Loader2, Share2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -527,6 +527,34 @@ export default function AwardsPredictions() {
         </div>
       </div>
 
+      {/* Ballot Progress Bar - Tap to view full ballot */}
+      <div className="max-w-4xl mx-auto px-4 mb-4">
+        <button 
+          onClick={() => setShowBallotModal(true)}
+          className="w-full bg-white border border-gray-200 rounded-2xl p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          data-testid="button-view-ballot-inline"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+              <Trophy size={18} className="text-purple-600" />
+            </div>
+            <div className="text-left">
+              <p className="font-semibold text-gray-900">Your Ballot</p>
+              <p className="text-sm text-gray-500">{picksCount} of {totalCategories} predictions made</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-purple-600 rounded-full transition-all" 
+                style={{ width: `${(picksCount / totalCategories) * 100}%` }}
+              />
+            </div>
+            <ChevronRight size={20} className="text-gray-400" />
+          </div>
+        </button>
+      </div>
+
       {/* Active Category Panel */}
       <div className="max-w-4xl mx-auto px-4 py-8">
         {event.categories.filter(c => c.id === activeCategory).map(category => {
@@ -572,8 +600,15 @@ export default function AwardsPredictions() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 gap-4">
-                {category.nominees.map(nominee => {
+              <div className="grid grid-cols-1 gap-3">
+                {[...category.nominees]
+                  .sort((a, b) => {
+                    // Put picked nominee at top
+                    if (userPickId === a.id) return -1;
+                    if (userPickId === b.id) return 1;
+                    return 0;
+                  })
+                  .map(nominee => {
                   const isPicked = userPickId === nominee.id;
                   const isWinner = event.status === 'completed' && category.winner_nominee_id === nominee.id;
                   const userWasCorrect = event.status === 'completed' && userPickId === category.winner_nominee_id;
@@ -649,20 +684,6 @@ export default function AwardsPredictions() {
             </motion.div>
           );
         })}
-      </div>
-
-      <div className="px-4 pb-12 flex justify-center">
-        <Button 
-          onClick={() => setShowBallotModal(true)}
-          className="bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-full px-8 py-6 text-lg shadow-lg shadow-purple-200 flex items-center gap-2"
-          data-testid="button-view-ballot"
-        >
-          <Info size={20} />
-          View Your Ballot
-          <span className="bg-white/20 px-2 py-0.5 rounded-full text-sm">
-            {picksCount}/{totalCategories}
-          </span>
-        </Button>
       </div>
 
       {/* My Ballot Modal */}
