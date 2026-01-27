@@ -532,39 +532,25 @@ export default function AwardsPredictions() {
                       key={nominee.id}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => handlePick(category.id, nominee.id)}
-                      className={`relative flex items-center p-4 rounded-2xl cursor-pointer transition-all ${
+                      className={`relative flex items-center px-5 py-4 rounded-full cursor-pointer transition-all ${
                         isPicked 
-                          ? 'bg-purple-50 border-2 border-purple-500 shadow-md' 
-                          : 'bg-white border border-gray-200 hover:border-purple-300 hover:bg-purple-50/30'
+                          ? 'bg-purple-100 border-2 border-purple-500' 
+                          : 'bg-gray-100 border border-gray-200 hover:bg-gray-200'
                       } ${event.status !== 'open' ? 'cursor-default' : ''}`}
                       data-testid={`card-nominee-${nominee.id}`}
                     >
                       {isWinner && (
-                        <div className="absolute -top-3 right-4 bg-amber-500 text-white px-3 py-1 rounded-full text-[10px] font-bold flex items-center shadow-sm uppercase tracking-wider">
-                          <Trophy size={10} className="mr-1" />
+                        <div className="absolute -top-2 right-4 bg-amber-500 text-white px-2 py-0.5 rounded-full text-[9px] font-bold flex items-center shadow-sm uppercase tracking-wider">
+                          <Trophy size={8} className="mr-1" />
                           Winner
                         </div>
                       )}
                       
-                      <div className="w-16 h-20 rounded-xl overflow-hidden shadow-sm flex-shrink-0 mr-4 bg-gray-100">
-                        {nominee.poster_url ? (
-                          <img 
-                            src={nominee.poster_url} 
-                            alt={nominee.title || nominee.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Trophy size={20} className="text-gray-300" />
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0 pr-8">
-                        <h3 className={`font-bold text-lg ${isPicked ? 'text-purple-900' : 'text-gray-900'}`}>{nominee.name}</h3>
-                        {nominee.title && (
-                          <p className={`text-sm font-medium ${isPicked ? 'text-purple-700/80' : 'text-gray-500'}`}>{nominee.title}</p>
-                        )}
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-medium text-base ${isPicked ? 'text-purple-900' : 'text-gray-900'}`}>
+                          {nominee.name}
+                          {nominee.title && <span className={`ml-1 ${isPicked ? 'text-purple-600' : 'text-gray-500'}`}>• {nominee.title}</span>}
+                        </p>
                         
                         {event.status === 'completed' && isPicked && (
                           <div className={`mt-1 flex items-center text-xs font-bold uppercase tracking-wide ${userWasCorrect ? 'text-green-600' : 'text-red-500'}`}>
@@ -583,13 +569,9 @@ export default function AwardsPredictions() {
                         )}
                       </div>
                       
-                      {event.status === 'open' && (
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                          isPicked 
-                            ? 'border-purple-500 bg-purple-500' 
-                            : 'border-gray-300'
-                        }`}>
-                          {isPicked && <Check size={14} className="text-white" />}
+                      {event.status === 'open' && isPicked && (
+                        <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
+                          <Check size={12} className="text-white" />
                         </div>
                       )}
                     </motion.div>
