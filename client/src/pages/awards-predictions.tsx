@@ -369,31 +369,31 @@ export default function AwardsPredictions() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       
-      {/* Hero Header - Light blue theme matching feed */}
-      <div className="bg-gradient-to-b from-sky-100 via-sky-50 to-gray-50 pb-8 pt-6 -mt-px text-center">
+      {/* Hero Header - Dark purple gradient matching app */}
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-12 pt-6 -mt-px text-center">
           <div className="mb-3">
             <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider">
               Consumed
             </Badge>
           </div>
 
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-sky-200 to-sky-300 mb-3 shadow-sm">
-            <Trophy className="w-7 h-7 text-sky-600" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 mb-3 shadow-lg">
+            <Trophy className="w-7 h-7 text-white" />
           </div>
           
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">
+          <h1 className="text-2xl font-bold text-white mb-1">
             {event.year} {event.name}
           </h1>
-          <p className="text-gray-500 max-w-md mx-auto text-sm">
+          <p className="text-gray-400 max-w-md mx-auto text-sm">
             {event.deadline && event.status === 'open' ? (
               <span className="flex items-center justify-center">
-                <Clock size={14} className="mr-1 text-sky-500" />
+                <Clock size={14} className="mr-1 text-amber-400" />
                 Closes: {new Date(event.deadline).toLocaleDateString('en-US', { 
                   month: 'short', day: 'numeric', year: 'numeric'
                 })}
               </span>
             ) : event.status === 'locked' ? (
-              <span className="flex items-center justify-center text-sky-600">
+              <span className="flex items-center justify-center text-amber-500">
                 <Lock size={14} className="mr-1" />
                 Predictions Locked
               </span>
@@ -406,17 +406,17 @@ export default function AwardsPredictions() {
       <div className="max-w-4xl mx-auto px-4 -mt-2">
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-sky-50 p-3 rounded-2xl border border-sky-100 text-center">
-            <p className="text-[10px] uppercase font-bold text-sky-400 mb-1">Picks</p>
+          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
+            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Picks</p>
             <p className="text-lg font-bold text-gray-900">{picksCount}/{totalCategories}</p>
           </div>
-          <div className="bg-sky-50 p-3 rounded-2xl border border-sky-100 text-center">
-            <p className="text-[10px] uppercase font-bold text-sky-400 mb-1">Points</p>
-            <p className="text-lg font-bold text-sky-600">{event.points_per_correct * picksCount}</p>
+          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
+            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Points</p>
+            <p className="text-lg font-bold text-purple-600">{event.points_per_correct * picksCount}</p>
           </div>
-          <div className="bg-sky-50 p-3 rounded-2xl border border-sky-100 text-center">
-            <p className="text-[10px] uppercase font-bold text-sky-400 mb-1">Status</p>
-            <p className="text-lg font-bold text-green-600 capitalize">{event.status}</p>
+          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
+            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Status</p>
+            <p className="text-lg font-bold text-amber-600 capitalize">{event.status}</p>
           </div>
         </div>
 
@@ -534,8 +534,8 @@ export default function AwardsPredictions() {
                       onClick={() => handlePick(category.id, nominee.id)}
                       className={`relative flex items-center p-4 rounded-2xl cursor-pointer transition-all ${
                         isPicked 
-                          ? 'bg-sky-50 border-2 border-sky-500 shadow-md' 
-                          : 'bg-white border border-gray-100 hover:border-sky-200 hover:bg-sky-50/30'
+                          ? 'bg-purple-50 border-2 border-purple-500 shadow-md' 
+                          : 'bg-white border border-gray-200 hover:border-purple-300 hover:bg-purple-50/30'
                       } ${event.status !== 'open' ? 'cursor-default' : ''}`}
                       data-testid={`card-nominee-${nominee.id}`}
                     >
@@ -546,7 +546,7 @@ export default function AwardsPredictions() {
                         </div>
                       )}
                       
-                      <div className="w-16 h-20 rounded-xl overflow-hidden shadow-sm flex-shrink-0 mr-4 bg-sky-50 border border-sky-100">
+                      <div className="w-16 h-20 rounded-xl overflow-hidden shadow-sm flex-shrink-0 mr-4 bg-gray-100">
                         {nominee.poster_url ? (
                           <img 
                             src={nominee.poster_url} 
@@ -555,15 +555,15 @@ export default function AwardsPredictions() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Trophy size={20} className="text-sky-300" />
+                            <Trophy size={20} className="text-gray-300" />
                           </div>
                         )}
                       </div>
                       
                       <div className="flex-1 min-w-0 pr-8">
-                        <h3 className={`font-bold text-lg ${isPicked ? 'text-sky-900' : 'text-gray-900'}`}>{nominee.name}</h3>
+                        <h3 className={`font-bold text-lg ${isPicked ? 'text-purple-900' : 'text-gray-900'}`}>{nominee.name}</h3>
                         {nominee.title && (
-                          <p className={`text-sm font-medium ${isPicked ? 'text-sky-700/80' : 'text-gray-500'}`}>{nominee.title}</p>
+                          <p className={`text-sm font-medium ${isPicked ? 'text-purple-700/80' : 'text-gray-500'}`}>{nominee.title}</p>
                         )}
                         
                         {event.status === 'completed' && isPicked && (
@@ -586,8 +586,8 @@ export default function AwardsPredictions() {
                       {event.status === 'open' && (
                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${
                           isPicked 
-                            ? 'border-sky-500 bg-sky-500' 
-                            : 'border-gray-200 hover:border-sky-300'
+                            ? 'border-purple-500 bg-purple-500' 
+                            : 'border-gray-300'
                         }`}>
                           {isPicked && <Check size={14} className="text-white" />}
                         </div>
