@@ -339,10 +339,10 @@ export default function AwardsPredictions() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center">
-          <Loader2 className="w-10 h-10 text-amber-400 animate-spin mb-4" />
-          <p className="text-gray-400">Loading predictions...</p>
+          <Loader2 className="w-10 h-10 text-purple-600 animate-spin mb-4" />
+          <p className="text-gray-500">Loading predictions...</p>
         </div>
       </div>
     );
@@ -351,11 +351,11 @@ export default function AwardsPredictions() {
   // Error state
   if (error || !event) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center px-4">
-          <Trophy className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Awards Not Found</h1>
-          <p className="text-gray-400 mb-6">The awards event could not be loaded. Make sure the database is set up.</p>
+          <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Awards Not Found</h1>
+          <p className="text-gray-500 mb-6">The awards event could not be loaded. Make sure the database is set up.</p>
           <Button onClick={() => navigate('/play/awards')} variant="outline">
             Back to Awards
           </Button>
@@ -369,31 +369,31 @@ export default function AwardsPredictions() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       
-      {/* Hero Header - Matching Predictions List Page */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-12 pt-6 -mt-px text-center">
-          <div className="mb-4">
+      {/* Hero Header - Light lavender theme matching feed */}
+      <div className="bg-gradient-to-b from-purple-100 via-purple-50 to-gray-50 pb-8 pt-6 -mt-px text-center">
+          <div className="mb-3">
             <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0.5 px-2 font-bold uppercase tracking-wider">
               Consumed
             </Badge>
           </div>
 
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-50 mb-4">
-            <Trophy className="w-8 h-8 text-amber-600" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-200 to-purple-300 mb-3 shadow-sm">
+            <Trophy className="w-7 h-7 text-purple-600" />
           </div>
           
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">
             {event.year} {event.name}
           </h1>
-          <p className="text-gray-400 max-w-md mx-auto">
+          <p className="text-gray-500 max-w-md mx-auto text-sm">
             {event.deadline && event.status === 'open' ? (
               <span className="flex items-center justify-center">
-                <Clock size={14} className="mr-1 text-amber-400" />
+                <Clock size={14} className="mr-1 text-purple-500" />
                 Closes: {new Date(event.deadline).toLocaleDateString('en-US', { 
                   month: 'short', day: 'numeric', year: 'numeric'
                 })}
               </span>
             ) : event.status === 'locked' ? (
-              <span className="flex items-center justify-center text-amber-500">
+              <span className="flex items-center justify-center text-purple-600">
                 <Lock size={14} className="mr-1" />
                 Predictions Locked
               </span>
@@ -403,25 +403,25 @@ export default function AwardsPredictions() {
           </p>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 -mt-6">
+      <div className="max-w-4xl mx-auto px-4 -mt-2">
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
-            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Picks</p>
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="bg-purple-50 p-3 rounded-2xl border border-purple-100 text-center">
+            <p className="text-[10px] uppercase font-bold text-purple-400 mb-1">Picks</p>
             <p className="text-lg font-bold text-gray-900">{picksCount}/{totalCategories}</p>
           </div>
-          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
-            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Points</p>
+          <div className="bg-purple-50 p-3 rounded-2xl border border-purple-100 text-center">
+            <p className="text-[10px] uppercase font-bold text-purple-400 mb-1">Points</p>
             <p className="text-lg font-bold text-purple-600">{event.points_per_correct * picksCount}</p>
           </div>
-          <div className="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm text-center">
-            <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Status</p>
-            <p className="text-lg font-bold text-amber-600 capitalize">{event.status}</p>
+          <div className="bg-purple-50 p-3 rounded-2xl border border-purple-100 text-center">
+            <p className="text-[10px] uppercase font-bold text-purple-400 mb-1">Status</p>
+            <p className="text-lg font-bold text-green-600 capitalize">{event.status}</p>
           </div>
         </div>
 
         {/* Who's Playing Section */}
-        <div className="mb-8 bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+        <div className="mb-6 bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-gray-900 flex items-center">
               <Users size={18} className="mr-2 text-purple-600" />
