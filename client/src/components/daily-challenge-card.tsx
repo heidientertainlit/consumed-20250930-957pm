@@ -149,13 +149,7 @@ export function DailyChallengeCard() {
         challenge_type: challenge?.challenge_type 
       });
       
-      // Only show toast for incorrect answers - correct/complete feedback shown inline
-      if (challenge?.challenge_type === 'trivia' && !result.isCorrect) {
-        toast({
-          title: "Not quite!",
-          description: `The correct answer was: ${result.correctAnswer}`
-        });
-      }
+      // Feedback shown inline - no toast needed
     },
     onError: (error: any) => {
       if (error.message?.includes('Already submitted')) {
@@ -194,13 +188,12 @@ export function DailyChallengeCard() {
     if (isFallback) {
       const isCorrect = selectedOption === fallbackChallenge.correct_answer;
       setHasSubmitted(true);
-      // Only show toast for incorrect - correct feedback shown inline
-      if (!isCorrect) {
-        toast({
-          title: "Not quite!",
-          description: `The correct answer was: ${fallbackChallenge.correct_answer}`
-        });
-      }
+      setSubmittedResult({
+        isCorrect,
+        correctAnswer: fallbackChallenge.correct_answer || '',
+        userAnswer: selectedOption || ''
+      });
+      // Feedback shown inline - no toast needed
       return;
     }
     
