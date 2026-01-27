@@ -163,8 +163,15 @@ export default function AwardsPredictions() {
       // Get all users who have made picks for this event's categories
       const { data: picksData, error: picksError } = await supabase
         .from('awards_picks')
-        .select('user_id')
+        .select('user_id, category_id')
         .in('category_id', categoryIds);
+      
+      console.log('🎯 Awards picks query:', { 
+        categoryIds, 
+        picksCount: picksData?.length, 
+        picksError,
+        samplePicks: picksData?.slice(0, 5)
+      });
       
       if (picksError) throw picksError;
       
@@ -174,12 +181,16 @@ export default function AwardsPredictions() {
         return acc;
       }, {} as Record<string, number>);
       
+      console.log('🎯 User pick counts:', userPickCounts);
+      
       // Only include users who have completed ALL categories
       const totalCategoryCount = categoryIds.length;
       const completedUserIds = Object.keys(userPickCounts).filter(
         id => id !== userId && userPickCounts[id] >= totalCategoryCount
       );
       const totalCount = completedUserIds.length;
+      
+      console.log('🎯 Completed users:', { totalCategoryCount, completedUserIds, currentUserId: userId });
       
       if (totalCount === 0) return { players: [], friendCount: 0, totalCount: 0 };
       
