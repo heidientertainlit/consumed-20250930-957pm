@@ -1383,8 +1383,31 @@ export default function Search() {
           <>
             {/* Stats Tab */}
             {activeTab === 'stats' && (
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <h2 className="text-base font-semibold text-gray-900 mb-3">Your Stats</h2>
+              <div className="space-y-4">
+                {/* DNA Survey CTA - show if no DNA profile */}
+                {!isLoadingDna && !dnaProfile && (
+                  <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 text-white">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Sparkles className="text-white" size={20} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-sm">Discover Your Entertainment DNA</h3>
+                        <p className="text-white/80 text-xs">Take a quick survey to unlock personalized recommendations</p>
+                      </div>
+                      <Button
+                        onClick={() => setLocation('/entertainment-dna')}
+                        size="sm"
+                        className="bg-white text-purple-600 hover:bg-white/90 text-xs font-semibold"
+                      >
+                        Start
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                  <h2 className="text-base font-semibold text-gray-900 mb-3">Your Stats</h2>
                 {isLoadingStats ? (
                   <div className="flex justify-center py-4">
                     <Loader2 className="animate-spin text-purple-600" size={24} />
@@ -1440,6 +1463,7 @@ export default function Search() {
                     <p className="text-sm">Start tracking to see your stats</p>
                   </div>
                 )}
+                </div>
               </div>
             )}
 
