@@ -68,7 +68,7 @@ serve(async (req) => {
       // Query prediction_pools with featured_date = today (Daily Call)
       const { data: challenge, error } = await supabaseAdmin
         .from('prediction_pools')
-        .select('id, featured_date, type, title, description, options, points_reward, status, category, icon, correct_answer')
+        .select('id, featured_date, type, title, options, points_reward, status, category, icon, correct_answer, media_title')
         .eq('featured_date', today)
         .eq('status', 'open')
         .limit(1)
