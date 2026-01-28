@@ -114,21 +114,21 @@ serve(async (req) => {
         .eq('user_id', user.id)
         .single();
 
-      // Also fetch run info if they've responded
+      // Also fetch streak info if they've responded
       let runInfo = null;
       if (response && !error) {
-        const { data: runData } = await supabaseAdmin
-          .from('daily_runs')
-          .select('current_run, longest_run')
+        const { data: streakData } = await supabaseAdmin
+          .from('login_streaks')
+          .select('current_streak, longest_streak')
           .eq('user_id', user.id)
           .single();
         
-        if (runData) {
+        if (streakData) {
           const milestones = [3, 7, 14, 30];
-          const nextMilestone = milestones.find(m => m > runData.current_run) || 30;
+          const nextMilestone = milestones.find(m => m > streakData.current_streak) || 30;
           runInfo = {
-            currentRun: runData.current_run,
-            longestRun: runData.longest_run,
+            currentRun: streakData.current_streak,
+            longestRun: streakData.longest_streak,
             bonusPoints: 0,
             nextMilestone
           };
@@ -223,29 +223,28 @@ serve(async (req) => {
         const yesterdayDate = yesterdayObj.toISOString().split('T')[0];
         runInfo = { currentRun: 1, bonusPoints: 0, nextMilestone: 3, longestRun: 1 };
         
-        // Get or create daily run record
-        const { data: existingRun, error: runQueryError } = await supabaseAdmin
-          .from('daily_runs')
+        // Get or create streak record using login_streaks table
+        const { data: existingStreak, error: streakQueryError } = await supabaseAdmin
+          .from('login_streaks')
           .select('*')
           .eq('user_id', user.id)
           .single();
         
-        // If table doesn't exist, skip run tracking
-        if (runQueryError && runQueryError.code === '42P01') {
-          console.log('daily_runs table does not exist, skipping run tracking');
+        // If table doesn't exist, skip streak tracking
+        if (streakQueryError && streakQueryError.code === '42P01') {
+          console.log('login_streaks table does not exist, skipping streak tracking');
           runInfo = null;
-        } else if (existingRun) {
-          const lastPlayStr = existingRun.last_play_date ? 
-            new Date(existingRun.last_play_date).toISOString().split('T')[0] : null;
+        } else if (existingStreak) {
+          const lastLoginStr = existingStreak.last_login;
           
-          if (lastPlayStr === todayDate) {
-            // Already played today - return existing run info
-            runInfo.currentRun = existingRun.current_run;
-            runInfo.longestRun = existingRun.longest_run;
-          } else if (lastPlayStr === yesterdayDate) {
-            // Consecutive day! Increment run
-            const newRun = existingRun.current_run + 1;
-            const newLongest = Math.max(newRun, existingRun.longest_run);
+          if (lastLoginStr === todayDate) {
+            // Already played today - return existing streak info
+            runInfo.currentRun = existingStreak.current_streak;
+            runInfo.longestRun = existingStreak.longest_streak;
+          } else if (lastLoginStr === yesterdayDate) {
+            // Consecutive day! Increment streak
+            const newStreak = existingStreak.current_streak + 1;
+            const newLongest = Math.max(newStreak, existingStreak.longest_streak);
             
             // Calculate bonus points at milestones
             const milestones = [
@@ -255,51 +254,44 @@ serve(async (req) => {
               { days: 30, points: 500 }
             ];
             
-            const milestone = milestones.find(m => m.days === newRun);
+            const milestone = milestones.find(m => m.days === newStreak);
             const bonusPoints = milestone?.points || 0;
             
             await supabaseAdmin
-              .from('daily_runs')
+              .from('login_streaks')
               .update({
-                current_run: newRun,
-                longest_run: newLongest,
-                last_play_date: new Date().toISOString(),
-                total_days_played: existingRun.total_days_played + 1,
-                bonus_points_earned: existingRun.bonus_points_earned + bonusPoints,
-                updated_at: new Date().toISOString()
+                current_streak: newStreak,
+                longest_streak: newLongest,
+                last_login: todayDate
               })
               .eq('user_id', user.id);
             
-            runInfo.currentRun = newRun;
+            runInfo.currentRun = newStreak;
             runInfo.longestRun = newLongest;
             runInfo.bonusPoints = bonusPoints;
             pointsEarned += bonusPoints;
           } else {
             // Streak broken - reset to 1
             await supabaseAdmin
-              .from('daily_runs')
+              .from('login_streaks')
               .update({
-                current_run: 1,
-                last_play_date: new Date().toISOString(),
-                total_days_played: existingRun.total_days_played + 1,
-                updated_at: new Date().toISOString()
+                current_streak: 1,
+                last_login: todayDate
               })
               .eq('user_id', user.id);
             
             runInfo.currentRun = 1;
-            runInfo.longestRun = existingRun.longest_run;
+            runInfo.longestRun = existingStreak.longest_streak;
           }
-        } else if (!runQueryError || runQueryError.code === 'PGRST116') {
+        } else if (!streakQueryError || streakQueryError.code === 'PGRST116') {
           // No record found (PGRST116) - first time playing, create record
           await supabaseAdmin
-            .from('daily_runs')
+            .from('login_streaks')
             .insert({
               user_id: user.id,
-              current_run: 1,
-              longest_run: 1,
-              last_play_date: new Date().toISOString(),
-              total_days_played: 1,
-              bonus_points_earned: 0
+              current_streak: 1,
+              longest_streak: 1,
+              last_login: todayDate
             });
         }
         
@@ -308,8 +300,8 @@ serve(async (req) => {
           const milestoneDays = [3, 7, 14, 30];
           runInfo.nextMilestone = milestoneDays.find(m => m > runInfo!.currentRun) || 30;
         }
-      } catch (runTrackingError) {
-        console.log('Error tracking daily run:', runTrackingError);
+      } catch (streakTrackingError) {
+        console.log('Error tracking streak:', streakTrackingError);
         runInfo = null;
       }
 
