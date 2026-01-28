@@ -152,7 +152,7 @@ serve(async (req) => {
         .select(`
           answer,
           user_id,
-          users:user_id(display_name, avatar_url)
+          users:user_id(display_name, avatar)
         `)
         .eq('moment_id', momentId)
         .in('user_id', friendIds)
