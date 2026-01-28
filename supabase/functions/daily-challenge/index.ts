@@ -215,8 +215,12 @@ serve(async (req) => {
       let runInfo: { currentRun: number; bonusPoints: number; nextMilestone: number; longestRun: number } | null = null;
       
       try {
-        const todayDate = new Date().toISOString().split('T')[0];
-        const yesterdayDate = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+        // Use client's local date for streak calculation (consistent with challenge lookup)
+        const todayDate = localDate || new Date().toISOString().split('T')[0];
+        // Calculate yesterday in the same timezone
+        const [year, month, day] = todayDate.split('-').map(Number);
+        const yesterdayObj = new Date(year, month - 1, day - 1);
+        const yesterdayDate = yesterdayObj.toISOString().split('T')[0];
         runInfo = { currentRun: 1, bonusPoints: 0, nextMilestone: 3, longestRun: 1 };
         
         // Get or create daily run record
