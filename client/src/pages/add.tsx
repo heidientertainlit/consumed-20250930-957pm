@@ -1340,7 +1340,7 @@ export default function Search() {
               }`}
             >
               <Dna size={14} />
-              DNA
+              My DNA
             </button>
             <button
               onClick={() => setActiveTab('history')}
@@ -1373,7 +1373,89 @@ export default function Search() {
             {/* DNA Tab - Combined Stats + Summary */}
             {activeTab === 'dna' && (
               <div className="space-y-4">
-                {/* DNA Profile Card or CTA */}
+                {/* Take DNA Quiz Button - Always at top */}
+                <div className="bg-gradient-to-r from-purple-500 via-blue-500 to-teal-400 rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Dna className="text-white" size={20} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-sm text-white">Complete Your DNA</h3>
+                      <p className="text-white/80 text-xs">Answer more questions to unlock personalized insights</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => setLocation('/entertainment-dna')}
+                        size="sm"
+                        className="bg-white text-purple-600 hover:bg-white/90 text-xs font-semibold"
+                      >
+                        Take DNA Quiz
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats Section - Now at top */}
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                  <h2 className="text-base font-semibold text-gray-900 mb-3">Your Stats</h2>
+                  {isLoadingStats ? (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="animate-spin text-purple-600" size={24} />
+                    </div>
+                  ) : userStats ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <p className="text-lg font-bold text-purple-600">{userStats.moviesWatched || 0}</p>
+                          <p className="text-xs text-gray-500">Movies</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-blue-600">{userStats.tvShowsWatched || 0}</p>
+                          <p className="text-xs text-gray-500">TV Shows</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-green-600">{userStats.booksRead || 0}</p>
+                          <p className="text-xs text-gray-500">Books</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <p className="text-lg font-bold text-pink-600">{userStats.musicHours || 0}h</p>
+                          <p className="text-xs text-gray-500">Music</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-orange-600">{userStats.podcastHours || 0}h</p>
+                          <p className="text-xs text-gray-500">Podcasts</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-red-600">{userStats.gamesPlayed || 0}</p>
+                          <p className="text-xs text-gray-500">Games</p>
+                        </div>
+                      </div>
+                      <div className="border-t pt-3 grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <p className="text-base font-bold text-gray-900">{userStats.totalHours || 0}h</p>
+                          <p className="text-xs text-gray-500">Total Hours</p>
+                        </div>
+                        <div>
+                          <p className="text-base font-bold text-gray-900">{userStats.averageRating || '-'}</p>
+                          <p className="text-xs text-gray-500">Avg Rating</p>
+                        </div>
+                        <div>
+                          <p className="text-base font-bold text-gray-900">{userStats.dayStreak || 0}</p>
+                          <p className="text-xs text-gray-500">Day Streak</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      <BarChart3 className="mx-auto mb-2 text-gray-300" size={32} />
+                      <p className="text-sm">Start tracking to see your stats</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* DNA Profile Card */}
                 {isLoadingDna ? (
                   <div className="bg-white rounded-xl p-4 flex justify-center border border-gray-100">
                     <Loader2 className="animate-spin text-purple-600" size={24} />
@@ -1439,101 +1521,12 @@ export default function Search() {
                         <Share2 size={14} />
                         Share
                       </Button>
-                      <Button
-                        onClick={handleRegenerateDna}
-                        disabled={isRegenerating}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-1.5 text-xs"
-                      >
-                        <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
-                        {isRegenerating ? '...' : 'Regenerate'}
-                      </Button>
                     </div>
                   </>
-                ) : (
-                  <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 text-white">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Sparkles className="text-white" size={20} />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-sm">Discover Your Entertainment DNA</h3>
-                        <p className="text-white/80 text-xs">Take a quick survey to unlock personalized recommendations</p>
-                      </div>
-                      <Button
-                        onClick={() => setLocation('/entertainment-dna')}
-                        size="sm"
-                        className="bg-white text-purple-600 hover:bg-white/90 text-xs font-semibold"
-                      >
-                        Start
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                ) : null}
 
                 {/* Recommendations */}
                 <RecommendationsGlimpse />
-
-                {/* Stats Section */}
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                  <h2 className="text-base font-semibold text-gray-900 mb-3">Your Stats</h2>
-                  {isLoadingStats ? (
-                    <div className="flex justify-center py-4">
-                      <Loader2 className="animate-spin text-purple-600" size={24} />
-                    </div>
-                  ) : userStats ? (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <p className="text-lg font-bold text-purple-600">{userStats.moviesWatched || 0}</p>
-                          <p className="text-xs text-gray-500">Movies</p>
-                        </div>
-                        <div>
-                          <p className="text-lg font-bold text-blue-600">{userStats.tvShowsWatched || 0}</p>
-                          <p className="text-xs text-gray-500">TV Shows</p>
-                        </div>
-                        <div>
-                          <p className="text-lg font-bold text-green-600">{userStats.booksRead || 0}</p>
-                          <p className="text-xs text-gray-500">Books</p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <p className="text-lg font-bold text-pink-600">{userStats.musicHours || 0}h</p>
-                          <p className="text-xs text-gray-500">Music</p>
-                        </div>
-                        <div>
-                          <p className="text-lg font-bold text-orange-600">{userStats.podcastHours || 0}h</p>
-                          <p className="text-xs text-gray-500">Podcasts</p>
-                        </div>
-                        <div>
-                          <p className="text-lg font-bold text-red-600">{userStats.gamesPlayed || 0}</p>
-                          <p className="text-xs text-gray-500">Games</p>
-                        </div>
-                      </div>
-                      <div className="border-t pt-3 grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <p className="text-base font-bold text-gray-900">{userStats.totalHours || 0}h</p>
-                          <p className="text-xs text-gray-500">Total Hours</p>
-                        </div>
-                        <div>
-                          <p className="text-base font-bold text-gray-900">{userStats.averageRating || '-'}</p>
-                          <p className="text-xs text-gray-500">Avg Rating</p>
-                        </div>
-                        <div>
-                          <p className="text-base font-bold text-gray-900">{userStats.dayStreak || 0}</p>
-                          <p className="text-xs text-gray-500">Day Streak</p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-gray-500">
-                      <BarChart3 className="mx-auto mb-2 text-gray-300" size={32} />
-                      <p className="text-sm">Start tracking to see your stats</p>
-                    </div>
-                  )}
-                </div>
               </div>
             )}
 
