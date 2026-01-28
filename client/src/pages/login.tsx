@@ -190,10 +190,10 @@ export default function LoginPage() {
             />
           </div>
           <h1 className="text-white text-lg font-semibold mb-2 leading-tight">
-            Where entertainment<br />comes together
+            How you do entertainment.
           </h1>
           <p className="text-gray-300 text-xs max-w-xs mx-auto">
-            Play, react, and keep up<br />with what you love.
+            Play trivia, track what you consume,<br />and discover your entertainment DNA.
           </p>
         </div>
         
