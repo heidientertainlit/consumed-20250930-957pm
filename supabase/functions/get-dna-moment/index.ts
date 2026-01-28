@@ -22,11 +22,11 @@ serve(async (req) => {
     const requestedCount = Math.min(Math.max(count, 1), 10);
 
     const authHeader = req.headers.get('Authorization');
-    let userId = null;
+    let userId: string | null = null;
     if (authHeader) {
       const token = authHeader.replace('Bearer ', '');
       const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-      userId = user?.id;
+      userId = user?.id ?? null;
     }
 
     let answeredMomentIds: string[] = [];
@@ -36,101 +36,64 @@ serve(async (req) => {
         .select('moment_id')
         .eq('user_id', userId);
       
-      answeredMomentIds = (userResponses || []).map((r: any) => r.moment_id);
+      answeredMomentIds = (userResponses || []).map((r: { moment_id: string }) => r.moment_id);
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const moments: any[] = [];
-
-    const { data: scheduledMoment } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('dna_moments')
       .select('*')
-      .eq('is_active', true)
-      .gte('display_date', today.toISOString())
-      .lt('display_date', tomorrow.toISOString())
-      .limit(1)
-      .single();
+      .eq('is_active', true);
 
-    if (scheduledMoment) {
-      moments.push({
-        id: scheduledMoment.id,
-        questionText: scheduledMoment.question_text,
-        optionA: scheduledMoment.option_a,
-        optionB: scheduledMoment.option_b,
-        optionC: scheduledMoment.option_c || null,
-        optionD: scheduledMoment.option_d || null,
-        optionE: scheduledMoment.option_e || null,
-        category: scheduledMoment.category,
-        isMultiSelect: scheduledMoment.is_multi_select || false
-      });
+    if (answeredMomentIds.length > 0) {
+      query = query.not('id', 'in', `(${answeredMomentIds.join(',')})`);
     }
 
-    if (moments.length < requestedCount) {
-      let query = supabaseAdmin
-        .from('dna_moments')
-        .select('*')
-        .eq('is_active', true)
-        .is('display_date', null);
+    const { data: availableMoments, error: momentsError } = await query;
 
-      const existingIds = moments.map(m => m.id);
-      const excludeIds = [...answeredMomentIds, ...existingIds];
-      
-      if (excludeIds.length > 0) {
-        query = query.not('id', 'in', `(${excludeIds.join(',')})`);
-      }
-
-      const { data: randomMoments } = await query.limit(requestedCount * 2);
-
-      if (randomMoments && randomMoments.length > 0) {
-        const shuffled = randomMoments.sort(() => Math.random() - 0.5);
-        const needed = requestedCount - moments.length;
-        
-        for (let i = 0; i < Math.min(needed, shuffled.length); i++) {
-          const m = shuffled[i];
-          moments.push({
-            id: m.id,
-            questionText: m.question_text,
-            optionA: m.option_a,
-            optionB: m.option_b,
-            optionC: m.option_c || null,
-            optionD: m.option_d || null,
-            optionE: m.option_e || null,
-            category: m.category,
-            isMultiSelect: m.is_multi_select || false
-          });
-        }
-      }
+    if (momentsError) {
+      console.error('Error fetching moments:', momentsError);
+      throw momentsError;
     }
 
-    if (moments.length === 0) {
+    if (!availableMoments || availableMoments.length === 0) {
       return new Response(JSON.stringify({ 
         moments: [], 
         answeredIds: answeredMomentIds,
-        message: 'No DNA moments available' 
+        allAnswered: true,
+        message: 'You have answered all DNA moments!' 
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
+    const shuffled = availableMoments.sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, requestedCount);
+
+    const moments = selected.map((m: {
+      id: string;
+      question_text: string;
+      option_a: string;
+      option_b: string;
+      option_c?: string;
+      option_d?: string;
+      option_e?: string;
+      category: string;
+      is_multi_select?: boolean;
+    }) => ({
+      id: m.id,
+      questionText: m.question_text,
+      optionA: m.option_a,
+      optionB: m.option_b,
+      optionC: m.option_c || null,
+      optionD: m.option_d || null,
+      optionE: m.option_e || null,
+      category: m.category,
+      isMultiSelect: m.is_multi_select || false
+    }));
+
     if (requestedCount === 1 && moments.length === 1) {
       const moment = moments[0];
-      const hasAnswered = answeredMomentIds.includes(moment.id);
-      let userAnswer = null;
-
-      if (hasAnswered && userId) {
-        const { data: response } = await supabaseAdmin
-          .from('dna_moment_responses')
-          .select('answer')
-          .eq('user_id', userId)
-          .eq('moment_id', moment.id)
-          .single();
-        userAnswer = response?.answer;
-      }
 
       const { data: allResponses } = await supabaseAdmin
         .from('dna_moment_responses')
@@ -138,28 +101,28 @@ serve(async (req) => {
         .eq('moment_id', moment.id);
 
       const totalResponses = allResponses?.length || 0;
-      const optionACount = allResponses?.filter((r: any) => r.answer === 'a').length || 0;
-      const optionBCount = allResponses?.filter((r: any) => r.answer === 'b').length || 0;
-      const optionCCount = allResponses?.filter((r: any) => r.answer === 'c').length || 0;
-
-      const optionDCount = allResponses?.filter((r: any) => r.answer?.includes('d')).length || 0;
-      const optionECount = allResponses?.filter((r: any) => r.answer?.includes('e')).length || 0;
+      const optionACount = allResponses?.filter((r: { answer: string }) => r.answer === 'a').length || 0;
+      const optionBCount = allResponses?.filter((r: { answer: string }) => r.answer === 'b').length || 0;
+      const optionCCount = allResponses?.filter((r: { answer: string }) => r.answer === 'c').length || 0;
+      const optionDCount = allResponses?.filter((r: { answer: string }) => r.answer === 'd').length || 0;
+      const optionECount = allResponses?.filter((r: { answer: string }) => r.answer === 'e').length || 0;
 
       const stats = {
         totalResponses,
-        optionAPercent: totalResponses > 0 ? Math.round((optionACount / totalResponses) * 100) : 20,
-        optionBPercent: totalResponses > 0 ? Math.round((optionBCount / totalResponses) * 100) : 20,
-        optionCPercent: totalResponses > 0 ? Math.round((optionCCount / totalResponses) * 100) : 20,
-        optionDPercent: totalResponses > 0 ? Math.round((optionDCount / totalResponses) * 100) : 20,
-        optionEPercent: totalResponses > 0 ? Math.round((optionECount / totalResponses) * 100) : 20,
+        optionAPercent: totalResponses > 0 ? Math.round((optionACount / totalResponses) * 100) : 50,
+        optionBPercent: totalResponses > 0 ? Math.round((optionBCount / totalResponses) * 100) : 50,
+        optionCPercent: totalResponses > 0 ? Math.round((optionCCount / totalResponses) * 100) : 0,
+        optionDPercent: totalResponses > 0 ? Math.round((optionDCount / totalResponses) * 100) : 0,
+        optionEPercent: totalResponses > 0 ? Math.round((optionECount / totalResponses) * 100) : 0,
       };
 
       return new Response(JSON.stringify({
         moment,
-        hasAnswered,
-        userAnswer,
+        hasAnswered: false,
+        userAnswer: null,
         stats,
-        friendResponses: []
+        friendResponses: [],
+        remainingCount: availableMoments.length - 1
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -168,7 +131,8 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       moments,
-      answeredIds: answeredMomentIds
+      answeredIds: answeredMomentIds,
+      remainingCount: availableMoments.length - moments.length
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
