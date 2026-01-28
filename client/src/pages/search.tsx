@@ -1073,8 +1073,8 @@ export default function Search() {
       
       {/* Page Title + Search */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-4 pb-4 px-4 -mt-px">
-        <p className="text-sm text-white/80 text-center mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          Feed your entertainment DNA by adding what you consume
+        <p className="text-base text-white/90 text-center mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          Feed your entertainment DNA. Add what you consume.
         </p>
         
         {/* Search Bar */}
