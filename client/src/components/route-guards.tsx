@@ -9,7 +9,8 @@ interface RouteGuardProps {
 const ONBOARDING_KEY = 'consumed_onboarding_completed';
 
 export function isOnboardingComplete(): boolean {
-  return localStorage.getItem(ONBOARDING_KEY) === 'true';
+  // Onboarding removed - always return true to skip it
+  return true;
 }
 
 export function markOnboardingComplete(): void {
