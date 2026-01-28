@@ -3316,53 +3316,6 @@ export default function UserProfile() {
                   </div>
                 )}
 
-                {/* DNA-Based Recommendations - Inline */}
-                {isOwnProfile && (isDnaRecsLoading || isDnaRecsGenerating || (Array.isArray(dnaRecommendations) && dnaRecommendations.length > 0)) && (
-                  <div className="mb-6 bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900 rounded-xl p-4 border border-gray-800/50">
-                    <div className="flex items-center mb-3">
-                      <Sparkles className="text-purple-400 mr-2" size={18} />
-                      <h4 className="text-lg font-bold text-white">For You</h4>
-                      {isDnaRecsGenerating && (
-                        <span className="ml-2 text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full animate-pulse border border-blue-500/30">
-                          Generating...
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-hide">
-                      {isDnaRecsLoading ? (
-                        [...Array(4)].map((_, index) => (
-                          <div key={`loading-${index}`} className="flex-shrink-0 w-24">
-                            <div className="relative rounded-lg overflow-hidden bg-slate-700 aspect-[2/3] animate-pulse"></div>
-                          </div>
-                        ))
-                      ) : (
-                        dnaRecommendations.slice(0, 6).map((rec: any) => {
-                          const uniqueId = `${rec.external_source}-${rec.external_id}`;
-                          const showFallback = !rec.image_url || imageErrors[uniqueId];
-                          return (
-                            <div key={uniqueId} className="flex-shrink-0 w-24" data-testid={`dna-rec-inline-${uniqueId}`}>
-                              <div className="relative rounded-lg overflow-hidden cursor-pointer aspect-[2/3] bg-slate-800">
-                                {showFallback ? (
-                                  <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-700 to-slate-800 p-2">
-                                    <p className="text-white font-bold text-xs text-center line-clamp-2">{rec.title}</p>
-                                  </div>
-                                ) : (
-                                  <img 
-                                    src={rec.image_url} 
-                                    alt={rec.title}
-                                    className="w-full h-full object-cover"
-                                    onError={() => setImageErrors(prev => ({ ...prev, [uniqueId]: true }))}
-                                  />
-                                )}
-                              </div>
-                              <p className="text-xs text-gray-300 mt-1 line-clamp-1">{rec.title}</p>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                )}
 
                 {/* Deep Dive Section - Collapsible */}
                 <Collapsible>
@@ -3610,12 +3563,6 @@ export default function UserProfile() {
               </div>
             )}
 
-            {/* Friend DNA Comparison - Standalone section for more room */}
-            {isOwnProfile && dnaProfileStatus === 'has_profile' && (
-              <div className="mt-4">
-                <FriendDNAComparison dnaLevel={dnaLevel} itemCount={dnaItemCount} hasSurvey={dnaProfileStatus === 'has_profile'} />
-              </div>
-            )}
 
           </div>
         </div>
