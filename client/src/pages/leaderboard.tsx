@@ -1,6 +1,6 @@
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
-import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, Award, Dices } from "lucide-react";
+import { Trophy, Star, Target, Brain, BookOpen, Film, Tv, Music, Gamepad2, Headphones, TrendingUp, Users, Globe, Share2, ChevronDown, ChevronUp, Award, Dices, Flame } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
@@ -275,6 +275,59 @@ export default function Leaderboard() {
     enabled: expandedAwards.size > 0,
   });
 
+  // Fetch streak leaderboard data
+  interface StreakEntry {
+    rank: number;
+    userId: string;
+    displayName: string;
+    userName: string;
+    avatar: string | null;
+    currentStreak: number;
+    longestStreak: number;
+    totalDays: number;
+  }
+
+  const { data: streakData } = useQuery<{ global: StreakEntry[]; friends: StreakEntry[]; allTime: StreakEntry[] }>({
+    queryKey: ['streak-leaderboard', scope],
+    queryFn: async () => {
+      if (!session?.access_token) return { global: [], friends: [], allTime: [] };
+
+      // Get friend IDs for friends scope
+      let friendIds: string[] = [];
+      if (scope === 'friends' && user?.id) {
+        const { data: friendships } = await supabase
+          .from('friendships')
+          .select('user_id, friend_id')
+          .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
+          .eq('status', 'accepted');
+        
+        friendIds = friendships?.map(f => f.user_id === user.id ? f.friend_id : f.user_id) || [];
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/streak-leaderboard`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            action: 'getLeaderboard',
+            limit: 10,
+            friendIds: scope === 'friends' ? friendIds : undefined
+          }),
+        }
+      );
+
+      if (!response.ok) return { global: [], friends: [], allTime: [] };
+      return response.json();
+    },
+    enabled: !!session?.access_token,
+  });
+
+  const [expandedStreaks, setExpandedStreaks] = useState(false);
+
   const renderLeaderboardList = (
     entries: LeaderboardEntry[] | undefined,
     categoryName: string,
@@ -525,6 +578,83 @@ export default function Leaderboard() {
             </TabsContent>
 
             <TabsContent value="games">
+              {/* Daily Call Streak Leaders */}
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
+                <button
+                  onClick={() => setExpandedStreaks(!expandedStreaks)}
+                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 p-4"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Flame className="text-white" size={20} />
+                      <h3 className="text-base font-bold text-white">Daily Call Streak Leaders</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link 
+                        href="/"
+                        className="text-white/90 hover:text-white text-sm font-medium"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Play Daily Call →
+                      </Link>
+                      {expandedStreaks ? <ChevronUp size={18} className="text-white" /> : <ChevronDown size={18} className="text-white" />}
+                    </div>
+                  </div>
+                </button>
+                
+                {expandedStreaks && (
+                  <div className="divide-y divide-gray-100">
+                    {(scope === 'friends' ? streakData?.friends : streakData?.global)?.length ? (
+                      (scope === 'friends' ? streakData?.friends : streakData?.global)?.slice(0, 10).map((entry, index) => {
+                        const isCurrentUser = entry.userId === user?.id;
+                        const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
+                        
+                        return (
+                          <div
+                            key={entry.userId}
+                            className={`flex items-center gap-4 p-4 ${isCurrentUser ? 'bg-purple-50' : 'hover:bg-gray-50'} transition-colors`}
+                          >
+                            <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                              {index < 3 ? (
+                                <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                                  {index + 1}
+                                </div>
+                              ) : (
+                                <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
+                              )}
+                            </div>
+
+                            <Link 
+                              href={`/user/${entry.userId}`}
+                              className="flex-1 min-w-0"
+                            >
+                              <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
+                                {entry.displayName}
+                                {isCurrentUser && <span className="ml-2 text-xs text-purple-600">(You)</span>}
+                              </p>
+                              <p className="text-xs text-gray-500">@{entry.userName}</p>
+                            </Link>
+
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Flame className="text-orange-500" size={18} />
+                              <div className="text-right">
+                                <p className="font-bold text-lg text-orange-600">{entry.currentStreak}</p>
+                                <p className="text-xs text-gray-500">day{entry.currentStreak !== 1 ? 's' : ''}</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="p-8 text-center text-gray-500">
+                        <Flame className="mx-auto mb-2 text-gray-300" size={32} />
+                        <p className="text-sm">No streaks yet. Complete Daily Call to start your streak!</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {renderCategoryCard(
                 'Trivia Champions',
                 Brain,

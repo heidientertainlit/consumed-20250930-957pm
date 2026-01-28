@@ -61,6 +61,7 @@ serve(async (req) => {
 
     if (action === 'getToday') {
       const today = new Date().toISOString().split('T')[0];
+      console.log('[daily-challenge] getToday - looking for featured_date:', today);
       
       // Query prediction_pools with featured_date = today (Daily Call)
       const { data: challenge, error } = await supabaseAdmin
@@ -71,8 +72,11 @@ serve(async (req) => {
         .limit(1)
         .single();
 
+      console.log('[daily-challenge] query result:', { challenge: challenge?.id, error: error?.message });
+
       if (error) {
-        return new Response(JSON.stringify({ challenge: null }), {
+        console.log('[daily-challenge] returning null due to error:', error.message);
+        return new Response(JSON.stringify({ challenge: null, debug: { today, error: error.message } }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
