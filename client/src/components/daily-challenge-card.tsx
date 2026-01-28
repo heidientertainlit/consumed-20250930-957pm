@@ -27,6 +27,7 @@ interface DailyChallenge {
   category: string | null;
   icon: string;
   status: string;
+  media_title?: string | null;
 }
 
 interface DailyChallengeResponse {
@@ -330,6 +331,12 @@ export function DailyChallengeCard() {
             {new Date(displayChallenge.scheduled_date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
           </div>
           
+          {displayChallenge.media_title && (
+            <div className="flex items-center gap-1.5 text-xs text-purple-300 mb-1">
+              <span className="font-medium">From:</span>
+              <span className="italic">{displayChallenge.media_title}</span>
+            </div>
+          )}
           <h3 className="text-lg font-bold text-white mb-2">{displayChallenge.title}</h3>
           {displayChallenge.description && (
             <p className="text-sm text-white/80 mb-4">{displayChallenge.description}</p>
