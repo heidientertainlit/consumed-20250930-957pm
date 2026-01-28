@@ -1029,47 +1029,6 @@ export default function Feed() {
     });
   }, [session, user]);
 
-  // Check for DNA profile and show notification once per session
-  useEffect(() => {
-    const checkDNAProfile = async () => {
-      if (!session?.access_token) return;
-      
-      // Only show once per session
-      const hasShownDNANotification = sessionStorage.getItem('shownDNANotification');
-      if (hasShownDNANotification) return;
-
-      try {
-        const { data: dnaProfile } = await supabase
-          .from('dna_profiles')
-          .select('id')
-          .eq('user_id', user?.id)
-          .single();
-
-        if (!dnaProfile) {
-          // User doesn't have a DNA profile - show notification
-          sessionStorage.setItem('shownDNANotification', 'true');
-          toast({
-            title: "Complete Your Entertainment DNA",
-            description: "Take a quick survey to unlock personalized recommendations and discover your entertainment personality.",
-            duration: 8000,
-          });
-        }
-      } catch (error) {
-        // No profile found or error - show notification
-        const hasShown = sessionStorage.getItem('shownDNANotification');
-        if (!hasShown) {
-          sessionStorage.setItem('shownDNANotification', 'true');
-          toast({
-            title: "Complete Your Entertainment DNA",
-            description: "Take a quick survey to unlock personalized recommendations and discover your entertainment personality.",
-            duration: 8000,
-          });
-        }
-      }
-    };
-
-    checkDNAProfile();
-  }, [session?.access_token, user?.id, toast]);
 
   // Fetch user's friends list for filtering
   const { data: friendsData = [] } = useQuery({
