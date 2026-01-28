@@ -105,8 +105,25 @@ export default function SeenItGame() {
   useEffect(() => {
     if (existingResponses && Object.keys(existingResponses).length > 0) {
       setResponses(existingResponses);
+      
+      // Auto-advance to first incomplete set
+      if (sets && sets.length > 0) {
+        const firstIncompleteIndex = sets.findIndex(set => {
+          const answeredCount = set.items.filter(item => 
+            existingResponses[item.id] !== null && existingResponses[item.id] !== undefined
+          ).length;
+          return answeredCount < set.items.length;
+        });
+        
+        if (firstIncompleteIndex !== -1 && firstIncompleteIndex !== currentSetIndex) {
+          setCurrentSetIndex(firstIncompleteIndex);
+        } else if (firstIncompleteIndex === -1 && sets.length > 0) {
+          // All sets complete - show the last one (or could show first)
+          setCurrentSetIndex(sets.length - 1);
+        }
+      }
     }
-  }, [existingResponses]);
+  }, [existingResponses, sets]);
 
   const responseMutation = useMutation({
     mutationFn: async ({ setId, itemId, seen, item }: { setId: string; itemId: string; seen: boolean; item: SeenItItem }) => {
