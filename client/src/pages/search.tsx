@@ -14,6 +14,7 @@ import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
+import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 
 interface Recommendation {
   title: string;
@@ -1520,6 +1521,11 @@ export default function Search() {
                         <RefreshCw size={14} className={isRegenerating ? 'animate-spin' : ''} />
                         {isRegenerating ? '...' : 'Regenerate'}
                       </Button>
+                    </div>
+
+                    {/* Recommendations */}
+                    <div className="mt-4">
+                      <RecommendationsGlimpse />
                     </div>
                   </>
                 ) : (

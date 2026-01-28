@@ -7,7 +7,6 @@ import ListShareModal from "@/components/list-share-modal";
 import FriendsManager from "@/components/friends-manager";
 import CreateRankDialog from "@/components/create-rank-dialog";
 import CreateListDialog from "@/components/create-list-dialog";
-import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -3564,12 +3563,6 @@ export default function UserProfile() {
               </div>
             )}
 
-            {/* Recommended For You - under DNA summary */}
-            {isOwnProfile && (
-              <div className="mt-6">
-                <RecommendationsGlimpse />
-              </div>
-            )}
 
           </div>
         </div>
