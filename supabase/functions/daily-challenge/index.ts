@@ -62,6 +62,7 @@ serve(async (req) => {
     if (action === 'getToday') {
       // Use client's local date if provided, otherwise fall back to UTC
       const today = params.localDate || new Date().toISOString().split('T')[0];
+      console.log('[daily-challenge] getToday - params received:', JSON.stringify(params));
       console.log('[daily-challenge] getToday - looking for featured_date:', today, params.localDate ? '(from client)' : '(UTC fallback)');
       
       // Query prediction_pools with featured_date = today (Daily Call)
