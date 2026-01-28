@@ -132,7 +132,8 @@ export function DailyChallengeCard() {
         body: JSON.stringify({ 
           action: 'submit',
           challengeId: challenge.id,
-          response: responseData
+          response: responseData,
+          localDate: new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local timezone
         })
       });
       

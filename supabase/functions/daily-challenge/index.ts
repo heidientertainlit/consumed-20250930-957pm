@@ -153,21 +153,24 @@ serve(async (req) => {
         });
       }
 
-      const { challengeId, response } = params;
-      const today = new Date().toISOString().split('T')[0];
+      const { challengeId, response, localDate } = params;
+      // Use client's local date if provided, otherwise fall back to UTC
+      const today = localDate || new Date().toISOString().split('T')[0];
+      console.log('[daily-challenge] submit - looking for challenge:', challengeId, 'on date:', today);
 
-      // Query prediction_pools instead of daily_challenges
+      // Query prediction_pools using featured_date (Daily Call field)
       const { data: challenge, error: challengeError } = await supabaseAdmin
         .from('prediction_pools')
         .select('*')
         .eq('id', challengeId)
-        .gte('publish_at', `${today}T00:00:00`)
-        .lt('publish_at', `${today}T23:59:59`)
+        .eq('featured_date', today)
         .eq('status', 'open')
         .single();
 
+      console.log('[daily-challenge] submit - challenge found:', challenge?.id, 'error:', challengeError?.message);
+
       if (challengeError || !challenge) {
-        return new Response(JSON.stringify({ error: 'Challenge not available or not for today' }), {
+        return new Response(JSON.stringify({ error: 'Challenge not available or not for today', debug: { challengeId, today, errorMsg: challengeError?.message } }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
