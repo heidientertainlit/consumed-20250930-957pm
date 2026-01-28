@@ -185,7 +185,7 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
     if (item.type === 'media_added') {
       const mediaDetailLink = item.mediaExternalId 
         ? `/media/${item.mediaType || 'movie'}/${item.mediaExternalSource || 'tmdb'}/${item.mediaExternalId}`
-        : `/search?q=${encodeURIComponent(item.mediaTitle || '')}`;
+        : `/add?q=${encodeURIComponent(item.mediaTitle || '')}`;
       return (
         <div key={item.id || index} className="py-3 border-b border-gray-100 last:border-b-0">
           <div className="flex gap-3">

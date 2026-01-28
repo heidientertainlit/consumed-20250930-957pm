@@ -478,8 +478,8 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
           {/* Add to DNA */}
           <Link
-            href="/search"
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/search" ? "bg-white/15" : ""}`}
+            href="/add"
+            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add-dna"
           >
             <div className="relative">

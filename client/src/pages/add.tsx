@@ -1384,26 +1384,48 @@ export default function Search() {
             {/* Stats Tab */}
             {activeTab === 'stats' && (
               <div className="space-y-4">
-                {/* DNA Survey CTA - show if no DNA profile */}
-                {!isLoadingDna && !dnaProfile && (
-                  <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 text-white">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Sparkles className="text-white" size={20} />
+                {/* DNA Survey CTA - different styles for new vs existing */}
+                {!isLoadingDna && (
+                  dnaProfile ? (
+                    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Sparkles className="text-purple-600" size={20} />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-sm text-gray-900">Your Entertainment DNA</h3>
+                          <p className="text-gray-500 text-xs">View or update your profile</p>
+                        </div>
+                        <Button
+                          onClick={() => setLocation('/entertainment-dna')}
+                          size="sm"
+                          variant="outline"
+                          className="text-xs font-semibold border-purple-200 text-purple-600 hover:bg-purple-50"
+                        >
+                          View DNA
+                        </Button>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-sm">Discover Your Entertainment DNA</h3>
-                        <p className="text-white/80 text-xs">Take a quick survey to unlock personalized recommendations</p>
-                      </div>
-                      <Button
-                        onClick={() => setLocation('/entertainment-dna')}
-                        size="sm"
-                        className="bg-white text-purple-600 hover:bg-white/90 text-xs font-semibold"
-                      >
-                        Start
-                      </Button>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 text-white">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Sparkles className="text-white" size={20} />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-sm">Discover Your Entertainment DNA</h3>
+                          <p className="text-white/80 text-xs">Take a quick survey to unlock personalized recommendations</p>
+                        </div>
+                        <Button
+                          onClick={() => setLocation('/entertainment-dna')}
+                          size="sm"
+                          className="bg-white text-purple-600 hover:bg-white/90 text-xs font-semibold"
+                        >
+                          Start
+                        </Button>
+                      </div>
+                    </div>
+                  )
                 )}
 
                 <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">

@@ -35,7 +35,7 @@ import GameFirstFeed from "@/pages/game-first-feed";
 import QuickLog from "@/pages/quick-log";
 import BlendedFeed from "@/pages/blended-feed";
 import FriendsUpdates from "@/pages/friendsupdates";
-import Search from "@/pages/search";
+import Add from "@/pages/add";
 import Conversations from "@/pages/conversations";
 import Leaderboard from "@/pages/leaderboard";
 import PlayTrivia from "@/pages/play-trivia";
@@ -166,14 +166,17 @@ function Router() {
             <FriendsUpdates />
           </ProtectedRoute>
         </Route>
-        <Route path="/search">
+        <Route path="/add">
           <ProtectedRoute>
-            <Search />
+            <Add />
           </ProtectedRoute>
+        </Route>
+        <Route path="/search">
+          <RedirectTo to="/add" />
         </Route>
         <Route path="/discover">
           <ProtectedRoute>
-            <Search />
+            <Add />
           </ProtectedRoute>
         </Route>
         <Route path="/conversations">

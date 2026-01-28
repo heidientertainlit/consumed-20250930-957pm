@@ -1268,7 +1268,7 @@ export default function MediaDetail() {
                           setLocation(`/media/${item.type || 'Movie'}/${item.external_source}/${item.external_id}`);
                         } else {
                           const searchTerm = item.title + (item.year ? ` ${item.year}` : '');
-                          setLocation(`/search?q=${encodeURIComponent(searchTerm)}`);
+                          setLocation(`/add?q=${encodeURIComponent(searchTerm)}`);
                         }
                       };
 
