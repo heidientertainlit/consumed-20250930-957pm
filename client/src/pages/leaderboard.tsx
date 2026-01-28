@@ -582,7 +582,7 @@ export default function Leaderboard() {
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
                 <button
                   onClick={() => setExpandedStreaks(!expandedStreaks)}
-                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 p-4"
+                  className="w-full bg-gradient-to-r from-purple-700 to-purple-900 p-4"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -636,9 +636,9 @@ export default function Leaderboard() {
                             </Link>
 
                             <div className="flex items-center gap-2 flex-shrink-0">
-                              <Flame className="text-orange-500" size={18} />
+                              <Flame className="text-purple-500" size={18} />
                               <div className="text-right">
-                                <p className="font-bold text-lg text-orange-600">{entry.currentStreak}</p>
+                                <p className="font-bold text-lg text-purple-600">{entry.currentStreak}</p>
                                 <p className="text-xs text-gray-500">day{entry.currentStreak !== 1 ? 's' : ''}</p>
                               </div>
                             </div>
@@ -647,7 +647,7 @@ export default function Leaderboard() {
                       })
                     ) : (
                       <div className="p-8 text-center text-gray-500">
-                        <Flame className="mx-auto mb-2 text-gray-300" size={32} />
+                        <Flame className="mx-auto mb-2 text-purple-300" size={32} />
                         <p className="text-sm">No streaks yet. Complete Daily Call to start your streak!</p>
                       </div>
                     )}
