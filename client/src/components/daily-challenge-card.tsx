@@ -70,7 +70,10 @@ export function DailyChallengeCard() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token || ''}`
         },
-        body: JSON.stringify({ action: 'getToday' })
+        body: JSON.stringify({ 
+          action: 'getToday',
+          localDate: new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local timezone
+        })
       });
       
       const data = await response.json();
