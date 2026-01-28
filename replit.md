@@ -99,6 +99,13 @@ Preferred communication style: Simple, everyday language.
 - AI Builder (`/library-ai`): Customization of lists and tracking via visual builder and AI chat.
 - DNA Levels System: Two-tier "Entertainment DNA" (survey-based) with friend comparison and unified insights.
 - DNA Moments: Quick binary questions in the feed that build Entertainment DNA while feeling like games. Shows % splits, friend answers, and earns points. Data stored in `dna_moments` and `dna_moment_responses` tables. Edge functions: `get-dna-moment`, `answer-dna-moment`.
+- **Daily Call System**: The featured daily game that drives daily engagement. Architecture:
+  - **Content**: Uses `prediction_pools` table where `featured_date` = today's date (DATE type, format: YYYY-MM-DD)
+  - **Responses**: Stored in `user_predictions` table (pool_id, user_id, prediction, points_earned)
+  - **Streak Tracking**: Uses `login_streaks` table with columns: `user_id` (uuid), `last_login` (date), `current_streak` (integer), `longest_streak` (integer)
+  - **Edge Function**: `daily-challenge` with actions: `getToday`, `checkResponse`, `submit`
+  - **Client sends `localDate`**: Format `new Date().toLocaleDateString('en-CA')` to handle timezone correctly
+  - **DO NOT use or create `daily_runs` table** - this was incorrectly suggested and doesn't exist in production
 - **Pools System**: Group prediction/trivia competitions where a host creates a pool, shares invite code with friends, adds prompts (questions), members submit answers, and host resolves prompts to award points. Features leaderboard per pool. Tables: `pools`, `pool_members`, `pool_prompts`, `pool_answers`. Edge functions: `create-pool`, `join-pool`, `add-pool-prompt`, `submit-pool-answer`, `resolve-pool-prompt`, `get-pool-details`, `get-pool-leaderboard`, `get-user-pools`. Routes: `/pools` (list), `/pool/:id` (detail), `/pool/join/:code` (shareable invite link).
 
 ### Feature Specifications
