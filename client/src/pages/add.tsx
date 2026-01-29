@@ -1315,47 +1315,49 @@ export default function Search() {
 
       {/* In Progress Section */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-2 pb-2 -mt-px">
-        <div className="px-4 mb-2">
-          <h2 className="text-sm font-semibold text-white">In Progress</h2>
-        </div>
-        {currentlyItems.length > 0 ? (
-          <div 
-            className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-4"
-            style={{ WebkitOverflowScrolling: 'touch' }}
-          >
-            {currentlyItems.map((item: any) => (
-              <CurrentlyConsumingCard 
-                key={item.id} 
-                item={item}
-                onUpdateProgress={(progress, total, mode, progressDisplay) => {
-                  updateProgressMutation.mutate({
-                    itemId: item.id,
-                    progress,
-                    total,
-                    mode,
-                    progressDisplay
-                  });
-                }}
-                onMoveToList={(targetList, listName) => {
-                  moveToListMutation.mutate({
-                    itemId: item.id,
-                    targetList,
-                    listName
-                  });
-                }}
-                isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
-              />
-            ))}
+        <div className="max-w-3xl lg:mx-auto">
+          <div className="px-4 mb-2">
+            <h2 className="text-sm font-semibold text-white">In Progress</h2>
           </div>
-        ) : (
-          <div className="px-4 pb-1">
-            <div className="bg-white/10 border border-white/20 rounded-lg p-3 text-center">
-              <Clock className="mx-auto mb-1 text-purple-300" size={18} />
-              <p className="text-white/80 text-xs">No items in your Currently list yet</p>
-              <p className="text-gray-400 text-[10px] mt-0.5">Search and add to "Currently" to track progress</p>
+          {currentlyItems.length > 0 ? (
+            <div 
+              className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-4 lg:justify-center"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              {currentlyItems.map((item: any) => (
+                <CurrentlyConsumingCard 
+                  key={item.id} 
+                  item={item}
+                  onUpdateProgress={(progress, total, mode, progressDisplay) => {
+                    updateProgressMutation.mutate({
+                      itemId: item.id,
+                      progress,
+                      total,
+                      mode,
+                      progressDisplay
+                    });
+                  }}
+                  onMoveToList={(targetList, listName) => {
+                    moveToListMutation.mutate({
+                      itemId: item.id,
+                      targetList,
+                      listName
+                    });
+                  }}
+                  isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
+                />
+              ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="px-4 pb-1">
+              <div className="bg-white/10 border border-white/20 rounded-lg p-3 text-center">
+                <Clock className="mx-auto mb-1 text-purple-300" size={18} />
+                <p className="text-white/80 text-xs">No items in your Currently list yet</p>
+                <p className="text-gray-400 text-[10px] mt-0.5">Search and add to "Currently" to track progress</p>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Content Section */}
