@@ -1111,11 +1111,11 @@ export default function Search() {
       
       {/* Page Title + Search */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-4 pb-4 px-4 -mt-px">
-        <div className="text-center mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="text-center mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <div className="text-2xl font-bold text-white">What are you</div>
-          <div className="text-lg">
+          <div className="text-lg font-medium flex items-center justify-center gap-0">
             <AnimatedWord />
-            <span className="text-white/70">?</span>
+            <span className="text-white/70 font-medium">?</span>
           </div>
         </div>
         
