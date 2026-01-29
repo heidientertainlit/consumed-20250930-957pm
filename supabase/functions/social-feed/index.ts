@@ -101,11 +101,13 @@ serve(async (req) => {
       const url = new URL(req.url);
       const limit = parseInt(url.searchParams.get('limit') || '15', 10);
       const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+      const specificPostId = url.searchParams.get('post_id');
       
-      console.log('Pagination:', { limit, offset });
-      console.log('🔥 EDGE FUNCTION VERSION: 2026-01-25-v2 - hot_take support');
+      console.log('Pagination:', { limit, offset, specificPostId });
+      console.log('🔥 EDGE FUNCTION VERSION: 2026-01-28-v3 - specific post support');
       
-      const { data: posts, error } = await supabase
+      // Build the base query
+      let query = supabase
         .from('social_posts')
         .select(`
           id, 
@@ -132,9 +134,16 @@ serve(async (req) => {
           list_id,
           rank_id,
           rec_category
-        `)
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1);
+        `);
+      
+      // If fetching a specific post, filter by ID; otherwise use pagination
+      if (specificPostId) {
+        query = query.eq('id', specificPostId);
+      } else {
+        query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+      }
+      
+      const { data: posts, error } = await query;
 
       if (error) {
         console.log('Query failed:', error);

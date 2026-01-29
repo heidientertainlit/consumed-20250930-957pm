@@ -1075,8 +1075,34 @@ export default function Feed() {
     initialPageParam: 0,
   });
 
-  // Flatten all pages into a single array
-  const socialPosts = infinitePosts?.pages.flat() || [];
+  // Fetch specific highlighted post when coming from a notification
+  const { data: highlightedPost } = useQuery({
+    queryKey: ["highlighted-post", highlightPostId],
+    queryFn: async () => {
+      if (!highlightPostId || !session?.access_token) return null;
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed?post_id=${highlightPostId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.posts?.[0] || null;
+    },
+    enabled: !!highlightPostId && !!session?.access_token,
+  });
+
+  // Flatten all pages into a single array, prepending highlighted post if not already included
+  const basePosts = infinitePosts?.pages.flat() || [];
+  const socialPosts = highlightedPost && !basePosts.find((p: any) => p.id === highlightedPost.id)
+    ? [highlightedPost, ...basePosts]
+    : basePosts;
 
   // Group same-user activities within same-day windows into consolidated cards BY ACTIVITY TYPE
   // Ratings consolidate if 2+ in same day, list adds go to Quick Glimpse (don't consolidate)
