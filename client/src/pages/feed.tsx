@@ -2987,19 +2987,19 @@ export default function Feed() {
                (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && 
                (!selectedCategory || selectedCategory === 'movies') && (
                 <Link href="/play/awards/oscars-2026">
-                  <div className="bg-gradient-to-r from-amber-900/80 to-yellow-800/80 rounded-2xl p-4 shadow-lg border border-amber-500/30 cursor-pointer hover:shadow-xl hover:border-amber-400/50 transition-all">
+                  <div className="bg-zinc-900/90 rounded-xl p-3 border border-zinc-700/50 cursor-pointer hover:bg-zinc-800/90 hover:border-zinc-600/60 transition-all">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center flex-shrink-0 shadow-md">
-                        <Trophy className="w-5 h-5 text-white" />
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center flex-shrink-0">
+                        <Trophy className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <h3 className="text-white font-bold text-base">2026 Oscars Ballot</h3>
-                          <span className="px-2 py-0.5 bg-amber-500/30 text-amber-200 text-[10px] font-semibold rounded-full">Trending</span>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-white font-medium text-sm">2026 Oscars Ballot</h3>
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                         </div>
-                        <p className="text-amber-100/70 text-sm">127 fans made picks - add yours & climb the leaderboard!</p>
+                        <p className="text-zinc-400 text-xs">127 picks made - join the competition</p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-amber-300" />
+                      <ChevronRight className="w-4 h-4 text-zinc-500" />
                     </div>
                   </div>
                 </Link>
@@ -5441,35 +5441,35 @@ export default function Feed() {
                   {/* 2026 Academy Awards - Show different state based on completion */}
                   <Link href="/play/awards/oscars-2026">
                     {hasCompletedOscarBallot ? (
-                      <div className="bg-gradient-to-r from-green-900 to-emerald-800 rounded-2xl p-4 shadow-lg border border-green-500/30 cursor-pointer hover:shadow-xl hover:border-green-400/40 transition-all">
+                      <div className="bg-zinc-900/90 rounded-xl p-3 border border-zinc-700/50 cursor-pointer hover:bg-zinc-800/90 hover:border-zinc-600/60 transition-all">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center flex-shrink-0 shadow-md">
-                            <Check className="w-5 h-5 text-white" />
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
+                            <Check className="w-4 h-4 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <h3 className="text-white font-bold text-base">2026 Oscars Ballot</h3>
-                              <span className="px-2 py-0.5 bg-green-500/30 text-green-300 text-[10px] font-semibold rounded-full">Complete</span>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-white font-medium text-sm">2026 Oscars Ballot</h3>
+                              <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 text-[10px] font-medium rounded">Done</span>
                             </div>
-                            <p className="text-green-200/80 text-sm">Your picks are locked in! View or share your ballot</p>
+                            <p className="text-zinc-400 text-xs">View or share your picks</p>
                           </div>
-                          <ChevronRight className="w-5 h-5 text-green-400" />
+                          <ChevronRight className="w-4 h-4 text-zinc-500" />
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-gradient-to-r from-amber-900/80 to-yellow-800/80 rounded-2xl p-4 shadow-lg border border-amber-500/30 cursor-pointer hover:shadow-xl hover:border-amber-400/50 transition-all">
+                      <div className="bg-zinc-900/90 rounded-xl p-3 border border-zinc-700/50 cursor-pointer hover:bg-zinc-800/90 hover:border-zinc-600/60 transition-all">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center flex-shrink-0 shadow-md">
-                            <Trophy className="w-5 h-5 text-white" />
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center flex-shrink-0">
+                            <Trophy className="w-4 h-4 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <h3 className="text-white font-bold text-base">2026 Oscars Ballot</h3>
-                              <span className="px-2 py-0.5 bg-amber-500/30 text-amber-200 text-[10px] font-semibold rounded-full">Trending</span>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-white font-medium text-sm">2026 Oscars Ballot</h3>
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                             </div>
-                            <p className="text-amber-100/70 text-sm">127 fans made picks - add yours & climb the leaderboard!</p>
+                            <p className="text-zinc-400 text-xs">127 picks made - join the competition</p>
                           </div>
-                          <ChevronRight className="w-5 h-5 text-amber-300" />
+                          <ChevronRight className="w-4 h-4 text-zinc-500" />
                         </div>
                       </div>
                     )}
