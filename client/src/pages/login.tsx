@@ -98,8 +98,7 @@ export default function LoginPage() {
       });
       setSubmitting(false);
     } else {
-      // Set flag for route guard to redirect to onboarding
-      sessionStorage.setItem('pendingOnboarding', 'true');
+      // New users go straight to activity feed (onboarding removed)
       
       // Check if there's a referrer and send friend request
       const referrerId = localStorage.getItem('consumed_referrer');

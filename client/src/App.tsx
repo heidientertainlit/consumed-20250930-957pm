@@ -119,9 +119,7 @@ function Router() {
           <PublicProfilePage />
         </Route>
         <Route path="/onboarding">
-          <ProtectedRoute>
-            <OnboardingPage />
-          </ProtectedRoute>
+          <RedirectTo to="/entertainment-dna" />
         </Route>
         <Route path="/entertainment-dna">
           <ProtectedRoute>
