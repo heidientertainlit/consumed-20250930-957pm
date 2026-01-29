@@ -19,27 +19,30 @@ import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 function AnimatedWord() {
   const words = ["watching", "reading", "playing", "listening to", "consuming"];
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIsAnimating(true);
+      setIsScrolling(true);
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % words.length);
-        setIsAnimating(false);
-      }, 300);
-    }, 2000);
+        setIsScrolling(false);
+      }, 400);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <span 
-      className={`font-semibold text-purple-300 transition-all duration-300 ${
-        isAnimating ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
-      }`}
-    >
-      {words[currentIndex]}
+    <span className="inline-block overflow-hidden h-[1.3em] align-bottom">
+      <span 
+        className={`inline-block font-bold text-purple-300 transition-transform duration-400 ease-out ${
+          isScrolling ? '-translate-y-full' : 'translate-y-0'
+        }`}
+        style={{ transitionDuration: '400ms' }}
+      >
+        {words[currentIndex]}
+      </span>
     </span>
   );
 }
@@ -1102,12 +1105,12 @@ export default function Search() {
       
       {/* Page Title + Search */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-4 pb-4 px-4 -mt-px">
-        <div className="text-base text-white/90 text-center mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          <span>What are you </span>
-          <span className="inline-block min-w-[100px]">
+        <div className="text-center mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <div className="text-xl text-white/90">What are you</div>
+          <div className="text-2xl font-bold">
             <AnimatedWord />
-          </span>
-          <span>?</span>
+            <span className="text-white/90">?</span>
+          </div>
         </div>
         
         {/* Search Bar */}
