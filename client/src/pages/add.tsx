@@ -17,7 +17,13 @@ import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 
 function AnimatedWord() {
-  const words = ["watching", "reading", "playing", "listening to", "consuming"];
+  const words = [
+    { text: "watching", color: "text-pink-400" },
+    { text: "reading", color: "text-cyan-400" },
+    { text: "playing", color: "text-green-400" },
+    { text: "listening to", color: "text-orange-400" },
+    { text: "consuming", color: "text-yellow-400" },
+  ];
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
 
@@ -36,12 +42,12 @@ function AnimatedWord() {
   return (
     <span className="inline-block overflow-hidden h-[1.3em] align-bottom">
       <span 
-        className={`inline-block font-bold text-purple-300 transition-transform duration-400 ease-out ${
-          isScrolling ? '-translate-y-full' : 'translate-y-0'
+        className={`inline-block font-medium ${words[currentIndex].color} transition-transform ease-out ${
+          isScrolling ? 'translate-y-full' : 'translate-y-0'
         }`}
         style={{ transitionDuration: '400ms' }}
       >
-        {words[currentIndex]}
+        {words[currentIndex].text}
       </span>
     </span>
   );
@@ -1106,10 +1112,10 @@ export default function Search() {
       {/* Page Title + Search */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-4 pb-4 px-4 -mt-px">
         <div className="text-center mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          <div className="text-xl text-white/90">What are you</div>
-          <div className="text-2xl font-bold">
+          <div className="text-2xl font-bold text-white">What are you</div>
+          <div className="text-lg">
             <AnimatedWord />
-            <span className="text-white/90">?</span>
+            <span className="text-white/70">?</span>
           </div>
         </div>
         
