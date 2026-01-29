@@ -2987,19 +2987,19 @@ export default function Feed() {
                (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && 
                (!selectedCategory || selectedCategory === 'movies') && (
                 <Link href="/play/awards/oscars-2026">
-                  <div className="bg-zinc-900/90 rounded-xl p-3 border border-zinc-700/50 cursor-pointer hover:bg-zinc-800/90 hover:border-zinc-600/60 transition-all">
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 cursor-pointer hover:bg-gray-100 hover:border-gray-300 transition-all">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center flex-shrink-0">
                         <Trophy className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-white font-medium text-sm">2026 Oscars Ballot</h3>
+                          <h3 className="text-gray-900 font-medium text-sm">2026 Oscars Ballot</h3>
                           <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                         </div>
-                        <p className="text-zinc-400 text-xs">127 picks made - join the competition</p>
+                        <p className="text-gray-500 text-xs">127 picks made - join the competition</p>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-zinc-500" />
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
                     </div>
                   </div>
                 </Link>
@@ -5441,35 +5441,35 @@ export default function Feed() {
                   {/* 2026 Academy Awards - Show different state based on completion */}
                   <Link href="/play/awards/oscars-2026">
                     {hasCompletedOscarBallot ? (
-                      <div className="bg-zinc-900/90 rounded-xl p-3 border border-zinc-700/50 cursor-pointer hover:bg-zinc-800/90 hover:border-zinc-600/60 transition-all">
+                      <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 cursor-pointer hover:bg-gray-100 hover:border-gray-300 transition-all">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
                             <Check className="w-4 h-4 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <h3 className="text-white font-medium text-sm">2026 Oscars Ballot</h3>
-                              <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 text-[10px] font-medium rounded">Done</span>
+                              <h3 className="text-gray-900 font-medium text-sm">2026 Oscars Ballot</h3>
+                              <span className="px-1.5 py-0.5 bg-green-100 text-green-600 text-[10px] font-medium rounded">Done</span>
                             </div>
-                            <p className="text-zinc-400 text-xs">View or share your picks</p>
+                            <p className="text-gray-500 text-xs">View or share your picks</p>
                           </div>
-                          <ChevronRight className="w-4 h-4 text-zinc-500" />
+                          <ChevronRight className="w-4 h-4 text-gray-400" />
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-zinc-900/90 rounded-xl p-3 border border-zinc-700/50 cursor-pointer hover:bg-zinc-800/90 hover:border-zinc-600/60 transition-all">
+                      <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 cursor-pointer hover:bg-gray-100 hover:border-gray-300 transition-all">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center flex-shrink-0">
                             <Trophy className="w-4 h-4 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <h3 className="text-white font-medium text-sm">2026 Oscars Ballot</h3>
+                              <h3 className="text-gray-900 font-medium text-sm">2026 Oscars Ballot</h3>
                               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                             </div>
-                            <p className="text-zinc-400 text-xs">127 picks made - join the competition</p>
+                            <p className="text-gray-500 text-xs">127 picks made - join the competition</p>
                           </div>
-                          <ChevronRight className="w-4 h-4 text-zinc-500" />
+                          <ChevronRight className="w-4 h-4 text-gray-400" />
                         </div>
                       </div>
                     )}
