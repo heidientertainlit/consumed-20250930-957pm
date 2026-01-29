@@ -2956,24 +2956,24 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* 2026 Academy Awards - Featured at top! (hidden if user completed ballot) */}
+              {/* 2026 Academy Awards - Featured at top! (hidden if user completed ballot, not shown in predictions filter to avoid duplicate) */}
               {!hasCompletedOscarBallot && 
-               (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'predictions' || selectedFilter === 'games') && 
+               (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && 
                (!selectedCategory || selectedCategory === 'movies') && (
                 <Link href="/play/awards/oscars-2026">
-                  <div className="bg-gradient-to-r from-[#12121f] to-[#2d1f4e] rounded-2xl p-4 shadow-lg border border-purple-500/20 cursor-pointer hover:shadow-xl hover:border-purple-400/40 transition-all">
+                  <div className="bg-gradient-to-r from-amber-900/80 to-yellow-800/80 rounded-2xl p-4 shadow-lg border border-amber-500/30 cursor-pointer hover:shadow-xl hover:border-amber-400/50 transition-all">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center flex-shrink-0 shadow-md">
                         <Trophy className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
                           <h3 className="text-white font-bold text-base">2026 Oscars Ballot</h3>
-                          <span className="px-2 py-0.5 bg-purple-500/30 text-purple-300 text-[10px] font-semibold rounded-full">Trending</span>
+                          <span className="px-2 py-0.5 bg-amber-500/30 text-amber-200 text-[10px] font-semibold rounded-full">Trending</span>
                         </div>
-                        <p className="text-gray-400 text-sm">127 fans made picks - add yours & climb the leaderboard!</p>
+                        <p className="text-amber-100/70 text-sm">127 fans made picks - add yours & climb the leaderboard!</p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-purple-400" />
+                      <ChevronRight className="w-5 h-5 text-amber-300" />
                     </div>
                   </div>
                 </Link>
@@ -5431,19 +5431,19 @@ export default function Feed() {
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-gradient-to-r from-[#12121f] to-[#2d1f4e] rounded-2xl p-4 shadow-lg border border-purple-500/20 cursor-pointer hover:shadow-xl hover:border-purple-400/40 transition-all">
+                      <div className="bg-gradient-to-r from-amber-900/80 to-yellow-800/80 rounded-2xl p-4 shadow-lg border border-amber-500/30 cursor-pointer hover:shadow-xl hover:border-amber-400/50 transition-all">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center flex-shrink-0 shadow-md">
                             <Trophy className="w-5 h-5 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
                               <h3 className="text-white font-bold text-base">2026 Oscars Ballot</h3>
-                              <span className="px-2 py-0.5 bg-purple-500/30 text-purple-300 text-[10px] font-semibold rounded-full">Trending</span>
+                              <span className="px-2 py-0.5 bg-amber-500/30 text-amber-200 text-[10px] font-semibold rounded-full">Trending</span>
                             </div>
-                            <p className="text-gray-400 text-sm">127 fans made picks - add yours & climb the leaderboard!</p>
+                            <p className="text-amber-100/70 text-sm">127 fans made picks - add yours & climb the leaderboard!</p>
                           </div>
-                          <ChevronRight className="w-5 h-5 text-purple-400" />
+                          <ChevronRight className="w-5 h-5 text-amber-300" />
                         </div>
                       </div>
                     )}
