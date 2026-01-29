@@ -16,6 +16,34 @@ import html2canvas from "html2canvas";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 
+function AnimatedWord() {
+  const words = ["watching", "reading", "playing", "listening to", "consuming"];
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsAnimating(true);
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % words.length);
+        setIsAnimating(false);
+      }, 300);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <span 
+      className={`font-semibold text-purple-300 transition-all duration-300 ${
+        isAnimating ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
+      }`}
+    >
+      {words[currentIndex]}
+    </span>
+  );
+}
+
 interface Recommendation {
   title: string;
   type: string;
@@ -1074,9 +1102,13 @@ export default function Search() {
       
       {/* Page Title + Search */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-4 pb-4 px-4 -mt-px">
-        <p className="text-base text-white/90 text-center mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          Feed your entertainment DNA. Add what you consume.
-        </p>
+        <div className="text-base text-white/90 text-center mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <span>What are you </span>
+          <span className="inline-block min-w-[100px]">
+            <AnimatedWord />
+          </span>
+          <span>?</span>
+        </div>
         
         {/* Search Bar */}
         <div className="bg-white rounded-2xl p-3 shadow-lg max-w-xl mx-auto">

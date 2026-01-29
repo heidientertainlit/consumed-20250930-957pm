@@ -60,7 +60,6 @@ import EngagePage from "@/pages/engage";
 import CollectionsPage from "@/pages/collections";
 import LoginPage from "./pages/login";
 import ResetPasswordPage from "./pages/reset-password";
-import OnboardingPage from "./pages/onboarding";
 import EntertainmentDNAPage from "./pages/entertainment-dna";
 import NotFoundPage from "./pages/not-found";
 import About from "@/pages/about";
