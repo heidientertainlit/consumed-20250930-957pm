@@ -241,6 +241,61 @@ serve(async (req) => {
           };
         }
       }
+    } else if (source === 'googlebooks') {
+      // Google Books API
+      const googleBooksKey = Deno.env.get('GOOGLE_BOOKS_API_KEY') || '';
+      const apiUrl = googleBooksKey 
+        ? `https://www.googleapis.com/books/v1/volumes/${externalId}?key=${googleBooksKey}`
+        : `https://www.googleapis.com/books/v1/volumes/${externalId}`;
+      
+      const response = await fetch(apiUrl);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const volumeInfo = data.volumeInfo || {};
+        
+        // Get the best cover image
+        let coverUrl = volumeInfo.imageLinks?.extraLarge || 
+                       volumeInfo.imageLinks?.large || 
+                       volumeInfo.imageLinks?.medium ||
+                       volumeInfo.imageLinks?.thumbnail || '';
+        
+        // Fix http to https
+        if (coverUrl.startsWith('http://')) {
+          coverUrl = coverUrl.replace('http://', 'https://');
+        }
+        
+        mediaDetails = {
+          title: volumeInfo.title,
+          type: 'Book',
+          creator: volumeInfo.authors?.join(', ') || 'Unknown Author',
+          artwork: coverUrl,
+          description: volumeInfo.description || 'No description available.',
+          rating: volumeInfo.averageRating ? volumeInfo.averageRating.toFixed(1) : '0',
+          releaseDate: volumeInfo.publishedDate,
+          category: volumeInfo.categories?.[0] || 'Book',
+          language: volumeInfo.language || 'en',
+          totalEpisodes: 0,
+          pageCount: volumeInfo.pageCount || 0,
+          subscribers: volumeInfo.ratingsCount ? `${volumeInfo.ratingsCount} ratings` : '0',
+          averageLength: volumeInfo.pageCount ? `${volumeInfo.pageCount} pages` : 'N/A',
+          publisher: volumeInfo.publisher,
+          isbn: volumeInfo.industryIdentifiers?.find((id: any) => id.type === 'ISBN_13')?.identifier ||
+                volumeInfo.industryIdentifiers?.find((id: any) => id.type === 'ISBN_10')?.identifier,
+          platforms: [
+            {
+              name: 'Google Books',
+              logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Google_Books_logo_2015.svg/220px-Google_Books_logo_2015.svg.png',
+              url: volumeInfo.infoLink || `https://books.google.com/books?id=${externalId}`
+            },
+            {
+              name: 'Amazon',
+              logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/200px-Amazon_logo.svg.png',
+              url: `https://www.amazon.com/s?k=${encodeURIComponent(volumeInfo.title || '')}`
+            }
+          ]
+        };
+      }
     } else if (source === 'openlibrary') {
       let response;
       let data;
