@@ -134,7 +134,7 @@ serve(async (req) => {
     } else if (source === 'spotify') {
       const spotifyToken = await getSpotifyToken();
       
-      // Could be track, album, or show
+      // Could be track, album, show, or episode
       let response = await fetch(`https://api.spotify.com/v1/tracks/${externalId}`, {
         headers: { 'Authorization': `Bearer ${spotifyToken}` }
       });
@@ -151,9 +151,17 @@ serve(async (req) => {
         });
       }
 
+      // Try episodes endpoint for podcast episodes
+      if (!response.ok) {
+        response = await fetch(`https://api.spotify.com/v1/episodes/${externalId}`, {
+          headers: { 'Authorization': `Bearer ${spotifyToken}` }
+        });
+      }
+
       if (response.ok) {
         const data = await response.json();
         const isPodcast = data.type === 'show';
+        const isEpisode = data.type === 'episode';
         
         // Build platforms array for Spotify content
         const platforms = [
@@ -164,36 +172,38 @@ serve(async (req) => {
           }
         ];
         
-        // Add common podcast platforms if it's a podcast
-        if (isPodcast) {
+        // Add common podcast platforms if it's a podcast or episode
+        if (isPodcast || isEpisode) {
+          const searchName = isEpisode ? data.show?.name : data.name;
           platforms.push(
             {
               name: 'Apple Podcasts',
               logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Podcasts_%28iOS%29.svg/170px-Podcasts_%28iOS%29.svg.png',
-              url: `https://podcasts.apple.com/search?term=${encodeURIComponent(data.name)}`
+              url: `https://podcasts.apple.com/search?term=${encodeURIComponent(searchName || data.name)}`
             },
             {
               name: 'Google Podcasts',
               logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Google_Podcasts_icon.svg/170px-Google_Podcasts_icon.svg.png',
-              url: `https://podcasts.google.com/search/${encodeURIComponent(data.name)}`
+              url: `https://podcasts.google.com/search/${encodeURIComponent(searchName || data.name)}`
             }
           );
         }
         
         mediaDetails = {
           title: data.name,
-          type: isPodcast ? 'Podcast' : 'Music',
-          creator: data.artists?.[0]?.name || data.publisher || 'Unknown',
-          artwork: data.images?.[0]?.url || data.album?.images?.[0]?.url,
-          description: data.description || 'No description available.',
+          type: isEpisode ? 'Podcast Episode' : (isPodcast ? 'Podcast' : 'Music'),
+          creator: data.artists?.[0]?.name || data.publisher || data.show?.publisher || data.show?.name || 'Unknown',
+          artwork: data.images?.[0]?.url || data.album?.images?.[0]?.url || data.show?.images?.[0]?.url,
+          description: data.description || data.html_description || 'No description available.',
           rating: '4.5',
           releaseDate: data.release_date,
-          category: data.genres?.[0] || (isPodcast ? 'Podcast' : 'Music'),
-          language: 'English',
+          category: data.genres?.[0] || (isPodcast || isEpisode ? 'Podcast' : 'Music'),
+          language: data.language || data.languages?.[0] || 'English',
           totalEpisodes: data.total_episodes || 0,
           subscribers: data.total_tracks ? `${data.total_tracks} tracks` : '0',
           averageLength: data.duration_ms ? `${Math.floor(data.duration_ms / 60000)} min` : '45 min',
           externalUrl: data.external_urls?.spotify,
+          showName: isEpisode ? data.show?.name : null,
           platforms
         };
       }
