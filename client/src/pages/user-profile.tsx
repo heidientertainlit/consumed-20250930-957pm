@@ -17,7 +17,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus } from "lucide-react";
+import { FeedbackDialog } from "@/components/feedback-dialog";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { 
   DropdownMenu, 
@@ -98,6 +99,7 @@ export default function UserProfile() {
   const [isSendingRequest, setIsSendingRequest] = useState(false);
   const [friendshipStatus, setFriendshipStatus] = useState<'none' | 'friends' | 'pending_sent' | 'pending_received' | 'loading'>('loading');
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   // Public profile - no restrictions for viewing
   const canViewProfile = true; // Always true for now - will add privacy settings later
@@ -3955,10 +3957,19 @@ export default function UserProfile() {
           </div>
         )}
 
-        {/* Logout Button - Only shown on own profile, at bottom */}
+        {/* Feedback and Logout Buttons - Only shown on own profile, at bottom */}
         {isOwnProfile && (
           <div className="px-4 pb-24 pt-12">
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-3">
+              <Button 
+                variant="outline" 
+                className="border-gray-300 text-purple-600 hover:bg-purple-50 hover:border-purple-300"
+                onClick={() => setIsFeedbackOpen(true)}
+                data-testid="button-feedback"
+              >
+                <MessageSquarePlus size={16} className="mr-2" />
+                Share Feedback
+              </Button>
               <Button 
                 variant="outline" 
                 className="border-gray-300 text-red-600 hover:bg-red-50 hover:border-red-300"
@@ -4842,6 +4853,12 @@ export default function UserProfile() {
       <QuickAddModal 
         isOpen={isQuickAddOpen} 
         onClose={() => setIsQuickAddOpen(false)} 
+      />
+
+      {/* Feedback Dialog */}
+      <FeedbackDialog
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
       />
     </>
   );

@@ -2755,6 +2755,35 @@ export default function Feed() {
     staleTime: 60000,
   });
 
+  // Get total number of users who have made Oscar ballot picks
+  const { data: oscarBallotCount = 0 } = useQuery({
+    queryKey: ['oscar-ballot-count'],
+    queryFn: async () => {
+      // Get Oscar event
+      const { data: event } = await supabase
+        .from('awards_events')
+        .select('id')
+        .or("name.ilike.%academy%,name.ilike.%oscar%")
+        .eq('status', 'open')
+        .single();
+      
+      if (!event) return 0;
+      
+      // Count distinct users who have made picks for this event
+      const { data: picks } = await supabase
+        .from('awards_picks')
+        .select('user_id, awards_categories!inner(event_id)')
+        .eq('awards_categories.event_id', event.id);
+      
+      if (!picks) return 0;
+      
+      // Count unique users
+      const uniqueUsers = new Set(picks.map(p => p.user_id));
+      return uniqueUsers.size;
+    },
+    staleTime: 60000,
+  });
+
   // Suggested quick adds - personalized from recommendations or trending
   // TODO: Add friend-activity sourcing as top priority (requires new backend query)
   // Priority should be: 1. Friends' recent activity → 2. DNA recommendations → 3. Trending content
@@ -2997,7 +3026,7 @@ export default function Feed() {
                           <h3 className="text-gray-900 font-medium text-sm">2026 Oscars Ballot</h3>
                           <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                         </div>
-                        <p className="text-gray-500 text-xs">127 picks made - join the competition</p>
+                        <p className="text-gray-500 text-xs">{oscarBallotCount} picks made - join the competition</p>
                       </div>
                       <ChevronRight className="w-4 h-4 text-gray-400" />
                     </div>
@@ -5467,7 +5496,7 @@ export default function Feed() {
                               <h3 className="text-gray-900 font-medium text-sm">2026 Oscars Ballot</h3>
                               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                             </div>
-                            <p className="text-gray-500 text-xs">127 picks made - join the competition</p>
+                            <p className="text-gray-500 text-xs">{oscarBallotCount} picks made - join the competition</p>
                           </div>
                           <ChevronRight className="w-4 h-4 text-gray-400" />
                         </div>

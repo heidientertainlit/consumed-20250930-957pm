@@ -352,13 +352,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             >
               {isSearchExpanded ? <X className="text-white" size={20} /> : <Search className="text-white" size={20} />}
             </button>
-            <button
-              onClick={() => setIsFeedbackOpen(true)}
-              className="hover:opacity-70 transition-opacity"
-              aria-label="Give feedback"
-            >
-              <MessageSquarePlus className="text-white" size={20} />
-            </button>
             <NotificationBell />
             <Link
               href={user?.id ? `/user/${user.id}` : "/login"}
