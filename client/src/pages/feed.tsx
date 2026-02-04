@@ -37,6 +37,7 @@ import ConsolidatedActivityCard, { ConsolidatedActivity } from "@/components/con
 import GroupedActivityCard from "@/components/grouped-activity-card";
 import RecommendationCard from "@/components/recommendation-card";
 import ConsumptionCarousel from "@/components/consumption-carousel";
+import SwipeableRatingCards from "@/components/swipeable-rating-cards";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
@@ -1453,18 +1454,29 @@ export default function Feed() {
     return hasRating || hasUserWrittenContent;
   };
 
-  // Create tiered feed with consumption carousels AND individual rating/thought cards
-  const createTieredFeed = (posts: (SocialPost | ConsolidatedActivity)[]): (SocialPost | ConsolidatedActivity | FriendActivityBlock | ConsumptionCarouselBlock)[] => {
-    const result: (SocialPost | ConsolidatedActivity | FriendActivityBlock | ConsumptionCarouselBlock)[] = [];
-    const simpleAddPosts: SocialPost[] = []; // Only simple "added to list" posts go to carousel
-    let gamePostCount = 0;
-    const CAROUSEL_INTERVAL = 5; // Show a consumption carousel every 5 game/engagement posts
+  // Type for swipeable rating cards block
+  interface SwipeableRatingBlock {
+    id: string;
+    type: 'swipeable_ratings';
+    posts: SocialPost[];
+  }
+
+  // Create tiered feed with The Room carousel AND swipeable rating cards
+  const createTieredFeed = (posts: (SocialPost | ConsolidatedActivity)[]): (SocialPost | ConsolidatedActivity | FriendActivityBlock | ConsumptionCarouselBlock | SwipeableRatingBlock)[] => {
+    const result: (SocialPost | ConsolidatedActivity | FriendActivityBlock | ConsumptionCarouselBlock | SwipeableRatingBlock)[] = [];
+    const simpleAddPosts: SocialPost[] = []; // Simple "added to list" posts for The Room
+    const ratingPosts: SocialPost[] = []; // Posts with ratings/thoughts for swipeable cards
+    let feedItemCount = 0;
+    const RATING_CARD_INTERVAL = 4; // Show swipeable rating cards every 4 feed items
+    const CAROUSEL_INTERVAL = 8; // Show The Room carousel every 8 feed items
     const MAX_ITEMS_PER_CAROUSEL = 8;
+    const MAX_RATING_CARDS = 5; // Max posts per swipeable rating block
 
     for (const item of posts) {
       // Skip ConsolidatedActivity items - pass through as-is
       if ('originalPostIds' in item) {
         result.push(item);
+        feedItemCount++;
         continue;
       }
 
@@ -1473,20 +1485,29 @@ export default function Feed() {
       if (isConsumptionPost(post)) {
         // Split consumption posts: meaningful content vs simple adds
         if (hasMeaningfulContent(post)) {
-          // Posts with ratings/thoughts flow through directly - they're valuable content!
-          result.push(post);
+          // Collect rating/thought posts for swipeable cards
+          ratingPosts.push(post);
         } else {
+          // Simple adds go to The Room carousel
           simpleAddPosts.push(post);
         }
       } else {
         // This is a game/engagement post - add directly to result
         result.push(post);
-        gamePostCount++;
+        feedItemCount++;
         
-        // Note: Rating/thought posts now flow through directly, not collected
+        // Insert swipeable rating cards every RATING_CARD_INTERVAL items
+        if (feedItemCount % RATING_CARD_INTERVAL === 0 && ratingPosts.length > 0) {
+          const postsToShow = ratingPosts.splice(0, MAX_RATING_CARDS);
+          result.push({
+            id: `swipeable-ratings-${feedItemCount}`,
+            type: 'swipeable_ratings',
+            posts: postsToShow
+          } as SwipeableRatingBlock);
+        }
         
-        // After every CAROUSEL_INTERVAL game posts, insert a consumption carousel for simple adds
-        if (gamePostCount % CAROUSEL_INTERVAL === 0 && simpleAddPosts.length > 0) {
+        // Insert The Room carousel every CAROUSEL_INTERVAL items
+        if (feedItemCount % CAROUSEL_INTERVAL === 0 && simpleAddPosts.length > 0) {
           const carouselItems = simpleAddPosts.splice(0, MAX_ITEMS_PER_CAROUSEL).map(p => ({
             id: p.id,
             userId: p.user?.id || '',
@@ -1504,13 +1525,22 @@ export default function Feed() {
           
           if (carouselItems.length > 0) {
             result.push({
-              id: `carousel-${gamePostCount}`,
+              id: `carousel-${feedItemCount}`,
               type: 'consumption_carousel',
               items: carouselItems
             } as ConsumptionCarouselBlock);
           }
         }
       }
+    }
+    
+    // Add remaining rating posts as a final swipeable block
+    if (ratingPosts.length > 0) {
+      result.push({
+        id: `swipeable-ratings-final`,
+        type: 'swipeable_ratings',
+        posts: ratingPosts
+      } as SwipeableRatingBlock);
     }
     
     // Add any remaining simple add posts as a final carousel
@@ -3199,6 +3229,49 @@ export default function Feed() {
                   currentUserId={currentAppUserId}
                 />
               )}
+
+              {/* Swipeable Rating Cards - Posts with ratings/reviews */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (() => {
+                const ratingPosts = (socialPosts || []).filter((p: any) => {
+                  if (!p.mediaItems?.length || !p.user?.id) return false;
+                  if (p.type === 'cast_approved') return false;
+                  const hasRating = p.rating && p.rating > 0;
+                  const content = p.content?.trim() || '';
+                  const isAutoGenerated = content.startsWith('Added ') || 
+                                          content.startsWith('"Added ') ||
+                                          content.match(/^"?Added .+ to .+"?$/i);
+                  const hasUserContent = content.length > 30 && !isAutoGenerated;
+                  return hasRating || hasUserContent;
+                });
+                
+                if (ratingPosts.length === 0) return null;
+                
+                return (
+                  <SwipeableRatingCards 
+                    posts={ratingPosts.slice(0, 10).map((p: any) => ({
+                      id: p.id,
+                      user: {
+                        id: p.user?.id || '',
+                        username: p.user?.username || '',
+                        displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '',
+                        avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar,
+                      },
+                      mediaItems: p.mediaItems?.map((m: any) => ({
+                        id: m.id,
+                        title: m.title,
+                        imageUrl: m.imageUrl || m.image_url,
+                        mediaType: m.mediaType || m.type,
+                        externalId: m.externalId || m.external_id,
+                        externalSource: m.externalSource || m.external_source || 'tmdb',
+                      })),
+                      rating: p.rating,
+                      content: p.content,
+                      timestamp: p.createdAt || p.created_at,
+                      type: p.type,
+                    }))}
+                  />
+                );
+              })()}
 
               {/* Cast Your Friends - Approved Casts Carousel */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && filteredPosts.filter((item: any) => item.type === 'cast_approved').length > 0 && (
