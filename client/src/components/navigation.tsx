@@ -463,40 +463,71 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
         )}
       </div>
 
-      {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] z-50 pb-safe">
-        <div className="flex justify-around items-center h-18 px-2 pt-3 pb-4">
-          {/* Home (main game feed) */}
-          <Link
-            href="/activity"
-            className={`flex flex-col items-center gap-1 py-2 px-6 rounded-xl transition-colors ${location === "/activity" || location === "/" ? "bg-white/15" : ""}`}
-            data-testid="nav-home"
+      {/* Bottom navigation with curved notch */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 pb-safe">
+        {/* SVG curved notch background */}
+        <div className="relative">
+          <svg 
+            className="w-full h-20" 
+            viewBox="0 0 375 80" 
+            preserveAspectRatio="none"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <Home className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Home</span>
-          </Link>
+            <defs>
+              <linearGradient id="navGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#0a0a0f" />
+                <stop offset="50%" stopColor="#12121f" />
+                <stop offset="100%" stopColor="#2d1f4e" />
+              </linearGradient>
+            </defs>
+            {/* Path with curved notch in center */}
+            <path 
+              d="M0,20 L145,20 C155,20 160,10 170,5 C180,0 195,0 187.5,0 C180,0 195,0 205,5 C215,10 220,20 230,20 L375,20 L375,80 L0,80 Z"
+              fill="url(#navGradient)"
+            />
+          </svg>
 
-          {/* Add - Big + button in center */}
+          {/* Floating Add button in the notch */}
           <Link
             href="/add"
-            className={`flex flex-col items-center gap-1 py-2 px-6 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
+            className="absolute left-1/2 -translate-x-1/2 -top-4 flex flex-col items-center"
             data-testid="nav-add"
           >
-            <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center -mt-4 shadow-lg shadow-purple-600/30">
+            <div 
+              className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-purple-600/40"
+              style={{
+                background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 50%, #4F46E5 100%)'
+              }}
+            >
               <Plus className="text-white" size={28} strokeWidth={2.5} />
             </div>
-            <span className="text-xs font-medium text-white -mt-1">Add</span>
           </Link>
 
-          {/* Leaderboard */}
-          <Link
-            href="/leaderboard"
-            className={`flex flex-col items-center gap-1 py-2 px-6 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
-            data-testid="nav-leaderboard"
-          >
-            <Trophy className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Leaders</span>
-          </Link>
+          {/* Nav items positioned on top of SVG */}
+          <div className="absolute inset-0 flex justify-between items-end px-8 pb-4">
+            {/* Home (main game feed) */}
+            <Link
+              href="/activity"
+              className={`flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-colors ${location === "/activity" || location === "/" ? "bg-white/15" : ""}`}
+              data-testid="nav-home"
+            >
+              <Home className="text-white" size={24} />
+              <span className="text-xs font-medium text-white">Home</span>
+            </Link>
+
+            {/* Spacer for center button */}
+            <div className="w-20" />
+
+            {/* Leaderboard */}
+            <Link
+              href="/leaderboard"
+              className={`flex flex-col items-center gap-1 py-2 px-4 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
+              data-testid="nav-leaderboard"
+            >
+              <Trophy className="text-white" size={24} />
+              <span className="text-xs font-medium text-white">Leaders</span>
+            </Link>
+          </div>
         </div>
       </nav>
 
