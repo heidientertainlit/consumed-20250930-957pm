@@ -346,7 +346,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           <div className="flex items-center gap-4">
             <button
               onClick={handleSearchToggle}
-              className="hover:opacity-70 transition-opacity mr-3"
+              className="hover:opacity-70 transition-opacity"
               aria-label="Search"
               data-testid="nav-search-toggle"
             >
@@ -360,6 +360,13 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
               <MessageSquarePlus className="text-white" size={20} />
             </button>
             <NotificationBell />
+            <Link
+              href={user?.id ? `/user/${user.id}` : "/login"}
+              className="hover:opacity-70 transition-opacity"
+              data-testid="nav-profile-top"
+            >
+              <User className="text-white" size={20} />
+            </Link>
           </div>
         </div>
 
@@ -469,44 +476,33 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           {/* Home (main game feed) */}
           <Link
             href="/activity"
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
+            className={`flex flex-col items-center gap-1 py-2 px-6 rounded-xl transition-colors ${location === "/activity" || location === "/" ? "bg-white/15" : ""}`}
             data-testid="nav-home"
           >
             <Home className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Home</span>
           </Link>
 
-          {/* Add to DNA */}
+          {/* Add - Big + button in center */}
           <Link
             href="/add"
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
-            data-testid="nav-add-dna"
+            className={`flex flex-col items-center gap-1 py-2 px-6 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
+            data-testid="nav-add"
           >
-            <div className="relative">
-              <Dna className="text-white" size={24} />
-              <Plus className="text-white absolute -right-1.5 -bottom-0.5 bg-[#0a0a0f] rounded-full" size={12} />
+            <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center -mt-4 shadow-lg shadow-purple-600/30">
+              <Plus className="text-white" size={28} strokeWidth={2.5} />
             </div>
-            <span className="text-xs font-medium text-white">Add</span>
+            <span className="text-xs font-medium text-white -mt-1">Add</span>
           </Link>
 
           {/* Leaderboard */}
           <Link
             href="/leaderboard"
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
+            className={`flex flex-col items-center gap-1 py-2 px-6 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
             data-testid="nav-leaderboard"
           >
             <Trophy className="text-white" size={24} />
             <span className="text-xs font-medium text-white">Leaders</span>
-          </Link>
-
-          {/* Profile */}
-          <Link
-            href={user?.id ? `/user/${user.id}` : "/login"}
-            className={`flex flex-col items-center gap-1 py-2 px-3 rounded-xl transition-colors ${location.startsWith("/user/") && location.includes(user?.id || "") ? "bg-white/15" : ""}`}
-            data-testid="nav-profile"
-          >
-            <User className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Me</span>
           </Link>
         </div>
       </nav>
