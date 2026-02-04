@@ -187,13 +187,22 @@ serve(async (req) => {
         if (googleBooksApiKey) {
           try {
             const googleBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=8&key=${googleBooksApiKey}`;
-            console.log('Fetching Google Books with API key');
+            console.log('Fetching Google Books with API key (key length:', googleBooksApiKey.length, ')');
             const googleResponse = await fetchWithTimeout(googleBooksUrl, {}, 5000);
             console.log('Google Books response status:', googleResponse.status);
+            
+            // Log error details if not OK
+            if (!googleResponse.ok) {
+              const errorText = await googleResponse.text();
+              console.error('Google Books API error:', errorText);
+            }
             
             if (googleResponse.ok) {
               const googleData = await googleResponse.json();
               console.log('Google Books items count:', googleData.items?.length || 0);
+              // Log titles for debugging
+              const titles = googleData.items?.slice(0, 5).map((i: any) => i.volumeInfo?.title) || [];
+              console.log('Google Books titles found:', JSON.stringify(titles));
               for (const item of googleData.items?.slice(0, 5) || []) {
                 const volumeInfo = item.volumeInfo;
                 if (volumeInfo && isContentAppropriate(volumeInfo, 'book')) {
