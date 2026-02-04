@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { ChevronRight, Star, Heart, MessageCircle, Plus, User } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 interface RatingPost {
   id: string;
@@ -31,12 +31,13 @@ interface SwipeableRatingCardsProps {
   posts: RatingPost[];
   onLike?: (postId: string) => void;
   onComment?: (postId: string) => void;
-  onAddToList?: (post: RatingPost) => void;
+  onAddToList?: (mediaItem: any) => void;
   likedPosts?: Set<string>;
 }
 
 export default function SwipeableRatingCards({ posts, onLike, onComment, onAddToList, likedPosts }: SwipeableRatingCardsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [, setLocation] = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   const startX = useRef<number>(0);
   const currentX = useRef<number>(0);
@@ -198,23 +199,23 @@ export default function SwipeableRatingCards({ posts, onLike, onComment, onAddTo
               </span>
             </div>
 
-            {/* Media title */}
+            {/* Media title - less bold */}
             <Link href={getMediaLink() || '#'}>
-              <h3 className="font-bold text-gray-900 text-base line-clamp-1 hover:text-purple-600 mb-1">
+              <h3 className="font-medium text-gray-900 text-sm line-clamp-1 hover:text-purple-600 mb-1">
                 {media?.title || 'Unknown'}
               </h3>
             </Link>
             
             {/* Rating stars */}
             {currentPost.rating && (
-              <div className="mb-2">
+              <div className="mb-1">
                 {renderStars(currentPost.rating)}
               </div>
             )}
 
-            {/* Review/thought content */}
+            {/* Review/thought content - more prominent */}
             {displayContent && (
-              <p className="text-sm text-gray-700 line-clamp-2 mb-2 italic">
+              <p className="text-sm text-gray-600 line-clamp-3 mb-2">
                 "{displayContent}"
               </p>
             )}
@@ -239,11 +240,18 @@ export default function SwipeableRatingCards({ posts, onLike, onComment, onAddTo
                   )}
                 </button>
                 
-                {/* Comment button */}
+                {/* Comment button - navigate to post */}
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    onComment?.(currentPost.id);
+                    if (onComment) {
+                      onComment(currentPost.id);
+                    }
+                    // Scroll to the post in the feed
+                    const postElement = document.getElementById(`post-${currentPost.id}`);
+                    if (postElement) {
+                      postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                   }}
                   className="flex items-center gap-1 group"
                 >
@@ -253,11 +261,14 @@ export default function SwipeableRatingCards({ posts, onLike, onComment, onAddTo
                   )}
                 </button>
                 
-                {/* Add to list */}
+                {/* Add to list - navigate to media page */}
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    onAddToList?.(currentPost);
+                    const mediaItem = media;
+                    if (mediaItem?.externalId && mediaItem?.externalSource) {
+                      setLocation(`/media/${mediaItem.externalSource}/${mediaItem.externalId}`);
+                    }
                   }}
                   className="group"
                 >
