@@ -177,47 +177,109 @@ serve(async (req) => {
       })());
     }
 
-    // Open Library Search (primary) - Google Books quota exceeded
+    // Google Books Search (primary) with API key + Open Library fallback
     if (!type || type === 'book') {
       searchPromises.push((async () => {
-        try {
-          let bookUrl;
-          if (searchQuery.toLowerCase().includes(' by ')) {
-            const parts = searchQuery.split(/\s+by\s+/i);
-            const title = parts[0].trim();
-            const author = parts[1].trim();
-            bookUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=8`;
-          } else {
-            bookUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}&limit=8`;
-          }
-          
-          console.log('Fetching Open Library:', bookUrl);
-          const bookResponse = await fetchWithTimeout(bookUrl, {}, 5000);
-          console.log('Open Library response status:', bookResponse.status);
-          
-          if (bookResponse.ok) {
-            const bookData = await bookResponse.json();
-            console.log('Open Library docs count:', bookData.docs?.length || 0);
-            bookData.docs?.slice(0, 5).forEach((book: any) => {
-              if (isContentAppropriate(book, 'book')) {
-                bookResults.push({
-                  title: book.title,
-                  type: 'book',
-                  creator: book.author_name?.[0] || 'Unknown Author',
-                  poster_url: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : '',
-                  external_id: book.key,
-                  external_source: 'openlibrary',
-                  description: book.first_sentence?.[0] || '',
-                  release_date: book.first_publish_year ? `${book.first_publish_year}` : null,
-                  edition_count: book.edition_count ?? 0
-                });
+        let foundBooks = false;
+        const googleBooksApiKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
+        
+        // Try Google Books first (with API key for proper quota)
+        if (googleBooksApiKey) {
+          try {
+            const googleBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=8&key=${googleBooksApiKey}`;
+            console.log('Fetching Google Books with API key');
+            const googleResponse = await fetchWithTimeout(googleBooksUrl, {}, 5000);
+            console.log('Google Books response status:', googleResponse.status);
+            
+            if (googleResponse.ok) {
+              const googleData = await googleResponse.json();
+              console.log('Google Books items count:', googleData.items?.length || 0);
+              for (const item of googleData.items?.slice(0, 5) || []) {
+                const volumeInfo = item.volumeInfo;
+                if (volumeInfo && isContentAppropriate(volumeInfo, 'book')) {
+                  let posterUrl = volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail || '';
+                  
+                  // If no cover from Google Books, try Open Library as fallback for cover
+                  if (!posterUrl && volumeInfo.title) {
+                    try {
+                      const olSearchUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(volumeInfo.title)}&limit=1`;
+                      const olRes = await fetchWithTimeout(olSearchUrl, {}, 2000);
+                      if (olRes.ok) {
+                        const olData = await olRes.json();
+                        const coverId = olData.docs?.[0]?.cover_i;
+                        if (coverId) {
+                          posterUrl = `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`;
+                        }
+                      }
+                    } catch (e) {
+                      // Ignore cover fallback errors
+                    }
+                  }
+                  
+                  bookResults.push({
+                    title: volumeInfo.title,
+                    type: 'book',
+                    creator: volumeInfo.authors?.[0] || 'Unknown Author',
+                    poster_url: posterUrl,
+                    external_id: item.id,
+                    external_source: 'googlebooks',
+                    description: volumeInfo.description?.substring(0, 200) || '',
+                    release_date: volumeInfo.publishedDate || null,
+                    ratings_count: volumeInfo.ratingsCount ?? 0
+                  });
+                  foundBooks = true;
+                }
               }
-            });
-            console.log('Books added from Open Library:', bookResults.length);
+              console.log('Books added from Google Books:', bookResults.length);
+            } else {
+              console.error('Google Books error response:', googleResponse.status);
+            }
+          } catch (error) {
+            console.error('Google Books search error:', error);
           }
-        } catch (error) {
-          console.error('Open Library search error:', error);
-          errors.push('books');
+        } else {
+          console.warn('GOOGLE_BOOKS_API_KEY not set, skipping Google Books');
+        }
+        
+        // Fallback to Open Library if Google Books fails or returns no results
+        if (!foundBooks) {
+          try {
+            let bookUrl;
+            if (searchQuery.toLowerCase().includes(' by ')) {
+              const parts = searchQuery.split(/\s+by\s+/i);
+              const title = parts[0].trim();
+              const author = parts[1].trim();
+              bookUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=8`;
+            } else {
+              bookUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}&limit=8`;
+            }
+            
+            console.log('Fetching Open Library (fallback):', bookUrl);
+            const bookResponse = await fetchWithTimeout(bookUrl, {}, 5000);
+            
+            if (bookResponse.ok) {
+              const bookData = await bookResponse.json();
+              bookData.docs?.slice(0, 5).forEach((book: any) => {
+                if (isContentAppropriate(book, 'book')) {
+                  bookResults.push({
+                    title: book.title,
+                    type: 'book',
+                    creator: book.author_name?.[0] || 'Unknown Author',
+                    poster_url: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : '',
+                    external_id: book.key,
+                    external_source: 'openlibrary',
+                    description: book.first_sentence?.[0] || '',
+                    release_date: book.first_publish_year ? `${book.first_publish_year}` : null,
+                    edition_count: book.edition_count ?? 0
+                  });
+                }
+              });
+              console.log('Books added from Open Library:', bookResults.length);
+            }
+          } catch (error) {
+            console.error('Open Library fallback error:', error);
+            errors.push('books');
+          }
         }
       })());
     }
