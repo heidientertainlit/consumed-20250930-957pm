@@ -1451,11 +1451,9 @@ export default function Feed() {
   // Create tiered feed with consumption carousels AND individual rating/thought cards
   const createTieredFeed = (posts: (SocialPost | ConsolidatedActivity)[]): (SocialPost | ConsolidatedActivity | FriendActivityBlock | ConsumptionCarouselBlock)[] => {
     const result: (SocialPost | ConsolidatedActivity | FriendActivityBlock | ConsumptionCarouselBlock)[] = [];
-    const simpleAddPosts: SocialPost[] = []; // Only simple adds go to carousel
-    const ratingThoughtPosts: SocialPost[] = []; // Rating/thought posts to show individually
+    const simpleAddPosts: SocialPost[] = []; // Only simple "added to list" posts go to carousel
     let gamePostCount = 0;
     const CAROUSEL_INTERVAL = 5; // Show a consumption carousel every 5 game/engagement posts
-    const RATING_POST_INTERVAL = 3; // Show a rating/thought post every 3 game posts
     const MAX_ITEMS_PER_CAROUSEL = 8;
 
     for (const item of posts) {
@@ -1470,7 +1468,8 @@ export default function Feed() {
       if (isConsumptionPost(post)) {
         // Split consumption posts: meaningful content vs simple adds
         if (hasMeaningfulContent(post)) {
-          ratingThoughtPosts.push(post);
+          // Posts with ratings/thoughts flow through directly - they're valuable content!
+          result.push(post);
         } else {
           simpleAddPosts.push(post);
         }
@@ -1479,13 +1478,7 @@ export default function Feed() {
         result.push(post);
         gamePostCount++;
         
-        // After every RATING_POST_INTERVAL game posts, insert a rating/thought post if available
-        if (gamePostCount % RATING_POST_INTERVAL === 0 && ratingThoughtPosts.length > 0) {
-          const ratingPost = ratingThoughtPosts.shift();
-          if (ratingPost) {
-            result.push(ratingPost);
-          }
-        }
+        // Note: Rating/thought posts now flow through directly, not collected
         
         // After every CAROUSEL_INTERVAL game posts, insert a consumption carousel for simple adds
         if (gamePostCount % CAROUSEL_INTERVAL === 0 && simpleAddPosts.length > 0) {
@@ -1513,11 +1506,6 @@ export default function Feed() {
           }
         }
       }
-    }
-    
-    // Add remaining rating/thought posts at the end
-    for (const post of ratingThoughtPosts) {
-      result.push(post);
     }
     
     // Add any remaining simple add posts as a final carousel
