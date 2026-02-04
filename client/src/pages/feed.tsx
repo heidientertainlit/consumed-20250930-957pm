@@ -1441,12 +1441,21 @@ export default function Feed() {
     }>;
   }
 
-  // Create tiered feed with consumption carousels
+  // Helper to check if a consumption post has meaningful content (rating or thought)
+  const hasMeaningfulContent = (post: SocialPost): boolean => {
+    const hasRating = post.rating && post.rating > 0;
+    const hasSubstantialContent = post.content && post.content.length > 30;
+    return hasRating || hasSubstantialContent;
+  };
+
+  // Create tiered feed with consumption carousels AND individual rating/thought cards
   const createTieredFeed = (posts: (SocialPost | ConsolidatedActivity)[]): (SocialPost | ConsolidatedActivity | FriendActivityBlock | ConsumptionCarouselBlock)[] => {
     const result: (SocialPost | ConsolidatedActivity | FriendActivityBlock | ConsumptionCarouselBlock)[] = [];
-    const consumptionPosts: SocialPost[] = [];
+    const simpleAddPosts: SocialPost[] = []; // Only simple adds go to carousel
+    const ratingThoughtPosts: SocialPost[] = []; // Rating/thought posts to show individually
     let gamePostCount = 0;
     const CAROUSEL_INTERVAL = 5; // Show a consumption carousel every 5 game/engagement posts
+    const RATING_POST_INTERVAL = 3; // Show a rating/thought post every 3 game posts
     const MAX_ITEMS_PER_CAROUSEL = 8;
 
     for (const item of posts) {
@@ -1459,16 +1468,28 @@ export default function Feed() {
       const post = item as SocialPost;
       
       if (isConsumptionPost(post)) {
-        // Collect consumption posts for carousels
-        consumptionPosts.push(post);
+        // Split consumption posts: meaningful content vs simple adds
+        if (hasMeaningfulContent(post)) {
+          ratingThoughtPosts.push(post);
+        } else {
+          simpleAddPosts.push(post);
+        }
       } else {
         // This is a game/engagement post - add directly to result
         result.push(post);
         gamePostCount++;
         
-        // After every CAROUSEL_INTERVAL game posts, insert a consumption carousel if we have items
-        if (gamePostCount % CAROUSEL_INTERVAL === 0 && consumptionPosts.length > 0) {
-          const carouselItems = consumptionPosts.splice(0, MAX_ITEMS_PER_CAROUSEL).map(p => ({
+        // After every RATING_POST_INTERVAL game posts, insert a rating/thought post if available
+        if (gamePostCount % RATING_POST_INTERVAL === 0 && ratingThoughtPosts.length > 0) {
+          const ratingPost = ratingThoughtPosts.shift();
+          if (ratingPost) {
+            result.push(ratingPost);
+          }
+        }
+        
+        // After every CAROUSEL_INTERVAL game posts, insert a consumption carousel for simple adds
+        if (gamePostCount % CAROUSEL_INTERVAL === 0 && simpleAddPosts.length > 0) {
+          const carouselItems = simpleAddPosts.splice(0, MAX_ITEMS_PER_CAROUSEL).map(p => ({
             id: p.id,
             userId: p.user?.id || '',
             username: p.user?.username || '',
@@ -1494,9 +1515,14 @@ export default function Feed() {
       }
     }
     
-    // Add any remaining consumption posts as a final carousel (even if just 1-2 items, don't drop them)
-    if (consumptionPosts.length > 0) {
-      const carouselItems = consumptionPosts.slice(0, MAX_ITEMS_PER_CAROUSEL).map(p => ({
+    // Add remaining rating/thought posts at the end
+    for (const post of ratingThoughtPosts) {
+      result.push(post);
+    }
+    
+    // Add any remaining simple add posts as a final carousel
+    if (simpleAddPosts.length > 0) {
+      const carouselItems = simpleAddPosts.slice(0, MAX_ITEMS_PER_CAROUSEL).map(p => ({
         id: p.id,
         userId: p.user?.id || '',
         username: p.user?.username || '',
