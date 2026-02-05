@@ -243,7 +243,11 @@ export default function Search() {
   const { data: fullMediaHistory = [], isLoading: isLoadingFullHistory } = useQuery({
     queryKey: ['full-media-history-dna', user?.id],
     queryFn: async () => {
-      if (!session?.access_token || !user?.id) return [];
+      if (!session?.access_token || !user?.id) {
+        console.log('📜 History: No session or user');
+        return [];
+      }
+      console.log('📜 History: Fetching for user', user.id);
       const { data, error } = await supabase
         .from('list_items')
         .select(`
@@ -260,7 +264,11 @@ export default function Search() {
         .eq('lists.user_id', user.id)
         .order('added_at', { ascending: false })
         .limit(100);
-      if (error) return [];
+      console.log('📜 History result:', { count: data?.length, error: error?.message });
+      if (error) {
+        console.error('📜 History error:', error);
+        return [];
+      }
       return (data || []).map((item: any) => ({
         ...item,
         listName: item.lists?.title || 'Unknown'
