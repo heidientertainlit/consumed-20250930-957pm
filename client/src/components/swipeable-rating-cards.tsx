@@ -330,7 +330,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 )}
               </Link>
               {/* Actions under poster */}
-              <div className="flex items-center justify-center gap-3 py-2 bg-gray-50">
+              <div className="relative flex items-center justify-center gap-3 py-2 bg-gray-50">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -367,8 +367,23 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                       <Star size={16} className="text-yellow-400 fill-yellow-400" />
                       <span className="text-xs text-yellow-600 font-medium">{userRating}</span>
                     </div>
-                  ) : showQuickRate ? (
-                    <div className="flex items-center">
+                  ) : (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowQuickRate(!showQuickRate);
+                      }}
+                      className="group"
+                      title="Rate this"
+                    >
+                      <Star size={16} className={showQuickRate ? "text-yellow-400" : "text-gray-400 group-hover:text-yellow-400 transition-colors"} />
+                    </button>
+                  )
+                )}
+                {/* Rating stars overlay */}
+                {showQuickRate && !userRating && (
+                  <div className="absolute left-0 right-0 bottom-full mb-1 flex items-center justify-center">
+                    <div className="flex items-center bg-white rounded-lg shadow-lg border border-gray-200 px-2 py-1.5">
                       {submittingRating ? (
                         <Loader2 className="animate-spin text-purple-500" size={18} />
                       ) : (
@@ -376,7 +391,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                           {[1, 2, 3, 4, 5].map((star) => (
                             <div
                               key={star}
-                              className="relative w-7 h-7 flex items-center justify-center cursor-pointer"
+                              className="relative w-8 h-8 flex items-center justify-center cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const rect = e.currentTarget.getBoundingClientRect();
@@ -392,12 +407,12 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                               onMouseLeave={() => setHoveredStar(0)}
                             >
                               <div className="relative">
-                                <Star size={22} className="text-gray-300" />
+                                <Star size={24} className="text-gray-300" />
                                 <div 
                                   className="absolute inset-0 overflow-hidden"
                                   style={{ width: `${Math.min(100, Math.max(0, (hoveredStar - star + 1) * 100))}%` }}
                                 >
-                                  <Star size={22} className="text-yellow-400 fill-yellow-400" />
+                                  <Star size={24} className="text-yellow-400 fill-yellow-400" />
                                 </div>
                               </div>
                             </div>
@@ -409,23 +424,12 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                             }}
                             className="ml-1 text-gray-400 hover:text-gray-600"
                           >
-                            <X size={14} />
+                            <X size={16} />
                           </button>
                         </>
                       )}
                     </div>
-                  ) : (
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowQuickRate(true);
-                      }}
-                      className="group"
-                      title="Rate this"
-                    >
-                      <Star size={16} className="text-gray-400 group-hover:text-yellow-400 transition-colors" />
-                    </button>
-                  )
+                  </div>
                 )}
               </div>
             </div>
