@@ -369,8 +369,8 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
             {/* Right column: Content */}
             <div className="flex-1 p-3 flex flex-col min-w-0">
               {/* User info */}
-              <div className="flex items-center gap-2 mb-1">
-                <Link href={`/profile/${currentPost.user?.id}`} className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Link href={`/profile/${currentPost.user?.id}`} className="shrink-0">
                   {currentPost.user?.avatar ? (
                     <img 
                       src={currentPost.user.avatar} 
@@ -382,13 +382,17 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                       <User size={12} className="text-purple-600" />
                     </div>
                   )}
-                  <span className="text-sm font-medium text-purple-600">
-                    {currentPost.user?.displayName || currentPost.user?.username || 'User'}
-                  </span>
                 </Link>
-                <span className="text-xs text-gray-400">
-                  {currentPost.rating ? 'rated' : 'reviewed'}
-                </span>
+                <div className="flex items-baseline gap-1 min-w-0">
+                  <Link href={`/profile/${currentPost.user?.id}`}>
+                    <span className="text-sm font-medium text-purple-600 truncate">
+                      {currentPost.user?.displayName || currentPost.user?.username || 'User'}
+                    </span>
+                  </Link>
+                  <span className="text-xs text-gray-400 shrink-0">
+                    {currentPost.rating ? 'rated' : 'reviewed'}
+                  </span>
+                </div>
               </div>
 
               {/* Media title */}
