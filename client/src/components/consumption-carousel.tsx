@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Users, ThumbsUp, ThumbsDown, HelpCircle, Bar
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import PostDetailSheet from './post-detail-sheet';
 
 const getStablePercent = (id: string, min = 40, max = 80) => {
   let hash = 0;
@@ -83,6 +84,7 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reactions, setReactions] = useState<Record<string, 'agree' | 'disagree'>>({});
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedPost, setSelectedPost] = useState<FriendActivityItem | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -189,7 +191,7 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
       return (
         <div key={item.id || index} className="py-3 border-b border-gray-100 last:border-b-0">
           <div className="flex gap-3">
-            {/* Left: Media Image - Clickable */}
+            {/* Left: Media Image - Clickable to media page */}
             <Link href={mediaDetailLink}>
               {item.mediaImage ? (
                 <div className="w-14 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0 shadow-sm cursor-pointer hover:opacity-80 transition-opacity">
@@ -202,16 +204,20 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
               )}
             </Link>
             
-            {/* Right: Content */}
-            <div className="flex-1 min-w-0">
+            {/* Right: Content - Clickable to open bottom sheet */}
+            <div 
+              className="flex-1 min-w-0 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedPost(item);
+              }}
+            >
               {/* Header row with user and delete */}
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1.5">
-                  <Link href={`/user/${item.userId}`}>
-                    <span className="text-xs text-purple-600 font-medium hover:underline cursor-pointer">
-                      {(item.username && item.username !== 'friend' && item.username !== 'Unknown' && item.username !== 'unknown') ? item.username : 'A fan'}
-                    </span>
-                  </Link>
+                  <span className="text-xs text-purple-600 font-medium">
+                    {(item.username && item.username !== 'friend' && item.username !== 'Unknown' && item.username !== 'unknown') ? item.username : 'A fan'}
+                  </span>
                   <span className="text-[10px] text-gray-400">{item.activityText || 'added'}</span>
                 </div>
                 {currentUserId && item.userId === currentUserId && (
@@ -226,12 +232,10 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
                 )}
               </div>
               
-              {/* Title - Clickable */}
-              <Link href={mediaDetailLink}>
-                <p className="text-gray-900 text-sm font-semibold line-clamp-1 mb-1 hover:text-purple-600 cursor-pointer transition-colors">
-                  {item.mediaTitle}
-                </p>
-              </Link>
+              {/* Title */}
+              <p className="text-gray-900 text-sm font-semibold line-clamp-1 mb-1">
+                {item.mediaTitle}
+              </p>
               
               {/* Rating if exists */}
               {item.rating && item.rating > 0 && (
@@ -240,17 +244,14 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
                 </div>
               )}
               
-              {/* Review snippet - clickable to expand */}
+              {/* Review snippet */}
               {item.review && (
-                <div 
-                  className="cursor-pointer"
-                  onClick={() => setExpandedReview(isExpanded ? null : item.id)}
-                >
+                <div>
                   <p className={`text-xs text-gray-600 ${isExpanded ? '' : 'line-clamp-2'}`}>
                     "{item.review}"
                   </p>
                   {item.review.length > 80 && !isExpanded && (
-                    <span className="text-[10px] text-purple-500 font-medium">Read more</span>
+                    <span className="text-[10px] text-purple-500 font-medium">Tap to see more</span>
                   )}
                 </div>
               )}
@@ -264,14 +265,14 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
                   {!hasReacted ? (
                     <>
                       <button
-                        onClick={() => handleReaction(item.id, 'agree')}
+                        onClick={(e) => { e.stopPropagation(); handleReaction(item.id, 'agree'); }}
                         className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-green-100 transition-colors"
                         title="Great pick"
                       >
                         <ThumbsUp className="w-3 h-3 text-gray-500" />
                       </button>
                       <button
-                        onClick={() => handleReaction(item.id, 'disagree')}
+                        onClick={(e) => { e.stopPropagation(); handleReaction(item.id, 'disagree'); }}
                         className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-red-100 transition-colors"
                         title="Overrated"
                       >
@@ -284,9 +285,9 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
                     </div>
                   )}
                   <button
-                    onClick={() => {/* TODO: Open add to list modal */}}
+                    onClick={(e) => { e.stopPropagation(); setSelectedPost(item); }}
                     className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-purple-100 transition-colors"
-                    title="Add to list"
+                    title="Comment & more"
                   >
                     <Plus className="w-3 h-3 text-gray-500" />
                   </button>
@@ -496,6 +497,28 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
       >
         {pages.map((pageItems, pageIndex) => renderPage(pageItems, pageIndex))}
       </div>
+
+      {selectedPost && (
+        <PostDetailSheet
+          isOpen={!!selectedPost}
+          onClose={() => setSelectedPost(null)}
+          post={{
+            id: selectedPost.id,
+            userId: selectedPost.userId,
+            username: selectedPost.username,
+            displayName: selectedPost.displayName,
+            avatar: selectedPost.avatar,
+            mediaTitle: selectedPost.mediaTitle || '',
+            mediaType: selectedPost.mediaType,
+            mediaImage: selectedPost.mediaImage,
+            mediaExternalId: selectedPost.mediaExternalId,
+            mediaExternalSource: selectedPost.mediaExternalSource,
+            rating: selectedPost.rating,
+            review: selectedPost.review,
+            timestamp: selectedPost.timestamp
+          }}
+        />
+      )}
     </div>
   );
 }
