@@ -385,11 +385,12 @@ export default function AwardsPredictions() {
       return response.data;
     },
     onSuccess: (data) => {
+      console.log('✅ Pick saved successfully:', data);
       queryClient.invalidateQueries({ queryKey: ['awards-picks'] });
-      // Visual feedback is shown inline - no toasts needed
+      queryClient.invalidateQueries({ queryKey: ['awards-vote-distribution'] });
     },
     onError: (error: Error) => {
-      console.error('Pick error:', error.message);
+      console.error('❌ Pick error:', error.message);
     }
   });
 
