@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ChevronRight, ChevronLeft, Star, Heart, MessageCircle, Plus, User, Send, Loader2 } from "lucide-react";
+import { ChevronRight, ChevronLeft, Star, Heart, MessageCircle, Plus, User, Send, Loader2, X } from "lucide-react";
 import { Link } from "wouter";
 import { QuickAddListSheet } from "./quick-add-list-sheet";
 import { useAuth } from "@/lib/auth";
@@ -66,6 +66,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
   const [showQuickRate, setShowQuickRate] = useState(false);
   const [hoveredStar, setHoveredStar] = useState(0);
   const [submittingRating, setSubmittingRating] = useState(false);
+  const [userRating, setUserRating] = useState<number | null>(null);
   
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
@@ -74,6 +75,8 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
     setImageLoaded(false);
     setShowComments(false);
     setComments([]);
+    setShowQuickRate(false);
+    setUserRating(null);
   }, [currentIndex]);
 
   if (!posts || posts.length === 0) return null;
@@ -274,7 +277,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
         })
       });
       if (response.ok) {
-        toast({ title: `Rated "${media.title}" ${rating} stars and added to Finished!` });
+        setUserRating(rating);
         setShowQuickRate(false);
         setHoveredStar(0);
       }
@@ -351,17 +354,63 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 >
                   <Plus size={16} className="text-gray-400 group-hover:text-purple-500 transition-colors" />
                 </button>
-                {session && !showQuickRate && (
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowQuickRate(true);
-                    }}
-                    className="group"
-                    title="Rate this"
-                  >
-                    <Star size={16} className="text-gray-400 group-hover:text-yellow-400 transition-colors" />
-                  </button>
+                {session && (
+                  userRating ? (
+                    <div className="flex items-center gap-0.5">
+                      <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                      <span className="text-xs text-yellow-600 font-medium">{userRating}</span>
+                    </div>
+                  ) : showQuickRate ? (
+                    <div className="flex items-center gap-0.5">
+                      {submittingRating ? (
+                        <Loader2 className="animate-spin text-purple-500" size={14} />
+                      ) : (
+                        <>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                submitQuickRating(star);
+                              }}
+                              onMouseEnter={() => setHoveredStar(star)}
+                              onMouseLeave={() => setHoveredStar(0)}
+                              className="p-0"
+                            >
+                              <Star
+                                size={14}
+                                className={`transition-colors ${
+                                  star <= hoveredStar 
+                                    ? 'text-yellow-400 fill-yellow-400' 
+                                    : 'text-gray-300 hover:text-yellow-300'
+                                }`}
+                              />
+                            </button>
+                          ))}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowQuickRate(false);
+                            }}
+                            className="ml-0.5 text-gray-400 hover:text-gray-600"
+                          >
+                            <X size={12} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowQuickRate(true);
+                      }}
+                      className="group"
+                      title="Rate this"
+                    >
+                      <Star size={16} className="text-gray-400 group-hover:text-yellow-400 transition-colors" />
+                    </button>
+                  )
                 )}
               </div>
             </div>
@@ -406,48 +455,6 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
               {currentPost.rating && (
                 <div className="mb-1">
                   {renderStars(currentPost.rating)}
-                </div>
-              )}
-
-              {/* Quick Rate expanded */}
-              {showQuickRate && (
-                <div className="flex items-center gap-1 mb-1 bg-purple-50 rounded-lg p-1.5">
-                  {submittingRating ? (
-                    <Loader2 className="animate-spin text-purple-500" size={14} />
-                  ) : (
-                    <>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            submitQuickRating(star);
-                          }}
-                          onMouseEnter={() => setHoveredStar(star)}
-                          onMouseLeave={() => setHoveredStar(0)}
-                          className="p-0.5"
-                        >
-                          <Star
-                            size={18}
-                            className={`transition-colors ${
-                              star <= hoveredStar 
-                                ? 'text-yellow-400 fill-yellow-400' 
-                                : 'text-gray-300 hover:text-yellow-300'
-                            }`}
-                          />
-                        </button>
-                      ))}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowQuickRate(false);
-                        }}
-                        className="ml-1 text-xs text-gray-400 hover:text-gray-600"
-                      >
-                        ✕
-                      </button>
-                    </>
-                  )}
                 </div>
               )}
 
