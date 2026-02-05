@@ -716,14 +716,7 @@ export default function AwardsPredictions() {
               )}
 
               <div className="grid grid-cols-1 gap-3">
-                {[...category.nominees]
-                  .sort((a, b) => {
-                    // Put picked nominee at top
-                    if (userPickId === a.id) return -1;
-                    if (userPickId === b.id) return 1;
-                    return 0;
-                  })
-                  .map(nominee => {
+                {category.nominees.map(nominee => {
                   const isPicked = userPickId === nominee.id;
                   const isWinner = event.status === 'completed' && category.winner_nominee_id === nominee.id;
                   const userWasCorrect = event.status === 'completed' && userPickId === category.winner_nominee_id;
