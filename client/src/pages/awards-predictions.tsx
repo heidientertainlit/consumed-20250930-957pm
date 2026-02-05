@@ -266,37 +266,80 @@ export default function AwardsPredictions() {
     enabled: !!event?.id,
   });
 
-  // Fetch vote distribution per nominee (for showing percentages)
-  const { data: voteDistribution } = useQuery<Record<string, { count: number; total: number }>>({
-    queryKey: ['awards-vote-distribution', event?.id],
+  // Fetch vote distribution per nominee (for showing percentages and friend picks)
+  interface VoteData { 
+    count: number; 
+    total: number; 
+    friends: { id: string; name: string; avatar: string | null }[];
+  }
+  const { data: voteDistribution } = useQuery<Record<string, VoteData>>({
+    queryKey: ['awards-vote-distribution', event?.id, userId],
     queryFn: async () => {
       if (!event?.id) return {};
       
       const categoryIds = event.categories.map(c => c.id);
       
-      // Get all picks for this event
+      // Get all picks for this event with user info
       const { data: picksData, error } = await supabase
         .from('awards_picks')
-        .select('nominee_id, category_id')
+        .select('nominee_id, category_id, user_id')
         .in('category_id', categoryIds);
       
       if (error) throw error;
       
+      // Get friend IDs if logged in
+      let friendIds: string[] = [];
+      if (userId) {
+        const { data: friendsData } = await supabase
+          .from('friends')
+          .select('friend_id')
+          .eq('user_id', userId)
+          .eq('status', 'accepted');
+        friendIds = (friendsData || []).map(f => f.friend_id);
+      }
+      
+      // Get friend user info
+      let friendUsers: Record<string, { name: string; avatar: string | null }> = {};
+      if (friendIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, display_name, user_name, avatar')
+          .in('id', friendIds);
+        (usersData || []).forEach(u => {
+          friendUsers[u.id] = { name: u.display_name || u.user_name || 'Friend', avatar: u.avatar };
+        });
+      }
+      
       // Count votes per nominee and total per category
       const categoryTotals: Record<string, number> = {};
       const nomineeVotes: Record<string, number> = {};
+      const nomineeFriends: Record<string, { id: string; name: string; avatar: string | null }[]> = {};
       
       (picksData || []).forEach(pick => {
         categoryTotals[pick.category_id] = (categoryTotals[pick.category_id] || 0) + 1;
         nomineeVotes[pick.nominee_id] = (nomineeVotes[pick.nominee_id] || 0) + 1;
+        
+        // Track friend picks
+        if (friendIds.includes(pick.user_id) && friendUsers[pick.user_id]) {
+          if (!nomineeFriends[pick.nominee_id]) nomineeFriends[pick.nominee_id] = [];
+          nomineeFriends[pick.nominee_id].push({
+            id: pick.user_id,
+            name: friendUsers[pick.user_id].name,
+            avatar: friendUsers[pick.user_id].avatar
+          });
+        }
       });
       
-      // Build result: nominee_id -> { count, total for its category }
-      const result: Record<string, { count: number; total: number }> = {};
+      // Build result
+      const result: Record<string, VoteData> = {};
       event.categories.forEach(cat => {
         const total = categoryTotals[cat.id] || 0;
         cat.nominees.forEach(nom => {
-          result[nom.id] = { count: nomineeVotes[nom.id] || 0, total };
+          result[nom.id] = { 
+            count: nomineeVotes[nom.id] || 0, 
+            total,
+            friends: nomineeFriends[nom.id] || []
+          };
         });
       });
       
@@ -744,6 +787,34 @@ export default function AwardsPredictions() {
                       </div>
                       
                       <div className="flex items-center gap-2 flex-shrink-0">
+                        {/* Friend avatars who picked this */}
+                        {(() => {
+                          const friendsPicked = voteDistribution?.[nominee.id]?.friends || [];
+                          if (friendsPicked.length === 0) return null;
+                          return (
+                            <div className="flex -space-x-1" title={friendsPicked.map(f => f.name).join(', ')}>
+                              {friendsPicked.slice(0, 3).map((friend, i) => (
+                                <div 
+                                  key={friend.id} 
+                                  className="w-5 h-5 rounded-full bg-purple-100 border border-white flex items-center justify-center overflow-hidden"
+                                  style={{ zIndex: 3 - i }}
+                                >
+                                  {friend.avatar ? (
+                                    <img src={friend.avatar} alt={friend.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-[8px] text-purple-600 font-medium">{friend.name.charAt(0).toUpperCase()}</span>
+                                  )}
+                                </div>
+                              ))}
+                              {friendsPicked.length > 3 && (
+                                <div className="w-5 h-5 rounded-full bg-gray-200 border border-white flex items-center justify-center text-[8px] text-gray-600">
+                                  +{friendsPicked.length - 3}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                        
                         {/* Vote percentage badge */}
                         {voteDistribution && voteDistribution[nominee.id]?.total > 0 && (
                           <span className={`text-xs px-2 py-0.5 rounded-full ${isPicked ? 'bg-purple-200 text-purple-700' : 'bg-gray-100 text-gray-500'}`}>
