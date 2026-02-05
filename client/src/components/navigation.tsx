@@ -487,24 +487,24 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                 className="absolute inset-0 w-full h-full" 
                 viewBox="0 0 40 40"
               >
-                {/* Left arc - smooth rounded parenthesis */}
+                {/* Left arc - wide circular curve like a parenthesis */}
                 <path 
-                  d="M 12 6 Q 4 20 12 34" 
+                  d="M 14 4 C 2 12 2 28 14 36" 
                   fill="none" 
                   stroke="#7C6FEA" 
                   strokeWidth="2" 
                   strokeLinecap="round"
                 />
-                {/* Right arc - smooth rounded parenthesis */}
+                {/* Right arc - wide circular curve like a parenthesis */}
                 <path 
-                  d="M 28 6 Q 36 20 28 34" 
+                  d="M 26 4 C 38 12 38 28 26 36" 
                   fill="none" 
                   stroke="#7C6FEA" 
                   strokeWidth="2" 
                   strokeLinecap="round"
                 />
               </svg>
-              <Plus className="text-white/90 relative z-10" size={18} strokeWidth={2} />
+              <Plus className="text-white/90 relative z-10" size={16} strokeWidth={1.5} />
             </div>
             <span className="text-xs font-medium text-white -mt-1">Add</span>
           </Link>

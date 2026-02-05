@@ -227,7 +227,6 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search movies, shows..."
                 className="w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-purple-400"
-                autoFocus
               />
             </div>
 
@@ -323,7 +322,6 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
               placeholder="What's your take? No spoilers without warning..."
               className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-purple-400 resize-none"
               rows={3}
-              autoFocus
             />
 
             <div className="flex justify-end mt-3">
