@@ -224,6 +224,41 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
     setSubmittingRating(true);
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      
+      // First, add to Finished list (marks as consumed)
+      try {
+        // Get user's Finished list
+        const listsResponse = await fetch(`${supabaseUrl}/functions/v1/get-user-lists-with-media`, {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        });
+        if (listsResponse.ok) {
+          const listsData = await listsResponse.json();
+          const finishedList = listsData.lists?.find((l: any) => 
+            l.title?.toLowerCase().includes('finished') || l.name?.toLowerCase().includes('finished')
+          );
+          if (finishedList) {
+            await fetch(`${supabaseUrl}/functions/v1/add-media-to-list`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                list_id: finishedList.id,
+                media_title: media.title,
+                media_type: media.mediaType || 'movie',
+                media_image_url: media.imageUrl || '',
+                media_external_id: media.externalId,
+                media_external_source: media.externalSource || 'tmdb',
+              })
+            });
+          }
+        }
+      } catch (listErr) {
+        console.log('Could not add to finished list:', listErr);
+      }
+
+      // Then submit the rating
       const response = await fetch(`${supabaseUrl}/functions/v1/rate-media`, {
         method: 'POST',
         headers: {
@@ -239,7 +274,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
         })
       });
       if (response.ok) {
-        toast({ title: `Rated "${media.title}" ${rating} stars!` });
+        toast({ title: `Rated "${media.title}" ${rating} stars and added to Finished!` });
         setShowQuickRate(false);
         setHoveredStar(0);
       }
