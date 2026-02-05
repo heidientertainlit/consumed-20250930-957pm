@@ -14,40 +14,48 @@ function getFallbackImageUrl(externalId?: string, externalSource?: string): stri
   return null;
 }
 
-function useSpotifyImage(externalId?: string, externalSource?: string, existingImageUrl?: string) {
+function useDynamicImage(externalId?: string, externalSource?: string, existingImageUrl?: string, title?: string) {
   const [imageUrl, setImageUrl] = useState<string | null>(existingImageUrl || null);
   
   useEffect(() => {
-    if (existingImageUrl) {
+    if (existingImageUrl && existingImageUrl.startsWith('http')) {
       setImageUrl(existingImageUrl);
       return;
     }
     
-    if (externalSource !== 'spotify' || !externalId) return;
+    if (!externalSource || !title) return;
     
-    const fetchSpotifyImage = async () => {
-      // Try episode first, then show, then track
-      const types = ['episode', 'show', 'track'];
-      
-      for (const type of types) {
-        try {
-          const oembedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/${type}/${externalId}`;
-          const response = await fetch(oembedUrl, { mode: 'cors' });
-          if (response.ok) {
-            const data = await response.json();
-            if (data.thumbnail_url) {
-              setImageUrl(data.thumbnail_url);
-              return;
-            }
+    const fetchImage = async () => {
+      // Use our media-search edge function to get the image
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        
+        // Determine media type for search
+        let mediaType = 'all';
+        if (externalSource === 'spotify') mediaType = 'podcast';
+        else if (externalSource === 'googlebooks' || externalSource === 'openlibrary') mediaType = 'book';
+        else if (externalSource === 'tmdb') mediaType = 'movie';
+        
+        const response = await fetch(
+          `${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(title)}&type=${mediaType}&limit=1`,
+          { headers: { 'Authorization': `Bearer ${anonKey}` } }
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          const result = data.results?.[0];
+          if (result?.poster_url || result?.image) {
+            setImageUrl(result.poster_url || result.image);
           }
-        } catch (e) {
-          // Try next type
         }
+      } catch (e) {
+        // Silent fail
       }
     };
     
-    fetchSpotifyImage();
-  }, [externalId, externalSource, existingImageUrl]);
+    fetchImage();
+  }, [externalId, externalSource, existingImageUrl, title]);
   
   return imageUrl;
 }
@@ -131,17 +139,18 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
   const currentPost = posts[currentIndex];
   const mediaItem = currentPost?.mediaItems?.[0];
   
-  // Fetch Spotify images dynamically if missing
-  const spotifyImageUrl = useSpotifyImage(
+  // Fetch images dynamically if missing (for Spotify, books, etc.)
+  const dynamicImageUrl = useDynamicImage(
     mediaItem?.externalId, 
     mediaItem?.externalSource, 
-    mediaItem?.imageUrl
+    mediaItem?.imageUrl,
+    mediaItem?.title
   );
   
   // Create enhanced media object with dynamically fetched image
   const media = mediaItem ? {
     ...mediaItem,
-    imageUrl: spotifyImageUrl || mediaItem.imageUrl
+    imageUrl: dynamicImageUrl || mediaItem.imageUrl
   } : undefined;
 
   const [swipeOffset, setSwipeOffset] = useState(0);
