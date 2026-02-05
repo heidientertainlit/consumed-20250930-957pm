@@ -107,6 +107,16 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
   const currentPost = posts[currentIndex];
   const mediaItem = currentPost?.mediaItems?.[0];
   
+  // Debug: log what data we're receiving
+  if (mediaItem && !mediaItem.imageUrl) {
+    console.log('📷 Rating card media item missing imageUrl:', {
+      title: mediaItem.title,
+      externalId: mediaItem.externalId,
+      externalSource: mediaItem.externalSource,
+      allFields: Object.keys(mediaItem)
+    });
+  }
+  
   // Get image URL with fallbacks
   const resolvedImageUrl = getImageUrl(
     mediaItem?.imageUrl, 
