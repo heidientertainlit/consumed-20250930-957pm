@@ -465,31 +465,30 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] z-50 pb-safe">
-        <div className="flex justify-around items-center h-18 px-2 pt-3 pb-4">
+        <div className="flex justify-around items-center h-16 px-2 pt-4 pb-3">
           {/* Home (main game feed) */}
           <Link
             href="/activity"
-            className={`flex flex-col items-center gap-1 py-2 px-6 rounded-xl transition-colors ${location === "/activity" || location === "/" ? "bg-white/15" : ""}`}
+            className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/activity" || location === "/" ? "bg-white/15" : ""}`}
             data-testid="nav-home"
           >
             <Home className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Home</span>
           </Link>
 
           {/* Add - Opposing arcs design with gradient purple */}
           <Link
             href="/add"
-            className={`flex flex-col items-center gap-1 py-2 px-6 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
+            className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add"
           >
-            <div className="relative w-12 h-10 flex items-center justify-center -mt-3">
+            <div className="relative w-10 h-8 flex items-center justify-center">
               <svg 
                 className="absolute inset-0 w-full h-full" 
-                viewBox="0 0 48 40"
+                viewBox="0 0 40 32"
               >
                 {/* Left arc - circular arc using A command */}
                 <path 
-                  d="M 14 4 A 18 18 0 0 0 14 36" 
+                  d="M 12 2 A 14 14 0 0 0 12 30" 
                   fill="none" 
                   stroke="#7C6FEA" 
                   strokeWidth="2" 
@@ -497,7 +496,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                 />
                 {/* Right arc - circular arc using A command */}
                 <path 
-                  d="M 34 4 A 18 18 0 0 1 34 36" 
+                  d="M 28 2 A 14 14 0 0 1 28 30" 
                   fill="none" 
                   stroke="#7C6FEA" 
                   strokeWidth="2" 
@@ -506,17 +505,15 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
               </svg>
               <Plus className="text-white/90 relative z-10" size={14} strokeWidth={1.5} />
             </div>
-            <span className="text-xs font-medium text-white -mt-1">Add</span>
           </Link>
 
           {/* Leaderboard */}
           <Link
             href="/leaderboard"
-            className={`flex flex-col items-center gap-1 py-2 px-6 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
+            className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
             data-testid="nav-leaderboard"
           >
             <Trophy className="text-white" size={24} />
-            <span className="text-xs font-medium text-white">Leaders</span>
           </Link>
         </div>
       </nav>
