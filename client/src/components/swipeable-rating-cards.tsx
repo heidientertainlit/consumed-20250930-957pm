@@ -39,6 +39,7 @@ interface RatingPost {
   mediaItems?: Array<{
     id: string;
     title: string;
+    creator?: string;
     imageUrl?: string;
     mediaType?: string;
     externalId?: string;
@@ -431,34 +432,34 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
             <div className="shrink-0 flex flex-col">
               <Link href={getMediaLink() || '#'}>
                 {hasValidImage ? (
-                  <div className="relative w-24 h-36">
+                  <div className="relative w-28 h-28 rounded-l-2xl overflow-hidden">
                     {!imageLoaded && (
-                      <div className="absolute inset-0 bg-gradient-to-br from-purple-200 to-purple-100 animate-pulse rounded-l-2xl" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-200 to-purple-100 animate-pulse" />
                     )}
                     <img 
                       src={media.imageUrl} 
                       alt={media.title || ''} 
-                      className={`w-24 h-36 object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                      className={`w-28 h-28 object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                       onLoad={() => setImageLoaded(true)}
                       loading="eager"
                     />
                   </div>
                 ) : getFallbackImageUrl(media.externalId, media.externalSource) ? (
-                  <div className="relative w-24 h-36">
+                  <div className="relative w-28 h-28 rounded-l-2xl overflow-hidden">
                     {!imageLoaded && (
-                      <div className="absolute inset-0 bg-gradient-to-br from-purple-200 to-purple-100 animate-pulse rounded-l-2xl" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-200 to-purple-100 animate-pulse" />
                     )}
                     <img 
                       src={getFallbackImageUrl(media.externalId, media.externalSource)!} 
                       alt={media.title || ''} 
-                      className={`w-24 h-36 object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                      className={`w-28 h-28 object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                       onLoad={() => setImageLoaded(true)}
                       onError={() => setImageLoaded(true)}
                       loading="eager"
                     />
                   </div>
                 ) : (
-                  <div className="w-24 h-36 bg-gradient-to-br from-purple-200 to-purple-100 flex items-center justify-center">
+                  <div className="w-28 h-28 bg-gradient-to-br from-purple-200 to-purple-100 flex items-center justify-center rounded-l-2xl">
                     <span className="text-gray-500 text-xs text-center px-2">No image</span>
                   </div>
                 )}
@@ -548,10 +549,17 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
 
               {/* Media title */}
               <Link href={getMediaLink() || '#'}>
-                <h3 className="font-medium text-gray-900 text-sm line-clamp-1 hover:text-purple-600 mb-1">
+                <h3 className="font-medium text-gray-900 text-sm line-clamp-2 hover:text-purple-600 leading-tight">
                   {media?.title || 'Unknown'}
                 </h3>
               </Link>
+              
+              {/* Creator/Author */}
+              {media?.creator && (
+                <p className="text-xs text-gray-500 truncate mb-0.5">
+                  {media.externalSource === 'spotify' ? 'by ' : ''}{media.creator}
+                </p>
+              )}
               
               {/* Rating stars */}
               {currentPost.rating && (
