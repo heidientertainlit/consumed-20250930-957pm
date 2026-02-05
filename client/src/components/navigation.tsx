@@ -482,22 +482,22 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex flex-col items-center gap-1 py-2 px-6 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add"
           >
-            <div className="relative w-10 h-10 flex items-center justify-center -mt-3">
+            <div className="relative w-12 h-10 flex items-center justify-center -mt-3">
               <svg 
                 className="absolute inset-0 w-full h-full" 
-                viewBox="0 0 40 40"
+                viewBox="0 0 48 40"
               >
-                {/* Left arc - wide circular curve like a parenthesis */}
+                {/* Left arc - very round semicircle */}
                 <path 
-                  d="M 14 4 C 2 12 2 28 14 36" 
+                  d="M 16 3 C -2 10 -2 30 16 37" 
                   fill="none" 
                   stroke="#7C6FEA" 
                   strokeWidth="2" 
                   strokeLinecap="round"
                 />
-                {/* Right arc - wide circular curve like a parenthesis */}
+                {/* Right arc - very round semicircle */}
                 <path 
-                  d="M 26 4 C 38 12 38 28 26 36" 
+                  d="M 32 3 C 50 10 50 30 32 37" 
                   fill="none" 
                   stroke="#7C6FEA" 
                   strokeWidth="2" 
