@@ -481,16 +481,16 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add"
           >
-            <div className="relative w-12 h-8 flex items-center justify-center">
+            <div className="relative w-10 h-8 flex items-center justify-center">
               {/* Left arc */}
               <svg 
-                className="absolute -left-1 top-0 h-full" 
-                width="14" 
+                className="absolute left-0 top-0" 
+                width="12" 
                 height="32" 
-                viewBox="0 0 14 32"
+                viewBox="0 0 12 32"
               >
                 <path 
-                  d="M 12 1 Q -6 16 12 31" 
+                  d="M 10 2 Q -2 16 10 30" 
                   fill="none" 
                   stroke="#7C6FEA" 
                   strokeWidth="2" 
@@ -498,16 +498,16 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                 />
               </svg>
               {/* Plus icon */}
-              <Plus className="text-white" size={16} strokeWidth={2} />
+              <Plus className="text-white" size={14} strokeWidth={1.5} />
               {/* Right arc */}
               <svg 
-                className="absolute -right-1 top-0 h-full" 
-                width="14" 
+                className="absolute right-0 top-0" 
+                width="12" 
                 height="32" 
-                viewBox="0 0 14 32"
+                viewBox="0 0 12 32"
               >
                 <path 
-                  d="M 2 1 Q 20 16 2 31" 
+                  d="M 2 2 Q 14 16 2 30" 
                   fill="none" 
                   stroke="#7C6FEA" 
                   strokeWidth="2" 
