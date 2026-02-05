@@ -11,13 +11,39 @@ function getFallbackImageUrl(externalId?: string, externalSource?: string): stri
   if (externalSource === 'googlebooks') {
     return `https://books.google.com/books/content?id=${externalId}&printsec=frontcover&img=1&zoom=1`;
   }
-  if (externalSource === 'tmdb') {
-    return null;
-  }
-  if (externalSource === 'spotify') {
-    return null;
-  }
   return null;
+}
+
+function useSpotifyImage(externalId?: string, externalSource?: string, existingImageUrl?: string) {
+  const [imageUrl, setImageUrl] = useState<string | null>(existingImageUrl || null);
+  
+  useEffect(() => {
+    if (existingImageUrl) {
+      setImageUrl(existingImageUrl);
+      return;
+    }
+    
+    if (externalSource !== 'spotify' || !externalId) return;
+    
+    const fetchSpotifyImage = async () => {
+      try {
+        const oembedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${externalId}`;
+        const response = await fetch(oembedUrl);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.thumbnail_url) {
+            setImageUrl(data.thumbnail_url);
+          }
+        }
+      } catch (e) {
+        // Silently fail - will show "No image" placeholder
+      }
+    };
+    
+    fetchSpotifyImage();
+  }, [externalId, externalSource, existingImageUrl]);
+  
+  return imageUrl;
 }
 
 interface RatingPost {
@@ -97,7 +123,20 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
   if (!posts || posts.length === 0) return null;
 
   const currentPost = posts[currentIndex];
-  const media = currentPost?.mediaItems?.[0];
+  const mediaItem = currentPost?.mediaItems?.[0];
+  
+  // Fetch Spotify images dynamically if missing
+  const spotifyImageUrl = useSpotifyImage(
+    mediaItem?.externalId, 
+    mediaItem?.externalSource, 
+    mediaItem?.imageUrl
+  );
+  
+  // Create enhanced media object with dynamically fetched image
+  const media = mediaItem ? {
+    ...mediaItem,
+    imageUrl: spotifyImageUrl || mediaItem.imageUrl
+  } : undefined;
 
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
