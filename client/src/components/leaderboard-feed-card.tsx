@@ -82,7 +82,6 @@ interface LeaderboardFeedCardProps {
 export default function LeaderboardFeedCard({ className, variant = 'trivia' }: LeaderboardFeedCardProps) {
   const config = CATEGORY_CONFIG[variant];
   const IconComponent = config.icon;
-  const [clappedUsers, setClappedUsers] = useState<Set<string>>(new Set());
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
@@ -231,33 +230,7 @@ export default function LeaderboardFeedCard({ className, variant = 'trivia' }: L
               </Link>
             )}
             
-            {!entry.isCurrentUser && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setClappedUsers(prev => {
-                    const newSet = new Set(prev);
-                    if (newSet.has(entry.userId)) {
-                      newSet.delete(entry.userId);
-                    } else {
-                      newSet.add(entry.userId);
-                    }
-                    return newSet;
-                  });
-                }}
-                className={cn(
-                  "text-sm transition-all",
-                  clappedUsers.has(entry.userId) 
-                    ? "scale-110" 
-                    : "opacity-50 hover:opacity-100"
-                )}
-              >
-                👏
-              </button>
-            )}
-            
-            <span className="text-xs font-semibold text-gray-700 min-w-[40px] text-right">
+            <span className="text-xs font-semibold text-gray-700">
               {entry.points.toLocaleString()}
             </span>
           </div>
