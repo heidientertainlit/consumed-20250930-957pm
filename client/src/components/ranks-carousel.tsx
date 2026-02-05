@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
-import { BarChart3, ChevronLeft, ChevronRight, Loader2, ArrowUp, ArrowDown, Plus, X } from 'lucide-react';
+import { BarChart3, ChevronLeft, ChevronRight, Loader2, ArrowUp, ArrowDown, Plus, X, MessageCircle, Send } from 'lucide-react';
 
 interface RankItem {
   id: string;
@@ -82,6 +82,18 @@ function VoteItem({ item, index, userVote, onVote, isVoting }: VoteItemProps) {
   );
 }
 
+interface RankComment {
+  id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  user?: {
+    display_name: string;
+    user_name: string;
+    avatar: string;
+  };
+}
+
 interface RanksCarouselProps {
   expanded?: boolean;
   offset?: number;
@@ -98,6 +110,9 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
   const [addingToRank, setAddingToRank] = useState<string | null>(null);
   const [customAddInput, setCustomAddInput] = useState('');
   const [userVotes, setUserVotes] = useState<Record<string, 'up' | 'down' | null>>({});
+  const [showComments, setShowComments] = useState<Record<string, boolean>>({});
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [rankComments, setRankComments] = useState<Record<string, RankComment[]>>({});
 
   const { data: ranks, isLoading } = useQuery({
     queryKey: ['consumed-ranks-carousel', offset],
@@ -402,6 +417,86 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
     voteMutation.mutate({ itemId, direction, rankId });
   };
 
+  const fetchComments = async (rankId: string) => {
+    const { data, error } = await supabase
+      .from('rank_comments')
+      .select(`
+        id,
+        user_id,
+        content,
+        created_at,
+        users:user_id (display_name, user_name, avatar)
+      `)
+      .eq('rank_id', rankId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    
+    if (!error && data) {
+      const formattedComments = data.map((c: any) => ({
+        id: c.id,
+        user_id: c.user_id,
+        content: c.content,
+        created_at: c.created_at,
+        user: c.users
+      }));
+      setRankComments(prev => ({ ...prev, [rankId]: formattedComments }));
+    }
+  };
+
+  const toggleComments = (rankId: string) => {
+    const newState = !showComments[rankId];
+    setShowComments(prev => ({ ...prev, [rankId]: newState }));
+    if (newState && !rankComments[rankId]) {
+      fetchComments(rankId);
+    }
+  };
+
+  const commentMutation = useMutation({
+    mutationFn: async ({ rankId, content }: { rankId: string; content: string }) => {
+      if (!user?.id) throw new Error('Must be logged in');
+      
+      const { data, error } = await supabase
+        .from('rank_comments')
+        .insert({
+          rank_id: rankId,
+          user_id: user.id,
+          content: content.trim()
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { rankId, comment: data };
+    },
+    onSuccess: ({ rankId }) => {
+      setCommentInputs(prev => ({ ...prev, [rankId]: '' }));
+      fetchComments(rankId);
+      trackEvent('rank_comment_posted', { rank_id: rankId });
+    },
+    onError: () => {
+      toast({ title: 'Failed to post comment', variant: 'destructive' });
+    }
+  });
+
+  const handlePostComment = (rankId: string) => {
+    const content = commentInputs[rankId]?.trim();
+    if (!content) return;
+    commentMutation.mutate({ rankId, content });
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d`;
+  };
+
   const addCustomItemMutation = useMutation({
     mutationFn: async ({ rankId, title }: { rankId: string; title: string }) => {
       if (!user?.id) throw new Error('Must be logged in');
@@ -553,7 +648,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                 ))}
               </div>
 
-              <div className="flex items-center gap-2 mt-3">
+              <div className="flex items-center gap-3 mt-3">
                 {rank.items.length > 5 && (
                   <button
                     onClick={() => toggleExpanded(rank.id)}
@@ -562,7 +657,70 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                     {isExpanded ? 'Show less' : `Show all ${rank.items.length}`}
                   </button>
                 )}
+                <button
+                  onClick={() => toggleComments(rank.id)}
+                  className="flex items-center gap-1 text-gray-500 hover:text-teal-600 text-sm transition-colors"
+                >
+                  <MessageCircle size={14} />
+                  <span>Debate</span>
+                </button>
               </div>
+
+              {showComments[rank.id] && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Input
+                      placeholder="Share your take..."
+                      value={commentInputs[rank.id] || ''}
+                      onChange={(e) => setCommentInputs(prev => ({ ...prev, [rank.id]: e.target.value }))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handlePostComment(rank.id);
+                        }
+                      }}
+                      className="flex-1 h-8 text-sm rounded-full bg-gray-50 border-gray-200"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => handlePostComment(rank.id)}
+                      disabled={!commentInputs[rank.id]?.trim() || commentMutation.isPending}
+                      className="h-8 w-8 p-0 rounded-full bg-teal-500 hover:bg-teal-600"
+                    >
+                      <Send size={14} />
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {(rankComments[rank.id] || []).length === 0 ? (
+                      <p className="text-gray-400 text-xs text-center py-2">No comments yet. Be the first to debate!</p>
+                    ) : (
+                      (rankComments[rank.id] || []).map((comment) => (
+                        <div key={comment.id} className="flex gap-2">
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center flex-shrink-0">
+                            {comment.user?.avatar ? (
+                              <img src={comment.user.avatar} alt="" className="w-6 h-6 rounded-full object-cover" />
+                            ) : (
+                              <span className="text-white text-[10px] font-medium">
+                                {(comment.user?.display_name || comment.user?.user_name || 'U')[0].toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-xs font-medium text-gray-900 truncate">
+                                {comment.user?.display_name || comment.user?.user_name || 'User'}
+                              </span>
+                              <span className="text-[10px] text-gray-400">{formatTimeAgo(comment.created_at)}</span>
+                            </div>
+                            <p className="text-xs text-gray-700 break-words">{comment.content}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
