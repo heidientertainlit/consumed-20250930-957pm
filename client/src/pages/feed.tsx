@@ -2988,13 +2988,13 @@ export default function Feed() {
             </div>
           ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'challenges'].includes(selectedFilter) ? (
             <div className="space-y-4 pb-24">
-              {/* Feed Filter Pills - Media Type + Game Types in one row */}
+              {/* Feed Filter Pills - Media Types shown by default, Play types behind Filter */}
               <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-2">
-                {/* Media Type Toggle - visually distinct */}
+                {/* Play Type Toggle */}
                 <button
                   onClick={() => setShowCategoryPills(!showCategoryPills)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                    selectedCategory
+                    selectedFilter !== 'All' && selectedFilter !== 'all'
                       ? 'bg-purple-600 text-white shadow-sm'
                       : showCategoryPills
                         ? 'bg-gray-200 text-gray-700 border border-gray-300'
@@ -3002,12 +3002,12 @@ export default function Feed() {
                   }`}
                 >
                   <SlidersHorizontal size={14} />
-                  <span>{selectedCategory ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1) : 'Filter'}</span>
-                  {selectedCategory && (
+                  <span>{selectedFilter !== 'All' && selectedFilter !== 'all' ? selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1) : 'Filter'}</span>
+                  {selectedFilter !== 'All' && selectedFilter !== 'all' && (
                     <X 
                       size={12} 
                       className="ml-1 hover:text-white/80"
-                      onClick={(e) => { e.stopPropagation(); setSelectedCategory(null); setShowCategoryPills(false); }}
+                      onClick={(e) => { e.stopPropagation(); setSelectedFilter('All'); setShowCategoryPills(false); }}
                     />
                   )}
                 </button>
@@ -3015,61 +3015,60 @@ export default function Feed() {
                 {/* Divider */}
                 <div className="w-px h-6 bg-gray-200 flex-shrink-0" />
 
-                {/* Game Type Pills */}
+                {/* Media Type Pills - Always visible */}
                 {[
-                  { id: 'all', label: 'All', Icon: Sparkles },
-                  { id: 'trivia', label: 'Trivia', Icon: Brain },
-                  { id: 'challenges', label: 'Challenges', Icon: Trophy },
-                  { id: 'polls', label: 'Polls', Icon: BarChart },
-                  { id: 'predictions', label: 'Predictions', Icon: Target },
-                  { id: 'commentary', label: 'Commentary', Icon: Flame },
-                ].map((filter) => (
+                  { id: null, label: 'All' },
+                  { id: 'movies', label: 'Movies' },
+                  { id: 'tv', label: 'TV' },
+                  { id: 'music', label: 'Music' },
+                  { id: 'books', label: 'Books' },
+                  { id: 'sports', label: 'Sports' },
+                  { id: 'podcasts', label: 'Podcasts' },
+                ].map((cat) => (
                   <button
-                    key={filter.id}
+                    key={cat.id || 'all'}
                     onClick={() => {
-                      setSelectedFilter(filter.id === selectedFilter ? 'All' : filter.id);
-                      if (filter.id === 'all' || filter.id === selectedFilter) {
-                        setSelectedCategory(null);
-                      }
+                      setSelectedCategory(cat.id === selectedCategory ? null : cat.id);
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                      (filter.id === 'all' && selectedFilter === 'All') || filter.id === selectedFilter
-                        ? 'bg-gradient-to-r from-indigo-600 via-purple-700 to-blue-700 text-white shadow-sm'
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                      cat.id === selectedCategory
+                        ? 'bg-purple-100 text-purple-700 border border-purple-300'
                         : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                     }`}
-                    data-testid={`feed-filter-${filter.id}`}
                   >
-                    <filter.Icon size={14} />
-                    <span>{filter.label}</span>
+                    {cat.label}
                   </button>
                 ))}
               </div>
 
-              {/* Category Pills Row - Shown when toggled */}
+              {/* Play Type Pills Row - Shown when Filter toggled */}
               {showCategoryPills && (
                 <div className="flex items-center gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide mb-2">
                   {[
-                    { id: null, label: 'All' },
-                    { id: 'movies', label: 'Movies' },
-                    { id: 'tv', label: 'TV' },
-                    { id: 'music', label: 'Music' },
-                    { id: 'books', label: 'Books' },
-                    { id: 'sports', label: 'Sports' },
-                    { id: 'podcasts', label: 'Podcasts' },
-                  ].map((cat) => (
+                    { id: 'all', label: 'All', Icon: Sparkles },
+                    { id: 'trivia', label: 'Trivia', Icon: Brain },
+                    { id: 'challenges', label: 'Challenges', Icon: Trophy },
+                    { id: 'polls', label: 'Polls', Icon: BarChart },
+                    { id: 'predictions', label: 'Predictions', Icon: Target },
+                    { id: 'commentary', label: 'Commentary', Icon: Flame },
+                  ].map((filter) => (
                     <button
-                      key={cat.id || 'all'}
+                      key={filter.id}
                       onClick={() => {
-                        setSelectedCategory(cat.id);
-                        if (cat.id === null) setShowCategoryPills(false);
+                        setSelectedFilter(filter.id === selectedFilter ? 'All' : filter.id);
+                        if (filter.id === 'all' || filter.id === selectedFilter) {
+                          setShowCategoryPills(false);
+                        }
                       }}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                        cat.id === selectedCategory
-                          ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                        (filter.id === 'all' && selectedFilter === 'All') || filter.id === selectedFilter
+                          ? 'bg-gradient-to-r from-indigo-600 via-purple-700 to-blue-700 text-white shadow-sm'
                           : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
                       }`}
+                      data-testid={`feed-filter-${filter.id}`}
                     >
-                      {cat.label}
+                      <filter.Icon size={14} />
+                      <span>{filter.label}</span>
                     </button>
                   ))}
                 </div>
