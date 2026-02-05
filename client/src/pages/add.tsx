@@ -131,7 +131,7 @@ export default function Search() {
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isFullAddModalOpen, setIsFullAddModalOpen] = useState(false);
   const [fullAddMedia, setFullAddMedia] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'dna' | 'lists' | 'history' | 'compare'>('dna');
+  const [activeTab, setActiveTab] = useState<'dna' | 'lists' | 'history' | 'compare'>('lists');
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
   const [isComparing, setIsComparing] = useState(false);
   const [comparisonResult, setComparisonResult] = useState<any>(null);
