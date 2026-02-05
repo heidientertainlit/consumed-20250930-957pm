@@ -482,36 +482,29 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex flex-col items-center gap-1 py-2 px-6 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add"
           >
-            <div className="relative w-12 h-12 flex items-center justify-center -mt-4">
-              {/* Left arc */}
+            <div className="relative w-10 h-10 flex items-center justify-center -mt-3">
               <svg 
                 className="absolute inset-0 w-full h-full" 
-                viewBox="0 0 48 48"
+                viewBox="0 0 40 40"
               >
-                <defs>
-                  <linearGradient id="arcGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#8B5CF6" />
-                    <stop offset="100%" stopColor="#6366F1" />
-                  </linearGradient>
-                </defs>
-                {/* Left arc - opening parenthesis */}
+                {/* Left arc - smooth rounded parenthesis */}
                 <path 
-                  d="M 14 8 C 6 16 6 32 14 40" 
+                  d="M 12 6 Q 4 20 12 34" 
                   fill="none" 
-                  stroke="url(#arcGradient)" 
-                  strokeWidth="3" 
+                  stroke="#7C6FEA" 
+                  strokeWidth="2" 
                   strokeLinecap="round"
                 />
-                {/* Right arc - closing parenthesis */}
+                {/* Right arc - smooth rounded parenthesis */}
                 <path 
-                  d="M 34 8 C 42 16 42 32 34 40" 
+                  d="M 28 6 Q 36 20 28 34" 
                   fill="none" 
-                  stroke="url(#arcGradient)" 
-                  strokeWidth="3" 
+                  stroke="#7C6FEA" 
+                  strokeWidth="2" 
                   strokeLinecap="round"
                 />
               </svg>
-              <Plus className="text-white relative z-10" size={24} strokeWidth={2.5} />
+              <Plus className="text-white/90 relative z-10" size={18} strokeWidth={2} />
             </div>
             <span className="text-xs font-medium text-white -mt-1">Add</span>
           </Link>
