@@ -90,9 +90,59 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
   const [hoveredStar, setHoveredStar] = useState(0);
   const [submittingRating, setSubmittingRating] = useState(false);
   const [userRating, setUserRating] = useState<number | null>(null);
+  const [fetchedImages, setFetchedImages] = useState<Record<string, string>>({});
   
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
+
+  // Fetch missing images dynamically via media-search
+  useEffect(() => {
+    const fetchMissingImages = async () => {
+      for (const post of posts) {
+        const media = post.mediaItems?.[0];
+        if (!media) continue;
+        
+        // Skip if already has valid image or already fetched
+        const hasValidImage = media.imageUrl && media.imageUrl.startsWith('http');
+        if (hasValidImage || fetchedImages[post.id]) continue;
+        
+        // Skip if no title to search with
+        if (!media.title) continue;
+        
+        try {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+          const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+          
+          // Determine media type for search
+          let mediaType = 'all';
+          if (media.externalSource === 'spotify') mediaType = 'podcast';
+          else if (media.externalSource === 'googlebooks' || media.externalSource === 'openlibrary') mediaType = 'book';
+          else if (media.externalSource === 'tmdb') mediaType = 'movie';
+          
+          const searchTitle = media.title.slice(0, 50);
+          const response = await fetch(
+            `${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(searchTitle)}&type=${mediaType}&limit=1`,
+            { headers: { 'Authorization': `Bearer ${anonKey}` } }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            const result = data.results?.[0];
+            if (result?.poster_url || result?.image) {
+              setFetchedImages(prev => ({
+                ...prev,
+                [post.id]: result.poster_url || result.image
+              }));
+            }
+          }
+        } catch (e) {
+          // Silent fail - image will just not show
+        }
+      }
+    };
+    
+    fetchMissingImages();
+  }, [posts]);
 
   useEffect(() => {
     setImageLoaded(false);
@@ -117,8 +167,9 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
     });
   }
   
-  // Get image URL with fallbacks
-  const resolvedImageUrl = getImageUrl(
+  // Get image URL with fallbacks - check dynamically fetched images first
+  const dynamicImage = fetchedImages[currentPost?.id || ''];
+  const resolvedImageUrl = dynamicImage || getImageUrl(
     mediaItem?.imageUrl, 
     mediaItem?.externalId, 
     mediaItem?.externalSource
