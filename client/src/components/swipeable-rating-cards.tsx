@@ -91,26 +91,27 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
   const [hoveredStar, setHoveredStar] = useState(0);
   const [submittingRating, setSubmittingRating] = useState(false);
   const [userRating, setUserRating] = useState<number | null>(null);
-  const [fetchedImages, setFetchedImages] = useState<Record<string, string>>({});
+  const [fetchedData, setFetchedData] = useState<Record<string, { image?: string; creator?: string }>>({});
   
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
-  // Fetch missing images dynamically via media-search
+  // Fetch missing images and creator info dynamically via media-search
   useEffect(() => {
-    const fetchMissingImages = async () => {
+    const fetchMissingData = async () => {
       for (const post of posts) {
         const media = post.mediaItems?.[0];
         if (!media) continue;
         
         // Skip if already fetched
-        if (fetchedImages[post.id]) continue;
+        if (fetchedData[post.id]) continue;
         
         // For Spotify, always re-fetch since stored URLs may be truncated/invalid
         const isSpotify = media.externalSource === 'spotify';
         const hasValidImage = !isSpotify && media.imageUrl && media.imageUrl.startsWith('http');
+        const hasValidCreator = media.creator && !media.creator.includes('Unknown');
         
-        if (hasValidImage) continue;
+        if (hasValidImage && hasValidCreator) continue;
         if (!media.title) continue;
         
         try {
@@ -135,10 +136,13 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
           if (response.ok) {
             const data = await response.json();
             const result = data.results?.[0];
-            if (result?.poster_url || result?.image) {
-              setFetchedImages(prev => ({
+            if (result) {
+              setFetchedData(prev => ({
                 ...prev,
-                [post.id]: result.poster_url || result.image
+                [post.id]: {
+                  image: result.poster_url || result.image,
+                  creator: result.creator && !result.creator.includes('Unknown') ? result.creator : undefined
+                }
               }));
             }
           }
@@ -148,7 +152,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
       }
     };
     
-    fetchMissingImages();
+    fetchMissingData();
   }, [posts]);
 
   useEffect(() => {
@@ -174,18 +178,23 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
     });
   }
   
-  // Get image URL with fallbacks - check dynamically fetched images first
-  const dynamicImage = fetchedImages[currentPost?.id || ''];
-  const resolvedImageUrl = dynamicImage || getImageUrl(
+  // Get image URL with fallbacks - check dynamically fetched data first
+  const dynamicData = fetchedData[currentPost?.id || ''];
+  const resolvedImageUrl = dynamicData?.image || getImageUrl(
     mediaItem?.imageUrl, 
     mediaItem?.externalId, 
     mediaItem?.externalSource
   );
   
-  // Create enhanced media object with resolved image
+  // Get creator - prefer fetched creator for Spotify, otherwise use original
+  const resolvedCreator = dynamicData?.creator || 
+    (mediaItem?.creator && !mediaItem.creator.includes('Unknown') ? mediaItem.creator : undefined);
+  
+  // Create enhanced media object with resolved image and creator
   const media = mediaItem ? {
     ...mediaItem,
-    imageUrl: resolvedImageUrl || mediaItem.imageUrl
+    imageUrl: resolvedImageUrl || mediaItem.imageUrl,
+    creator: resolvedCreator || mediaItem.creator
   } : undefined;
 
   const [swipeOffset, setSwipeOffset] = useState(0);
