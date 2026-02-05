@@ -1,10 +1,10 @@
 import { useState, useRef, useMemo } from 'react';
 import { Link } from 'wouter';
-import { ChevronLeft, ChevronRight, Users, ThumbsUp, ThumbsDown, HelpCircle, BarChart3, Sparkles, Film, Tv, BookOpen, Music, Star, Plus, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ThumbsUp, ThumbsDown, HelpCircle, BarChart3, Sparkles, Film, Tv, BookOpen, Music, Star, Plus, Trash2, MessageCircle, Send, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import PostDetailSheet from './post-detail-sheet';
+import { QuickAddModal } from './quick-add-modal';
 
 const getStablePercent = (id: string, min = 40, max = 80) => {
   let hash = 0;
@@ -84,7 +84,16 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reactions, setReactions] = useState<Record<string, 'agree' | 'disagree'>>({});
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [selectedPost, setSelectedPost] = useState<FriendActivityItem | null>(null);
+  const [expandedComments, setExpandedComments] = useState<string | null>(null);
+  const [showRating, setShowRating] = useState<string | null>(null);
+  const [showAddModal, setShowAddModal] = useState<FriendActivityItem | null>(null);
+  const [comments, setComments] = useState<Record<string, any[]>>({});
+  const [loadingComments, setLoadingComments] = useState<string | null>(null);
+  const [newComment, setNewComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [submittingRating, setSubmittingRating] = useState(false);
+  const [hoveredStar, setHoveredStar] = useState(0);
+  const [userRatings, setUserRatings] = useState<Record<string, number>>({});
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -157,6 +166,76 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
     setReactions(prev => ({ ...prev, [itemId]: reaction }));
   };
 
+  const fetchComments = async (postId: string) => {
+    setLoadingComments(postId);
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .select(`id, content, created_at, user_id, users:user_id (id, user_name, display_name, avatar)`)
+        .eq('post_id', postId)
+        .order('created_at', { ascending: true })
+        .limit(10);
+      if (!error && data) {
+        setComments(prev => ({ ...prev, [postId]: data }));
+      }
+    } catch (err) {
+      console.error('Error fetching comments:', err);
+    }
+    setLoadingComments(null);
+  };
+
+  const toggleComments = (postId: string) => {
+    if (expandedComments === postId) {
+      setExpandedComments(null);
+    } else {
+      setExpandedComments(postId);
+      if (!comments[postId]) {
+        fetchComments(postId);
+      }
+    }
+  };
+
+  const submitComment = async (postId: string) => {
+    if (!newComment.trim() || !user?.id) return;
+    setSubmittingComment(true);
+    try {
+      await supabase.functions.invoke('social-feed-comments', {
+        body: { action: 'add', postId, content: newComment.trim(), userId: user.id }
+      });
+      setNewComment('');
+      fetchComments(postId);
+      toast({ title: 'Comment added!' });
+    } catch (err) {
+      toast({ title: 'Failed to add comment', variant: 'destructive' });
+    }
+    setSubmittingComment(false);
+  };
+
+  const submitRating = async (item: FriendActivityItem, rating: number) => {
+    if (!user?.id || !item.mediaExternalId) return;
+    setSubmittingRating(true);
+    try {
+      await supabase.functions.invoke('quick-add', {
+        body: {
+          userId: user.id,
+          mediaId: item.mediaExternalId,
+          mediaType: item.mediaType || 'movie',
+          mediaTitle: item.mediaTitle,
+          imageUrl: item.mediaImage,
+          externalSource: item.mediaExternalSource || 'tmdb',
+          listName: 'Finished',
+          rating: rating
+        }
+      });
+      setUserRatings(prev => ({ ...prev, [item.id]: rating }));
+      setShowRating(null);
+      toast({ title: `Rated ${rating} stars!` });
+    } catch (err) {
+      toast({ title: 'Failed to rate', variant: 'destructive' });
+    }
+    setSubmittingRating(false);
+  };
+
   if (!items || items.length === 0) return null;
 
   // Create pages array
@@ -204,14 +283,8 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
               )}
             </Link>
             
-            {/* Right: Content - Clickable to open bottom sheet */}
-            <div 
-              className="flex-1 min-w-0 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedPost(item);
-              }}
-            >
+            {/* Right: Content */}
+            <div className="flex-1 min-w-0">
               {/* Header row with user and delete */}
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1.5">
@@ -285,14 +358,111 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
                     </div>
                   )}
                   <button
-                    onClick={(e) => { e.stopPropagation(); setSelectedPost(item); }}
+                    onClick={(e) => { e.stopPropagation(); setShowAddModal(item); }}
                     className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-purple-100 transition-colors"
-                    title="Comment & more"
+                    title="Add to list"
                   >
                     <Plus className="w-3 h-3 text-gray-500" />
                   </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowRating(showRating === item.id ? null : item.id); }}
+                    className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-yellow-100 transition-colors"
+                    title="Rate"
+                  >
+                    <Star className={`w-3 h-3 ${userRatings[item.id] ? 'text-yellow-400 fill-yellow-400' : 'text-gray-500'}`} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleComments(item.id); }}
+                    className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-blue-100 transition-colors"
+                    title="Comments"
+                  >
+                    <MessageCircle className={`w-3 h-3 ${expandedComments === item.id ? 'text-purple-500' : 'text-gray-500'}`} />
+                  </button>
                 </div>
               </div>
+
+              {/* Inline rating stars */}
+              {showRating === item.id && !userRatings[item.id] && (
+                <div className="mt-2 p-2 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-center gap-1">
+                    {submittingRating ? (
+                      <Loader2 className="animate-spin text-purple-500" size={16} />
+                    ) : (
+                      [1, 2, 3, 4, 5].map((star) => (
+                        <div
+                          key={star}
+                          className="w-8 h-8 flex items-center justify-center cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const isLeftHalf = (e.clientX - rect.left) < rect.width / 2;
+                            submitRating(item, isLeftHalf ? star - 0.5 : star);
+                          }}
+                          onMouseMove={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setHoveredStar((e.clientX - rect.left) < rect.width / 2 ? star - 0.5 : star);
+                          }}
+                          onMouseLeave={() => setHoveredStar(0)}
+                        >
+                          <div className="relative">
+                            <Star size={20} className="text-gray-300" />
+                            <div className="absolute inset-0 overflow-hidden" style={{ width: `${Math.min(100, Math.max(0, (hoveredStar - star + 1) * 100))}%` }}>
+                              <Star size={20} className="text-yellow-400 fill-yellow-400" />
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Inline comments section */}
+              {expandedComments === item.id && (
+                <div className="mt-2 pt-2 border-t border-gray-100">
+                  {loadingComments === item.id ? (
+                    <div className="flex justify-center py-2">
+                      <Loader2 className="animate-spin text-purple-500" size={16} />
+                    </div>
+                  ) : (comments[item.id] || []).length === 0 ? (
+                    <p className="text-xs text-gray-400 text-center py-2">No comments yet</p>
+                  ) : (
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {(comments[item.id] || []).map((comment: any) => (
+                        <div key={comment.id} className="flex gap-2">
+                          <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                            <span className="text-[8px] text-purple-600">{comment.users?.user_name?.charAt(0)?.toUpperCase() || '?'}</span>
+                          </div>
+                          <div className="flex-1">
+                            <span className="text-[10px] font-medium text-purple-600">{comment.users?.display_name || comment.users?.user_name}</span>
+                            <p className="text-xs text-gray-600">{comment.content}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {user && (
+                    <div className="flex gap-1 mt-2">
+                      <input
+                        type="text"
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && submitComment(item.id)}
+                        placeholder="Add comment..."
+                        className="flex-1 bg-gray-100 rounded-full px-3 py-1 text-xs outline-none"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); submitComment(item.id); }}
+                        disabled={!newComment.trim() || submittingComment}
+                        className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center disabled:opacity-50"
+                      >
+                        {submittingComment ? <Loader2 className="animate-spin text-white" size={12} /> : <Send size={12} className="text-white" />}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -498,24 +668,16 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
         {pages.map((pageItems, pageIndex) => renderPage(pageItems, pageIndex))}
       </div>
 
-      {selectedPost && (
-        <PostDetailSheet
-          isOpen={!!selectedPost}
-          onClose={() => setSelectedPost(null)}
-          post={{
-            id: selectedPost.id,
-            userId: selectedPost.userId,
-            username: selectedPost.username,
-            displayName: selectedPost.displayName,
-            avatar: selectedPost.avatar,
-            mediaTitle: selectedPost.mediaTitle || '',
-            mediaType: selectedPost.mediaType,
-            mediaImage: selectedPost.mediaImage,
-            mediaExternalId: selectedPost.mediaExternalId,
-            mediaExternalSource: selectedPost.mediaExternalSource,
-            rating: selectedPost.rating,
-            review: selectedPost.review,
-            timestamp: selectedPost.timestamp
+      {showAddModal && (
+        <QuickAddModal
+          isOpen={!!showAddModal}
+          onClose={() => setShowAddModal(null)}
+          preSelectedMedia={{
+            title: showAddModal.mediaTitle || '',
+            mediaType: showAddModal.mediaType || 'movie',
+            imageUrl: showAddModal.mediaImage,
+            externalId: showAddModal.mediaExternalId,
+            externalSource: showAddModal.mediaExternalSource || 'tmdb'
           }}
         />
       )}
