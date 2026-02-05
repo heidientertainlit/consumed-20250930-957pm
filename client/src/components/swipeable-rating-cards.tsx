@@ -382,8 +382,8 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 )}
                 {/* Rating stars overlay */}
                 {showQuickRate && !userRating && (
-                  <div className="absolute left-0 right-0 bottom-full mb-1 flex items-center justify-center">
-                    <div className="flex items-center bg-white rounded-lg shadow-lg border border-gray-200 px-2 py-1.5">
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 z-10">
+                    <div className="flex items-center bg-white rounded-lg shadow-lg border border-gray-200 px-2 py-1.5 whitespace-nowrap">
                       {submittingRating ? (
                         <Loader2 className="animate-spin text-purple-500" size={18} />
                       ) : (
