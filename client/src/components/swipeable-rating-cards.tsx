@@ -296,60 +296,36 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="flex">
-            {/* Media poster on left */}
-            <Link href={getMediaLink() || '#'} className="shrink-0">
-              {hasValidImage ? (
-                <div className="relative w-28 h-40">
-                  {!imageLoaded && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-200 to-purple-100 animate-pulse" />
-                  )}
+          <div className="p-4">
+            {/* User info at top */}
+            <div className="flex items-center gap-2 mb-3">
+              <Link href={`/profile/${currentPost.user?.id}`} className="flex items-center gap-2">
+                {currentPost.user?.avatar ? (
                   <img 
-                    src={media.imageUrl} 
-                    alt={media.title || ''} 
-                    className={`w-28 h-40 object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-                    onLoad={() => setImageLoaded(true)}
-                    loading="eager"
+                    src={currentPost.user.avatar} 
+                    alt="" 
+                    className="w-7 h-7 rounded-full object-cover border border-purple-100"
                   />
-                </div>
-              ) : (
-                <div className="w-28 h-40 bg-gradient-to-br from-purple-200 to-purple-100 flex items-center justify-center">
-                  <span className="text-gray-500 text-xs text-center px-2">No image</span>
-                </div>
-              )}
-            </Link>
-
-            {/* Content on right */}
-            <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
-              {/* User info */}
-              <div className="flex items-center gap-2 mb-2">
-                <Link href={`/profile/${currentPost.user?.id}`} className="flex items-center gap-2">
-                  {currentPost.user?.avatar ? (
-                    <img 
-                      src={currentPost.user.avatar} 
-                      alt="" 
-                      className="w-7 h-7 rounded-full object-cover border border-purple-100"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center">
-                      <User size={14} className="text-purple-600" />
-                    </div>
-                  )}
-                  <span className="text-sm font-medium text-purple-600">
-                    {currentPost.user?.displayName || currentPost.user?.username || 'User'}
-                  </span>
-                </Link>
-                <span className="text-xs text-gray-400">
-                  {currentPost.rating ? 'rated' : 'reviewed'}
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center">
+                    <User size={14} className="text-purple-600" />
+                  </div>
+                )}
+                <span className="text-sm font-medium text-purple-600">
+                  {currentPost.user?.displayName || currentPost.user?.username || 'User'}
                 </span>
-              </div>
-
-              {/* Media title */}
-              <Link href={getMediaLink() || '#'}>
-                <h3 className="font-medium text-gray-900 text-sm line-clamp-1 hover:text-purple-600 mb-1">
-                  {media?.title || 'Unknown'}
-                </h3>
               </Link>
+              <span className="text-xs text-gray-400">
+                {currentPost.rating ? 'rated' : 'reviewed'}
+              </span>
+            </div>
+
+            {/* Media title */}
+            <Link href={getMediaLink() || '#'}>
+              <h3 className="font-semibold text-gray-900 text-base mb-2 hover:text-purple-600">
+                {media?.title || 'Unknown'}
+              </h3>
+            </Link>
               
               {/* Rating stars */}
               {currentPost.rating && (
@@ -489,7 +465,6 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                   )}
                 </div>
               </div>
-            </div>
           </div>
 
           {/* Inline Comments Section */}
