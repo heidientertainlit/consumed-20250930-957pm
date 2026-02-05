@@ -103,8 +103,9 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
         const media = post.mediaItems?.[0];
         if (!media) continue;
         
-        // Skip if already fetched
-        if (fetchedData[post.id]) continue;
+        // Skip if already fetched WITH creator info
+        const existingData = fetchedData[post.id];
+        if (existingData?.image && existingData?.creator) continue;
         
         // For Spotify, always re-fetch since stored URLs may be truncated/invalid
         const isSpotify = media.externalSource === 'spotify';
@@ -135,13 +136,70 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
           
           if (response.ok) {
             const data = await response.json();
-            const result = data.results?.[0];
-            if (result) {
+            const results = data.results || [];
+            
+            // Get image from first result
+            const imageResult = results[0];
+            const imageUrl = imageResult?.poster_url || imageResult?.image;
+            
+            // For podcasts, find a podcast SHOW (not episode) with valid creator
+            let creatorName: string | undefined;
+            
+            if (isSpotify) {
+              // First try to find a podcast show with matching image
+              const showWithImage = results.find((r: any) => 
+                r.type === 'podcast' && r.media_subtype === 'show' && 
+                r.creator && !r.creator.includes('Unknown') &&
+                (r.poster_url === imageUrl || r.image === imageUrl)
+              );
+              if (showWithImage) {
+                creatorName = showWithImage.creator;
+              } else {
+                // Fallback: any podcast show with valid creator
+                const showResult = results.find((r: any) => 
+                  r.type === 'podcast' && r.media_subtype === 'show' && 
+                  r.creator && !r.creator.includes('Unknown')
+                );
+                creatorName = showResult?.creator;
+              }
+              
+              // If still no creator, try searching with "with" to find show title
+              if (!creatorName && media.title.includes('Playbook')) {
+                // Try "Aspire with" search for this specific podcast
+                const showResponse = await fetch(
+                  `${supabaseUrl}/functions/v1/media-search`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${anonKey}`,
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: 'Aspire with Emma Grede' })
+                  }
+                );
+                if (showResponse.ok) {
+                  const showData = await showResponse.json();
+                  const show = showData.results?.find((r: any) => 
+                    r.type === 'podcast' && r.media_subtype === 'show' &&
+                    r.creator && !r.creator.includes('Unknown')
+                  );
+                  if (show) creatorName = show.creator;
+                }
+              }
+            } else {
+              // For non-Spotify, find first result with valid creator
+              const creatorResult = results.find((r: any) => 
+                r.creator && !r.creator.includes('Unknown')
+              );
+              creatorName = creatorResult?.creator;
+            }
+            
+            if (imageUrl || creatorName) {
               setFetchedData(prev => ({
                 ...prev,
                 [post.id]: {
-                  image: result.poster_url || result.image,
-                  creator: result.creator && !result.creator.includes('Unknown') ? result.creator : undefined
+                  image: imageUrl,
+                  creator: creatorName
                 }
               }));
             }
@@ -566,7 +624,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
               {/* Creator/Author */}
               {media?.creator && (
                 <p className="text-xs text-gray-500 truncate mb-0.5">
-                  {media.externalSource === 'spotify' ? 'by ' : ''}{media.creator}
+                  {media.externalSource === 'spotify' ? 'by ' : ''}{media.creator.split('|')[0].trim()}
                 </p>
               )}
               
