@@ -170,9 +170,9 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
     setLoadingComments(postId);
     try {
       const { data, error } = await supabase
-        .from('comments')
+        .from('social_post_comments')
         .select(`id, content, created_at, user_id, users:user_id (id, user_name, display_name, avatar)`)
-        .eq('post_id', postId)
+        .eq('social_post_id', postId)
         .order('created_at', { ascending: true })
         .limit(10);
       if (!error && data) {
