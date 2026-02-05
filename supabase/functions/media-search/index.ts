@@ -682,9 +682,23 @@ serve(async (req) => {
       }
       
       // 8. Book bonus for exact/near-exact title matches
-      // Books are often the original source material
-      if (item.type === 'book' && (title === queryLower || title.includes(queryLower))) {
-        score += 10;
+      // Books are often the original source material (Anne of Green Gables, etc.)
+      if (item.type === 'book') {
+        // Strong bonus for exact title match - book is likely the original
+        if (normalizedTitle === normalizedQuery || title === queryLower) {
+          score += 35;  // Significant boost for exact match books
+        } else if (normalizedTitle.startsWith(normalizedQuery) || title.startsWith(queryLower)) {
+          score += 25;  // Good boost when book title starts with query
+        } else if (title.includes(queryLower) || normalizedTitle.includes(normalizedQuery)) {
+          score += 15;  // Moderate boost for partial match
+        }
+        
+        // Classic book bonus - old books with many editions are literary classics
+        if (editionCount && editionCount > 50) {
+          score += 20;  // Many editions = enduring classic
+        } else if (editionCount && editionCount > 20) {
+          score += 10;
+        }
       }
       
       return { ...item, _score: score };
