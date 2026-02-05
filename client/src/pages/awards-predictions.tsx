@@ -266,6 +266,45 @@ export default function AwardsPredictions() {
     enabled: !!event?.id,
   });
 
+  // Fetch vote distribution per nominee (for showing percentages)
+  const { data: voteDistribution } = useQuery<Record<string, { count: number; total: number }>>({
+    queryKey: ['awards-vote-distribution', event?.id],
+    queryFn: async () => {
+      if (!event?.id) return {};
+      
+      const categoryIds = event.categories.map(c => c.id);
+      
+      // Get all picks for this event
+      const { data: picksData, error } = await supabase
+        .from('awards_picks')
+        .select('nominee_id, category_id')
+        .in('category_id', categoryIds);
+      
+      if (error) throw error;
+      
+      // Count votes per nominee and total per category
+      const categoryTotals: Record<string, number> = {};
+      const nomineeVotes: Record<string, number> = {};
+      
+      (picksData || []).forEach(pick => {
+        categoryTotals[pick.category_id] = (categoryTotals[pick.category_id] || 0) + 1;
+        nomineeVotes[pick.nominee_id] = (nomineeVotes[pick.nominee_id] || 0) + 1;
+      });
+      
+      // Build result: nominee_id -> { count, total for its category }
+      const result: Record<string, { count: number; total: number }> = {};
+      event.categories.forEach(cat => {
+        const total = categoryTotals[cat.id] || 0;
+        cat.nominees.forEach(nom => {
+          result[nom.id] = { count: nomineeVotes[nom.id] || 0, total };
+        });
+      });
+      
+      return result;
+    },
+    enabled: !!event?.id,
+  });
+
   // Initialize local picks from fetched data
   useEffect(() => {
     if (userPicks) {
@@ -705,18 +744,12 @@ export default function AwardsPredictions() {
                       </div>
                       
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        {/* Info button to view on TMDB */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const searchTerm = nominee.title;
-                            window.open(`https://www.themoviedb.org/search?query=${encodeURIComponent(searchTerm)}`, '_blank');
-                          }}
-                          className="w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
-                          title="View on TMDB"
-                        >
-                          <Info size={12} className="text-gray-600" />
-                        </button>
+                        {/* Vote percentage badge */}
+                        {voteDistribution && voteDistribution[nominee.id]?.total > 0 && (
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${isPicked ? 'bg-purple-200 text-purple-700' : 'bg-gray-100 text-gray-500'}`}>
+                            {Math.round((voteDistribution[nominee.id].count / voteDistribution[nominee.id].total) * 100)}%
+                          </span>
+                        )}
                         
                         {event.status === 'open' && isPicked && (
                           <div className="w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
