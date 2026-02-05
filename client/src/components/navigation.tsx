@@ -465,7 +465,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] z-50 pb-safe">
-        <div className="flex justify-around items-center h-16 px-2 pt-4 pb-3">
+        <div className="flex justify-around items-center h-20 px-2 pt-3 pb-5">
           {/* Home (main game feed) */}
           <Link
             href="/activity"
@@ -481,29 +481,39 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add"
           >
-            <div className="relative w-10 h-8 flex items-center justify-center">
+            <div className="relative w-8 h-8 flex items-center justify-center">
+              {/* Left arc */}
               <svg 
-                className="absolute inset-0 w-full h-full" 
-                viewBox="0 0 40 32"
+                className="absolute left-0 top-0 h-full" 
+                width="10" 
+                height="32" 
+                viewBox="0 0 10 32"
               >
-                {/* Left arc - circular arc using A command */}
                 <path 
-                  d="M 12 2 A 14 14 0 0 0 12 30" 
-                  fill="none" 
-                  stroke="#7C6FEA" 
-                  strokeWidth="2" 
-                  strokeLinecap="round"
-                />
-                {/* Right arc - circular arc using A command */}
-                <path 
-                  d="M 28 2 A 14 14 0 0 1 28 30" 
+                  d="M 8 2 Q -4 16 8 30" 
                   fill="none" 
                   stroke="#7C6FEA" 
                   strokeWidth="2" 
                   strokeLinecap="round"
                 />
               </svg>
-              <Plus className="text-white/90 relative z-10" size={14} strokeWidth={1.5} />
+              {/* Plus icon */}
+              <Plus className="text-white" size={16} strokeWidth={2} />
+              {/* Right arc */}
+              <svg 
+                className="absolute right-0 top-0 h-full" 
+                width="10" 
+                height="32" 
+                viewBox="0 0 10 32"
+              >
+                <path 
+                  d="M 2 2 Q 14 16 2 30" 
+                  fill="none" 
+                  stroke="#7C6FEA" 
+                  strokeWidth="2" 
+                  strokeLinecap="round"
+                />
+              </svg>
             </div>
           </Link>
 
