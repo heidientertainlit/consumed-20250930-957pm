@@ -251,14 +251,14 @@ export default function Search() {
           title,
           media_type,
           image_url,
-          created_at,
+          added_at,
           rating,
           external_id,
           external_source,
           lists!inner(user_id, title)
         `)
         .eq('lists.user_id', user.id)
-        .order('created_at', { ascending: false })
+        .order('added_at', { ascending: false })
         .limit(100);
       if (error) return [];
       return (data || []).map((item: any) => ({
@@ -378,7 +378,7 @@ export default function Search() {
   const filteredMediaHistory = fullMediaHistory.filter((item: any) => {
     const matchesSearch = !mediaHistorySearch || item.title?.toLowerCase().includes(mediaHistorySearch.toLowerCase());
     const matchesType = mediaHistoryType === 'all' || item.media_type?.toLowerCase() === mediaHistoryType.toLowerCase();
-    const matchesYear = mediaHistoryYear === 'all' || new Date(item.created_at).getFullYear().toString() === mediaHistoryYear;
+    const matchesYear = mediaHistoryYear === 'all' || new Date(item.added_at).getFullYear().toString() === mediaHistoryYear;
     const matchesRating = mediaHistoryRating === 'all' || item.rating?.toString() === mediaHistoryRating;
     return matchesSearch && matchesType && matchesYear && matchesRating;
   });
@@ -2162,7 +2162,7 @@ export default function Search() {
                                   <span>•</span>
                                   <span>{item.listName}</span>
                                 </div>
-                                <p className="text-xs text-gray-400">{new Date(item.created_at).toLocaleDateString()}</p>
+                                <p className="text-xs text-gray-400">{item.added_at ? new Date(item.added_at).toLocaleDateString() : ''}</p>
                               </div>
                             </div>
                           </div>
