@@ -382,8 +382,8 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 )}
                 {/* Rating stars overlay */}
                 {showQuickRate && !userRating && (
-                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 z-10">
-                    <div className="flex items-center bg-white rounded-lg shadow-lg border border-gray-200 px-2 py-1.5 whitespace-nowrap">
+                  <div className="fixed inset-x-0 bottom-auto z-50 flex justify-center" style={{ top: 'auto' }}>
+                    <div className="flex items-center bg-white rounded-lg shadow-xl border border-gray-200 px-3 py-2 whitespace-nowrap">
                       {submittingRating ? (
                         <Loader2 className="animate-spin text-purple-500" size={18} />
                       ) : (
@@ -515,9 +515,9 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
               </div>
           </div>
 
-          {/* Inline Comments Section */}
+          {/* Inline Comments Section - Full width */}
           {showComments && (
-            <div className="border-t border-gray-100 p-3 bg-gray-50/50">
+            <div className="border-t border-gray-100 p-4 bg-gray-50/50">
               {loadingComments ? (
                 <div className="flex justify-center py-3">
                   <Loader2 className="animate-spin text-purple-500" size={20} />
@@ -526,22 +526,22 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 <>
                   {/* Existing comments */}
                   {comments.length > 0 ? (
-                    <div className="space-y-2 mb-3 max-h-32 overflow-y-auto">
-                      {comments.slice(0, 3).map((comment) => (
+                    <div className="space-y-3 mb-3 max-h-48 overflow-y-auto">
+                      {comments.slice(0, 5).map((comment) => (
                         <div key={comment.id} className="flex gap-2">
-                          <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-                            <User size={12} className="text-purple-600" />
+                          <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                            <User size={14} className="text-purple-600" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="text-xs font-medium text-purple-600 mr-1">
+                            <span className="text-sm font-medium text-purple-600 mr-1">
                               {comment.username || comment.user?.displayName || comment.user?.username || 'User'}
                             </span>
-                            <span className="text-xs text-gray-700">{comment.content}</span>
+                            <span className="text-sm text-gray-700">{comment.content}</span>
                           </div>
                         </div>
                       ))}
-                      {comments.length > 3 && (
-                        <p className="text-xs text-gray-400 text-center">+ {comments.length - 3} more comments</p>
+                      {comments.length > 5 && (
+                        <p className="text-xs text-gray-400 text-center">+ {comments.length - 5} more comments</p>
                       )}
                     </div>
                   ) : (
