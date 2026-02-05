@@ -138,6 +138,13 @@ export default function SwipeableRatingCards({ posts, onLike, onComment, likedPo
     if (onComment) {
       onComment(currentPost.id);
     }
+    // Scroll to the actual post in the feed
+    setTimeout(() => {
+      const postElement = document.getElementById(`post-${currentPost.id}`);
+      if (postElement) {
+        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
   };
 
   const hasValidImage = media?.imageUrl && media.imageUrl.startsWith('http');
