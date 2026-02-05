@@ -183,6 +183,9 @@ serve(async (req) => {
         let foundBooks = false;
         const googleBooksApiKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
         
+        // DEBUG: Log first 8 chars of API key to verify correct key is loaded
+        console.log('DEBUG GOOGLE_BOOKS_API_KEY first 8 chars:', googleBooksApiKey ? googleBooksApiKey.slice(0, 8) : 'NOT SET');
+        
         // Try Google Books first (with API key for proper quota)
         if (googleBooksApiKey) {
           try {
