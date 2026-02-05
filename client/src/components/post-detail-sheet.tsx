@@ -4,6 +4,7 @@ import { X, Heart, MessageCircle, Plus, Star, Send, Loader2 } from 'lucide-react
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { QuickAddModal } from './quick-add-modal';
 
 interface PostDetailSheetProps {
   isOpen: boolean;
@@ -36,6 +37,11 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
   const [submittingComment, setSubmittingComment] = useState(false);
   const [isLiked, setIsLiked] = useState(initialIsLiked || false);
   const [likesCount, setLikesCount] = useState(0);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showRating, setShowRating] = useState(false);
+  const [hoveredStar, setHoveredStar] = useState(0);
+  const [userRating, setUserRating] = useState<number | null>(null);
+  const [submittingRating, setSubmittingRating] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -143,6 +149,39 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
       toast({ title: 'Failed to add comment', variant: 'destructive' });
     }
     setSubmittingComment(false);
+  };
+
+  const submitRating = async (rating: number) => {
+    if (!user?.id || !session || !post.mediaExternalId) {
+      toast({ title: 'Sign in to rate', variant: 'destructive' });
+      return;
+    }
+
+    setSubmittingRating(true);
+    try {
+      const { error } = await supabase.functions.invoke('quick-add', {
+        body: {
+          userId: user.id,
+          mediaId: post.mediaExternalId,
+          mediaType: post.mediaType || 'movie',
+          mediaTitle: post.mediaTitle,
+          imageUrl: post.mediaImage,
+          externalSource: post.mediaExternalSource || 'tmdb',
+          listName: 'Finished',
+          rating: rating
+        }
+      });
+
+      if (error) throw error;
+
+      setUserRating(rating);
+      setShowRating(false);
+      toast({ title: `Rated ${rating} stars!` });
+    } catch (err) {
+      console.error('Error rating:', err);
+      toast({ title: 'Failed to rate', variant: 'destructive' });
+    }
+    setSubmittingRating(false);
   };
 
   const renderStars = (rating: number) => (
@@ -256,31 +295,87 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
             </div>
           </div>
 
-          <div className="flex items-center gap-4 py-3 border-t border-b border-gray-100 mb-4">
-            <button 
-              onClick={handleLike}
-              className="flex items-center gap-1.5"
-            >
-              <Heart 
-                size={22} 
-                className={isLiked ? 'text-red-500 fill-red-500' : 'text-gray-500'} 
-              />
-              <span className="text-sm text-gray-600">{likesCount}</span>
-            </button>
-            
-            <button 
-              onClick={() => inputRef.current?.focus()}
-              className="flex items-center gap-1.5"
-            >
-              <MessageCircle size={22} className="text-gray-500" />
-              <span className="text-sm text-gray-600">{comments.length}</span>
-            </button>
-            
-            <button className="flex items-center gap-1.5 ml-auto">
-              <Plus size={22} className="text-gray-500" />
-              <span className="text-sm text-gray-600">Add to List</span>
-            </button>
+          <div className="flex items-center justify-between py-3 border-t border-b border-gray-100 mb-4">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={handleLike}
+                className="flex items-center gap-1.5"
+              >
+                <Heart 
+                  size={22} 
+                  className={isLiked ? 'text-red-500 fill-red-500' : 'text-gray-500'} 
+                />
+                <span className="text-sm text-gray-600">{likesCount}</span>
+              </button>
+              
+              <button 
+                onClick={() => inputRef.current?.focus()}
+                className="flex items-center gap-1.5"
+              >
+                <MessageCircle size={22} className="text-gray-500" />
+                <span className="text-sm text-gray-600">{comments.length}</span>
+              </button>
+              
+              <button 
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-1.5"
+              >
+                <Plus size={22} className="text-gray-500" />
+              </button>
+              
+              <button 
+                onClick={() => setShowRating(!showRating)}
+                className="flex items-center gap-1.5"
+              >
+                <Star 
+                  size={22} 
+                  className={userRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-500'} 
+                />
+              </button>
+            </div>
           </div>
+
+          {showRating && !userRating && session && (
+            <div className="mb-4 p-3 bg-gray-50 rounded-xl">
+              <p className="text-xs text-gray-500 mb-2 text-center">Tap to rate (tap left/right half for half stars)</p>
+              <div className="flex items-center justify-center">
+                {submittingRating ? (
+                  <Loader2 className="animate-spin text-purple-500" size={20} />
+                ) : (
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <div
+                        key={star}
+                        className="relative w-10 h-10 flex items-center justify-center cursor-pointer"
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const isLeftHalf = (e.clientX - rect.left) < rect.width / 2;
+                          const rating = isLeftHalf ? star - 0.5 : star;
+                          submitRating(rating);
+                        }}
+                        onMouseMove={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const isLeftHalf = (e.clientX - rect.left) < rect.width / 2;
+                          setHoveredStar(isLeftHalf ? star - 0.5 : star);
+                        }}
+                        onMouseLeave={() => setHoveredStar(0)}
+                      >
+                        <div className="relative">
+                          <Star size={28} className="text-gray-300" />
+                          <div 
+                            className="absolute inset-0 overflow-hidden"
+                            style={{ width: `${Math.min(100, Math.max(0, (hoveredStar - star + 1) * 100))}%` }}
+                          >
+                            <Star size={28} className="text-yellow-400 fill-yellow-400" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="mb-4">
             <h4 className="font-medium text-gray-900 mb-3">Comments</h4>
@@ -344,6 +439,20 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
           )}
         </div>
       </div>
+
+      {showAddModal && post.mediaExternalId && (
+        <QuickAddModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          preSelectedMedia={{
+            title: post.mediaTitle,
+            mediaType: post.mediaType || 'movie',
+            imageUrl: post.mediaImage,
+            externalId: post.mediaExternalId,
+            externalSource: post.mediaExternalSource || 'tmdb'
+          }}
+        />
+      )}
     </div>
   );
 }
