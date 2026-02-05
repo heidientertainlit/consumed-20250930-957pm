@@ -403,19 +403,20 @@ export default function AwardsPredictions() {
     if (!event || event.status !== 'open') return;
     if (isAuthLoading || !userId) return;
     
+    // Check if same nominee is already picked (no change needed)
+    if (localPicks.get(categoryId) === nomineeId) {
+      return;
+    }
+    
     // Optimistic update
     setLocalPicks(prev => {
       const newPicks = new Map(prev);
-      if (newPicks.get(categoryId) === nomineeId) {
-        // Toggle off - but we don't support deleting picks yet
-        return prev;
-      } else {
-        newPicks.set(categoryId, nomineeId);
-        // Save to server
-        savePick.mutate({ categoryId, nomineeId });
-      }
+      newPicks.set(categoryId, nomineeId);
       return newPicks;
     });
+    
+    // Save to server (outside of state setter)
+    savePick.mutate({ categoryId, nomineeId });
   };
 
   const switchToCategory = (categoryId: string) => {
