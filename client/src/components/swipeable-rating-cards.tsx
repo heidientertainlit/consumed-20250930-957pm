@@ -34,7 +34,10 @@ interface Comment {
   id: string;
   content: string;
   createdAt: string;
-  user: {
+  created_at?: string;
+  username?: string;
+  user_id?: string;
+  user?: {
     id: string;
     username: string;
     displayName: string;
@@ -60,6 +63,9 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentInput, setCommentInput] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [showQuickRate, setShowQuickRate] = useState(false);
+  const [hoveredStar, setHoveredStar] = useState(0);
+  const [submittingRating, setSubmittingRating] = useState(false);
   
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
@@ -213,6 +219,38 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
     }
   };
 
+  const submitQuickRating = async (rating: number) => {
+    if (!session?.access_token || !media) return;
+    setSubmittingRating(true);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const response = await fetch(`${supabaseUrl}/functions/v1/rate-media`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          media_external_id: media.externalId,
+          media_external_source: media.externalSource || 'tmdb',
+          media_title: media.title,
+          media_type: media.mediaType || 'movie',
+          rating: rating,
+        })
+      });
+      if (response.ok) {
+        toast({ title: `Rated "${media.title}" ${rating} stars!` });
+        setShowQuickRate(false);
+        setHoveredStar(0);
+      }
+    } catch (err) {
+      console.error('Failed to submit rating:', err);
+      toast({ title: "Failed to submit rating", variant: "destructive" });
+    } finally {
+      setSubmittingRating(false);
+    }
+  };
+
   const hasValidImage = media?.imageUrl && media.imageUrl.startsWith('http');
 
   return (
@@ -282,6 +320,59 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
               {currentPost.rating && (
                 <div className="mb-1">
                   {renderStars(currentPost.rating)}
+                </div>
+              )}
+
+              {/* Quick Rate - tap to add your own rating */}
+              {session && !showQuickRate && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowQuickRate(true);
+                  }}
+                  className="text-xs text-purple-500 hover:text-purple-600 mb-1"
+                >
+                  Tap to rate
+                </button>
+              )}
+              {showQuickRate && (
+                <div className="flex items-center gap-1 mb-1 bg-purple-50 rounded-lg p-2">
+                  {submittingRating ? (
+                    <Loader2 className="animate-spin text-purple-500" size={16} />
+                  ) : (
+                    <>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            submitQuickRating(star);
+                          }}
+                          onMouseEnter={() => setHoveredStar(star)}
+                          onMouseLeave={() => setHoveredStar(0)}
+                          className="p-0.5"
+                        >
+                          <Star
+                            size={20}
+                            className={`transition-colors ${
+                              star <= hoveredStar 
+                                ? 'text-yellow-400 fill-yellow-400' 
+                                : 'text-gray-300 hover:text-yellow-300'
+                            }`}
+                          />
+                        </button>
+                      ))}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowQuickRate(false);
+                        }}
+                        className="ml-2 text-xs text-gray-400 hover:text-gray-600"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -380,18 +471,14 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                     <div className="space-y-2 mb-3 max-h-32 overflow-y-auto">
                       {comments.slice(0, 3).map((comment) => (
                         <div key={comment.id} className="flex gap-2">
-                          {comment.user?.avatar ? (
-                            <img src={comment.user.avatar} alt="" className="w-6 h-6 rounded-full object-cover" />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                              <User size={12} className="text-purple-600" />
-                            </div>
-                          )}
+                          <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                            <User size={12} className="text-purple-600" />
+                          </div>
                           <div className="flex-1 min-w-0">
-                            <span className="text-xs font-medium text-purple-600">
-                              {comment.user?.displayName || comment.user?.username}
+                            <span className="text-xs font-medium text-purple-600 mr-1">
+                              {comment.username || comment.user?.displayName || comment.user?.username || 'User'}
                             </span>
-                            <p className="text-xs text-gray-700 line-clamp-2">{comment.content}</p>
+                            <span className="text-xs text-gray-700">{comment.content}</span>
                           </div>
                         </div>
                       ))}
@@ -400,7 +487,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                       )}
                     </div>
                   ) : (
-                    <p className="text-xs text-gray-400 text-center mb-3">No comments yet</p>
+                    <p className="text-xs text-gray-400 text-center mb-3">No comments yet. Be the first!</p>
                   )}
 
                   {/* Comment input */}
