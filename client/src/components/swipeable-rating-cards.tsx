@@ -84,18 +84,32 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
   const currentPost = posts[currentIndex];
   const media = currentPost?.mediaItems?.[0];
 
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
+    setIsSwiping(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSwiping) return;
+    const currentX = e.touches[0].clientX;
+    const diff = currentX - touchStartX.current;
+    // Limit the offset for visual feedback
+    setSwipeOffset(Math.max(-80, Math.min(80, diff)));
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     touchEndX.current = e.changedTouches[0].clientX;
     handleSwipe();
+    setSwipeOffset(0);
+    setIsSwiping(false);
   };
 
   const handleSwipe = () => {
     const diff = touchStartX.current - touchEndX.current;
-    const threshold = 50;
+    const threshold = 40; // Lower threshold for easier swiping
 
     if (diff > threshold && currentIndex < posts.length - 1) {
       setCurrentIndex(prev => prev + 1);
@@ -302,8 +316,10 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
     <>
       <div className="mb-4">
         <div 
-          className="relative bg-white rounded-2xl border border-gray-100 shadow-sm"
+          className="relative bg-white rounded-2xl border border-gray-100 shadow-sm transition-transform duration-100"
+          style={{ transform: `translateX(${swipeOffset}px)` }}
           onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
           <div className="flex">
