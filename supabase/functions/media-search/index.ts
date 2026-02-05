@@ -318,7 +318,7 @@ serve(async (req) => {
               const accessToken = authData.access_token;
               
               const spotifyResponse = await fetchWithTimeout(
-                `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=show,episode&limit=10`,
+                `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=show,episode&limit=10&market=US`,
                 { headers: { 'Authorization': `Bearer ${accessToken}` } },
                 3000
               );
