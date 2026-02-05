@@ -296,60 +296,118 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="p-4">
-            {/* User info at top */}
-            <div className="flex items-center gap-2 mb-3">
-              <Link href={`/profile/${currentPost.user?.id}`} className="flex items-center gap-2">
-                {currentPost.user?.avatar ? (
-                  <img 
-                    src={currentPost.user.avatar} 
-                    alt="" 
-                    className="w-7 h-7 rounded-full object-cover border border-purple-100"
-                  />
+          <div className="flex">
+            {/* Left column: Poster + Actions */}
+            <div className="shrink-0 flex flex-col">
+              <Link href={getMediaLink() || '#'}>
+                {hasValidImage ? (
+                  <div className="relative w-24 h-36">
+                    {!imageLoaded && (
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-200 to-purple-100 animate-pulse rounded-l-2xl" />
+                    )}
+                    <img 
+                      src={media.imageUrl} 
+                      alt={media.title || ''} 
+                      className={`w-24 h-36 object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                      onLoad={() => setImageLoaded(true)}
+                      loading="eager"
+                    />
+                  </div>
                 ) : (
-                  <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center">
-                    <User size={14} className="text-purple-600" />
+                  <div className="w-24 h-36 bg-gradient-to-br from-purple-200 to-purple-100 flex items-center justify-center">
+                    <span className="text-gray-500 text-xs text-center px-2">No image</span>
                   </div>
                 )}
-                <span className="text-sm font-medium text-purple-600">
-                  {currentPost.user?.displayName || currentPost.user?.username || 'User'}
-                </span>
               </Link>
-              <span className="text-xs text-gray-400">
-                {currentPost.rating ? 'rated' : 'reviewed'}
-              </span>
-            </div>
-
-            {/* Media title */}
-            <Link href={getMediaLink() || '#'}>
-              <h3 className="font-semibold text-gray-900 text-base mb-2 hover:text-purple-600">
-                {media?.title || 'Unknown'}
-              </h3>
-            </Link>
-              
-              {/* Rating stars */}
-              {currentPost.rating && (
-                <div className="mb-1">
-                  {renderStars(currentPost.rating)}
-                </div>
-              )}
-
-              {/* Quick Rate - tap to add your own rating */}
-              {session && !showQuickRate && (
+              {/* Actions under poster */}
+              <div className="flex items-center justify-center gap-3 py-2 bg-gray-50">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    setShowQuickRate(true);
+                    e.preventDefault();
+                    onLike?.(currentPost.id);
                   }}
-                  className="text-xs text-purple-500 hover:text-purple-600 mb-1"
+                  className="flex items-center gap-0.5 group"
                 >
-                  Tap to rate
+                  <Heart 
+                    size={16} 
+                    className={`transition-colors ${isPostLiked ? 'text-red-500 fill-red-500' : 'text-gray-400 group-hover:text-red-400'}`}
+                  />
+                  <span className="text-xs text-gray-500">{currentPost.likesCount || 0}</span>
                 </button>
-              )}
+                <button 
+                  onClick={handleCommentClick}
+                  className="flex items-center gap-0.5 group"
+                >
+                  <MessageCircle 
+                    size={16} 
+                    className={`transition-colors ${showComments ? 'text-purple-600 fill-purple-100' : 'text-gray-400 group-hover:text-purple-500'}`}
+                  />
+                  <span className="text-xs text-gray-500">{currentPost.commentsCount || comments.length || 0}</span>
+                </button>
+                <button 
+                  onClick={handleAddClick}
+                  className="group"
+                >
+                  <Plus size={16} className="text-gray-400 group-hover:text-purple-500 transition-colors" />
+                </button>
+              </div>
+            </div>
+
+            {/* Right column: Content */}
+            <div className="flex-1 p-3 flex flex-col min-w-0">
+              {/* User info */}
+              <div className="flex items-center gap-2 mb-1">
+                <Link href={`/profile/${currentPost.user?.id}`} className="flex items-center gap-2">
+                  {currentPost.user?.avatar ? (
+                    <img 
+                      src={currentPost.user.avatar} 
+                      alt="" 
+                      className="w-6 h-6 rounded-full object-cover border border-purple-100"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                      <User size={12} className="text-purple-600" />
+                    </div>
+                  )}
+                  <span className="text-sm font-medium text-purple-600">
+                    {currentPost.user?.displayName || currentPost.user?.username || 'User'}
+                  </span>
+                </Link>
+                <span className="text-xs text-gray-400">
+                  {currentPost.rating ? 'rated' : 'reviewed'}
+                </span>
+              </div>
+
+              {/* Media title */}
+              <Link href={getMediaLink() || '#'}>
+                <h3 className="font-medium text-gray-900 text-sm line-clamp-1 hover:text-purple-600 mb-1">
+                  {media?.title || 'Unknown'}
+                </h3>
+              </Link>
+              
+              {/* Rating stars + Tap to rate star icon */}
+              <div className="flex items-center gap-2 mb-1">
+                {currentPost.rating && renderStars(currentPost.rating)}
+                {session && !showQuickRate && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowQuickRate(true);
+                    }}
+                    className="p-1 rounded-full hover:bg-purple-50 transition-colors"
+                    title="Rate this"
+                  >
+                    <Star size={16} className="text-gray-300 hover:text-yellow-400" />
+                  </button>
+                )}
+              </div>
+
+              {/* Quick Rate expanded */}
               {showQuickRate && (
-                <div className="flex items-center gap-1 mb-1 bg-purple-50 rounded-lg p-2">
+                <div className="flex items-center gap-1 mb-1 bg-purple-50 rounded-lg p-1.5">
                   {submittingRating ? (
-                    <Loader2 className="animate-spin text-purple-500" size={16} />
+                    <Loader2 className="animate-spin text-purple-500" size={14} />
                   ) : (
                     <>
                       {[1, 2, 3, 4, 5].map((star) => (
@@ -364,7 +422,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                           className="p-0.5"
                         >
                           <Star
-                            size={20}
+                            size={18}
                             className={`transition-colors ${
                               star <= hoveredStar 
                                 ? 'text-yellow-400 fill-yellow-400' 
@@ -378,9 +436,9 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                           e.stopPropagation();
                           setShowQuickRate(false);
                         }}
-                        className="ml-2 text-xs text-gray-400 hover:text-gray-600"
+                        className="ml-1 text-xs text-gray-400 hover:text-gray-600"
                       >
-                        Cancel
+                        ✕
                       </button>
                     </>
                   )}
@@ -389,55 +447,13 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
 
               {/* Review/thought content */}
               {displayContent && (
-                <p className="text-sm text-gray-600 line-clamp-3 mb-2">
+                <p className="text-sm text-gray-600 line-clamp-2">
                   "{displayContent}"
                 </p>
               )}
 
-              {/* Actions row */}
-              <div className="flex items-center justify-between mt-auto">
-                <div className="flex items-center gap-4">
-                  {/* Like button with count */}
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      onLike?.(currentPost.id);
-                    }}
-                    className="flex items-center gap-1 group"
-                  >
-                    <Heart 
-                      size={18} 
-                      className={`transition-colors ${isPostLiked ? 'text-red-500 fill-red-500' : 'text-gray-400 group-hover:text-red-400'}`}
-                    />
-                    <span className="text-xs text-gray-500">{currentPost.likesCount || 0}</span>
-                  </button>
-                  
-                  {/* Comment button with count */}
-                  <button 
-                    onClick={handleCommentClick}
-                    className="flex items-center gap-1 group"
-                  >
-                    <MessageCircle 
-                      size={18} 
-                      className={`transition-colors ${showComments ? 'text-purple-600 fill-purple-100' : 'text-gray-400 group-hover:text-purple-500'}`}
-                    />
-                    <span className={`text-xs ${showComments ? 'text-purple-600' : 'text-gray-500'}`}>
-                      {currentPost.commentsCount || comments.length || 0}
-                    </span>
-                  </button>
-                  
-                  {/* Add to list button */}
-                  <button 
-                    onClick={handleAddClick}
-                    className="group"
-                  >
-                    <Plus size={18} className="text-gray-400 group-hover:text-purple-500 transition-colors" />
-                  </button>
-                </div>
-
-                {/* Navigation arrows */}
-                <div className="flex items-center gap-1">
+              {/* Navigation arrows */}
+              <div className="flex items-center justify-end gap-1 mt-auto">
                   {currentIndex > 0 && (
                     <button 
                       onClick={(e) => {
