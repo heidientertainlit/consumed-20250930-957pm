@@ -26,17 +26,23 @@ function useSpotifyImage(externalId?: string, externalSource?: string, existingI
     if (externalSource !== 'spotify' || !externalId) return;
     
     const fetchSpotifyImage = async () => {
-      try {
-        const oembedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/episode/${externalId}`;
-        const response = await fetch(oembedUrl);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.thumbnail_url) {
-            setImageUrl(data.thumbnail_url);
+      // Try episode first, then show, then track
+      const types = ['episode', 'show', 'track'];
+      
+      for (const type of types) {
+        try {
+          const oembedUrl = `https://open.spotify.com/oembed?url=https://open.spotify.com/${type}/${externalId}`;
+          const response = await fetch(oembedUrl, { mode: 'cors' });
+          if (response.ok) {
+            const data = await response.json();
+            if (data.thumbnail_url) {
+              setImageUrl(data.thumbnail_url);
+              return;
+            }
           }
+        } catch (e) {
+          // Try next type
         }
-      } catch (e) {
-        // Silently fail - will show "No image" placeholder
       }
     };
     
@@ -208,7 +214,8 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
 
   const getMediaLink = () => {
     if (!media?.externalId || !media?.externalSource) return null;
-    return `/media/${media.externalSource}/${media.externalId}`;
+    const mediaType = media.mediaType || 'movie';
+    return `/media/${mediaType}/${media.externalSource}/${media.externalId}`;
   };
 
   const isPostLiked = likedPosts?.has(currentPost.id) || currentPost.isLiked;
