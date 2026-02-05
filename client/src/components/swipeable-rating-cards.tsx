@@ -382,8 +382,8 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 )}
                 {/* Rating stars overlay */}
                 {showQuickRate && !userRating && (
-                  <div className="absolute -top-12 left-0 right-0 z-50 flex justify-center pointer-events-none">
-                    <div className="flex items-center bg-white rounded-lg shadow-xl border border-gray-200 px-3 py-2 whitespace-nowrap pointer-events-auto">
+                  <div className="absolute -top-14 left-1/2 -translate-x-1/2 z-50">
+                    <div className="flex items-center bg-white rounded-xl shadow-xl border border-gray-200 px-2 py-2">
                       {submittingRating ? (
                         <Loader2 className="animate-spin text-purple-500" size={18} />
                       ) : (
@@ -391,7 +391,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                           {[1, 2, 3, 4, 5].map((star) => (
                             <div
                               key={star}
-                              className="relative w-8 h-8 flex items-center justify-center cursor-pointer"
+                              className="relative w-9 h-9 flex items-center justify-center cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 const rect = e.currentTarget.getBoundingClientRect();
