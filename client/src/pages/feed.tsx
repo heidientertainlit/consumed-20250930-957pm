@@ -3024,6 +3024,7 @@ export default function Feed() {
                   { id: 'books', label: 'Books' },
                   { id: 'sports', label: 'Sports' },
                   { id: 'podcasts', label: 'Podcasts' },
+                  { id: 'gaming', label: 'Gaming' },
                 ].map((cat) => (
                   <button
                     key={cat.id || 'all'}
@@ -3031,9 +3032,11 @@ export default function Feed() {
                       setSelectedCategory(cat.id === selectedCategory ? null : cat.id);
                     }}
                     className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                      cat.id === selectedCategory
-                        ? 'bg-purple-100 text-purple-700 border border-purple-300'
-                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                      cat.id === null && selectedCategory === null
+                        ? 'bg-gradient-to-r from-indigo-600 via-purple-700 to-blue-700 text-white shadow-sm'
+                        : cat.id !== null && cat.id === selectedCategory
+                          ? 'bg-purple-100 text-purple-700 border border-purple-300'
+                          : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                     }`}
                   >
                     {cat.label}
