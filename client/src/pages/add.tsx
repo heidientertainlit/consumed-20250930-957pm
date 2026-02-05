@@ -131,13 +131,12 @@ export default function Search() {
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isFullAddModalOpen, setIsFullAddModalOpen] = useState(false);
   const [fullAddMedia, setFullAddMedia] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'dna' | 'compare' | 'history'>('dna');
+  const [activeTab, setActiveTab] = useState<'dna' | 'lists' | 'history' | 'compare'>('dna');
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
   const [isComparing, setIsComparing] = useState(false);
   const [comparisonResult, setComparisonResult] = useState<any>(null);
   const [compareError, setCompareError] = useState<string | null>(null);
   const comparisonCardRef = useRef<HTMLDivElement>(null);
-  const [historySubTab, setHistorySubTab] = useState<'lists' | 'history'>('lists');
   const [listSearch, setListSearch] = useState('');
   const [mediaHistorySearch, setMediaHistorySearch] = useState('');
   const [mediaHistoryType, setMediaHistoryType] = useState('all');
@@ -1427,6 +1426,17 @@ export default function Search() {
               My DNA
             </button>
             <button
+              onClick={() => setActiveTab('lists')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                activeTab === 'lists'
+                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+              }`}
+            >
+              <List size={14} />
+              Lists
+            </button>
+            <button
               onClick={() => setActiveTab('history')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 activeTab === 'history'
@@ -1881,8 +1891,8 @@ export default function Search() {
               </div>
             )}
 
-            {/* Media History Tab */}
-            {activeTab === 'history' && (
+            {/* Lists Tab */}
+            {activeTab === 'lists' && (
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-end gap-2 mb-3">
                   <button
@@ -1892,11 +1902,9 @@ export default function Search() {
                     <Plus size={12} />
                     Add Media
                   </button>
-                  <Link href="/track">
-                    <a className="bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium">
-                      <Download size={12} />
-                      Import
-                    </a>
+                  <Link href="/track" className="bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium">
+                    <Download size={12} />
+                    Import
                   </Link>
                   <button
                     className="bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium"
@@ -1907,105 +1915,89 @@ export default function Search() {
                   </button>
                 </div>
 
-                <Tabs value={historySubTab} onValueChange={(v) => setHistorySubTab(v as 'lists' | 'history')} className="w-full">
-                  <TabsList className="w-full mb-3 bg-gray-100 border border-gray-200 p-0.5 h-9">
-                    <TabsTrigger 
-                      value="lists" 
-                      className="flex-1 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-500 data-[state=active]:text-white"
-                    >
-                      <List size={14} className="mr-1.5" />
-                      Lists
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="history" 
-                      className="flex-1 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-500 data-[state=active]:text-white"
-                    >
-                      <Clock size={14} className="mr-1.5" />
-                      History
-                    </TabsTrigger>
-                  </TabsList>
+                <div className="relative mb-3">
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                  <input
+                    type="text"
+                    placeholder="Search lists..."
+                    value={listSearch}
+                    onChange={(e) => setListSearch(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                  />
+                </div>
 
-                  <TabsContent value="lists" className="mt-0">
-                    <div className="relative mb-3">
-                      <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                      <input
-                        type="text"
-                        placeholder="Search lists..."
-                        value={listSearch}
-                        onChange={(e) => setListSearch(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
-                      />
-                    </div>
-
-                    {isLoadingLists ? (
-                      <div className="space-y-2">
-                        {[1, 2, 3].map((n) => (
-                          <div key={n} className="bg-gray-50 rounded-lg p-3 animate-pulse">
-                            <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
-                            <div className="h-3 bg-gray-100 rounded w-1/4"></div>
-                          </div>
-                        ))}
+                {isLoadingLists ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((n) => (
+                      <div key={n} className="bg-gray-50 rounded-lg p-3 animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+                        <div className="h-3 bg-gray-100 rounded w-1/4"></div>
                       </div>
-                    ) : userLists.length === 0 ? (
-                      <div className="text-center py-6">
-                        <List className="mx-auto mb-2 text-gray-300" size={28} />
-                        <p className="text-sm text-gray-600">No lists yet</p>
-                        <p className="text-xs text-gray-500">Create your first list to start tracking</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {userLists
-                          .filter((list: any) => list.title.toLowerCase().includes(listSearch.toLowerCase()))
-                          .map((list: any) => (
-                          <div
-                            key={list.id}
-                            className="bg-gray-50 border border-gray-200 rounded-lg hover:border-purple-300 transition-colors cursor-pointer"
-                            onClick={() => {
-                              const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
-                              setLocation(`/list/${listSlug}`);
-                            }}
-                          >
-                            <div className="px-3 py-2.5 flex items-center justify-between">
-                              <div className="flex items-center gap-2.5 flex-1">
-                                <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
-                                  {list.is_default ? (
-                                    list.title === 'Want to Watch' ? <Play className="text-purple-600" size={14} /> :
-                                    list.title === 'Currently' ? <Clock className="text-blue-600" size={14} /> :
-                                    list.title === 'Completed' ? <Trophy className="text-green-600" size={14} /> :
-                                    <List className="text-gray-600" size={14} />
-                                  ) : (
-                                    <List className="text-purple-600" size={14} />
-                                  )}
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-1.5">
-                                    <h4 className="font-medium text-gray-900 text-sm">{getDisplayTitle(list.title)}</h4>
-                                    {!list.is_default && list.visibility === 'private' && (
-                                      <Lock size={10} className="text-gray-400" />
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-gray-500">{list.items?.length || 0} items</p>
-                                </div>
-                              </div>
+                    ))}
+                  </div>
+                ) : userLists.length === 0 ? (
+                  <div className="text-center py-6">
+                    <List className="mx-auto mb-2 text-gray-300" size={28} />
+                    <p className="text-sm text-gray-600">No lists yet</p>
+                    <p className="text-xs text-gray-500">Create your first list to start tracking</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {userLists
+                      .filter((list: any) => list.title.toLowerCase().includes(listSearch.toLowerCase()))
+                      .map((list: any) => (
+                      <div
+                        key={list.id}
+                        className="bg-gray-50 border border-gray-200 rounded-lg hover:border-purple-300 transition-colors cursor-pointer"
+                        onClick={() => {
+                          const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
+                          setLocation(`/list/${listSlug}`);
+                        }}
+                      >
+                        <div className="px-3 py-2.5 flex items-center justify-between">
+                          <div className="flex items-center gap-2.5 flex-1">
+                            <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
+                              {list.is_default ? (
+                                list.title === 'Want to Watch' ? <Play className="text-purple-600" size={14} /> :
+                                list.title === 'Currently' ? <Clock className="text-blue-600" size={14} /> :
+                                list.title === 'Completed' ? <Trophy className="text-green-600" size={14} /> :
+                                <List className="text-gray-600" size={14} />
+                              ) : (
+                                <List className="text-purple-600" size={14} />
+                              )}
+                            </div>
+                            <div className="flex-1">
                               <div className="flex items-center gap-1.5">
-                                <Share2 
-                                  className="text-gray-400 hover:text-purple-600" 
-                                  size={14}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleShareList(list.id, list.title);
-                                  }}
-                                />
-                                <ChevronRight className="text-gray-400" size={16} />
+                                <h4 className="font-medium text-gray-900 text-sm">{getDisplayTitle(list.title)}</h4>
+                                {!list.is_default && list.visibility === 'private' && (
+                                  <Lock size={10} className="text-gray-400" />
+                                )}
                               </div>
+                              <p className="text-xs text-gray-500">{list.items?.length || 0} items</p>
                             </div>
                           </div>
-                        ))}
+                          <div className="flex items-center gap-1.5">
+                            <Share2 
+                              className="text-gray-400 hover:text-purple-600" 
+                              size={14}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleShareList(list.id, list.title);
+                              }}
+                            />
+                            <ChevronRight className="text-gray-400" size={16} />
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </TabsContent>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-                  <TabsContent value="history" className="mt-0">
+            {/* History Tab */}
+            {activeTab === 'history' && (
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       <div className="relative">
                         <button
@@ -2183,8 +2175,6 @@ export default function Search() {
                         ))}
                       </div>
                     )}
-                  </TabsContent>
-                </Tabs>
               </div>
             )}
           </>
