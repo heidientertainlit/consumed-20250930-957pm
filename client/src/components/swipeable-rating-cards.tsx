@@ -302,7 +302,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
     <>
       <div className="mb-4">
         <div 
-          className="relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+          className="relative bg-white rounded-2xl border border-gray-100 shadow-sm"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
@@ -379,57 +379,6 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                       <Star size={16} className={showQuickRate ? "text-yellow-400" : "text-gray-400 group-hover:text-yellow-400 transition-colors"} />
                     </button>
                   )
-                )}
-                {/* Rating stars overlay */}
-                {showQuickRate && !userRating && (
-                  <div className="absolute -top-14 left-1/2 -translate-x-1/2 z-50">
-                    <div className="flex items-center bg-white rounded-xl shadow-xl border border-gray-200 px-2 py-2">
-                      {submittingRating ? (
-                        <Loader2 className="animate-spin text-purple-500" size={18} />
-                      ) : (
-                        <>
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <div
-                              key={star}
-                              className="relative w-9 h-9 flex items-center justify-center cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const isLeftHalf = (e.clientX - rect.left) < rect.width / 2;
-                                const rating = isLeftHalf ? star - 0.5 : star;
-                                submitQuickRating(rating);
-                              }}
-                              onMouseMove={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const isLeftHalf = (e.clientX - rect.left) < rect.width / 2;
-                                setHoveredStar(isLeftHalf ? star - 0.5 : star);
-                              }}
-                              onMouseLeave={() => setHoveredStar(0)}
-                            >
-                              <div className="relative">
-                                <Star size={24} className="text-gray-300" />
-                                <div 
-                                  className="absolute inset-0 overflow-hidden"
-                                  style={{ width: `${Math.min(100, Math.max(0, (hoveredStar - star + 1) * 100))}%` }}
-                                >
-                                  <Star size={24} className="text-yellow-400 fill-yellow-400" />
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setShowQuickRate(false);
-                            }}
-                            className="ml-1 text-gray-400 hover:text-gray-600"
-                          >
-                            <X size={16} />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
                 )}
               </div>
             </div>
@@ -514,6 +463,58 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 </div>
               </div>
           </div>
+
+          {/* Rating stars overlay - positioned at card level for full visibility */}
+          {showQuickRate && !userRating && session && (
+            <div className="absolute bottom-12 left-4 z-50">
+              <div className="flex items-center bg-white rounded-xl shadow-xl border border-gray-200 px-3 py-2">
+                {submittingRating ? (
+                  <Loader2 className="animate-spin text-purple-500" size={18} />
+                ) : (
+                  <>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <div
+                        key={star}
+                        className="relative w-10 h-10 flex items-center justify-center cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const isLeftHalf = (e.clientX - rect.left) < rect.width / 2;
+                          const rating = isLeftHalf ? star - 0.5 : star;
+                          submitQuickRating(rating);
+                        }}
+                        onMouseMove={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const isLeftHalf = (e.clientX - rect.left) < rect.width / 2;
+                          setHoveredStar(isLeftHalf ? star - 0.5 : star);
+                        }}
+                        onMouseLeave={() => setHoveredStar(0)}
+                      >
+                        <div className="relative">
+                          <Star size={28} className="text-gray-300" />
+                          <div 
+                            className="absolute inset-0 overflow-hidden"
+                            style={{ width: `${Math.min(100, Math.max(0, (hoveredStar - star + 1) * 100))}%` }}
+                          >
+                            <Star size={28} className="text-yellow-400 fill-yellow-400" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowQuickRate(false);
+                      }}
+                      className="ml-2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={18} />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Inline Comments Section - Full width */}
           {showComments && (
