@@ -1,8 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { Trophy, ChevronRight, Brain, Target, TrendingUp, Library } from 'lucide-react';
 import { Link } from 'wouter';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
+import { queryClient } from '@/lib/queryClient';
 
 interface LeaderboardEntry {
   rank: number;
@@ -80,6 +82,7 @@ interface LeaderboardFeedCardProps {
 export default function LeaderboardFeedCard({ className, variant = 'trivia' }: LeaderboardFeedCardProps) {
   const config = CATEGORY_CONFIG[variant];
   const IconComponent = config.icon;
+  const [clappedUsers, setClappedUsers] = useState<Set<string>>(new Set());
 
   const { data: currentUser } = useQuery({
     queryKey: ['current-user'],
@@ -228,7 +231,33 @@ export default function LeaderboardFeedCard({ className, variant = 'trivia' }: L
               </Link>
             )}
             
-            <span className="text-xs font-semibold text-gray-700">
+            {!entry.isCurrentUser && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setClappedUsers(prev => {
+                    const newSet = new Set(prev);
+                    if (newSet.has(entry.userId)) {
+                      newSet.delete(entry.userId);
+                    } else {
+                      newSet.add(entry.userId);
+                    }
+                    return newSet;
+                  });
+                }}
+                className={cn(
+                  "text-sm transition-all",
+                  clappedUsers.has(entry.userId) 
+                    ? "scale-110" 
+                    : "opacity-50 hover:opacity-100"
+                )}
+              >
+                👏
+              </button>
+            )}
+            
+            <span className="text-xs font-semibold text-gray-700 min-w-[40px] text-right">
               {entry.points.toLocaleString()}
             </span>
           </div>
