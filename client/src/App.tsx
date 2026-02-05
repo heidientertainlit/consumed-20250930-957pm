@@ -229,17 +229,13 @@ function Router() {
           <RedirectTo to="/activity" />
         </Route>
         <Route path="/play/awards/:slug">
-          <ProtectedRoute>
-            <AwardsPredictions />
-          </ProtectedRoute>
+          <AwardsPredictions />
         </Route>
         <Route path="/awards">
           <RedirectTo to="/activity" />
         </Route>
         <Route path="/awards/:eventId">
-          <ProtectedRoute>
-            <AwardsPredictions />
-          </ProtectedRoute>
+          <AwardsPredictions />
         </Route>
         <Route path="/awards/:eventId/ballot">
           <AwardsBallotShare />
