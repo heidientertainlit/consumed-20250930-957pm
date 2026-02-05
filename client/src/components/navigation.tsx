@@ -487,24 +487,24 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                 className="absolute inset-0 w-full h-full" 
                 viewBox="0 0 48 40"
               >
-                {/* Left arc - very round semicircle */}
+                {/* Left arc - circular arc using A command */}
                 <path 
-                  d="M 16 3 C -2 10 -2 30 16 37" 
+                  d="M 14 4 A 18 18 0 0 0 14 36" 
                   fill="none" 
                   stroke="#7C6FEA" 
                   strokeWidth="2" 
                   strokeLinecap="round"
                 />
-                {/* Right arc - very round semicircle */}
+                {/* Right arc - circular arc using A command */}
                 <path 
-                  d="M 32 3 C 50 10 50 30 32 37" 
+                  d="M 34 4 A 18 18 0 0 1 34 36" 
                   fill="none" 
                   stroke="#7C6FEA" 
                   strokeWidth="2" 
                   strokeLinecap="round"
                 />
               </svg>
-              <Plus className="text-white/90 relative z-10" size={16} strokeWidth={1.5} />
+              <Plus className="text-white/90 relative z-10" size={14} strokeWidth={1.5} />
             </div>
             <span className="text-xs font-medium text-white -mt-1">Add</span>
           </Link>
