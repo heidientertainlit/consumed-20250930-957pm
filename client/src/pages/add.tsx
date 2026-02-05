@@ -1288,7 +1288,7 @@ export default function Search() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 text-sm truncate">{result.title}</p>
+                        <p className="font-medium text-gray-900 text-sm line-clamp-2">{result.title}</p>
                         <div className="flex items-center gap-2 text-xs text-gray-500">
                           <span className="capitalize">{result.type}</span>
                           {result.creator && <span>• {result.creator}</span>}
@@ -2319,7 +2319,7 @@ export default function Search() {
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-gray-900 truncate">{result.title}</p>
+                              <p className="font-semibold text-gray-900 line-clamp-2">{result.title}</p>
                               <div className="flex items-center gap-2 text-sm text-gray-500">
                                 <span className="capitalize">{result.type}</span>
                                 {result.year && <span>• {result.year}</span>}
