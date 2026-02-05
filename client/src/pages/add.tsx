@@ -1415,17 +1415,6 @@ export default function Search() {
         {!isAiMode && !searchQuery.trim() && (
           <div className="flex gap-2 overflow-x-auto pb-2 -mt-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <button
-              onClick={() => setActiveTab('dna')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                activeTab === 'dna'
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
-              }`}
-            >
-              <Dna size={14} />
-              My DNA
-            </button>
-            <button
               onClick={() => setActiveTab('lists')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 activeTab === 'lists'
@@ -1446,6 +1435,17 @@ export default function Search() {
             >
               <Clock size={14} />
               History
+            </button>
+            <button
+              onClick={() => setActiveTab('dna')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                activeTab === 'dna'
+                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+              }`}
+            >
+              <Dna size={14} />
+              My DNA
             </button>
             <button
               onClick={() => setActiveTab('compare')}
