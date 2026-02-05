@@ -1102,25 +1102,23 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
                     {list.label}
                   </button>
                 ))}
-                {/* Custom lists pill - opens the main list drawer */}
-                {userLists.filter((l: any) => !l.is_default).length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsListDrawerOpen(true)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
-                      !['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    data-testid="custom-list-dropdown"
-                  >
-                    {!['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId) 
-                      ? userLists.find((l: any) => l.id === selectedListId)?.title || userLists.find((l: any) => l.id === selectedListId)?.name || 'Custom'
-                      : 'Custom'
-                    }
-                    <ChevronDown size={14} />
-                  </button>
-                )}
+                {/* Custom lists pill - always show so users can access their custom lists */}
+                <button
+                  type="button"
+                  onClick={() => setIsListDrawerOpen(true)}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
+                    !['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  data-testid="custom-list-dropdown"
+                >
+                  {!['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId) 
+                    ? userLists.find((l: any) => l.id === selectedListId)?.title || userLists.find((l: any) => l.id === selectedListId)?.name || 'Custom'
+                    : 'Custom'
+                  }
+                  <ChevronDown size={14} />
+                </button>
               </div>
 
               {/* More options toggle */}

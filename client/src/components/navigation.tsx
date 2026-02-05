@@ -476,19 +476,42 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-xs font-medium text-white">Home</span>
           </Link>
 
-          {/* Add - Big + button in center with gradient */}
+          {/* Add - Opposing arcs design with gradient purple */}
           <Link
             href="/add"
             className={`flex flex-col items-center gap-1 py-2 px-6 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add"
           >
-            <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center -mt-4 shadow-lg shadow-purple-600/30"
-              style={{
-                background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 50%, #4F46E5 100%)'
-              }}
-            >
-              <Plus className="text-white" size={28} strokeWidth={2.5} />
+            <div className="relative w-12 h-12 flex items-center justify-center -mt-4">
+              {/* Left arc */}
+              <svg 
+                className="absolute inset-0 w-full h-full" 
+                viewBox="0 0 48 48"
+              >
+                <defs>
+                  <linearGradient id="arcGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8B5CF6" />
+                    <stop offset="100%" stopColor="#6366F1" />
+                  </linearGradient>
+                </defs>
+                {/* Left arc - opening parenthesis */}
+                <path 
+                  d="M 14 8 C 6 16 6 32 14 40" 
+                  fill="none" 
+                  stroke="url(#arcGradient)" 
+                  strokeWidth="3" 
+                  strokeLinecap="round"
+                />
+                {/* Right arc - closing parenthesis */}
+                <path 
+                  d="M 34 8 C 42 16 42 32 34 40" 
+                  fill="none" 
+                  stroke="url(#arcGradient)" 
+                  strokeWidth="3" 
+                  strokeLinecap="round"
+                />
+              </svg>
+              <Plus className="text-white relative z-10" size={24} strokeWidth={2.5} />
             </div>
             <span className="text-xs font-medium text-white -mt-1">Add</span>
           </Link>
