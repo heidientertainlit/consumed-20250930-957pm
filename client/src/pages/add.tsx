@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target, User, Plus, Users, Download, RefreshCw, Share2, Dna, Mic, Gamepad2, Clock, BarChart3, Send, Lock, List, ChevronRight, Calendar, Play, Trophy } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target, User, Plus, Users, Download, RefreshCw, Share2, Dna, Mic, Gamepad2, Clock, BarChart3, Send, Lock, List, ChevronRight, Calendar, Play, Trophy, MessageSquarePlus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/auth";
 import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
+import { QuickAddModal } from "@/components/quick-add-modal";
 import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
@@ -128,6 +129,8 @@ export default function Search() {
   const [isAiMode, setIsAiMode] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
+  const [isFullAddModalOpen, setIsFullAddModalOpen] = useState(false);
+  const [fullAddMedia, setFullAddMedia] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'dna' | 'compare' | 'history'>('dna');
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
   const [isComparing, setIsComparing] = useState(false);
@@ -1279,25 +1282,49 @@ export default function Search() {
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setQuickAddMedia({
-                          title: result.title,
-                          mediaType: result.type || 'movie',
-                          imageUrl: result.image_url || result.poster_path || result.image,
-                          externalId: result.external_id || result.id,
-                          externalSource: result.source || result.external_source || 'tmdb',
-                          creator: result.creator,
-                        });
-                        setIsQuickAddOpen(true);
-                      }}
-                      className="w-8 h-8 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-colors flex-shrink-0"
-                      aria-label="Add to list"
-                      data-testid={`quick-add-inline-${idx}`}
-                    >
-                      <Plus size={14} />
-                    </button>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {/* Quick add to list button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setQuickAddMedia({
+                            title: result.title,
+                            mediaType: result.type || 'movie',
+                            imageUrl: result.image_url || result.poster_path || result.image,
+                            externalId: result.external_id || result.id,
+                            externalSource: result.source || result.external_source || 'tmdb',
+                            creator: result.creator,
+                          });
+                          setIsQuickAddOpen(true);
+                        }}
+                        className="w-8 h-8 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-colors"
+                        aria-label="Add to list"
+                        data-testid={`quick-add-inline-${idx}`}
+                      >
+                        <Plus size={14} />
+                      </button>
+                      {/* Rate/Review/Hot Take button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFullAddMedia({
+                            title: result.title,
+                            mediaType: result.type || 'movie',
+                            imageUrl: result.image_url || result.poster_path || result.image,
+                            externalId: result.external_id || result.id,
+                            externalSource: result.source || result.external_source || 'tmdb',
+                            creator: result.creator,
+                          });
+                          setIsFullAddModalOpen(true);
+                        }}
+                        className="w-8 h-8 bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white rounded-full flex items-center justify-center transition-colors relative"
+                        aria-label="Rate or share thoughts"
+                        data-testid={`full-add-inline-${idx}`}
+                      >
+                        <MessageSquarePlus size={14} />
+                        <Star size={8} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -2297,24 +2324,47 @@ export default function Search() {
                               )}
                             </div>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setQuickAddMedia({
-                                title: result.title,
-                                mediaType: result.type || 'movie',
-                                imageUrl: result.image_url || result.poster_path || result.image,
-                                externalId: result.external_id || result.id,
-                                externalSource: result.external_source || result.source || 'tmdb',
-                                creator: result.creator,
-                              });
-                              setIsQuickAddOpen(true);
-                            }}
-                            className="w-10 h-10 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center flex-shrink-0 transition-colors"
-                            data-testid={`add-media-${idx}`}
-                          >
-                            <Plus size={20} className="text-white" />
-                          </button>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {/* Quick add to list button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setQuickAddMedia({
+                                  title: result.title,
+                                  mediaType: result.type || 'movie',
+                                  imageUrl: result.image_url || result.poster_path || result.image,
+                                  externalId: result.external_id || result.id,
+                                  externalSource: result.external_source || result.source || 'tmdb',
+                                  creator: result.creator,
+                                });
+                                setIsQuickAddOpen(true);
+                              }}
+                              className="w-10 h-10 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
+                              data-testid={`add-media-${idx}`}
+                            >
+                              <Plus size={20} className="text-white" />
+                            </button>
+                            {/* Rate/Review/Hot Take button */}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFullAddMedia({
+                                  title: result.title,
+                                  mediaType: result.type || 'movie',
+                                  imageUrl: result.image_url || result.poster_path || result.image,
+                                  externalId: result.external_id || result.id,
+                                  externalSource: result.external_source || result.source || 'tmdb',
+                                  creator: result.creator,
+                                });
+                                setIsFullAddModalOpen(true);
+                              }}
+                              className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
+                              data-testid={`full-add-media-${idx}`}
+                            >
+                              <MessageSquarePlus size={16} className="text-white" />
+                              <Star size={10} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -2505,6 +2555,15 @@ export default function Search() {
           setQuickAddMedia(null);
         }}
         media={quickAddMedia}
+      />
+
+      <QuickAddModal
+        isOpen={isFullAddModalOpen}
+        onClose={() => {
+          setIsFullAddModalOpen(false);
+          setFullAddMedia(null);
+        }}
+        preSelectedMedia={fullAddMedia}
       />
     </div>
   );
