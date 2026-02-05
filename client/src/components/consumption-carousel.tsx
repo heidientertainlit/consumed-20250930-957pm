@@ -94,6 +94,7 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
   const [submittingRating, setSubmittingRating] = useState(false);
   const [hoveredStar, setHoveredStar] = useState(0);
   const [userRatings, setUserRatings] = useState<Record<string, number>>({});
+  const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -239,6 +240,28 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
       toast({ title: 'Failed to rate', variant: 'destructive' });
     }
     setSubmittingRating(false);
+  };
+
+  const deleteComment = async (commentId: number, postId: string) => {
+    if (!user?.id) return;
+    setDeletingCommentId(commentId);
+    try {
+      const { error } = await supabase
+        .from('social_post_comments')
+        .delete()
+        .eq('id', commentId)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      setComments(prev => ({
+        ...prev,
+        [postId]: (prev[postId] || []).filter((c: any) => c.id !== commentId)
+      }));
+      toast({ title: 'Comment deleted' });
+    } catch (err) {
+      console.error('Delete comment error:', err);
+      toast({ title: 'Failed to delete', variant: 'destructive' });
+    }
+    setDeletingCommentId(null);
   };
 
   if (!items || items.length === 0) return null;
@@ -434,7 +457,7 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
                   ) : (
                     <div className="space-y-2 max-h-32 overflow-y-auto">
                       {(comments[item.id] || []).map((comment: any) => (
-                        <div key={comment.id} className="flex gap-2">
+                        <div key={comment.id} className="flex gap-2 group">
                           <div className="w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
                             <span className="text-[8px] text-purple-600">{comment.users?.user_name?.charAt(0)?.toUpperCase() || '?'}</span>
                           </div>
@@ -442,6 +465,20 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
                             <span className="text-[10px] font-medium text-purple-600">{comment.users?.display_name || comment.users?.user_name}</span>
                             <p className="text-xs text-gray-600">{comment.content}</p>
                           </div>
+                          {comment.user_id === user?.id && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); deleteComment(comment.id, item.id); }}
+                              disabled={deletingCommentId === comment.id}
+                              className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-red-500 transition-all disabled:opacity-50"
+                              title="Delete comment"
+                            >
+                              {deletingCommentId === comment.id ? (
+                                <Loader2 className="animate-spin" size={10} />
+                              ) : (
+                                <Trash2 size={10} />
+                              )}
+                            </button>
+                          )}
                         </div>
                       ))}
                     </div>
