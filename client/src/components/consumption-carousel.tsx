@@ -201,7 +201,8 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
     try {
       console.log('Submitting comment to post:', postId, 'content:', newComment.trim());
       const { data, error } = await supabase.functions.invoke('social-feed-comments', {
-        body: { action: 'add', postId, content: newComment.trim(), userId: user.id }
+        method: 'POST',
+        body: { post_id: postId, content: newComment.trim() }
       });
       console.log('Comment response:', data, 'error:', error);
       if (error) throw error;
