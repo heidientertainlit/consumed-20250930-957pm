@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Trophy, Check, X, ChevronDown, ChevronUp, ChevronRight,
   Users, TrendingUp, Info, ArrowLeft, ChevronLeft,
-  Sparkles, Lock, Clock, Loader2, Share2
+  Sparkles, Lock, Clock, Loader2, Share2, LogIn
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import Navigation from "@/components/navigation";
 
@@ -55,6 +56,7 @@ export default function AwardsPredictions() {
   const [session, setSession] = useState<any>(null);
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [showBallotModal, setShowBallotModal] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [localPicks, setLocalPicks] = useState<Map<string, string>>(new Map());
   const tabsRef = useRef<HTMLDivElement>(null);
 
@@ -402,7 +404,12 @@ export default function AwardsPredictions() {
 
   const handlePick = (categoryId: string, nomineeId: string) => {
     if (!event || event.status !== 'open') return;
-    if (isAuthLoading || !userId) return;
+    
+    // If not logged in, show login prompt
+    if (!userId) {
+      setShowLoginPrompt(true);
+      return;
+    }
     
     const currentPick = localPicks.get(categoryId);
     console.log('🎯 handlePick called:', { categoryId, nomineeId, currentPick, isChange: currentPick !== nomineeId });
@@ -930,6 +937,40 @@ export default function AwardsPredictions() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Login Prompt Dialog */}
+      <Dialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-amber-500" />
+              Make Your Oscar Picks!
+            </DialogTitle>
+            <DialogDescription>
+              Sign in or create an account to save your predictions and compete with friends.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 pt-4">
+            <Button
+              onClick={() => {
+                sessionStorage.setItem('returnUrl', window.location.pathname);
+                navigate('/login');
+              }}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              Sign In / Create Account
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowLoginPrompt(false)}
+              className="w-full"
+            >
+              Continue Browsing
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

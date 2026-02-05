@@ -30,9 +30,15 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Simple redirect: if user is logged in, go to activity
+    // Redirect after login: check for returnUrl first, otherwise go to activity
     if (!loading && user && !justSignedUp) {
-      setLocation('/activity');
+      const returnUrl = sessionStorage.getItem('returnUrl');
+      if (returnUrl) {
+        sessionStorage.removeItem('returnUrl');
+        setLocation(returnUrl);
+      } else {
+        setLocation('/activity');
+      }
     }
   }, [user, loading, justSignedUp, setLocation]);
 
