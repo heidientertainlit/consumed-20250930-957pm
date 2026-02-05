@@ -301,8 +301,19 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
             {/* Left: Media Image - Clickable to media page */}
             <Link href={mediaDetailLink}>
               {item.mediaImage ? (
-                <div className="w-14 h-20 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0 shadow-sm cursor-pointer hover:opacity-80 transition-opacity">
-                  <img src={item.mediaImage} alt={item.mediaTitle} className="w-full h-full object-cover" />
+                <div className="w-14 h-20 rounded-lg overflow-hidden bg-gradient-to-br from-purple-500 to-blue-500 flex-shrink-0 shadow-sm cursor-pointer hover:opacity-80 transition-opacity relative">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    {item.mediaType === 'book' ? <BookOpen className="text-white/60" size={20} /> : 
+                     item.mediaType === 'tv' ? <Tv className="text-white/60" size={20} /> : 
+                     item.mediaType === 'music' ? <Music className="text-white/60" size={20} /> : 
+                     <Film className="text-white/60" size={20} />}
+                  </div>
+                  <img 
+                    src={item.mediaImage} 
+                    alt={item.mediaTitle} 
+                    className="w-full h-full object-cover relative z-10" 
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
                 </div>
               ) : (
                 <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0 shadow-sm cursor-pointer hover:opacity-80 transition-opacity">
