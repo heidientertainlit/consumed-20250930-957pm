@@ -14,50 +14,18 @@ function getFallbackImageUrl(externalId?: string, externalSource?: string): stri
   return null;
 }
 
-function useDynamicImage(externalId?: string, externalSource?: string, existingImageUrl?: string, title?: string) {
-  const [imageUrl, setImageUrl] = useState<string | null>(existingImageUrl || null);
+function getImageUrl(imageUrl?: string, externalId?: string, externalSource?: string): string | null {
+  // Return existing valid image
+  if (imageUrl && imageUrl.startsWith('http')) {
+    return imageUrl;
+  }
   
-  useEffect(() => {
-    if (existingImageUrl && existingImageUrl.startsWith('http')) {
-      setImageUrl(existingImageUrl);
-      return;
-    }
-    
-    if (!externalSource || !title) return;
-    
-    const fetchImage = async () => {
-      // Use our media-search edge function to get the image
-      try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        
-        // Determine media type for search
-        let mediaType = 'all';
-        if (externalSource === 'spotify') mediaType = 'podcast';
-        else if (externalSource === 'googlebooks' || externalSource === 'openlibrary') mediaType = 'book';
-        else if (externalSource === 'tmdb') mediaType = 'movie';
-        
-        const response = await fetch(
-          `${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(title)}&type=${mediaType}&limit=1`,
-          { headers: { 'Authorization': `Bearer ${anonKey}` } }
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          const result = data.results?.[0];
-          if (result?.poster_url || result?.image) {
-            setImageUrl(result.poster_url || result.image);
-          }
-        }
-      } catch (e) {
-        // Silent fail
-      }
-    };
-    
-    fetchImage();
-  }, [externalId, externalSource, existingImageUrl, title]);
+  // Fallback for Google Books if we have the ID
+  if (externalSource === 'googlebooks' && externalId) {
+    return `https://books.google.com/books/content?id=${externalId}&printsec=frontcover&img=1&zoom=1`;
+  }
   
-  return imageUrl;
+  return null;
 }
 
 interface RatingPost {
@@ -139,18 +107,17 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
   const currentPost = posts[currentIndex];
   const mediaItem = currentPost?.mediaItems?.[0];
   
-  // Fetch images dynamically if missing (for Spotify, books, etc.)
-  const dynamicImageUrl = useDynamicImage(
+  // Get image URL with fallbacks
+  const resolvedImageUrl = getImageUrl(
+    mediaItem?.imageUrl, 
     mediaItem?.externalId, 
-    mediaItem?.externalSource, 
-    mediaItem?.imageUrl,
-    mediaItem?.title
+    mediaItem?.externalSource
   );
   
-  // Create enhanced media object with dynamically fetched image
+  // Create enhanced media object with resolved image
   const media = mediaItem ? {
     ...mediaItem,
-    imageUrl: dynamicImageUrl || mediaItem.imageUrl
+    imageUrl: resolvedImageUrl || mediaItem.imageUrl
   } : undefined;
 
   const [swipeOffset, setSwipeOffset] = useState(0);
@@ -430,7 +397,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 )}
               </Link>
               {/* Actions under poster */}
-              <div className="relative flex items-center justify-center gap-3 py-2 bg-gray-50">
+              <div className="relative flex items-center justify-start gap-3 py-2 px-2">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
