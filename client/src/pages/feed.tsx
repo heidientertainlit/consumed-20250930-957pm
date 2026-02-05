@@ -3133,7 +3133,6 @@ export default function Feed() {
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
-                    onComment={(postId) => setExpandedComments(prev => { const newSet = new Set(prev); if (newSet.has(postId)) newSet.delete(postId); else newSet.add(postId); return newSet; })}
                     likedPosts={likedPosts}
                   />
                 );
@@ -3278,7 +3277,6 @@ export default function Feed() {
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
-                    onComment={(postId) => setExpandedComments(prev => { const newSet = new Set(prev); if (newSet.has(postId)) newSet.delete(postId); else newSet.add(postId); return newSet; })}
                     likedPosts={likedPosts}
                   />
                 );

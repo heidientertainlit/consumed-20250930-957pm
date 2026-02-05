@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { ChevronRight, ChevronLeft, Star, Heart, MessageCircle, Plus, User } from "lucide-react";
+import { ChevronRight, ChevronLeft, Star, Heart, MessageCircle, Plus, User, Send, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import { QuickAddListSheet } from "./quick-add-list-sheet";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
 
 interface RatingPost {
   id: string;
@@ -28,24 +30,44 @@ interface RatingPost {
   isLiked?: boolean;
 }
 
+interface Comment {
+  id: string;
+  content: string;
+  createdAt: string;
+  user: {
+    id: string;
+    username: string;
+    displayName: string;
+    avatar: string;
+  };
+}
+
 interface SwipeableRatingCardsProps {
   posts: RatingPost[];
   onLike?: (postId: string) => void;
-  onComment?: (postId: string) => void;
   likedPosts?: Set<string>;
 }
 
-export default function SwipeableRatingCards({ posts, onLike, onComment, likedPosts }: SwipeableRatingCardsProps) {
+export default function SwipeableRatingCards({ posts, onLike, likedPosts }: SwipeableRatingCardsProps) {
+  const { session } = useAuth();
+  const { toast } = useToast();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [commentInput, setCommentInput] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
   
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
   useEffect(() => {
     setImageLoaded(false);
+    setShowComments(false);
+    setComments([]);
   }, [currentIndex]);
 
   if (!posts || posts.length === 0) return null;
@@ -132,19 +154,63 @@ export default function SwipeableRatingCards({ posts, onLike, onComment, likedPo
     }
   };
 
-  const handleCommentClick = (e: React.MouseEvent) => {
+  const fetchComments = async () => {
+    if (!session?.access_token) return;
+    setLoadingComments(true);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const response = await fetch(`${supabaseUrl}/functions/v1/social-feed-comments?post_id=${currentPost.id}`, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setComments(data.comments || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch comments:', err);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
+  const handleCommentClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (onComment) {
-      onComment(currentPost.id);
+    if (!showComments) {
+      setShowComments(true);
+      await fetchComments();
+    } else {
+      setShowComments(false);
     }
-    // Scroll to the actual post in the feed
-    setTimeout(() => {
-      const postElement = document.getElementById(`post-${currentPost.id}`);
-      if (postElement) {
-        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const submitComment = async () => {
+    if (!session?.access_token || !commentInput.trim()) return;
+    setSubmittingComment(true);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const response = await fetch(`${supabaseUrl}/functions/v1/social-feed-comments`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          post_id: currentPost.id,
+          content: commentInput.trim()
+        })
+      });
+      if (response.ok) {
+        setCommentInput("");
+        await fetchComments();
+        toast({ title: "Comment added!" });
       }
-    }, 100);
+    } catch (err) {
+      console.error('Failed to submit comment:', err);
+      toast({ title: "Failed to add comment", variant: "destructive" });
+    } finally {
+      setSubmittingComment(false);
+    }
   };
 
   const hasValidImage = media?.imageUrl && media.imageUrl.startsWith('http');
@@ -250,8 +316,13 @@ export default function SwipeableRatingCards({ posts, onLike, onComment, likedPo
                     onClick={handleCommentClick}
                     className="flex items-center gap-1 group"
                   >
-                    <MessageCircle size={18} className="text-gray-400 group-hover:text-purple-500 transition-colors" />
-                    <span className="text-xs text-gray-500">{currentPost.commentsCount || 0}</span>
+                    <MessageCircle 
+                      size={18} 
+                      className={`transition-colors ${showComments ? 'text-purple-600 fill-purple-100' : 'text-gray-400 group-hover:text-purple-500'}`}
+                    />
+                    <span className={`text-xs ${showComments ? 'text-purple-600' : 'text-gray-500'}`}>
+                      {currentPost.commentsCount || comments.length || 0}
+                    </span>
                   </button>
                   
                   {/* Add to list button */}
@@ -294,6 +365,74 @@ export default function SwipeableRatingCards({ posts, onLike, onComment, likedPo
               </div>
             </div>
           </div>
+
+          {/* Inline Comments Section */}
+          {showComments && (
+            <div className="border-t border-gray-100 p-3 bg-gray-50/50">
+              {loadingComments ? (
+                <div className="flex justify-center py-3">
+                  <Loader2 className="animate-spin text-purple-500" size={20} />
+                </div>
+              ) : (
+                <>
+                  {/* Existing comments */}
+                  {comments.length > 0 ? (
+                    <div className="space-y-2 mb-3 max-h-32 overflow-y-auto">
+                      {comments.slice(0, 3).map((comment) => (
+                        <div key={comment.id} className="flex gap-2">
+                          {comment.user?.avatar ? (
+                            <img src={comment.user.avatar} alt="" className="w-6 h-6 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                              <User size={12} className="text-purple-600" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-medium text-purple-600">
+                              {comment.user?.displayName || comment.user?.username}
+                            </span>
+                            <p className="text-xs text-gray-700 line-clamp-2">{comment.content}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {comments.length > 3 && (
+                        <p className="text-xs text-gray-400 text-center">+ {comments.length - 3} more comments</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 text-center mb-3">No comments yet</p>
+                  )}
+
+                  {/* Comment input */}
+                  {session ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={commentInput}
+                        onChange={(e) => setCommentInput(e.target.value)}
+                        placeholder="Add a comment..."
+                        className="flex-1 text-sm px-3 py-2 rounded-full border border-gray-200 focus:outline-none focus:border-purple-400"
+                        onKeyPress={(e) => e.key === 'Enter' && submitComment()}
+                      />
+                      <button
+                        onClick={submitComment}
+                        disabled={!commentInput.trim() || submittingComment}
+                        className="p-2 rounded-full bg-purple-600 text-white disabled:opacity-50"
+                      >
+                        {submittingComment ? (
+                          <Loader2 className="animate-spin" size={16} />
+                        ) : (
+                          <Send size={16} />
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 text-center">Sign in to comment</p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
           {/* Dots indicator */}
           {posts.length > 1 && (
