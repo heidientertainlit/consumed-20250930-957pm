@@ -382,10 +382,9 @@ export default function Leaderboard() {
 
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="text-right">
-                    <p className="font-bold text-lg text-purple-600">{entry.score}</p>
-                    {!hideDetails && entry.detail && (
-                      <p className="text-xs text-gray-500">{entry.detail}</p>
-                    )}
+                    <p className="font-bold text-lg text-purple-600">
+                      {typeof entry.score === 'number' ? entry.score.toLocaleString() : entry.score} pts
+                    </p>
                   </div>
                   
                   {isCurrentUser && (
