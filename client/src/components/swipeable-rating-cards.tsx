@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { ChevronRight, Star, Heart, MessageCircle, Plus, User } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ChevronRight, ChevronLeft, Star, Heart, MessageCircle, Plus, User } from "lucide-react";
 import { Link } from "wouter";
 import { QuickAddListSheet } from "./quick-add-list-sheet";
 
@@ -39,60 +39,49 @@ export default function SwipeableRatingCards({ posts, onLike, onComment, likedPo
   const [currentIndex, setCurrentIndex] = useState(0);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const startX = useRef<number>(0);
-  const currentX = useRef<number>(0);
-  const isDragging = useRef<boolean>(false);
-  const [dragOffset, setDragOffset] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
+
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [currentIndex]);
 
   if (!posts || posts.length === 0) return null;
 
   const currentPost = posts[currentIndex];
   const media = currentPost?.mediaItems?.[0];
 
-  const handleStart = (clientX: number) => {
-    startX.current = clientX;
-    currentX.current = clientX;
-    isDragging.current = true;
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
   };
 
-  const handleMove = (clientX: number) => {
-    if (!isDragging.current) return;
-    currentX.current = clientX;
-    const diff = currentX.current - startX.current;
-    setDragOffset(diff);
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    touchEndX.current = e.changedTouches[0].clientX;
+    handleSwipe();
   };
 
-  const handleEnd = () => {
-    if (!isDragging.current) return;
-    isDragging.current = false;
-    
-    const diff = currentX.current - startX.current;
+  const handleSwipe = () => {
+    const diff = touchStartX.current - touchEndX.current;
     const threshold = 50;
-    
-    if (diff < -threshold && currentIndex < posts.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    } else if (diff > threshold && currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+
+    if (diff > threshold && currentIndex < posts.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+    } else if (diff < -threshold && currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
     }
-    
-    setDragOffset(0);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => handleStart(e.touches[0].clientX);
-  const handleTouchMove = (e: React.TouchEvent) => handleMove(e.touches[0].clientX);
-  const handleTouchEnd = () => handleEnd();
-
-  const handleMouseDown = (e: React.MouseEvent) => handleStart(e.clientX);
-  const handleMouseMove = (e: React.MouseEvent) => handleMove(e.clientX);
-  const handleMouseUp = () => handleEnd();
-  const handleMouseLeave = () => {
-    if (isDragging.current) handleEnd();
   };
 
   const goToNext = () => {
     if (currentIndex < posts.length - 1) {
       setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const goToPrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
     }
   };
 
@@ -151,35 +140,32 @@ export default function SwipeableRatingCards({ posts, onLike, onComment, likedPo
     }
   };
 
+  const hasValidImage = media?.imageUrl && media.imageUrl.startsWith('http');
+
   return (
     <>
       <div className="mb-4">
         <div 
-          ref={containerRef}
-          className="relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden select-none touch-pan-y"
+          className="relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
           onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-          style={{
-            transform: `translateX(${dragOffset * 0.3}px)`,
-            transition: isDragging.current ? 'none' : 'transform 0.2s ease-out'
-          }}
         >
           <div className="flex">
             {/* Media poster on left */}
             <Link href={getMediaLink() || '#'} className="shrink-0">
-              {media?.imageUrl ? (
-                <img 
-                  src={media.imageUrl} 
-                  alt={media.title || ''} 
-                  className="w-28 h-40 object-cover"
-                  draggable={false}
-                  loading="eager"
-                />
+              {hasValidImage ? (
+                <div className="relative w-28 h-40">
+                  {!imageLoaded && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-200 to-purple-100 animate-pulse" />
+                  )}
+                  <img 
+                    src={media.imageUrl} 
+                    alt={media.title || ''} 
+                    className={`w-28 h-40 object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                    onLoad={() => setImageLoaded(true)}
+                    loading="eager"
+                  />
+                </div>
               ) : (
                 <div className="w-28 h-40 bg-gradient-to-br from-purple-200 to-purple-100 flex items-center justify-center">
                   <span className="text-gray-500 text-xs text-center px-2">No image</span>
@@ -197,7 +183,6 @@ export default function SwipeableRatingCards({ posts, onLike, onComment, likedPo
                       src={currentPost.user.avatar} 
                       alt="" 
                       className="w-7 h-7 rounded-full object-cover border border-purple-100"
-                      draggable={false}
                     />
                   ) : (
                     <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center">
@@ -271,9 +256,20 @@ export default function SwipeableRatingCards({ posts, onLike, onComment, likedPo
                   </button>
                 </div>
 
-                {/* Navigation */}
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400">
+                {/* Navigation arrows */}
+                <div className="flex items-center gap-1">
+                  {currentIndex > 0 && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        goToPrev();
+                      }}
+                      className="p-1.5 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors"
+                    >
+                      <ChevronLeft size={14} className="text-gray-500" />
+                    </button>
+                  )}
+                  <span className="text-xs text-gray-400 px-1">
                     {currentIndex + 1}/{posts.length}
                   </span>
                   {currentIndex < posts.length - 1 && (
@@ -284,7 +280,7 @@ export default function SwipeableRatingCards({ posts, onLike, onComment, likedPo
                       }}
                       className="p-1.5 rounded-full bg-purple-50 hover:bg-purple-100 transition-colors"
                     >
-                      <ChevronRight size={16} className="text-purple-600" />
+                      <ChevronRight size={14} className="text-purple-600" />
                     </button>
                   )}
                 </div>
