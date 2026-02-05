@@ -264,13 +264,7 @@ export default function Search() {
       const { data, error } = await supabase
         .from('list_items')
         .select(`
-          id,
-          title,
-          media_type,
-          image_url,
-          rating,
-          external_id,
-          external_source,
+          *,
           lists!inner(user_id, title)
         `)
         .eq('lists.user_id', appUser.id)
