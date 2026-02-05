@@ -176,7 +176,6 @@ export default function PostDetailSheet({ isOpen, onClose, post, onLike, isLiked
 
       setUserRating(rating);
       setShowRating(false);
-      toast({ title: `Rated ${rating} stars!` });
     } catch (err) {
       console.error('Error rating:', err);
       toast({ title: 'Failed to rate', variant: 'destructive' });

@@ -167,7 +167,6 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
         throw new Error('Failed to submit rating');
       }
 
-      toast({ title: `Rated "${media.title}" ${selectedRating} stars!` });
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       setStep('recommend');

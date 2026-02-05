@@ -235,7 +235,6 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
       });
       setUserRatings(prev => ({ ...prev, [item.id]: rating }));
       setShowRating(null);
-      toast({ title: `Rated ${rating} stars!` });
     } catch (err) {
       toast({ title: 'Failed to rate', variant: 'destructive' });
     }

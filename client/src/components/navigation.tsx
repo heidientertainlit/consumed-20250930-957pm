@@ -234,12 +234,12 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
     onSuccess: (result, variables) => {
       const isDuplicate = result?.message === 'Item already in list';
       
-      toast({
-        title: isDuplicate ? "Already in list!" : "Added to list!",
-        description: isDuplicate 
-          ? `${variables.media.title} is already in this list.`
-          : `${variables.media.title} has been added to your list.`,
-      });
+      if (isDuplicate) {
+        toast({
+          title: "Already in list!",
+          description: `${variables.media.title} is already in this list.`,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['user-lists-for-nav'] });
     },
     onError: () => {

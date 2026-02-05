@@ -356,12 +356,12 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
     onSuccess: (result) => {
       const isDuplicate = result?.message?.toLowerCase().includes('already');
       
-      toast({
-        title: isDuplicate ? "Already in list!" : "Added to list!",
-        description: isDuplicate 
-          ? `${media.title} is already in this list.`
-          : `${media.title} has been added to your list.`,
-      });
+      if (isDuplicate) {
+        toast({
+          title: "Already in list!",
+          description: `${media.title} is already in this list.`,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
     },
     onError: () => {

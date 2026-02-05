@@ -350,8 +350,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
               mediaImage: selectedMedia.image || selectedMedia.image_url,
             }),
           });
-          toast({ title: `Tracked ${selectedMedia.title} + Hot Take posted! 🔥` });
-        } else if (trackPostType === 'poll' && contentText.trim()) {
+          } else if (trackPostType === 'poll' && contentText.trim()) {
           const validOptions = pollOptions.filter(o => o.trim());
           if (validOptions.length >= 2) {
             await fetch(`${supabaseUrl}/functions/v1/create-poll`, {
@@ -369,12 +368,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 mediaTitle: selectedMedia.title,
               }),
             });
-            toast({ title: `Tracked ${selectedMedia.title} + Poll created!` });
-          } else {
-            toast({ title: `Tracked ${selectedMedia.title}!` });
           }
-        } else {
-          toast({ title: `Tracked ${selectedMedia.title}!` });
         }
         
         queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });

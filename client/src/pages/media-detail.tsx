@@ -677,12 +677,7 @@ export default function MediaDetail() {
 
       return response.json();
     },
-    onSuccess: (data) => {
-      const listTitle = data.listTitle || 'list';
-      toast({
-        title: "Added to list!",
-        description: `${mediaItem?.title} added to ${listTitle}.`,
-      });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
     },
     onError: (error) => {

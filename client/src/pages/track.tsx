@@ -280,14 +280,7 @@ export default function Track() {
 
       return response.json();
     },
-    onSuccess: (data, variables) => {
-      // Use the listTitle from the response for consistent messaging
-      const listTitle = data.listTitle || 'list';
-      toast({
-        title: "Added to list!",
-        description: `${variables.recommendation.title} added to ${listTitle}.`,
-      });
-      // Invalidate and refetch only the lists data to show the new item - don't refetch recommendations
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
     },
     onError: (error) => {

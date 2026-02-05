@@ -596,14 +596,9 @@ export default function UserProfile() {
       }
       return response.json();
     },
-    onSuccess: (data, variables) => {
-      const listTitle = data.listTitle || 'list';
-      toast({
-        title: "Added to list!",
-        description: `${variables.recommendation.title} added to ${listTitle}.`,
-      });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
-      fetchUserLists(); // Refresh lists
+      fetchUserLists();
     },
     onError: (error) => {
       toast({
