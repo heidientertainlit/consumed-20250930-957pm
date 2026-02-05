@@ -199,13 +199,17 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
     if (!newComment.trim() || !user?.id) return;
     setSubmittingComment(true);
     try {
-      await supabase.functions.invoke('social-feed-comments', {
+      console.log('Submitting comment to post:', postId, 'content:', newComment.trim());
+      const { data, error } = await supabase.functions.invoke('social-feed-comments', {
         body: { action: 'add', postId, content: newComment.trim(), userId: user.id }
       });
+      console.log('Comment response:', data, 'error:', error);
+      if (error) throw error;
       setNewComment('');
       fetchComments(postId);
       toast({ title: 'Comment added!' });
     } catch (err) {
+      console.error('Comment error:', err);
       toast({ title: 'Failed to add comment', variant: 'destructive' });
     }
     setSubmittingComment(false);
