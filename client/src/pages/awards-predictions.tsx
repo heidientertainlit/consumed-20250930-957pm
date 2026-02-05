@@ -403,8 +403,12 @@ export default function AwardsPredictions() {
     if (!event || event.status !== 'open') return;
     if (isAuthLoading || !userId) return;
     
+    const currentPick = localPicks.get(categoryId);
+    console.log('🎯 handlePick called:', { categoryId, nomineeId, currentPick, isChange: currentPick !== nomineeId });
+    
     // Check if same nominee is already picked (no change needed)
-    if (localPicks.get(categoryId) === nomineeId) {
+    if (currentPick === nomineeId) {
+      console.log('🎯 Same nominee already picked, skipping');
       return;
     }
     
@@ -416,6 +420,7 @@ export default function AwardsPredictions() {
     });
     
     // Save to server (outside of state setter)
+    console.log('🎯 Calling savePick.mutate for:', { categoryId, nomineeId });
     savePick.mutate({ categoryId, nomineeId });
   };
 
