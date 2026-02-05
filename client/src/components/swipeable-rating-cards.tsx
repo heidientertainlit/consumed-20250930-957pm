@@ -102,27 +102,33 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
         const media = post.mediaItems?.[0];
         if (!media) continue;
         
-        // Skip if already has valid image or already fetched
-        const hasValidImage = media.imageUrl && media.imageUrl.startsWith('http');
-        if (hasValidImage || fetchedImages[post.id]) continue;
+        // Skip if already fetched
+        if (fetchedImages[post.id]) continue;
         
-        // Skip if no title to search with
+        // For Spotify, always re-fetch since stored URLs may be truncated/invalid
+        const isSpotify = media.externalSource === 'spotify';
+        const hasValidImage = !isSpotify && media.imageUrl && media.imageUrl.startsWith('http');
+        
+        if (hasValidImage) continue;
         if (!media.title) continue;
         
         try {
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
           const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
           
-          // Determine media type for search
-          let mediaType = 'all';
-          if (media.externalSource === 'spotify') mediaType = 'podcast';
-          else if (media.externalSource === 'googlebooks' || media.externalSource === 'openlibrary') mediaType = 'book';
-          else if (media.externalSource === 'tmdb') mediaType = 'movie';
+          // Use shorter search title for better results
+          const searchTitle = media.title.split(':')[0].trim().slice(0, 30);
           
-          const searchTitle = media.title.slice(0, 50);
           const response = await fetch(
-            `${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(searchTitle)}&type=${mediaType}&limit=1`,
-            { headers: { 'Authorization': `Bearer ${anonKey}` } }
+            `${supabaseUrl}/functions/v1/media-search`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${anonKey}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ query: searchTitle })
+            }
           );
           
           if (response.ok) {
@@ -136,7 +142,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
             }
           }
         } catch (e) {
-          // Silent fail - image will just not show
+          // Silent fail
         }
       }
     };

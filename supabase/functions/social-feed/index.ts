@@ -184,8 +184,52 @@ serve(async (req) => {
       // Helper function to fetch poster URL from various sources based on media type
       const fetchPosterUrl = async (externalId: string, mediaType?: string, externalSource?: string, mediaTitle?: string): Promise<string | null> => {
         try {
+          // For Spotify podcasts/music - use Spotify Web API
+          if (externalSource === 'spotify' || mediaType === 'podcast' || mediaType === 'music') {
+            const spotifyClientId = Deno.env.get('SPOTIFY_CLIENT_ID');
+            const spotifyClientSecret = Deno.env.get('SPOTIFY_CLIENT_SECRET');
+            
+            if (spotifyClientId && spotifyClientSecret && mediaTitle) {
+              try {
+                // Get Spotify access token
+                const tokenResponse = await fetch('https://accounts.spotify.com/api/token', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': 'Basic ' + btoa(`${spotifyClientId}:${spotifyClientSecret}`),
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                  },
+                  body: 'grant_type=client_credentials'
+                });
+                
+                if (tokenResponse.ok) {
+                  const tokenData = await tokenResponse.json();
+                  const accessToken = tokenData.access_token;
+                  
+                  // Search for the show/podcast
+                  const searchQuery = encodeURIComponent(mediaTitle.slice(0, 50));
+                  const searchResponse = await fetch(
+                    `https://api.spotify.com/v1/search?q=${searchQuery}&type=show&limit=1`,
+                    { headers: { 'Authorization': `Bearer ${accessToken}` } }
+                  );
+                  
+                  if (searchResponse.ok) {
+                    const searchData = await searchResponse.json();
+                    const show = searchData.shows?.items?.[0];
+                    if (show?.images?.[0]?.url) {
+                      console.log('Spotify show image found for:', mediaTitle);
+                      return show.images[0].url;
+                    }
+                  }
+                }
+              } catch (spotifyError) {
+                console.error('Spotify API error:', spotifyError);
+              }
+            }
+            return null;
+          }
+          
           // For books - try Google Books first, then Open Library
-          if (mediaType === 'book' || externalSource === 'google_books' || externalSource === 'openlibrary') {
+          if (mediaType === 'book' || externalSource === 'google_books' || externalSource === 'googlebooks' || externalSource === 'openlibrary') {
             // If we have a Google Books ID
             if (externalSource === 'google_books' && externalId) {
               const googleBooksApiKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
