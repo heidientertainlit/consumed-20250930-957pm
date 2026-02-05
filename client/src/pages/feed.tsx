@@ -3017,21 +3017,21 @@ export default function Feed() {
 
                 {/* Media Type Pills - Always visible */}
                 {[
-                  { id: null, label: 'All' },
-                  { id: 'movies', label: 'Movies' },
-                  { id: 'tv', label: 'TV' },
-                  { id: 'music', label: 'Music' },
-                  { id: 'books', label: 'Books' },
-                  { id: 'sports', label: 'Sports' },
-                  { id: 'podcasts', label: 'Podcasts' },
-                  { id: 'gaming', label: 'Gaming' },
+                  { id: null, label: 'All', Icon: Sparkles },
+                  { id: 'movies', label: 'Movies', Icon: Film },
+                  { id: 'tv', label: 'TV', Icon: Tv2 },
+                  { id: 'music', label: 'Music', Icon: Music },
+                  { id: 'books', label: 'Books', Icon: Book },
+                  { id: 'sports', label: 'Sports', Icon: Activity },
+                  { id: 'podcasts', label: 'Podcasts', Icon: Headphones },
+                  { id: 'gaming', label: 'Gaming', Icon: Gamepad2 },
                 ].map((cat) => (
                   <button
                     key={cat.id || 'all'}
                     onClick={() => {
                       setSelectedCategory(cat.id === selectedCategory ? null : cat.id);
                     }}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                       cat.id === null && selectedCategory === null
                         ? 'bg-gradient-to-r from-indigo-600 via-purple-700 to-blue-700 text-white shadow-sm'
                         : cat.id !== null && cat.id === selectedCategory
@@ -3039,6 +3039,7 @@ export default function Feed() {
                           : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                     }`}
                   >
+                    <cat.Icon size={14} />
                     {cat.label}
                   </button>
                 ))}
