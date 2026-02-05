@@ -41,7 +41,7 @@ function AnimatedWord() {
   }, []);
 
   return (
-    <span className="inline-block overflow-hidden h-[1.2em] align-baseline">
+    <span className="inline-flex overflow-hidden h-[1em] items-center" style={{ verticalAlign: 'baseline' }}>
       <span 
         className={`inline-block font-medium ${words[currentIndex].color} transition-transform ease-out ${
           isScrolling ? 'translate-y-full' : 'translate-y-0'
