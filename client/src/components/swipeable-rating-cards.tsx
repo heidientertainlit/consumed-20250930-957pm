@@ -5,6 +5,21 @@ import { QuickAddListSheet } from "./quick-add-list-sheet";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
+function getFallbackImageUrl(externalId?: string, externalSource?: string): string | null {
+  if (!externalId || !externalSource) return null;
+  
+  if (externalSource === 'googlebooks') {
+    return `https://books.google.com/books/content?id=${externalId}&printsec=frontcover&img=1&zoom=1`;
+  }
+  if (externalSource === 'tmdb') {
+    return null;
+  }
+  if (externalSource === 'spotify') {
+    return null;
+  }
+  return null;
+}
+
 interface RatingPost {
   id: string;
   user?: {
@@ -336,6 +351,20 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                       alt={media.title || ''} 
                       className={`w-24 h-36 object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                       onLoad={() => setImageLoaded(true)}
+                      loading="eager"
+                    />
+                  </div>
+                ) : getFallbackImageUrl(media.externalId, media.externalSource) ? (
+                  <div className="relative w-24 h-36">
+                    {!imageLoaded && (
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-200 to-purple-100 animate-pulse rounded-l-2xl" />
+                    )}
+                    <img 
+                      src={getFallbackImageUrl(media.externalId, media.externalSource)!} 
+                      alt={media.title || ''} 
+                      className={`w-24 h-36 object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                      onLoad={() => setImageLoaded(true)}
+                      onError={() => setImageLoaded(true)}
                       loading="eager"
                     />
                   </div>
