@@ -239,15 +239,28 @@ export default function Search() {
     staleTime: 60000,
   });
 
-  // Enhanced media history with list names
+  // Enhanced media history with list names - lookup app user by email first
   const { data: fullMediaHistory = [], isLoading: isLoadingFullHistory } = useQuery({
-    queryKey: ['full-media-history-dna', user?.id],
+    queryKey: ['full-media-history-dna', user?.email],
     queryFn: async () => {
-      if (!session?.access_token || !user?.id) {
-        console.log('📜 History: No session or user');
+      if (!session?.access_token || !user?.email) {
+        console.log('📜 History: No session or user email');
         return [];
       }
-      console.log('📜 History: Fetching for user', user.id);
+      
+      // First lookup app user ID by email (same as edge function)
+      const { data: appUser, error: appUserError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', user.email)
+        .single();
+      
+      if (appUserError || !appUser) {
+        console.log('📜 History: App user not found for email', user.email);
+        return [];
+      }
+      
+      console.log('📜 History: Fetching for app user', appUser.id);
       const { data, error } = await supabase
         .from('list_items')
         .select(`
@@ -255,14 +268,13 @@ export default function Search() {
           title,
           media_type,
           image_url,
-          added_at,
           rating,
           external_id,
           external_source,
           lists!inner(user_id, title)
         `)
-        .eq('lists.user_id', user.id)
-        .order('added_at', { ascending: false })
+        .eq('lists.user_id', appUser.id)
+        .order('id', { ascending: false })
         .limit(100);
       console.log('📜 History result:', { count: data?.length, error: error?.message });
       if (error) {
@@ -274,7 +286,7 @@ export default function Search() {
         listName: item.lists?.title || 'Unknown'
       }));
     },
-    enabled: !!session?.access_token && !!user?.id,
+    enabled: !!session?.access_token && !!user?.email,
     staleTime: 60000,
   });
 
@@ -386,7 +398,7 @@ export default function Search() {
   const filteredMediaHistory = fullMediaHistory.filter((item: any) => {
     const matchesSearch = !mediaHistorySearch || item.title?.toLowerCase().includes(mediaHistorySearch.toLowerCase());
     const matchesType = mediaHistoryType === 'all' || item.media_type?.toLowerCase() === mediaHistoryType.toLowerCase();
-    const matchesYear = mediaHistoryYear === 'all' || new Date(item.added_at).getFullYear().toString() === mediaHistoryYear;
+    const matchesYear = mediaHistoryYear === 'all'; // Year filter temporarily disabled until date field available
     const matchesRating = mediaHistoryRating === 'all' || item.rating?.toString() === mediaHistoryRating;
     return matchesSearch && matchesType && matchesYear && matchesRating;
   });
@@ -2170,7 +2182,7 @@ export default function Search() {
                                   <span>•</span>
                                   <span>{item.listName}</span>
                                 </div>
-                                <p className="text-xs text-gray-400">{item.added_at ? new Date(item.added_at).toLocaleDateString() : ''}</p>
+                                {/* Date display removed - production schema doesn't have date field */}
                               </div>
                             </div>
                           </div>
