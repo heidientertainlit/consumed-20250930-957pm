@@ -120,13 +120,20 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
     if (!rating) return null;
     return (
       <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            size={16}
-            className={star <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
-          />
-        ))}
+        {[1, 2, 3, 4, 5].map((star) => {
+          const fillPercent = Math.min(100, Math.max(0, (rating - star + 1) * 100));
+          return (
+            <div key={star} className="relative">
+              <Star size={16} className="text-gray-300" />
+              <div 
+                className="absolute inset-0 overflow-hidden"
+                style={{ width: `${fillPercent}%` }}
+              >
+                <Star size={16} className="text-yellow-400 fill-yellow-400" />
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -357,44 +364,52 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 {session && (
                   userRating ? (
                     <div className="flex items-center gap-0.5">
-                      <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                      <Star size={16} className="text-yellow-400 fill-yellow-400" />
                       <span className="text-xs text-yellow-600 font-medium">{userRating}</span>
                     </div>
                   ) : showQuickRate ? (
-                    <div className="flex items-center gap-0.5">
+                    <div className="flex items-center">
                       {submittingRating ? (
-                        <Loader2 className="animate-spin text-purple-500" size={14} />
+                        <Loader2 className="animate-spin text-purple-500" size={18} />
                       ) : (
                         <>
                           {[1, 2, 3, 4, 5].map((star) => (
-                            <button
+                            <div
                               key={star}
+                              className="relative w-7 h-7 flex items-center justify-center cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                submitQuickRating(star);
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const isLeftHalf = (e.clientX - rect.left) < rect.width / 2;
+                                const rating = isLeftHalf ? star - 0.5 : star;
+                                submitQuickRating(rating);
                               }}
-                              onMouseEnter={() => setHoveredStar(star)}
+                              onMouseMove={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const isLeftHalf = (e.clientX - rect.left) < rect.width / 2;
+                                setHoveredStar(isLeftHalf ? star - 0.5 : star);
+                              }}
                               onMouseLeave={() => setHoveredStar(0)}
-                              className="p-0"
                             >
-                              <Star
-                                size={14}
-                                className={`transition-colors ${
-                                  star <= hoveredStar 
-                                    ? 'text-yellow-400 fill-yellow-400' 
-                                    : 'text-gray-300 hover:text-yellow-300'
-                                }`}
-                              />
-                            </button>
+                              <div className="relative">
+                                <Star size={22} className="text-gray-300" />
+                                <div 
+                                  className="absolute inset-0 overflow-hidden"
+                                  style={{ width: `${Math.min(100, Math.max(0, (hoveredStar - star + 1) * 100))}%` }}
+                                >
+                                  <Star size={22} className="text-yellow-400 fill-yellow-400" />
+                                </div>
+                              </div>
+                            </div>
                           ))}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setShowQuickRate(false);
                             }}
-                            className="ml-0.5 text-gray-400 hover:text-gray-600"
+                            className="ml-1 text-gray-400 hover:text-gray-600"
                           >
-                            <X size={12} />
+                            <X size={14} />
                           </button>
                         </>
                       )}
