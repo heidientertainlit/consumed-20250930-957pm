@@ -455,6 +455,8 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
     mutationFn: async ({ rankId, content }: { rankId: string; content: string }) => {
       if (!user?.id) throw new Error('Must be logged in');
       
+      console.log('💬 Posting comment:', { rankId, userId: user.id, content: content.trim() });
+      
       const { data, error } = await supabase
         .from('rank_comments')
         .insert({
@@ -465,16 +467,22 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('💬 Comment error:', error);
+        throw error;
+      }
+      console.log('💬 Comment posted:', data);
       return { rankId, comment: data };
     },
     onSuccess: ({ rankId }) => {
       setCommentInputs(prev => ({ ...prev, [rankId]: '' }));
       fetchComments(rankId);
       trackEvent('rank_comment_posted', { rank_id: rankId });
+      toast({ title: 'Comment posted!' });
     },
-    onError: () => {
-      toast({ title: 'Failed to post comment', variant: 'destructive' });
+    onError: (error: any) => {
+      console.error('💬 Comment mutation error:', error);
+      toast({ title: 'Failed to post comment', description: error?.message || 'Please try again', variant: 'destructive' });
     }
   });
 
@@ -679,7 +687,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                           handlePostComment(rank.id);
                         }
                       }}
-                      className="flex-1 h-8 text-sm rounded-full bg-gray-50 border-gray-200"
+                      className="flex-1 h-8 text-sm rounded-full bg-gray-50 border-gray-200 text-gray-900"
                     />
                     <Button
                       size="sm"
