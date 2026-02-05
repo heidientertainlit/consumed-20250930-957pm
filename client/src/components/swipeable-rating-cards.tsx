@@ -351,6 +351,18 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 >
                   <Plus size={16} className="text-gray-400 group-hover:text-purple-500 transition-colors" />
                 </button>
+                {session && !showQuickRate && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowQuickRate(true);
+                    }}
+                    className="group"
+                    title="Rate this"
+                  >
+                    <Star size={16} className="text-gray-400 group-hover:text-yellow-400 transition-colors" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -386,22 +398,12 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 </h3>
               </Link>
               
-              {/* Rating stars + Tap to rate star icon */}
-              <div className="flex items-center gap-2 mb-1">
-                {currentPost.rating && renderStars(currentPost.rating)}
-                {session && !showQuickRate && (
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowQuickRate(true);
-                    }}
-                    className="p-1 rounded-full hover:bg-purple-50 transition-colors"
-                    title="Rate this"
-                  >
-                    <Star size={16} className="text-gray-300 hover:text-yellow-400" />
-                  </button>
-                )}
-              </div>
+              {/* Rating stars */}
+              {currentPost.rating && (
+                <div className="mb-1">
+                  {renderStars(currentPost.rating)}
+                </div>
+              )}
 
               {/* Quick Rate expanded */}
               {showQuickRate && (
