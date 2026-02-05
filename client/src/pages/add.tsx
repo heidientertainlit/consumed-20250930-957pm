@@ -19,11 +19,11 @@ import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 
 function AnimatedWord() {
   const words = [
-    { text: "watching", color: "text-pink-400" },
-    { text: "reading", color: "text-cyan-400" },
-    { text: "playing", color: "text-green-400" },
-    { text: "listening to", color: "text-orange-400" },
-    { text: "consuming", color: "text-yellow-400" },
+    { text: "watching", color: "text-violet-400" },
+    { text: "reading", color: "text-violet-400" },
+    { text: "playing", color: "text-violet-400" },
+    { text: "listening to", color: "text-violet-400" },
+    { text: "consuming", color: "text-violet-400" },
   ];
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
