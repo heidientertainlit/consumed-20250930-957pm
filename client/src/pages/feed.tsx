@@ -1656,24 +1656,29 @@ export default function Feed() {
     }
 
     // Apply media category pill filter (Movies, TV, Music, Books, etc.)
+    // Only filter regular media posts - skip special types that are rendered separately
     if (selectedCategory) {
-      const categoryToMediaType: { [key: string]: string[] } = {
-        'movies': ['movie', 'film'],
-        'tv': ['tv', 'tv_show', 'tv show', 'series'],
-        'music': ['music', 'album', 'song', 'track'],
-        'books': ['book', 'ebook', 'audiobook'],
-        'sports': ['sports', 'sport'],
-        'podcasts': ['podcast'],
-        'gaming': ['game', 'gaming', 'video_game'],
-      };
-      const allowedTypes = categoryToMediaType[selectedCategory] || [];
-      if (allowedTypes.length > 0) {
-        if (!post.mediaItems || post.mediaItems.length === 0) return false;
-        const hasMatchingMedia = post.mediaItems.some(media => {
-          const mediaType = media.mediaType?.toLowerCase() || '';
-          return allowedTypes.includes(mediaType);
-        });
-        if (!hasMatchingMedia) return false;
+      const skipFilterTypes = ['cast_approved', 'hot_take', 'prediction', 'poll', 'vote', 'trivia', 'rank_share', 'ask_for_recs', 'friend_list_group'];
+      const postType = post.type?.toLowerCase() || '';
+      if (!skipFilterTypes.includes(postType)) {
+        const categoryToMediaType: { [key: string]: string[] } = {
+          'movies': ['movie', 'film'],
+          'tv': ['tv', 'tv_show', 'tv show', 'series'],
+          'music': ['music', 'album', 'song', 'track'],
+          'books': ['book', 'ebook', 'audiobook'],
+          'sports': ['sports', 'sport'],
+          'podcasts': ['podcast'],
+          'gaming': ['game', 'gaming', 'video_game'],
+        };
+        const allowedTypes = categoryToMediaType[selectedCategory] || [];
+        if (allowedTypes.length > 0) {
+          if (!post.mediaItems || post.mediaItems.length === 0) return false;
+          const hasMatchingMedia = post.mediaItems.some(media => {
+            const mediaType = media.mediaType?.toLowerCase() || '';
+            return allowedTypes.includes(mediaType);
+          });
+          if (!hasMatchingMedia) return false;
+        }
       }
     }
 
