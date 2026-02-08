@@ -1105,6 +1105,30 @@ export default function Feed() {
     ? [highlightedPost, ...basePosts]
     : basePosts;
 
+  // Helper: filter social posts by selected media category
+  const categoryToMediaTypeMap: { [key: string]: string[] } = {
+    'movies': ['movie', 'film'],
+    'tv': ['tv', 'tv_show', 'tv show', 'series'],
+    'music': ['music', 'album', 'song', 'track'],
+    'books': ['book', 'ebook', 'audiobook'],
+    'sports': ['sports', 'sport'],
+    'podcasts': ['podcast'],
+    'gaming': ['game', 'gaming', 'video_game'],
+  };
+
+  const filterByCategory = (posts: any[]) => {
+    if (!selectedCategory) return posts;
+    const allowedTypes = categoryToMediaTypeMap[selectedCategory] || [];
+    if (allowedTypes.length === 0) return posts;
+    return posts.filter((p: any) => {
+      if (!p.mediaItems || p.mediaItems.length === 0) return false;
+      return p.mediaItems.some((m: any) => {
+        const mt = m.mediaType?.toLowerCase() || '';
+        return allowedTypes.includes(mt);
+      });
+    });
+  };
+
   // Group same-user activities within same-day windows into consolidated cards BY ACTIVITY TYPE
   // Ratings consolidate if 2+ in same day, list adds go to Quick Glimpse (don't consolidate)
   const TIME_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours (same day)
@@ -1661,16 +1685,7 @@ export default function Feed() {
       const skipFilterTypes = ['cast_approved', 'hot_take', 'prediction', 'poll', 'vote', 'trivia', 'rank_share', 'ask_for_recs', 'friend_list_group'];
       const postType = post.type?.toLowerCase() || '';
       if (!skipFilterTypes.includes(postType)) {
-        const categoryToMediaType: { [key: string]: string[] } = {
-          'movies': ['movie', 'film'],
-          'tv': ['tv', 'tv_show', 'tv show', 'series'],
-          'music': ['music', 'album', 'song', 'track'],
-          'books': ['book', 'ebook', 'audiobook'],
-          'sports': ['sports', 'sport'],
-          'podcasts': ['podcast'],
-          'gaming': ['game', 'gaming', 'video_game'],
-        };
-        const allowedTypes = categoryToMediaType[selectedCategory] || [];
+        const allowedTypes = categoryToMediaTypeMap[selectedCategory] || [];
         if (allowedTypes.length > 0) {
           if (!post.mediaItems || post.mediaItems.length === 0) return false;
           const hasMatchingMedia = post.mediaItems.some(media => {
@@ -3169,7 +3184,7 @@ export default function Feed() {
 
               {/* Swipeable Rating Cards - After Leaderboard (every 3 items pattern) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (() => {
-                const ratingPostsRaw = (socialPosts || []).filter((p: any) => {
+                const ratingPostsRaw = filterByCategory(socialPosts || []).filter((p: any) => {
                   if (!p.mediaItems?.length || !p.user?.id) return false;
                   if (p.type === 'cast_approved') return false;
                   const hasRating = p.rating && p.rating > 0;
@@ -3195,12 +3210,12 @@ export default function Feed() {
               })()}
 
               {/* Hot Takes Card - Share a thought about what you're consuming */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'commentary') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'commentary') && !selectedCategory && (
                 <QuickReactCard />
               )}
 
               {/* Hot Take 1 - First hot take after QuickReactCard (only in All view) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && 
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory &&
                 socialPosts
                   .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
                   .slice(0, 1)
@@ -3262,7 +3277,7 @@ export default function Feed() {
               }
 
               {/* DNA Moment Card - in All or DNA filter */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <DnaMomentCard />
               )}
 
@@ -3273,7 +3288,7 @@ export default function Feed() {
 
               {/* Swipeable Rating Cards - Between Polls and Cast Friends */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'commentary') && (() => {
-                const ratingPostsRaw = (socialPosts || []).filter((p: any) => {
+                const ratingPostsRaw = filterByCategory(socialPosts || []).filter((p: any) => {
                   if (!p.mediaItems?.length || !p.user?.id) return false;
                   if (p.type === 'cast_approved') return false;
                   const hasRating = p.rating && p.rating > 0;
@@ -3299,21 +3314,21 @@ export default function Feed() {
               })()}
 
               {/* Cast Your Friends Game */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <div id="cast-friends-game">
                   <CastFriendsGame />
                 </div>
               )}
 
               {/* Seen It Game */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <SeenItGame />
               )}
 
               {/* The Room - Friend Activity with reactions */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && (socialPosts || []).filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved').length > 0 && (
+              {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && filterByCategory(socialPosts || []).filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved').length > 0 && (
                 <ConsumptionCarousel 
-                  items={(socialPosts || [])
+                  items={filterByCategory(socialPosts || [])
                     .filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved')
                     .slice(0, 10)
                     .map((p: any) => ({
@@ -3341,7 +3356,7 @@ export default function Feed() {
 
               {/* Swipeable Rating Cards - Second set after The Room */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && (() => {
-                const ratingPostsRaw = (socialPosts || []).filter((p: any) => {
+                const ratingPostsRaw = filterByCategory(socialPosts || []).filter((p: any) => {
                   if (!p.mediaItems?.length || !p.user?.id) return false;
                   if (p.type === 'cast_approved') return false;
                   const hasRating = p.rating && p.rating > 0;
@@ -3367,7 +3382,7 @@ export default function Feed() {
               })()}
 
               {/* Cast Your Friends - Approved Casts Carousel */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && filteredPosts.filter((item: any) => item.type === 'cast_approved').length > 0 && (
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && filteredPosts.filter((item: any) => item.type === 'cast_approved').length > 0 && (
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -3542,17 +3557,17 @@ export default function Feed() {
               )}
 
               {/* Points Glimpse - only in All view */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <PointsGlimpse />
               )}
 
               {/* Consumed Rankings Carousel - only in All view */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <RanksCarousel offset={0} />
               )}
 
               {/* Oscar Ballot Completions - only in All view */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <AwardsCompletionFeed />
               )}
 
@@ -3563,7 +3578,7 @@ export default function Feed() {
               )}
 
               {/* Hot Take 2 - After TV trivia (only in All view) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && 
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory &&
                 socialPosts
                   .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
                   .slice(1, 2)
@@ -3622,7 +3637,7 @@ export default function Feed() {
               }
 
               {/* Leaderboard - Poll Masters */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
                 <LeaderboardFeedCard variant="polls" />
               )}
 
@@ -3633,18 +3648,18 @@ export default function Feed() {
               )}
 
               {/* Leaderboard - Prediction Pros */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
                 <LeaderboardFeedCard variant="predictions" />
               )}
 
               {/* More Ranks */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <RanksCarousel offset={1} />
               )}
 
               {/* Swipeable Rating Cards - After Debate the Rank */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'commentary') && (() => {
-                const ratingPostsRaw = (socialPosts || []).filter((p: any) => {
+                const ratingPostsRaw = filterByCategory(socialPosts || []).filter((p: any) => {
                   if (!p.mediaItems?.length || !p.user?.id) return false;
                   if (p.type === 'cast_approved') return false;
                   const hasRating = p.rating && p.rating > 0;
@@ -3670,12 +3685,12 @@ export default function Feed() {
               })()}
 
               {/* Leaderboard - Media Leaders */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
                 <LeaderboardFeedCard variant="consumption" />
               )}
 
               {/* Complete Your DNA Card */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <div className="bg-gradient-to-br from-purple-600 via-teal-500 to-cyan-500 rounded-2xl p-4 shadow-lg">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
@@ -3702,7 +3717,7 @@ export default function Feed() {
               )}
 
               {/* Recommendations - For You */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <RecommendationsGlimpse />
               )}
 
@@ -3713,7 +3728,7 @@ export default function Feed() {
               )}
 
               {/* Hot Take 3 - After Books trivia */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && 
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory &&
                 socialPosts
                   .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
                   .slice(2, 3)
@@ -3782,7 +3797,7 @@ export default function Feed() {
               )}
 
               {/* Hot Take 4 - After Gaming trivia */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && 
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory &&
                 socialPosts
                   .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
                   .slice(3, 4)
@@ -3842,7 +3857,7 @@ export default function Feed() {
 
               {/* Full Commentary list - when commentary filter is selected (hot takes, ratings, thoughts) */}
               {selectedFilter === 'commentary' && 
-                socialPosts
+                filterByCategory(socialPosts)
                   .filter((post: any) => {
                     const isHotTake = post.type === 'hot_take' || post.post_type === 'hot_take';
                     const hasRating = post.rating && post.rating > 0;
