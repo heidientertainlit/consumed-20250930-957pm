@@ -3,7 +3,7 @@
     "apps": [],
     "details": [
       {
-        "appID": "V3JP2V3NNG.com.consumed.app",
+        "appID": "V3JP2V3NNG.com.entertainlit.consumed",
         "paths": [
           "*"
         ]
@@ -12,7 +12,7 @@
   },
   "webcredentials": {
     "apps": [
-      "V3JP2V3NNG.com.consumed.app"
+      "V3JP2V3NNG.com.entertainlit.consumed"
     ]
   }
 }
