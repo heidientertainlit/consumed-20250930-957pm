@@ -1645,7 +1645,7 @@ export default function Feed() {
     }
     
     
-    // Apply media type filter
+    // Apply media type filter from detailed filters dialog
     if (detailedFilters.mediaTypes.length > 0) {
       if (!post.mediaItems || post.mediaItems.length === 0) return false;
       const hasMatchingMedia = post.mediaItems.some(media => {
@@ -1653,6 +1653,28 @@ export default function Feed() {
         return detailedFilters.mediaTypes.includes(mediaType || '');
       });
       if (!hasMatchingMedia) return false;
+    }
+
+    // Apply media category pill filter (Movies, TV, Music, Books, etc.)
+    if (selectedCategory) {
+      const categoryToMediaType: { [key: string]: string[] } = {
+        'movies': ['movie', 'film'],
+        'tv': ['tv', 'tv_show', 'tv show', 'series'],
+        'music': ['music', 'album', 'song', 'track'],
+        'books': ['book', 'ebook', 'audiobook'],
+        'sports': ['sports', 'sport'],
+        'podcasts': ['podcast'],
+        'gaming': ['game', 'gaming', 'video_game'],
+      };
+      const allowedTypes = categoryToMediaType[selectedCategory] || [];
+      if (allowedTypes.length > 0) {
+        if (!post.mediaItems || post.mediaItems.length === 0) return false;
+        const hasMatchingMedia = post.mediaItems.some(media => {
+          const mediaType = media.mediaType?.toLowerCase() || '';
+          return allowedTypes.includes(mediaType);
+        });
+        if (!hasMatchingMedia) return false;
+      }
     }
 
     // Apply engagement type filter
