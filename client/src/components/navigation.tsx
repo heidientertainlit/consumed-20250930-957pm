@@ -481,9 +481,9 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add"
           >
-            <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-              <rect x="11" y="1" width="8" height="28" rx="4" fill="white" />
-              <rect x="1" y="11" width="28" height="8" rx="4" fill="white" />
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect x="12" y="1" width="4" height="26" rx="2" fill="white" />
+              <rect x="1" y="12" width="26" height="4" rx="2" fill="white" />
             </svg>
           </Link>
 
