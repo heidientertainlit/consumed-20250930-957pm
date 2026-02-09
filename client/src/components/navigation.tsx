@@ -464,8 +464,31 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       </div>
 
       {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
-        <div className="flex justify-around items-end px-2 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 20px), 20px)' }}>
+      <nav className="fixed bottom-0 left-0 right-0 z-50">
+        {/* Floating plus button - positioned above the nav */}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-6 z-20">
+          <Link
+            href="/add"
+            className="block"
+            data-testid="nav-add"
+          >
+            <div className="w-[56px] h-[56px] rounded-full flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #7C3AED, #6366F1)' }}>
+              <Plus className="text-white" size={26} strokeWidth={2.5} />
+            </div>
+          </Link>
+        </div>
+        {/* Nav background with notch cutout */}
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 80" preserveAspectRatio="none" fill="none">
+          <defs>
+            <linearGradient id="navBgGrad" x1="0" y1="0" x2="400" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#0a0a0f" />
+              <stop offset="50%" stopColor="#12121f" />
+              <stop offset="100%" stopColor="#2d1f4e" />
+            </linearGradient>
+          </defs>
+          <path d="M0,0 L160,0 C165,0 170,0 175,5 C180,15 185,28 200,28 C215,28 220,15 225,5 C230,0 235,0 240,0 L400,0 L400,80 L0,80 Z" fill="url(#navBgGrad)" />
+        </svg>
+        <div className="relative z-10 flex justify-around items-end px-2 pt-5" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 20px), 20px)' }}>
           {/* Home (main game feed) */}
           <Link
             href="/activity"
@@ -475,19 +498,8 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <Home className="text-white" size={28} />
           </Link>
 
-          {/* Add - Floating gradient plus button with notch */}
-          <Link
-            href="/add"
-            className="flex items-center justify-center -mt-8 relative"
-            data-testid="nav-add"
-          >
-            <svg className="absolute top-[-4px] left-1/2 -translate-x-1/2" width="76" height="40" viewBox="0 0 76 40" fill="none">
-              <path d="M0,40 L0,20 C0,20 8,20 14,14 C20,8 24,0 38,0 C52,0 56,8 62,14 C68,20 76,20 76,20 L76,40 Z" fill="#0a0a0f" />
-            </svg>
-            <div className="relative z-10 w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #7C3AED, #6366F1)' }}>
-              <Plus className="text-white" size={26} strokeWidth={2.5} />
-            </div>
-          </Link>
+          {/* Spacer for center button */}
+          <div className="w-[56px]" />
 
           {/* Leaderboard */}
           <Link
