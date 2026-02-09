@@ -465,20 +465,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50">
-        {/* Floating plus button - only 1/4 above nav */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-3 z-20">
-          <Link
-            href="/add"
-            className="block"
-            data-testid="nav-add"
-          >
-            <div className="w-[62px] h-[62px] rounded-full flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #5B21B6, #7C3AED, #818CF8)' }}>
-              <Plus className="text-white" size={28} strokeWidth={2.5} />
-            </div>
-          </Link>
-        </div>
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }} />
-        <div className="relative z-10 flex justify-around items-center px-2 pt-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 12px), 12px)' }}>
+        <div className="flex justify-around items-center px-2 pt-3" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 16px), 16px)' }}>
           {/* Home (main game feed) */}
           <Link
             href="/activity"
@@ -488,8 +475,16 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <Home className="text-white" size={28} />
           </Link>
 
-          {/* Spacer for center button */}
-          <div className="w-[56px]" />
+          {/* Add - gradient circle plus */}
+          <Link
+            href="/add"
+            className="flex items-center justify-center"
+            data-testid="nav-add"
+          >
+            <div className="w-[44px] h-[44px] rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #22D3EE, #818CF8, #A855F7, #9333EA)' }}>
+              <Plus className="text-white" size={24} strokeWidth={2.5} />
+            </div>
+          </Link>
 
           {/* Leaderboard */}
           <Link
