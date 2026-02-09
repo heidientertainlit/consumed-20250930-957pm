@@ -482,11 +482,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             data-testid="nav-add"
           >
             <div className="relative flex flex-col items-center">
-              <Plus className="text-white mb-[-2px]" size={12} strokeWidth={2.5} />
-              <svg width="24" height="18" viewBox="0 0 24 18" fill="none">
-                <rect x="2" y="0" width="20" height="4" rx="1.5" stroke="#7C6FEA" strokeWidth="1.8" fill="none" />
-                <rect x="0" y="7" width="24" height="4" rx="1.5" stroke="white" strokeWidth="1.8" fill="none" />
-                <rect x="0" y="14" width="24" height="4" rx="1.5" stroke="white" strokeWidth="1.8" fill="none" />
+              <Plus className="text-white mb-[-1px]" size={10} strokeWidth={3} />
+              <svg width="26" height="22" viewBox="0 0 26 22" fill="none">
+                {/* Top bar - tilted like being added */}
+                <rect x="4" y="0" width="18" height="3.5" rx="1.5" stroke="white" strokeWidth="1.8" fill="none" transform="rotate(-12, 13, 1.75)" />
+                {/* Middle bar */}
+                <rect x="1" y="9" width="24" height="3.5" rx="1.5" stroke="white" strokeWidth="1.8" fill="none" />
+                {/* Bottom bar */}
+                <rect x="1" y="16" width="24" height="3.5" rx="1.5" stroke="white" strokeWidth="1.8" fill="none" />
               </svg>
             </div>
           </Link>
