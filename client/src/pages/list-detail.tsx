@@ -693,14 +693,6 @@ export default function ListDetail() {
               </button>
               <h1 className="text-lg font-semibold text-gray-900 truncate">{listData?.name ? getDisplayTitle(listData.name) : ''}</h1>
             </div>
-            <button
-              onClick={() => setIsTrackModalOpen(true)}
-              className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-purple-600 hover:bg-purple-700 text-xs font-medium text-white transition-colors"
-              data-testid="button-add-item"
-            >
-              <Plus size={14} />
-              Add
-            </button>
           </div>
           
           {/* Row 2: Meta info + actions */}
@@ -800,7 +792,7 @@ export default function ListDetail() {
         {!sharedUserId && session && (
           <button
             onClick={() => setIsTrackModalOpen(true)}
-            className="w-full flex items-center justify-center gap-2 py-3 mb-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm transition-colors shadow-sm"
+            className="w-full flex items-center justify-center gap-2 py-3 mb-4 rounded-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white font-semibold text-sm transition-all shadow-md"
             data-testid="button-add-item-prominent"
           >
             <Plus size={18} strokeWidth={2.5} />
