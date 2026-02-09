@@ -475,13 +475,16 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <Home className="text-white" size={28} />
           </Link>
 
-          {/* Add - Floating gradient plus button */}
+          {/* Add - Floating gradient plus button with notch */}
           <Link
             href="/add"
-            className="flex items-center justify-center -mt-8"
+            className="flex items-center justify-center -mt-8 relative"
             data-testid="nav-add"
           >
-            <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-lg border-[3px] border-[#0a0a0f]" style={{ background: 'linear-gradient(135deg, #7C3AED, #6366F1)' }}>
+            <svg className="absolute top-[-4px] left-1/2 -translate-x-1/2" width="76" height="40" viewBox="0 0 76 40" fill="none">
+              <path d="M0,40 L0,20 C0,20 8,20 14,14 C20,8 24,0 38,0 C52,0 56,8 62,14 C68,20 76,20 76,20 L76,40 Z" fill="#0a0a0f" />
+            </svg>
+            <div className="relative z-10 w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #7C3AED, #6366F1)' }}>
               <Plus className="text-white" size={26} strokeWidth={2.5} />
             </div>
           </Link>
