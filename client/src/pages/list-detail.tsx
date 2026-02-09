@@ -923,25 +923,6 @@ export default function ListDetail() {
             )}
           </div>
 
-          {/* View Toggle - moved to end of filters */}
-          <div className="ml-auto">
-            <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-white">
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-purple-100 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                data-testid="button-view-list"
-              >
-                <List size={16} />
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-purple-100 text-purple-600' : 'text-gray-500 hover:text-gray-700'}`}
-                data-testid="button-view-grid"
-              >
-                <LayoutGrid size={16} />
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* List View - Draggable */}
