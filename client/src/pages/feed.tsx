@@ -1782,25 +1782,25 @@ export default function Feed() {
   }, [socialPosts]);
 
   // Handle scrolling to specific post/comment from notification
-  const lastScrolledRef = useRef<string | null>(null);
-  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Uses setInterval to avoid being cancelled by re-renders when socialPosts changes
+  const scrollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   useEffect(() => {
-    if (!highlightPostId || socialPosts.length === 0) return;
+    if (!highlightPostId) return;
     
-    const scrollKey = `${highlightPostId}-${highlightCommentId || 'post'}`;
-    if (lastScrolledRef.current === scrollKey) return;
-    lastScrolledRef.current = scrollKey;
+    // Clean up any previous scroll intervals
+    if (scrollIntervalRef.current) { clearInterval(scrollIntervalRef.current); scrollIntervalRef.current = null; }
+    if (scrollTimeoutRef.current) { clearTimeout(scrollTimeoutRef.current); scrollTimeoutRef.current = null; }
     
-    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
-    
-    console.log('🔔 Notification scroll: postId=', highlightPostId, 'commentId=', highlightCommentId);
+    console.log('🔔 Notification scroll starting: postId=', highlightPostId, 'commentId=', highlightCommentId);
     
     // Auto-expand comments for the highlighted post so CommentsSection mounts and fetches
     setExpandedComments(prev => new Set(prev).add(highlightPostId));
     
     let attempts = 0;
     const maxAttempts = 40;
+    let scrolledToPost = false;
     
     const highlightElement = (el: HTMLElement, isComment: boolean) => {
       console.log('🔔 Found element, scrolling to', isComment ? 'comment' : 'post');
@@ -1811,23 +1811,29 @@ export default function Feed() {
       setTimeout(() => {
         el.style.backgroundColor = 'transparent';
       }, 2500);
+    };
+    
+    const cleanupUrl = () => {
       window.history.replaceState({}, '', '/activity');
     };
     
-    const tryScroll = () => {
+    scrollIntervalRef.current = setInterval(() => {
       attempts++;
       
-      // First scroll to the post element so it's visible
       const postElement = document.getElementById(`post-${highlightPostId}`);
       
       if (highlightCommentId) {
         const commentElement = document.getElementById(`comment-${highlightCommentId}`);
         if (commentElement) {
           highlightElement(commentElement, true);
+          if (scrollIntervalRef.current) clearInterval(scrollIntervalRef.current);
+          scrollIntervalRef.current = null;
+          cleanupUrl();
           return;
         }
-        // If post is visible but comment isn't loaded yet, scroll to post first
-        if (postElement && attempts === 1) {
+        // Scroll to post first while waiting for comment to load
+        if (postElement && !scrolledToPost) {
+          scrolledToPost = true;
           postElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         if (attempts <= 5 || attempts % 5 === 0) {
@@ -1836,6 +1842,9 @@ export default function Feed() {
       } else {
         if (postElement) {
           highlightElement(postElement, false);
+          if (scrollIntervalRef.current) clearInterval(scrollIntervalRef.current);
+          scrollIntervalRef.current = null;
+          cleanupUrl();
           return;
         }
         if (attempts <= 5 || attempts % 5 === 0) {
@@ -1843,26 +1852,25 @@ export default function Feed() {
         }
       }
       
-      if (attempts < maxAttempts) {
-        scrollTimerRef.current = setTimeout(tryScroll, 500);
-      } else {
-        // Fallback: if comment was never found, at least scroll to the post
+      if (attempts >= maxAttempts) {
+        if (scrollIntervalRef.current) clearInterval(scrollIntervalRef.current);
+        scrollIntervalRef.current = null;
+        // Fallback: scroll to post if comment wasn't found
         if (highlightCommentId && postElement) {
           console.log('🔔 Comment not found, falling back to post scroll');
           highlightElement(postElement, false);
         } else {
           console.log('🔔 Gave up scrolling after', maxAttempts, 'attempts');
         }
-        window.history.replaceState({}, '', '/activity');
+        cleanupUrl();
       }
-    };
-    
-    scrollTimerRef.current = setTimeout(tryScroll, 300);
+    }, 500);
     
     return () => {
-      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+      if (scrollIntervalRef.current) { clearInterval(scrollIntervalRef.current); scrollIntervalRef.current = null; }
+      if (scrollTimeoutRef.current) { clearTimeout(scrollTimeoutRef.current); scrollTimeoutRef.current = null; }
     };
-  }, [highlightPostId, highlightCommentId, socialPosts]);
+  }, [highlightPostId, highlightCommentId]);
 
   // Fetch Play games for inline play
   const { data: playGames = [] } = useQuery({

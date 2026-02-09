@@ -50,6 +50,7 @@ import CreatorProfile from "@/pages/creator-profile";
 import UserProfile from "@/pages/user-profile";
 import MediaDetail from "@/pages/media-detail";
 import ListDetail from "@/pages/list-detail";
+import PostDetail from "@/pages/post-detail";
 import CreateRank from "@/pages/create-rank";
 import RankDetail from "@/pages/rank-detail";
 import EdnaSharePage from "@/pages/edna-share";
@@ -274,6 +275,11 @@ function Router() {
         <Route path="/media/:type/:source/:prefix/:id">
           <ProtectedRoute>
             <MediaDetail />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/post/:id">
+          <ProtectedRoute>
+            <PostDetail />
           </ProtectedRoute>
         </Route>
         <Route path="/list/:id">

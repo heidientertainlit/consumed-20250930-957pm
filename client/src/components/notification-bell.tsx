@@ -145,11 +145,10 @@ export function NotificationBell() {
       case 'mention':
       case 'comment_like':
       case 'post_like':
-        // Post-related notifications - go to the specific post and comment
         if (notification.post_id) {
           const url = notification.comment_id 
-            ? `/activity?post=${notification.post_id}&comment=${notification.comment_id}`
-            : `/activity?post=${notification.post_id}`;
+            ? `/post/${notification.post_id}?comment=${notification.comment_id}`
+            : `/post/${notification.post_id}`;
           setLocation(url);
         } else {
           setLocation('/activity');
@@ -193,9 +192,8 @@ export function NotificationBell() {
         break;
 
       default:
-        // Fallback: if there's a post_id, go to feed; if list_id, go to that list
         if (notification.post_id) {
-          setLocation(`/activity?post=${notification.post_id}`);
+          setLocation(`/post/${notification.post_id}`);
         } else if (notification.list_id) {
           setLocation(`/list/${notification.list_id}`);
         } else {
