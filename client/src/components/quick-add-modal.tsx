@@ -195,7 +195,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
     } else {
       if (defaultListId) {
         setSelectedListId(defaultListId);
-        setStage("composer");
       }
       if (preSelectedMedia) {
         setSelectedMedia({
