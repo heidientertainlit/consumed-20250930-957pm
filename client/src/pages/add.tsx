@@ -2131,6 +2131,32 @@ export default function Search() {
             {/* History Tab */}
             {activeTab === 'history' && (
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    {/* View Toggle + Download */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center bg-gray-100 rounded p-0.5">
+                        <button
+                          onClick={() => setHistoryViewMode('list')}
+                          className={`p-1.5 rounded transition-colors ${historyViewMode === 'list' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400'}`}
+                        >
+                          <List size={14} />
+                        </button>
+                        <button
+                          onClick={() => setHistoryViewMode('grid')}
+                          className={`p-1.5 rounded transition-colors ${historyViewMode === 'grid' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400'}`}
+                        >
+                          <LayoutGrid size={14} />
+                        </button>
+                      </div>
+                      <button
+                        onClick={handleDownloadHistoryImage}
+                        disabled={isGeneratingHistoryImage || !filteredMediaHistory.length}
+                        className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors disabled:opacity-40"
+                        aria-label="Download as image"
+                      >
+                        <Download size={16} className={isGeneratingHistoryImage ? 'animate-pulse' : ''} />
+                      </button>
+                    </div>
+
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       <div className="relative">
                         <button
@@ -2243,32 +2269,6 @@ export default function Search() {
                           </div>
                         )}
                       </div>
-                    </div>
-
-                    {/* View Toggle + Download */}
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center bg-gray-100 rounded p-0.5">
-                        <button
-                          onClick={() => setHistoryViewMode('list')}
-                          className={`p-1.5 rounded transition-colors ${historyViewMode === 'list' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400'}`}
-                        >
-                          <List size={14} />
-                        </button>
-                        <button
-                          onClick={() => setHistoryViewMode('grid')}
-                          className={`p-1.5 rounded transition-colors ${historyViewMode === 'grid' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400'}`}
-                        >
-                          <LayoutGrid size={14} />
-                        </button>
-                      </div>
-                      <button
-                        onClick={handleDownloadHistoryImage}
-                        disabled={isGeneratingHistoryImage || !filteredMediaHistory.length}
-                        className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors disabled:opacity-40"
-                        aria-label="Download as image"
-                      >
-                        <Download size={16} className={isGeneratingHistoryImage ? 'animate-pulse' : ''} />
-                      </button>
                     </div>
 
                     <div className="relative mb-3">
