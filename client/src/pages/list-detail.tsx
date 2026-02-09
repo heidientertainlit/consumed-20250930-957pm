@@ -425,6 +425,26 @@ export default function ListDetail() {
     setIsGeneratingImage(true);
 
     try {
+      const toDataUrl = async (url: string): Promise<string> => {
+        try {
+          const resp = await fetch(url);
+          const blob = await resp.blob();
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch {
+          return '';
+        }
+      };
+
+      const allItems = listData.items || [];
+      const imageDataUrls = await Promise.all(
+        allItems.map((item: any) => item.artwork ? toDataUrl(item.artwork) : Promise.resolve(''))
+      );
+
       const container = document.createElement('div');
       container.style.cssText = 'position:fixed;left:-9999px;top:0;width:1080px;background:linear-gradient(135deg,#1a1025 0%,#2d1b4e 50%,#1a1025 100%);padding:60px 40px;font-family:system-ui,-apple-system,sans-serif;';
       
@@ -437,18 +457,19 @@ export default function ListDetail() {
       const cols = 4;
       grid.style.cssText = `display:grid;grid-template-columns:repeat(${cols},1fr);gap:12px;`;
 
-      const allItems = listData.items || [];
       const loadPromises: Promise<void>[] = [];
 
-      allItems.forEach((item: any) => {
+      allItems.forEach((item: any, idx: number) => {
         const cell = document.createElement('div');
-        cell.style.cssText = 'border-radius:12px;overflow:hidden;aspect-ratio:2/3;background:#2a2a3e;position:relative;';
+        const cellWidth = Math.floor((1080 - 80 - 36) / cols);
+        const cellHeight = Math.floor(cellWidth * 1.5);
+        cell.style.cssText = `border-radius:12px;overflow:hidden;width:${cellWidth}px;height:${cellHeight}px;background:#2a2a3e;position:relative;`;
         
-        if (item.artwork) {
+        const dataUrl = imageDataUrls[idx];
+        if (dataUrl) {
           const img = document.createElement('img');
-          img.crossOrigin = 'anonymous';
-          img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
-          img.src = item.artwork;
+          img.style.cssText = `width:${cellWidth}px;height:${cellHeight}px;object-fit:cover;display:block;`;
+          img.src = dataUrl;
           cell.appendChild(img);
           
           loadPromises.push(new Promise<void>((resolve) => {
@@ -456,7 +477,7 @@ export default function ListDetail() {
             img.onerror = () => {
               img.remove();
               const fallback = document.createElement('div');
-              fallback.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:14px;text-align:center;padding:8px;';
+              fallback.style.cssText = `width:${cellWidth}px;height:${cellHeight}px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:16px;text-align:center;padding:12px;`;
               fallback.textContent = item.title || '';
               cell.appendChild(fallback);
               resolve();
@@ -464,7 +485,7 @@ export default function ListDetail() {
           }));
         } else {
           const fallback = document.createElement('div');
-          fallback.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:14px;text-align:center;padding:8px;';
+          fallback.style.cssText = `width:${cellWidth}px;height:${cellHeight}px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:16px;text-align:center;padding:12px;`;
           fallback.textContent = item.title || '';
           cell.appendChild(fallback);
         }
@@ -475,20 +496,20 @@ export default function ListDetail() {
       container.appendChild(grid);
 
       const footer = document.createElement('div');
-      footer.style.cssText = 'text-align:center;margin-top:40px;';
-      footer.innerHTML = '<div style="font-size:22px;color:rgba(255,255,255,0.6);font-weight:600;">@consumedapp</div>';
+      footer.style.cssText = 'text-align:center;margin-top:48px;';
+      footer.innerHTML = '<div style="font-size:32px;color:rgba(255,255,255,0.7);font-weight:700;letter-spacing:0.5px;">@consumedapp</div>';
       container.appendChild(footer);
 
       document.body.appendChild(container);
       
       await Promise.allSettled(loadPromises);
-      await new Promise(r => setTimeout(r, 300));
+      await new Promise(r => setTimeout(r, 200));
 
       const canvas = await html2canvas(container, {
         backgroundColor: null,
         scale: 2,
-        useCORS: true,
-        allowTaint: true,
+        useCORS: false,
+        allowTaint: false,
         logging: false,
       });
 
