@@ -465,7 +465,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
-        <div className="flex justify-around items-center px-2 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 20px), 20px)' }}>
+        <div className="flex justify-around items-end px-2 pt-3" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 20px), 20px)' }}>
           {/* Home (main game feed) */}
           <Link
             href="/activity"
