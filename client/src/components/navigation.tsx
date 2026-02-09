@@ -475,21 +475,15 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <Home className="text-white" size={28} />
           </Link>
 
-          {/* Add - Library stack with plus icon */}
+          {/* Add - Floating gradient plus button */}
           <Link
             href="/add"
-            className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
+            className="flex items-center justify-center -mt-8"
             data-testid="nav-add"
           >
-            <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-              {/* Rounded square frame - open top-right corner */}
-              <path d="M18,2 L6,2 C3.8,2 2,3.8 2,6 L2,22 C2,24.2 3.8,26 6,26 L22,26 C24.2,26 26,24.2 26,22 L26,12" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-              {/* Sparkle/star inside - represents all entertainment */}
-              <path d="M13,10 L14,14 L18,15 L14,16 L13,20 L12,16 L8,15 L12,14 Z" stroke="white" strokeWidth="1.5" fill="none" strokeLinejoin="round" />
-              {/* Plus icon top-right */}
-              <line x1="24" y1="2" x2="24" y2="9" stroke="white" strokeWidth="2" strokeLinecap="round" />
-              <line x1="20.5" y1="5.5" x2="27.5" y2="5.5" stroke="white" strokeWidth="2" strokeLinecap="round" />
-            </svg>
+            <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center shadow-lg border-[3px] border-[#0a0a0f]" style={{ background: 'linear-gradient(135deg, #7C3AED, #6366F1)' }}>
+              <Plus className="text-white" size={26} strokeWidth={2.5} />
+            </div>
           </Link>
 
           {/* Leaderboard */}
