@@ -539,21 +539,15 @@ export default function ListDetail() {
         throw new Error('Failed to generate image');
       }
 
-      if (navigator.share && navigator.canShare?.({ files: [new File([blob], `${listFileName}.png`, { type: 'image/png' })] })) {
-        const file = new File([blob], `${listFileName}-consumedapp.png`, { type: 'image/png' });
-        await navigator.share({ files: [file], title: listData.name || 'My List' });
-        toast({ title: "Shared!", description: "Image shared successfully" });
-      } else {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `${listFileName}-consumedapp.png`;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-        toast({ title: "Image Downloaded", description: "Share it on social media!" });
-      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `${listFileName}-consumedapp.png`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      toast({ title: "Image Downloaded", description: "Share it on social media!" });
     } catch (error) {
       console.error('Error generating image:', error);
       toast({ title: "Download Failed", description: "Could not generate image", variant: "destructive" });

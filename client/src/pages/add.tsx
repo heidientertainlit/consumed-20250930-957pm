@@ -393,7 +393,8 @@ export default function Search() {
   const filteredMediaHistory = fullMediaHistory.filter((item: any) => {
     const matchesSearch = !mediaHistorySearch || item.title?.toLowerCase().includes(mediaHistorySearch.toLowerCase());
     const matchesType = mediaHistoryType === 'all' || item.media_type?.toLowerCase() === mediaHistoryType.toLowerCase();
-    const matchesYear = mediaHistoryYear === 'all'; // Year filter temporarily disabled until date field available
+    const itemYear = item.created_at ? new Date(item.created_at).getFullYear().toString() : null;
+    const matchesYear = mediaHistoryYear === 'all' || itemYear === mediaHistoryYear;
     const matchesRating = mediaHistoryRating === 'all' || item.rating?.toString() === mediaHistoryRating;
     return matchesSearch && matchesType && matchesYear && matchesRating;
   });
@@ -527,21 +528,15 @@ export default function Search() {
         throw new Error('Failed to generate image');
       }
 
-      if (navigator.share && navigator.canShare?.({ files: [new File([blob], `${fileName}.png`, { type: 'image/png' })] })) {
-        const file = new File([blob], `${fileName}-consumedapp.png`, { type: 'image/png' });
-        await navigator.share({ files: [file], title: historyTitle });
-        toast({ title: "Shared!", description: "Image shared successfully" });
-      } else {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `${fileName}-consumedapp.png`;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-        toast({ title: "Image Downloaded", description: "Share it on social media!" });
-      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `${fileName}-consumedapp.png`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      toast({ title: "Image Downloaded", description: "Share it on social media!" });
     } catch (error) {
       console.error('Error generating history image:', error);
       toast({ title: "Download Failed", description: "Could not generate image", variant: "destructive" });
