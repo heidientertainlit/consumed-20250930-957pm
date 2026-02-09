@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
+import { JustTrackedSheet } from "./just-tracked-sheet";
 
 interface QuickAddListSheetProps {
   isOpen: boolean;
@@ -17,11 +18,12 @@ interface QuickAddListSheetProps {
     externalSource?: string;
     creator?: string;
   } | null;
+  onOpenHotTakeComposer?: (media: { title: string; mediaType: string; imageUrl?: string; externalId?: string; externalSource?: string }) => void;
 }
 
-type SheetStep = 'select-list' | 'rate' | 'recommend';
+type SheetStep = 'select-list' | 'rate' | 'recommend' | 'just-tracked';
 
-export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetProps) {
+export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeComposer }: QuickAddListSheetProps) {
   const { session } = useAuth();
   const { toast } = useToast();
   const [isAdding, setIsAdding] = useState<string | null>(null);
@@ -132,8 +134,8 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
         setAddedListName(listName);
         setStep('rate');
       } else {
-        toast({ title: `Added "${media.title}" to ${listName}!` });
-        handleClose();
+        setAddedListName(listName);
+        setStep('just-tracked');
       }
     } catch (error: any) {
       toast({ title: error.message || "Failed to add", variant: "destructive" });
@@ -297,6 +299,39 @@ export function QuickAddListSheet({ isOpen, onClose, media }: QuickAddListSheetP
           </div>
         </DrawerContent>
       </Drawer>
+    );
+  }
+
+  if (step === 'just-tracked') {
+    return (
+      <JustTrackedSheet
+        isOpen={isOpen}
+        onClose={handleClose}
+        media={media ? {
+          title: media.title,
+          mediaType: media.mediaType,
+          imageUrl: media.imageUrl,
+          externalId: media.externalId,
+          externalSource: media.externalSource,
+          creator: media.creator,
+        } : null}
+        listName={addedListName}
+        onDropHotTake={onOpenHotTakeComposer && media ? () => {
+          const mediaData = {
+            title: media.title,
+            mediaType: media.mediaType,
+            imageUrl: media.imageUrl,
+            externalId: media.externalId,
+            externalSource: media.externalSource,
+          };
+          handleClose();
+          onOpenHotTakeComposer(mediaData);
+        } : undefined}
+        onRateIt={() => {
+          setStep('rate');
+        }}
+        showRateOption={true}
+      />
     );
   }
 

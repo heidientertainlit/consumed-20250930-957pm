@@ -15,6 +15,7 @@ import { AuthModal } from "./auth-modal";
 import { useToast } from "@/hooks/use-toast";
 import CustomListSubmenu from "./custom-list-submenu";
 import CreateListDialog from "./create-list-dialog";
+import { JustTrackedSheet } from "./just-tracked-sheet";
 
 interface ConsumptionTrackerProps {
   isOpen: boolean;
@@ -45,6 +46,8 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
   const [selectedMedia, setSelectedMedia] = useState<MediaResult | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showCreateListDialog, setShowCreateListDialog] = useState(false);
+  const [showJustTracked, setShowJustTracked] = useState(false);
+  const [justTrackedMedia, setJustTrackedMedia] = useState<MediaResult | null>(null);
   const [rating, setRating] = useState<number>(0);
   const [review, setReview] = useState<string>("");
   const [rewatchCount, setRewatchCount] = useState<number>(1);
@@ -209,11 +212,9 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
       return response.json();
     },
     onSuccess: async (data) => {
-      // No toast needed - user can see the item added to the list visually
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       
-      // Sync creator stats after successfully tracking media
       try {
         const syncResponse = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/sync-creator-stats', {
           method: 'POST',
@@ -226,18 +227,23 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
         if (syncResponse.ok) {
           const result = await syncResponse.json();
           console.log('✅ Creator stats synced:', result);
-          // Invalidate leaderboard queries so Fan Points updates
           queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
         } else {
           console.error('Sync response error:', await syncResponse.text());
         }
       } catch (error) {
         console.error('Failed to sync creator stats:', error);
-        // Don't fail the whole operation if stats sync fails
       }
       
-      onClose();
-      resetForm();
+      if (selectedMedia && !targetRankId) {
+        setJustTrackedMedia(selectedMedia);
+        setShowJustTracked(true);
+        onClose();
+        resetForm();
+      } else {
+        onClose();
+        resetForm();
+      }
     },
     onError: (error) => {
       toast({
@@ -323,6 +329,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-white border border-gray-200 max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="pb-4 flex-shrink-0">
@@ -702,5 +709,26 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
         onOpenChange={setShowCreateListDialog}
       />
     </Dialog>
+
+    <JustTrackedSheet
+      isOpen={showJustTracked}
+      onClose={() => {
+        setShowJustTracked(false);
+        setJustTrackedMedia(null);
+      }}
+      media={justTrackedMedia ? {
+        title: justTrackedMedia.title,
+        mediaType: justTrackedMedia.type,
+        imageUrl: justTrackedMedia.image,
+        externalId: justTrackedMedia.external_id,
+        externalSource: justTrackedMedia.external_source,
+        creator: justTrackedMedia.creator,
+      } : null}
+      onRateIt={() => {
+        setShowJustTracked(false);
+        setJustTrackedMedia(null);
+      }}
+    />
+    </>
   );
 }
