@@ -1898,7 +1898,7 @@ export default function Search() {
             {/* Lists Tab */}
             {activeTab === 'lists' && (
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex items-center justify-end gap-2 mb-3">
+                <div className="flex items-center justify-center gap-2 mb-3">
                   <Link href="/track" className="bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium">
                     <Download size={12} />
                     Import
