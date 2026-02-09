@@ -472,22 +472,12 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className="block"
             data-testid="nav-add"
           >
-            <div className="w-[62px] h-[62px] rounded-full flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #7C3AED, #6366F1)' }}>
+            <div className="w-[62px] h-[62px] rounded-full flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #5B21B6, #7C3AED, #818CF8)' }}>
               <Plus className="text-white" size={28} strokeWidth={2.5} />
             </div>
           </Link>
         </div>
-        {/* Nav background with notch cutout */}
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 60" preserveAspectRatio="none" fill="none">
-          <defs>
-            <linearGradient id="navBgGrad" x1="0" y1="0" x2="400" y2="0" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#0a0a0f" />
-              <stop offset="50%" stopColor="#12121f" />
-              <stop offset="100%" stopColor="#2d1f4e" />
-            </linearGradient>
-          </defs>
-          <path d="M0,0 L162,0 C167,0 172,0 177,4 C182,12 187,22 200,22 C213,22 218,12 223,4 C228,0 233,0 238,0 L400,0 L400,60 L0,60 Z" fill="url(#navBgGrad)" />
-        </svg>
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }} />
         <div className="relative z-10 flex justify-around items-center px-2 pt-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 12px), 12px)' }}>
           {/* Home (main game feed) */}
           <Link
