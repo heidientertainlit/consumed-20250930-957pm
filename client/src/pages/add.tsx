@@ -2132,7 +2132,7 @@ export default function Search() {
             {activeTab === 'history' && (
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                     {/* View Toggle + Download */}
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-end gap-1 mb-3">
                       <div className="flex items-center bg-gray-100 rounded p-0.5">
                         <button
                           onClick={() => setHistoryViewMode('list')}
