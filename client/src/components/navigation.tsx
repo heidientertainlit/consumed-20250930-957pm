@@ -483,13 +483,13 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <div className="relative flex flex-col items-center gap-[2px]">
               <Plus className="text-white" size={14} strokeWidth={2.5} />
-              <svg width="24" height="18" viewBox="0 0 24 18" fill="none">
+              <svg width="24" height="22" viewBox="0 0 24 22" fill="none">
                 {/* Diagonal line on top */}
-                <line x1="2" y1="5" x2="22" y2="0" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="2" y1="7" x2="22" y2="2" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
                 {/* Middle bar */}
-                <line x1="1" y1="11" x2="23" y2="11" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="1" y1="13" x2="23" y2="13" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
                 {/* Bottom bar */}
-                <line x1="1" y1="17" x2="23" y2="17" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="1" y1="19" x2="23" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
               </svg>
             </div>
           </Link>
