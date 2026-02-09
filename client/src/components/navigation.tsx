@@ -481,7 +481,10 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add"
           >
-            <Plus className="text-white" size={32} strokeWidth={2} />
+            <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+              <rect x="11" y="1" width="8" height="28" rx="4" fill="white" />
+              <rect x="1" y="11" width="28" height="8" rx="4" fill="white" />
+            </svg>
           </Link>
 
           {/* Leaderboard */}
