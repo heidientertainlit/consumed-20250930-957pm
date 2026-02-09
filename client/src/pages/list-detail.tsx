@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Navigation from "@/components/navigation";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical, LayoutGrid, List, Search, Film, Tv, BookOpen, Music, ChevronRight, Star, GripVertical, Download } from "lucide-react";
-import html2canvas from "html2canvas";
 import { Switch } from "@/components/ui/switch";
 import { useLocation, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -417,7 +416,6 @@ export default function ListDetail() {
     }
   };
 
-  const downloadRef = useRef<HTMLDivElement>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   const handleDownloadImage = useCallback(async () => {
@@ -425,95 +423,111 @@ export default function ListDetail() {
     setIsGeneratingImage(true);
 
     try {
-      const toDataUrl = async (url: string): Promise<string> => {
-        try {
-          const resp = await fetch(url);
-          const blob = await resp.blob();
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-        } catch {
-          return '';
-        }
+      const allItems = listData.items || [];
+      const cols = 4;
+      const canvasWidth = 1080;
+      const padding = 60;
+      const gap = 12;
+      const cellWidth = Math.floor((canvasWidth - padding * 2 - gap * (cols - 1)) / cols);
+      const cellHeight = Math.floor(cellWidth * 1.5);
+      const rows = Math.ceil(allItems.length / cols);
+
+      const titleHeight = 100;
+      const footerHeight = 80;
+      const canvasHeight = padding + titleHeight + rows * cellHeight + (rows - 1) * gap + footerHeight + padding;
+
+      const scale = 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvasWidth * scale;
+      canvas.height = canvasHeight * scale;
+      const ctx = canvas.getContext('2d')!;
+      ctx.scale(scale, scale);
+
+      const grad = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
+      grad.addColorStop(0, '#1a1025');
+      grad.addColorStop(0.5, '#2d1b4e');
+      grad.addColorStop(1, '#1a1025');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      ctx.fillStyle = 'white';
+      ctx.font = '800 48px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(getDisplayTitle(listData.name || ''), canvasWidth / 2, padding + 48);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '400 20px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`${listData.items.length} items`, canvasWidth / 2, padding + 78);
+
+      const loadImage = (url: string): Promise<HTMLImageElement | null> => {
+        return new Promise((resolve) => {
+          const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(url)}`;
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = () => resolve(null);
+          img.src = proxyUrl;
+        });
       };
 
-      const allItems = listData.items || [];
-      const imageDataUrls = await Promise.all(
-        allItems.map((item: any) => item.artwork ? toDataUrl(item.artwork) : Promise.resolve(''))
+      const images = await Promise.all(
+        allItems.map((item: any) => item.artwork ? loadImage(item.artwork) : Promise.resolve(null))
       );
 
-      const container = document.createElement('div');
-      container.style.cssText = 'position:fixed;left:-9999px;top:0;width:1080px;background:linear-gradient(135deg,#1a1025 0%,#2d1b4e 50%,#1a1025 100%);padding:60px 40px;font-family:system-ui,-apple-system,sans-serif;';
-      
-      const title = document.createElement('div');
-      title.style.cssText = 'text-align:center;margin-bottom:40px;';
-      title.innerHTML = `<div style="font-size:48px;font-weight:800;color:white;letter-spacing:-0.5px;">${getDisplayTitle(listData.name || '')}</div><div style="font-size:20px;color:rgba(255,255,255,0.5);margin-top:8px;">${listData.items.length} items</div>`;
-      container.appendChild(title);
-
-      const grid = document.createElement('div');
-      const cols = 4;
-      grid.style.cssText = `display:grid;grid-template-columns:repeat(${cols},1fr);gap:12px;`;
-
-      const loadPromises: Promise<void>[] = [];
+      const gridTop = padding + titleHeight;
 
       allItems.forEach((item: any, idx: number) => {
-        const cell = document.createElement('div');
-        const cellWidth = Math.floor((1080 - 80 - 36) / cols);
-        const cellHeight = Math.floor(cellWidth * 1.5);
-        cell.style.cssText = `border-radius:12px;overflow:hidden;width:${cellWidth}px;height:${cellHeight}px;background:#2a2a3e;position:relative;`;
-        
-        const dataUrl = imageDataUrls[idx];
-        if (dataUrl) {
-          const img = document.createElement('img');
-          img.style.cssText = `width:${cellWidth}px;height:${cellHeight}px;object-fit:cover;display:block;`;
-          img.src = dataUrl;
-          cell.appendChild(img);
-          
-          loadPromises.push(new Promise<void>((resolve) => {
-            img.onload = () => resolve();
-            img.onerror = () => {
-              img.remove();
-              const fallback = document.createElement('div');
-              fallback.style.cssText = `width:${cellWidth}px;height:${cellHeight}px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:16px;text-align:center;padding:12px;`;
-              fallback.textContent = item.title || '';
-              cell.appendChild(fallback);
-              resolve();
-            };
-          }));
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        const x = padding + col * (cellWidth + gap);
+        const y = gridTop + row * (cellHeight + gap);
+
+        ctx.save();
+        ctx.beginPath();
+        const r = 12;
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + cellWidth - r, y);
+        ctx.quadraticCurveTo(x + cellWidth, y, x + cellWidth, y + r);
+        ctx.lineTo(x + cellWidth, y + cellHeight - r);
+        ctx.quadraticCurveTo(x + cellWidth, y + cellHeight, x + cellWidth - r, y + cellHeight);
+        ctx.lineTo(x + r, y + cellHeight);
+        ctx.quadraticCurveTo(x, y + cellHeight, x, y + cellHeight - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+        ctx.clip();
+
+        ctx.fillStyle = '#2a2a3e';
+        ctx.fillRect(x, y, cellWidth, cellHeight);
+
+        const img = images[idx];
+        if (img) {
+          const imgAspect = img.naturalWidth / img.naturalHeight;
+          const cellAspect = cellWidth / cellHeight;
+          let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
+          if (imgAspect > cellAspect) {
+            sw = img.naturalHeight * cellAspect;
+            sx = (img.naturalWidth - sw) / 2;
+          } else {
+            sh = img.naturalWidth / cellAspect;
+            sy = (img.naturalHeight - sh) / 2;
+          }
+          ctx.drawImage(img, sx, sy, sw, sh, x, y, cellWidth, cellHeight);
         } else {
-          const fallback = document.createElement('div');
-          fallback.style.cssText = `width:${cellWidth}px;height:${cellHeight}px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:16px;text-align:center;padding:12px;`;
-          fallback.textContent = item.title || '';
-          cell.appendChild(fallback);
+          ctx.fillStyle = 'rgba(255,255,255,0.4)';
+          ctx.font = '400 14px system-ui, -apple-system, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(item.title || '', x + cellWidth / 2, y + cellHeight / 2, cellWidth - 16);
         }
-        
-        grid.appendChild(cell);
+
+        ctx.restore();
       });
 
-      container.appendChild(grid);
-
-      const footer = document.createElement('div');
-      footer.style.cssText = 'text-align:center;margin-top:48px;';
-      footer.innerHTML = '<div style="font-size:32px;color:rgba(255,255,255,0.7);font-weight:700;letter-spacing:0.5px;">@consumedapp</div>';
-      container.appendChild(footer);
-
-      document.body.appendChild(container);
-      
-      await Promise.allSettled(loadPromises);
-      await new Promise(r => setTimeout(r, 200));
-
-      const canvas = await html2canvas(container, {
-        backgroundColor: null,
-        scale: 2,
-        useCORS: false,
-        allowTaint: false,
-        logging: false,
-      });
-
-      document.body.removeChild(container);
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.font = '700 40px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('@consumedapp', canvasWidth / 2, canvasHeight - padding + 10);
 
       const link = document.createElement('a');
       link.download = `${(listData.name || 'list').toLowerCase().replace(/\s+/g, '-')}-consumedapp.png`;

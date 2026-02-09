@@ -9,6 +9,31 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
+  app.get("/api/image-proxy", async (req, res) => {
+    try {
+      const url = req.query.url as string;
+      if (!url) {
+        return res.status(400).json({ error: "URL parameter required" });
+      }
+      const allowedDomains = ['image.tmdb.org', 'books.google.com', 'i.scdn.co', 'covers.openlibrary.org', 'mosaic.scdn.co', 'm.media-amazon.com', 'is1-ssl.mzstatic.com'];
+      const parsed = new URL(url);
+      if (!allowedDomains.some(d => parsed.hostname.includes(d))) {
+        return res.status(403).json({ error: "Domain not allowed" });
+      }
+      const response = await fetch(url);
+      if (!response.ok) {
+        return res.status(response.status).json({ error: "Failed to fetch image" });
+      }
+      const contentType = response.headers.get('content-type') || 'image/jpeg';
+      res.set('Content-Type', contentType);
+      res.set('Cache-Control', 'public, max-age=86400');
+      const buffer = Buffer.from(await response.arrayBuffer());
+      res.send(buffer);
+    } catch (error) {
+      res.status(500).json({ error: "Image proxy error" });
+    }
+  });
+
   // Get NY Times bestsellers with Google Books covers
   app.get("/api/nyt/bestsellers", async (req, res) => {
     try {
