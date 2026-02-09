@@ -1787,13 +1787,13 @@ export default function Feed() {
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   useEffect(() => {
-    if (!highlightPostId) return;
+    if (!highlightPostId || !highlightedPost) return;
     
     // Clean up any previous scroll intervals
     if (scrollIntervalRef.current) { clearInterval(scrollIntervalRef.current); scrollIntervalRef.current = null; }
     if (scrollTimeoutRef.current) { clearTimeout(scrollTimeoutRef.current); scrollTimeoutRef.current = null; }
     
-    console.log('🔔 Notification scroll starting: postId=', highlightPostId, 'commentId=', highlightCommentId);
+    console.log('🔔 Notification scroll starting: postId=', highlightPostId, 'commentId=', highlightCommentId, 'postLoaded=', !!highlightedPost);
     
     // Auto-expand comments for the highlighted post so CommentsSection mounts and fetches
     setExpandedComments(prev => new Set(prev).add(highlightPostId));
@@ -1870,7 +1870,7 @@ export default function Feed() {
       if (scrollIntervalRef.current) { clearInterval(scrollIntervalRef.current); scrollIntervalRef.current = null; }
       if (scrollTimeoutRef.current) { clearTimeout(scrollTimeoutRef.current); scrollTimeoutRef.current = null; }
     };
-  }, [highlightPostId, highlightCommentId]);
+  }, [highlightPostId, highlightCommentId, highlightedPost]);
 
   // Fetch Play games for inline play
   const { data: playGames = [] } = useQuery({
@@ -3169,6 +3169,108 @@ export default function Feed() {
                   <div className="text-4xl mb-3">👥</div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">No Friend Activity</h3>
                   <p className="text-gray-500 text-sm">Follow more friends to see their activity!</p>
+                </div>
+              )}
+
+              {/* Highlighted post from notification - rendered at top of feed */}
+              {highlightPostId && highlightedPost && (
+                <div 
+                  id={`post-${highlightedPost.id}`}
+                  className="rounded-2xl border-2 border-purple-200 bg-white shadow-sm overflow-hidden"
+                >
+                  <div className="p-4">
+                    {highlightedPost.user && (
+                      <div className="flex items-start gap-3 mb-3">
+                        <Link href={`/user/${highlightedPost.user.id}`}>
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer flex-shrink-0">
+                            {highlightedPost.user.avatar ? (
+                              <img src={highlightedPost.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                            ) : (
+                              <span className="text-sm">{highlightedPost.user.displayName?.[0]?.toUpperCase() || highlightedPost.user.username?.[0]?.toUpperCase() || '?'}</span>
+                            )}
+                          </div>
+                        </Link>
+                        <div className="min-w-0 flex-1">
+                          <Link href={`/user/${highlightedPost.user.id}`}>
+                            <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">
+                              @{highlightedPost.user.username}
+                            </span>
+                          </Link>
+                          <p className="text-xs text-gray-400">{highlightedPost.timestamp ? formatDate(highlightedPost.timestamp) : ''}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {highlightedPost.mediaItems?.[0] && (
+                      <div className="bg-gray-50 rounded-lg p-3 mb-3 border border-gray-100">
+                        <div className="flex gap-3">
+                          <div className="flex-shrink-0">
+                            {highlightedPost.mediaItems[0].imageUrl && highlightedPost.mediaItems[0].imageUrl.startsWith('http') ? (
+                              <img
+                                src={highlightedPost.mediaItems[0].imageUrl}
+                                alt={highlightedPost.mediaItems[0].title}
+                                className="w-14 h-18 rounded-lg object-cover"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
+                            ) : (
+                              <div className="w-14 h-18 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                                <Film size={18} className="text-purple-300" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm text-gray-900 line-clamp-2">{highlightedPost.mediaItems[0].title}</h3>
+                            {highlightedPost.mediaItems[0].mediaType && (
+                              <p className="text-xs text-gray-500 capitalize">{highlightedPost.mediaItems[0].mediaType}</p>
+                            )}
+                            {highlightedPost.rating && highlightedPost.rating > 0 && (
+                              <div className="flex items-center gap-0.5 mt-1">
+                                {[1, 2, 3, 4, 5].map(s => (
+                                  <Star key={s} size={13} className={s <= (highlightedPost.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {highlightedPost.content && !highlightedPost.content.toLowerCase().startsWith('rated ') && !highlightedPost.content.toLowerCase().startsWith('added ') && (
+                      <div className="text-sm text-gray-800 mb-3 whitespace-pre-wrap">
+                        {renderMentions(highlightedPost.content)}
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
+                      <button
+                        onClick={() => handleLike(highlightedPost.id)}
+                        className={`flex items-center gap-1.5 text-sm ${likedPosts.has(highlightedPost.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                      >
+                        <Heart size={16} fill={likedPosts.has(highlightedPost.id) ? 'currentColor' : 'none'} />
+                        <span>{highlightedPost.likes || 0}</span>
+                      </button>
+                      <div className="flex items-center gap-1.5 text-sm text-purple-500">
+                        <MessageCircle size={16} />
+                        <span>{highlightedPost.comments || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-100 p-4 bg-gray-50/50">
+                    <CommentsSection
+                      postId={highlightedPost.id}
+                      fetchComments={fetchComments}
+                      session={session}
+                      commentInput={commentInputs[highlightedPost.id] || ''}
+                      onCommentInputChange={(value) => handleCommentInputChange(highlightedPost.id, value)}
+                      onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(highlightedPost.id, parentCommentId, content)}
+                      isSubmitting={commentMutation.isPending}
+                      currentUserId={user?.id}
+                      onDeleteComment={(commentId) => handleDeleteComment(commentId, highlightedPost.id)}
+                      onVoteComment={handleVoteComment}
+                      commentVotes={commentVotes}
+                    />
+                  </div>
                 </div>
               )}
 
