@@ -1028,29 +1028,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                 </button>
               )}
 
-              {/* Post type pills for add-to-list mode */}
-              {defaultListId && (
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { id: 'thought', label: 'Thought', icon: '' },
-                    { id: 'hot_take', label: '🌶️ Hot Take', icon: '' },
-                    { id: 'poll', label: '📊 Poll', icon: '' },
-                  ].map((type) => (
-                    <button
-                      key={type.id}
-                      onClick={() => setPostType(type.id as PostType)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                        postType === type.id
-                          ? 'bg-gray-900 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {type.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-
               {/* Dynamic content based on post type */}
               {postType === 'thought' && (
                 <>
