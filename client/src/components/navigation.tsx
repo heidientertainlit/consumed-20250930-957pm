@@ -472,7 +472,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/activity" || location === "/" ? "bg-white/15" : ""}`}
             data-testid="nav-home"
           >
-            <Home className="text-white" size={24} />
+            <Home className="text-white" size={28} />
           </Link>
 
           {/* Add - Library stack with plus icon */}
@@ -500,7 +500,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
             data-testid="nav-leaderboard"
           >
-            <Trophy className="text-white" size={24} />
+            <Trophy className="text-white" size={28} />
           </Link>
         </div>
       </nav>
