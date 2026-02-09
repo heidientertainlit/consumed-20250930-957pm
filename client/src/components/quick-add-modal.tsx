@@ -524,6 +524,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] }),
         queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] }),
+        queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] }),
         queryClient.invalidateQueries({ queryKey: ['user-ranks', user?.id] }),
         queryClient.invalidateQueries({ queryKey: ['media-ratings'] }),
       ]);

@@ -790,7 +790,7 @@ export default function MediaDetail() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setLocation('/')}
+            onClick={() => window.history.back()}
             className="mb-3 -ml-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 h-8"
             data-testid="button-back"
           >
