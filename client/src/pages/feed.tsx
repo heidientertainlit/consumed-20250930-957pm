@@ -1011,10 +1011,20 @@ export default function Feed() {
   }, []);
   
   // Check for URL parameters to scroll to specific post/comment (reactive to URL changes)
+  // Store in state so the highlighted post persists after URL cleanup
   const searchString = useSearch();
-  const urlParams = new URLSearchParams(searchString);
-  const highlightPostId = urlParams.get('post');
-  const highlightCommentId = urlParams.get('comment');
+  const [highlightPostId, setHighlightPostId] = useState<string | null>(null);
+  const [highlightCommentId, setHighlightCommentId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const urlParams = new URLSearchParams(searchString);
+    const postId = urlParams.get('post');
+    const commentId = urlParams.get('comment');
+    if (postId) {
+      setHighlightPostId(postId);
+      setHighlightCommentId(commentId);
+    }
+  }, [searchString]);
   
   // Feature flag for comment likes
   const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
@@ -3178,7 +3188,16 @@ export default function Feed() {
                   id={`post-${highlightedPost.id}`}
                   className="rounded-2xl border-2 border-purple-200 bg-white shadow-sm overflow-hidden"
                 >
-                  <div className="p-4">
+                  <div className="px-4 pt-3 pb-1 flex items-center justify-between">
+                    <span className="text-xs text-purple-500 font-medium">From notification</span>
+                    <button 
+                      onClick={() => { setHighlightPostId(null); setHighlightCommentId(null); }}
+                      className="text-gray-400 hover:text-gray-600 p-1"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div className="px-4 pb-4">
                     {highlightedPost.user && (
                       <div className="flex items-start gap-3 mb-3">
                         <Link href={`/user/${highlightedPost.user.id}`}>
