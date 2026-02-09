@@ -482,7 +482,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             data-testid="nav-add"
           >
             <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #5B21B6, #7C3AED, #818CF8)' }}>
-              <svg width="26" height="28" viewBox="0 0 26 28" fill="none">
+              <svg width="26" height="30" viewBox="0 -2 26 30" fill="none">
                 <line x1="12" y1="-1" x2="12" y2="5.5" stroke="white" strokeWidth="2" strokeLinecap="round" />
                 <line x1="8.5" y1="2.25" x2="15.5" y2="2.25" stroke="white" strokeWidth="2" strokeLinecap="round" />
                 <line x1="3" y1="12" x2="22" y2="8.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
