@@ -475,44 +475,18 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <Home className="text-white" size={24} />
           </Link>
 
-          {/* Add - Opposing arcs design with gradient purple */}
+          {/* Add - Library stack with plus icon */}
           <Link
             href="/add"
             className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add"
           >
-            <div className="relative w-11 h-8 flex items-center justify-center">
-              {/* Left arc */}
-              <svg 
-                className="absolute left-0 top-0" 
-                width="12" 
-                height="32" 
-                viewBox="0 0 12 32"
-              >
-                <path 
-                  d="M 10 2 Q -4 16 10 30" 
-                  fill="none" 
-                  stroke="#7C6FEA" 
-                  strokeWidth="2" 
-                  strokeLinecap="round"
-                />
-              </svg>
-              {/* Plus icon */}
-              <Plus className="text-white" size={14} strokeWidth={1.5} />
-              {/* Right arc */}
-              <svg 
-                className="absolute right-0 top-0" 
-                width="12" 
-                height="32" 
-                viewBox="0 0 12 32"
-              >
-                <path 
-                  d="M 2 2 Q 16 16 2 30" 
-                  fill="none" 
-                  stroke="#7C6FEA" 
-                  strokeWidth="2" 
-                  strokeLinecap="round"
-                />
+            <div className="relative flex flex-col items-center">
+              <Plus className="text-white mb-[-2px]" size={12} strokeWidth={2.5} />
+              <svg width="24" height="18" viewBox="0 0 24 18" fill="none">
+                <rect x="2" y="0" width="20" height="4" rx="1.5" stroke="#7C6FEA" strokeWidth="1.8" fill="none" />
+                <rect x="0" y="7" width="24" height="4" rx="1.5" stroke="white" strokeWidth="1.8" fill="none" />
+                <rect x="0" y="14" width="24" height="4" rx="1.5" stroke="white" strokeWidth="1.8" fill="none" />
               </svg>
             </div>
           </Link>

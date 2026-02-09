@@ -1133,7 +1133,7 @@ export default function Search() {
             <AnimatedWord />
             <span>?</span>
           </div>
-          <p className="text-sm text-gray-400 mt-1">Add it here</p>
+          <p className="text-sm text-gray-400 mt-1">Add media here:</p>
         </div>
         
         {/* Search Bar */}
