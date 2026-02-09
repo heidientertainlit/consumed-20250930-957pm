@@ -1773,62 +1773,59 @@ export default function Feed() {
   }, [socialPosts]);
 
   // Handle scrolling to specific post/comment from notification
+  const scrollAttemptedRef = useRef(false);
+  
   useEffect(() => {
-    if (highlightPostId && socialPosts.length > 0) {
-      // Auto-expand comments for the highlighted post
-      setExpandedComments(prev => new Set(prev).add(highlightPostId));
+    if (!highlightPostId || socialPosts.length === 0 || scrollAttemptedRef.current) return;
+    scrollAttemptedRef.current = true;
+    
+    // Auto-expand comments for the highlighted post
+    setExpandedComments(prev => new Set(prev).add(highlightPostId));
+    
+    // Retry scrolling until element is found (comments may take time to load)
+    let attempts = 0;
+    const maxAttempts = 25;
+    
+    const highlightElement = (el: HTMLElement, isComment: boolean) => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.transition = 'background-color 0.5s ease-in-out';
+      el.style.backgroundColor = isComment ? 'rgba(147, 51, 234, 0.15)' : 'rgba(147, 51, 234, 0.1)';
+      el.style.borderRadius = isComment ? '8px' : '12px';
+      setTimeout(() => {
+        el.style.backgroundColor = 'transparent';
+      }, 2500);
+      window.history.replaceState({}, '', '/activity');
+    };
+    
+    const tryScroll = () => {
+      attempts++;
       
-      // Retry scrolling until element is found (comments may take time to load)
-      let attempts = 0;
-      const maxAttempts = 10;
-      
-      const tryScroll = () => {
-        attempts++;
-        
-        if (highlightCommentId) {
-          // Scroll to specific comment
-          const commentElement = document.getElementById(`comment-${highlightCommentId}`);
-          if (commentElement) {
-            commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Add subtle highlight effect with smooth fade
-            commentElement.style.transition = 'background-color 0.5s ease-in-out';
-            commentElement.style.backgroundColor = 'rgba(147, 51, 234, 0.15)';
-            commentElement.style.borderRadius = '8px';
-            setTimeout(() => {
-              commentElement.style.backgroundColor = 'transparent';
-            }, 2500);
-            // Clear URL params to prevent re-triggering
-            window.history.replaceState({}, '', '/activity');
-            return; // Success
-          }
-        } else {
-          // Just scroll to the post (for likes)
-          const postElement = document.getElementById(`post-${highlightPostId}`);
-          if (postElement) {
-            postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Add subtle highlight effect with smooth fade
-            postElement.style.transition = 'background-color 0.5s ease-in-out';
-            postElement.style.backgroundColor = 'rgba(147, 51, 234, 0.1)';
-            postElement.style.borderRadius = '12px';
-            setTimeout(() => {
-              postElement.style.backgroundColor = 'transparent';
-            }, 2500);
-            // Clear URL params to prevent re-triggering
-            window.history.replaceState({}, '', '/activity');
-            return; // Success
-          }
+      if (highlightCommentId) {
+        const commentElement = document.getElementById(`comment-${highlightCommentId}`);
+        if (commentElement) {
+          highlightElement(commentElement, true);
+          return;
         }
-        
-        // Retry if element not found yet
-        if (attempts < maxAttempts) {
-          setTimeout(tryScroll, 300);
+      } else {
+        const postElement = document.getElementById(`post-${highlightPostId}`);
+        if (postElement) {
+          highlightElement(postElement, false);
+          return;
         }
-      };
+      }
       
-      // Start trying after initial delay
-      setTimeout(tryScroll, 500);
-    }
+      if (attempts < maxAttempts) {
+        setTimeout(tryScroll, 400);
+      }
+    };
+    
+    setTimeout(tryScroll, 600);
   }, [highlightPostId, highlightCommentId, socialPosts]);
+  
+  // Reset scroll ref when URL params change
+  useEffect(() => {
+    scrollAttemptedRef.current = false;
+  }, [highlightPostId]);
 
   // Fetch Play games for inline play
   const { data: playGames = [] } = useQuery({
