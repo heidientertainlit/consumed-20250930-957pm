@@ -796,12 +796,24 @@ export default function ListDetail() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-4">
         
+        {/* Prominent Add Button */}
+        {!sharedUserId && session && (
+          <button
+            onClick={() => setIsTrackModalOpen(true)}
+            className="w-full flex items-center justify-center gap-2 py-3 mb-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm transition-colors shadow-sm"
+            data-testid="button-add-item-prominent"
+          >
+            <Plus size={18} strokeWidth={2.5} />
+            Add Media to This List
+          </button>
+        )}
+
         {/* Search Bar */}
         <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Search in list..."
+            placeholder="Filter items in list..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400"
