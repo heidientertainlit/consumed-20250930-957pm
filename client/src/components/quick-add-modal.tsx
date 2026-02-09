@@ -195,6 +195,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
     } else {
       if (defaultListId) {
         setSelectedListId(defaultListId);
+        setStage("composer");
       }
       if (preSelectedMedia) {
         setSelectedMedia({
@@ -793,22 +794,30 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                     <div
                       key={`${result.external_id || result.id}-${index}`}
                       onClick={() => {
-                        console.log('🎯 Row clicked - navigating to media:', result.title);
-                        onClose();
-                        const mediaType = result.type || 'movie';
-                        const externalId = result.external_id || result.id;
-                        const externalSource = result.external_source || 'tmdb';
-                        setLocation(`/media/${mediaType}/${externalSource}/${externalId}`);
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+                        if (defaultListId) {
+                          handleSelectMedia(result);
+                        } else {
+                          console.log('🎯 Row clicked - navigating to media:', result.title);
                           onClose();
                           const mediaType = result.type || 'movie';
                           const externalId = result.external_id || result.id;
                           const externalSource = result.external_source || 'tmdb';
                           setLocation(`/media/${mediaType}/${externalSource}/${externalId}`);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          if (defaultListId) {
+                            handleSelectMedia(result);
+                          } else {
+                            onClose();
+                            const mediaType = result.type || 'movie';
+                            const externalId = result.external_id || result.id;
+                            const externalSource = result.external_source || 'tmdb';
+                            setLocation(`/media/${mediaType}/${externalSource}/${externalId}`);
+                          }
                         }
                       }}
                       className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-purple-50 transition-colors cursor-pointer select-none"
