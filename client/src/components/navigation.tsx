@@ -465,20 +465,20 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50">
-        {/* Floating plus button - positioned above the nav */}
-        <div className="absolute left-1/2 -translate-x-1/2 -top-6 z-20">
+        {/* Floating plus button - only 1/4 above nav */}
+        <div className="absolute left-1/2 -translate-x-1/2 -top-3 z-20">
           <Link
             href="/add"
             className="block"
             data-testid="nav-add"
           >
-            <div className="w-[56px] h-[56px] rounded-full flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #7C3AED, #6366F1)' }}>
-              <Plus className="text-white" size={26} strokeWidth={2.5} />
+            <div className="w-[62px] h-[62px] rounded-full flex items-center justify-center shadow-lg" style={{ background: 'linear-gradient(135deg, #7C3AED, #6366F1)' }}>
+              <Plus className="text-white" size={28} strokeWidth={2.5} />
             </div>
           </Link>
         </div>
         {/* Nav background with notch cutout */}
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 80" preserveAspectRatio="none" fill="none">
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 60" preserveAspectRatio="none" fill="none">
           <defs>
             <linearGradient id="navBgGrad" x1="0" y1="0" x2="400" y2="0" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stopColor="#0a0a0f" />
@@ -486,9 +486,9 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
               <stop offset="100%" stopColor="#2d1f4e" />
             </linearGradient>
           </defs>
-          <path d="M0,0 L160,0 C165,0 170,0 175,5 C180,15 185,28 200,28 C215,28 220,15 225,5 C230,0 235,0 240,0 L400,0 L400,80 L0,80 Z" fill="url(#navBgGrad)" />
+          <path d="M0,0 L162,0 C167,0 172,0 177,4 C182,12 187,22 200,22 C213,22 218,12 223,4 C228,0 233,0 238,0 L400,0 L400,60 L0,60 Z" fill="url(#navBgGrad)" />
         </svg>
-        <div className="relative z-10 flex justify-around items-end px-2 pt-5" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 20px), 20px)' }}>
+        <div className="relative z-10 flex justify-around items-center px-2 pt-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 12px), 12px)' }}>
           {/* Home (main game feed) */}
           <Link
             href="/activity"
