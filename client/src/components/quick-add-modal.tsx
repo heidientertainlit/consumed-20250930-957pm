@@ -195,6 +195,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
     } else {
       if (defaultListId) {
         setSelectedListId(defaultListId);
+        setStage("composer");
       }
       if (preSelectedMedia) {
         setSelectedMedia({
@@ -892,10 +893,10 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
             {/* Composer Header */}
             <div className="p-4 border-b border-gray-100">
               <div className="flex items-center justify-between">
-                <button onClick={handleBack} className="text-gray-600 hover:text-gray-900">
+                <button onClick={defaultListId ? onClose : handleBack} className="text-gray-600 hover:text-gray-900">
                   <ArrowLeft size={20} />
                 </button>
-                <h2 className="text-lg font-bold text-gray-900">Say something</h2>
+                <h2 className="text-lg font-bold text-gray-900">{defaultListId ? 'Add Media' : 'Say something'}</h2>
                 <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                   <X size={20} />
                 </button>
@@ -903,39 +904,66 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {/* Post type pills */}
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { id: 'thought', label: 'Thought' },
-                  { id: 'hot_take', label: 'Hot Take' },
-                  { id: 'ask', label: 'Ask' },
-                  { id: 'poll', label: 'Poll' },
-                  { id: 'rank', label: 'Rank' },
-                ].map((type) => (
-                  <button
-                    key={type.id}
-                    onClick={() => setPostType(type.id as PostType)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                      postType === type.id
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {type.label}
-                  </button>
-                ))}
-              </div>
+              {/* Search bar for add-to-list mode */}
+              {defaultListId && (
+                <div className="relative">
+                  <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search for a movie, show, book..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-purple-400"
+                    autoFocus
+                  />
+                  {searchQuery && (
+                    <button 
+                      onClick={() => { setSearchQuery(""); setSearchResults([]); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                  {searchResults.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                      {searchResults.map((result, index) => {
+                        const posterImage = result.poster_url || result.image_url;
+                        return (
+                          <div
+                            key={`${result.external_id || result.id}-${index}`}
+                            onClick={() => {
+                              setSelectedMedia(result);
+                              setSearchQuery("");
+                              setSearchResults([]);
+                            }}
+                            className="flex items-center gap-3 p-2.5 hover:bg-purple-50 cursor-pointer border-b border-gray-50 last:border-b-0"
+                          >
+                            {posterImage ? (
+                              <img src={posterImage} alt="" className="w-8 h-12 object-cover rounded shrink-0" />
+                            ) : (
+                              <div className="w-8 h-12 bg-gradient-to-br from-purple-100 to-blue-100 rounded flex items-center justify-center shrink-0">
+                                {getMediaIcon(result.type)}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 text-sm truncate">{result.title}</p>
+                              <p className="text-xs text-gray-500 capitalize">{result.type}{result.year ? ` • ${result.year}` : ''}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {isSearching && (
+                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg p-4 flex justify-center">
+                      <Loader2 className="animate-spin text-purple-600" size={20} />
+                    </div>
+                  )}
+                </div>
+              )}
 
-              {/* Attach media section (collapsed by default) */}
-              {!selectedMedia ? (
-                <button
-                  onClick={() => setStage("search")}
-                  className="w-full flex items-center gap-2 p-3 border border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-purple-400 hover:text-purple-600 transition-colors"
-                >
-                  <Search size={18} />
-                  <span>Attach media (optional)</span>
-                </button>
-              ) : (
+              {/* Selected media card */}
+              {selectedMedia && (
                 <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-xl">
                   {(selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path) ? (
                     <img
@@ -964,11 +992,70 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                 </div>
               )}
 
+              {/* Post type pills - only show for non-list mode or when not in add-to-list context */}
+              {!defaultListId && (
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'thought', label: 'Thought' },
+                    { id: 'hot_take', label: 'Hot Take' },
+                    { id: 'ask', label: 'Ask' },
+                    { id: 'poll', label: 'Poll' },
+                    { id: 'rank', label: 'Rank' },
+                  ].map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() => setPostType(type.id as PostType)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        postType === type.id
+                          ? 'bg-gray-900 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Attach media section - only for non-list mode */}
+              {!defaultListId && !selectedMedia && (
+                <button
+                  onClick={() => setStage("search")}
+                  className="w-full flex items-center gap-2 p-3 border border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-purple-400 hover:text-purple-600 transition-colors"
+                >
+                  <Search size={18} />
+                  <span>Attach media (optional)</span>
+                </button>
+              )}
+
+              {/* Post type pills for add-to-list mode */}
+              {defaultListId && (
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'thought', label: 'Thought', icon: '' },
+                    { id: 'hot_take', label: '🌶️ Hot Take', icon: '' },
+                    { id: 'poll', label: '📊 Poll', icon: '' },
+                  ].map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() => setPostType(type.id as PostType)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                        postType === type.id
+                          ? 'bg-gray-900 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Dynamic content based on post type */}
               {postType === 'thought' && (
                 <>
                   <Textarea
-                    placeholder="What's on your mind?"
+                    placeholder={defaultListId ? "Add a review (optional)..." : "What's on your mind?"}
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
                     className="bg-white border-gray-200 resize-none min-h-[100px]"
@@ -1076,8 +1163,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                 </>
               )}
 
-              {/* Show rating and list options when media is attached (for thought/hot_take) */}
-              {selectedMedia && (postType === 'thought' || postType === 'hot_take') && (
+              {/* Show rating and list options when media is attached (for thought/hot_take) or in add-to-list mode */}
+              {(defaultListId || (selectedMedia && (postType === 'thought' || postType === 'hot_take'))) && (
                 <>
                   {/* Rating */}
                   <div className="flex items-center gap-2">
@@ -1261,17 +1348,17 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
             <div className="p-4 border-t border-gray-100">
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting || (!reviewText.trim() && postType !== 'rank' && rating === 0)}
+                disabled={isSubmitting || (defaultListId ? !selectedMedia : (!reviewText.trim() && postType !== 'rank' && rating === 0))}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
                 data-testid="quick-add-submit"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="animate-spin mr-2" size={16} />
-                    Posting...
+                    {defaultListId ? 'Adding...' : 'Posting...'}
                   </>
                 ) : (
-                  'Post'
+                  defaultListId ? 'Add Media' : 'Post'
                 )}
               </Button>
             </div>
