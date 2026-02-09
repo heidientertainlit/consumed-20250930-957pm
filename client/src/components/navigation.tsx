@@ -483,11 +483,11 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #5B21B6, #7C3AED, #818CF8)' }}>
               <svg width="26" height="28" viewBox="0 0 26 28" fill="none">
-                <line x1="17" y1="0.5" x2="17" y2="7" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                <line x1="13.5" y1="3.75" x2="20.5" y2="3.75" stroke="white" strokeWidth="2" strokeLinecap="round" />
-                <line x1="3" y1="13" x2="22" y2="9.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                <line x1="2" y1="19" x2="23" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                <line x1="2" y1="25" x2="23" y2="25" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="12" y1="0.5" x2="12" y2="7" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                <line x1="8.5" y1="3.75" x2="15.5" y2="3.75" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                <line x1="3" y1="12" x2="22" y2="8.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="2" y1="18" x2="23" y2="18" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="2" y1="24" x2="23" y2="24" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
               </svg>
             </div>
           </Link>
