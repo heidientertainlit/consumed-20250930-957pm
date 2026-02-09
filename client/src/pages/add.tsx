@@ -517,13 +517,31 @@ export default function Search() {
       ctx.textAlign = 'center';
       ctx.fillText('@consumedapp', canvasWidth / 2, canvasHeight - padding + 10);
 
-      const link = document.createElement('a');
       const fileName = historyTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      link.download = `${fileName}-consumedapp.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
 
-      toast({ title: "Image Downloaded", description: "Share it on social media!" });
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), 'image/png')
+      );
+
+      if (!blob) {
+        throw new Error('Failed to generate image');
+      }
+
+      if (navigator.share && navigator.canShare?.({ files: [new File([blob], `${fileName}.png`, { type: 'image/png' })] })) {
+        const file = new File([blob], `${fileName}-consumedapp.png`, { type: 'image/png' });
+        await navigator.share({ files: [file], title: historyTitle });
+        toast({ title: "Shared!", description: "Image shared successfully" });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `${fileName}-consumedapp.png`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        toast({ title: "Image Downloaded", description: "Share it on social media!" });
+      }
     } catch (error) {
       console.error('Error generating history image:', error);
       toast({ title: "Download Failed", description: "Could not generate image", variant: "destructive" });
