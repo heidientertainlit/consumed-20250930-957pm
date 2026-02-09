@@ -481,16 +481,16 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add"
           >
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <svg width="42" height="42" viewBox="0 0 42 42" fill="none">
               <defs>
-                <linearGradient id="addBtnGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                <linearGradient id="addBtnGrad" x1="0" y1="0" x2="42" y2="42" gradientUnits="userSpaceOnUse">
                   <stop offset="0%" stopColor="#7C3AED" />
                   <stop offset="100%" stopColor="#6366F1" />
                 </linearGradient>
               </defs>
-              <circle cx="18" cy="18" r="17" fill="url(#addBtnGrad)" />
-              <rect x="16" y="9" width="4" height="18" rx="2" fill="white" />
-              <rect x="9" y="16" width="18" height="4" rx="2" fill="white" />
+              <circle cx="21" cy="21" r="20" fill="url(#addBtnGrad)" opacity="0.5" />
+              <rect x="19.5" y="13" width="3" height="16" rx="1.5" fill="white" />
+              <rect x="13" y="19.5" width="16" height="3" rx="1.5" fill="white" />
             </svg>
           </Link>
 
