@@ -481,12 +481,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add"
           >
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              {/* Bookmark shape */}
-              <path d="M5,3 C5,1.9 5.9,1 7,1 L19,1 C20.1,1 21,1.9 21,3 L21,25 L14,20 L7,25 L7,14" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+              {/* Rounded square frame - open top-right corner */}
+              <path d="M18,2 L6,2 C3.8,2 2,3.8 2,6 L2,22 C2,24.2 3.8,26 6,26 L22,26 C24.2,26 26,24.2 26,22 L26,12" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              {/* Sparkle/star inside - represents all entertainment */}
+              <path d="M13,10 L14,14 L18,15 L14,16 L13,20 L12,16 L8,15 L12,14 Z" stroke="white" strokeWidth="1.5" fill="none" strokeLinejoin="round" />
               {/* Plus icon top-right */}
-              <line x1="22" y1="4" x2="22" y2="10" stroke="white" strokeWidth="2" strokeLinecap="round" />
-              <line x1="19" y1="7" x2="25" y2="7" stroke="white" strokeWidth="2" strokeLinecap="round" />
+              <line x1="24" y1="2" x2="24" y2="9" stroke="white" strokeWidth="2" strokeLinecap="round" />
+              <line x1="20.5" y1="5.5" x2="27.5" y2="5.5" stroke="white" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </Link>
 
