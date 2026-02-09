@@ -481,15 +481,15 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add"
           >
-            <div className="relative flex flex-col items-center">
-              <Plus className="text-white mb-[-1px]" size={10} strokeWidth={3} />
-              <svg width="26" height="22" viewBox="0 0 26 22" fill="none">
-                {/* Top bar - tilted like being added */}
-                <rect x="4" y="0" width="18" height="3.5" rx="1.5" stroke="white" strokeWidth="1.8" fill="none" transform="rotate(-12, 13, 1.75)" />
+            <div className="relative flex flex-col items-center gap-[2px]">
+              <Plus className="text-white" size={14} strokeWidth={2.5} />
+              <svg width="24" height="18" viewBox="0 0 24 18" fill="none">
+                {/* Diagonal line on top */}
+                <line x1="2" y1="5" x2="22" y2="0" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
                 {/* Middle bar */}
-                <rect x="1" y="9" width="24" height="3.5" rx="1.5" stroke="white" strokeWidth="1.8" fill="none" />
+                <line x1="1" y1="11" x2="23" y2="11" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
                 {/* Bottom bar */}
-                <rect x="1" y="16" width="24" height="3.5" rx="1.5" stroke="white" strokeWidth="1.8" fill="none" />
+                <line x1="1" y1="17" x2="23" y2="17" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
               </svg>
             </div>
           </Link>
