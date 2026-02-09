@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Navigation from "@/components/navigation";
-import ConsumptionTracker from "@/components/consumption-tracker";
+import { QuickAddModal } from "@/components/quick-add-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical, LayoutGrid, List, Search, Film, Tv, BookOpen, Music, ChevronRight, Star, GripVertical } from "lucide-react";
@@ -1071,13 +1071,11 @@ export default function ListDetail() {
 
       </div>
 
-      {/* Consumption Tracker Modal for Adding Media */}
-      <ConsumptionTracker 
+      {/* Quick Add Modal for Adding Media */}
+      <QuickAddModal 
         isOpen={isTrackModalOpen} 
         onClose={() => setIsTrackModalOpen(false)}
-        defaultListType={listData?.name && listData.name !== 'All' ? getListTypeFromTitle(listData.name) : undefined}
-        targetListDisplayName={listData?.name && listData.name !== 'All' ? getDisplayTitle(listData.name) : undefined}
-        targetCustomListId={listData?.isCustom ? listData.id : undefined}
+        defaultListId={listData?.id}
       />
 
       {/* Manage Collaborators Dialog */}

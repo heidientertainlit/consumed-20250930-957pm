@@ -56,12 +56,13 @@ interface QuickAddModalProps {
   isOpen: boolean;
   onClose: () => void;
   preSelectedMedia?: PreSelectedMedia | null;
+  defaultListId?: string;
 }
 
 type Stage = "search" | "composer";
 type PostType = "thought" | "hot_take" | "ask" | "poll" | "rank";
 
-export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddModalProps) {
+export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId }: QuickAddModalProps) {
   const { user, session } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -191,20 +192,24 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia }: QuickAddMod
   useEffect(() => {
     if (!isOpen) {
       resetModal();
-    } else if (preSelectedMedia) {
-      // Pre-populate with provided media and skip to details
-      setSelectedMedia({
-        title: preSelectedMedia.title,
-        type: preSelectedMedia.mediaType,
-        image_url: preSelectedMedia.imageUrl,
-        poster_url: preSelectedMedia.imageUrl,
-        poster_path: preSelectedMedia.imageUrl,
-        external_id: preSelectedMedia.externalId,
-        external_source: preSelectedMedia.externalSource,
-      });
-      setStage("composer");
+    } else {
+      if (defaultListId) {
+        setSelectedListId(defaultListId);
+      }
+      if (preSelectedMedia) {
+        setSelectedMedia({
+          title: preSelectedMedia.title,
+          type: preSelectedMedia.mediaType,
+          image_url: preSelectedMedia.imageUrl,
+          poster_url: preSelectedMedia.imageUrl,
+          poster_path: preSelectedMedia.imageUrl,
+          external_id: preSelectedMedia.externalId,
+          external_source: preSelectedMedia.externalSource,
+        });
+        setStage("composer");
+      }
     }
-  }, [isOpen, preSelectedMedia]);
+  }, [isOpen, preSelectedMedia, defaultListId]);
 
   const resetModal = () => {
     setStage("search");
