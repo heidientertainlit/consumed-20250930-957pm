@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Navigation from "@/components/navigation";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical, LayoutGrid, List, Search, Film, Tv, BookOpen, Music, ChevronRight, Star, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical, LayoutGrid, List, Search, Film, Tv, BookOpen, Music, ChevronRight, Star, GripVertical, Download } from "lucide-react";
+import html2canvas from "html2canvas";
 import { Switch } from "@/components/ui/switch";
 import { useLocation, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -416,7 +417,96 @@ export default function ListDetail() {
     }
   };
 
-  // Removed fallbackCopyToClipboard - using same pattern as predictions
+  const downloadRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+  const handleDownloadImage = useCallback(async () => {
+    if (!listData?.items?.length || isGeneratingImage) return;
+    setIsGeneratingImage(true);
+
+    try {
+      const container = document.createElement('div');
+      container.style.cssText = 'position:fixed;left:-9999px;top:0;width:1080px;background:linear-gradient(135deg,#1a1025 0%,#2d1b4e 50%,#1a1025 100%);padding:60px 40px;font-family:system-ui,-apple-system,sans-serif;';
+      
+      const title = document.createElement('div');
+      title.style.cssText = 'text-align:center;margin-bottom:40px;';
+      title.innerHTML = `<div style="font-size:48px;font-weight:800;color:white;letter-spacing:-0.5px;">${getDisplayTitle(listData.name || '')}</div><div style="font-size:20px;color:rgba(255,255,255,0.5);margin-top:8px;">${listData.items.length} items</div>`;
+      container.appendChild(title);
+
+      const grid = document.createElement('div');
+      const cols = 4;
+      grid.style.cssText = `display:grid;grid-template-columns:repeat(${cols},1fr);gap:12px;`;
+
+      const allItems = listData.items || [];
+      const loadPromises: Promise<void>[] = [];
+
+      allItems.forEach((item: any) => {
+        const cell = document.createElement('div');
+        cell.style.cssText = 'border-radius:12px;overflow:hidden;aspect-ratio:2/3;background:#2a2a3e;position:relative;';
+        
+        if (item.artwork) {
+          const img = document.createElement('img');
+          img.crossOrigin = 'anonymous';
+          img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+          img.src = item.artwork;
+          cell.appendChild(img);
+          
+          loadPromises.push(new Promise<void>((resolve) => {
+            img.onload = () => resolve();
+            img.onerror = () => {
+              img.remove();
+              const fallback = document.createElement('div');
+              fallback.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:14px;text-align:center;padding:8px;';
+              fallback.textContent = item.title || '';
+              cell.appendChild(fallback);
+              resolve();
+            };
+          }));
+        } else {
+          const fallback = document.createElement('div');
+          fallback.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.4);font-size:14px;text-align:center;padding:8px;';
+          fallback.textContent = item.title || '';
+          cell.appendChild(fallback);
+        }
+        
+        grid.appendChild(cell);
+      });
+
+      container.appendChild(grid);
+
+      const footer = document.createElement('div');
+      footer.style.cssText = 'text-align:center;margin-top:40px;';
+      footer.innerHTML = '<div style="font-size:22px;color:rgba(255,255,255,0.6);font-weight:600;">@consumedapp</div>';
+      container.appendChild(footer);
+
+      document.body.appendChild(container);
+      
+      await Promise.allSettled(loadPromises);
+      await new Promise(r => setTimeout(r, 300));
+
+      const canvas = await html2canvas(container, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+      });
+
+      document.body.removeChild(container);
+
+      const link = document.createElement('a');
+      link.download = `${(listData.name || 'list').toLowerCase().replace(/\s+/g, '-')}-consumedapp.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      toast({ title: "Image Downloaded", description: "Share it on social media!" });
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast({ title: "Download Failed", description: "Could not generate image", variant: "destructive" });
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  }, [listData, isGeneratingImage, toast]);
 
   const deleteMutation = useMutation({
     mutationFn: async (itemId: string) => {
@@ -749,6 +839,16 @@ export default function ListDetail() {
                 aria-label="Share"
               >
                 {copied ? <Check size={16} className="text-green-500" /> : <Share2 size={16} />}
+              </button>
+
+              <button
+                onClick={handleDownloadImage}
+                disabled={isGeneratingImage || !listData?.items?.length}
+                className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors disabled:opacity-40"
+                data-testid="button-download-list"
+                aria-label="Download as image"
+              >
+                <Download size={16} className={isGeneratingImage ? 'animate-pulse' : ''} />
               </button>
               
               {!sharedUserId && session && !sharedListData?.is_default && (
