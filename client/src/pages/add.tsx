@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target, User, Plus, Users, Download, RefreshCw, Share2, Dna, Mic, Gamepad2, Clock, BarChart3, Send, Lock, List, ChevronRight, Calendar, Play, Trophy, MessageSquarePlus, Star } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target, User, Plus, Users, Download, RefreshCw, Share2, Dna, Mic, Gamepad2, Clock, BarChart3, Send, Lock, List, ChevronRight, Calendar, Play, Trophy, MessageSquarePlus, Star, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -143,6 +143,8 @@ export default function Search() {
   const [mediaHistoryYear, setMediaHistoryYear] = useState('all');
   const [mediaHistoryRating, setMediaHistoryRating] = useState('all');
   const [openFilter, setOpenFilter] = useState<string | null>(null);
+  const [historyViewMode, setHistoryViewMode] = useState<'list' | 'grid'>('list');
+  const [isGeneratingHistoryImage, setIsGeneratingHistoryImage] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const summaryCardRef = useRef<HTMLDivElement>(null);
@@ -395,6 +397,140 @@ export default function Search() {
     const matchesRating = mediaHistoryRating === 'all' || item.rating?.toString() === mediaHistoryRating;
     return matchesSearch && matchesType && matchesYear && matchesRating;
   });
+
+  const getHistoryTitle = () => {
+    const parts: string[] = [];
+    if (mediaHistoryType !== 'all') parts.push(mediaHistoryType.charAt(0).toUpperCase() + mediaHistoryType.slice(1) + 's');
+    if (mediaHistoryYear !== 'all') parts.push(mediaHistoryYear);
+    if (mediaHistoryRating !== 'all') parts.push(`${mediaHistoryRating}★+`);
+    return parts.length > 0 ? parts.join(' · ') : 'My History';
+  };
+
+  const handleDownloadHistoryImage = useCallback(async () => {
+    if (!filteredMediaHistory.length || isGeneratingHistoryImage) return;
+    setIsGeneratingHistoryImage(true);
+
+    try {
+      const items = filteredMediaHistory;
+      const cols = 4;
+      const canvasWidth = 1080;
+      const padding = 60;
+      const gap = 12;
+      const cellWidth = Math.floor((canvasWidth - padding * 2 - gap * (cols - 1)) / cols);
+      const cellHeight = Math.floor(cellWidth * 1.5);
+      const rows = Math.ceil(items.length / cols);
+      const titleHeight = 100;
+      const footerHeight = 80;
+      const canvasHeight = padding + titleHeight + rows * cellHeight + (rows - 1) * gap + footerHeight + padding;
+
+      const scale = 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvasWidth * scale;
+      canvas.height = canvasHeight * scale;
+      const ctx = canvas.getContext('2d')!;
+      ctx.scale(scale, scale);
+
+      const grad = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
+      grad.addColorStop(0, '#1a1025');
+      grad.addColorStop(0.5, '#2d1b4e');
+      grad.addColorStop(1, '#1a1025');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+      const historyTitle = getHistoryTitle();
+      ctx.fillStyle = 'white';
+      ctx.font = '800 48px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(historyTitle, canvasWidth / 2, padding + 48);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '400 20px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`${items.length} items`, canvasWidth / 2, padding + 78);
+
+      const loadImage = (url: string): Promise<HTMLImageElement | null> => {
+        return new Promise((resolve) => {
+          const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(url)}`;
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = () => resolve(null);
+          img.src = proxyUrl;
+        });
+      };
+
+      const images = await Promise.all(
+        items.map((item: any) => {
+          const imgUrl = item.image_url || item.poster_url;
+          return imgUrl ? loadImage(imgUrl) : Promise.resolve(null);
+        })
+      );
+
+      const gridTop = padding + titleHeight;
+      items.forEach((item: any, idx: number) => {
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        const x = padding + col * (cellWidth + gap);
+        const y = gridTop + row * (cellHeight + gap);
+
+        ctx.save();
+        ctx.beginPath();
+        const r = 12;
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + cellWidth - r, y);
+        ctx.quadraticCurveTo(x + cellWidth, y, x + cellWidth, y + r);
+        ctx.lineTo(x + cellWidth, y + cellHeight - r);
+        ctx.quadraticCurveTo(x + cellWidth, y + cellHeight, x + cellWidth - r, y + cellHeight);
+        ctx.lineTo(x + r, y + cellHeight);
+        ctx.quadraticCurveTo(x, y + cellHeight, x, y + cellHeight - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+        ctx.clip();
+
+        ctx.fillStyle = '#2a2a3e';
+        ctx.fillRect(x, y, cellWidth, cellHeight);
+
+        const img = images[idx];
+        if (img) {
+          const imgAspect = img.naturalWidth / img.naturalHeight;
+          const cellAspect = cellWidth / cellHeight;
+          let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
+          if (imgAspect > cellAspect) {
+            sw = img.naturalHeight * cellAspect;
+            sx = (img.naturalWidth - sw) / 2;
+          } else {
+            sh = img.naturalWidth / cellAspect;
+            sy = (img.naturalHeight - sh) / 2;
+          }
+          ctx.drawImage(img, sx, sy, sw, sh, x, y, cellWidth, cellHeight);
+        } else {
+          ctx.fillStyle = 'rgba(255,255,255,0.4)';
+          ctx.font = '400 14px system-ui, -apple-system, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(item.title || '', x + cellWidth / 2, y + cellHeight / 2, cellWidth - 16);
+        }
+        ctx.restore();
+      });
+
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.font = '700 40px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('@consumedapp', canvasWidth / 2, canvasHeight - padding + 10);
+
+      const link = document.createElement('a');
+      const fileName = historyTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      link.download = `${fileName}-consumedapp.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      toast({ title: "Image Downloaded", description: "Share it on social media!" });
+    } catch (error) {
+      console.error('Error generating history image:', error);
+      toast({ title: "Download Failed", description: "Could not generate image", variant: "destructive" });
+    } finally {
+      setIsGeneratingHistoryImage(false);
+    }
+  }, [filteredMediaHistory, isGeneratingHistoryImage, toast, mediaHistoryType, mediaHistoryYear, mediaHistoryRating]);
 
   const handleShareList = async (listId: string, listTitle: string) => {
     const url = `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}`;
@@ -2109,11 +2245,37 @@ export default function Search() {
                       </div>
                     </div>
 
+                    {/* View Toggle + Download */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center bg-gray-100 rounded p-0.5">
+                        <button
+                          onClick={() => setHistoryViewMode('list')}
+                          className={`p-1.5 rounded transition-colors ${historyViewMode === 'list' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400'}`}
+                        >
+                          <List size={14} />
+                        </button>
+                        <button
+                          onClick={() => setHistoryViewMode('grid')}
+                          className={`p-1.5 rounded transition-colors ${historyViewMode === 'grid' ? 'bg-white shadow-sm text-purple-600' : 'text-gray-400'}`}
+                        >
+                          <LayoutGrid size={14} />
+                        </button>
+                      </div>
+                      <button
+                        onClick={handleDownloadHistoryImage}
+                        disabled={isGeneratingHistoryImage || !filteredMediaHistory.length}
+                        className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors disabled:opacity-40"
+                        aria-label="Download as image"
+                      >
+                        <Download size={16} className={isGeneratingHistoryImage ? 'animate-pulse' : ''} />
+                      </button>
+                    </div>
+
                     <div className="relative mb-3">
                       <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                       <input
                         type="text"
-                        placeholder="Search media history..."
+                        placeholder="Filter media history..."
                         value={mediaHistorySearch}
                         onChange={(e) => setMediaHistorySearch(e.target.value)}
                         className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
@@ -2135,7 +2297,7 @@ export default function Search() {
                         <p className="text-sm text-gray-600">No media history yet</p>
                         <p className="text-xs text-gray-500">Start tracking to see your history</p>
                       </div>
-                    ) : (
+                    ) : historyViewMode === 'list' ? (
                       <div className="space-y-2">
                         {filteredMediaHistory.map((item: any, index: number) => (
                           <div
@@ -2165,8 +2327,31 @@ export default function Search() {
                                   <span>•</span>
                                   <span>{item.listName}</span>
                                 </div>
-                                {/* Date display removed - production schema doesn't have date field */}
                               </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                        {filteredMediaHistory.map((item: any, index: number) => (
+                          <div
+                            key={`${item.id}-${index}`}
+                            className="bg-white rounded-lg border border-gray-200 hover:border-purple-400 hover:shadow-lg transition-all overflow-hidden cursor-pointer"
+                            onClick={() => {
+                              if (item.external_id && item.external_source) {
+                                setLocation(`/media/${item.media_type}/${item.external_source}/${item.external_id}`);
+                              }
+                            }}
+                          >
+                            <div className="aspect-[2/3] relative">
+                              {item.image_url ? (
+                                <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center p-1">
+                                  <span className="text-[10px] text-gray-400 text-center leading-tight">{item.title}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}
