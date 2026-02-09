@@ -1229,6 +1229,12 @@ export default function Feed() {
     posts.forEach(post => {
       const postType = post.type?.toLowerCase() || '';
       
+      // Never consolidate the highlighted post from a notification - it needs its own element for scrolling
+      if (highlightPostId && post.id === highlightPostId) {
+        ungroupablePosts.push(post);
+        return;
+      }
+      
       // Only ratings and finished are groupable into consolidated cards
       // List adds (add-to-list) go to Quick Glimpse instead - don't consolidate them
       const isGroupable = (
@@ -1631,6 +1637,9 @@ export default function Feed() {
     
     const post = item as SocialPost;
     
+    // Never filter out the highlighted post from a notification
+    if (highlightPostId && post.id === highlightPostId) return true;
+    
     // Hide user-generated polls and predictions - only show Consumed-created ones
     const postType = post.type?.toLowerCase() || '';
     if (['prediction', 'poll', 'vote'].includes(postType)) {
@@ -1773,20 +1782,28 @@ export default function Feed() {
   }, [socialPosts]);
 
   // Handle scrolling to specific post/comment from notification
-  const scrollAttemptedRef = useRef(false);
+  const lastScrolledRef = useRef<string | null>(null);
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   useEffect(() => {
-    if (!highlightPostId || socialPosts.length === 0 || scrollAttemptedRef.current) return;
-    scrollAttemptedRef.current = true;
+    if (!highlightPostId || socialPosts.length === 0) return;
     
-    // Auto-expand comments for the highlighted post
+    const scrollKey = `${highlightPostId}-${highlightCommentId || 'post'}`;
+    if (lastScrolledRef.current === scrollKey) return;
+    lastScrolledRef.current = scrollKey;
+    
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    
+    console.log('🔔 Notification scroll: postId=', highlightPostId, 'commentId=', highlightCommentId);
+    
+    // Auto-expand comments for the highlighted post so CommentsSection mounts and fetches
     setExpandedComments(prev => new Set(prev).add(highlightPostId));
     
-    // Retry scrolling until element is found (comments may take time to load)
     let attempts = 0;
-    const maxAttempts = 25;
+    const maxAttempts = 40;
     
     const highlightElement = (el: HTMLElement, isComment: boolean) => {
+      console.log('🔔 Found element, scrolling to', isComment ? 'comment' : 'post');
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       el.style.transition = 'background-color 0.5s ease-in-out';
       el.style.backgroundColor = isComment ? 'rgba(147, 51, 234, 0.15)' : 'rgba(147, 51, 234, 0.1)';
@@ -1800,32 +1817,52 @@ export default function Feed() {
     const tryScroll = () => {
       attempts++;
       
+      // First scroll to the post element so it's visible
+      const postElement = document.getElementById(`post-${highlightPostId}`);
+      
       if (highlightCommentId) {
         const commentElement = document.getElementById(`comment-${highlightCommentId}`);
         if (commentElement) {
           highlightElement(commentElement, true);
           return;
         }
+        // If post is visible but comment isn't loaded yet, scroll to post first
+        if (postElement && attempts === 1) {
+          postElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        if (attempts <= 5 || attempts % 5 === 0) {
+          console.log(`🔔 Attempt ${attempts}/${maxAttempts}: comment-${highlightCommentId} not found yet`);
+        }
       } else {
-        const postElement = document.getElementById(`post-${highlightPostId}`);
         if (postElement) {
           highlightElement(postElement, false);
           return;
         }
+        if (attempts <= 5 || attempts % 5 === 0) {
+          console.log(`🔔 Attempt ${attempts}/${maxAttempts}: post-${highlightPostId} not found yet`);
+        }
       }
       
       if (attempts < maxAttempts) {
-        setTimeout(tryScroll, 400);
+        scrollTimerRef.current = setTimeout(tryScroll, 500);
+      } else {
+        // Fallback: if comment was never found, at least scroll to the post
+        if (highlightCommentId && postElement) {
+          console.log('🔔 Comment not found, falling back to post scroll');
+          highlightElement(postElement, false);
+        } else {
+          console.log('🔔 Gave up scrolling after', maxAttempts, 'attempts');
+        }
+        window.history.replaceState({}, '', '/activity');
       }
     };
     
-    setTimeout(tryScroll, 600);
+    scrollTimerRef.current = setTimeout(tryScroll, 300);
+    
+    return () => {
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    };
   }, [highlightPostId, highlightCommentId, socialPosts]);
-  
-  // Reset scroll ref when URL params change
-  useEffect(() => {
-    scrollAttemptedRef.current = false;
-  }, [highlightPostId]);
 
   // Fetch Play games for inline play
   const { data: playGames = [] } = useQuery({
