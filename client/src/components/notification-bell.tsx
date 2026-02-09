@@ -147,8 +147,8 @@ export function NotificationBell() {
       case 'post_like':
         if (notification.post_id) {
           const url = notification.comment_id 
-            ? `/post/${notification.post_id}?comment=${notification.comment_id}`
-            : `/post/${notification.post_id}`;
+            ? `/activity?post=${notification.post_id}&comment=${notification.comment_id}`
+            : `/activity?post=${notification.post_id}`;
           setLocation(url);
         } else {
           setLocation('/activity');
@@ -193,7 +193,7 @@ export function NotificationBell() {
 
       default:
         if (notification.post_id) {
-          setLocation(`/post/${notification.post_id}`);
+          setLocation(`/activity?post=${notification.post_id}`);
         } else if (notification.list_id) {
           setLocation(`/list/${notification.list_id}`);
         } else {

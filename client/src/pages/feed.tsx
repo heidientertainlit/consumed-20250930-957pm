@@ -3982,8 +3982,8 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* Social Posts - DISABLED: feed ends at "You're all caught up" message */}
-              {false && (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && filteredPosts.filter((item: any) => {
+              {/* Social Posts */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && filteredPosts.filter((item: any) => {
                 // Filter out incorrectly formatted prediction posts
                 if ('originalPostIds' in item) return true; // Keep consolidated activities
                 if ((item as any).type === 'friend_activity_block') return true; // Keep friend activity blocks
