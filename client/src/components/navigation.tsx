@@ -481,33 +481,12 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-add"
           >
-            <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-              {/* Top-left: Film/Movie camera */}
-              <g transform="translate(3, 3)">
-                <rect x="0" y="2" width="10" height="7" rx="1.2" stroke="white" strokeWidth="1.5" fill="none" />
-                <polygon points="10,3.5 13,1.5 13,9.5 10,7.5" stroke="white" strokeWidth="1.2" fill="none" strokeLinejoin="round" />
-              </g>
-              {/* Top-right: Headphones/Music */}
-              <g transform="translate(24, 2)">
-                <path d="M2,9 L2,7 C2,3.5 4.5,1 7,1 C9.5,1 12,3.5 12,7 L12,9" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                <rect x="0" y="8" width="3" height="4" rx="1" stroke="white" strokeWidth="1.2" fill="none" />
-                <rect x="11" y="8" width="3" height="4" rx="1" stroke="white" strokeWidth="1.2" fill="none" />
-              </g>
-              {/* Bottom-left: Book */}
-              <g transform="translate(3, 24)">
-                <path d="M1,1 L1,11 C1,11 4,10 7,11 L7,1 C7,1 4,0 1,1 Z" stroke="white" strokeWidth="1.3" fill="none" strokeLinejoin="round" />
-                <path d="M7,1 C7,1 10,0 13,1 L13,11 C13,11 10,10 7,11" stroke="white" strokeWidth="1.3" fill="none" strokeLinejoin="round" />
-              </g>
-              {/* Bottom-right: Game controller */}
-              <g transform="translate(23, 26)">
-                <path d="M1,5 C1,2.5 3,1 5.5,1 L8.5,1 C11,1 13,2.5 13,5 C13,7 12,9 10,9 L9,7 L5,7 L4,9 C2,9 1,7 1,5 Z" stroke="white" strokeWidth="1.3" fill="none" strokeLinejoin="round" />
-                <line x1="4" y1="4" x2="4" y2="6" stroke="white" strokeWidth="1" strokeLinecap="round" />
-                <line x1="3" y1="5" x2="5" y2="5" stroke="white" strokeWidth="1" strokeLinecap="round" />
-                <circle cx="10" cy="4.5" r="0.6" fill="white" />
-              </g>
-              {/* Center: Plus */}
-              <rect x="17.5" y="13" width="3" height="12" rx="1.5" fill="white" />
-              <rect x="13" y="17.5" width="12" height="3" rx="1.5" fill="white" />
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              {/* Bookmark shape */}
+              <path d="M5,3 C5,1.9 5.9,1 7,1 L19,1 C20.1,1 21,1.9 21,3 L21,25 L14,20 L7,25 L7,14" stroke="white" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              {/* Plus icon top-right */}
+              <line x1="22" y1="4" x2="22" y2="10" stroke="white" strokeWidth="2" strokeLinecap="round" />
+              <line x1="19" y1="7" x2="25" y2="7" stroke="white" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </Link>
 
