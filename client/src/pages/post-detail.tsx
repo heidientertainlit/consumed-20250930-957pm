@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearch, useParams } from "wouter";
-import { ArrowLeft, Heart, MessageCircle, Star, Trash2, Share } from "lucide-react";
+import { ArrowLeft, Heart, MessageCircle, Star, Trash2, Share, Film, Music, BookOpen, Tv, Gamepad2 } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -23,6 +23,7 @@ interface MediaItem {
   externalId?: string;
   externalSource?: string;
   rating?: number;
+  creator?: string;
 }
 
 interface SocialPost {
@@ -37,6 +38,31 @@ interface SocialPost {
   mediaItems?: MediaItem[];
   listData?: any;
   rankData?: any;
+}
+
+function getMediaIcon(mediaType?: string) {
+  switch (mediaType?.toLowerCase()) {
+    case 'movie':
+    case 'movies':
+      return <Film size={20} className="text-purple-300" />;
+    case 'music':
+    case 'album':
+    case 'track':
+    case 'podcast':
+      return <Music size={20} className="text-purple-300" />;
+    case 'book':
+    case 'books':
+      return <BookOpen size={20} className="text-purple-300" />;
+    case 'tv':
+    case 'tv show':
+    case 'series':
+      return <Tv size={20} className="text-purple-300" />;
+    case 'game':
+    case 'games':
+      return <Gamepad2 size={20} className="text-purple-300" />;
+    default:
+      return <Film size={20} className="text-purple-300" />;
+  }
 }
 
 export default function PostDetail() {
@@ -257,14 +283,20 @@ export default function PostDetail() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  const hasValidImage = (url?: string) => url && url !== '' && url.startsWith('http');
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-lg mx-auto px-4 py-4">
-          <button onClick={() => window.history.back()} className="mb-4 flex items-center gap-2 text-gray-600 hover:text-gray-900">
-            <ArrowLeft size={20} />
-            <span className="text-sm font-medium">Back</span>
-          </button>
+      <div className="min-h-screen bg-gray-50 pb-24">
+        <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-gray-50 pb-6">
+          <div className="max-w-lg mx-auto px-4 pt-4">
+            <button onClick={() => window.history.back()} className="mb-4 flex items-center gap-2 text-gray-300 hover:text-white">
+              <ArrowLeft size={20} />
+              <span className="text-sm font-medium">Back</span>
+            </button>
+          </div>
+        </div>
+        <div className="max-w-lg mx-auto px-4 -mt-2">
           <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-pulse shadow-sm">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-gray-200" />
@@ -283,14 +315,24 @@ export default function PostDetail() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-lg mx-auto px-4 py-4">
-          <button onClick={() => window.history.back()} className="mb-4 flex items-center gap-2 text-gray-600 hover:text-gray-900">
-            <ArrowLeft size={20} />
-            <span className="text-sm font-medium">Back</span>
-          </button>
+      <div className="min-h-screen bg-gray-50 pb-24">
+        <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-gray-50 pb-6">
+          <div className="max-w-lg mx-auto px-4 pt-4">
+            <button onClick={() => window.history.back()} className="mb-4 flex items-center gap-2 text-gray-300 hover:text-white">
+              <ArrowLeft size={20} />
+              <span className="text-sm font-medium">Back</span>
+            </button>
+          </div>
+        </div>
+        <div className="max-w-lg mx-auto px-4 -mt-2">
           <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm">
             <p className="text-gray-500">Post not found</p>
+            <button
+              onClick={() => setLocation('/')}
+              className="mt-4 text-sm text-purple-600 hover:text-purple-700 font-medium"
+            >
+              Go to Feed
+            </button>
           </div>
         </div>
       </div>
@@ -300,19 +342,23 @@ export default function PostDetail() {
   const mediaItem = post.mediaItems?.[0];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-lg mx-auto px-4 py-4">
-        <button onClick={() => window.history.back()} className="mb-4 flex items-center gap-2 text-gray-600 hover:text-gray-900">
-          <ArrowLeft size={20} />
-          <span className="text-sm font-medium">Back</span>
-        </button>
+    <div className="min-h-screen bg-gray-50 pb-24">
+      <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-gray-50 pb-6">
+        <div className="max-w-lg mx-auto px-4 pt-4">
+          <button onClick={() => window.history.back()} className="flex items-center gap-2 text-gray-300 hover:text-white">
+            <ArrowLeft size={20} />
+            <span className="text-sm font-medium">Back to Feed</span>
+          </button>
+        </div>
+      </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden" id={`post-${post.id}`}>
+      <div className="max-w-lg mx-auto px-4 -mt-2">
+        <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden" id={`post-${post.id}`}>
           <div className="p-4">
             {post.user && (
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-start gap-3 mb-3">
                 <Link href={`/user/${post.user.id}`}>
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer flex-shrink-0">
                     {post.user.avatar ? (
                       <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                     ) : (
@@ -320,43 +366,67 @@ export default function PostDetail() {
                     )}
                   </div>
                 </Link>
-                <div className="flex-1">
-                  <Link href={`/user/${post.user.id}`}>
-                    <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">
-                      @{post.user.username}
-                    </span>
-                  </Link>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Link href={`/user/${post.user.id}`}>
+                      <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">
+                        @{post.user.username}
+                      </span>
+                    </Link>
+                  </div>
                   <p className="text-xs text-gray-400">{post.timestamp ? formatDate(post.timestamp) : ''}</p>
                 </div>
               </div>
             )}
 
             {mediaItem && (
-              <div className="flex gap-3 mb-3">
-                {mediaItem.imageUrl && (
+              <div className="bg-white rounded-lg p-3 mb-3 border border-gray-100">
+                <div className="flex gap-3">
                   <Link href={`/media/${mediaItem.mediaType?.toLowerCase() || 'movie'}/${mediaItem.externalSource || 'tmdb'}/${mediaItem.externalId}`}>
-                    <img
-                      src={mediaItem.imageUrl}
-                      alt={mediaItem.title}
-                      className="w-16 h-24 rounded-lg object-cover flex-shrink-0 cursor-pointer hover:opacity-90"
-                    />
-                  </Link>
-                )}
-                <div className="flex-1 min-w-0">
-                  <Link href={`/media/${mediaItem.mediaType?.toLowerCase() || 'movie'}/${mediaItem.externalSource || 'tmdb'}/${mediaItem.externalId}`}>
-                    <p className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer truncate">{mediaItem.title}</p>
-                  </Link>
-                  {post.rating && post.rating > 0 && (
-                    <div className="flex items-center gap-0.5 mt-1">
-                      {[1, 2, 3, 4, 5].map(s => (
-                        <Star
-                          key={s}
-                          size={14}
-                          className={s <= post.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}
+                    <div className="cursor-pointer flex-shrink-0">
+                      {hasValidImage(mediaItem.imageUrl) ? (
+                        <img
+                          src={mediaItem.imageUrl}
+                          alt={mediaItem.title}
+                          className="w-16 h-20 rounded-lg object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const fallback = target.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
                         />
-                      ))}
+                      ) : null}
+                      <div
+                        className="w-16 h-20 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 items-center justify-center"
+                        style={{ display: hasValidImage(mediaItem.imageUrl) ? 'none' : 'flex' }}
+                      >
+                        {getMediaIcon(mediaItem.mediaType)}
+                      </div>
                     </div>
-                  )}
+                  </Link>
+                  <div className="flex-1 min-w-0">
+                    <Link href={`/media/${mediaItem.mediaType?.toLowerCase() || 'movie'}/${mediaItem.externalSource || 'tmdb'}/${mediaItem.externalId}`}>
+                      <h3 className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{mediaItem.title}</h3>
+                    </Link>
+                    {mediaItem.creator && (
+                      <p className="text-xs text-gray-600 mb-0.5">by {mediaItem.creator}</p>
+                    )}
+                    {mediaItem.mediaType && (
+                      <p className="text-xs text-gray-500 capitalize mb-1">{mediaItem.mediaType}</p>
+                    )}
+                    {post.rating && post.rating > 0 && (
+                      <div className="flex items-center gap-0.5 mt-1">
+                        {[1, 2, 3, 4, 5].map(s => (
+                          <Star
+                            key={s}
+                            size={14}
+                            className={s <= post.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
