@@ -257,6 +257,10 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
   
   const dynamicData = fetchedData[currentPost?.id || ''];
   
+  if (mediaItem) {
+    console.log('📖 CARD RENDER:', { title: mediaItem.title, creator: mediaItem.creator, imageUrl: mediaItem.imageUrl?.substring(0, 50), externalSource: mediaItem.externalSource, dynamicCreator: dynamicData?.creator });
+  }
+  
   const originalImageValid = mediaItem?.imageUrl && mediaItem.imageUrl.startsWith('http');
   const originalCreatorValid = mediaItem?.creator && !mediaItem.creator.includes('Unknown') && mediaItem.creator.length > 0;
   
