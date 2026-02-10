@@ -47,7 +47,7 @@ export default function SeenItGame() {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [responses, setResponses] = useState<Record<string, boolean | null>>({});
+  const [responses, setResponses] = useState<Record<string, boolean | 'want_to' | null>>({});
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const { friendsData, isLoadingFriends } = useFriendsManagement();
@@ -146,8 +146,10 @@ export default function SeenItGame() {
   }, [existingResponses, sets]);
 
   const responseMutation = useMutation({
-    mutationFn: async ({ setId, itemId, seen, item }: { setId: string; itemId: string; seen: boolean; item: SeenItItem }) => {
+    mutationFn: async ({ setId, itemId, response, item }: { setId: string; itemId: string; response: boolean | 'want_to'; item: SeenItItem }) => {
       if (!user?.id) throw new Error('Must be logged in');
+      
+      const seenValue = response === true;
       
       const { data: existing } = await supabase
         .from('seen_it_responses')
@@ -159,53 +161,68 @@ export default function SeenItGame() {
       if (existing) {
         await supabase
           .from('seen_it_responses')
-          .update({ seen })
+          .update({ seen: seenValue })
           .eq('id', existing.id);
       } else {
         await supabase.from('seen_it_responses').insert({
           set_id: setId,
           item_id: itemId,
           user_id: user.id,
-          seen
+          seen: seenValue
         });
       }
       
-      // If user marked as "seen", add to their watch history (Finished list)
-      if (seen && item.external_id && item.external_source) {
+      if (item.external_id && item.external_source) {
         try {
           const { data: { session } } = await supabase.auth.getSession();
-          await supabase.functions.invoke('track-media', {
-            body: {
-              media: {
-                title: item.title,
-                mediaType: item.media_type || 'movie',
-                imageUrl: item.image_url,
-                externalId: item.external_id,
-                externalSource: item.external_source
-              },
-              listType: 'finished',
-              skip_social_post: true
-            }
-          });
+          if (response === true) {
+            await supabase.functions.invoke('track-media', {
+              body: {
+                media: {
+                  title: item.title,
+                  mediaType: item.media_type || 'movie',
+                  imageUrl: item.image_url,
+                  externalId: item.external_id,
+                  externalSource: item.external_source
+                },
+                listType: 'finished',
+                skip_social_post: true
+              }
+            });
+          } else if (response === 'want_to') {
+            await supabase.functions.invoke('track-media', {
+              body: {
+                media: {
+                  title: item.title,
+                  mediaType: item.media_type || 'movie',
+                  imageUrl: item.image_url,
+                  externalId: item.external_id,
+                  externalSource: item.external_source
+                },
+                listType: 'want_to',
+                skip_social_post: true
+              }
+            });
+          }
         } catch (err) {
-          console.error('Failed to add to watch history:', err);
+          console.error('Failed to add to list:', err);
         }
       }
       
-      return { itemId, seen };
+      return { itemId, response };
     },
-    onSuccess: ({ itemId, seen }) => {
-      trackEvent('seen_it_response', { item_id: itemId, seen });
-      if (seen) {
+    onSuccess: ({ itemId, response }) => {
+      trackEvent('seen_it_response', { item_id: itemId, response: String(response) });
+      if (response === true || response === 'want_to') {
         queryClient.invalidateQueries({ queryKey: ['/api/list-items'] });
       }
     }
   });
 
-  const handleResponse = (setId: string, item: SeenItItem, seen: boolean) => {
-    setResponses(prev => ({ ...prev, [item.id]: seen }));
+  const handleResponse = (setId: string, item: SeenItItem, response: boolean | 'want_to') => {
+    setResponses(prev => ({ ...prev, [item.id]: response }));
     if (session) {
-      responseMutation.mutate({ setId, itemId: item.id, seen, item });
+      responseMutation.mutate({ setId, itemId: item.id, response, item });
     }
   };
 
@@ -263,6 +280,7 @@ export default function SeenItGame() {
   }
 
   const seenCount = currentSet.items.filter(item => responses[item.id] === true).length;
+  const wantToCount = currentSet.items.filter(item => responses[item.id] === 'want_to').length;
   const answeredCount = currentSet.items.filter(item => responses[item.id] !== null && responses[item.id] !== undefined).length;
   const isComplete = answeredCount === currentSet.items.length;
   
@@ -334,22 +352,28 @@ export default function SeenItGame() {
                 <div className="flex gap-1 mt-2">
                   <button
                     onClick={() => handleResponse(currentSet.id, item, false)}
-                    className="flex-1 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-medium hover:bg-white/20 active:scale-95 transition-all"
+                    className="py-1.5 px-2 rounded-full bg-white/10 border border-white/20 text-white/80 text-[10px] font-medium hover:bg-white/20 active:scale-95 transition-all"
                   >
                     Nope
                   </button>
                   <button
+                    onClick={() => handleResponse(currentSet.id, item, 'want_to')}
+                    className="flex-1 py-1.5 px-1 rounded-full bg-white/10 border border-amber-400/40 text-amber-300 text-[10px] font-medium hover:bg-amber-500/20 active:scale-95 transition-all"
+                  >
+                    Want to
+                  </button>
+                  <button
                     onClick={() => handleResponse(currentSet.id, item, true)}
-                    className="flex-1 py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all"
+                    className="py-1.5 px-2 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-[10px] font-medium hover:opacity-90 active:scale-95 transition-all"
                   >
                     {mediaConfig.actionYes}
                   </button>
                 </div>
               ) : (
-                <div className={`mt-2 py-1.5 rounded-full text-center text-xs font-medium ${
-                  response ? 'bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white' : 'bg-white/10 text-white/60'
+                <div className={`mt-2 py-1.5 rounded-full text-center text-[10px] font-medium ${
+                  response === true ? 'bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white' : response === 'want_to' ? 'bg-amber-500/20 border border-amber-400/40 text-amber-300' : 'bg-white/10 text-white/60'
                 }`}>
-                  {response ? `✓ ${mediaConfig.actionDone}` : '✗ Nope'}
+                  {response === true ? `✓ ${mediaConfig.actionDone}` : response === 'want_to' ? '+ Want to' : '✗ Nope'}
                 </div>
               )}
             </div>
@@ -368,7 +392,12 @@ export default function SeenItGame() {
               <span className="text-purple-200 text-[10px] text-center">
                 {mediaConfig.actionDone}
               </span>
-              <div className="flex items-center gap-1 mt-2">
+              {wantToCount > 0 && (
+                <span className="text-amber-300 text-[9px] mt-1">
+                  +{wantToCount} on watchlist
+                </span>
+              )}
+              <div className="flex items-center gap-1 mt-1">
                 <Sparkles className="w-3 h-3 text-yellow-400" />
                 <span className="text-yellow-300 text-[9px]">+ Added to DNA</span>
               </div>
