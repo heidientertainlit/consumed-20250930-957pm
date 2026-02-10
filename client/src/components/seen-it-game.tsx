@@ -52,7 +52,24 @@ export default function SeenItGame() {
   const [showChallengeModal, setShowChallengeModal] = useState(false);
   const { friendsData, isLoadingFriends } = useFriendsManagement();
 
-  const { data: sets, isLoading } = useQuery({
+  const { data: trendingSets, isLoading: isLoadingTrending } = useQuery({
+    queryKey: ['trending-sets'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('trending-sets', {
+          body: {},
+        });
+        if (error) return [];
+        return (data?.sets || []) as SeenItSet[];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 60,
+    gcTime: 1000 * 60 * 60 * 2,
+  });
+
+  const { data: staticSets, isLoading: isLoadingStatic } = useQuery({
     queryKey: ['seen-it-sets'],
     queryFn: async () => {
       const { data: setsData, error } = await supabase
@@ -83,6 +100,9 @@ export default function SeenItGame() {
       return setsWithItems;
     }
   });
+
+  const sets = [...(trendingSets || []), ...(staticSets || [])];
+  const isLoading = sets.length === 0 && (isLoadingTrending || isLoadingStatic);
 
   const { data: existingResponses } = useQuery({
     queryKey: ['seen-it-responses', user?.id],
