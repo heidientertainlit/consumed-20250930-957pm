@@ -199,7 +199,7 @@ export default function SeenItGame() {
                   externalId: item.external_id,
                   externalSource: item.external_source
                 },
-                listType: 'want_to',
+                listType: 'queue',
                 skip_social_post: true
               }
             });
@@ -353,27 +353,27 @@ export default function SeenItGame() {
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleResponse(currentSet.id, item, false)}
-                      className="flex-1 py-1.5 rounded-full bg-white/10 border border-white/20 text-white/80 text-xs font-medium hover:bg-white/20 active:scale-95 transition-all"
+                      className="flex-1 py-1.5 rounded-full bg-black/60 border border-white/15 text-white text-xs font-medium hover:bg-black/80 active:scale-95 transition-all"
                     >
                       Nope
                     </button>
                     <button
                       onClick={() => handleResponse(currentSet.id, item, true)}
-                      className="flex-1 py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all"
+                      className="flex-1 py-1.5 rounded-full bg-black/60 border border-white/15 text-white text-xs font-medium hover:bg-black/80 active:scale-95 transition-all"
                     >
                       {mediaConfig.actionYes}
                     </button>
                   </div>
                   <button
                     onClick={() => handleResponse(currentSet.id, item, 'want_to')}
-                    className="w-full py-1 rounded-full bg-white/5 border border-amber-400/30 text-amber-300 text-[10px] font-medium hover:bg-amber-500/15 active:scale-95 transition-all"
+                    className="w-full py-1 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-[10px] font-medium hover:opacity-90 active:scale-95 transition-all"
                   >
                     Want to
                   </button>
                 </div>
               ) : (
                 <div className={`mt-2 py-1.5 rounded-full text-center text-xs font-medium ${
-                  response === true ? 'bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white' : response === 'want_to' ? 'bg-amber-500/20 border border-amber-400/30 text-amber-300' : 'bg-white/10 text-white/60'
+                  response === true ? 'bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white' : response === 'want_to' ? 'bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white' : 'bg-black/60 border border-white/15 text-white/60'
                 }`}>
                   {response === true ? `✓ ${mediaConfig.actionDone}` : response === 'want_to' ? '+ Want to' : '✗ Nope'}
                 </div>
@@ -395,7 +395,7 @@ export default function SeenItGame() {
                 {mediaConfig.actionDone}
               </span>
               {wantToCount > 0 && (
-                <span className="text-amber-300 text-[9px] mt-1">
+                <span className="text-purple-200 text-[9px] mt-1">
                   +{wantToCount} on watchlist
                 </span>
               )}
