@@ -118,27 +118,50 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
   const { data: existingResponses } = useQuery({
     queryKey: ['seen-it-responses', user?.id],
     queryFn: async () => {
-      if (!user?.id) return {};
+      if (!user?.id) return { responseMap: {}, trackedExternalIds: {} };
       const responseMap: Record<string, boolean> = {};
 
-      const { data } = await supabase
-        .from('seen_it_responses')
-        .select('item_id, seen')
-        .eq('user_id', user.id);
-      (data || []).forEach(r => {
-        responseMap[r.item_id] = r.seen;
-      });
+      try {
+        const { data } = await supabase
+          .from('seen_it_responses')
+          .select('item_id, seen')
+          .eq('user_id', user.id);
+        (data || []).forEach(r => {
+          responseMap[r.item_id] = r.seen;
+        });
+      } catch (e) {
+        console.warn('seen_it_responses query failed:', e);
+      }
 
-      const { data: listItems } = await supabase
-        .from('list_items')
-        .select('external_id, list_id, lists!inner(slug)')
-        .eq('user_id', user.id);
       const trackedExternalIds: Record<string, string> = {};
-      (listItems || []).forEach((item: any) => {
-        const slug = item.lists?.slug;
-        if (slug === 'finished') trackedExternalIds[item.external_id] = 'finished';
-        else if (slug === 'queue' && !trackedExternalIds[item.external_id]) trackedExternalIds[item.external_id] = 'queue';
-      });
+      try {
+        const { data: userLists } = await supabase
+          .from('lists')
+          .select('id, title')
+          .eq('user_id', user.id);
+
+        const finishedListIds = (userLists || []).filter(l => l.title === 'Finished').map(l => l.id);
+        const queueListIds = (userLists || []).filter(l => l.title === 'Want To').map(l => l.id);
+        const allListIds = [...finishedListIds, ...queueListIds];
+
+        if (allListIds.length > 0) {
+          const { data: listItems } = await supabase
+            .from('list_items')
+            .select('external_id, list_id')
+            .eq('user_id', user.id)
+            .in('list_id', allListIds);
+
+          (listItems || []).forEach((item: any) => {
+            if (finishedListIds.includes(item.list_id)) {
+              trackedExternalIds[item.external_id] = 'finished';
+            } else if (queueListIds.includes(item.list_id) && !trackedExternalIds[item.external_id]) {
+              trackedExternalIds[item.external_id] = 'queue';
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('list_items query failed:', e);
+      }
 
       return { responseMap, trackedExternalIds };
     },
