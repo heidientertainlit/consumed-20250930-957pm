@@ -187,11 +187,31 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 }
               }
             } else {
-              // For non-Spotify, find first result with valid creator
-              const creatorResult = results.find((r: any) => 
-                r.creator && !r.creator.includes('Unknown')
+              const mediaType = media.externalSource === 'open_library' ? 'book' : 
+                                media.externalSource === 'tmdb' ? (media.mediaType || 'movie') :
+                                media.externalSource === 'youtube' ? 'video' : null;
+              const normalizedTitle = media.title.toLowerCase().trim();
+              
+              const titleMatch = results.find((r: any) => 
+                r.creator && !r.creator.includes('Unknown') &&
+                r.title?.toLowerCase().trim() === normalizedTitle
               );
-              creatorName = creatorResult?.creator;
+              if (titleMatch) {
+                creatorName = titleMatch.creator;
+              } else if (mediaType) {
+                const typeMatch = results.find((r: any) => 
+                  r.creator && !r.creator.includes('Unknown') &&
+                  r.type === mediaType
+                );
+                creatorName = typeMatch?.creator;
+              }
+              if (!creatorName) {
+                const closeMatch = results.find((r: any) => 
+                  r.creator && !r.creator.includes('Unknown') &&
+                  r.title?.toLowerCase().includes(normalizedTitle.split(':')[0].trim())
+                );
+                creatorName = closeMatch?.creator;
+              }
             }
             
             if (imageUrl || creatorName) {
