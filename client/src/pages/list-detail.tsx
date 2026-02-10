@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical, LayoutGrid, List, Search, Film, Tv, BookOpen, Music, ChevronRight, Star, GripVertical, Download } from "lucide-react";
+import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical, LayoutGrid, List, Search, Film, Tv, BookOpen, Music, ChevronRight, Star, GripVertical, Download, ArrowRightLeft } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useLocation, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { copyLink } from "@/lib/share";
 import { supabase } from "@/lib/supabase";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import UserSearch from "@/components/user-search";
@@ -23,10 +24,11 @@ import { CSS } from "@dnd-kit/utilities";
 interface SortableListItemProps {
   item: any;
   onRemove: (id: string) => void;
+  onMove?: (item: any) => void;
   isOwner: boolean;
 }
 
-function SortableListItem({ item, onRemove, isOwner }: SortableListItemProps) {
+function SortableListItem({ item, onRemove, onMove, isOwner }: SortableListItemProps) {
   const {
     attributes,
     listeners,
@@ -94,15 +96,28 @@ function SortableListItem({ item, onRemove, isOwner }: SortableListItemProps) {
         </div>
       )}
       {isOwner && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onRemove(item.id)}
-          className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 h-auto"
-          data-testid={`button-remove-${item.id}`}
-        >
-          <Trash2 size={16} />
-        </Button>
+        <div className="flex items-center gap-0.5">
+          {onMove && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onMove(item)}
+              className="text-gray-400 hover:text-purple-600 hover:bg-purple-50 p-1.5 h-auto"
+              data-testid={`button-move-${item.id}`}
+            >
+              <ArrowRightLeft size={16} />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onRemove(item.id)}
+            className="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 h-auto"
+            data-testid={`button-remove-${item.id}`}
+          >
+            <Trash2 size={16} />
+          </Button>
+        </div>
       )}
     </div>
   );
@@ -113,6 +128,7 @@ export default function ListDetail() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isCollaboratorsDialogOpen, setIsCollaboratorsDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [moveItem, setMoveItem] = useState<any>(null);
   
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -586,6 +602,30 @@ export default function ListDetail() {
   const handleRemoveItem = (itemId: string) => {
     deleteMutation.mutate(itemId);
   };
+
+  const allUserLists = userListsData?.lists || [];
+
+  const moveMutation = useMutation({
+    mutationFn: async ({ itemId, targetListId }: { itemId: string; targetListId: number }) => {
+      const { error } = await supabase
+        .from('list_items')
+        .update({ list_id: targetListId })
+        .eq('id', itemId);
+
+      if (error) throw new Error(error.message);
+      return { itemId, targetListId };
+    },
+    onSuccess: (_, variables) => {
+      const targetList = allUserLists.find((l: any) => l.id === variables.targetListId);
+      const targetName = targetList ? getDisplayTitle(targetList.title) : 'list';
+      toast({ title: `Moved to ${targetName}` });
+      setMoveItem(null);
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+    },
+    onError: (error) => {
+      toast({ title: 'Failed to move item', description: error.message, variant: 'destructive' });
+    },
+  });
 
   // Privacy toggle mutation - Direct Supabase update (no edge function)
   const privacyMutation = useMutation({
@@ -1108,6 +1148,7 @@ export default function ListDetail() {
                       key={item.id}
                       item={item}
                       onRemove={handleRemoveItem}
+                      onMove={!sharedUserId ? (item) => setMoveItem(item) : undefined}
                       isOwner={!sharedUserId}
                     />
                   ))}
@@ -1286,6 +1327,46 @@ export default function ListDetail() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Drawer open={!!moveItem} onOpenChange={(open) => !open && setMoveItem(null)}>
+        <DrawerContent className="bg-white rounded-t-2xl">
+          <DrawerHeader className="text-center pb-2 border-b border-gray-100">
+            <DrawerTitle className="text-lg font-semibold text-gray-900">
+              Move "{moveItem?.title}"
+            </DrawerTitle>
+            <p className="text-sm text-gray-500 mt-1">Choose a list</p>
+          </DrawerHeader>
+          <div className="px-4 py-3 space-y-1.5 max-h-[60vh] overflow-y-auto">
+            {allUserLists
+              .filter((l: any) => l.id !== sharedListData?.id)
+              .map((targetList: any) => (
+                <button
+                  key={targetList.id}
+                  onClick={() => moveItem && moveMutation.mutate({ itemId: moveItem.id, targetListId: targetList.id })}
+                  disabled={moveMutation.isPending}
+                  className="w-full flex items-center justify-between p-3.5 rounded-xl bg-gray-50 hover:bg-purple-50 hover:border-purple-200 border border-gray-200 transition-colors text-left"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">{getDisplayTitle(targetList.title)}</p>
+                    <p className="text-xs text-gray-500">{targetList.items?.length || 0} items</p>
+                  </div>
+                  <ChevronRight size={16} className="text-gray-400" />
+                </button>
+              ))}
+            {allUserLists.filter((l: any) => l.id !== sharedListData?.id).length === 0 && (
+              <p className="text-center text-sm text-gray-500 py-6">No other lists available</p>
+            )}
+          </div>
+          <div className="px-4 pb-6 pt-2">
+            <button
+              onClick={() => setMoveItem(null)}
+              className="w-full py-3 text-gray-400 text-sm hover:text-gray-600 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
 
     </div>
   );
