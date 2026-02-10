@@ -122,14 +122,7 @@ export function JustTrackedSheet({
   const [identityAnswer, setIdentityAnswer] = useState<string | null>(null);
   const [isSavingAnswer, setIsSavingAnswer] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      setPhase('identity');
-      setIdentityAnswer(null);
-    }
-  }, [isOpen]);
-
-  const { data: tasteStats } = useQuery({
+  const { data: tasteStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['taste-stats', user?.id, media?.mediaType],
     queryFn: async () => {
       if (!user?.id) return { typeStats: [], creatorCount: 0 };
@@ -159,9 +152,22 @@ export function JustTrackedSheet({
     staleTime: 30000,
   });
 
-  if (!media) return null;
+  const insight = tasteStats && media ? generateInsight(media, tasteStats.typeStats, tasteStats.creatorCount) : null;
 
-  const insight = tasteStats ? generateInsight(media, tasteStats.typeStats, tasteStats.creatorCount) : null;
+  useEffect(() => {
+    if (isOpen) {
+      setPhase('identity');
+      setIdentityAnswer(null);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (phase === 'identity' && tasteStats && !isLoadingStats && !insight) {
+      setPhase('actions');
+    }
+  }, [phase, tasteStats, isLoadingStats, insight]);
+
+  if (!media) return null;
 
   const getMediaVerb = (type?: string) => {
     switch (type?.toLowerCase()) {
@@ -260,7 +266,12 @@ export function JustTrackedSheet({
           </p>
         </DrawerHeader>
         
-        {phase === 'identity' && insight ? (
+        {phase === 'identity' && (isLoadingStats || !tasteStats) ? (
+          <div className="px-4 py-8 flex flex-col items-center justify-center">
+            <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mb-3" />
+            <p className="text-sm text-gray-400">Analyzing your taste...</p>
+          </div>
+        ) : phase === 'identity' && insight ? (
           <div className="px-4 py-5">
             <div className="text-center mb-5">
               <div className="flex items-center justify-center gap-1.5 mb-3">
