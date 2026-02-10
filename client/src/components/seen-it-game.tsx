@@ -63,6 +63,37 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
   });
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
 
+  const { data: supabaseCompletedSets } = useQuery({
+    queryKey: ['seen-it-completions', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      try {
+        const { data, error } = await supabase
+          .from('seen_it_completions')
+          .select('set_id')
+          .eq('user_id', user.id);
+        if (error) {
+          console.warn('seen_it_completions query failed:', error);
+          return [];
+        }
+        const ids = (data || []).map((r: any) => r.set_id);
+        console.log('🎯 Supabase completed sets:', ids);
+        if (ids.length > 0) {
+          setCompletedSetIds(prev => {
+            const next = new Set(prev);
+            ids.forEach((id: string) => next.add(id));
+            try { localStorage.setItem('seen_it_completed_sets', JSON.stringify([...next])); } catch {}
+            return next;
+          });
+        }
+        return ids;
+      } catch (e) {
+        console.warn('seen_it_completions query error:', e);
+        return [];
+      }
+    },
+    enabled: !!user?.id
+  });
 
   const { data: trendingSets, isLoading: isLoadingTrending } = useQuery({
     queryKey: ['trending-sets'],
@@ -211,11 +242,12 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
   }, [existingResponses, sets, localResponses]);
 
   const incompleteSets = useMemo(() => {
-    return sets.filter(set => {
+    const result = sets.filter(set => {
       if (completedSetIds.has(set.id)) return false;
       const answeredCount = set.items.filter(item => responses[item.id] !== undefined).length;
       return answeredCount < set.items.length;
     });
+    return result;
   }, [sets, responses, completedSetIds]);
 
   useEffect(() => {
@@ -223,15 +255,30 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
       if (completedSetIds.has(set.id)) return;
       const answeredCount = set.items.filter(item => responses[item.id] !== undefined).length;
       if (answeredCount >= set.items.length && set.items.length > 0) {
+        const seenCount = set.items.filter(item => responses[item.id] === true).length;
         setCompletedSetIds(prev => {
           const next = new Set(prev);
           next.add(set.id);
           try { localStorage.setItem('seen_it_completed_sets', JSON.stringify([...next])); } catch {}
           return next;
         });
+        if (user?.id) {
+          supabase.from('seen_it_completions').upsert({
+            id: `${user.id}-${set.id}`,
+            set_id: set.id,
+            user_id: user.id,
+            seen_count: seenCount,
+            total_count: set.items.length,
+            percentage: Math.round((seenCount / set.items.length) * 100),
+            completed_at: new Date().toISOString()
+          }, { onConflict: 'id' }).then(({ error }) => {
+            if (error) console.warn('Failed to save completion to Supabase:', error);
+            else console.log('🎯 Saved completion to Supabase:', set.id);
+          });
+        }
       }
     });
-  }, [responses, sets, completedSetIds]);
+  }, [responses, sets, completedSetIds, user?.id]);
 
   useEffect(() => {
     if (currentSetIndex >= incompleteSets.length && incompleteSets.length > 0) {
@@ -327,6 +374,32 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
     }
   };
 
+  const markSetDone = (setId: string) => {
+    setCompletedSetIds(prev => {
+      const next = new Set(prev);
+      next.add(setId);
+      try { localStorage.setItem('seen_it_completed_sets', JSON.stringify([...next])); } catch {}
+      return next;
+    });
+    if (user?.id) {
+      supabase.from('seen_it_completions').upsert({
+        id: `${user.id}-${setId}`,
+        set_id: setId,
+        user_id: user.id,
+        seen_count: 0,
+        total_count: 0,
+        percentage: 0,
+        completed_at: new Date().toISOString()
+      }, { onConflict: 'id' }).then(({ error }) => {
+        if (error) console.warn('Failed to save dismissal:', error);
+        else {
+          console.log('🎯 Dismissed set saved to Supabase:', setId);
+          queryClient.invalidateQueries({ queryKey: ['seen-it-completions'] });
+        }
+      });
+    }
+  };
+
   const currentSet = incompleteSets?.[currentSetIndex];
 
   if (isLoading && !mediaTypeFilter) {
@@ -363,6 +436,13 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
           {answeredCount > 0 && (
             <span className="text-purple-300 text-xs">{seenCount}/{answeredCount}</span>
           )}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); markSetDone(currentSet.id); }}
+            className="text-purple-400 hover:text-white text-xs px-2 py-0.5 rounded-full border border-purple-500/30 hover:border-purple-400/50 transition-all active:scale-95 touch-manipulation"
+          >
+            Done
+          </button>
           <ChevronRight className="w-4 h-4 text-purple-400" />
         </div>
       </div>
@@ -471,14 +551,14 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
                 {incompleteSets.length > 1 && currentSetIndex < incompleteSets.length - 1 ? (
                   <button
                     type="button"
-                    onClick={() => setCurrentSetIndex(prev => prev + 1)}
+                    onClick={() => { markSetDone(currentSet.id); setCurrentSetIndex(prev => Math.min(prev, incompleteSets.length - 2)); }}
                     className="w-full py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all"
                   >
                     Next Set →
                   </button>
                 ) : (
                   <Link href="/profile">
-                    <button type="button" className="w-full py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all">
+                    <button type="button" onClick={() => markSetDone(currentSet.id)} className="w-full py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all">
                       View DNA
                     </button>
                   </Link>
