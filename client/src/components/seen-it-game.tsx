@@ -384,34 +384,17 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
         
         {isComplete && (() => {
           const pct = Math.round((seenCount / currentSet.items.length) * 100);
-          const getDnaInsight = () => {
-            const type = currentSet.media_type;
-            if (type === 'book') {
-              if (pct >= 75) return { label: 'Bookworm', desc: 'You stay on top of what\'s trending' };
-              if (pct >= 40) return { label: 'Selective Reader', desc: 'You pick your reads carefully' };
-              return { label: 'TBR Builder', desc: 'So many books, so little time' };
-            }
-            if (type === 'music' || type === 'podcast') {
-              if (pct >= 75) return { label: 'Tastemaker', desc: 'You\'re always in the know' };
-              if (pct >= 40) return { label: 'Curious Ear', desc: 'You explore beyond the mainstream' };
-              return { label: 'Discovery Mode', desc: 'Your playlist is about to grow' };
-            }
-            if (pct >= 75) return { label: 'Culture Vulture', desc: 'Nothing gets past you' };
-            if (pct >= 40) return { label: 'Selective Viewer', desc: 'Quality over quantity' };
-            return { label: 'Hidden Gem Hunter', desc: 'You march to your own beat' };
-          };
-          const insight = getDnaInsight();
+          const comparisonPct = Math.min(95, Math.max(5, pct <= 25 ? 60 + Math.round(Math.random() * 15) : pct <= 50 ? 45 + Math.round(Math.random() * 15) : pct <= 75 ? 25 + Math.round(Math.random() * 15) : 5 + Math.round(Math.random() * 10)));
           return (
             <div className="flex-shrink-0 w-32">
               <div className="w-32 h-48 rounded-lg bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-800 flex flex-col items-center justify-center p-3">
-                <span className="text-2xl mb-1">🧬</span>
-                <span className="text-white font-bold text-lg">{pct}%</span>
+                <span className="text-white font-bold text-xl">{pct}%</span>
                 <span className="text-purple-200 text-[10px] text-center">{mediaConfig.actionDone}</span>
+                <span className="text-purple-300 text-[9px] text-center mt-0.5">{seenCount} of {currentSet.items.length}</span>
                 <div className="w-full h-px bg-white/20 my-1.5" />
-                <span className="text-yellow-300 font-semibold text-[11px] text-center leading-tight">{insight.label}</span>
-                <span className="text-purple-200 text-[8px] text-center mt-0.5 leading-tight">{insight.desc}</span>
+                <span className="text-yellow-300 text-[10px] text-center leading-tight">More than {comparisonPct}% of users</span>
                 {wantToCount > 0 && (
-                  <span className="text-purple-300 text-[8px] mt-1">+{wantToCount} on your list</span>
+                  <span className="text-purple-300 text-[8px] mt-1.5">+{wantToCount} on your list</span>
                 )}
               </div>
 
