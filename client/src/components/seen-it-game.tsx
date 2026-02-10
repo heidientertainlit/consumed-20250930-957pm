@@ -244,13 +244,15 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
   const incompleteSets = useMemo(() => {
     const result = sets.filter(set => {
       if (completedSetIds.has(set.id)) return false;
-      const answeredCount = set.items.filter(item => responses[item.id] !== undefined).length;
-      return answeredCount < set.items.length;
+      return true;
     });
     return result;
-  }, [sets, responses, completedSetIds]);
+  }, [sets, completedSetIds]);
 
+  const autoDetectedRef = useRef(false);
   useEffect(() => {
+    if (autoDetectedRef.current || !existingResponses || sets.length === 0) return;
+    autoDetectedRef.current = true;
     sets.forEach(set => {
       if (completedSetIds.has(set.id)) return;
       const answeredCount = set.items.filter(item => responses[item.id] !== undefined).length;
@@ -259,7 +261,7 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
         saveSetCompletion(set.id, seenCount, set.items.length);
       }
     });
-  }, [responses, sets, completedSetIds]);
+  }, [existingResponses, sets]);
 
   useEffect(() => {
     if (currentSetIndex >= incompleteSets.length && incompleteSets.length > 0) {
@@ -374,22 +376,6 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
       const next = { ...prev, [item.id]: response };
       if (extKey) next[extKey] = response;
       try { localStorage.setItem('seen_it_responses', JSON.stringify(next)); } catch {}
-
-      const currentSetObj = sets.find(s => s.id === setId);
-      if (currentSetObj) {
-        const allAnswered = currentSetObj.items.every(i => {
-          if (i.id === item.id) return true;
-          return responses[i.id] !== undefined;
-        });
-        if (allAnswered) {
-          const seenCount = currentSetObj.items.filter(i => {
-            if (i.id === item.id) return response === true;
-            return responses[i.id] === true;
-          }).length;
-          setTimeout(() => saveSetCompletion(setId, seenCount, currentSetObj.items.length), 100);
-        }
-      }
-
       return next;
     });
     if (session) {
