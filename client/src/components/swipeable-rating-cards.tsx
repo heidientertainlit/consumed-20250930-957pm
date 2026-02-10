@@ -108,20 +108,13 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
         if (existingData?.image && existingData?.creator) continue;
         
         const isSpotify = media.externalSource === 'spotify';
-        const isBook = media.externalSource === 'open_library';
+        const isBook = media.externalSource === 'open_library' || media.externalSource === 'googlebooks';
         const isTmdb = media.externalSource === 'tmdb';
         
-        const imageMatchesSource = (() => {
-          if (!media.imageUrl || !media.imageUrl.startsWith('http')) return false;
-          if (isBook) return media.imageUrl.includes('openlibrary.org') || media.imageUrl.includes('covers.openlibrary');
-          if (isTmdb) return media.imageUrl.includes('tmdb.org') || media.imageUrl.includes('themoviedb.org');
-          if (isSpotify) return false;
-          return true;
-        })();
-        
+        const hasValidImage = media.imageUrl && media.imageUrl.startsWith('http');
         const hasValidCreator = media.creator && !media.creator.includes('Unknown');
         
-        if (imageMatchesSource && hasValidCreator) continue;
+        if (!isSpotify && hasValidImage && hasValidCreator) continue;
         if (!media.title) continue;
         
         try {
@@ -525,34 +518,34 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
             <div className="shrink-0 flex flex-col">
               <Link href={getMediaLink() || '#'}>
                 {hasValidImage ? (
-                  <div className="relative w-28 h-28 rounded-l-2xl overflow-hidden">
+                  <div className="relative w-24 min-h-[120px] rounded-l-2xl overflow-hidden flex-shrink-0">
                     {!imageLoaded && (
                       <div className="absolute inset-0 bg-gradient-to-br from-purple-200 to-purple-100 animate-pulse" />
                     )}
                     <img 
                       src={media.imageUrl} 
                       alt={media.title || ''} 
-                      className={`w-28 h-28 object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                      className={`w-full h-full object-contain bg-gray-50 transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                       onLoad={() => setImageLoaded(true)}
                       loading="eager"
                     />
                   </div>
                 ) : getFallbackImageUrl(media.externalId, media.externalSource) ? (
-                  <div className="relative w-28 h-28 rounded-l-2xl overflow-hidden">
+                  <div className="relative w-24 min-h-[120px] rounded-l-2xl overflow-hidden flex-shrink-0">
                     {!imageLoaded && (
                       <div className="absolute inset-0 bg-gradient-to-br from-purple-200 to-purple-100 animate-pulse" />
                     )}
                     <img 
                       src={getFallbackImageUrl(media.externalId, media.externalSource)!} 
                       alt={media.title || ''} 
-                      className={`w-28 h-28 object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                      className={`w-full h-full object-contain bg-gray-50 transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                       onLoad={() => setImageLoaded(true)}
                       onError={() => setImageLoaded(true)}
                       loading="eager"
                     />
                   </div>
                 ) : (
-                  <div className="w-28 h-28 bg-gradient-to-br from-purple-200 to-purple-100 flex items-center justify-center rounded-l-2xl">
+                  <div className="w-24 min-h-[120px] bg-gradient-to-br from-purple-200 to-purple-100 flex items-center justify-center rounded-l-2xl flex-shrink-0">
                     <span className="text-gray-500 text-xs text-center px-2">No image</span>
                   </div>
                 )}
@@ -647,12 +640,31 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 </h3>
               </Link>
               
-              {/* Creator/Author */}
-              {media?.creator && (
-                <p className="text-xs text-gray-500 truncate mb-0.5">
-                  {media.externalSource === 'spotify' ? 'by ' : ''}{media.creator.split('|')[0].trim()}
-                </p>
-              )}
+              {/* Creator/Author + Media Type */}
+              <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                {media?.creator && (
+                  <span className="text-xs text-gray-500 truncate">
+                    {media.creator.split('|')[0].trim()}
+                  </span>
+                )}
+                {media?.mediaType && (
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600 whitespace-nowrap">
+                    {media.mediaType === 'tv' ? 'TV' : 
+                     media.mediaType === 'movie' ? 'Movie' :
+                     media.mediaType === 'Book' || media.externalSource === 'googlebooks' || media.externalSource === 'open_library' ? 'Book' :
+                     media.externalSource === 'spotify' ? 'Podcast' :
+                     media.mediaType.charAt(0).toUpperCase() + media.mediaType.slice(1)}
+                  </span>
+                )}
+                {!media?.mediaType && media?.externalSource && (
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-600 whitespace-nowrap">
+                    {media.externalSource === 'googlebooks' || media.externalSource === 'open_library' ? 'Book' :
+                     media.externalSource === 'tmdb' ? 'Movie' :
+                     media.externalSource === 'spotify' ? 'Podcast' :
+                     media.externalSource === 'youtube' ? 'Video' : ''}
+                  </span>
+                )}
+              </div>
               
               {/* Rating stars */}
               {currentPost.rating && (
