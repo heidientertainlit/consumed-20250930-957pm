@@ -43,7 +43,11 @@ const getMediaTypeConfig = (mediaType: string) => {
   }
 };
 
-export default function SeenItGame() {
+interface SeenItGameProps {
+  mediaTypeFilter?: string;
+}
+
+export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -101,7 +105,15 @@ export default function SeenItGame() {
     }
   });
 
-  const sets = [...(trendingSets || []), ...(staticSets || [])];
+  const allSets = [...(trendingSets || []), ...(staticSets || [])];
+  const sets = mediaTypeFilter 
+    ? allSets.filter(s => {
+        if (mediaTypeFilter === 'movie') return s.media_type === 'movie' || s.media_type === 'tv';
+        if (mediaTypeFilter === 'book') return s.media_type === 'book';
+        if (mediaTypeFilter === 'music') return s.media_type === 'music' || s.media_type === 'podcast';
+        return s.media_type === mediaTypeFilter;
+      })
+    : allSets;
   const isLoading = sets.length === 0 && (isLoadingTrending || isLoadingStatic);
 
   const { data: existingResponses } = useQuery({
@@ -265,7 +277,7 @@ export default function SeenItGame() {
 
   const currentSet = sets?.[currentSetIndex];
 
-  if (isLoading) {
+  if (isLoading && !mediaTypeFilter) {
     return (
       <Card className="bg-gradient-to-br from-[#2d1b4e] via-[#1a1035] to-[#0f0a1a] border-0 p-4 rounded-xl">
         <div className="flex items-center justify-center py-8">

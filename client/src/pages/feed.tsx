@@ -3804,6 +3804,11 @@ export default function Feed() {
                 <LeaderboardFeedCard variant="polls" />
               )}
 
+              {/* Read It? - Books (appears after Cast Your Friends carousel) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <SeenItGame mediaTypeFilter="book" />
+              )}
+
               {/* POLLS filter - TV category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
                (!selectedCategory || selectedCategory === 'tv') && (
@@ -3877,6 +3882,11 @@ export default function Feed() {
                     </Link>
                   </div>
                 </div>
+              )}
+
+              {/* Listened to It? - Music & Podcasts */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <SeenItGame mediaTypeFilter="music" />
               )}
 
               {/* Recommendations - For You */}
