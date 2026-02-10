@@ -138,34 +138,24 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
             const data = await response.json();
             const results = data.results || [];
             
-            // Get image from first result
-            const imageResult = results[0];
-            const imageUrl = imageResult?.poster_url || imageResult?.image;
-            
-            // For podcasts, find a podcast SHOW (not episode) with valid creator
+            let imageUrl: string | undefined;
             let creatorName: string | undefined;
             
             if (isSpotify) {
-              // First try to find a podcast show with matching image
-              const showWithImage = results.find((r: any) => 
+              const showWithCreator = results.find((r: any) => 
                 r.type === 'podcast' && r.media_subtype === 'show' && 
-                r.creator && !r.creator.includes('Unknown') &&
-                (r.poster_url === imageUrl || r.image === imageUrl)
+                r.creator && !r.creator.includes('Unknown')
               );
-              if (showWithImage) {
-                creatorName = showWithImage.creator;
-              } else {
-                // Fallback: any podcast show with valid creator
-                const showResult = results.find((r: any) => 
-                  r.type === 'podcast' && r.media_subtype === 'show' && 
-                  r.creator && !r.creator.includes('Unknown')
-                );
-                creatorName = showResult?.creator;
+              if (showWithCreator) {
+                creatorName = showWithCreator.creator;
+                imageUrl = showWithCreator.poster_url || showWithCreator.image;
+              }
+              if (!imageUrl) {
+                const firstShow = results.find((r: any) => r.type === 'podcast' && r.media_subtype === 'show');
+                imageUrl = firstShow?.poster_url || firstShow?.image || results[0]?.poster_url || results[0]?.image;
               }
               
-              // If still no creator, try searching with "with" to find show title
               if (!creatorName && media.title.includes('Playbook')) {
-                // Try "Aspire with" search for this specific podcast
                 const showResponse = await fetch(
                   `${supabaseUrl}/functions/v1/media-search`,
                   {
@@ -193,24 +183,30 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
               const normalizedTitle = media.title.toLowerCase().trim();
               
               const titleMatch = results.find((r: any) => 
-                r.creator && !r.creator.includes('Unknown') &&
                 r.title?.toLowerCase().trim() === normalizedTitle
               );
               if (titleMatch) {
-                creatorName = titleMatch.creator;
+                creatorName = titleMatch.creator && !titleMatch.creator.includes('Unknown') ? titleMatch.creator : undefined;
+                imageUrl = titleMatch.poster_url || titleMatch.image;
               } else if (mediaType) {
-                const typeMatch = results.find((r: any) => 
-                  r.creator && !r.creator.includes('Unknown') &&
-                  r.type === mediaType
-                );
-                creatorName = typeMatch?.creator;
+                const typeMatch = results.find((r: any) => r.type === mediaType);
+                if (typeMatch) {
+                  creatorName = typeMatch.creator && !typeMatch.creator.includes('Unknown') ? typeMatch.creator : undefined;
+                  imageUrl = typeMatch.poster_url || typeMatch.image;
+                }
               }
-              if (!creatorName) {
+              if (!imageUrl && !creatorName) {
                 const closeMatch = results.find((r: any) => 
-                  r.creator && !r.creator.includes('Unknown') &&
                   r.title?.toLowerCase().includes(normalizedTitle.split(':')[0].trim())
                 );
-                creatorName = closeMatch?.creator;
+                if (closeMatch) {
+                  creatorName = closeMatch.creator && !closeMatch.creator.includes('Unknown') ? closeMatch.creator : undefined;
+                  imageUrl = closeMatch.poster_url || closeMatch.image;
+                }
+              }
+              if (!imageUrl) {
+                const fallback = mediaType ? results.find((r: any) => r.type === mediaType) : results[0];
+                imageUrl = fallback?.poster_url || fallback?.image || results[0]?.poster_url || results[0]?.image;
               }
             }
             
