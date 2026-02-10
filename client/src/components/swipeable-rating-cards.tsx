@@ -255,19 +255,19 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
     });
   }
   
-  // Get image URL with fallbacks - check dynamically fetched data first
   const dynamicData = fetchedData[currentPost?.id || ''];
-  const resolvedImageUrl = dynamicData?.image || getImageUrl(
-    mediaItem?.imageUrl, 
-    mediaItem?.externalId, 
-    mediaItem?.externalSource
-  );
   
-  // Get creator - prefer fetched creator for Spotify, otherwise use original
-  const resolvedCreator = dynamicData?.creator || 
-    (mediaItem?.creator && !mediaItem.creator.includes('Unknown') ? mediaItem.creator : undefined);
+  const originalImageValid = mediaItem?.imageUrl && mediaItem.imageUrl.startsWith('http');
+  const originalCreatorValid = mediaItem?.creator && !mediaItem.creator.includes('Unknown') && mediaItem.creator.length > 0;
   
-  // Create enhanced media object with resolved image and creator
+  const resolvedImageUrl = originalImageValid 
+    ? mediaItem.imageUrl 
+    : (dynamicData?.image || getImageUrl(mediaItem?.imageUrl, mediaItem?.externalId, mediaItem?.externalSource));
+  
+  const resolvedCreator = originalCreatorValid
+    ? mediaItem.creator
+    : (dynamicData?.creator || undefined);
+  
   const media = mediaItem ? {
     ...mediaItem,
     imageUrl: resolvedImageUrl || mediaItem.imageUrl,
