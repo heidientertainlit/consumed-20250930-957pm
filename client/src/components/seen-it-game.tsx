@@ -2,14 +2,12 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Eye, ChevronRight, Check, X, Users, Trophy, Plus, Star, Loader2, Sparkles, Search, BookOpen, Headphones, Gamepad2 } from "lucide-react";
+import { Eye, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, Search, BookOpen, Headphones, Gamepad2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { trackEvent } from "@/lib/posthog";
-import { useFriendsManagement } from "@/hooks/use-friends-management";
 import { Link } from "wouter";
 
 interface SeenItItem {
@@ -54,8 +52,7 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
   const initializedRef = useRef(false);
   const [responses, setResponses] = useState<Record<string, boolean | 'want_to' | null>>({});
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
-  const [showChallengeModal, setShowChallengeModal] = useState(false);
-  const { friendsData, isLoadingFriends } = useFriendsManagement();
+
 
   const { data: trendingSets, isLoading: isLoadingTrending } = useQuery({
     queryKey: ['trending-sets'],
@@ -239,43 +236,6 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
     }
   };
 
-  const challengeMutation = useMutation({
-    mutationFn: async (friendId: string) => {
-      if (!user?.id || !currentSet) throw new Error('Must be logged in');
-      
-      const { data, error } = await supabase.functions.invoke('seen-it-challenge', {
-        body: {
-          action: 'create',
-          set_id: currentSet.id,
-          set_title: currentSet.title,
-          challenged_id: friendId,
-          score: seenCount,
-          total_items: currentSet.items.length
-        }
-      });
-      
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      
-      return data;
-    },
-    onSuccess: () => {
-      setShowChallengeModal(false);
-      toast({
-        title: "Challenge sent!",
-        description: "Your friend will be notified"
-      });
-      trackEvent('seen_it_challenge_sent', { set_id: currentSet?.id });
-    },
-    onError: (err) => {
-      toast({
-        title: "Couldn't send challenge",
-        description: err instanceof Error ? err.message : "Try again",
-        variant: "destructive"
-      });
-    }
-  });
-
   const currentSet = sets?.[currentSetIndex];
 
   if (isLoading && !mediaTypeFilter) {
@@ -398,53 +358,61 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
           );
         })}
         
-        {isComplete && (
-          <div className="flex-shrink-0 w-32">
-            <div className="w-32 h-48 rounded-lg bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-800 flex flex-col items-center justify-center p-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center mb-1">
-                <Trophy className="w-5 h-5 text-white" />
+        {isComplete && (() => {
+          const pct = Math.round((seenCount / currentSet.items.length) * 100);
+          const getDnaInsight = () => {
+            const type = currentSet.media_type;
+            if (type === 'book') {
+              if (pct >= 75) return { label: 'Bookworm', desc: 'You stay on top of what\'s trending' };
+              if (pct >= 40) return { label: 'Selective Reader', desc: 'You pick your reads carefully' };
+              return { label: 'TBR Builder', desc: 'So many books, so little time' };
+            }
+            if (type === 'music' || type === 'podcast') {
+              if (pct >= 75) return { label: 'Tastemaker', desc: 'You\'re always in the know' };
+              if (pct >= 40) return { label: 'Curious Ear', desc: 'You explore beyond the mainstream' };
+              return { label: 'Discovery Mode', desc: 'Your playlist is about to grow' };
+            }
+            if (pct >= 75) return { label: 'Culture Vulture', desc: 'Nothing gets past you' };
+            if (pct >= 40) return { label: 'Selective Viewer', desc: 'Quality over quantity' };
+            return { label: 'Watchlist Loading', desc: 'So much to discover' };
+          };
+          const insight = getDnaInsight();
+          return (
+            <div className="flex-shrink-0 w-32">
+              <div className="w-32 h-48 rounded-lg bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-800 flex flex-col items-center justify-center p-3">
+                <span className="text-2xl mb-1">🧬</span>
+                <span className="text-white font-bold text-lg">{pct}%</span>
+                <span className="text-purple-200 text-[10px] text-center">{mediaConfig.actionDone}</span>
+                <div className="w-full h-px bg-white/20 my-1.5" />
+                <span className="text-yellow-300 font-semibold text-[11px] text-center leading-tight">{insight.label}</span>
+                <span className="text-purple-200 text-[8px] text-center mt-0.5 leading-tight">{insight.desc}</span>
+                {wantToCount > 0 && (
+                  <span className="text-purple-300 text-[8px] mt-1">+{wantToCount} on your list</span>
+                )}
               </div>
-              <span className="text-white font-bold text-lg">
-                {Math.round((seenCount / currentSet.items.length) * 100)}%
-              </span>
-              <span className="text-purple-200 text-[10px] text-center">
-                {mediaConfig.actionDone}
-              </span>
-              {wantToCount > 0 && (
-                <span className="text-purple-200 text-[9px] mt-1">
-                  +{wantToCount} on watchlist
-                </span>
-              )}
-              <div className="flex items-center gap-1 mt-1">
-                <Sparkles className="w-3 h-3 text-yellow-400" />
-                <span className="text-yellow-300 text-[9px]">+ Added to DNA</span>
+
+              <p className="text-white text-sm font-medium mt-2 text-center">Complete!</p>
+
+              <div className="flex flex-col gap-1 mt-2">
+                {sets && sets.length > 1 && currentSetIndex < sets.length - 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentSetIndex(prev => prev + 1)}
+                    className="w-full py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all"
+                  >
+                    Next Set →
+                  </button>
+                ) : (
+                  <Link href="/profile">
+                    <button type="button" className="w-full py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all">
+                      View DNA
+                    </button>
+                  </Link>
+                )}
               </div>
             </div>
-            
-            <p className="text-white text-sm font-medium mt-2 text-center">Complete!</p>
-            
-            <div className="flex flex-col gap-1 mt-2">
-              {sets && sets.length > 1 && currentSetIndex < sets.length - 1 ? (
-                <button
-                  onClick={() => setCurrentSetIndex(prev => prev + 1)}
-                  className="w-full py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all"
-                >
-                  Next Set →
-                </button>
-              ) : (
-                <button className="w-full py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all">
-                  View DNA
-                </button>
-              )}
-              <button 
-                onClick={() => setShowChallengeModal(true)}
-                className="w-full py-1.5 rounded-full bg-white/10 text-white/80 text-xs font-medium hover:bg-white/20 active:scale-95 transition-all"
-              >
-                Challenge
-              </button>
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       
@@ -462,56 +430,6 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
         </div>
       )}
 
-      <Dialog open={showChallengeModal} onOpenChange={setShowChallengeModal}>
-        <DialogContent className="bg-white border-gray-200 max-w-sm rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-gray-900 flex items-center gap-2">
-              <Users className="w-5 h-5 text-purple-600" />
-              Challenge a Friend
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-3 max-h-64 overflow-y-auto">
-            {isLoadingFriends ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="w-5 h-5 animate-spin text-purple-600" />
-              </div>
-            ) : !friendsData?.friends?.length ? (
-              <p className="text-gray-500 text-sm text-center py-4">
-                Add friends to challenge them!
-              </p>
-            ) : (
-              friendsData.friends.map((friend: any) => (
-                <button
-                  key={friend.id}
-                  onClick={() => challengeMutation.mutate(friend.id)}
-                  disabled={challengeMutation.isPending}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
-                >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-                    {(friend.display_name || friend.user_name || '?')[0].toUpperCase()}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-gray-900 font-medium text-sm">
-                      {friend.display_name || friend.user_name}
-                    </p>
-                    <p className="text-gray-500 text-xs">@{friend.user_name}</p>
-                  </div>
-                  {challengeMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  )}
-                </button>
-              ))
-            )}
-          </div>
-          
-          <p className="text-gray-400 text-xs text-center mt-2">
-            Your score: {seenCount}/{currentSet?.items?.length || 0} ({Math.round((seenCount / (currentSet?.items?.length || 1)) * 100)}%)
-          </p>
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 }
