@@ -364,21 +364,27 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
                 <div className="mt-2 space-y-1">
                   <div className="flex gap-1">
                     <button
-                      onClick={() => handleResponse(currentSet.id, item, false)}
-                      className="flex-1 py-1.5 rounded-full bg-black/60 border border-white/15 text-white text-xs font-medium hover:bg-black/80 active:scale-95 transition-all"
+                      type="button"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleResponse(currentSet.id, item, false); }}
+                      className="flex-1 py-1.5 rounded-full bg-black/60 border border-white/15 text-white text-xs font-medium hover:bg-black/80 active:scale-95 transition-all relative z-10"
                     >
                       Nope
                     </button>
                     <button
-                      onClick={() => handleResponse(currentSet.id, item, true)}
-                      className="flex-1 py-1.5 rounded-full bg-black/60 border border-white/15 text-white text-xs font-medium hover:bg-black/80 active:scale-95 transition-all"
+                      type="button"
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleResponse(currentSet.id, item, true); }}
+                      className="flex-1 py-1.5 rounded-full bg-black/60 border border-white/15 text-white text-xs font-medium hover:bg-black/80 active:scale-95 transition-all relative z-10"
                     >
                       {mediaConfig.actionYes}
                     </button>
                   </div>
                   <button
-                    onClick={() => handleResponse(currentSet.id, item, 'want_to')}
-                    className="w-full py-1 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-[10px] font-medium hover:opacity-90 active:scale-95 transition-all"
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleResponse(currentSet.id, item, 'want_to'); }}
+                    className="w-full py-1 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-[10px] font-medium hover:opacity-90 active:scale-95 transition-all relative z-10"
                   >
                     Want to
                   </button>

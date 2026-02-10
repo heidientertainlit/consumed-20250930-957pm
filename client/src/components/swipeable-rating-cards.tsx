@@ -525,7 +525,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                     <img 
                       src={media.imageUrl} 
                       alt={media.title || ''} 
-                      className={`w-full h-full object-contain bg-gray-50 transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                      className={`w-full h-full object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                       onLoad={() => setImageLoaded(true)}
                       loading="eager"
                     />
@@ -538,7 +538,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                     <img 
                       src={getFallbackImageUrl(media.externalId, media.externalSource)!} 
                       alt={media.title || ''} 
-                      className={`w-full h-full object-contain bg-gray-50 transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                      className={`w-full h-full object-cover transition-opacity duration-200 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
                       onLoad={() => setImageLoaded(true)}
                       onError={() => setImageLoaded(true)}
                       loading="eager"
@@ -605,7 +605,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
             </div>
 
             {/* Right column: Content */}
-            <div className="flex-1 p-3 flex flex-col min-w-0">
+            <div className="flex-1 py-3 pr-3 pl-2 flex flex-col min-w-0">
               {/* User info */}
               <div className="flex items-center gap-1.5 mb-1">
                 <Link href={`/profile/${currentPost.user?.id}`} className="shrink-0">
