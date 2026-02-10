@@ -120,38 +120,62 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
     queryKey: ['seen-it-responses', user?.id],
     queryFn: async () => {
       if (!user?.id) return {};
+      const responseMap: Record<string, boolean> = {};
+
       const { data } = await supabase
         .from('seen_it_responses')
         .select('item_id, seen')
         .eq('user_id', user.id);
-      
-      const responseMap: Record<string, boolean> = {};
       (data || []).forEach(r => {
         responseMap[r.item_id] = r.seen;
       });
-      return responseMap;
+
+      const { data: listItems } = await supabase
+        .from('list_items')
+        .select('external_id, list_id, lists!inner(slug)')
+        .eq('user_id', user.id);
+      const trackedExternalIds: Record<string, string> = {};
+      (listItems || []).forEach((item: any) => {
+        const slug = item.lists?.slug;
+        if (slug === 'finished') trackedExternalIds[item.external_id] = 'finished';
+        else if (slug === 'queue' && !trackedExternalIds[item.external_id]) trackedExternalIds[item.external_id] = 'queue';
+      });
+
+      return { responseMap, trackedExternalIds };
     },
     enabled: !!user?.id
   });
 
   useEffect(() => {
     if (initializedRef.current) return;
-    if (existingResponses && Object.keys(existingResponses).length > 0 && sets.length > 0) {
-      initializedRef.current = true;
-      setResponses(existingResponses);
-      
-      const firstIncompleteIndex = sets.findIndex(set => {
-        const answeredCount = set.items.filter(item => 
-          existingResponses[item.id] !== null && existingResponses[item.id] !== undefined
-        ).length;
-        return answeredCount < set.items.length;
+    if (!existingResponses || !sets.length) return;
+    const { responseMap, trackedExternalIds } = existingResponses as { responseMap: Record<string, boolean>; trackedExternalIds: Record<string, string> };
+    if (!responseMap && !trackedExternalIds) return;
+
+    initializedRef.current = true;
+    const merged: Record<string, boolean | 'want_to' | null> = { ...responseMap };
+
+    sets.forEach(set => {
+      set.items.forEach(item => {
+        if (merged[item.id] !== undefined) return;
+        const extId = item.external_id;
+        if (extId && trackedExternalIds?.[extId]) {
+          merged[item.id] = trackedExternalIds[extId] === 'finished' ? true : 'want_to';
+        }
       });
-      
-      if (firstIncompleteIndex !== -1 && firstIncompleteIndex !== currentSetIndex) {
-        setCurrentSetIndex(firstIncompleteIndex);
-      } else if (firstIncompleteIndex === -1) {
-        setCurrentSetIndex(sets.length - 1);
-      }
+    });
+
+    setResponses(merged);
+
+    const firstIncompleteIndex = sets.findIndex(set => {
+      const answeredCount = set.items.filter(item => merged[item.id] !== null && merged[item.id] !== undefined).length;
+      return answeredCount < set.items.length;
+    });
+
+    if (firstIncompleteIndex !== -1 && firstIncompleteIndex !== currentSetIndex) {
+      setCurrentSetIndex(firstIncompleteIndex);
+    } else if (firstIncompleteIndex === -1) {
+      setCurrentSetIndex(sets.length - 1);
     }
   }, [existingResponses, sets]);
 
@@ -374,7 +398,7 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
             }
             if (pct >= 75) return { label: 'Culture Vulture', desc: 'Nothing gets past you' };
             if (pct >= 40) return { label: 'Selective Viewer', desc: 'Quality over quantity' };
-            return { label: 'Watchlist Loading', desc: 'So much to discover' };
+            return { label: 'Hidden Gem Hunter', desc: 'You march to your own beat' };
           };
           const insight = getDnaInsight();
           return (
