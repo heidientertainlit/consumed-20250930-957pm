@@ -201,6 +201,7 @@ export default function UserProfile() {
   const listsRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState<string>('dna');
+  const initialSectionSet = useRef(false);
   const [collectionsSubTab, setCollectionsSubTab] = useState<'lists' | 'history'>('lists');
   const [activitySubFilter, setActivitySubFilter] = useState<'posts' | 'history' | 'bets'>('posts');
   const [listSearch, setListSearch] = useState("");
@@ -232,6 +233,16 @@ export default function UserProfile() {
       setIsLoadingActivity(false);
     }
   };
+
+  useEffect(() => {
+    if (!isOwnProfile && !initialSectionSet.current) {
+      initialSectionSet.current = true;
+      setActiveSection('overview');
+    }
+    if (isOwnProfile) {
+      initialSectionSet.current = false;
+    }
+  }, [isOwnProfile]);
 
   useEffect(() => {
     if (activeSection === 'activity' && activitySubFilter === 'posts') {
@@ -1015,11 +1026,24 @@ export default function UserProfile() {
         checkFriendshipStatus();
       } else {
         const data = await response.json();
-        toast({
-          title: "Request Failed",
-          description: data.error || "Unable to send friend request.",
-          variant: "destructive"
-        });
+        const msg = data.error || "";
+        if (msg.includes('Already friends') || msg.includes('duplicate key') || msg.includes('unique constraint')) {
+          toast({
+            title: "Already friends!",
+            description: "You're already connected with this person.",
+          });
+        } else if (msg.includes('already sent') || msg.includes('Friend request already')) {
+          toast({
+            title: "Request already sent",
+            description: "Your friend request is pending.",
+          });
+        } else {
+          toast({
+            title: "Request Failed",
+            description: msg || "Unable to send friend request.",
+            variant: "destructive"
+          });
+        }
       }
     } catch (error) {
       console.error('Send friend request error:', error);
@@ -2937,7 +2961,7 @@ export default function UserProfile() {
         )}
 
         {/* GLANCEABLE VIEW FOR FRIEND PROFILES - Shows all key sections at once */}
-        {!isOwnProfile && friendshipStatus === 'friends' && (
+        {!isOwnProfile && friendshipStatus === 'friends' && activeSection === 'overview' && (
           <div className="px-4 py-4 space-y-4">
             {/* Compact Stats Card */}
             <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
@@ -2983,7 +3007,7 @@ export default function UserProfile() {
                 <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
                   <Sparkles className="text-white" size={14} />
                 </div>
-                <h4 className="text-sm font-semibold text-gray-700">Entertainment DNA</h4>
+                <h4 className="text-sm font-semibold text-gray-700">{userProfileData?.display_name || userProfileData?.first_name || 'Their'}'s Entertainment DNA</h4>
               </div>
               {dnaProfileStatus === 'has_profile' && dnaProfile ? (
                 <div>
@@ -3074,12 +3098,12 @@ export default function UserProfile() {
           </div>
         )}
 
-        {/* My Entertainment DNA (includes Stats) - FULL VIEW for own profile */}
-        {isOwnProfile && activeSection === 'dna' && (
+        {/* Entertainment DNA (includes Stats) - FULL VIEW */}
+        {activeSection === 'dna' && (
         <div ref={dnaRef} className="px-4 mb-8">
           {/* Stats Section */}
           <div className="mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>{isOwnProfile ? 'Your' : 'Their'} Stats</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>{isOwnProfile ? 'Your' : `${userProfileData?.display_name || userProfileData?.first_name || 'Their'}'s`} Stats</h3>
             {isLoadingStats ? (
               <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
                 <div className="flex items-center justify-center">
@@ -3148,16 +3172,16 @@ export default function UserProfile() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="text-xl font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent">
-                    {isOwnProfile ? 'Your' : 'Their'} Entertainment DNA
+                    {isOwnProfile ? 'Your' : `${userProfileData?.display_name || userProfileData?.first_name || userProfileData?.user_name || 'Their'}'s`} Entertainment DNA
                   </h2>
                   {dnaProfileStatus === 'has_profile' && (
-                    <p className="text-sm text-gray-600">{isOwnProfile ? 'Your' : 'Their'} Entertainment Personality</p>
+                    <p className="text-sm text-gray-600">{isOwnProfile ? 'Your' : `${userProfileData?.display_name || userProfileData?.first_name || userProfileData?.user_name || 'Their'}'s`} Entertainment Personality</p>
                   )}
                   {dnaProfileStatus === 'no_profile' && isOwnProfile && (
                     <p className="text-sm text-gray-600">Discover your unique entertainment personality</p>
                   )}
                   {dnaProfileStatus === 'no_profile' && !isOwnProfile && (
-                    <p className="text-sm text-gray-600">This user hasn't taken the DNA survey yet</p>
+                    <p className="text-sm text-gray-600">{userProfileData?.display_name || userProfileData?.first_name || 'This user'} hasn't taken the DNA survey yet</p>
                   )}
                   {dnaProfileStatus === 'generating' && (
                     <p className="text-sm text-gray-600">Analyzing entertainment preferences...</p>
@@ -3231,12 +3255,12 @@ export default function UserProfile() {
                     <Brain className="text-white" size={32} />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {isOwnProfile ? 'Complete the Survey to Get Your Entertainment DNA' : 'No Entertainment DNA Yet'}
+                    {isOwnProfile ? 'Complete the Survey to Get Your Entertainment DNA' : `${userProfileData?.display_name || userProfileData?.first_name || 'This user'} hasn't created their DNA yet`}
                   </h3>
                   <p className="text-sm text-gray-600 max-w-md mx-auto">
                     {isOwnProfile 
                       ? 'Answer a few quick questions to unlock your unique entertainment personality profile and get personalized recommendations.'
-                      : 'This user hasn\'t completed their Entertainment DNA survey yet.'}
+                      : `${userProfileData?.display_name || userProfileData?.first_name || 'This user'} hasn't completed their Entertainment DNA survey yet.`}
                   </p>
                 </div>
                 {isOwnProfile && (
@@ -3326,7 +3350,7 @@ export default function UserProfile() {
         {activeSection === 'badges' && (
           <div className="px-4 mb-8">
             <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>
-              {isOwnProfile ? 'Your' : 'Their'} Badges
+              {isOwnProfile ? 'Your' : `${userProfileData?.display_name || userProfileData?.first_name || 'Their'}'s`} Badges
             </h3>
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
               {userBadges.length > 0 ? (

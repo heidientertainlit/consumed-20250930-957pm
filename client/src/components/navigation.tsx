@@ -281,11 +281,24 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send friend request.",
-        variant: "destructive",
-      });
+      const msg = error.message || "";
+      if (msg.includes('Already friends') || msg.includes('duplicate key') || msg.includes('unique constraint')) {
+        toast({
+          title: "Already friends!",
+          description: "You're already connected with this person.",
+        });
+      } else if (msg.includes('already sent') || msg.includes('Friend request already')) {
+        toast({
+          title: "Request already sent",
+          description: "Your friend request is pending.",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: msg || "Failed to send friend request.",
+          variant: "destructive",
+        });
+      }
     },
   });
 

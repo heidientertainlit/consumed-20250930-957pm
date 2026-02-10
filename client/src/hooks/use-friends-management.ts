@@ -118,11 +118,24 @@ export function useFriendsManagement() {
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Failed to Send Request",
-        description: error.message,
-        variant: "destructive"
-      });
+      const msg = error.message || "";
+      if (msg.includes('Already friends') || msg.includes('duplicate key') || msg.includes('unique constraint')) {
+        toast({
+          title: "Already friends!",
+          description: "You're already connected with this person.",
+        });
+      } else if (msg.includes('already sent') || msg.includes('Friend request already')) {
+        toast({
+          title: "Request already sent",
+          description: "Your friend request is pending.",
+        });
+      } else {
+        toast({
+          title: "Failed to Send Request",
+          description: msg,
+          variant: "destructive"
+        });
+      }
     },
   });
 
