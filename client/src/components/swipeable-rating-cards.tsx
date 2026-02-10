@@ -107,20 +107,30 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
         const existingData = fetchedData[post.id];
         if (existingData?.image && existingData?.creator) continue;
         
-        // For Spotify, always re-fetch since stored URLs may be truncated/invalid
         const isSpotify = media.externalSource === 'spotify';
-        const hasValidImage = !isSpotify && media.imageUrl && media.imageUrl.startsWith('http');
+        const isBook = media.externalSource === 'open_library';
+        const isTmdb = media.externalSource === 'tmdb';
+        
+        const imageMatchesSource = (() => {
+          if (!media.imageUrl || !media.imageUrl.startsWith('http')) return false;
+          if (isBook) return media.imageUrl.includes('openlibrary.org') || media.imageUrl.includes('covers.openlibrary');
+          if (isTmdb) return media.imageUrl.includes('tmdb.org') || media.imageUrl.includes('themoviedb.org');
+          if (isSpotify) return false;
+          return true;
+        })();
+        
         const hasValidCreator = media.creator && !media.creator.includes('Unknown');
         
-        if (hasValidImage && hasValidCreator) continue;
+        if (imageMatchesSource && hasValidCreator) continue;
         if (!media.title) continue;
         
         try {
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
           const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
           
-          // Use shorter search title for better results
           const searchTitle = media.title.split(':')[0].trim().slice(0, 30);
+          
+          const searchType = isBook ? 'book' : isTmdb ? (media.mediaType === 'tv' ? 'tv' : 'movie') : isSpotify ? 'podcast' : null;
           
           const response = await fetch(
             `${supabaseUrl}/functions/v1/media-search`,
@@ -130,7 +140,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                 'Authorization': `Bearer ${anonKey}`,
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({ query: searchTitle })
+              body: JSON.stringify({ query: searchTitle, ...(searchType ? { type: searchType } : {}) })
             }
           );
           
