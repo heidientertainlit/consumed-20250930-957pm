@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,7 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
   const [responses, setResponses] = useState<Record<string, boolean | 'want_to' | null>>({});
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
   const [showChallengeModal, setShowChallengeModal] = useState(false);
@@ -105,15 +106,17 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
     }
   });
 
-  const allSets = [...(trendingSets || []), ...(staticSets || [])];
-  const sets = mediaTypeFilter 
-    ? allSets.filter(s => {
-        if (mediaTypeFilter === 'movie') return s.media_type === 'movie' || s.media_type === 'tv';
-        if (mediaTypeFilter === 'book') return s.media_type === 'book';
-        if (mediaTypeFilter === 'music') return s.media_type === 'music' || s.media_type === 'podcast';
-        return s.media_type === mediaTypeFilter;
-      })
-    : allSets;
+  const sets = useMemo(() => {
+    const allSets = [...(trendingSets || []), ...(staticSets || [])];
+    return mediaTypeFilter 
+      ? allSets.filter(s => {
+          if (mediaTypeFilter === 'movie') return s.media_type === 'movie' || s.media_type === 'tv';
+          if (mediaTypeFilter === 'book') return s.media_type === 'book';
+          if (mediaTypeFilter === 'music') return s.media_type === 'music' || s.media_type === 'podcast';
+          return s.media_type === mediaTypeFilter;
+        })
+      : allSets;
+  }, [trendingSets, staticSets, mediaTypeFilter]);
   const isLoading = sets.length === 0 && (isLoadingTrending || isLoadingStatic);
 
   const { data: existingResponses } = useQuery({
@@ -135,24 +138,22 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
   });
 
   useEffect(() => {
-    if (existingResponses && Object.keys(existingResponses).length > 0) {
+    if (initializedRef.current) return;
+    if (existingResponses && Object.keys(existingResponses).length > 0 && sets.length > 0) {
+      initializedRef.current = true;
       setResponses(existingResponses);
       
-      // Auto-advance to first incomplete set
-      if (sets && sets.length > 0) {
-        const firstIncompleteIndex = sets.findIndex(set => {
-          const answeredCount = set.items.filter(item => 
-            existingResponses[item.id] !== null && existingResponses[item.id] !== undefined
-          ).length;
-          return answeredCount < set.items.length;
-        });
-        
-        if (firstIncompleteIndex !== -1 && firstIncompleteIndex !== currentSetIndex) {
-          setCurrentSetIndex(firstIncompleteIndex);
-        } else if (firstIncompleteIndex === -1 && sets.length > 0) {
-          // All sets complete - show the last one (or could show first)
-          setCurrentSetIndex(sets.length - 1);
-        }
+      const firstIncompleteIndex = sets.findIndex(set => {
+        const answeredCount = set.items.filter(item => 
+          existingResponses[item.id] !== null && existingResponses[item.id] !== undefined
+        ).length;
+        return answeredCount < set.items.length;
+      });
+      
+      if (firstIncompleteIndex !== -1 && firstIncompleteIndex !== currentSetIndex) {
+        setCurrentSetIndex(firstIncompleteIndex);
+      } else if (firstIncompleteIndex === -1) {
+        setCurrentSetIndex(sets.length - 1);
       }
     }
   }, [existingResponses, sets]);
@@ -365,26 +366,23 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
                   <div className="flex gap-1">
                     <button
                       type="button"
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleResponse(currentSet.id, item, false); }}
-                      className="flex-1 py-1.5 rounded-full bg-black/60 border border-white/15 text-white text-xs font-medium hover:bg-black/80 active:scale-95 transition-all relative z-10"
+                      onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, false); }}
+                      className="flex-1 py-1.5 rounded-full bg-black/60 border border-white/15 text-white text-xs font-medium hover:bg-black/80 active:scale-95 transition-all relative z-10 touch-manipulation"
                     >
                       Nope
                     </button>
                     <button
                       type="button"
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleResponse(currentSet.id, item, true); }}
-                      className="flex-1 py-1.5 rounded-full bg-black/60 border border-white/15 text-white text-xs font-medium hover:bg-black/80 active:scale-95 transition-all relative z-10"
+                      onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, true); }}
+                      className="flex-1 py-1.5 rounded-full bg-black/60 border border-white/15 text-white text-xs font-medium hover:bg-black/80 active:scale-95 transition-all relative z-10 touch-manipulation"
                     >
                       {mediaConfig.actionYes}
                     </button>
                   </div>
                   <button
                     type="button"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleResponse(currentSet.id, item, 'want_to'); }}
-                    className="w-full py-1 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-[10px] font-medium hover:opacity-90 active:scale-95 transition-all relative z-10"
+                    onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, 'want_to'); }}
+                    className="w-full py-1 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-[10px] font-medium hover:opacity-90 active:scale-95 transition-all relative z-10 touch-manipulation"
                   >
                     Want to
                   </button>
