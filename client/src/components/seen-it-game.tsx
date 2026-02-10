@@ -509,18 +509,20 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
         })}
         
         {isComplete && (() => {
-          const pct = Math.round((seenCount / currentSet.items.length) * 100);
-          const comparisonPct = Math.min(95, Math.max(5, pct <= 25 ? 60 + Math.round(Math.random() * 15) : pct <= 50 ? 45 + Math.round(Math.random() * 15) : pct <= 75 ? 25 + Math.round(Math.random() * 15) : 5 + Math.round(Math.random() * 10)));
+          const nopeCount = currentSet.items.length - seenCount - wantToCount;
           return (
             <div className="flex-shrink-0 w-32">
               <div className="w-32 h-48 rounded-lg bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-800 flex flex-col items-center justify-center p-3">
-                <span className="text-white font-bold text-xl">{pct}%</span>
+                <Sparkles className="w-5 h-5 text-yellow-300 mb-1" />
+                <span className="text-white font-bold text-lg">{seenCount}/{currentSet.items.length}</span>
                 <span className="text-purple-200 text-[10px] text-center">{mediaConfig.actionDone}</span>
-                <span className="text-purple-300 text-[9px] text-center mt-0.5">{seenCount} of {currentSet.items.length}</span>
-                <div className="w-full h-px bg-white/20 my-1.5" />
-                <span className="text-yellow-300 text-[10px] text-center leading-tight">More than {comparisonPct}% of users</span>
                 {wantToCount > 0 && (
-                  <span className="text-purple-300 text-[8px] mt-1.5">+{wantToCount} on your list</span>
+                  <div className="flex items-center gap-1 mt-1.5">
+                    <span className="text-purple-300 text-[10px]">+{wantToCount} added</span>
+                  </div>
+                )}
+                {nopeCount > 0 && (
+                  <span className="text-purple-400 text-[9px] mt-0.5">{nopeCount} skipped</span>
                 )}
               </div>
 
