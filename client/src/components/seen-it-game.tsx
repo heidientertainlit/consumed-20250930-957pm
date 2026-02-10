@@ -49,7 +49,12 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [localResponses, setLocalResponses] = useState<Record<string, boolean | 'want_to'>>({});
+  const [localResponses, setLocalResponses] = useState<Record<string, boolean | 'want_to'>>(() => {
+    try {
+      const stored = localStorage.getItem('seen_it_responses');
+      return stored ? JSON.parse(stored) : {};
+    } catch { return {}; }
+  });
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
 
 
@@ -183,7 +188,19 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
         });
       });
     }
-    Object.entries(localResponses).forEach(([id, val]) => { merged[id] = val; });
+    Object.entries(localResponses).forEach(([id, val]) => {
+      if (id.startsWith('ext_')) return;
+      merged[id] = val;
+    });
+    sets.forEach(set => {
+      set.items.forEach(item => {
+        if (merged[item.id] !== undefined) return;
+        const extKey = item.external_id ? `ext_${item.external_id}` : null;
+        if (extKey && localResponses[extKey] !== undefined) {
+          merged[item.id] = localResponses[extKey];
+        }
+      });
+    });
     return merged;
   }, [existingResponses, sets, localResponses]);
 
@@ -276,7 +293,13 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
   });
 
   const handleResponse = (setId: string, item: SeenItItem, response: boolean | 'want_to') => {
-    setLocalResponses(prev => ({ ...prev, [item.id]: response }));
+    const extKey = item.external_id ? `ext_${item.external_id}` : null;
+    setLocalResponses(prev => {
+      const next = { ...prev, [item.id]: response };
+      if (extKey) next[extKey] = response;
+      try { localStorage.setItem('seen_it_responses', JSON.stringify(next)); } catch {}
+      return next;
+    });
     if (session) {
       responseMutation.mutate({ setId, itemId: item.id, response, item });
     }
