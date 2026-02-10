@@ -55,6 +55,12 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
       return stored ? JSON.parse(stored) : {};
     } catch { return {}; }
   });
+  const [completedSetIds, setCompletedSetIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('seen_it_completed_sets');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch { return new Set(); }
+  });
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
 
 
@@ -206,10 +212,26 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
 
   const incompleteSets = useMemo(() => {
     return sets.filter(set => {
+      if (completedSetIds.has(set.id)) return false;
       const answeredCount = set.items.filter(item => responses[item.id] !== undefined).length;
       return answeredCount < set.items.length;
     });
-  }, [sets, responses]);
+  }, [sets, responses, completedSetIds]);
+
+  useEffect(() => {
+    sets.forEach(set => {
+      if (completedSetIds.has(set.id)) return;
+      const answeredCount = set.items.filter(item => responses[item.id] !== undefined).length;
+      if (answeredCount >= set.items.length && set.items.length > 0) {
+        setCompletedSetIds(prev => {
+          const next = new Set(prev);
+          next.add(set.id);
+          try { localStorage.setItem('seen_it_completed_sets', JSON.stringify([...next])); } catch {}
+          return next;
+        });
+      }
+    });
+  }, [responses, sets, completedSetIds]);
 
   useEffect(() => {
     if (currentSetIndex >= incompleteSets.length && incompleteSets.length > 0) {
