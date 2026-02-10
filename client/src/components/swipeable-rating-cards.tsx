@@ -518,7 +518,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
             <div className="shrink-0 flex flex-col">
               <Link href={getMediaLink() || '#'}>
                 {hasValidImage ? (
-                  <div className="relative w-24 min-h-[120px] rounded-l-2xl overflow-hidden flex-shrink-0">
+                  <div className="relative w-28 min-h-[120px] rounded-l-2xl overflow-hidden flex-shrink-0">
                     {!imageLoaded && (
                       <div className="absolute inset-0 bg-gradient-to-br from-purple-200 to-purple-100 animate-pulse" />
                     )}
@@ -531,7 +531,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                     />
                   </div>
                 ) : getFallbackImageUrl(media.externalId, media.externalSource) ? (
-                  <div className="relative w-24 min-h-[120px] rounded-l-2xl overflow-hidden flex-shrink-0">
+                  <div className="relative w-28 min-h-[120px] rounded-l-2xl overflow-hidden flex-shrink-0">
                     {!imageLoaded && (
                       <div className="absolute inset-0 bg-gradient-to-br from-purple-200 to-purple-100 animate-pulse" />
                     )}
@@ -545,7 +545,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                     />
                   </div>
                 ) : (
-                  <div className="w-24 min-h-[120px] bg-gradient-to-br from-purple-200 to-purple-100 flex items-center justify-center rounded-l-2xl flex-shrink-0">
+                  <div className="w-28 min-h-[120px] bg-gradient-to-br from-purple-200 to-purple-100 flex items-center justify-center rounded-l-2xl flex-shrink-0">
                     <span className="text-gray-500 text-xs text-center px-2">No image</span>
                   </div>
                 )}
@@ -605,7 +605,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
             </div>
 
             {/* Right column: Content */}
-            <div className="flex-1 py-3 pr-3 pl-1 flex flex-col min-w-0">
+            <div className="flex-1 py-3 pr-3 pl-0 flex flex-col min-w-0">
               {/* User info */}
               <div className="flex items-center gap-1.5 mb-1">
                 <Link href={`/profile/${currentPost.user?.id}`} className="shrink-0">
