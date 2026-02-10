@@ -509,7 +509,6 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
         })}
         
         {isComplete && (() => {
-          const nopeCount = currentSet.items.length - seenCount - wantToCount;
           return (
             <div className="flex-shrink-0 w-32">
               <div className="w-32 h-48 rounded-lg bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-800 flex flex-col items-center justify-center p-3">
@@ -517,12 +516,7 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
                 <span className="text-white font-bold text-lg">{seenCount}/{currentSet.items.length}</span>
                 <span className="text-purple-200 text-[10px] text-center">{mediaConfig.actionDone}</span>
                 {wantToCount > 0 && (
-                  <div className="flex items-center gap-1 mt-1.5">
-                    <span className="text-purple-300 text-[10px]">+{wantToCount} added</span>
-                  </div>
-                )}
-                {nopeCount > 0 && (
-                  <span className="text-purple-400 text-[9px] mt-0.5">{nopeCount} skipped</span>
+                  <span className="text-purple-300 text-[9px] mt-1.5">+{wantToCount} on your list</span>
                 )}
               </div>
 
