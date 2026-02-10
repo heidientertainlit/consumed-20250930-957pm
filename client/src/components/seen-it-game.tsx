@@ -49,8 +49,7 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const initializedRef = useRef(false);
-  const [responses, setResponses] = useState<Record<string, boolean | 'want_to' | null>>({});
+  const [localResponses, setLocalResponses] = useState<Record<string, boolean | 'want_to'>>({});
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
 
 
@@ -146,38 +145,37 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
     enabled: !!user?.id
   });
 
-  useEffect(() => {
-    if (initializedRef.current) return;
-    if (!existingResponses || !sets.length) return;
-    const { responseMap, trackedExternalIds } = existingResponses as { responseMap: Record<string, boolean>; trackedExternalIds: Record<string, string> };
-    if (!responseMap && !trackedExternalIds) return;
-
-    initializedRef.current = true;
-    const merged: Record<string, boolean | 'want_to' | null> = { ...responseMap };
-
-    sets.forEach(set => {
-      set.items.forEach(item => {
-        if (merged[item.id] !== undefined) return;
-        const extId = item.external_id;
-        if (extId && trackedExternalIds?.[extId]) {
-          merged[item.id] = trackedExternalIds[extId] === 'finished' ? true : 'want_to';
-        }
+  const responses = useMemo(() => {
+    const merged: Record<string, boolean | 'want_to'> = {};
+    if (existingResponses && 'responseMap' in existingResponses) {
+      const { responseMap, trackedExternalIds } = existingResponses as { responseMap: Record<string, boolean>; trackedExternalIds: Record<string, string> };
+      Object.entries(responseMap || {}).forEach(([id, val]) => { merged[id] = val; });
+      sets.forEach(set => {
+        set.items.forEach(item => {
+          if (merged[item.id] !== undefined) return;
+          const extId = item.external_id;
+          if (extId && trackedExternalIds?.[extId]) {
+            merged[item.id] = trackedExternalIds[extId] === 'finished' ? true : 'want_to';
+          }
+        });
       });
-    });
+    }
+    Object.entries(localResponses).forEach(([id, val]) => { merged[id] = val; });
+    return merged;
+  }, [existingResponses, sets, localResponses]);
 
-    setResponses(merged);
-
-    const firstIncompleteIndex = sets.findIndex(set => {
-      const answeredCount = set.items.filter(item => merged[item.id] !== null && merged[item.id] !== undefined).length;
+  const incompleteSets = useMemo(() => {
+    return sets.filter(set => {
+      const answeredCount = set.items.filter(item => responses[item.id] !== undefined).length;
       return answeredCount < set.items.length;
     });
+  }, [sets, responses]);
 
-    if (firstIncompleteIndex !== -1 && firstIncompleteIndex !== currentSetIndex) {
-      setCurrentSetIndex(firstIncompleteIndex);
-    } else if (firstIncompleteIndex === -1) {
-      setCurrentSetIndex(sets.length - 1);
+  useEffect(() => {
+    if (currentSetIndex >= incompleteSets.length && incompleteSets.length > 0) {
+      setCurrentSetIndex(0);
     }
-  }, [existingResponses, sets]);
+  }, [incompleteSets.length]);
 
   const responseMutation = useMutation({
     mutationFn: async ({ setId, itemId, response, item }: { setId: string; itemId: string; response: boolean | 'want_to'; item: SeenItItem }) => {
@@ -247,6 +245,7 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
     },
     onSuccess: ({ itemId, response }) => {
       trackEvent('seen_it_response', { item_id: itemId, response: String(response) });
+      queryClient.invalidateQueries({ queryKey: ['seen-it-responses'] });
       if (response === true || response === 'want_to') {
         queryClient.invalidateQueries({ queryKey: ['/api/list-items'] });
       }
@@ -254,13 +253,13 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
   });
 
   const handleResponse = (setId: string, item: SeenItItem, response: boolean | 'want_to') => {
-    setResponses(prev => ({ ...prev, [item.id]: response }));
+    setLocalResponses(prev => ({ ...prev, [item.id]: response }));
     if (session) {
       responseMutation.mutate({ setId, itemId: item.id, response, item });
     }
   };
 
-  const currentSet = sets?.[currentSetIndex];
+  const currentSet = incompleteSets?.[currentSetIndex];
 
   if (isLoading && !mediaTypeFilter) {
     return (
@@ -272,7 +271,7 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
     );
   }
 
-  if (!sets || sets.length === 0 || !currentSet) {
+  if (!incompleteSets || incompleteSets.length === 0 || !currentSet) {
     return null;
   }
 
@@ -401,7 +400,7 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
               <p className="text-white text-sm font-medium mt-2 text-center">Complete!</p>
 
               <div className="flex flex-col gap-1 mt-2">
-                {sets && sets.length > 1 && currentSetIndex < sets.length - 1 ? (
+                {incompleteSets.length > 1 && currentSetIndex < incompleteSets.length - 1 ? (
                   <button
                     type="button"
                     onClick={() => setCurrentSetIndex(prev => prev + 1)}
@@ -423,9 +422,9 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
       </div>
 
       
-      {sets.length > 1 && (
+      {incompleteSets.length > 1 && (
         <div className="flex justify-center gap-1.5 mt-3">
-          {sets.map((_, idx) => (
+          {incompleteSets.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentSetIndex(idx)}
