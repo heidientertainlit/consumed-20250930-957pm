@@ -28,6 +28,10 @@ interface PollItem {
   options: string[];
   category?: string;
   pointsReward: number;
+  origin_type?: string;
+  origin_user_id?: string;
+  creatorName?: string;
+  creatorAvatar?: string;
 }
 
 interface PollsCarouselProps {
@@ -79,13 +83,34 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         }
       }
       
-      const items: PollItem[] = Array.from(uniqueTitles.values()).map(pool => ({
-        id: pool.id,
-        title: pool.title,
-        options: Array.isArray(pool.options) ? pool.options.filter((o: any) => typeof o === 'string') : [],
-        category: pool.category,
-        pointsReward: pool.points_reward || 2
-      })).filter(item => item.options.length > 0);
+      const poolsList = Array.from(uniqueTitles.values());
+      
+      const userCreatorIds = [...new Set(poolsList.filter(p => p.origin_type === 'user' && p.origin_user_id).map(p => p.origin_user_id))];
+      let creatorMap = new Map<string, { display_name: string; avatar: string; user_name: string }>();
+      if (userCreatorIds.length > 0) {
+        const { data: creators } = await supabase
+          .from('users')
+          .select('id, display_name, avatar, user_name')
+          .in('id', userCreatorIds);
+        if (creators) {
+          creatorMap = new Map(creators.map(c => [c.id, c]));
+        }
+      }
+      
+      const items: PollItem[] = poolsList.map(pool => {
+        const creator = pool.origin_user_id ? creatorMap.get(pool.origin_user_id) : null;
+        return {
+          id: pool.id,
+          title: pool.title,
+          options: Array.isArray(pool.options) ? pool.options.filter((o: any) => typeof o === 'string') : [],
+          category: pool.category,
+          pointsReward: pool.points_reward || 2,
+          origin_type: pool.origin_type || undefined,
+          origin_user_id: pool.origin_user_id || undefined,
+          creatorName: creator?.display_name || creator?.user_name || undefined,
+          creatorAvatar: creator?.avatar || undefined,
+        };
+      }).filter(item => item.options.length > 0);
       
       return items;
     },
@@ -384,11 +409,32 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
           const voted = votedPolls[poll.id];
           const selected = selectedOption[poll.id];
           
+          const isUserPoll = poll.origin_type === 'user';
+          
           return (
             <div key={poll.id} className="flex-shrink-0 w-full snap-center">
-              <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
-                <span className="text-xs text-green-700 font-medium">+{poll.pointsReward} pts</span>
-              </div>
+              {isUserPoll && poll.creatorName ? (
+                <div className="flex items-center gap-2 mb-3">
+                  {poll.creatorAvatar ? (
+                    <img src={poll.creatorAvatar} alt={poll.creatorName} className="w-7 h-7 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center">
+                      <span className="text-xs font-semibold text-purple-600">{poll.creatorName.charAt(0).toUpperCase()}</span>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{poll.creatorName}</p>
+                    <p className="text-[10px] text-gray-500">Poll</p>
+                  </div>
+                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
+                    <span className="text-xs text-green-700 font-medium">+{poll.pointsReward} pts</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
+                  <span className="text-xs text-green-700 font-medium">+{poll.pointsReward} pts</span>
+                </div>
+              )}
               
               <h3 className="text-gray-900 font-semibold text-base mb-3">{poll.title}</h3>
               
@@ -409,86 +455,6 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                     </button>
                   ))}
                   
-                  {!otherSearchOpen[poll.id] ? (
-                    <button
-                      className="py-3 px-4 rounded-full border border-dashed border-gray-300 text-gray-500 text-sm font-medium transition-all text-left hover:bg-gray-100 flex items-center gap-2"
-                      onClick={() => setOtherSearchOpen(prev => ({ ...prev, [poll.id]: true }))}
-                      disabled={voteMutation.isPending}
-                    >
-                      <Plus className="w-4 h-4" />
-                      My Pick
-                    </button>
-                  ) : (
-                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Search className="w-4 h-4 text-gray-400" />
-                        <Input
-                          placeholder="Search for your pick..."
-                          value={otherSearchQuery[poll.id] || ''}
-                          onChange={(e) => {
-                            const query = e.target.value;
-                            setOtherSearchQuery(prev => ({ ...prev, [poll.id]: query }));
-                            if (query.trim().length >= 2) {
-                              setTimeout(() => {
-                                handleOtherSearch(poll.id, query);
-                              }, 300);
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              handleOtherSearch(poll.id, otherSearchQuery[poll.id] || '');
-                            }
-                          }}
-                          className="flex-1 bg-transparent border-0 text-gray-700 placeholder:text-gray-400 text-sm h-8 p-0 focus-visible:ring-0"
-                          autoFocus
-                        />
-                        <button
-                          onClick={() => {
-                            setOtherSearchOpen(prev => ({ ...prev, [poll.id]: false }));
-                            setOtherSearchQuery(prev => ({ ...prev, [poll.id]: '' }));
-                            setOtherSearchResults(prev => ({ ...prev, [poll.id]: [] }));
-                          }}
-                          className="p-1 hover:bg-gray-200 rounded"
-                        >
-                          <X className="w-4 h-4 text-gray-400" />
-                        </button>
-                      </div>
-                      
-                      {isSearching[poll.id] && (
-                        <div className="flex items-center justify-center py-3">
-                          <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                        </div>
-                      )}
-                      
-                      {otherSearchResults[poll.id]?.length > 0 && (
-                        <div className="space-y-1 max-h-40 overflow-y-auto">
-                          {otherSearchResults[poll.id].map((result, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => handleSelectOther(poll, result)}
-                              className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors text-left"
-                            >
-                              {result.poster_url || result.image_url ? (
-                                <img 
-                                  src={result.poster_url || result.image_url} 
-                                  alt={result.title}
-                                  className="w-8 h-10 object-cover rounded"
-                                />
-                              ) : (
-                                <div className="w-8 h-10 bg-gray-200 rounded flex items-center justify-center">
-                                  <Search className="w-3 h-3 text-gray-400" />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-gray-700 text-sm font-medium truncate">{result.title}</p>
-                                <p className="text-gray-500 text-xs">{result.type} {result.year ? `(${result.year})` : ''}</p>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="space-y-2">
