@@ -450,6 +450,8 @@ export default function MediaDetail() {
       // Enrich each recommendation with poster images by searching media-search
       const enrichedRecs = await Promise.all(
         limitedRecs.map(async (item: any) => {
+          const itemType = (item.type || item.media_type || '').toLowerCase();
+          const searchTypes = itemType.includes('book') ? ['book'] : itemType.includes('music') || itemType.includes('album') ? ['music'] : itemType.includes('podcast') ? ['podcast'] : ['movie', 'tv'];
           const searchQuery = item.title + (item.year ? ` ${item.year}` : '');
           try {
             const searchResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search`, {
@@ -458,7 +460,7 @@ export default function MediaDetail() {
                 'Authorization': `Bearer ${session.access_token}`,
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({ query: searchQuery, limit: 1 })
+              body: JSON.stringify({ query: searchQuery, types: searchTypes, limit: 1 })
             });
             
             if (searchResponse.ok) {
@@ -468,7 +470,7 @@ export default function MediaDetail() {
                 return {
                   title: match.title || item.title,
                   type: match.type || item.type || item.media_type,
-                  poster_url: match.poster_url || match.image_url,
+                  poster_url: match.poster_url || match.image || match.image_url || '',
                   year: match.year || item.year,
                   external_id: match.external_id || match.id,
                   external_source: match.external_source || match.source,
@@ -1088,18 +1090,6 @@ export default function MediaDetail() {
           <div className="mt-4 pt-4 border-t border-gray-100">
             <h3 className="text-base font-bold text-gray-900 mb-3">Say something</h3>
             <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-              <div className="flex items-center gap-3 mb-3 p-2 bg-white rounded-xl border border-gray-100">
-                <img 
-                  src={resolvedImageUrl} 
-                  alt={mediaItem.title}
-                  className="w-10 h-14 rounded-lg object-cover flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-gray-900 font-medium text-sm truncate">{mediaItem.title}</p>
-                  <p className="text-gray-500 text-xs capitalize">{mediaItem.type || params?.type}</p>
-                </div>
-              </div>
-
               <div className="flex flex-wrap gap-2 mb-3">
                 {(['thought', 'hot_take'] as const).map((type) => (
                   <button
