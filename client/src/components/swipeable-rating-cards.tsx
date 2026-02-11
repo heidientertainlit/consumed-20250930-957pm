@@ -116,10 +116,12 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
         const isTmdb = media.externalSource === 'tmdb';
         
         const hasValidImage = media.imageUrl && media.imageUrl.startsWith('http');
-        const hasValidCreator = media.creator && !media.creator.includes('Unknown');
+        const hasValidCreator = media.creator && media.creator.trim() !== '' && !media.creator.includes('Unknown');
         
         if (!isSpotify && hasValidImage && hasValidCreator) continue;
         if (!media.title) continue;
+        
+        const keepExistingImage = hasValidImage;
         
         try {
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -218,12 +220,13 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
             }
             
             fetchedPostIds.current.add(post.id);
-            if (imageUrl || creatorName) {
+            const finalImage = keepExistingImage ? undefined : imageUrl;
+            if (finalImage || creatorName) {
               setFetchedData(prev => ({
                 ...prev,
                 [post.id]: {
-                  image: imageUrl,
-                  creator: creatorName
+                  image: finalImage || prev[post.id]?.image,
+                  creator: creatorName || prev[post.id]?.creator
                 }
               }));
             }
