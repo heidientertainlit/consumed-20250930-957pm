@@ -198,7 +198,9 @@ serve(async (req) => {
 
         // Ensure we have an image URL - fetch from TMDB if not provided
         let finalImageUrl = media_image_url || null;
-        if (!finalImageUrl && media_external_id && media_external_source === 'tmdb') {
+        if ((media_external_source === 'googlebooks' || media_external_source === 'open_library') && media_external_id) {
+          finalImageUrl = `https://books.google.com/books/content?id=${media_external_id}&printsec=frontcover&img=1&zoom=1`;
+        } else if (!finalImageUrl && media_external_id && media_external_source === 'tmdb') {
           console.log('Fetching TMDB poster for prediction post...');
           finalImageUrl = await fetchTmdbPosterUrl(media_external_id, media_external_source);
         }
@@ -305,7 +307,9 @@ serve(async (req) => {
 
         // Ensure we have an image URL - fetch from TMDB if not provided
         let pollImageUrl = media_image_url || null;
-        if (!pollImageUrl && media_external_id && media_external_source === 'tmdb') {
+        if ((media_external_source === 'googlebooks' || media_external_source === 'open_library') && media_external_id) {
+          pollImageUrl = `https://books.google.com/books/content?id=${media_external_id}&printsec=frontcover&img=1&zoom=1`;
+        } else if (!pollImageUrl && media_external_id && media_external_source === 'tmdb') {
           console.log('Fetching TMDB poster for poll post...');
           pollImageUrl = await fetchTmdbPosterUrl(media_external_id, media_external_source);
         }
@@ -372,7 +376,11 @@ serve(async (req) => {
       // Handle all other post types (thought, rate-review, add-media)
       // Ensure we have an image URL - fetch from TMDB if not provided
       let regularPostImageUrl = media_image_url || null;
-      if (!regularPostImageUrl && media_external_id && media_external_source === 'tmdb') {
+      // For books, always construct the correct Google Books image from external_id
+      if ((media_external_source === 'googlebooks' || media_external_source === 'open_library') && media_external_id) {
+        regularPostImageUrl = `https://books.google.com/books/content?id=${media_external_id}&printsec=frontcover&img=1&zoom=1`;
+        console.log('Using Google Books poster for post:', regularPostImageUrl);
+      } else if (!regularPostImageUrl && media_external_id && media_external_source === 'tmdb') {
         console.log('Fetching TMDB poster for regular post...');
         regularPostImageUrl = await fetchTmdbPosterUrl(media_external_id, media_external_source);
       }

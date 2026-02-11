@@ -313,7 +313,11 @@ serve(async (req) => {
         
         // Ensure we have a poster URL - fetch from TMDB if missing
         let finalImageUrl = body.media_image_url || null;
-        if (!finalImageUrl && media_external_id && (media_external_source === 'tmdb' || !media_external_source)) {
+        // For books, always construct the correct Google Books image from external_id
+        if ((media_external_source === 'googlebooks' || media_external_source === 'open_library') && media_external_id) {
+          finalImageUrl = `https://books.google.com/books/content?id=${media_external_id}&printsec=frontcover&img=1&zoom=1`;
+          console.log('Using Google Books poster for rating:', finalImageUrl);
+        } else if (!finalImageUrl && media_external_id && (media_external_source === 'tmdb' || !media_external_source)) {
           console.log('No image URL provided for rating, fetching from TMDB...');
           finalImageUrl = await fetchTmdbPosterUrl(media_external_id, media_external_source || 'tmdb', media_type);
           if (finalImageUrl) {

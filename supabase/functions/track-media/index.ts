@@ -272,7 +272,11 @@ serve(async (req) => {
     // CRITICAL: Ensure we have a poster image URL before inserting
     // This prevents the "random stock image" bug in the activity feed
     let finalImageUrl = imageUrl || null;
-    if (!finalImageUrl) {
+    // For books, always construct the correct Google Books image from external_id
+    if ((externalSource === 'googlebooks' || externalSource === 'open_library') && externalId) {
+      finalImageUrl = `https://books.google.com/books/content?id=${externalId}&printsec=frontcover&img=1&zoom=1`;
+      console.log('Using Google Books poster:', finalImageUrl);
+    } else if (!finalImageUrl) {
       console.log('No image URL provided, fetching from TMDB for:', title);
       finalImageUrl = await fetchTmdbPosterUrl(externalId, externalSource, mediaType, title);
       if (finalImageUrl) {
