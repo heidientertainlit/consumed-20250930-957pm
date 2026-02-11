@@ -414,28 +414,30 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
           return (
             <div key={poll.id} className="flex-shrink-0 w-full snap-center">
               {isUserPoll && poll.creatorName ? (
-                <div className="flex items-center gap-2 mb-3">
-                  {poll.creatorAvatar ? (
-                    <img src={poll.creatorAvatar} alt={poll.creatorName} className="w-6 h-6 rounded-full object-cover" />
-                  ) : (
-                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
-                      <span className="text-[10px] font-semibold text-purple-600">{poll.creatorName.charAt(0).toUpperCase()}</span>
+                <>
+                  <div className="flex items-center gap-2.5 mb-2">
+                    {poll.creatorAvatar ? (
+                      <img src={poll.creatorAvatar} alt={poll.creatorName} className="w-8 h-8 rounded-full object-cover ring-2 ring-purple-100" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center ring-2 ring-purple-100">
+                        <span className="text-xs font-bold text-white">{poll.creatorName.charAt(0).toUpperCase()}</span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{poll.creatorName}</p>
                     </div>
-                  )}
-                  <span className="text-sm font-medium text-gray-900">{poll.creatorName}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-[10px] font-medium text-gray-600">{poll.category || 'General'}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-purple-100 text-[10px] font-medium text-purple-600">Poll</span>
-                  <div className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
+                    <span className="px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-[10px] font-medium text-green-700">+{poll.pointsReward} pts</span>
+                  </div>
+                  <h3 className="text-gray-900 font-semibold text-base mb-3 pl-[42px]">{poll.title}</h3>
+                </>
+              ) : (
+                <>
+                  <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
                     <span className="text-xs text-green-700 font-medium">+{poll.pointsReward} pts</span>
                   </div>
-                </div>
-              ) : (
-                <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
-                  <span className="text-xs text-green-700 font-medium">+{poll.pointsReward} pts</span>
-                </div>
+                  <h3 className="text-gray-900 font-semibold text-base mb-3">{poll.title}</h3>
+                </>
               )}
-              
-              <h3 className="text-gray-900 font-semibold text-base mb-3">{poll.title}</h3>
               
               {!voted ? (
                 <div className="flex flex-col gap-2">
