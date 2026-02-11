@@ -1521,6 +1521,16 @@ export default function Feed() {
   // Helper to deduplicate rating posts - keep only one per user+media, preferring the one with content
   const deduplicateRatingPosts = (posts: any[]): any[] => {
     const seen = new Map<string, any>();
+    const isAutoContent = (text: string) => !text || text.startsWith('Added ') || text.startsWith('"Added ') || /^"?Added .+ to .+"?$/i.test(text);
+    const postScore = (post: any) => {
+      const hasRating = post.rating && post.rating > 0;
+      const content = post.content?.trim() || '';
+      const auto = isAutoContent(content);
+      let score = 0;
+      if (hasRating) score += 100;
+      if (!auto && content.length > 0) score += 50 + content.length;
+      return score;
+    };
     for (const post of posts) {
       const mediaId = post.mediaItems?.[0]?.externalId || post.mediaItems?.[0]?.external_id || post.mediaItems?.[0]?.id || '';
       const userId = post.user?.id || '';
@@ -1529,13 +1539,7 @@ export default function Feed() {
       if (!existing) {
         seen.set(key, post);
       } else {
-        // Prefer the post with more content (review text)
-        const existingContent = existing.content?.trim() || '';
-        const newContent = post.content?.trim() || '';
-        const existingIsAuto = existingContent.startsWith('Added ') || existingContent.match(/^"?Added .+ to .+"?$/i);
-        const newIsAuto = newContent.startsWith('Added ') || newContent.match(/^"?Added .+ to .+"?$/i);
-        // Keep the one with user-written content, or longer content
-        if ((newContent.length > existingContent.length && !newIsAuto) || (existingIsAuto && !newIsAuto)) {
+        if (postScore(post) > postScore(existing)) {
           seen.set(key, post);
         }
       }
