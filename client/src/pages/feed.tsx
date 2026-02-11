@@ -3535,7 +3535,13 @@ export default function Feed() {
                 <ConsumptionCarousel 
                   items={(() => {
                     const filtered = filterByCategory(socialPosts || [])
-                      .filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved');
+                      .filter((p: any) => {
+                        if (!p.mediaItems?.length || !p.user?.id || p.user?.username === 'Unknown' || p.type === 'cast_approved') return false;
+                        const content = (p.content || '').trim();
+                        const isAutoAdd = /^"?Added .+ to .+"?$/i.test(content) || content.startsWith('Added ');
+                        if (isAutoAdd && !(p.rating && p.rating > 0)) return false;
+                        return true;
+                      });
                     const seen = new Map<string, any>();
                     const pickBetter = (existing: any, candidate: any) => {
                       const cRating = candidate.rating && candidate.rating > 0;
