@@ -352,23 +352,44 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
             });
           }
           } else if (trackPostType === 'poll' && contentText.trim()) {
-          const validOptions = pollOptions.filter(o => o.trim());
-          if (validOptions.length >= 2) {
-            await fetch(`${supabaseUrl}/functions/v1/create-poll`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                question: contentText,
-                options: validOptions,
-                containsSpoilers,
-                mediaId: selectedMedia.external_id,
-                mediaType: selectedMedia.type,
-                mediaTitle: selectedMedia.title,
-              }),
-            });
+          const validTrackPollOptions = pollOptions.filter(o => o.trim());
+          if (validTrackPollOptions.length >= 2) {
+            const { data: { user: trackPollUser } } = await supabase.auth.getUser();
+            if (trackPollUser) {
+              const trackPoolId = crypto.randomUUID();
+              await supabase.from('prediction_pools').insert({
+                id: trackPoolId,
+                title: contentText.substring(0, 100),
+                description: contentText,
+                type: 'vote',
+                status: 'open',
+                category: selectedMedia.type?.toLowerCase() || 'general',
+                icon: '🗳️',
+                options: validTrackPollOptions,
+                points_reward: 10,
+                origin_type: 'user',
+                origin_user_id: trackPollUser.id,
+                media_external_id: selectedMedia.external_id || null,
+                media_external_source: selectedMedia.external_source || null,
+                media_title: selectedMedia.title || null,
+                likes_count: 0,
+                comments_count: 0,
+                participants: 0,
+              });
+              await supabase.from('social_posts').insert({
+                user_id: trackPollUser.id,
+                content: contentText,
+                post_type: 'poll',
+                prediction_pool_id: trackPoolId,
+                visibility: 'public',
+                media_title: selectedMedia.title || null,
+                media_type: selectedMedia.type?.toLowerCase() || null,
+                media_external_id: selectedMedia.external_id || null,
+                media_external_source: selectedMedia.external_source || null,
+                image_url: selectedMedia.image || selectedMedia.image_url || '',
+                contains_spoiler: containsSpoilers,
+              });
+            }
           }
         }
         
@@ -418,23 +439,52 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           return;
         }
         
-        const response = await fetch(`${supabaseUrl}/functions/v1/create-poll`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            question: contentText,
+        const { data: { user: pollUser } } = await supabase.auth.getUser();
+        if (!pollUser) throw new Error('Not authenticated');
+
+        const poolId = crypto.randomUUID();
+        const { error: poolError } = await supabase
+          .from('prediction_pools')
+          .insert({
+            id: poolId,
+            title: contentText.substring(0, 100),
+            description: contentText,
+            type: 'vote',
+            status: 'open',
+            category: selectedMedia?.type?.toLowerCase() || 'general',
+            icon: '🗳️',
             options: validOptions,
-            containsSpoilers,
-            mediaId: selectedMedia?.external_id,
-            mediaType: selectedMedia?.type,
-            mediaTitle: selectedMedia?.title,
-          }),
+            points_reward: 10,
+            origin_type: 'user',
+            origin_user_id: pollUser.id,
+            media_external_id: selectedMedia?.external_id || null,
+            media_external_source: selectedMedia?.external_source || null,
+            media_title: selectedMedia?.title || null,
+            likes_count: 0,
+            comments_count: 0,
+            participants: 0,
+          });
+
+        if (poolError) {
+          console.error('Poll pool error:', poolError);
+          throw new Error('Failed to create poll');
+        }
+
+        const { error: pollPostError } = await supabase.from('social_posts').insert({
+          user_id: pollUser.id,
+          content: contentText,
+          post_type: 'poll',
+          prediction_pool_id: poolId,
+          visibility: 'public',
+          media_title: selectedMedia?.title || null,
+          media_type: selectedMedia?.type?.toLowerCase() || null,
+          media_external_id: selectedMedia?.external_id || null,
+          media_external_source: selectedMedia?.external_source || null,
+          image_url: selectedMedia?.image || selectedMedia?.image_url || '',
+          contains_spoiler: containsSpoilers,
         });
-        
-        if (!response.ok) throw new Error('Failed to create poll');
+
+        if (pollPostError) console.error('Poll social post error:', pollPostError);
         
         toast({ title: "Poll created!" });
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
