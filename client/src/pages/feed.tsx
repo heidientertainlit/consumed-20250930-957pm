@@ -252,7 +252,23 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
       }
     });
     
-    return filteredPosts;
+    const fixedPosts = filteredPosts.map((post: any) => {
+      if (post.mediaItems?.length > 0) {
+        return {
+          ...post,
+          mediaItems: post.mediaItems.map((m: any) => {
+            const src = m.externalSource || m.external_source || '';
+            const eid = m.externalId || m.external_id || '';
+            if ((src === 'googlebooks' || src === 'open_library') && eid) {
+              return { ...m, imageUrl: `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`, image_url: `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1` };
+            }
+            return m;
+          })
+        };
+      }
+      return post;
+    });
+    return fixedPosts;
   }
   
   // Fallback for old response format (array of posts)
@@ -658,7 +674,15 @@ function CurrentlyConsumingFeedCard({
   const [hoverRating, setHoverRating] = useState(0);
   const [selectedRating, setSelectedRating] = useState(0);
   
-  const media = post.mediaItems![0];
+  const rawMedia = post.mediaItems![0];
+  const media = (() => {
+    const src = rawMedia.externalSource;
+    const eid = rawMedia.externalId;
+    if ((src === 'googlebooks' || src === 'open_library') && eid) {
+      return { ...rawMedia, imageUrl: `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1` };
+    }
+    return rawMedia;
+  })();
   const isOwnPost = user?.id && post.user?.id === user.id;
   
   const handleSubmitRating = async (rating: number) => {
@@ -3363,7 +3387,7 @@ export default function Feed() {
                     posts={ratingPosts.slice(0, 3).map((p: any) => ({
                       id: p.id,
                       user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
-                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if ((!img || !img.startsWith('http')) && (src === 'googlebooks' || src === 'open_library') && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
+                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if ((src === 'googlebooks' || src === 'open_library') && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
@@ -3467,7 +3491,7 @@ export default function Feed() {
                     posts={ratingPosts.slice(6, 9).map((p: any) => ({
                       id: p.id,
                       user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
-                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if ((!img || !img.startsWith('http')) && (src === 'googlebooks' || src === 'open_library') && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
+                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if ((src === 'googlebooks' || src === 'open_library') && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
@@ -3535,7 +3559,7 @@ export default function Feed() {
                     posts={ratingPosts.slice(3, 6).map((p: any) => ({
                       id: p.id,
                       user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
-                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if ((!img || !img.startsWith('http')) && (src === 'googlebooks' || src === 'open_library') && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
+                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if ((src === 'googlebooks' || src === 'open_library') && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
@@ -3843,7 +3867,7 @@ export default function Feed() {
                     posts={ratingPosts.slice(9, 12).map((p: any) => ({
                       id: p.id,
                       user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
-                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if ((!img || !img.startsWith('http')) && (src === 'googlebooks' || src === 'open_library') && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
+                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if ((src === 'googlebooks' || src === 'open_library') && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
