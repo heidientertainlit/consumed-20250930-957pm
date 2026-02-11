@@ -3523,8 +3523,25 @@ export default function Feed() {
               {/* The Room - Friend Activity with reactions */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && filterByCategory(socialPosts || []).filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved').length > 0 && (
                 <ConsumptionCarousel 
-                  items={filterByCategory(socialPosts || [])
-                    .filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved')
+                  items={(() => {
+                    const filtered = filterByCategory(socialPosts || [])
+                      .filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved');
+                    const seen = new Map<string, any>();
+                    for (const p of filtered) {
+                      const mediaId = p.mediaItems?.[0]?.externalId || p.mediaItems?.[0]?.external_id || p.mediaItems?.[0]?.id || '';
+                      const userId = p.user?.id || '';
+                      const key = `${userId}-${mediaId}`;
+                      const existing = seen.get(key);
+                      if (!existing) {
+                        seen.set(key, p);
+                      } else {
+                        const hasRating = p.rating && p.rating > 0;
+                        const existingHasRating = existing.rating && existing.rating > 0;
+                        if (hasRating && !existingHasRating) seen.set(key, p);
+                      }
+                    }
+                    return Array.from(seen.values());
+                  })()
                     .slice(0, 10)
                     .map((p: any) => ({
                       id: p.id,
