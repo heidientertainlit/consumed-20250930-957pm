@@ -3391,7 +3391,9 @@ export default function Feed() {
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
+                    onDelete={handleHidePost}
                     likedPosts={likedPosts}
+                    currentUserId={currentAppUserId}
                   />
                 );
               })()}
@@ -3495,7 +3497,9 @@ export default function Feed() {
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
+                    onDelete={handleHidePost}
                     likedPosts={likedPosts}
+                    currentUserId={currentAppUserId}
                   />
                 );
               })()}
@@ -3563,7 +3567,9 @@ export default function Feed() {
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
+                    onDelete={handleHidePost}
                     likedPosts={likedPosts}
+                    currentUserId={currentAppUserId}
                   />
                 );
               })()}
@@ -3871,7 +3877,9 @@ export default function Feed() {
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
+                    onDelete={handleHidePost}
                     likedPosts={likedPosts}
+                    currentUserId={currentAppUserId}
                   />
                 );
               })()}

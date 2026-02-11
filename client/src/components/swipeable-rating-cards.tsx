@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ChevronRight, ChevronLeft, Star, Heart, MessageCircle, Plus, User, Send, Loader2, X } from "lucide-react";
+import { ChevronRight, ChevronLeft, Star, Heart, MessageCircle, Plus, User, Send, Loader2, X, Trash2 } from "lucide-react";
 import { Link } from "wouter";
 import { QuickAddListSheet } from "./quick-add-list-sheet";
 import { useAuth } from "@/lib/auth";
@@ -72,10 +72,12 @@ interface Comment {
 interface SwipeableRatingCardsProps {
   posts: RatingPost[];
   onLike?: (postId: string) => void;
+  onDelete?: (postId: string) => void;
   likedPosts?: Set<string>;
+  currentUserId?: string;
 }
 
-export default function SwipeableRatingCards({ posts, onLike, likedPosts }: SwipeableRatingCardsProps) {
+export default function SwipeableRatingCards({ posts, onLike, onDelete, likedPosts, currentUserId }: SwipeableRatingCardsProps) {
   const { session } = useAuth();
   const { toast } = useToast();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -629,7 +631,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                     </div>
                   )}
                 </Link>
-                <div className="flex items-baseline gap-1 min-w-0">
+                <div className="flex items-baseline gap-1 min-w-0 flex-1">
                   <Link href={`/profile/${currentPost.user?.id}`}>
                     <span className="text-sm font-medium text-purple-600 truncate">
                       {currentPost.user?.displayName || currentPost.user?.username || 'User'}
@@ -639,6 +641,19 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
                     {currentPost.rating ? 'rated' : 'reviewed'}
                   </span>
                 </div>
+                {currentUserId && currentPost.user?.id === currentUserId && onDelete && (
+                  <button
+                    onClick={() => {
+                      if (confirm('Delete this post?')) {
+                        onDelete(currentPost.id);
+                      }
+                    }}
+                    className="text-gray-400 hover:text-red-500 transition-colors shrink-0 ml-1"
+                    title="Delete post"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
               </div>
 
               {/* Media title */}
