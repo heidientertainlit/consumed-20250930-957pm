@@ -1688,15 +1688,16 @@ export default function Feed() {
     // Never filter out the highlighted post from a notification
     if (highlightPostId && post.id === highlightPostId) return true;
     
-    // Hide user-generated polls and predictions - only show Consumed-created ones
+    // Hide user-generated predictions - only show Consumed-created ones
+    // But allow user-generated polls through since those are social content
     const postType = post.type?.toLowerCase() || '';
-    if (['prediction', 'poll', 'vote'].includes(postType)) {
+    if (['prediction'].includes(postType)) {
       const postData = post as any;
       const isUserGenerated = postData.origin_type === 'user' || 
         (!postData.origin_type && postData.origin_user_id) ||
         (postData.user && !postData.origin_type);
       if (isUserGenerated) {
-        return false; // Hide user-generated polls/predictions
+        return false; // Hide user-generated predictions
       }
     }
     
@@ -4444,6 +4445,42 @@ export default function Feed() {
                       <div className="mb-4">
                         <CollaborativePredictionCard 
                           prediction={predictionCardData as any}
+                        />
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Render user-generated polls as interactive voting cards
+                if (post.type === 'poll' && (post as any).question) {
+                  const pollPost = post as any;
+                  const pollCardData = {
+                    ...post,
+                    id: pollPost.poolId || post.id,
+                    title: pollPost.question,
+                    mediaTitle: pollPost.mediaTitle || post.mediaItems?.[0]?.title,
+                    mediaItems: pollPost.mediaItems || post.mediaItems || [],
+                    creator: pollPost.creator || post.user || { username: 'Unknown' },
+                    poolId: pollPost.poolId || post.id,
+                    options: pollPost.options || [],
+                    optionVotes: pollPost.optionVotes || [],
+                    userVotes: pollPost.userVotes || [],
+                    userHasAnswered: pollPost.userHasAnswered || false,
+                    likesCount: pollPost.likes || 0,
+                    commentsCount: pollPost.comments || 0,
+                    isLiked: pollPost.isLiked || false,
+                    origin_type: pollPost.origin_type || 'user',
+                    origin_user_id: pollPost.origin_user_id,
+                    status: pollPost.status || 'open',
+                    type: 'vote',
+                  };
+
+                  return (
+                    <div key={`poll-${post.id}`}>
+                      {carouselElements}
+                      <div className="mb-4">
+                        <CollaborativePredictionCard 
+                          prediction={pollCardData as any}
                         />
                       </div>
                     </div>

@@ -167,7 +167,7 @@ serve(async (req) => {
         // Use admin client to bypass RLS on prediction_pools
         const { data: pools, error: poolsError } = await supabaseAdmin
           .from('prediction_pools')
-          .select('id, title, description, options, status, type, origin_type, origin_user_id, created_at, likes_count, comments_count, media_external_id, media_external_source, media_title')
+          .select('id, title, options, status, type, origin_type, origin_user_id, created_at, likes_count, comments_count, media_external_id, media_external_source, media_title')
           .in('id', predictionPoolIds);
         
         if (pools) {
@@ -1183,13 +1183,13 @@ serve(async (req) => {
         // Check if current user has already voted on this prediction
         const userHasAnswered = userVotedPoolIds.has(pred.id);
 
+        const isPoll = pred.type === 'vote';
         return {
           id: pred.id,
-          type: 'prediction',
+          type: isPoll ? 'poll' : 'prediction',
           poolType: pred.type || 'predict',
           poolId: pred.id,
           question: pred.title,
-          description: pred.description,
           status: pred.status,
           options: pred.options || [],
           optionVotes,
