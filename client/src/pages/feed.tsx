@@ -30,6 +30,7 @@ import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vo
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
+import { UserPollsCarousel } from "@/components/user-polls-carousel";
 import ConversationsPanel from "@/components/conversations-panel";
 import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog";
 import RankFeedCard from "@/components/rank-feed-card";
@@ -4215,14 +4216,16 @@ export default function Feed() {
               )}
 
               {/* Social Posts */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && filteredPosts.filter((item: any) => {
-                // Filter out incorrectly formatted prediction posts
-                if ('originalPostIds' in item) return true; // Keep consolidated activities
-                if ((item as any).type === 'friend_activity_block') return true; // Keep friend activity blocks
-                if ((item as any).type === 'consumption_carousel') return false; // Skip - handled separately above
+              {(() => {
+                let pendingUserPolls: any[] = [];
+                const feedData = (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') ? filteredPosts.filter((item: any) => {
+                if ('originalPostIds' in item) return true;
+                if ((item as any).type === 'friend_activity_block') return true;
+                if ((item as any).type === 'consumption_carousel') return false;
                 const post = item as SocialPost;
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
-              }).map((item: any, postIndex: number) => {
+              }) : [];
+              return feedData.map((item: any, postIndex: number) => {
                 // Handle Quick Glimpse cards (scrolling Tier 2 grouped activities)
                 if ((item as any).type === 'friend_activity_block') {
                   const block = item as any;
@@ -4451,11 +4454,10 @@ export default function Feed() {
                   );
                 }
 
-                // Render user-generated polls as interactive cards
+                // Collect user-generated polls for carousel rendering
                 if (post.type === 'poll' && (post as any).question) {
                   const pollPost = post as any;
                   const pollCardData = {
-                    ...post,
                     id: pollPost.poolId || post.id,
                     title: pollPost.question,
                     mediaTitle: pollPost.mediaTitle || post.mediaItems?.[0]?.title,
@@ -4475,16 +4477,25 @@ export default function Feed() {
                     type: 'vote',
                   };
 
-                  return (
-                    <div key={`poll-${post.id}`}>
-                      {carouselElements}
-                      <div className="mb-4">
-                        <CollaborativePredictionCard 
-                          prediction={pollCardData as any}
-                        />
+                  const isLastPost = postIndex === feedData.length - 1;
+                  const nextPost = !isLastPost ? feedData[postIndex + 1] : null;
+                  const nextIsPoll = nextPost?.type === 'poll' && (nextPost as any).question;
+
+                  if (!pendingUserPolls) pendingUserPolls = [];
+                  pendingUserPolls.push(pollCardData);
+
+                  if (!nextIsPoll || isLastPost) {
+                    const pollsToRender = [...pendingUserPolls];
+                    pendingUserPolls = [];
+                    return (
+                      <div key={`user-polls-${post.id}`}>
+                        {carouselElements}
+                        <UserPollsCarousel polls={pollsToRender} />
                       </div>
-                    </div>
-                  );
+                    );
+                  }
+                  
+                  return carouselElements ? <div key={`carousel-spacer-${post.id}`}>{carouselElements}</div> : null;
                 }
 
                 // Skip user rank_share posts - only show Consumed Rankings carousel
@@ -5927,7 +5938,8 @@ export default function Feed() {
 
                 </div>
               );
-              })}
+              });
+              })()}
 
               {/* Infinite Scroll Loading Indicator - DISABLED */}
               {/* 
