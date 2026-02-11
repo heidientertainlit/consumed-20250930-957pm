@@ -3535,41 +3535,48 @@ export default function Feed() {
                 <ConsumptionCarousel 
                   items={(() => {
                     const filtered = filterByCategory(socialPosts || [])
-                      .filter((p: any) => {
-                        if (!p.mediaItems?.length || !p.user?.id || p.user?.username === 'Unknown' || p.type === 'cast_approved') return false;
-                        const content = (p.content || '').trim();
-                        const isAutoAdd = /^"?Added .+ to .+"?$/i.test(content) || content.startsWith('Added ');
-                        if (isAutoAdd && !(p.rating && p.rating > 0)) return false;
-                        return true;
-                      });
+                      .filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved');
                     const seen = new Map<string, any>();
-                    const pickBetter = (existing: any, candidate: any) => {
-                      const cRating = candidate.rating && candidate.rating > 0;
-                      const eRating = existing.rating && existing.rating > 0;
-                      if (cRating && !eRating) return candidate;
-                      const cContent = candidate.content?.trim() || '';
-                      const eContent = existing.content?.trim() || '';
-                      const cAuto = !cContent || /^"?Added .+ to .+"?$/i.test(cContent);
-                      const eAuto = !eContent || /^"?Added .+ to .+"?$/i.test(eContent);
-                      if (!cAuto && eAuto) return candidate;
-                      return existing;
+                    const isAutoAdd = (text: string) => /^"?Added .+ to .+"?$/i.test(text) || text.startsWith('Added ');
+                    const getListName = (text: string) => {
+                      const m = text.match(/to\s+["']?([^"']+)["']?\s*$/i) || text.match(/Added .+ to (.+?)["']?\s*$/i);
+                      return m ? m[1].replace(/"/g, '').trim() : '';
                     };
                     for (const p of filtered) {
                       const mediaId = p.mediaItems?.[0]?.externalId || p.mediaItems?.[0]?.external_id || p.mediaItems?.[0]?.id || '';
                       const mediaTitle = (p.mediaItems?.[0]?.title || '').toLowerCase().trim();
                       const userId = p.user?.id || '';
                       const idKey = `${userId}-id-${mediaId}`;
-                      const titleKey = `${userId}-title-${mediaTitle}`;
+                      const titleKey = mediaTitle ? `${userId}-title-${mediaTitle}` : '';
                       const existingById = seen.get(idKey);
-                      const existingByTitle = seen.get(titleKey);
+                      const existingByTitle = titleKey ? seen.get(titleKey) : undefined;
                       const existing = existingById || existingByTitle;
                       if (!existing) {
-                        seen.set(idKey, p);
-                        if (mediaTitle) seen.set(titleKey, p);
+                        const clone = { ...p };
+                        const content = (clone.content || '').trim();
+                        if (isAutoAdd(content)) {
+                          clone._listName = getListName(content);
+                        }
+                        seen.set(idKey, clone);
+                        if (titleKey) seen.set(titleKey, clone);
                       } else {
-                        const better = pickBetter(existing, p);
-                        seen.set(idKey, better);
-                        if (mediaTitle) seen.set(titleKey, better);
+                        const content = (p.content || '').trim();
+                        const hasRating = p.rating && p.rating > 0;
+                        const existingHasRating = existing.rating && existing.rating > 0;
+                        if (isAutoAdd(content)) {
+                          existing._listName = existing._listName || getListName(content);
+                        }
+                        if (hasRating && !existingHasRating) {
+                          const merged = { ...p, _listName: existing._listName };
+                          seen.set(idKey, merged);
+                          if (titleKey) seen.set(titleKey, merged);
+                        } else if (hasRating) {
+                          existing._listName = existing._listName || getListName(content);
+                        } else if (!existingHasRating && !isAutoAdd(content) && content.length > (existing.content || '').length) {
+                          const merged = { ...p, _listName: existing._listName };
+                          seen.set(idKey, merged);
+                          if (titleKey) seen.set(titleKey, merged);
+                        }
                       }
                     }
                     const uniquePosts = new Map<string, any>();
@@ -3591,7 +3598,11 @@ export default function Feed() {
                       mediaImage: p.mediaItems[0]?.imageUrl || p.mediaItems[0]?.image_url || p.mediaItems[0]?.poster_url || '',
                       mediaExternalId: p.mediaItems[0]?.externalId || p.mediaItems[0]?.external_id || '',
                       mediaExternalSource: p.mediaItems[0]?.externalSource || p.mediaItems[0]?.external_source || 'tmdb',
-                      activityText: p.rating ? `rated ${p.rating}/5` : (p.activityText || 'added'),
+                      activityText: p.rating && p._listName
+                        ? `rated ${p.rating}/5 · ${p._listName}`
+                        : p.rating ? `rated ${p.rating}/5`
+                        : p._listName ? `added to ${p._listName}`
+                        : (p.activityText || 'added'),
                       rating: p.rating || null,
                       review: p.content || p.review || null,
                       timestamp: p.createdAt || new Date().toISOString()
