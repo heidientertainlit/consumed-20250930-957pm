@@ -1533,18 +1533,28 @@ export default function Feed() {
     };
     for (const post of posts) {
       const mediaId = post.mediaItems?.[0]?.externalId || post.mediaItems?.[0]?.external_id || post.mediaItems?.[0]?.id || '';
+      const mediaTitle = (post.mediaItems?.[0]?.title || '').toLowerCase().trim();
       const userId = post.user?.id || '';
-      const key = `${userId}-${mediaId}`;
-      const existing = seen.get(key);
+      const idKey = `${userId}-id-${mediaId}`;
+      const titleKey = `${userId}-title-${mediaTitle}`;
+      const existingById = seen.get(idKey);
+      const existingByTitle = seen.get(titleKey);
+      const existing = existingById || existingByTitle;
       if (!existing) {
-        seen.set(key, post);
+        seen.set(idKey, post);
+        if (mediaTitle) seen.set(titleKey, post);
       } else {
         if (postScore(post) > postScore(existing)) {
-          seen.set(key, post);
+          seen.set(idKey, post);
+          if (mediaTitle) seen.set(titleKey, post);
         }
       }
     }
-    return Array.from(seen.values());
+    const uniquePosts = new Map<string, any>();
+    for (const [, p] of seen) {
+      uniquePosts.set(p.id, p);
+    }
+    return Array.from(uniquePosts.values());
   };
 
   // Type for swipeable rating cards block
@@ -3527,20 +3537,40 @@ export default function Feed() {
                     const filtered = filterByCategory(socialPosts || [])
                       .filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved');
                     const seen = new Map<string, any>();
+                    const pickBetter = (existing: any, candidate: any) => {
+                      const cRating = candidate.rating && candidate.rating > 0;
+                      const eRating = existing.rating && existing.rating > 0;
+                      if (cRating && !eRating) return candidate;
+                      const cContent = candidate.content?.trim() || '';
+                      const eContent = existing.content?.trim() || '';
+                      const cAuto = !cContent || /^"?Added .+ to .+"?$/i.test(cContent);
+                      const eAuto = !eContent || /^"?Added .+ to .+"?$/i.test(eContent);
+                      if (!cAuto && eAuto) return candidate;
+                      return existing;
+                    };
                     for (const p of filtered) {
                       const mediaId = p.mediaItems?.[0]?.externalId || p.mediaItems?.[0]?.external_id || p.mediaItems?.[0]?.id || '';
+                      const mediaTitle = (p.mediaItems?.[0]?.title || '').toLowerCase().trim();
                       const userId = p.user?.id || '';
-                      const key = `${userId}-${mediaId}`;
-                      const existing = seen.get(key);
+                      const idKey = `${userId}-id-${mediaId}`;
+                      const titleKey = `${userId}-title-${mediaTitle}`;
+                      const existingById = seen.get(idKey);
+                      const existingByTitle = seen.get(titleKey);
+                      const existing = existingById || existingByTitle;
                       if (!existing) {
-                        seen.set(key, p);
+                        seen.set(idKey, p);
+                        if (mediaTitle) seen.set(titleKey, p);
                       } else {
-                        const hasRating = p.rating && p.rating > 0;
-                        const existingHasRating = existing.rating && existing.rating > 0;
-                        if (hasRating && !existingHasRating) seen.set(key, p);
+                        const better = pickBetter(existing, p);
+                        seen.set(idKey, better);
+                        if (mediaTitle) seen.set(titleKey, better);
                       }
                     }
-                    return Array.from(seen.values());
+                    const uniquePosts = new Map<string, any>();
+                    for (const [, p] of seen) {
+                      uniquePosts.set(p.id, p);
+                    }
+                    return Array.from(uniquePosts.values());
                   })()
                     .slice(0, 10)
                     .map((p: any) => ({
