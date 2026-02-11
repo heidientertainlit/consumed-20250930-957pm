@@ -1130,7 +1130,10 @@ export default function Search() {
       });
       if (!response.ok) return [];
       const data = await response.json();
-      return data.results || [];
+      return (data.results || []).map((r: any) => ({
+        ...r,
+        image_url: r.image_url || r.poster_url || r.image || r.poster_path || '',
+      }));
     },
     enabled: !isAiMode && !!searchQuery.trim() && !!session?.access_token,
     staleTime: 1000 * 60 * 5,
