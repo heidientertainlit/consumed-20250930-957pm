@@ -209,24 +209,7 @@ serve(async (req) => {
               for (const item of googleData.items?.slice(0, 5) || []) {
                 const volumeInfo = item.volumeInfo;
                 if (volumeInfo && isContentAppropriate(volumeInfo, 'book')) {
-                  let posterUrl = volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail || '';
-                  
-                  // If no cover from Google Books, try Open Library as fallback for cover
-                  if (!posterUrl && volumeInfo.title) {
-                    try {
-                      const olSearchUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(volumeInfo.title)}&limit=1`;
-                      const olRes = await fetchWithTimeout(olSearchUrl, {}, 2000);
-                      if (olRes.ok) {
-                        const olData = await olRes.json();
-                        const coverId = olData.docs?.[0]?.cover_i;
-                        if (coverId) {
-                          posterUrl = `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`;
-                        }
-                      }
-                    } catch (e) {
-                      // Ignore cover fallback errors
-                    }
-                  }
+                  const posterUrl = `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`;
                   
                   bookResults.push({
                     title: volumeInfo.title,
