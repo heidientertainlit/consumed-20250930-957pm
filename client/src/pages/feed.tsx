@@ -4451,9 +4451,40 @@ export default function Feed() {
                   );
                 }
 
-                // User polls are shown in PollsCarousel - skip standalone rendering
-                if (post.type === 'poll') {
-                  return null;
+                // Render user-generated polls as interactive cards
+                if (post.type === 'poll' && (post as any).question) {
+                  const pollPost = post as any;
+                  const pollCardData = {
+                    ...post,
+                    id: pollPost.poolId || post.id,
+                    title: pollPost.question,
+                    mediaTitle: pollPost.mediaTitle || post.mediaItems?.[0]?.title,
+                    mediaItems: pollPost.mediaItems || post.mediaItems || [],
+                    creator: pollPost.creator || post.user || { username: 'Unknown' },
+                    poolId: pollPost.poolId || post.id,
+                    options: pollPost.options || [],
+                    optionVotes: pollPost.optionVotes || [],
+                    userVotes: pollPost.userVotes || [],
+                    userHasAnswered: pollPost.userHasAnswered || false,
+                    likesCount: pollPost.likes || 0,
+                    commentsCount: pollPost.comments || 0,
+                    isLiked: pollPost.isLiked || false,
+                    origin_type: pollPost.origin_type || 'user',
+                    origin_user_id: pollPost.origin_user_id,
+                    status: pollPost.status || 'open',
+                    type: 'vote',
+                  };
+
+                  return (
+                    <div key={`poll-${post.id}`}>
+                      {carouselElements}
+                      <div className="mb-4">
+                        <CollaborativePredictionCard 
+                          prediction={pollCardData as any}
+                        />
+                      </div>
+                    </div>
+                  );
                 }
 
                 // Skip user rank_share posts - only show Consumed Rankings carousel

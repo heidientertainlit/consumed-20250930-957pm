@@ -74,7 +74,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         votedPoolIds = (userPredictions || []).map(p => p.pool_id);
       }
       
-      const unvotedPools = (pools || []).filter(pool => !votedPoolIds.includes(pool.id));
+      const unvotedPools = (pools || []).filter(pool => !votedPoolIds.includes(pool.id) && pool.origin_type !== 'user');
       
       const uniqueTitles = new Map<string, any>();
       for (const pool of unvotedPools) {
@@ -409,17 +409,10 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
           const voted = votedPolls[poll.id];
           const selected = selectedOption[poll.id];
           
-          const isUserPoll = poll.origin_type === 'user';
-          
           return (
             <div key={poll.id} className="flex-shrink-0 w-full snap-center">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
-                  <span className="text-xs text-green-700 font-medium">+{poll.pointsReward} pts</span>
-                </div>
-                {isUserPoll && poll.creatorName && (
-                  <span className="text-xs text-gray-500">created by <span className="font-medium text-gray-700">{poll.creatorName}</span></span>
-                )}
+              <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
+                <span className="text-xs text-green-700 font-medium">+{poll.pointsReward} pts</span>
               </div>
               <h3 className="text-gray-900 font-semibold text-base mb-3">{poll.title}</h3>
               
