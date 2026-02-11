@@ -96,12 +96,16 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
+  const fetchedPostIds = useRef<Set<string>>(new Set());
+  
   // Fetch missing images and creator info dynamically via media-search
   useEffect(() => {
     const fetchMissingData = async () => {
       for (const post of posts) {
         const media = post.mediaItems?.[0];
         if (!media) continue;
+        
+        if (fetchedPostIds.current.has(post.id)) continue;
         
         // Skip if already fetched WITH creator info
         const existingData = fetchedData[post.id];
@@ -213,6 +217,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
               }
             }
             
+            fetchedPostIds.current.add(post.id);
             if (imageUrl || creatorName) {
               setFetchedData(prev => ({
                 ...prev,
@@ -224,7 +229,7 @@ export default function SwipeableRatingCards({ posts, onLike, likedPosts }: Swip
             }
           }
         } catch (e) {
-          // Silent fail
+          fetchedPostIds.current.add(post.id);
         }
       }
     };

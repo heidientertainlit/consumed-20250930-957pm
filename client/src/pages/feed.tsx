@@ -3363,7 +3363,7 @@ export default function Feed() {
                     posts={ratingPosts.slice(0, 3).map((p: any) => ({
                       id: p.id,
                       user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
-                      mediaItems: p.mediaItems?.map((m: any) => ({ id: m.id, title: m.title, creator: m.creator || '', imageUrl: m.imageUrl || m.image_url || m.poster_url, mediaType: m.mediaType || m.type, externalId: m.externalId || m.external_id, externalSource: m.externalSource || m.external_source || 'tmdb' })),
+                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if ((!img || !img.startsWith('http')) && (src === 'googlebooks' || src === 'open_library') && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
@@ -3467,7 +3467,7 @@ export default function Feed() {
                     posts={ratingPosts.slice(6, 9).map((p: any) => ({
                       id: p.id,
                       user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
-                      mediaItems: p.mediaItems?.map((m: any) => ({ id: m.id, title: m.title, creator: m.creator || '', imageUrl: m.imageUrl || m.image_url || m.poster_url, mediaType: m.mediaType || m.type, externalId: m.externalId || m.external_id, externalSource: m.externalSource || m.external_source || 'tmdb' })),
+                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if ((!img || !img.startsWith('http')) && (src === 'googlebooks' || src === 'open_library') && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
@@ -3535,7 +3535,7 @@ export default function Feed() {
                     posts={ratingPosts.slice(3, 6).map((p: any) => ({
                       id: p.id,
                       user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
-                      mediaItems: p.mediaItems?.map((m: any) => ({ id: m.id, title: m.title, creator: m.creator || '', imageUrl: m.imageUrl || m.image_url || m.poster_url, mediaType: m.mediaType || m.type, externalId: m.externalId || m.external_id, externalSource: m.externalSource || m.external_source || 'tmdb' })),
+                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if ((!img || !img.startsWith('http')) && (src === 'googlebooks' || src === 'open_library') && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
@@ -3843,7 +3843,7 @@ export default function Feed() {
                     posts={ratingPosts.slice(9, 12).map((p: any) => ({
                       id: p.id,
                       user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
-                      mediaItems: p.mediaItems?.map((m: any) => ({ id: m.id, title: m.title, creator: m.creator || '', imageUrl: m.imageUrl || m.image_url || m.poster_url, mediaType: m.mediaType || m.type, externalId: m.externalId || m.external_id, externalSource: m.externalSource || m.external_source || 'tmdb' })),
+                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if ((!img || !img.startsWith('http')) && (src === 'googlebooks' || src === 'open_library') && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
                       rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
                     }))}
                     onLike={handleLike}
