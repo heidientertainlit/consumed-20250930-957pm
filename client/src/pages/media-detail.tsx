@@ -644,7 +644,7 @@ export default function MediaDetail() {
             title: mediaItem.title,
             type: mediaItem.type || params?.type,
             creator: mediaItem.creator,
-            image_url: mediaItem.artwork || mediaItem.image_url,
+            image_url: resolvedImageUrl,
             media_type: mediaItem.type || params?.type,
           }
         : {
@@ -652,7 +652,7 @@ export default function MediaDetail() {
               title: mediaItem.title,
               mediaType: mediaItem.type || params?.type,
               creator: mediaItem.creator,
-              imageUrl: mediaItem.artwork || mediaItem.image_url,
+              imageUrl: resolvedImageUrl,
               externalId: params?.id,
               externalSource: params?.source,
               description: mediaItem.description || null
@@ -758,6 +758,18 @@ export default function MediaDetail() {
   }
 
   // Use fetched data or fallback to mock data structure
+  const getBooksCoverUrl = (id: string) => `https://books.google.com/books/content?id=${id}&printsec=frontcover&img=1&zoom=1`;
+  const resolvedImageUrl = (() => {
+    const img = mediaItem?.artwork || mediaItem?.image_url || mediaItem?.poster_url || '';
+    if (img && !img.includes('placeholder') && img !== '') return img;
+    const src = params?.source || mediaItem?.external_source;
+    const eid = params?.id || mediaItem?.external_id;
+    if ((src === 'googlebooks' || src === 'open_library') && eid) {
+      return getBooksCoverUrl(eid);
+    }
+    return img;
+  })();
+
   const mediaData = mediaItem || {
     id: "spotify_0Yzd0g8NYmn27k2HFNplv7",
     title: "SmartLess",
@@ -803,7 +815,7 @@ export default function MediaDetail() {
             {/* Poster - smaller and fixed width */}
             <div className="w-28 h-40 md:w-36 md:h-52 rounded-xl overflow-hidden shadow-md flex-shrink-0">
               <img 
-                src={mediaItem.artwork || mediaItem.image_url} 
+                src={resolvedImageUrl} 
                 alt={mediaItem.title}
                 className="w-full h-full object-cover"
               />
@@ -1371,7 +1383,7 @@ export default function MediaDetail() {
         mediaTitle={mediaItem?.title || mediaData.title}
         mediaType={mediaItem?.type || mediaData.type}
         mediaCreator={mediaItem?.creator || mediaData.creator}
-        mediaImage={mediaItem?.artwork || mediaData.artwork}
+        mediaImage={resolvedImageUrl || mediaData.artwork}
         mediaExternalId={params?.id}
         mediaExternalSource={params?.source}
       />
@@ -1401,7 +1413,7 @@ export default function MediaDetail() {
         preselectedMedia={{
           title: mediaItem?.title || mediaData.title,
           mediaType: mediaItem?.type || mediaData.type,
-          imageUrl: mediaItem?.artwork || mediaData.artwork,
+          imageUrl: resolvedImageUrl || mediaData.artwork,
           externalId: params?.id,
           externalSource: params?.source,
           creator: mediaItem?.creator || mediaData.creator,
