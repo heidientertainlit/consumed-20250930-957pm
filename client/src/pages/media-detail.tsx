@@ -1101,7 +1101,7 @@ export default function MediaDetail() {
               </div>
 
               <div className="flex flex-wrap gap-2 mb-3">
-                {(['thought', 'hot_take', 'ask', 'poll', 'rank'] as const).map((type) => (
+                {(['thought', 'hot_take'] as const).map((type) => (
                   <button
                     key={type}
                     onClick={() => setComposeType(type)}
@@ -1111,7 +1111,7 @@ export default function MediaDetail() {
                         : 'bg-white text-gray-700 border-gray-200 active:bg-gray-100'
                     }`}
                   >
-                    {type === 'thought' ? 'Thought' : type === 'hot_take' ? 'Hot Take' : type === 'ask' ? 'Ask' : type === 'poll' ? 'Poll' : 'Rank'}
+                    {type === 'thought' ? 'Thought' : 'Hot Take'}
                   </button>
                 ))}
               </div>
@@ -1140,38 +1140,9 @@ export default function MediaDetail() {
                 ))}
               </div>
 
-              <div className="flex flex-wrap gap-2 mb-4">
-                {['Finished', 'Currently', 'Want To', 'Favorites', 'DNF'].map((listName) => (
-                  <button
-                    key={listName}
-                    onClick={() => setComposeSelectedList(composeSelectedList?.name === listName ? null : { name: listName, isCustom: false })}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                      composeSelectedList?.name === listName
-                        ? 'bg-purple-600 text-white border-purple-600'
-                        : 'bg-white text-gray-700 border-gray-200 active:bg-gray-100'
-                    }`}
-                  >
-                    {listName}
-                  </button>
-                ))}
-                {customLists.map((list: any) => (
-                  <button
-                    key={list.id}
-                    onClick={() => setComposeSelectedList(composeSelectedList?.id === list.id ? null : { name: list.title, isCustom: true, id: list.id })}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                      composeSelectedList?.id === list.id
-                        ? 'bg-purple-600 text-white border-purple-600'
-                        : 'bg-white text-gray-700 border-gray-200 active:bg-gray-100'
-                    }`}
-                  >
-                    {list.title}
-                  </button>
-                ))}
-              </div>
-
               <Button
                 onClick={handleComposePost}
-                disabled={isComposePosting || (!composeText.trim() && !composeRating && !composeSelectedList)}
+                disabled={isComposePosting || (!composeText.trim() && !composeRating)}
                 className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl py-5 text-sm font-semibold"
               >
                 {isComposePosting ? (
