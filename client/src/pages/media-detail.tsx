@@ -467,13 +467,22 @@ export default function MediaDetail() {
               const searchData = await searchResponse.json();
               const match = searchData.results?.[0];
               if (match) {
+                let posterUrl = match.poster_url || match.image || match.image_url || '';
+                const matchSource = match.external_source || match.source || '';
+                const matchId = match.external_id || match.id || '';
+                if (!posterUrl && matchSource === 'googlebooks' && matchId) {
+                  posterUrl = `https://books.google.com/books/content?id=${matchId}&printsec=frontcover&img=1&zoom=1`;
+                }
+                if (!posterUrl && (matchSource === 'openlibrary' || matchSource === 'open_library') && matchId) {
+                  posterUrl = `https://covers.openlibrary.org/b/olid/${matchId.replace(/^works\//, '')}-L.jpg`;
+                }
                 return {
                   title: match.title || item.title,
                   type: match.type || item.type || item.media_type,
-                  poster_url: match.poster_url || match.image || match.image_url || '',
+                  poster_url: posterUrl,
                   year: match.year || item.year,
-                  external_id: match.external_id || match.id,
-                  external_source: match.external_source || match.source,
+                  external_id: matchId,
+                  external_source: matchSource,
                 };
               }
             }
@@ -481,11 +490,10 @@ export default function MediaDetail() {
             console.error('Failed to enrich recommendation:', e);
           }
           
-          // Fallback to original data
           return {
             title: item.title,
             type: item.type || item.media_type,
-            poster_url: item.poster_url || item.poster || item.image_url,
+            poster_url: item.poster_url || item.poster || item.image_url || '',
             year: item.year,
             external_id: item.external_id || item.id,
             external_source: item.external_source || item.source,
@@ -1455,14 +1463,18 @@ export default function MediaDetail() {
                                 src={item.poster_url}
                                 alt={item.title}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  target.parentElement?.classList.add('show-fallback');
+                                }}
                               />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-200 to-blue-200">
-                                <div className="text-purple-600 opacity-60">
-                                  {getTypeIcon(item.type)}
-                                </div>
+                            ) : null}
+                            <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-200 to-blue-200 ${item.poster_url ? 'absolute inset-0 -z-10' : ''}`}>
+                              <div className="text-purple-600 opacity-60 scale-150">
+                                {getTypeIcon(item.type)}
                               </div>
-                            )}
+                            </div>
                             <div className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-medium flex items-center gap-1 ${getTypeColor(item.type)}`}>
                               {getTypeIcon(item.type)}
                               <span className="truncate max-w-[50px]">{item.type || 'Media'}</span>
