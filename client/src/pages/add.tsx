@@ -1429,9 +1429,9 @@ export default function Search() {
                         }
                       }}
                     >
-                      {(result.image_url || result.poster_path || result.image) ? (
+                      {(result.poster_url || result.image_url || result.poster_path || result.image) ? (
                         <img
-                          src={result.image_url || result.poster_path || result.image}
+                          src={result.poster_url || result.image_url || result.poster_path || result.image}
                           alt={result.title}
                           className="w-10 h-14 object-cover rounded-lg flex-shrink-0"
                         />
@@ -1459,7 +1459,7 @@ export default function Search() {
                           setQuickAddMedia({
                             title: result.title,
                             mediaType: result.type || 'movie',
-                            imageUrl: result.image_url || result.poster_path || result.image,
+                            imageUrl: result.poster_url || result.image_url || result.poster_path || result.image,
                             externalId: result.external_id || result.id,
                             externalSource: result.source || result.external_source || 'tmdb',
                             creator: result.creator,
@@ -1479,7 +1479,7 @@ export default function Search() {
                           setFullAddMedia({
                             title: result.title,
                             mediaType: result.type || 'movie',
-                            imageUrl: result.image_url || result.poster_path || result.image,
+                            imageUrl: result.poster_url || result.image_url || result.poster_path || result.image,
                             externalId: result.external_id || result.id,
                             externalSource: result.source || result.external_source || 'tmdb',
                             creator: result.creator,
@@ -2504,9 +2504,9 @@ export default function Search() {
                               }
                             }}
                           >
-                            {(result.image_url || result.poster_path || result.image) ? (
+                            {(result.poster_url || result.image_url || result.poster_path || result.image) ? (
                               <img
-                                src={result.image_url || result.poster_path || result.image}
+                                src={result.poster_url || result.image_url || result.poster_path || result.image}
                                 alt={result.title}
                                 className="w-12 h-16 object-cover rounded-lg flex-shrink-0"
                               />
@@ -2534,7 +2534,7 @@ export default function Search() {
                                 setQuickAddMedia({
                                   title: result.title,
                                   mediaType: result.type || 'movie',
-                                  imageUrl: result.image_url || result.poster_path || result.image,
+                                  imageUrl: result.poster_url || result.image_url || result.poster_path || result.image,
                                   externalId: result.external_id || result.id,
                                   externalSource: result.external_source || result.source || 'tmdb',
                                   creator: result.creator,
@@ -2553,7 +2553,7 @@ export default function Search() {
                                 setFullAddMedia({
                                   title: result.title,
                                   mediaType: result.type || 'movie',
-                                  imageUrl: result.image_url || result.poster_path || result.image,
+                                  imageUrl: result.poster_url || result.image_url || result.poster_path || result.image,
                                   externalId: result.external_id || result.id,
                                   externalSource: result.external_source || result.source || 'tmdb',
                                   creator: result.creator,

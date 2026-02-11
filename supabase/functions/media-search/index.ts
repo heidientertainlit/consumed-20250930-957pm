@@ -697,7 +697,8 @@ serve(async (req) => {
     const results = trimmed.map(({ _score, poster_url, ...item }) => ({
       ...item,
       poster_url,
-      image: poster_url // Alias for frontend compatibility
+      image: poster_url,
+      image_url: poster_url
     }));
 
     // Log final results
