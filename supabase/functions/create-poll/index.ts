@@ -133,11 +133,10 @@ serve(async (req) => {
         .from('prediction_pools')
         .insert({
           id: poolId,
-          title: question.substring(0, 100),
-          description: question,
+          title: question,
           type: 'vote',
           status: 'open',
-          category: 'movie',
+          category: media_type || 'movie',
           icon: '🗳️',
           options: options,
           points_reward: 10,
