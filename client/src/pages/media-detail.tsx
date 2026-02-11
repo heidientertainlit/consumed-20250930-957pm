@@ -12,7 +12,7 @@ import RatingModal from "@/components/rating-modal";
 import CreateListDialog from "@/components/create-list-dialog";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickActionSheet } from "@/components/quick-action-sheet";
-import { QuickReactCard } from "@/components/quick-react-card";
+
 import { supabase } from "@/lib/supabase";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -49,6 +49,11 @@ export default function MediaDetail() {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Record<string, any[]>>({});
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
+  const [composeType, setComposeType] = useState<'thought' | 'hot_take' | 'ask' | 'poll' | 'rank'>('thought');
+  const [composeText, setComposeText] = useState('');
+  const [composeRating, setComposeRating] = useState(0);
+  const [composeSelectedList, setComposeSelectedList] = useState<{ name: string; isCustom: boolean; id?: string } | null>(null);
+  const [isComposePosting, setIsComposePosting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -689,6 +694,77 @@ export default function MediaDetail() {
     },
   });
 
+  const handleComposePost = async () => {
+    if (!session?.access_token || !mediaItem) return;
+    if (!composeText.trim() && !composeRating && !composeSelectedList) return;
+    setIsComposePosting(true);
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error('Not authenticated');
+
+      if (composeText.trim()) {
+        await supabase.from('social_posts').insert({
+          user_id: authUser.id,
+          content: composeText,
+          post_type: composeType,
+          visibility: 'public',
+          media_title: mediaItem.title,
+          media_type: (mediaItem.type || params?.type || 'movie').toLowerCase(),
+          media_external_id: params?.id,
+          media_external_source: params?.source || 'tmdb',
+          image_url: resolvedImageUrl || '',
+          fire_votes: 0,
+          ice_votes: 0,
+        });
+      }
+
+      if (composeRating > 0) {
+        const rateResponse = await fetch(
+          "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/rate-media",
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              media: {
+                title: mediaItem.title,
+                mediaType: mediaItem.type || params?.type,
+                creator: mediaItem.creator,
+                imageUrl: resolvedImageUrl,
+                externalId: params?.id,
+                externalSource: params?.source,
+              },
+              rating: composeRating,
+              review: composeText.trim() || null,
+            }),
+          }
+        );
+        if (!rateResponse.ok) console.error('Rating failed');
+      }
+
+      if (composeSelectedList) {
+        addMediaToListMutation.mutate({ 
+          listType: composeSelectedList.isCustom ? composeSelectedList.id! : composeSelectedList.name, 
+          isCustom: composeSelectedList.isCustom 
+        });
+      }
+
+      setComposeText('');
+      setComposeRating(0);
+      setComposeSelectedList(null);
+      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+      queryClient.invalidateQueries({ queryKey: ['media-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      toast({ title: "Posted!", description: "Your post has been shared." });
+    } catch (error) {
+      console.error('Compose post error:', error);
+      toast({ title: "Couldn't post", description: "Please try again.", variant: "destructive" });
+    }
+    setIsComposePosting(false);
+  };
+
   const handleAddMediaToList = (listType: string, isCustom: boolean = false) => {
     addMediaToListMutation.mutate({ listType, isCustom });
   };
@@ -759,14 +835,20 @@ export default function MediaDetail() {
 
   // Use fetched data or fallback to mock data structure
   const getBooksCoverUrl = (id: string) => `https://books.google.com/books/content?id=${id}&printsec=frontcover&img=1&zoom=1`;
+  const getOpenLibraryCoverUrl = (id: string) => {
+    const cleanId = id.replace(/^works\//, '');
+    return `https://covers.openlibrary.org/b/olid/${cleanId}-L.jpg`;
+  };
   const resolvedImageUrl = (() => {
-    const img = mediaItem?.artwork || mediaItem?.image_url || mediaItem?.poster_url || '';
-    if (img && !img.includes('placeholder') && img !== '') return img;
     const src = params?.source || mediaItem?.external_source;
     const eid = params?.id || mediaItem?.external_id;
-    if ((src === 'googlebooks' || src === 'open_library') && eid) {
+    if (src === 'googlebooks' && eid) {
       return getBooksCoverUrl(eid);
     }
+    if ((src === 'openlibrary' || src === 'open_library') && eid) {
+      return getOpenLibraryCoverUrl(eid);
+    }
+    const img = mediaItem?.artwork || mediaItem?.image_url || mediaItem?.poster_url || '';
     return img;
   })();
 
@@ -1001,17 +1083,106 @@ export default function MediaDetail() {
             )}
           </div>
 
-          {/* Quick React - Share a thought about this title */}
+          {/* Say something - inline compose */}
+          {session && (
           <div className="mt-4 pt-4 border-t border-gray-100">
-            <QuickReactCard 
-              preselectedMedia={mediaItem ? {
-                id: mediaItem.id || `${params?.source}-${params?.id}`,
-                title: mediaItem.title,
-                type: mediaItem.type || params?.type || 'movie',
-                image: mediaItem.poster_path || mediaItem.poster || mediaItem.image
-              } : undefined}
-            />
+            <h3 className="text-base font-bold text-gray-900 mb-3">Say something</h3>
+            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+              <div className="flex items-center gap-3 mb-3 p-2 bg-white rounded-xl border border-gray-100">
+                <img 
+                  src={resolvedImageUrl} 
+                  alt={mediaItem.title}
+                  className="w-10 h-14 rounded-lg object-cover flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-gray-900 font-medium text-sm truncate">{mediaItem.title}</p>
+                  <p className="text-gray-500 text-xs capitalize">{mediaItem.type || params?.type}</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 mb-3">
+                {(['thought', 'hot_take', 'ask', 'poll', 'rank'] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setComposeType(type)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      composeType === type
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white text-gray-700 border-gray-200 active:bg-gray-100'
+                    }`}
+                  >
+                    {type === 'thought' ? 'Thought' : type === 'hot_take' ? 'Hot Take' : type === 'ask' ? 'Ask' : type === 'poll' ? 'Poll' : 'Rank'}
+                  </button>
+                ))}
+              </div>
+
+              <textarea
+                value={composeText}
+                onChange={(e) => setComposeText(e.target.value)}
+                placeholder={composeType === 'hot_take' ? "What's your hot take?" : composeType === 'ask' ? "What do you want to know?" : "What's on your mind?"}
+                className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-purple-400 resize-none mb-3"
+                rows={3}
+              />
+
+              <div className="flex items-center gap-1 mb-3">
+                <span className="text-sm text-gray-600 mr-1">Rating:</span>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setComposeRating(composeRating === star ? 0 : star)}
+                    className="p-0.5"
+                  >
+                    <Star
+                      size={22}
+                      className={`${star <= composeRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} transition-colors`}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex flex-wrap gap-2 mb-4">
+                {['Finished', 'Currently', 'Want To', 'Favorites', 'DNF'].map((listName) => (
+                  <button
+                    key={listName}
+                    onClick={() => setComposeSelectedList(composeSelectedList?.name === listName ? null : { name: listName, isCustom: false })}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      composeSelectedList?.name === listName
+                        ? 'bg-purple-600 text-white border-purple-600'
+                        : 'bg-white text-gray-700 border-gray-200 active:bg-gray-100'
+                    }`}
+                  >
+                    {listName}
+                  </button>
+                ))}
+                {customLists.map((list: any) => (
+                  <button
+                    key={list.id}
+                    onClick={() => setComposeSelectedList(composeSelectedList?.id === list.id ? null : { name: list.title, isCustom: true, id: list.id })}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      composeSelectedList?.id === list.id
+                        ? 'bg-purple-600 text-white border-purple-600'
+                        : 'bg-white text-gray-700 border-gray-200 active:bg-gray-100'
+                    }`}
+                  >
+                    {list.title}
+                  </button>
+                ))}
+              </div>
+
+              <Button
+                onClick={handleComposePost}
+                disabled={isComposePosting || (!composeText.trim() && !composeRating && !composeSelectedList)}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl py-5 text-sm font-semibold"
+              >
+                {isComposePosting ? (
+                  <><Loader2 size={16} className="mr-2 animate-spin" /> Posting...</>
+                ) : (
+                  'Post'
+                )}
+              </Button>
+            </div>
           </div>
+          )}
 
           {/* Reviews & Ratings - stacked collapsible */}
           <div className="mt-3 pt-3 border-t border-gray-100">
