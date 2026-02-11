@@ -1114,20 +1114,39 @@ export default function MediaDetail() {
                 rows={3}
               />
 
-              <div className="flex items-center gap-1 mb-3">
-                <span className="text-sm text-gray-600 mr-1">Rating:</span>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setComposeRating(composeRating === star ? 0 : star)}
-                    className="p-0.5"
-                  >
-                    <Star
-                      size={22}
-                      className={`${star <= composeRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} transition-colors`}
-                    />
-                  </button>
-                ))}
+              <div className="flex items-center gap-0 mb-3">
+                <span className="text-sm text-gray-600 mr-2">Rating:</span>
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const isFullFilled = composeRating >= star;
+                  const isHalfFilled = !isFullFilled && composeRating >= star - 0.5;
+                  return (
+                    <div key={star} className="relative w-6 h-6 cursor-pointer">
+                      <Star
+                        size={22}
+                        className="absolute inset-0 text-gray-300 transition-colors"
+                      />
+                      {isHalfFilled && (
+                        <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
+                          <Star size={22} className="text-yellow-400 fill-yellow-400" />
+                        </div>
+                      )}
+                      {isFullFilled && (
+                        <Star size={22} className="absolute inset-0 text-yellow-400 fill-yellow-400" />
+                      )}
+                      <div
+                        className="absolute left-0 top-0 w-1/2 h-full z-10"
+                        onClick={() => setComposeRating(composeRating === star - 0.5 ? 0 : star - 0.5)}
+                      />
+                      <div
+                        className="absolute right-0 top-0 w-1/2 h-full z-10"
+                        onClick={() => setComposeRating(composeRating === star ? 0 : star)}
+                      />
+                    </div>
+                  );
+                })}
+                {composeRating > 0 && (
+                  <span className="text-sm font-medium text-gray-700 ml-2">{composeRating}/5</span>
+                )}
               </div>
 
               <Button
