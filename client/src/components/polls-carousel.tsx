@@ -416,17 +416,16 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
               {isUserPoll && poll.creatorName ? (
                 <div className="flex items-center gap-2 mb-3">
                   {poll.creatorAvatar ? (
-                    <img src={poll.creatorAvatar} alt={poll.creatorName} className="w-7 h-7 rounded-full object-cover" />
+                    <img src={poll.creatorAvatar} alt={poll.creatorName} className="w-6 h-6 rounded-full object-cover" />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center">
-                      <span className="text-xs font-semibold text-purple-600">{poll.creatorName.charAt(0).toUpperCase()}</span>
+                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center">
+                      <span className="text-[10px] font-semibold text-purple-600">{poll.creatorName.charAt(0).toUpperCase()}</span>
                     </div>
                   )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{poll.creatorName}</p>
-                    <p className="text-[10px] text-gray-500">{poll.category || 'General'} · Poll</p>
-                  </div>
-                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
+                  <span className="text-sm font-medium text-gray-900">{poll.creatorName}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-[10px] font-medium text-gray-600">{poll.category || 'General'}</span>
+                  <span className="px-2 py-0.5 rounded-full bg-purple-100 text-[10px] font-medium text-purple-600">Poll</span>
+                  <div className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
                     <span className="text-xs text-green-700 font-medium">+{poll.pointsReward} pts</span>
                   </div>
                 </div>
