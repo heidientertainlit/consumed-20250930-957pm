@@ -424,7 +424,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{poll.creatorName}</p>
-                    <p className="text-[10px] text-gray-500">Poll</p>
+                    <p className="text-[10px] text-gray-500">{poll.category || 'General'} · Poll</p>
                   </div>
                   <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
                     <span className="text-xs text-green-700 font-medium">+{poll.pointsReward} pts</span>
