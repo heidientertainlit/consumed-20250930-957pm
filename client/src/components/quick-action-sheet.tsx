@@ -6,6 +6,7 @@ import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { supabase } from "@/lib/supabase";
 import { trackEvent } from "@/lib/posthog";
 import { useQuery } from "@tanstack/react-query";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -332,24 +333,24 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           has_rating: ratingValue > 0
         });
         
-        // Also create a hot take or poll if selected
         if (trackPostType === 'hot_take' && contentText.trim()) {
-          await fetch(`${supabaseUrl}/functions/v1/create-post`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
+          const { data: { user: trackUser } } = await supabase.auth.getUser();
+          if (trackUser) {
+            await supabase.from('social_posts').insert({
+              user_id: trackUser.id,
               content: contentText,
-              type: 'hot_take',
-              containsSpoilers,
-              mediaId: selectedMedia.external_id,
-              mediaType: selectedMedia.type,
-              mediaTitle: selectedMedia.title,
-              mediaImage: selectedMedia.image || selectedMedia.image_url,
-            }),
-          });
+              post_type: 'hot_take',
+              visibility: 'public',
+              media_title: selectedMedia.title,
+              media_type: selectedMedia.type?.toLowerCase(),
+              media_external_id: selectedMedia.external_id,
+              media_external_source: selectedMedia.external_source || 'tmdb',
+              image_url: selectedMedia.image || selectedMedia.image_url || '',
+              contains_spoiler: containsSpoilers,
+              fire_votes: 0,
+              ice_votes: 0,
+            });
+          }
           } else if (trackPostType === 'poll' && contentText.trim()) {
           const validOptions = pollOptions.filter(o => o.trim());
           if (validOptions.length >= 2) {
@@ -381,24 +382,26 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           return;
         }
         
-        const response = await fetch(`${supabaseUrl}/functions/v1/create-post`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            content: contentText,
-            type: selectedAction === "hot_take" ? "hot_take" : "thought",
-            containsSpoilers,
-            mediaId: selectedMedia?.external_id,
-            mediaType: selectedMedia?.type,
-            mediaTitle: selectedMedia?.title,
-            mediaImage: selectedMedia?.image,
-          }),
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) throw new Error('Not authenticated');
+        
+        const postType = selectedAction === "hot_take" ? "hot_take" : sayMode || "thought";
+        const { error } = await supabase.from('social_posts').insert({
+          user_id: authUser.id,
+          content: contentText,
+          post_type: postType,
+          visibility: 'public',
+          media_title: selectedMedia?.title || null,
+          media_type: selectedMedia?.type?.toLowerCase() || null,
+          media_external_id: selectedMedia?.external_id || null,
+          media_external_source: selectedMedia?.external_source || null,
+          image_url: selectedMedia?.image || selectedMedia?.image_url || '',
+          contains_spoiler: containsSpoilers,
+          fire_votes: 0,
+          ice_votes: 0,
         });
         
-        if (!response.ok) throw new Error('Failed to create post');
+        if (error) throw error;
         
         toast({ title: selectedAction === "hot_take" ? "Hot Take posted! 🔥" : "Post created!" });
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
@@ -443,20 +446,24 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           return;
         }
         
-        const response = await fetch(`${supabaseUrl}/functions/v1/create-post`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            content: contentText,
-            type: "ask_for_recs",
-            category: recCategory || undefined,
-          }),
+        const { data: { user: recUser } } = await supabase.auth.getUser();
+        if (!recUser) throw new Error('Not authenticated');
+        
+        const { error: recError } = await supabase.from('social_posts').insert({
+          user_id: recUser.id,
+          content: contentText,
+          post_type: 'ask_for_recs',
+          visibility: 'public',
+          media_title: selectedMedia?.title || null,
+          media_type: selectedMedia?.type?.toLowerCase() || null,
+          media_external_id: selectedMedia?.external_id || null,
+          media_external_source: selectedMedia?.external_source || null,
+          image_url: selectedMedia?.image || selectedMedia?.image_url || '',
+          fire_votes: 0,
+          ice_votes: 0,
         });
         
-        if (!response.ok) throw new Error('Failed to post');
+        if (recError) throw recError;
         
         toast({ title: "Rec request posted!" });
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
