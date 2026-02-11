@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
@@ -54,6 +54,7 @@ export default function MediaDetail() {
   const [composeRating, setComposeRating] = useState(0);
   const [composeSelectedList, setComposeSelectedList] = useState<{ name: string; isCustom: boolean; id?: string } | null>(null);
   const [isComposePosting, setIsComposePosting] = useState(false);
+  const composeSectionRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -977,7 +978,9 @@ export default function MediaDetail() {
               </Button>
               <Button 
                 size="sm"
-                onClick={() => setShowRatingModal(true)}
+                onClick={() => {
+                  composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}
                 className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
                 data-testid="button-add-rating"
               >
@@ -1095,7 +1098,7 @@ export default function MediaDetail() {
 
           {/* Say something - inline compose */}
           {session && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
+          <div ref={composeSectionRef} className="mt-4 pt-4 border-t border-gray-100">
             <h3 className="text-base font-bold text-gray-900 mb-3">Say something</h3>
             <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
               <div className="flex flex-wrap gap-2 mb-3">
