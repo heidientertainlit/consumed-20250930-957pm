@@ -4201,20 +4201,6 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Sports" />
               )}
 
-              {/* End of Feed Message */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && (
-                <div className="text-center py-8 text-gray-400">
-                  <p className="text-sm font-medium text-purple-600">You're all caught up! 🎉</p>
-                  <p className="text-xs mt-2 max-w-xs mx-auto">Give feedback and tell us what you want more of, what went wrong, or scroll up and go play more trivia.</p>
-                  <Button
-                    onClick={() => setIsFeedbackOpen(true)}
-                    className="mt-4 bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6"
-                  >
-                    Give Feedback
-                  </Button>
-                </div>
-              )}
-
               {/* Social Posts */}
               {(() => {
                 let pendingUserPolls: any[] = [];
@@ -5940,6 +5926,20 @@ export default function Feed() {
               );
               });
               })()}
+
+              {/* End of Feed Message */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && (
+                <div className="text-center py-8 text-gray-400">
+                  <p className="text-sm font-medium text-purple-600">You're all caught up! 🎉</p>
+                  <p className="text-xs mt-2 max-w-xs mx-auto">Give feedback and tell us what you want more of, what went wrong, or scroll up and go play more trivia.</p>
+                  <Button
+                    onClick={() => setIsFeedbackOpen(true)}
+                    className="mt-4 bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6"
+                  >
+                    Give Feedback
+                  </Button>
+                </div>
+              )}
 
               {/* Infinite Scroll Loading Indicator - DISABLED */}
               {/* 

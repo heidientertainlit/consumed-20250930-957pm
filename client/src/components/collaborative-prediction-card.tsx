@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target, ArrowBigUp, ArrowBigDown, User } from "lucide-react";
+import { TrendingUp, Heart, MessageCircle, Users, Trash2, ChevronRight as ChevronRightIcon, Target, ArrowBigUp, ArrowBigDown, User, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
@@ -77,6 +77,8 @@ export default function CollaborativePredictionCard({
   const [currentLikesCount, setCurrentLikesCount] = useState(likesCount);
   const [showParticipants, setShowParticipants] = useState(false);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [votedOption, setVotedOption] = useState<string | null>(null);
 
   // Check if current user is the creator
   const appUserId = session?.user?.user_metadata?.id || session?.user?.id;
@@ -151,13 +153,12 @@ export default function CollaborativePredictionCard({
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Vote cast!",
-        description: "Your prediction has been recorded.",
-      });
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
     },
     onError: () => {
+      setHasVoted(false);
+      setVotedOption(null);
+      setSelectedOption(null);
       toast({
         title: "Failed to vote",
         description: "Please try again.",
@@ -393,13 +394,11 @@ export default function CollaborativePredictionCard({
   };
 
   const handleSelectOption = (option: string) => {
-    if (userHasAnswered || voteMutation.isPending) return;
+    if (userHasAnswered || voteMutation.isPending || hasVoted) return;
     setSelectedOption(option);
-  };
-
-  const handleSubmitVote = () => {
-    if (!selectedOption || voteMutation.isPending) return;
-    voteMutation.mutate(selectedOption);
+    setHasVoted(true);
+    setVotedOption(option);
+    voteMutation.mutate(option);
   };
 
   const handlePostComment = () => {
@@ -514,27 +513,30 @@ export default function CollaborativePredictionCard({
             options.map((option, index) => {
               const optionData = optionVotes?.find(ov => ov.option === option);
               const percentage = optionData?.percentage || 0;
+              const answered = userHasAnswered || hasVoted;
+              const isMyVote = votedOption === option || (userHasAnswered && optionData && optionData.count > 0);
               
               return (
                 <button
                   key={index}
                   onClick={() => handleSelectOption(option)}
-                  disabled={userHasAnswered || voteMutation.isPending}
-                  className={`w-full rounded-full px-4 py-3 transition-all flex items-center justify-between ${
-                    userHasAnswered 
-                      ? "bg-gradient-to-r from-purple-950 via-purple-800 to-violet-500 cursor-not-allowed"
-                      : selectedOption === option
-                      ? "bg-gradient-to-r from-purple-950 via-purple-800 to-violet-500 ring-2 ring-purple-300 cursor-pointer"
+                  disabled={answered || voteMutation.isPending}
+                  className={`w-full rounded-full px-4 py-3 transition-all duration-300 flex items-center justify-between ${
+                    answered && isMyVote
+                      ? "bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 ring-2 ring-blue-300 cursor-default"
+                      : answered
+                      ? "bg-gradient-to-r from-purple-950/60 via-purple-800/60 to-violet-500/60 cursor-default opacity-70"
                       : "bg-gradient-to-r from-purple-950 via-purple-800 to-violet-500 hover:from-purple-900 hover:via-purple-700 hover:to-violet-400 cursor-pointer"
                   }`}
                   data-testid={`button-vote-option-${index}`}
                 >
-                  <span className="text-sm font-medium text-white">
+                  <span className="text-sm font-medium text-white flex items-center gap-2">
+                    {answered && isMyVote && <Check className="w-4 h-4" />}
                     {option}
                   </span>
-                  {userHasAnswered && totalVotes > 0 && (
+                  {answered && (
                     <span className="text-sm font-semibold text-white">
-                      {percentage}%
+                      {userHasAnswered ? `${percentage}%` : ''}
                     </span>
                   )}
                 </button>
@@ -543,20 +545,6 @@ export default function CollaborativePredictionCard({
           ) : null}
         </div>
       </div>
-
-      {/* Submit Button */}
-      {!userHasAnswered && selectedOption && (
-        <div className="mb-3">
-          <Button
-            onClick={handleSubmitVote}
-            disabled={voteMutation.isPending}
-            className="w-full bg-gray-900 hover:bg-gray-800 text-white rounded-lg"
-            data-testid="button-submit-vote"
-          >
-            {voteMutation.isPending ? "Submitting..." : isPoll ? "Cast Vote" : "Cast Prediction"}
-          </Button>
-        </div>
-      )}
 
       {/* Vote count */}
       {totalVotes > 0 && (
