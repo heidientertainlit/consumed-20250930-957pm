@@ -3356,6 +3356,32 @@ export default function Feed() {
                 </Link>
               )}
 
+              {/* User-Generated Polls Carousel - High in feed */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && (() => {
+                const userPollPosts = filteredPosts.filter((p: any) => p.type === 'poll' && (p as any).question);
+                if (userPollPosts.length === 0) return null;
+                const userPollCards = userPollPosts.map((post: any) => ({
+                  id: post.poolId || post.id,
+                  title: post.question,
+                  mediaTitle: post.mediaTitle || post.mediaItems?.[0]?.title,
+                  mediaItems: post.mediaItems || [],
+                  creator: post.creator || post.user || { username: 'Unknown' },
+                  poolId: post.poolId || post.id,
+                  options: post.options || [],
+                  optionVotes: post.optionVotes || [],
+                  userVotes: post.userVotes || [],
+                  userHasAnswered: post.userHasAnswered || false,
+                  likesCount: post.likes || 0,
+                  commentsCount: post.comments || 0,
+                  isLiked: post.isLiked || false,
+                  origin_type: post.origin_type || 'user',
+                  origin_user_id: post.origin_user_id,
+                  status: post.status || 'open',
+                  type: 'vote',
+                }));
+                return <UserPollsCarousel polls={userPollCards} />;
+              })()}
+
               {/* Filtered views - show only the selected category */}
               {/* TRIVIA filter - Movies category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && 
@@ -4203,7 +4229,6 @@ export default function Feed() {
 
               {/* Social Posts */}
               {(() => {
-                let pendingUserPolls: any[] = [];
                 const feedData = (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') ? filteredPosts.filter((item: any) => {
                 if ('originalPostIds' in item) return true;
                 if ((item as any).type === 'friend_activity_block') return true;
@@ -4440,48 +4465,9 @@ export default function Feed() {
                   );
                 }
 
-                // Collect user-generated polls for carousel rendering
+                // User polls are rendered in dedicated carousel higher up in feed
                 if (post.type === 'poll' && (post as any).question) {
-                  const pollPost = post as any;
-                  const pollCardData = {
-                    id: pollPost.poolId || post.id,
-                    title: pollPost.question,
-                    mediaTitle: pollPost.mediaTitle || post.mediaItems?.[0]?.title,
-                    mediaItems: pollPost.mediaItems || post.mediaItems || [],
-                    creator: pollPost.creator || post.user || { username: 'Unknown' },
-                    poolId: pollPost.poolId || post.id,
-                    options: pollPost.options || [],
-                    optionVotes: pollPost.optionVotes || [],
-                    userVotes: pollPost.userVotes || [],
-                    userHasAnswered: pollPost.userHasAnswered || false,
-                    likesCount: pollPost.likes || 0,
-                    commentsCount: pollPost.comments || 0,
-                    isLiked: pollPost.isLiked || false,
-                    origin_type: pollPost.origin_type || 'user',
-                    origin_user_id: pollPost.origin_user_id,
-                    status: pollPost.status || 'open',
-                    type: 'vote',
-                  };
-
-                  const isLastPost = postIndex === feedData.length - 1;
-                  const nextPost = !isLastPost ? feedData[postIndex + 1] : null;
-                  const nextIsPoll = nextPost?.type === 'poll' && (nextPost as any).question;
-
-                  if (!pendingUserPolls) pendingUserPolls = [];
-                  pendingUserPolls.push(pollCardData);
-
-                  if (!nextIsPoll || isLastPost) {
-                    const pollsToRender = [...pendingUserPolls];
-                    pendingUserPolls = [];
-                    return (
-                      <div key={`user-polls-${post.id}`}>
-                        {carouselElements}
-                        <UserPollsCarousel polls={pollsToRender} />
-                      </div>
-                    );
-                  }
-                  
-                  return carouselElements ? <div key={`carousel-spacer-${post.id}`}>{carouselElements}</div> : null;
+                  return null;
                 }
 
                 // Skip user rank_share posts - only show Consumed Rankings carousel
