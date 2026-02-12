@@ -1476,7 +1476,7 @@ export default function Feed() {
     ];
     
     // Game/engagement posts should NEVER be consumption posts - always show prominently
-    const gameTypes = ['trivia', 'poll', 'prediction', 'vote', 'ask_for_recs', 'rank_share', 'media_group', 'cast_approved'];
+    const gameTypes = ['trivia', 'poll', 'prediction', 'vote', 'ask_for_recs', 'ask_for_rec', 'rank_share', 'media_group', 'cast_approved'];
     if (gameTypes.includes(postType)) return false;
     
     // Check explicit consumption types
@@ -1711,7 +1711,7 @@ export default function Feed() {
     // Hide malformed posts: short content (looks like just a title), no media items, 
     // and not a special post type (prediction/poll/trivia/rank_share)
     // Note: 'add-to-list' (from track-media) is also a valid type
-    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'friend_list_group', 'cast_approved', 'hot_take'];
+    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'ask_for_rec', 'friend_list_group', 'cast_approved', 'hot_take'];
     const isSpecialType = specialTypes.includes(post.type || '');
     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
     const hasListData = !!(post as any).listData;
@@ -1747,7 +1747,7 @@ export default function Feed() {
     // Apply media category pill filter (Movies, TV, Music, Books, etc.)
     // Only filter regular media posts - skip special types that are rendered separately
     if (selectedCategory) {
-      const skipFilterTypes = ['cast_approved', 'hot_take', 'prediction', 'poll', 'vote', 'trivia', 'rank_share', 'ask_for_recs', 'friend_list_group'];
+      const skipFilterTypes = ['cast_approved', 'hot_take', 'prediction', 'poll', 'vote', 'trivia', 'rank_share', 'ask_for_recs', 'ask_for_rec', 'friend_list_group'];
       const postType = post.type?.toLowerCase() || '';
       if (!skipFilterTypes.includes(postType)) {
         const allowedTypes = categoryToMediaTypeMap[selectedCategory] || [];
@@ -4824,8 +4824,8 @@ export default function Feed() {
                   );
                 }
 
-                // Check if this item is an ask_for_recs post
-                if (post.type === 'ask_for_recs') {
+                // Check if this item is an ask_for_recs post (handles both 'ask_for_recs' and 'ask_for_rec' variants)
+                if (post.type === 'ask_for_recs' || post.type === 'ask_for_rec') {
                   const recCategory = (post as any).recCategory;
                   const categoryLabels: Record<string, string> = {
                     movies: 'movies', tv: 'TV shows', books: 'books', music: 'music', 
