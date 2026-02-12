@@ -4239,6 +4239,7 @@ export default function Feed() {
                 if ('originalPostIds' in item) return true;
                 if ((item as any).type === 'friend_activity_block') return true;
                 if ((item as any).type === 'consumption_carousel') return false;
+                if ((item as any).type === 'swipeable_ratings') return false;
                 const post = item as SocialPost;
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }) : [];
@@ -5889,7 +5890,7 @@ export default function Feed() {
                         })()}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {formatDate(post.timestamp)}
+                        {post.timestamp ? formatDate(post.timestamp) : 'Today'}
                       </div>
                     </div>
 
