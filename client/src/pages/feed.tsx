@@ -4885,37 +4885,21 @@ export default function Feed() {
                             {/* Request Content */}
                             <p className="text-lg font-medium text-gray-900 mb-4">{post.content}</p>
                             
-                            {/* Simplified actions for recs card */}
+                            {/* Actions row */}
                             <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                              <div className="flex items-center gap-3">
-                                <button
-                                  onClick={() => {
-                                    setExpandedAddRecInput(prev => {
-                                      const newSet = new Set(prev);
-                                      newSet.add(post.id);
-                                      return newSet;
-                                    });
-                                  }}
-                                  className="flex items-center gap-1.5 text-sm text-purple-600 hover:text-purple-700 font-medium"
-                                  data-testid={`button-add-rec-${post.id}`}
-                                >
-                                  <Plus size={16} />
-                                  <span>Add rec</span>
-                                </button>
-                                <button
-                                  onClick={() => handleLike(post.id)}
-                                  className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-amber-500' : 'text-gray-400 hover:text-amber-500'}`}
-                                  data-testid={`button-follow-${post.id}`}
-                                  title="Follow for updates"
-                                >
-                                  <span className="text-base">👀</span>
-                                  <span>{likedPosts.has(post.id) ? 'Following' : 'Follow'}</span>
-                                </button>
-                              </div>
+                              <button
+                                onClick={() => handleLike(post.id)}
+                                className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-amber-500' : 'text-gray-400 hover:text-amber-500'}`}
+                                data-testid={`button-follow-${post.id}`}
+                                title="Follow for updates"
+                              >
+                                <span className="text-base">👀</span>
+                                <span>{likedPosts.has(post.id) ? 'Following' : 'Follow'}</span>
+                              </button>
                               <span className="text-xs text-gray-400">{post.comments || 0} recs</span>
                             </div>
                           
-                            {/* Recommendations section - always visible */}
+                            {/* Recommendations section - always visible with add input open */}
                             <div className="mt-3 pt-3 border-t border-gray-200">
                               <CommentsSection 
                                 postId={post.id}
@@ -4933,7 +4917,7 @@ export default function Feed() {
                                 commentVotes={commentVotes}
                                 isRecsMode={true}
                                 recCategory={recCategory}
-                                forceShowAddInput={expandedAddRecInput.has(post.id)}
+                                forceShowAddInput={true}
                               />
                             </div>
                           </div>

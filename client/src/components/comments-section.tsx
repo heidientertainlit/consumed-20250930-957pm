@@ -544,7 +544,6 @@ export default function CommentsSection({
       external_source: media.external_source
     });
     onSubmitComment(undefined, mediaJson);
-    setShowAddRecInput(false); // Collapse after adding
   };
 
   return (
@@ -652,13 +651,13 @@ export default function CommentsSection({
           )}
         </>
       ) : (
-        <div className="text-center text-gray-400 text-sm py-2">
-          {isRecsMode 
-            ? "No recs yet • Be the first →" 
-            : hotTakeMode
+        !isRecsMode && (
+          <div className="text-center text-gray-400 text-sm py-2">
+            {hotTakeMode
               ? "No takes yet. Be the first!"
               : "No comments yet. Be the first to comment!"}
-        </div>
+          </div>
+        )
       )}
     </div>
   );
