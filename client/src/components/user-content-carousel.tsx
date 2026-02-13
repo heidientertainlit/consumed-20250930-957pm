@@ -103,7 +103,7 @@ function UserContentCard({ post, onLike, isLiked }: { post: UGCPost; onLike?: (i
           </Link>
           <Link href={`/user/${post.user?.id || ''}`}>
             <span className="text-xs font-medium text-gray-700 hover:text-purple-600 cursor-pointer truncate">
-              @{post.user?.username || 'unknown'}
+              {post.user?.displayName || post.user?.username || 'Someone'}
             </span>
           </Link>
         </div>

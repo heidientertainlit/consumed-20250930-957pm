@@ -750,7 +750,7 @@ function CurrentlyConsumingFeedCard({
               <div className="min-w-0">
                 <p className="text-sm text-gray-900">
                   <Link href={`/user/${post.user?.id}`}>
-                    <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.username}</span>
+                    <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
                   </Link>
                   {' '}added{' '}
                   <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
@@ -929,7 +929,7 @@ function CurrentlyConsumingFeedCard({
                 onClick={() => onBet(
                   post.id, 
                   media.title, 
-                  formatUsername(post.user?.username),
+                  post.user?.displayName || formatUsername(post.user?.username),
                   post.user?.id || '',
                   media.externalId,
                   media.externalSource,
@@ -3319,7 +3319,7 @@ export default function Feed() {
                         <div className="min-w-0 flex-1">
                           <Link href={`/user/${highlightedPost.user.id}`}>
                             <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">
-                              @{highlightedPost.user.username}
+                              {highlightedPost.user.displayName || highlightedPost.user.username}
                             </span>
                           </Link>
                           <p className="text-xs text-gray-400">{highlightedPost.timestamp ? formatDate(highlightedPost.timestamp) : ''}</p>
@@ -3933,7 +3933,7 @@ export default function Feed() {
                   // Format activity text with points emphasis for games
                   const formatActivityText = (activity: any) => {
                     const points = getPointsForAction(activity.action, activity.rating);
-                    const name = formatUsername(activity.user?.username);
+                    const name = activity.user?.displayName || formatUsername(activity.user?.username);
                     
                     // Game activities - show scoring
                     if (activity.action === 'trivia' || activity.action === 'scored') {
@@ -4231,7 +4231,7 @@ export default function Feed() {
                             setActiveBetPost({
                               postId: postId,
                               mediaTitle: media.title,
-                              userName: formatUsername(targetUser?.username),
+                              userName: targetUser?.displayName || formatUsername(targetUser?.username),
                               targetUserId: userId,
                               externalId: media.externalId,
                               externalSource: media.externalSource,
@@ -4271,7 +4271,7 @@ export default function Feed() {
                               <div className="flex-1 min-w-0">
                                 <p className="text-gray-900">
                                   <Link href={`/user/${post.user?.id}`}>
-                                    <span className="font-semibold hover:text-purple-600 cursor-pointer">{formatUsername(post.user?.username)}</span>
+                                    <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || formatUsername(post.user?.username)}</span>
                                   </Link>
                                   {' '}{post.content}
                                 </p>
@@ -4423,7 +4423,7 @@ export default function Feed() {
                               <div className="flex-1">
                                 <p className="text-sm text-gray-900">
                                   <Link href={`/user/${post.user?.id}`}>
-                                    <span className="font-semibold hover:text-purple-600 cursor-pointer">@{post.user?.username}</span>
+                                    <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
                                   </Link>
                                   {' '}cast{' '}
                                   <span className="font-semibold">@{targetUserName}</span>
@@ -5515,7 +5515,7 @@ export default function Feed() {
                           const isBettableList = listTitle === 'currently' || listTitle === 'want to';
                           const hasMedia = post.mediaItems && post.mediaItems.length > 0;
                           const isOwnPost = currentAppUserId && post.user?.id === currentAppUserId;
-                          const userName = formatUsername(post.user?.username);
+                          const userName = post.user?.displayName || formatUsername(post.user?.username);
                           
                           // Only show bet button for other users' posts (can't bet on your own)
                           if (isBettableList && hasMedia && !activeInlineRating && !isOwnPost) {
