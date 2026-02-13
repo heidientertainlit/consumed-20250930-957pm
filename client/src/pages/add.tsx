@@ -1278,7 +1278,7 @@ export default function Search() {
       <Navigation />
       
       {/* Page Title + Search */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-6 pb-6 px-4 -mt-px">
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-8 px-4 -mt-px">
         <div className="text-center mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <div className="text-xl font-semibold text-white flex items-center justify-center gap-1.5">
             <span>What are you</span>
@@ -1548,14 +1548,16 @@ export default function Search() {
             </div>
           )}
         </div>
+        {/* Divider */}
+        <div className="border-t border-gray-200 mx-4 mt-2"></div>
       </div>
       
       {/* Main Content Area - Light Background */}
-      <div className="max-w-7xl mx-auto px-4 pt-3 pb-6 space-y-6">
+      <div className="bg-white max-w-7xl mx-auto px-4 pt-2 pb-6 space-y-6">
 
-        {/* Pill Filters - styled like the screenshot */}
+        {/* Pill Filters */}
         {!isAiMode && !searchQuery.trim() && (
-          <div className="flex gap-2 overflow-x-auto pb-2 pt-3 border-t border-gray-100 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <button
               onClick={() => setActiveTab('lists')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
