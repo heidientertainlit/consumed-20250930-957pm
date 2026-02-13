@@ -233,13 +233,12 @@ export default function ListDetail() {
     }
   })();
 
-  // Find the specific list from the REAL data based on URL slug
+  // Find the specific list from the REAL data based on URL slug or list UUID
   const sharedListData = sharedUserId 
     ? userListsData?.lists?.[0] // For shared links, get the first (and only) list returned
     : userListsData?.lists?.find((list: any) => {
         const sluggedTitle = createSlug(list.title);
-        // Compare both encoded and decoded versions
-        return sluggedTitle === urlListName || sluggedTitle === decodedUrlListName;
+        return sluggedTitle === urlListName || sluggedTitle === decodedUrlListName || list.id === urlListName;
       });
 
   console.log('Shared list data found:', sharedListData);
