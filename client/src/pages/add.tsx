@@ -1278,7 +1278,7 @@ export default function Search() {
       <Navigation />
       
       {/* Page Title + Search */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-8 px-4 -mt-px">
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-10 px-4 -mt-px">
         <div className="text-center mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <div className="text-xl font-semibold text-white flex items-center justify-center gap-1.5">
             <span>What are you</span>
@@ -1549,7 +1549,7 @@ export default function Search() {
           )}
         </div>
         {/* Divider */}
-        <div className="border-t border-gray-200 mx-4 mt-2"></div>
+        <div className="border-t border-gray-200 mx-4 mt-0"></div>
       </div>
       
       {/* Main Content Area - Light Background */}
