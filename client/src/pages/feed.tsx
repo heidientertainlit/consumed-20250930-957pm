@@ -1176,10 +1176,10 @@ export default function Feed() {
     const pool: UGCPost[] = filterByCategory(socialPosts || [])
       .filter((p: any) => {
         if (!p.user?.id || !p.user?.username || p.user.username === 'Unknown') return false;
+        if (p.type === 'poll' && (p as any).question) return false;
         if (p.type === 'cast_approved') return true;
         if (p.type === 'hot_take' || p.post_type === 'hot_take') return true;
         if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
-        if (p.type === 'poll' && (p as any).question) return true;
         if (p.type === 'rank' || p.type === 'shared_rank') return true;
         const content = (p.content || '').trim();
         if (p.rating && p.rating > 0) return true;
