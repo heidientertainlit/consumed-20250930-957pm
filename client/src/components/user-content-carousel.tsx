@@ -41,26 +41,26 @@ interface UserContentCarouselProps {
 function getTypeLabel(type: string): { label: string; color: string; icon: any } {
   switch (type) {
     case 'hot_take':
-      return { label: 'Hot Take', color: 'from-orange-500 to-red-500', icon: Flame };
+      return { label: 'Hot Take', color: 'from-purple-600 to-pink-500', icon: Flame };
     case 'ask_for_rec':
     case 'ask_for_recs':
-      return { label: 'Asking for Recs', color: 'from-purple-600 to-indigo-600', icon: HelpCircle };
+      return { label: 'Asking for Recs', color: 'from-indigo-500 to-purple-600', icon: HelpCircle };
     case 'poll':
-      return { label: 'Poll', color: 'from-blue-500 to-cyan-500', icon: BarChart3 };
+      return { label: 'Poll', color: 'from-blue-500 to-indigo-500', icon: BarChart3 };
     case 'rating':
     case 'review':
-      return { label: 'Review', color: 'from-amber-500 to-yellow-500', icon: Star };
+      return { label: 'Review', color: 'from-violet-500 to-purple-600', icon: Star };
     case 'thought':
     case 'general':
-      return { label: 'Thought', color: 'from-gray-600 to-gray-700', icon: MessageCircle };
+      return { label: 'Thought', color: 'from-slate-500 to-indigo-500', icon: MessageCircle };
     case 'cast_approved':
-      return { label: 'Cast', color: 'from-purple-500 to-amber-500', icon: Users };
+      return { label: 'Cast', color: 'from-purple-500 to-blue-500', icon: Users };
     case 'rank':
-      return { label: 'Rank', color: 'from-emerald-500 to-teal-500', icon: Trophy };
+      return { label: 'Rank', color: 'from-blue-600 to-purple-500', icon: Trophy };
     case 'finished':
-      return { label: 'Finished', color: 'from-green-500 to-emerald-500', icon: CheckCircle2 };
+      return { label: 'Finished', color: 'from-indigo-400 to-blue-500', icon: CheckCircle2 };
     default:
-      return { label: 'Post', color: 'from-gray-500 to-gray-600', icon: MessageCircle };
+      return { label: 'Post', color: 'from-slate-500 to-purple-500', icon: MessageCircle };
   }
 }
 
