@@ -1279,7 +1279,7 @@ export default function Search() {
       
       {/* Page Title + Search */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-10 px-4 -mt-px">
-        <div className="text-center mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="text-center mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <div className="text-xl font-semibold text-white flex items-center justify-center gap-1.5">
             <span>What are you</span>
             <AnimatedWord />
@@ -2037,26 +2037,26 @@ export default function Search() {
 
             {/* Lists Tab */}
             {activeTab === 'lists' && (
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-                <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 -mt-1">
+
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="relative flex-1">
+                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                    <input
+                      type="text"
+                      placeholder="Search lists..."
+                      value={listSearch}
+                      onChange={(e) => setListSearch(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                    />
+                  </div>
                   <button
-                    className="bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium"
+                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-[34px] px-3 rounded-lg flex items-center gap-1 font-medium flex-shrink-0"
                     onClick={() => setIsQuickAddOpen(true)}
                   >
                     <Plus size={12} />
-                    Create List
+                    New
                   </button>
-                </div>
-
-                <div className="relative mb-3">
-                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                  <input
-                    type="text"
-                    placeholder="Search lists..."
-                    value={listSearch}
-                    onChange={(e) => setListSearch(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
-                  />
                 </div>
 
                 {isLoadingLists ? (
@@ -2155,10 +2155,6 @@ export default function Search() {
                       >
                         <Download size={16} className={isGeneratingHistoryImage ? 'animate-pulse' : ''} />
                       </button>
-                      <Link href="/track" className="ml-auto bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium">
-                        <FileUp size={12} />
-                        Import
-                      </Link>
                     </div>
 
                     <div className="flex flex-wrap gap-1.5 mb-2">
