@@ -38,29 +38,29 @@ interface UserContentCarouselProps {
   currentUserId?: string;
 }
 
-function getTypeLabel(type: string): { label: string; color: string; icon: any } {
+function getTypeLabel(type: string): { label: string; iconColor: string; icon: any } {
   switch (type) {
     case 'hot_take':
-      return { label: 'Hot Take', color: 'from-purple-600 to-pink-500', icon: Flame };
+      return { label: 'Hot Take', iconColor: 'text-orange-500', icon: Flame };
     case 'ask_for_rec':
     case 'ask_for_recs':
-      return { label: 'Asking for Recs', color: 'from-indigo-500 to-purple-600', icon: HelpCircle };
+      return { label: 'Asking for Recs', iconColor: 'text-purple-500', icon: HelpCircle };
     case 'poll':
-      return { label: 'Poll', color: 'from-blue-500 to-indigo-500', icon: BarChart3 };
+      return { label: 'Poll', iconColor: 'text-blue-500', icon: BarChart3 };
     case 'rating':
     case 'review':
-      return { label: 'Review', color: 'from-violet-500 to-purple-600', icon: Star };
+      return { label: 'Review', iconColor: 'text-purple-500', icon: Star };
     case 'thought':
     case 'general':
-      return { label: 'Thought', color: 'from-slate-500 to-indigo-500', icon: MessageCircle };
+      return { label: 'Thought', iconColor: 'text-gray-500', icon: MessageCircle };
     case 'cast_approved':
-      return { label: 'Cast', color: 'from-purple-500 to-blue-500', icon: Users };
+      return { label: 'Cast', iconColor: 'text-purple-500', icon: Users };
     case 'rank':
-      return { label: 'Rank', color: 'from-blue-600 to-purple-500', icon: Trophy };
+      return { label: 'Rank', iconColor: 'text-blue-500', icon: Trophy };
     case 'finished':
-      return { label: 'Finished', color: 'from-indigo-400 to-blue-500', icon: CheckCircle2 };
+      return { label: 'Finished', iconColor: 'text-indigo-500', icon: CheckCircle2 };
     default:
-      return { label: 'Post', color: 'from-slate-500 to-purple-500', icon: MessageCircle };
+      return { label: 'Post', iconColor: 'text-gray-500', icon: MessageCircle };
   }
 }
 
@@ -84,28 +84,31 @@ function UserContentCard({ post, onLike, isLiked }: { post: UGCPost; onLike?: (i
   const avatarLetter = username[0]?.toUpperCase() || '?';
 
   return (
-    <div className="flex-shrink-0 w-[280px] rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
-      <div className={`bg-gradient-to-r ${typeInfo.color} px-3 py-1.5 flex items-center gap-1.5`}>
-        <TypeIcon size={12} className="text-white" />
-        <span className="text-xs font-medium text-white">{typeInfo.label}</span>
-      </div>
-
-      <div className="p-3">
-        <div className="flex items-center gap-2 mb-2">
-          <Link href={`/user/${post.user?.id || ''}`}>
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer flex-shrink-0">
-              {post.user?.avatar ? (
-                <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-              ) : (
-                avatarLetter
-              )}
+    <div className="flex-shrink-0 w-[280px] rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            <Link href={`/user/${post.user?.id || ''}`}>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer flex-shrink-0">
+                {post.user?.avatar ? (
+                  <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                ) : (
+                  avatarLetter
+                )}
+              </div>
+            </Link>
+            <div className="min-w-0">
+              <Link href={`/user/${post.user?.id || ''}`}>
+                <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer truncate block">
+                  {post.user?.displayName || post.user?.username || 'Someone'}
+                </span>
+              </Link>
+              <span className={`text-[11px] font-medium ${typeInfo.iconColor} flex items-center gap-1`}>
+                <TypeIcon size={11} />
+                {typeInfo.label}
+              </span>
             </div>
-          </Link>
-          <Link href={`/user/${post.user?.id || ''}`}>
-            <span className="text-xs font-medium text-gray-700 hover:text-purple-600 cursor-pointer truncate">
-              {post.user?.displayName || post.user?.username || 'Someone'}
-            </span>
-          </Link>
+          </div>
         </div>
 
         {post.type === 'poll' ? (
@@ -169,7 +172,7 @@ function UserContentCard({ post, onLike, isLiked }: { post: UGCPost; onLike?: (i
               )}
               <div className="flex-1 space-y-1.5">
                 {post.options.map((opt, i) => (
-                  <div key={i} className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-full px-3 py-1.5 text-xs font-medium text-white truncate">
+                  <div key={i} className="bg-gray-100 rounded-full px-3 py-2 text-xs font-medium text-gray-800 truncate">
                     {opt}
                   </div>
                 ))}
@@ -184,7 +187,7 @@ function UserContentCard({ post, onLike, isLiked }: { post: UGCPost; onLike?: (i
           </div>
         )}
 
-        <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
+        <div className="flex items-center gap-3 pt-3 mt-1 border-t border-gray-50">
           {post.type === 'hot_take' ? (
             <>
               <span className="flex items-center gap-1 text-xs text-orange-500">
