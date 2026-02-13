@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target, User, Plus, Users, Download, RefreshCw, Share2, Dna, Mic, Gamepad2, Clock, BarChart3, Send, Lock, List, ChevronRight, Calendar, Play, Trophy, MessageSquarePlus, Star, LayoutGrid } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, TrendingUp, Heart, Target, User, Plus, Users, Download, RefreshCw, Share2, Dna, Mic, Gamepad2, Clock, BarChart3, Send, Lock, List, ChevronRight, Calendar, Play, Trophy, MessageSquarePlus, Star, LayoutGrid, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -1507,7 +1507,7 @@ export default function Search() {
       <div className="bg-white pt-4 pb-2 -mt-px">
         <div className="max-w-3xl lg:mx-auto px-4">
           <div className="mb-2">
-            <h2 className="text-sm font-semibold text-gray-900">In Progress</h2>
+            <h2 className="text-sm font-medium text-gray-900">In Progress</h2>
           </div>
           {currentlyItems.length > 0 ? (
             <div 
@@ -2039,10 +2039,6 @@ export default function Search() {
             {activeTab === 'lists' && (
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-center gap-2 mb-3">
-                  <Link href="/track" className="bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium">
-                    <Download size={12} />
-                    Import
-                  </Link>
                   <button
                     className="bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium"
                     onClick={() => setIsQuickAddOpen(true)}
@@ -2159,6 +2155,10 @@ export default function Search() {
                       >
                         <Download size={16} className={isGeneratingHistoryImage ? 'animate-pulse' : ''} />
                       </button>
+                      <Link href="/track" className="ml-auto bg-white border border-purple-300 hover:border-purple-500 text-purple-700 text-xs h-7 px-3 rounded-full flex items-center gap-1 font-medium">
+                        <FileUp size={12} />
+                        Import
+                      </Link>
                     </div>
 
                     <div className="flex flex-wrap gap-1.5 mb-2">
