@@ -233,14 +233,14 @@ export function UserContentCarousel({ posts, title, onLike, likedPosts, currentU
   return (
     <div className="mb-4">
       {title && (
-        <div className="flex items-center justify-between mb-2 px-1">
-          <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-bold text-gray-900">{title}</h3>
           <span className="text-xs text-gray-400">{posts.length} posts</span>
         </div>
       )}
       <div
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory"
+        className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
       >
         {posts.map((post) => (
