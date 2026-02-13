@@ -725,8 +725,8 @@ function CurrentlyConsumingFeedCard({
     }
   };
   
-  // Get display name without "consumed/IsConsumed" suffix
-  const displayName = (post.user?.username || '').replace(/consumed|IsConsumed/gi, '').trim() || post.user?.username;
+  // Get display name - prefer displayName from API, fallback to cleaned username
+  const displayName = post.user?.displayName || (post.user?.username || '').replace(/consumed|IsConsumed/gi, '').trim() || post.user?.username;
   
   return (
     <div id={`post-${post.id}`}>
@@ -5389,19 +5389,21 @@ export default function Feed() {
                           let userId: string | undefined;
                           let username: string | undefined;
                           
+                          let userDisplayName: string | undefined;
                           if (post.user) {
                             userId = post.user.id;
                             username = post.user.username;
+                            userDisplayName = post.user.displayName;
                           } else if (post.groupedActivities?.[0]) {
                             const activity = post.groupedActivities[0] as any;
                             userId = activity.userId;
                             username = activity.username;
+                            userDisplayName = activity.displayName;
                           }
                           
                           if (!userId || !username) return null;
                           
-                          // Get the first name or username for display
-                          const displayName = username.replace(/consumed|IsConsumed/gi, '').trim() || username;
+                          const displayName = userDisplayName || username.replace(/consumed|IsConsumed/gi, '').trim() || username;
                           
                           return (
                             <Link
