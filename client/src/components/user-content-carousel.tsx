@@ -204,24 +204,27 @@ function UserContentCard({ post, onLike, onComment, isLiked }: { post: UGCPost; 
         <div className="flex items-center gap-3 pt-2.5 mt-auto border-t border-gray-50 flex-shrink-0">
           {post.type === 'hot_take' ? (
             <>
-              <span className="flex items-center gap-1 text-xs text-orange-500">
+              <button
+                className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600"
+              >
                 <Flame size={12} /> {post.fire_votes || 0}
-              </span>
-              <span className="flex items-center gap-1 text-xs text-blue-400">
+              </button>
+              <button
+                className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-500"
+              >
                 <Snowflake size={12} /> {post.ice_votes || 0}
-              </span>
+              </button>
             </>
           ) : (
             <button
               onClick={(e) => { e.stopPropagation(); onLike?.(post.id); }}
-              className={`flex items-center gap-1 text-xs ${isLiked ? 'text-red-500' : 'text-gray-400'}`}
+              className={`flex items-center gap-1 text-xs ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
             >
               <Heart size={12} fill={isLiked ? 'currentColor' : 'none'} />
               <span>{post.likes || 0}</span>
             </button>
           )}
           <button
-            onClick={(e) => { e.stopPropagation(); handleCardTap(); }}
             className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-500"
           >
             <MessageCircle size={12} />
