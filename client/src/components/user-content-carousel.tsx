@@ -1,8 +1,8 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Link } from 'wouter';
 import { 
-  Flame, Snowflake, MessageCircle, Heart, Star, ChevronRight, 
-  HelpCircle, BarChart3, Users, BookOpen, CheckCircle2, Trophy,
+  Flame, Snowflake, MessageCircle, Heart, Star, 
+  HelpCircle, BarChart3, Users, CheckCircle2, Trophy,
   Film, Music, Tv2, Book, Headphones, Gamepad2
 } from 'lucide-react';
 
@@ -34,6 +34,7 @@ interface UserContentCarouselProps {
   posts: UGCPost[];
   title?: string;
   onLike?: (postId: string) => void;
+  onComment?: (postId: string) => void;
   likedPosts?: Set<string>;
   currentUserId?: string;
 }
@@ -76,59 +77,117 @@ function getMediaIcon(mediaType?: string) {
   }
 }
 
-function UserContentCard({ post, onLike, isLiked }: { post: UGCPost; onLike?: (id: string) => void; isLiked?: boolean }) {
+function UserContentCard({ post, onLike, onComment, isLiked }: { post: UGCPost; onLike?: (id: string) => void; onComment?: (id: string) => void; isLiked?: boolean }) {
   const typeInfo = getTypeLabel(post.type);
   const TypeIcon = typeInfo.icon;
   const MediaIcon = getMediaIcon(post.mediaType);
   const username = post.user?.displayName || post.user?.username || 'Someone';
   const avatarLetter = username[0]?.toUpperCase() || '?';
 
+  const handleCardTap = () => {
+    const postEl = document.getElementById(`post-${post.id}`);
+    if (postEl) {
+      postEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      postEl.classList.add('ring-2', 'ring-purple-300');
+      setTimeout(() => postEl.classList.remove('ring-2', 'ring-purple-300'), 2000);
+    }
+    onComment?.(post.id);
+  };
+
   return (
-    <div className="flex-shrink-0 w-[280px] rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2.5">
-            <Link href={`/user/${post.user?.id || ''}`}>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer flex-shrink-0">
-                {post.user?.avatar ? (
-                  <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                ) : (
-                  avatarLetter
-                )}
-              </div>
-            </Link>
-            <div className="min-w-0">
-              <Link href={`/user/${post.user?.id || ''}`}>
-                <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer truncate block">
-                  {post.user?.displayName || post.user?.username || 'Someone'}
-                </span>
-              </Link>
-              <span className={`text-[11px] font-medium ${typeInfo.iconColor} flex items-center gap-1`}>
-                <TypeIcon size={11} />
-                {typeInfo.label}
-              </span>
+    <div
+      className="flex-shrink-0 w-[260px] h-[240px] rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm cursor-pointer flex flex-col"
+      onClick={handleCardTap}
+    >
+      <div className="p-4 flex flex-col flex-1 min-h-0">
+        <div className="flex items-center gap-2.5 mb-3 flex-shrink-0">
+          <Link href={`/user/${post.user?.id || ''}`} onClick={(e: any) => e.stopPropagation()}>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer flex-shrink-0">
+              {post.user?.avatar ? (
+                <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+              ) : (
+                avatarLetter
+              )}
             </div>
+          </Link>
+          <div className="min-w-0 flex-1">
+            <Link href={`/user/${post.user?.id || ''}`} onClick={(e: any) => e.stopPropagation()}>
+              <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer truncate block">
+                {username}
+              </span>
+            </Link>
+            <span className={`text-[11px] font-medium ${typeInfo.iconColor} flex items-center gap-1`}>
+              <TypeIcon size={11} />
+              {typeInfo.label}
+            </span>
           </div>
         </div>
 
-        {post.type === 'poll' ? (
-          <div className="mb-2">
-            {post.mediaTitle && (
-              <p className="text-[10px] text-gray-500 mb-0.5">{post.mediaTitle}</p>
-            )}
-            <p className="text-sm font-bold text-gray-900 line-clamp-2">{post.content}</p>
-          </div>
-        ) : post.mediaImage && post.mediaImage.startsWith('http') ? (
-          <div className="flex gap-2.5 mb-2">
-            <img
-              src={post.mediaImage}
-              alt={post.mediaTitle || ''}
-              className="w-12 h-16 rounded-lg object-cover flex-shrink-0"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-            <div className="flex-1 min-w-0">
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {post.type === 'poll' ? (
+            <div>
               {post.mediaTitle && (
-                <p className="text-xs font-semibold text-gray-900 line-clamp-1 mb-0.5">{post.mediaTitle}</p>
+                <p className="text-[10px] text-gray-500 mb-0.5 truncate">{post.mediaTitle}</p>
+              )}
+              <p className="text-sm font-bold text-gray-900 line-clamp-2 mb-2">{post.content}</p>
+              {post.options && post.options.length > 0 && (
+                <div className="flex gap-2">
+                  {post.mediaImage && post.mediaImage.startsWith('http') && (
+                    <img
+                      src={post.mediaImage}
+                      alt={post.mediaTitle || ''}
+                      className="w-12 h-16 rounded-lg object-cover flex-shrink-0"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <div className="flex-1 space-y-1">
+                    {post.options.slice(0, 3).map((opt, i) => (
+                      <div key={i} className="bg-gray-100 rounded-full px-3 py-1.5 text-xs font-medium text-gray-800 truncate">
+                        {opt}
+                      </div>
+                    ))}
+                    {post.options.length > 3 && (
+                      <p className="text-[10px] text-gray-400 pl-1">+{post.options.length - 3} more</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              {post.optionVotes && post.optionVotes.length > 0 && (
+                <div className="flex items-center gap-1 mt-1.5 text-xs text-gray-500">
+                  <Users size={11} />
+                  <span>{post.optionVotes.reduce((sum, v) => sum + (v.count || 0), 0)} votes</span>
+                </div>
+              )}
+            </div>
+          ) : post.mediaImage && post.mediaImage.startsWith('http') ? (
+            <div className="flex gap-2.5">
+              <img
+                src={post.mediaImage}
+                alt={post.mediaTitle || ''}
+                className="w-12 h-16 rounded-lg object-cover flex-shrink-0"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+              <div className="flex-1 min-w-0">
+                {post.mediaTitle && (
+                  <p className="text-xs font-semibold text-gray-900 line-clamp-1 mb-0.5">{post.mediaTitle}</p>
+                )}
+                {post.rating && post.rating > 0 && (
+                  <div className="flex items-center gap-0.5 mb-1">
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star key={s} size={10} className={s <= post.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-gray-600 line-clamp-3">{post.content}</p>
+              </div>
+            </div>
+          ) : (
+            <div>
+              {post.mediaTitle && (
+                <p className="text-xs font-semibold text-gray-900 line-clamp-1 mb-1">
+                  <MediaIcon size={11} className="inline mr-1 text-gray-400" />
+                  {post.mediaTitle}
+                </p>
               )}
               {post.rating && post.rating > 0 && (
                 <div className="flex items-center gap-0.5 mb-1">
@@ -137,57 +196,12 @@ function UserContentCard({ post, onLike, isLiked }: { post: UGCPost; onLike?: (i
                   ))}
                 </div>
               )}
-              <p className="text-xs text-gray-600 line-clamp-2">{post.content}</p>
+              <p className="text-sm text-gray-800 line-clamp-4">{post.content}</p>
             </div>
-          </div>
-        ) : (
-          <div className="mb-2">
-            {post.mediaTitle && (
-              <p className="text-xs font-semibold text-gray-900 line-clamp-1 mb-1">
-                <MediaIcon size={11} className="inline mr-1 text-gray-400" />
-                {post.mediaTitle}
-              </p>
-            )}
-            {post.rating && post.rating > 0 && (
-              <div className="flex items-center gap-0.5 mb-1">
-                {[1, 2, 3, 4, 5].map(s => (
-                  <Star key={s} size={10} className={s <= post.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
-                ))}
-              </div>
-            )}
-            <p className="text-sm text-gray-800 line-clamp-3">{post.content}</p>
-          </div>
-        )}
+          )}
+        </div>
 
-        {post.type === 'poll' && post.options && post.options.length > 0 && (
-          <div className="mb-2">
-            <div className="flex gap-2">
-              {post.mediaImage && post.mediaImage.startsWith('http') && (
-                <img
-                  src={post.mediaImage}
-                  alt={post.mediaTitle || ''}
-                  className="w-16 h-20 rounded-lg object-cover flex-shrink-0"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-              )}
-              <div className="flex-1 space-y-1.5">
-                {post.options.map((opt, i) => (
-                  <div key={i} className="bg-gray-100 rounded-full px-3 py-2 text-xs font-medium text-gray-800 truncate">
-                    {opt}
-                  </div>
-                ))}
-              </div>
-            </div>
-            {post.optionVotes && post.optionVotes.length > 0 && (
-              <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
-                <Users size={11} />
-                <span>{post.optionVotes.reduce((sum, v) => sum + (v.count || 0), 0)} votes</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="flex items-center gap-3 pt-3 mt-1 border-t border-gray-50">
+        <div className="flex items-center gap-3 pt-2.5 mt-auto border-t border-gray-50 flex-shrink-0">
           {post.type === 'hot_take' ? (
             <>
               <span className="flex items-center gap-1 text-xs text-orange-500">
@@ -206,17 +220,20 @@ function UserContentCard({ post, onLike, isLiked }: { post: UGCPost; onLike?: (i
               <span>{post.likes || 0}</span>
             </button>
           )}
-          <span className="flex items-center gap-1 text-xs text-gray-400">
+          <button
+            onClick={(e) => { e.stopPropagation(); handleCardTap(); }}
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-500"
+          >
             <MessageCircle size={12} />
             <span>{post.comments || 0}</span>
-          </span>
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-export function UserContentCarousel({ posts, title, onLike, likedPosts, currentUserId }: UserContentCarouselProps) {
+export function UserContentCarousel({ posts, title, onLike, onComment, likedPosts, currentUserId }: UserContentCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   if (!posts || posts.length === 0) return null;
@@ -227,6 +244,7 @@ export function UserContentCarousel({ posts, title, onLike, likedPosts, currentU
         <UserContentCard 
           post={posts[0]} 
           onLike={onLike}
+          onComment={onComment}
           isLiked={likedPosts?.has(posts[0].id)}
         />
       </div>
@@ -251,6 +269,7 @@ export function UserContentCarousel({ posts, title, onLike, likedPosts, currentU
             <UserContentCard
               post={post}
               onLike={onLike}
+              onComment={onComment}
               isLiked={likedPosts?.has(post.id)}
             />
           </div>

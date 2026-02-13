@@ -1175,7 +1175,9 @@ export default function Feed() {
     const isAutoGen = (text: string) => !text || text.startsWith('Added ') || text.startsWith('"Added ') || /^"?Added .+ to .+"?$/i.test(text);
     const pool: UGCPost[] = filterByCategory(socialPosts || [])
       .filter((p: any) => {
-        if (!p.user?.id || !p.user?.username || p.user.username === 'Unknown') return false;
+        const hasUser = p.user?.id && p.user?.username && p.user.username !== 'Unknown';
+        const hasCreator = p.creator?.id && p.creator?.username && p.creator.username !== 'Unknown';
+        if (!hasUser && !hasCreator) return false;
         if (p.type === 'cast_approved') return true;
         if (p.type === 'hot_take' || p.post_type === 'hot_take') return true;
         if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
@@ -1207,14 +1209,15 @@ export default function Feed() {
         if (src === 'googlebooks' && eid) mediaImg = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`;
         else if (src === 'open_library' && eid) mediaImg = `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`;
 
+        const userObj = p.user || p.creator;
         return {
           id: p.id, type: postType,
-          user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
+          user: { id: userObj?.id || '', username: userObj?.username || '', displayName: userObj?.displayName || userObj?.display_name || userObj?.username || '', avatar: userObj?.avatar_url || userObj?.avatarUrl || userObj?.avatar || '' },
           content: postType === 'poll' ? ((p as any).question || content) : content,
-          mediaTitle: media?.title, mediaType: media?.mediaType || media?.type, mediaImage: mediaImg,
+          mediaTitle: media?.title || (p as any).mediaTitle, mediaType: media?.mediaType || media?.type, mediaImage: mediaImg,
           rating: p.rating, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
           fire_votes: p.fire_votes || 0, ice_votes: p.ice_votes || 0,
-          options: (p as any).options || [], optionVotes: (p as any).optionVotes || [], timestamp: p.createdAt || p.created_at, pollId: (p as any).poolId || p.id,
+          options: (p as any).options || [], optionVotes: (p as any).optionVotes || [], timestamp: p.createdAt || p.created_at || p.timestamp, pollId: (p as any).poolId || p.id,
         };
       });
 
@@ -3425,7 +3428,7 @@ export default function Feed() {
 
               {/* UGC Slot 0 - Discovery carousel (6 items) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[0]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[0]} title="What People Are Saying" onLike={handleLike} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[0]} title="What People Are Saying" onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
               )}
 
               {/* Filtered views - show only the selected category */}
@@ -3464,7 +3467,7 @@ export default function Feed() {
 
               {/* UGC Slot 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[1]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[1]} onLike={handleLike} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[1]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
               )}
 
               {/* DNA Moment Card - in All or DNA filter */}
@@ -3479,7 +3482,7 @@ export default function Feed() {
 
               {/* UGC Slot 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[2]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[2]} onLike={handleLike} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[2]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
               )}
 
               {/* Cast Your Friends Game */}
@@ -3579,7 +3582,7 @@ export default function Feed() {
 
               {/* UGC Slot 3 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[3]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[3]} onLike={handleLike} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[3]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
               )}
 
               {/* Cast Your Friends - Approved Casts Carousel */}
@@ -3780,7 +3783,7 @@ export default function Feed() {
 
               {/* UGC Slot 4 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[4]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[4]} onLike={handleLike} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[4]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
               )}
 
               {/* Leaderboard - Poll Masters */}
@@ -3811,7 +3814,7 @@ export default function Feed() {
 
               {/* UGC Slot 5 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[5]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[5]} onLike={handleLike} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[5]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
               )}
 
               {/* Leaderboard - Media Leaders */}
@@ -3864,7 +3867,7 @@ export default function Feed() {
 
               {/* UGC Slot 6 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[6]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[6]} onLike={handleLike} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[6]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
               )}
 
               {/* TRIVIA - Podcasts category */}
@@ -3879,12 +3882,12 @@ export default function Feed() {
 
               {/* UGC Slot 7 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[7]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[7]} onLike={handleLike} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[7]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
               )}
 
               {/* UGC Slot 8 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[8]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[8]} onLike={handleLike} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[8]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
               )}
 
               {/* TRIVIA - Sports category */}
@@ -3894,12 +3897,12 @@ export default function Feed() {
 
               {/* UGC Slot 9 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[9]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[9]} onLike={handleLike} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[9]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
               )}
 
               {/* UGC Slot 10+ (remaining) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[10]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[10]} onLike={handleLike} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[10]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
               )}
 
               {/* Social Posts */}
