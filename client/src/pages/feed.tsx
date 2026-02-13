@@ -31,6 +31,7 @@ import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
 import { UserPollsCarousel } from "@/components/user-polls-carousel";
+import { UserContentCarousel, type UGCPost } from "@/components/user-content-carousel";
 import ConversationsPanel from "@/components/conversations-panel";
 import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog";
 import RankFeedCard from "@/components/rank-feed-card";
@@ -1169,6 +1170,66 @@ export default function Feed() {
       });
     });
   };
+
+  const ugcSlots: UGCPost[][] = (() => {
+    const isAutoGen = (text: string) => !text || text.startsWith('Added ') || text.startsWith('"Added ') || /^"?Added .+ to .+"?$/i.test(text);
+    const pool: UGCPost[] = filterByCategory(socialPosts || [])
+      .filter((p: any) => {
+        if (!p.user?.id || !p.user?.username || p.user.username === 'Unknown') return false;
+        if (p.type === 'cast_approved') return true;
+        if (p.type === 'hot_take' || p.post_type === 'hot_take') return true;
+        if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
+        if (p.type === 'poll' && (p as any).question) return true;
+        if (p.type === 'rank' || p.type === 'shared_rank') return true;
+        const content = (p.content || '').trim();
+        if (p.rating && p.rating > 0) return true;
+        if (content.length > 20 && !isAutoGen(content)) return true;
+        if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) return true;
+        return false;
+      })
+      .map((p: any): UGCPost => {
+        let postType: UGCPost['type'] = 'general';
+        const content = (p.content || '').trim();
+        if (p.type === 'hot_take' || p.post_type === 'hot_take') postType = 'hot_take';
+        else if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') postType = 'ask_for_rec';
+        else if (p.type === 'poll' && (p as any).question) postType = 'poll';
+        else if (p.type === 'cast_approved') postType = 'cast_approved';
+        else if (p.type === 'rank' || p.type === 'shared_rank') postType = 'rank';
+        else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
+        else if (p.rating && p.rating > 0 && content.length > 20) postType = 'review';
+        else if (p.rating && p.rating > 0) postType = 'rating';
+        else postType = 'thought';
+
+        const media = p.mediaItems?.[0];
+        let mediaImg = media?.imageUrl || media?.image_url || media?.poster_url || '';
+        const src = media?.externalSource || media?.external_source || 'tmdb';
+        const eid = media?.externalId || media?.external_id;
+        if (src === 'googlebooks' && eid) mediaImg = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`;
+        else if (src === 'open_library' && eid) mediaImg = `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`;
+
+        return {
+          id: p.id, type: postType,
+          user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
+          content: postType === 'poll' ? ((p as any).question || content) : content,
+          mediaTitle: media?.title, mediaType: media?.mediaType || media?.type, mediaImage: mediaImg,
+          rating: p.rating, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
+          fire_votes: p.fire_votes || 0, ice_votes: p.ice_votes || 0,
+          options: (p as any).options || [], timestamp: p.createdAt || p.created_at, pollId: (p as any).poolId || p.id,
+        };
+      });
+
+    const seen = new Set<string>();
+    const unique = pool.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
+
+    const sizes = [6, 3, 3, 2, 3, 2, 3, 2, 2, 3, 2];
+    const slots: UGCPost[][] = [];
+    let cur = 0;
+    for (const s of sizes) { slots.push(unique.slice(cur, cur + s)); cur += s; }
+    if (cur < unique.length) slots.push(unique.slice(cur));
+    return slots;
+  })();
+
+  const ugcUsedIds = new Set(ugcSlots.flat().map(p => p.id));
 
   // Group same-user activities within same-day windows into consolidated cards BY ACTIVITY TYPE
   // Ratings consolidate if 2+ in same day, list adds go to Quick Glimpse (don't consolidate)
@@ -3388,6 +3449,11 @@ export default function Feed() {
                 return <UserPollsCarousel polls={userPollCards} />;
               })()}
 
+              {/* UGC Slot 0 - Discovery carousel (6 items) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[0]?.length > 0 && (
+                <UserContentCarousel posts={ugcSlots[0]} title="What People Are Saying" onLike={handleLike} likedPosts={likedPosts} />
+              )}
+
               {/* Filtered views - show only the selected category */}
               {/* TRIVIA filter - Movies category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && 
@@ -3417,101 +3483,15 @@ export default function Feed() {
                 <LeaderboardFeedCard variant="trivia" />
               )}
 
-              {/* Swipeable Rating Cards - After Leaderboard (every 3 items pattern) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && (() => {
-                const ratingPostsRaw = filterByCategory(socialPosts || []).filter((p: any) => {
-                  if (!p.mediaItems?.length || !p.user?.id) return false;
-                  if (p.type === 'cast_approved') return false;
-                  const hasRating = p.rating && p.rating > 0;
-                  const content = p.content?.trim() || '';
-                  const isAutoGenerated = content.startsWith('Added ') || content.startsWith('"Added ') || content.match(/^"?Added .+ to .+"?$/i);
-                  const hasUserContent = content.length > 30 && !isAutoGenerated;
-                  return hasRating || hasUserContent;
-                });
-                const ratingPosts = deduplicateRatingPosts(ratingPostsRaw);
-                if (ratingPosts.length < 3) return null;
-                return (
-                  <SwipeableRatingCards 
-                    posts={ratingPosts.slice(0, 3).map((p: any) => ({
-                      id: p.id,
-                      user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
-                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if (src === 'googlebooks' && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } else if (src === 'open_library' && eid) { img = `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
-                      rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
-                    }))}
-                    onLike={handleLike}
-                    onDelete={handleHidePost}
-                    likedPosts={likedPosts}
-                    currentUserId={currentAppUserId}
-                  />
-                );
-              })()}
-
               {/* Hot Takes Card - Share a thought about what you're consuming */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'commentary') && !selectedCategory && (
                 <QuickReactCard />
               )}
 
-              {/* Hot Take 1 - First hot take after QuickReactCard (only in All view) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory &&
-                socialPosts
-                  .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
-                  .slice(0, 1)
-                  .map((post: any) => (
-                    <div key={`hottake-wrapper-${post.id}`}>
-                      <HotTakeFeedCard
-                        key={`hottake-${post.id}`}
-                        post={{
-                          id: post.id,
-                          user: post.user,
-                          content: post.content,
-                          media_title: post.mediaItems?.[0]?.title || post.media_title,
-                          media_type: post.mediaItems?.[0]?.type || post.media_type,
-                          image_url: post.mediaItems?.[0]?.imageUrl || post.image_url,
-                          fire_votes: post.fire_votes || 0,
-                          ice_votes: post.ice_votes || 0,
-                          comments_count: post.comments || post.comments_count || 0,
-                          created_at: post.createdAt || post.created_at || post.timestamp,
-                        }}
-                        currentUserId={user?.id}
-                        onDelete={handleDeletePost}
-                        onComment={(postId) => {
-                          setExpandedComments(prev => {
-                            const newSet = new Set(prev);
-                            if (newSet.has(postId)) {
-                              newSet.delete(postId);
-                            } else {
-                              newSet.add(postId);
-                            }
-                            return newSet;
-                          });
-                        }}
-                      />
-                      {expandedComments.has(post.id) && (
-                        <div className="mt-2 bg-white rounded-xl border border-gray-100 p-3">
-                          <CommentsSection
-                            postId={post.id}
-                            isLiked={likedPosts.has(post.id)}
-                            onLike={handleLike}
-                            expandedComments={true}
-                            onToggleComments={() => {}}
-                            fetchComments={fetchComments}
-                            commentInput={commentInputs[post.id] || ''}
-                            onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
-                            onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
-                            isSubmitting={commentMutation.isPending}
-                            currentUserId={user?.id}
-                            onDeleteComment={handleDeleteComment}
-                            onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
-                            onVoteComment={handleVoteComment}
-                            likedComments={likedComments}
-                            session={session}
-                            hotTakeMode={true}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))
-              }
+              {/* UGC Slot 1 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[1]?.length > 0 && (
+                <UserContentCarousel posts={ugcSlots[1]} onLike={handleLike} likedPosts={likedPosts} />
+              )}
 
               {/* DNA Moment Card - in All or DNA filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
@@ -3523,34 +3503,10 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
               )}
 
-              {/* Swipeable Rating Cards - Between Polls and Cast Friends */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'commentary') && (() => {
-                const ratingPostsRaw = filterByCategory(socialPosts || []).filter((p: any) => {
-                  if (!p.mediaItems?.length || !p.user?.id) return false;
-                  if (p.type === 'cast_approved') return false;
-                  const hasRating = p.rating && p.rating > 0;
-                  const content = p.content?.trim() || '';
-                  const isAutoGenerated = content.startsWith('Added ') || content.startsWith('"Added ') || content.match(/^"?Added .+ to .+"?$/i);
-                  const hasUserContent = content.length > 30 && !isAutoGenerated;
-                  return hasRating || hasUserContent;
-                });
-                const ratingPosts = deduplicateRatingPosts(ratingPostsRaw);
-                if (ratingPosts.length < 9) return null;
-                return (
-                  <SwipeableRatingCards 
-                    posts={ratingPosts.slice(6, 9).map((p: any) => ({
-                      id: p.id,
-                      user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
-                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if (src === 'googlebooks' && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } else if (src === 'open_library' && eid) { img = `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
-                      rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
-                    }))}
-                    onLike={handleLike}
-                    onDelete={handleHidePost}
-                    likedPosts={likedPosts}
-                    currentUserId={currentAppUserId}
-                  />
-                );
-              })()}
+              {/* UGC Slot 2 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[2]?.length > 0 && (
+                <UserContentCarousel posts={ugcSlots[2]} onLike={handleLike} likedPosts={likedPosts} />
+              )}
 
               {/* Cast Your Friends Game */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
@@ -3647,34 +3603,10 @@ export default function Feed() {
                 />
               )}
 
-              {/* Swipeable Rating Cards - Second set after The Room */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && (() => {
-                const ratingPostsRaw = filterByCategory(socialPosts || []).filter((p: any) => {
-                  if (!p.mediaItems?.length || !p.user?.id) return false;
-                  if (p.type === 'cast_approved') return false;
-                  const hasRating = p.rating && p.rating > 0;
-                  const content = p.content?.trim() || '';
-                  const isAutoGenerated = content.startsWith('Added ') || content.startsWith('"Added ') || content.match(/^"?Added .+ to .+"?$/i);
-                  const hasUserContent = content.length > 30 && !isAutoGenerated;
-                  return hasRating || hasUserContent;
-                });
-                const ratingPosts = deduplicateRatingPosts(ratingPostsRaw);
-                if (ratingPosts.length < 6) return null;
-                return (
-                  <SwipeableRatingCards 
-                    posts={ratingPosts.slice(3, 6).map((p: any) => ({
-                      id: p.id,
-                      user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
-                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if (src === 'googlebooks' && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } else if (src === 'open_library' && eid) { img = `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
-                      rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
-                    }))}
-                    onLike={handleLike}
-                    onDelete={handleHidePost}
-                    likedPosts={likedPosts}
-                    currentUserId={currentAppUserId}
-                  />
-                );
-              })()}
+              {/* UGC Slot 3 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[3]?.length > 0 && (
+                <UserContentCarousel posts={ugcSlots[3]} onLike={handleLike} likedPosts={likedPosts} />
+              )}
 
               {/* Cast Your Friends - Approved Casts Carousel */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && filteredPosts.filter((item: any) => item.type === 'cast_approved').length > 0 && (
@@ -3872,64 +3804,10 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
               )}
 
-              {/* Hot Take 2 - After TV trivia (only in All view) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory &&
-                socialPosts
-                  .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
-                  .slice(1, 2)
-                  .map((post: any) => (
-                    <div key={`hottake2-wrapper-${post.id}`}>
-                      <HotTakeFeedCard
-                        key={`hottake2-${post.id}`}
-                        post={{
-                          id: post.id,
-                          user: post.user,
-                          content: post.content,
-                          media_title: post.mediaItems?.[0]?.title || post.media_title,
-                          media_type: post.mediaItems?.[0]?.type || post.media_type,
-                          image_url: post.mediaItems?.[0]?.imageUrl || post.image_url,
-                          fire_votes: post.fire_votes || 0,
-                          ice_votes: post.ice_votes || 0,
-                          comments_count: post.comments || post.comments_count || 0,
-                          created_at: post.createdAt || post.created_at || post.timestamp,
-                        }}
-                        currentUserId={user?.id}
-                        onDelete={handleDeletePost}
-                        onComment={(postId) => {
-                          setExpandedComments(prev => {
-                            const newSet = new Set(prev);
-                            if (newSet.has(postId)) newSet.delete(postId);
-                            else newSet.add(postId);
-                            return newSet;
-                          });
-                        }}
-                      />
-                      {expandedComments.has(post.id) && (
-                        <div className="mt-2 bg-white rounded-xl border border-gray-100 p-3">
-                          <CommentsSection
-                            postId={post.id}
-                            isLiked={likedPosts.has(post.id)}
-                            onLike={handleLike}
-                            expandedComments={true}
-                            onToggleComments={() => {}}
-                            fetchComments={fetchComments}
-                            commentInput={commentInputs[post.id] || ''}
-                            onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
-                            onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
-                            isSubmitting={commentMutation.isPending}
-                            currentUserId={user?.id}
-                            onDeleteComment={handleDeleteComment}
-                            onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
-                            onVoteComment={handleVoteComment}
-                            likedComments={likedComments}
-                            session={session}
-                            hotTakeMode={true}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))
-              }
+              {/* UGC Slot 4 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[4]?.length > 0 && (
+                <UserContentCarousel posts={ugcSlots[4]} onLike={handleLike} likedPosts={likedPosts} />
+              )}
 
               {/* Leaderboard - Poll Masters */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
@@ -3957,34 +3835,10 @@ export default function Feed() {
                 <RanksCarousel offset={1} />
               )}
 
-              {/* Swipeable Rating Cards - After Debate the Rank */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'commentary') && (() => {
-                const ratingPostsRaw = filterByCategory(socialPosts || []).filter((p: any) => {
-                  if (!p.mediaItems?.length || !p.user?.id) return false;
-                  if (p.type === 'cast_approved') return false;
-                  const hasRating = p.rating && p.rating > 0;
-                  const content = p.content?.trim() || '';
-                  const isAutoGenerated = content.startsWith('Added ') || content.startsWith('"Added ') || content.match(/^"?Added .+ to .+"?$/i);
-                  const hasUserContent = content.length > 30 && !isAutoGenerated;
-                  return hasRating || hasUserContent;
-                });
-                const ratingPosts = deduplicateRatingPosts(ratingPostsRaw);
-                if (ratingPosts.length < 12) return null;
-                return (
-                  <SwipeableRatingCards 
-                    posts={ratingPosts.slice(9, 12).map((p: any) => ({
-                      id: p.id,
-                      user: { id: p.user?.id || '', username: p.user?.username || '', displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '', avatar: p.user?.avatar_url || p.user?.avatarUrl || p.user?.avatar },
-                      mediaItems: p.mediaItems?.map((m: any) => { const src = m.externalSource || m.external_source || 'tmdb'; const eid = m.externalId || m.external_id; let img = m.imageUrl || m.image_url || m.poster_url || ''; if (src === 'googlebooks' && eid) { img = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`; } else if (src === 'open_library' && eid) { img = `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`; } return { id: m.id, title: m.title, creator: m.creator || '', imageUrl: img, mediaType: m.mediaType || m.type, externalId: eid, externalSource: src }; }),
-                      rating: p.rating, content: p.content, timestamp: p.createdAt || p.created_at, type: p.type, likesCount: p.likesCount || p.likes_count || 0, commentsCount: p.commentsCount || p.comments_count || 0, isLiked: p.likedByCurrentUser,
-                    }))}
-                    onLike={handleLike}
-                    onDelete={handleHidePost}
-                    likedPosts={likedPosts}
-                    currentUserId={currentAppUserId}
-                  />
-                );
-              })()}
+              {/* UGC Slot 5 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[5]?.length > 0 && (
+                <UserContentCarousel posts={ugcSlots[5]} onLike={handleLike} likedPosts={likedPosts} />
+              )}
 
               {/* Leaderboard - Media Leaders */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
@@ -4034,64 +3888,10 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
               )}
 
-              {/* Hot Take 3 - After Books trivia */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory &&
-                socialPosts
-                  .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
-                  .slice(2, 3)
-                  .map((post: any) => (
-                    <div key={`hottake3-wrapper-${post.id}`}>
-                      <HotTakeFeedCard
-                        key={`hottake3-${post.id}`}
-                        post={{
-                          id: post.id,
-                          user: post.user,
-                          content: post.content,
-                          media_title: post.mediaItems?.[0]?.title || post.media_title,
-                          media_type: post.mediaItems?.[0]?.type || post.media_type,
-                          image_url: post.mediaItems?.[0]?.imageUrl || post.image_url,
-                          fire_votes: post.fire_votes || 0,
-                          ice_votes: post.ice_votes || 0,
-                          comments_count: post.comments || post.comments_count || 0,
-                          created_at: post.createdAt || post.created_at || post.timestamp,
-                        }}
-                        currentUserId={user?.id}
-                        onDelete={handleDeletePost}
-                        onComment={(postId) => {
-                          setExpandedComments(prev => {
-                            const newSet = new Set(prev);
-                            if (newSet.has(postId)) newSet.delete(postId);
-                            else newSet.add(postId);
-                            return newSet;
-                          });
-                        }}
-                      />
-                      {expandedComments.has(post.id) && (
-                        <div className="mt-2 bg-white rounded-xl border border-gray-100 p-3">
-                          <CommentsSection
-                            postId={post.id}
-                            isLiked={likedPosts.has(post.id)}
-                            onLike={handleLike}
-                            expandedComments={true}
-                            onToggleComments={() => {}}
-                            fetchComments={fetchComments}
-                            commentInput={commentInputs[post.id] || ''}
-                            onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
-                            onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
-                            isSubmitting={commentMutation.isPending}
-                            currentUserId={user?.id}
-                            onDeleteComment={handleDeleteComment}
-                            onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
-                            onVoteComment={handleVoteComment}
-                            likedComments={likedComments}
-                            session={session}
-                            hotTakeMode={true}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))
-              }
+              {/* UGC Slot 6 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[6]?.length > 0 && (
+                <UserContentCarousel posts={ugcSlots[6]} onLike={handleLike} likedPosts={likedPosts} />
+              )}
 
               {/* TRIVIA - Podcasts category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
@@ -4103,134 +3903,29 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
               )}
 
-              {/* Hot Take 4 - After Gaming trivia */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory &&
-                socialPosts
-                  .filter((post: any) => post.type === 'hot_take' || post.post_type === 'hot_take')
-                  .slice(3, 4)
-                  .map((post: any) => (
-                    <div key={`hottake4-wrapper-${post.id}`}>
-                      <HotTakeFeedCard
-                        key={`hottake4-${post.id}`}
-                        post={{
-                          id: post.id,
-                          user: post.user,
-                          content: post.content,
-                          media_title: post.mediaItems?.[0]?.title || post.media_title,
-                          media_type: post.mediaItems?.[0]?.type || post.media_type,
-                          image_url: post.mediaItems?.[0]?.imageUrl || post.image_url,
-                          fire_votes: post.fire_votes || 0,
-                          ice_votes: post.ice_votes || 0,
-                          comments_count: post.comments || post.comments_count || 0,
-                          created_at: post.createdAt || post.created_at || post.timestamp,
-                        }}
-                        currentUserId={user?.id}
-                        onDelete={handleDeletePost}
-                        onComment={(postId) => {
-                          setExpandedComments(prev => {
-                            const newSet = new Set(prev);
-                            if (newSet.has(postId)) newSet.delete(postId);
-                            else newSet.add(postId);
-                            return newSet;
-                          });
-                        }}
-                      />
-                      {expandedComments.has(post.id) && (
-                        <div className="mt-2 bg-white rounded-xl border border-gray-100 p-3">
-                          <CommentsSection
-                            postId={post.id}
-                            isLiked={likedPosts.has(post.id)}
-                            onLike={handleLike}
-                            expandedComments={true}
-                            onToggleComments={() => {}}
-                            fetchComments={fetchComments}
-                            commentInput={commentInputs[post.id] || ''}
-                            onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
-                            onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
-                            isSubmitting={commentMutation.isPending}
-                            currentUserId={user?.id}
-                            onDeleteComment={handleDeleteComment}
-                            onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
-                            onVoteComment={handleVoteComment}
-                            likedComments={likedComments}
-                            session={session}
-                            hotTakeMode={true}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))
-              }
+              {/* UGC Slot 7 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[7]?.length > 0 && (
+                <UserContentCarousel posts={ugcSlots[7]} onLike={handleLike} likedPosts={likedPosts} />
+              )}
 
-              {/* Full Commentary list - when commentary filter is selected (hot takes, ratings, thoughts) */}
-              {selectedFilter === 'commentary' && 
-                filterByCategory(socialPosts)
-                  .filter((post: any) => {
-                    const isHotTake = post.type === 'hot_take' || post.post_type === 'hot_take';
-                    const hasRating = post.rating && post.rating > 0;
-                    const content = post.content?.trim() || '';
-                    const isAutoGenerated = content.startsWith('Added ') || content.startsWith('"Added ') || content.match(/^"?Added .+ to .+"?$/i);
-                    const hasUserContent = content.length > 30 && !isAutoGenerated;
-                    return isHotTake || hasRating || hasUserContent;
-                  })
-                  .slice(0, 20)
-                  .map((post: any) => (
-                    <div key={`hottake-full-${post.id}`}>
-                      <HotTakeFeedCard
-                        key={`hottake-full-card-${post.id}`}
-                        post={{
-                          id: post.id,
-                          user: post.user,
-                          content: post.content,
-                          media_title: post.mediaItems?.[0]?.title || post.media_title,
-                          media_type: post.mediaItems?.[0]?.type || post.media_type,
-                          image_url: post.mediaItems?.[0]?.imageUrl || post.image_url,
-                          fire_votes: post.fire_votes || 0,
-                          ice_votes: post.ice_votes || 0,
-                          comments_count: post.comments || post.comments_count || 0,
-                          created_at: post.createdAt || post.created_at || post.timestamp,
-                        }}
-                        currentUserId={user?.id}
-                        onDelete={handleDeletePost}
-                        onComment={(postId) => {
-                          setExpandedComments(prev => {
-                            const newSet = new Set(prev);
-                            if (newSet.has(postId)) newSet.delete(postId);
-                            else newSet.add(postId);
-                            return newSet;
-                          });
-                        }}
-                      />
-                      {expandedComments.has(post.id) && (
-                        <div className="mt-2 bg-white rounded-xl border border-gray-100 p-3">
-                          <CommentsSection
-                            postId={post.id}
-                            isLiked={likedPosts.has(post.id)}
-                            onLike={handleLike}
-                            expandedComments={true}
-                            onToggleComments={() => {}}
-                            fetchComments={fetchComments}
-                            commentInput={commentInputs[post.id] || ''}
-                            onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
-                            onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
-                            isSubmitting={commentMutation.isPending}
-                            currentUserId={user?.id}
-                            onDeleteComment={handleDeleteComment}
-                            onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
-                            onVoteComment={handleVoteComment}
-                            likedComments={likedComments}
-                            session={session}
-                            hotTakeMode={true}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))
-              }
+              {/* UGC Slot 8 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[8]?.length > 0 && (
+                <UserContentCarousel posts={ugcSlots[8]} onLike={handleLike} likedPosts={likedPosts} />
+              )}
 
               {/* TRIVIA - Sports category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Sports" />
+              )}
+
+              {/* UGC Slot 9 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[9]?.length > 0 && (
+                <UserContentCarousel posts={ugcSlots[9]} onLike={handleLike} likedPosts={likedPosts} />
+              )}
+
+              {/* UGC Slot 10+ (remaining) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[10]?.length > 0 && (
+                <UserContentCarousel posts={ugcSlots[10]} onLike={handleLike} likedPosts={likedPosts} />
               )}
 
               {/* Social Posts */}
