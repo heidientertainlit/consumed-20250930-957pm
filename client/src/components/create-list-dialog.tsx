@@ -24,6 +24,8 @@ interface MediaResult {
   external_id?: string;
   external_source?: string;
   description?: string;
+  year?: string | number;
+  poster_url?: string;
 }
 
 interface SelectedCollaborator {
@@ -258,26 +260,30 @@ export default function CreateListDialog({ open, onOpenChange }: CreateListDialo
 
             {searchResults.length > 0 && (
               <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
-                {searchResults.map((result, index) => (
-                  <div
-                    key={index}
-                    onClick={() => addMedia(result)}
-                    className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
-                  >
-                    {result.image ? (
-                      <img src={result.image} alt={result.title} className="w-10 h-10 object-cover rounded" />
-                    ) : (
-                      <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
-                        <Search className="text-gray-400" size={16} />
+                {searchResults.map((result, index) => {
+                  const imgUrl = result.image || result.poster_url || '';
+                  const details = [result.year, result.creator, result.type].filter(Boolean).join(' · ');
+                  return (
+                    <div
+                      key={index}
+                      onClick={() => addMedia({ ...result, image: imgUrl })}
+                      className="flex items-center gap-3 p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                    >
+                      {imgUrl ? (
+                        <img src={imgUrl} alt={result.title} className="w-10 h-14 object-cover rounded" />
+                      ) : (
+                        <div className="w-10 h-14 bg-gray-200 rounded flex items-center justify-center">
+                          <Search className="text-gray-400" size={16} />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-black text-sm truncate">{result.title}</p>
+                        <p className="text-xs text-gray-500 truncate">{details}</p>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-black text-sm truncate">{result.title}</p>
-                      <p className="text-xs text-gray-500 truncate">{result.creator} · {result.type}</p>
+                      <Plus className="text-purple-600 flex-shrink-0" size={18} />
                     </div>
-                    <Plus className="text-purple-600" size={18} />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 

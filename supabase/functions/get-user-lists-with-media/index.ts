@@ -325,7 +325,27 @@ serve(async (req) => {
         userItems = items || [];
       }
       console.log("User items count:", userItems.length);
-      
+
+      // Fetch items for collaborative lists (items belong to list owner, not collaborator)
+      const collabListIds = customLists.filter((l: any) => l.isCollaborative).map((l: any) => l.id);
+      if (collabListIds.length > 0) {
+        try {
+          const { data: collabItems, error: collabItemsError } = await queryClient
+            .from('list_items')
+            .select('*')
+            .in('list_id', collabListIds);
+
+          if (!collabItemsError && collabItems) {
+            const existingIds = new Set(userItems.map((i: any) => i.id));
+            const newCollabItems = collabItems.filter((i: any) => !existingIds.has(i.id));
+            userItems = [...userItems, ...newCollabItems];
+            console.log("Added collaborative list items:", newCollabItems.length);
+          }
+        } catch (error) {
+          console.error('Collaborative items fetch failed (non-fatal):', error);
+        }
+      }
+
       // Fetch user's ratings from media_ratings table
       const { data: ratings, error: ratingsError } = await queryClient
         .from('media_ratings')

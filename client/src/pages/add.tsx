@@ -1282,10 +1282,12 @@ export default function Search() {
       {/* Page Title + Search */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-10 px-4 -mt-px">
         <div className="text-center mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          <div className="text-xl font-semibold text-white flex items-center justify-center gap-1.5">
-            <span>What are you</span>
-            <AnimatedWord />
-            <span>?</span>
+          <div className="text-xl font-semibold text-white text-center">
+            <div>What are you</div>
+            <div className="flex items-center justify-center gap-1">
+              <AnimatedWord />
+              <span>?</span>
+            </div>
           </div>
         </div>
         
