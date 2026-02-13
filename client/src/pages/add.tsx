@@ -1285,7 +1285,6 @@ export default function Search() {
             <AnimatedWord />
             <span>?</span>
           </div>
-          <p className="text-sm text-gray-400 mt-1">Add it here:</p>
         </div>
         
         {/* Search Bar */}
@@ -1311,15 +1310,10 @@ export default function Search() {
                 setIsAiMode(!isAiMode);
                 setSearchResults(null);
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all flex-shrink-0 ${
-                isAiMode 
-                  ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white" 
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
+              className="flex-shrink-0 p-1 transition-all"
               data-testid="toggle-ai-mode"
             >
-              <Sparkles size={14} />
-              AI Mode
+              <Sparkles size={18} className={isAiMode ? "text-purple-600" : "text-gray-300"} />
             </button>
           </div>
         </div>
@@ -1509,15 +1503,15 @@ export default function Search() {
         </div>
       )}
 
-      {/* In Progress Section */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-2 pb-2 -mt-px">
-        <div className="max-w-3xl lg:mx-auto">
-          <div className="px-4 mb-2">
-            <h2 className="text-sm font-semibold text-white">In Progress</h2>
+      {/* In Progress Section - White Background */}
+      <div className="bg-white pt-4 pb-4 -mt-px">
+        <div className="max-w-3xl lg:mx-auto px-4">
+          <div className="mb-2">
+            <h2 className="text-sm font-semibold text-gray-900">In Progress</h2>
           </div>
           {currentlyItems.length > 0 ? (
             <div 
-              className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 px-4 lg:justify-center"
+              className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 lg:justify-center"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               {currentlyItems.map((item: any) => (
@@ -1545,22 +1539,14 @@ export default function Search() {
               ))}
             </div>
           ) : (
-            <div className="px-4 pb-1">
-              <div className="bg-white/10 border border-white/20 rounded-lg p-3 text-center">
-                <Clock className="mx-auto mb-1 text-purple-300" size={18} />
-                <p className="text-white/80 text-xs">No items in your Currently list yet</p>
+            <div className="pb-1">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                <Clock className="mx-auto mb-1 text-gray-400" size={18} />
+                <p className="text-gray-600 text-xs">No items in your Currently list yet</p>
                 <p className="text-gray-400 text-[10px] mt-0.5">Search and add to "Currently" to track progress</p>
               </div>
             </div>
           )}
-        </div>
-      </div>
-      
-      {/* Content Section */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-3 pb-6 px-4 -mt-px">
-        <div className="max-w-7xl mx-auto space-y-3">
-
-
         </div>
       </div>
       
