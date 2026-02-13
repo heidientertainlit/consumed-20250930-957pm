@@ -26,7 +26,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 import { HotTakeFeedCard } from "@/components/hot-take-feed-card";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -134,6 +134,9 @@ interface SocialPost {
   status?: 'open' | 'locked' | 'completed';
   resolved_at?: string | null;
   winning_option?: string;
+  postType?: string;
+  fire_votes?: number;
+  ice_votes?: number;
 }
 
 interface FeedResponse {
@@ -2555,7 +2558,11 @@ export default function Feed() {
   };
 
   const handleHotTakeVote = async (postId: string, voteType: 'fire' | 'ice') => {
-    if (!session?.access_token) return;
+    console.log('🔥🧊 handleHotTakeVote called:', { postId, voteType, hasSession: !!session?.access_token });
+    if (!session?.access_token) {
+      console.log('❌ No session for hot take vote');
+      return;
+    }
     try {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/hot-take-vote`, {
         method: 'POST',
@@ -2566,6 +2573,8 @@ export default function Feed() {
         },
         body: JSON.stringify({ postId, voteType }),
       });
+      const result = await response.json();
+      console.log('🔥🧊 Hot take vote response:', response.status, result);
       if (response.ok) {
         queryClient.invalidateQueries({ queryKey: ["social-feed"] });
       }
@@ -5447,23 +5456,43 @@ export default function Feed() {
                   <div className="pt-2 border-t border-gray-100 mt-2 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-6">
-                        {/* Like button - uses realPostId for grouped posts */}
-                        <button 
-                          onClick={() => handleLike(realPostId)}
-                          disabled={likeMutation.isPending}
-                          className={`flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                            likedPosts.has(realPostId) 
-                              ? 'text-red-500' 
-                              : 'text-gray-500 hover:text-red-500'
-                          }`}
-                          data-testid={`button-like-${post.id}`}
-                        >
-                          <Heart 
-                            size={18} 
-                            fill={likedPosts.has(realPostId) ? 'currentColor' : 'none'}
-                          />
-                          <span className="text-sm">{post.likes}</span>
-                        </button>
+                        {(post.type === 'hot_take' || post.postType === 'hot_take') ? (
+                          <>
+                            <button 
+                              onClick={() => handleHotTakeVote(realPostId, 'fire')}
+                              className="flex items-center space-x-1.5 text-orange-500 hover:text-orange-600 transition-colors"
+                              style={{ touchAction: 'manipulation' }}
+                            >
+                              <Flame size={18} />
+                              <span className="text-sm">{post.fire_votes || 0}</span>
+                            </button>
+                            <button 
+                              onClick={() => handleHotTakeVote(realPostId, 'ice')}
+                              className="flex items-center space-x-1.5 text-blue-400 hover:text-blue-500 transition-colors"
+                              style={{ touchAction: 'manipulation' }}
+                            >
+                              <Snowflake size={18} />
+                              <span className="text-sm">{post.ice_votes || 0}</span>
+                            </button>
+                          </>
+                        ) : (
+                          <button 
+                            onClick={() => handleLike(realPostId)}
+                            disabled={likeMutation.isPending}
+                            className={`flex items-center space-x-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                              likedPosts.has(realPostId) 
+                                ? 'text-red-500' 
+                                : 'text-gray-500 hover:text-red-500'
+                            }`}
+                            data-testid={`button-like-${post.id}`}
+                          >
+                            <Heart 
+                              size={18} 
+                              fill={likedPosts.has(realPostId) ? 'currentColor' : 'none'}
+                            />
+                            <span className="text-sm">{post.likes}</span>
+                          </button>
+                        )}
                         <button 
                           onClick={() => toggleComments(realPostId)}
                           className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors"

@@ -206,36 +206,44 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
           )}
         </div>
 
-        <div className="flex items-center gap-3 pt-2.5 mt-auto border-t border-gray-50 flex-shrink-0">
+        <div className="flex items-center gap-3 pt-2.5 mt-auto border-t border-gray-50 flex-shrink-0" style={{ touchAction: 'manipulation' }}>
           {post.type === 'hot_take' ? (
             <>
               <button
-                onClick={(e) => { e.stopPropagation(); onFireVote?.(post.id); }}
-                className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 active:scale-110 transition-transform"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); console.log('🔥 Fire button tapped for:', post.id); onFireVote?.(post.id); }}
+                onTouchEnd={(e) => { e.stopPropagation(); }}
+                className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 active:scale-110 transition-transform py-1 px-1 -ml-1 min-h-[32px]"
+                style={{ touchAction: 'manipulation' }}
               >
-                <Flame size={12} /> {post.fire_votes || 0}
+                <Flame size={14} /> {post.fire_votes || 0}
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); onIceVote?.(post.id); }}
-                className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-500 active:scale-110 transition-transform"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); console.log('🧊 Ice button tapped for:', post.id); onIceVote?.(post.id); }}
+                onTouchEnd={(e) => { e.stopPropagation(); }}
+                className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-500 active:scale-110 transition-transform py-1 px-1 min-h-[32px]"
+                style={{ touchAction: 'manipulation' }}
               >
-                <Snowflake size={12} /> {post.ice_votes || 0}
+                <Snowflake size={14} /> {post.ice_votes || 0}
               </button>
             </>
           ) : (
             <button
-              onClick={(e) => { e.stopPropagation(); onLike?.(post.id); }}
-              className={`flex items-center gap-1 text-xs ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} active:scale-110 transition-transform`}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); console.log('❤️ Like button tapped for:', post.id); onLike?.(post.id); }}
+              onTouchEnd={(e) => { e.stopPropagation(); }}
+              className={`flex items-center gap-1 text-xs ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} active:scale-110 transition-transform py-1 px-1 -ml-1 min-h-[32px]`}
+              style={{ touchAction: 'manipulation' }}
             >
-              <Heart size={12} fill={isLiked ? 'currentColor' : 'none'} />
+              <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
               <span>{post.likes || 0}</span>
             </button>
           )}
           <button
-            onClick={(e) => { e.stopPropagation(); scrollToPost(); onComment?.(post.id); }}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-500 active:scale-110 transition-transform"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); console.log('💬 Comment button tapped for:', post.id); scrollToPost(); onComment?.(post.id); }}
+            onTouchEnd={(e) => { e.stopPropagation(); }}
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-500 active:scale-110 transition-transform py-1 px-1 min-h-[32px]"
+            style={{ touchAction: 'manipulation' }}
           >
-            <MessageCircle size={12} />
+            <MessageCircle size={14} />
             <span>{post.comments || 0}</span>
           </button>
         </div>
