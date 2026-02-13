@@ -1278,7 +1278,7 @@ export default function Search() {
       <Navigation />
       
       {/* Page Title + Search */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-4 pb-4 px-4 -mt-px">
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-6 pb-6 px-4 -mt-px">
         <div className="text-center mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <div className="text-xl font-semibold text-white flex items-center justify-center gap-1.5">
             <span>What are you</span>
@@ -1504,7 +1504,7 @@ export default function Search() {
       )}
 
       {/* In Progress Section - White Background */}
-      <div className="bg-white pt-4 pb-4 -mt-px">
+      <div className="bg-white pt-4 pb-2 -mt-px">
         <div className="max-w-3xl lg:mx-auto px-4">
           <div className="mb-2">
             <h2 className="text-sm font-semibold text-gray-900">In Progress</h2>
@@ -1551,11 +1551,11 @@ export default function Search() {
       </div>
       
       {/* Main Content Area - Light Background */}
-      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 pt-3 pb-6 space-y-6">
 
         {/* Pill Filters - styled like the screenshot */}
         {!isAiMode && !searchQuery.trim() && (
-          <div className="flex gap-2 overflow-x-auto pb-2 -mt-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="flex gap-2 overflow-x-auto pb-2 pt-3 border-t border-gray-100 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <button
               onClick={() => setActiveTab('lists')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
