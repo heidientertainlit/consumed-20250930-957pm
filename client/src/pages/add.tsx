@@ -12,6 +12,7 @@ import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { QuickAddModal } from "@/components/quick-add-modal";
+import CreateListDialog from "@/components/create-list-dialog";
 import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
@@ -130,6 +131,7 @@ export default function Search() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isFullAddModalOpen, setIsFullAddModalOpen] = useState(false);
+  const [isCreateListOpen, setIsCreateListOpen] = useState(false);
   const [fullAddMedia, setFullAddMedia] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'dna' | 'lists' | 'history' | 'compare'>('lists');
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
@@ -2052,7 +2054,7 @@ export default function Search() {
                   </div>
                   <button
                     className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-[34px] px-3 rounded-lg flex items-center gap-1 font-medium flex-shrink-0"
-                    onClick={() => setIsQuickAddOpen(true)}
+                    onClick={() => setIsCreateListOpen(true)}
                   >
                     <Plus size={12} />
                     New
@@ -2741,6 +2743,11 @@ export default function Search() {
           setQuickAddMedia(null);
         }}
         media={quickAddMedia}
+      />
+
+      <CreateListDialog
+        open={isCreateListOpen}
+        onOpenChange={setIsCreateListOpen}
       />
 
       <QuickAddModal

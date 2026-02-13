@@ -357,7 +357,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
   return (
     <>
       <div 
-        className="w-24 flex-shrink-0"
+        className="w-20 flex-shrink-0"
         data-testid={`currently-card-${item.id}`}
       >
         <div 
