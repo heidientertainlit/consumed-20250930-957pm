@@ -1176,10 +1176,10 @@ export default function Feed() {
     const pool: UGCPost[] = filterByCategory(socialPosts || [])
       .filter((p: any) => {
         if (!p.user?.id || !p.user?.username || p.user.username === 'Unknown') return false;
-        if (p.type === 'poll' && (p as any).question) return false;
         if (p.type === 'cast_approved') return true;
         if (p.type === 'hot_take' || p.post_type === 'hot_take') return true;
         if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
+        if (p.type === 'poll' && (p as any).question) return true;
         if (p.type === 'rank' || p.type === 'shared_rank') return true;
         const content = (p.content || '').trim();
         if (p.rating && p.rating > 0) return true;
@@ -1214,7 +1214,7 @@ export default function Feed() {
           mediaTitle: media?.title, mediaType: media?.mediaType || media?.type, mediaImage: mediaImg,
           rating: p.rating, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
           fire_votes: p.fire_votes || 0, ice_votes: p.ice_votes || 0,
-          options: (p as any).options || [], timestamp: p.createdAt || p.created_at, pollId: (p as any).poolId || p.id,
+          options: (p as any).options || [], optionVotes: (p as any).optionVotes || [], timestamp: p.createdAt || p.created_at, pollId: (p as any).poolId || p.id,
         };
       });
 
@@ -3422,32 +3422,6 @@ export default function Feed() {
                   </div>
                 </Link>
               )}
-
-              {/* User-Generated Polls Carousel - High in feed */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && (() => {
-                const userPollPosts = filteredPosts.filter((p: any) => p.type === 'poll' && (p as any).question);
-                if (userPollPosts.length === 0) return null;
-                const userPollCards = userPollPosts.map((post: any) => ({
-                  id: post.poolId || post.id,
-                  title: post.question,
-                  mediaTitle: post.mediaTitle || post.mediaItems?.[0]?.title,
-                  mediaItems: post.mediaItems || [],
-                  creator: post.creator || post.user || { username: 'Unknown' },
-                  poolId: post.poolId || post.id,
-                  options: post.options || [],
-                  optionVotes: post.optionVotes || [],
-                  userVotes: post.userVotes || [],
-                  userHasAnswered: post.userHasAnswered || false,
-                  likesCount: post.likes || 0,
-                  commentsCount: post.comments || 0,
-                  isLiked: post.isLiked || false,
-                  origin_type: post.origin_type || 'user',
-                  origin_user_id: post.origin_user_id,
-                  status: post.status || 'open',
-                  type: 'vote',
-                }));
-                return <UserPollsCarousel polls={userPollCards} />;
-              })()}
 
               {/* UGC Slot 0 - Discovery carousel (6 items) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[0]?.length > 0 && (

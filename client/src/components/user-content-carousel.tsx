@@ -108,7 +108,14 @@ function UserContentCard({ post, onLike, isLiked }: { post: UGCPost; onLike?: (i
           </Link>
         </div>
 
-        {post.mediaImage && post.mediaImage.startsWith('http') ? (
+        {post.type === 'poll' ? (
+          <div className="mb-2">
+            {post.mediaTitle && (
+              <p className="text-[10px] text-gray-500 mb-0.5">{post.mediaTitle}</p>
+            )}
+            <p className="text-sm font-bold text-gray-900 line-clamp-2">{post.content}</p>
+          </div>
+        ) : post.mediaImage && post.mediaImage.startsWith('http') ? (
           <div className="flex gap-2.5 mb-2">
             <img
               src={post.mediaImage}
@@ -150,14 +157,29 @@ function UserContentCard({ post, onLike, isLiked }: { post: UGCPost; onLike?: (i
         )}
 
         {post.type === 'poll' && post.options && post.options.length > 0 && (
-          <div className="space-y-1 mb-2">
-            {post.options.slice(0, 3).map((opt, i) => (
-              <div key={i} className="bg-gray-50 rounded-md px-2 py-1 text-xs text-gray-700 truncate">
-                {opt}
+          <div className="mb-2">
+            <div className="flex gap-2">
+              {post.mediaImage && post.mediaImage.startsWith('http') && (
+                <img
+                  src={post.mediaImage}
+                  alt={post.mediaTitle || ''}
+                  className="w-16 h-20 rounded-lg object-cover flex-shrink-0"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              )}
+              <div className="flex-1 space-y-1.5">
+                {post.options.map((opt, i) => (
+                  <div key={i} className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-full px-3 py-1.5 text-xs font-medium text-white truncate">
+                    {opt}
+                  </div>
+                ))}
               </div>
-            ))}
-            {post.options.length > 3 && (
-              <p className="text-[10px] text-gray-400">+{post.options.length - 3} more</p>
+            </div>
+            {post.optionVotes && post.optionVotes.length > 0 && (
+              <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
+                <Users size={11} />
+                <span>{post.optionVotes.reduce((sum, v) => sum + (v.count || 0), 0)} votes</span>
+              </div>
             )}
           </div>
         )}
