@@ -1551,7 +1551,7 @@ export default function Search() {
           )}
         </div>
         {/* Divider */}
-        <div className="border-t border-gray-200 mx-4 mt-0"></div>
+        <div className="border-t border-gray-200 mx-4 mt-2 mb-2"></div>
       </div>
       
       {/* Main Content Area - Light Background */}
