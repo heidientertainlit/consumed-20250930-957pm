@@ -2554,6 +2554,26 @@ export default function Feed() {
     likeMutation.mutate({ postId, wasLiked });
   };
 
+  const handleHotTakeVote = async (postId: string, voteType: 'fire' | 'ice') => {
+    if (!session?.access_token) return;
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/hot-take-vote`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ postId, voteType }),
+      });
+      if (response.ok) {
+        queryClient.invalidateQueries({ queryKey: ["social-feed"] });
+      }
+    } catch (error) {
+      console.error('Hot take vote error:', error);
+    }
+  };
+
   const handleComment = (postId: string, parentCommentId?: string, replyContent?: string) => {
     // For replies, use the provided replyContent; for top-level comments, use commentInputs
     const content = replyContent?.trim() || commentInputs[postId]?.trim();
@@ -3428,7 +3448,7 @@ export default function Feed() {
 
               {/* UGC Slot 0 - Discovery carousel (6 items) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[0]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[0]} title="What People Are Saying" onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[0]} title="What People Are Saying" onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* Filtered views - show only the selected category */}
@@ -3467,7 +3487,7 @@ export default function Feed() {
 
               {/* UGC Slot 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[1]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[1]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[1]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* DNA Moment Card - in All or DNA filter */}
@@ -3482,7 +3502,7 @@ export default function Feed() {
 
               {/* UGC Slot 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[2]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[2]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[2]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* Cast Your Friends Game */}
@@ -3582,7 +3602,7 @@ export default function Feed() {
 
               {/* UGC Slot 3 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[3]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[3]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[3]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* Cast Your Friends - Approved Casts Carousel */}
@@ -3783,7 +3803,7 @@ export default function Feed() {
 
               {/* UGC Slot 4 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[4]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[4]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[4]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* Leaderboard - Poll Masters */}
@@ -3814,7 +3834,7 @@ export default function Feed() {
 
               {/* UGC Slot 5 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[5]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[5]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[5]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* Leaderboard - Media Leaders */}
@@ -3867,7 +3887,7 @@ export default function Feed() {
 
               {/* UGC Slot 6 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[6]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[6]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[6]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* TRIVIA - Podcasts category */}
@@ -3882,12 +3902,12 @@ export default function Feed() {
 
               {/* UGC Slot 7 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[7]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[7]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[7]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* UGC Slot 8 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[8]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[8]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[8]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* TRIVIA - Sports category */}
@@ -3897,12 +3917,12 @@ export default function Feed() {
 
               {/* UGC Slot 9 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[9]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[9]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[9]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* UGC Slot 10+ (remaining) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[10]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[10]} onLike={handleLike} onComment={toggleComments} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[10]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* Social Posts */}

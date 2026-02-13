@@ -35,6 +35,8 @@ interface UserContentCarouselProps {
   title?: string;
   onLike?: (postId: string) => void;
   onComment?: (postId: string) => void;
+  onFireVote?: (postId: string) => void;
+  onIceVote?: (postId: string) => void;
   likedPosts?: Set<string>;
   currentUserId?: string;
 }
@@ -77,31 +79,34 @@ function getMediaIcon(mediaType?: string) {
   }
 }
 
-function UserContentCard({ post, onLike, onComment, isLiked }: { post: UGCPost; onLike?: (id: string) => void; onComment?: (id: string) => void; isLiked?: boolean }) {
+function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLiked }: { 
+  post: UGCPost; 
+  onLike?: (id: string) => void; 
+  onComment?: (id: string) => void; 
+  onFireVote?: (id: string) => void;
+  onIceVote?: (id: string) => void;
+  isLiked?: boolean;
+}) {
   const typeInfo = getTypeLabel(post.type);
   const TypeIcon = typeInfo.icon;
   const MediaIcon = getMediaIcon(post.mediaType);
   const username = post.user?.displayName || post.user?.username || 'Someone';
   const avatarLetter = username[0]?.toUpperCase() || '?';
 
-  const handleCardTap = () => {
+  const scrollToPost = () => {
     const postEl = document.getElementById(`post-${post.id}`);
     if (postEl) {
       postEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       postEl.classList.add('ring-2', 'ring-purple-300');
       setTimeout(() => postEl.classList.remove('ring-2', 'ring-purple-300'), 2000);
     }
-    onComment?.(post.id);
   };
 
   return (
-    <div
-      className="flex-shrink-0 w-[260px] h-[240px] rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm cursor-pointer flex flex-col"
-      onClick={handleCardTap}
-    >
+    <div className="flex-shrink-0 w-[260px] h-[240px] rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm flex flex-col">
       <div className="p-4 flex flex-col flex-1 min-h-0">
         <div className="flex items-center gap-2.5 mb-3 flex-shrink-0">
-          <Link href={`/user/${post.user?.id || ''}`} onClick={(e: any) => e.stopPropagation()}>
+          <Link href={`/user/${post.user?.id || ''}`}>
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer flex-shrink-0">
               {post.user?.avatar ? (
                 <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
@@ -111,7 +116,7 @@ function UserContentCard({ post, onLike, onComment, isLiked }: { post: UGCPost; 
             </div>
           </Link>
           <div className="min-w-0 flex-1">
-            <Link href={`/user/${post.user?.id || ''}`} onClick={(e: any) => e.stopPropagation()}>
+            <Link href={`/user/${post.user?.id || ''}`}>
               <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer truncate block">
                 {username}
               </span>
@@ -205,12 +210,14 @@ function UserContentCard({ post, onLike, onComment, isLiked }: { post: UGCPost; 
           {post.type === 'hot_take' ? (
             <>
               <button
-                className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600"
+                onClick={(e) => { e.stopPropagation(); onFireVote?.(post.id); }}
+                className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 active:scale-110 transition-transform"
               >
                 <Flame size={12} /> {post.fire_votes || 0}
               </button>
               <button
-                className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-500"
+                onClick={(e) => { e.stopPropagation(); onIceVote?.(post.id); }}
+                className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-500 active:scale-110 transition-transform"
               >
                 <Snowflake size={12} /> {post.ice_votes || 0}
               </button>
@@ -218,14 +225,15 @@ function UserContentCard({ post, onLike, onComment, isLiked }: { post: UGCPost; 
           ) : (
             <button
               onClick={(e) => { e.stopPropagation(); onLike?.(post.id); }}
-              className={`flex items-center gap-1 text-xs ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+              className={`flex items-center gap-1 text-xs ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} active:scale-110 transition-transform`}
             >
               <Heart size={12} fill={isLiked ? 'currentColor' : 'none'} />
               <span>{post.likes || 0}</span>
             </button>
           )}
           <button
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-500"
+            onClick={(e) => { e.stopPropagation(); scrollToPost(); onComment?.(post.id); }}
+            className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-500 active:scale-110 transition-transform"
           >
             <MessageCircle size={12} />
             <span>{post.comments || 0}</span>
@@ -236,7 +244,7 @@ function UserContentCard({ post, onLike, onComment, isLiked }: { post: UGCPost; 
   );
 }
 
-export function UserContentCarousel({ posts, title, onLike, onComment, likedPosts, currentUserId }: UserContentCarouselProps) {
+export function UserContentCarousel({ posts, title, onLike, onComment, onFireVote, onIceVote, likedPosts, currentUserId }: UserContentCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   if (!posts || posts.length === 0) return null;
@@ -248,6 +256,8 @@ export function UserContentCarousel({ posts, title, onLike, onComment, likedPost
           post={posts[0]} 
           onLike={onLike}
           onComment={onComment}
+          onFireVote={onFireVote}
+          onIceVote={onIceVote}
           isLiked={likedPosts?.has(posts[0].id)}
         />
       </div>
@@ -273,6 +283,8 @@ export function UserContentCarousel({ posts, title, onLike, onComment, likedPost
               post={post}
               onLike={onLike}
               onComment={onComment}
+              onFireVote={onFireVote}
+              onIceVote={onIceVote}
               isLiked={likedPosts?.has(post.id)}
             />
           </div>
