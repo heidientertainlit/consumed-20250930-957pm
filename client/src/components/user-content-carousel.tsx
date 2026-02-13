@@ -234,7 +234,7 @@ export function UserContentCarousel({ posts, title, onLike, likedPosts, currentU
     <div className="mb-4">
       {title && (
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-bold text-gray-900">{title}</h3>
+          <h3 className="text-sm font-medium text-gray-900">{title}</h3>
           <span className="text-xs text-gray-400">{posts.length} posts</span>
         </div>
       )}
