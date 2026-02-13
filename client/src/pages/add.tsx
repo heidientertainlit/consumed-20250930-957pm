@@ -1555,7 +1555,7 @@ export default function Search() {
       </div>
       
       {/* Main Content Area - Light Background */}
-      <div className="bg-white max-w-7xl mx-auto px-4 pt-2 pb-6 space-y-6">
+      <div className="bg-white max-w-7xl mx-auto px-4 pt-0 pb-6 space-y-4">
 
         {/* Pill Filters */}
         {!isAiMode && !searchQuery.trim() && (
