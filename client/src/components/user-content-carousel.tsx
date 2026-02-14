@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { Link } from 'wouter';
 import { 
   Flame, Snowflake, MessageCircle, Heart, Star, 
@@ -113,18 +113,23 @@ function InlineComments({ postId, fetchComments, onSubmitComment, isSubmitting, 
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [inputValue, setInputValue] = useState('');
+  const hasFetched = useRef(false);
+  const fetchRef = useRef(fetchComments);
+  fetchRef.current = fetchComments;
 
   useEffect(() => {
-    if (fetchComments) {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+    if (fetchRef.current) {
       setLoading(true);
-      fetchComments(postId).then(data => {
+      fetchRef.current(postId).then(data => {
         setComments(data || []);
         setLoading(false);
       }).catch(() => setLoading(false));
     } else {
       setLoading(false);
     }
-  }, [postId, fetchComments]);
+  }, [postId]);
 
   const handleSubmit = () => {
     if (!inputValue.trim() || !onSubmitComment) return;
