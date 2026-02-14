@@ -172,10 +172,13 @@ function InlineComments({ postId, fetchComments, onSubmitComment, isSubmitting, 
                     <span className="text-[10px] text-gray-400">{formatTimeAgo(comment.createdAt)}</span>
                     {currentUserId && comment.user?.id === currentUserId && onDeleteComment && (
                       <button
-                        onClick={() => onDeleteComment(String(comment.id), postId)}
-                        className="text-gray-300 hover:text-red-400 ml-auto"
+                        onClick={() => {
+                          onDeleteComment(String(comment.id), postId);
+                          setComments(prev => prev.filter(c => c.id !== comment.id));
+                        }}
+                        className="text-gray-400 hover:text-red-500 ml-auto p-1 min-h-[24px] min-w-[24px] flex items-center justify-center"
                       >
-                        <Trash2 size={10} />
+                        <Trash2 size={13} />
                       </button>
                     )}
                   </div>
