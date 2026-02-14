@@ -146,7 +146,7 @@ function CommentItem({
     return null;
   };
   
-  const mediaData = isRecsMode ? parseMediaMetadata() : null;
+  const mediaData = parseMediaMetadata();
   const displayTitle = mediaData?.title || comment.content;
   const displayCreator = mediaData?.creator;
   const displayPoster = mediaData?.poster_url;
@@ -335,7 +335,23 @@ function CommentItem({
               </button>
             )}
           </div>
-          <p className="text-sm text-gray-800 mb-2 break-words">{renderMentions(comment.content)}</p>
+          {mediaData ? (
+            <div className="flex items-center gap-2 mb-2">
+              {displayPoster && (
+                <img src={displayPoster} alt={displayTitle} className="w-9 h-12 rounded object-cover flex-shrink-0" />
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">{displayTitle}</p>
+                <p className="text-xs text-gray-500">
+                  {displayType && <span className="capitalize">{displayType}</span>}
+                  {displayType && displayCreator && ' · '}
+                  {displayCreator}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-800 mb-2 break-words">{renderMentions(comment.content)}</p>
+          )}
           
           {/* Action buttons */}
           <div className="flex items-center space-x-3">
