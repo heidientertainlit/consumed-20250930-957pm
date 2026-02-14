@@ -46,6 +46,7 @@ interface UserContentCarouselProps {
   isSubmitting?: boolean;
   session?: any;
   onDeleteComment?: (commentId: string, postId: string) => void;
+  onDeletePost?: (postId: string) => void;
 }
 
 function getTypeLabel(type: string): { label: string; iconColor: string; icon: any } {
@@ -216,7 +217,7 @@ function InlineComments({ postId, fetchComments, onSubmitComment, isSubmitting, 
   );
 }
 
-function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLiked, isCommentsActive, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, currentUserId, onDeleteComment }: { 
+function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLiked, isCommentsActive, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, currentUserId, onDeleteComment, onDeletePost }: { 
   post: UGCPost; 
   onLike?: (id: string) => void; 
   onComment?: (id: string) => void; 
@@ -231,6 +232,7 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
   session?: any;
   currentUserId?: string;
   onDeleteComment?: (commentId: string, postId: string) => void;
+  onDeletePost?: (postId: string) => void;
 }) {
   const typeInfo = getTypeLabel(post.type);
   const TypeIcon = typeInfo.icon;
@@ -262,6 +264,14 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
               {typeInfo.label}
             </span>
           </div>
+          {currentUserId && post.user?.id === currentUserId && onDeletePost && !isCommentsActive && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }}
+              className="text-gray-300 hover:text-red-500 p-1"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
           {isCommentsActive && onCloseComments && (
             <button onClick={onCloseComments} className="text-gray-400 hover:text-gray-600 p-1">
               <X size={16} />
@@ -409,7 +419,7 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
   );
 }
 
-export function UserContentCarousel({ posts, title, onLike, onComment, onFireVote, onIceVote, likedPosts, currentUserId, activeCommentPostId, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, onDeleteComment }: UserContentCarouselProps) {
+export function UserContentCarousel({ posts, title, onLike, onComment, onFireVote, onIceVote, likedPosts, currentUserId, activeCommentPostId, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, onDeleteComment, onDeletePost }: UserContentCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   if (!posts || posts.length === 0) return null;
@@ -426,6 +436,7 @@ export function UserContentCarousel({ posts, title, onLike, onComment, onFireVot
     session,
     currentUserId,
     onDeleteComment,
+    onDeletePost,
   };
 
   if (posts.length === 1) {
