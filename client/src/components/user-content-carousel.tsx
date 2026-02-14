@@ -238,7 +238,7 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
             </button>
           )}
           <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); console.log('💬 Comment button tapped for:', post.id); scrollToPost(); onComment?.(post.id); }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onComment?.(post.id); }}
             onTouchEnd={(e) => { e.stopPropagation(); }}
             className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-500 active:scale-110 transition-transform py-1 px-1 min-h-[32px]"
             style={{ touchAction: 'manipulation' }}

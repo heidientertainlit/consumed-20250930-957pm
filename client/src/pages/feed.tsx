@@ -1002,6 +1002,7 @@ export default function Feed() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showCategoryPills, setShowCategoryPills] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [commentModalPostId, setCommentModalPostId] = useState<string | null>(null);
   const [expandedAddRecInput, setExpandedAddRecInput] = useState<Set<string>>(new Set()); // Track recs posts with add input expanded
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
@@ -3457,7 +3458,7 @@ export default function Feed() {
 
               {/* UGC Slot 0 - Discovery carousel (6 items) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[0]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[0]} title="What People Are Saying" onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[0]} title="What People Are Saying" onLike={handleLike} onComment={(id) => setCommentModalPostId(id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* Filtered views - show only the selected category */}
@@ -3496,7 +3497,7 @@ export default function Feed() {
 
               {/* UGC Slot 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[1]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[1]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[1]} onLike={handleLike} onComment={(id) => setCommentModalPostId(id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* DNA Moment Card - in All or DNA filter */}
@@ -3511,7 +3512,7 @@ export default function Feed() {
 
               {/* UGC Slot 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[2]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[2]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[2]} onLike={handleLike} onComment={(id) => setCommentModalPostId(id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* Cast Your Friends Game */}
@@ -3611,7 +3612,7 @@ export default function Feed() {
 
               {/* UGC Slot 3 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[3]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[3]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[3]} onLike={handleLike} onComment={(id) => setCommentModalPostId(id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* Cast Your Friends - Approved Casts Carousel */}
@@ -3812,7 +3813,7 @@ export default function Feed() {
 
               {/* UGC Slot 4 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[4]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[4]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[4]} onLike={handleLike} onComment={(id) => setCommentModalPostId(id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* Leaderboard - Poll Masters */}
@@ -3843,7 +3844,7 @@ export default function Feed() {
 
               {/* UGC Slot 5 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[5]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[5]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[5]} onLike={handleLike} onComment={(id) => setCommentModalPostId(id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* Leaderboard - Media Leaders */}
@@ -3896,7 +3897,7 @@ export default function Feed() {
 
               {/* UGC Slot 6 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[6]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[6]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[6]} onLike={handleLike} onComment={(id) => setCommentModalPostId(id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* TRIVIA - Podcasts category */}
@@ -3911,12 +3912,12 @@ export default function Feed() {
 
               {/* UGC Slot 7 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[7]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[7]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[7]} onLike={handleLike} onComment={(id) => setCommentModalPostId(id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* UGC Slot 8 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[8]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[8]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[8]} onLike={handleLike} onComment={(id) => setCommentModalPostId(id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* TRIVIA - Sports category */}
@@ -3926,12 +3927,12 @@ export default function Feed() {
 
               {/* UGC Slot 9 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[9]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[9]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[9]} onLike={handleLike} onComment={(id) => setCommentModalPostId(id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* UGC Slot 10+ (remaining) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[10]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[10]} onLike={handleLike} onComment={toggleComments} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
+                <UserContentCarousel posts={ugcSlots[10]} onLike={handleLike} onComment={(id) => setCommentModalPostId(id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
               )}
 
               {/* Social Posts */}
@@ -4030,7 +4031,7 @@ export default function Feed() {
                       <ConsolidatedActivityCard
                         activity={consolidated}
                         onLike={(postId) => handleLike(postId)}
-                        onComment={(postId) => toggleComments(postId)}
+                        onComment={(postId) => setCommentModalPostId(postId)}
                         onDelete={(postIds) => {
                           postIds.forEach(postId => deletePostMutation.mutate(postId));
                         }}
@@ -5494,7 +5495,7 @@ export default function Feed() {
                           </button>
                         )}
                         <button 
-                          onClick={() => toggleComments(realPostId)}
+                          onClick={() => { setCommentModalPostId(realPostId); }}
                           className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors"
                         >
                           <MessageCircle size={18} />
@@ -5601,24 +5602,7 @@ export default function Feed() {
                       </div>
                     </div>
 
-                    {/* Comments Section - uses realPostId for grouped posts */}
-                    {expandedComments.has(realPostId) && (
-                      <CommentsSection 
-                        postId={realPostId}
-                        fetchComments={fetchComments}
-                        session={session}
-                        commentInput={commentInputs[realPostId] || ''}
-                        onCommentInputChange={(value) => handleCommentInputChange(realPostId, value)}
-                        onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(realPostId, parentCommentId, content)}
-                        isSubmitting={commentMutation.isPending}
-                        currentUserId={user?.id}
-                        onDeleteComment={handleDeleteComment}
-                        onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
-                        onVoteComment={handleVoteComment}
-                        likedComments={likedComments}
-                        commentVotes={commentVotes}
-                      />
-                    )}
+                    
                   </div>
                   </div>
 
@@ -5870,6 +5854,43 @@ export default function Feed() {
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {commentModalPostId && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setCommentModalPostId(null)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div 
+            className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-xl max-h-[70vh] flex flex-col animate-in slide-in-from-bottom duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-gray-100">
+              <h3 className="font-semibold text-gray-900">Comments</h3>
+              <button 
+                onClick={() => setCommentModalPostId(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+              >
+                <X size={18} className="text-gray-500" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <CommentsSection 
+                postId={commentModalPostId}
+                fetchComments={fetchComments}
+                session={session}
+                commentInput={commentInputs[commentModalPostId] || ''}
+                onCommentInputChange={(value) => handleCommentInputChange(commentModalPostId, value)}
+                onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(commentModalPostId, parentCommentId, content)}
+                isSubmitting={commentMutation.isPending}
+                currentUserId={user?.id}
+                onDeleteComment={handleDeleteComment}
+                onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+                onVoteComment={handleVoteComment}
+                likedComments={likedComments}
+                commentVotes={commentVotes}
+              />
             </div>
           </div>
         </div>
