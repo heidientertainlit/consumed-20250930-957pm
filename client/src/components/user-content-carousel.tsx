@@ -3,7 +3,7 @@ import { Link } from 'wouter';
 import { 
   Flame, Snowflake, MessageCircle, Heart, Star, 
   HelpCircle, BarChart3, Users, CheckCircle2, Trophy,
-  Film, Music, Tv2, Book, Headphones, Gamepad2
+  Film, Music, Tv2, Book, Headphones, Gamepad2, X
 } from 'lucide-react';
 
 export interface UGCPost {
@@ -39,6 +39,9 @@ interface UserContentCarouselProps {
   onIceVote?: (postId: string) => void;
   likedPosts?: Set<string>;
   currentUserId?: string;
+  activeCommentPostId?: string | null;
+  renderCommentsForPost?: (postId: string) => React.ReactNode;
+  onCloseComments?: () => void;
 }
 
 function getTypeLabel(type: string): { label: string; iconColor: string; icon: any } {
@@ -50,42 +53,45 @@ function getTypeLabel(type: string): { label: string; iconColor: string; icon: a
       return { label: 'Asking for Recs', iconColor: 'text-purple-500', icon: HelpCircle };
     case 'poll':
       return { label: 'Poll', iconColor: 'text-blue-500', icon: BarChart3 };
-    case 'rating':
-    case 'review':
-      return { label: 'Review', iconColor: 'text-purple-500', icon: Star };
-    case 'thought':
-    case 'general':
-      return { label: 'Thought', iconColor: 'text-gray-500', icon: MessageCircle };
     case 'cast_approved':
-      return { label: 'Cast', iconColor: 'text-purple-500', icon: Users };
+      return { label: 'Cast', iconColor: 'text-amber-500', icon: Trophy };
     case 'rank':
-      return { label: 'Rank', iconColor: 'text-blue-500', icon: Trophy };
+      return { label: 'Ranked', iconColor: 'text-emerald-500', icon: Trophy };
     case 'finished':
-      return { label: 'Finished', iconColor: 'text-indigo-500', icon: CheckCircle2 };
+      return { label: 'Finished', iconColor: 'text-green-500', icon: CheckCircle2 };
+    case 'review':
+      return { label: 'Review', iconColor: 'text-yellow-500', icon: Star };
+    case 'rating':
+      return { label: 'Rating', iconColor: 'text-yellow-500', icon: Star };
+    case 'thought':
+      return { label: 'Thought', iconColor: 'text-blue-400', icon: MessageCircle };
     default:
-      return { label: 'Post', iconColor: 'text-gray-500', icon: MessageCircle };
+      return { label: 'Post', iconColor: 'text-gray-400', icon: MessageCircle };
   }
 }
 
 function getMediaIcon(mediaType?: string) {
   switch (mediaType?.toLowerCase()) {
     case 'movie': return Film;
-    case 'tv': case 'tv_show': case 'series': return Tv2;
-    case 'music': case 'album': case 'song': case 'track': return Music;
+    case 'tv': case 'show': return Tv2;
+    case 'music': case 'song': case 'album': return Music;
     case 'book': return Book;
     case 'podcast': return Headphones;
-    case 'game': case 'gaming': return Gamepad2;
+    case 'game': return Gamepad2;
     default: return Film;
   }
 }
 
-function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLiked }: { 
+function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLiked, isCommentsActive, renderComments, onCloseComments }: { 
   post: UGCPost; 
   onLike?: (id: string) => void; 
   onComment?: (id: string) => void; 
   onFireVote?: (id: string) => void;
   onIceVote?: (id: string) => void;
   isLiked?: boolean;
+  isCommentsActive?: boolean;
+  renderComments?: () => React.ReactNode;
+  onCloseComments?: () => void;
 }) {
   const typeInfo = getTypeLabel(post.type);
   const TypeIcon = typeInfo.icon;
@@ -93,17 +99,8 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
   const username = post.user?.displayName || post.user?.username || 'Someone';
   const avatarLetter = username[0]?.toUpperCase() || '?';
 
-  const scrollToPost = () => {
-    const postEl = document.getElementById(`post-${post.id}`);
-    if (postEl) {
-      postEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      postEl.classList.add('ring-2', 'ring-purple-300');
-      setTimeout(() => postEl.classList.remove('ring-2', 'ring-purple-300'), 2000);
-    }
-  };
-
   return (
-    <div className="flex-shrink-0 w-[260px] h-[240px] rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm flex flex-col">
+    <div className={`flex-shrink-0 rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm flex flex-col ${isCommentsActive ? 'w-[320px]' : 'w-[260px] h-[240px]'}`}>
       <div className="p-4 flex flex-col flex-1 min-h-0">
         <div className="flex items-center gap-2.5 mb-3 flex-shrink-0">
           <Link href={`/user/${post.user?.id || ''}`}>
@@ -126,55 +123,79 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
               {typeInfo.label}
             </span>
           </div>
+          {isCommentsActive && onCloseComments && (
+            <button onClick={onCloseComments} className="text-gray-400 hover:text-gray-600 p-1">
+              <X size={16} />
+            </button>
+          )}
         </div>
 
-        <div className="flex-1 min-h-0 overflow-hidden">
-          {post.type === 'poll' ? (
-            <div>
-              {post.mediaTitle && (
-                <p className="text-[10px] text-gray-500 mb-0.5 truncate">{post.mediaTitle}</p>
-              )}
-              <p className="text-sm font-bold text-gray-900 line-clamp-2 mb-2">{post.content}</p>
-              {post.options && post.options.length > 0 && (
-                <div className="flex gap-2">
-                  {post.mediaImage && post.mediaImage.startsWith('http') && (
-                    <img
-                      src={post.mediaImage}
-                      alt={post.mediaTitle || ''}
-                      className="w-12 h-16 rounded-lg object-cover flex-shrink-0"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                  )}
-                  <div className="flex-1 space-y-1">
-                    {post.options.slice(0, 3).map((opt, i) => (
-                      <div key={i} className="bg-gray-100 rounded-full px-3 py-1.5 text-xs font-medium text-gray-800 truncate">
-                        {opt}
-                      </div>
-                    ))}
-                    {post.options.length > 3 && (
-                      <p className="text-[10px] text-gray-400 pl-1">+{post.options.length - 3} more</p>
-                    )}
-                  </div>
-                </div>
-              )}
-              {post.optionVotes && post.optionVotes.length > 0 && (
-                <div className="flex items-center gap-1 mt-1.5 text-xs text-gray-500">
-                  <Users size={11} />
-                  <span>{post.optionVotes.reduce((sum, v) => sum + (v.count || 0), 0)} votes</span>
-                </div>
-              )}
-            </div>
-          ) : post.mediaImage && post.mediaImage.startsWith('http') ? (
-            <div className="flex gap-2.5">
-              <img
-                src={post.mediaImage}
-                alt={post.mediaTitle || ''}
-                className="w-12 h-16 rounded-lg object-cover flex-shrink-0"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
-              <div className="flex-1 min-w-0">
+        {!isCommentsActive && (
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {post.type === 'poll' ? (
+              <div>
                 {post.mediaTitle && (
-                  <p className="text-xs font-semibold text-gray-900 line-clamp-1 mb-0.5">{post.mediaTitle}</p>
+                  <p className="text-[10px] text-gray-500 mb-0.5 truncate">{post.mediaTitle}</p>
+                )}
+                <p className="text-sm font-bold text-gray-900 line-clamp-2 mb-2">{post.content}</p>
+                {post.options && post.options.length > 0 && (
+                  <div className="flex gap-2">
+                    {post.mediaImage && post.mediaImage.startsWith('http') && (
+                      <img
+                        src={post.mediaImage}
+                        alt={post.mediaTitle || ''}
+                        className="w-12 h-16 rounded-lg object-cover flex-shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    )}
+                    <div className="flex-1 space-y-1">
+                      {post.options.slice(0, 3).map((opt, i) => (
+                        <div key={i} className="bg-gray-100 rounded-full px-3 py-1.5 text-xs font-medium text-gray-800 truncate">
+                          {opt}
+                        </div>
+                      ))}
+                      {post.options.length > 3 && (
+                        <p className="text-[10px] text-gray-400 pl-1">+{post.options.length - 3} more</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {post.optionVotes && post.optionVotes.length > 0 && (
+                  <div className="flex items-center gap-1 mt-1.5 text-xs text-gray-500">
+                    <Users size={11} />
+                    <span>{post.optionVotes.reduce((sum, v) => sum + (v.count || 0), 0)} votes</span>
+                  </div>
+                )}
+              </div>
+            ) : post.mediaImage && post.mediaImage.startsWith('http') ? (
+              <div className="flex gap-2.5">
+                <img
+                  src={post.mediaImage}
+                  alt={post.mediaTitle || ''}
+                  className="w-12 h-16 rounded-lg object-cover flex-shrink-0"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+                <div className="flex-1 min-w-0">
+                  {post.mediaTitle && (
+                    <p className="text-xs font-semibold text-gray-900 line-clamp-1 mb-0.5">{post.mediaTitle}</p>
+                  )}
+                  {post.rating && post.rating > 0 && (
+                    <div className="flex items-center gap-0.5 mb-1">
+                      {[1, 2, 3, 4, 5].map(s => (
+                        <Star key={s} size={10} className={s <= post.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-600 line-clamp-3">{post.content}</p>
+                </div>
+              </div>
+            ) : (
+              <div>
+                {post.mediaTitle && (
+                  <p className="text-xs font-semibold text-gray-900 line-clamp-1 mb-1">
+                    <MediaIcon size={11} className="inline mr-1 text-gray-400" />
+                    {post.mediaTitle}
+                  </p>
                 )}
                 {post.rating && post.rating > 0 && (
                   <div className="flex items-center gap-0.5 mb-1">
@@ -183,76 +204,74 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
                     ))}
                   </div>
                 )}
-                <p className="text-xs text-gray-600 line-clamp-3">{post.content}</p>
+                <p className="text-sm text-gray-800 line-clamp-4">{post.content}</p>
               </div>
-            </div>
-          ) : (
-            <div>
-              {post.mediaTitle && (
-                <p className="text-xs font-semibold text-gray-900 line-clamp-1 mb-1">
-                  <MediaIcon size={11} className="inline mr-1 text-gray-400" />
-                  {post.mediaTitle}
-                </p>
-              )}
-              {post.rating && post.rating > 0 && (
-                <div className="flex items-center gap-0.5 mb-1">
-                  {[1, 2, 3, 4, 5].map(s => (
-                    <Star key={s} size={10} className={s <= post.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
-                  ))}
-                </div>
-              )}
-              <p className="text-sm text-gray-800 line-clamp-4">{post.content}</p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
-        <div className="flex items-center gap-3 pt-2.5 mt-auto border-t border-gray-50 flex-shrink-0" style={{ touchAction: 'manipulation' }}>
-          {post.type === 'hot_take' ? (
-            <>
+        {isCommentsActive && (
+          <div className="flex-1 min-h-0">
+            {post.mediaTitle && (
+              <p className="text-xs text-gray-500 mb-2 truncate">
+                Re: <span className="font-medium">{post.mediaTitle}</span>
+              </p>
+            )}
+            <div className="max-h-[300px] overflow-y-auto">
+              {renderComments?.()}
+            </div>
+          </div>
+        )}
+
+        {!isCommentsActive && (
+          <div className="flex items-center gap-3 pt-2.5 mt-auto border-t border-gray-50 flex-shrink-0" style={{ touchAction: 'manipulation' }}>
+            {post.type === 'hot_take' ? (
+              <>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onFireVote?.(post.id); }}
+                  onTouchEnd={(e) => { e.stopPropagation(); }}
+                  className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 active:scale-110 transition-transform py-1 px-1 -ml-1 min-h-[32px]"
+                  style={{ touchAction: 'manipulation' }}
+                >
+                  <Flame size={14} /> {post.fire_votes || 0}
+                </button>
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onIceVote?.(post.id); }}
+                  onTouchEnd={(e) => { e.stopPropagation(); }}
+                  className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-500 active:scale-110 transition-transform py-1 px-1 min-h-[32px]"
+                  style={{ touchAction: 'manipulation' }}
+                >
+                  <Snowflake size={14} /> {post.ice_votes || 0}
+                </button>
+              </>
+            ) : (
               <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); console.log('🔥 Fire button tapped for:', post.id); onFireVote?.(post.id); }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onLike?.(post.id); }}
                 onTouchEnd={(e) => { e.stopPropagation(); }}
-                className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 active:scale-110 transition-transform py-1 px-1 -ml-1 min-h-[32px]"
+                className={`flex items-center gap-1 text-xs ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} active:scale-110 transition-transform py-1 px-1 -ml-1 min-h-[32px]`}
                 style={{ touchAction: 'manipulation' }}
               >
-                <Flame size={14} /> {post.fire_votes || 0}
+                <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
+                <span>{post.likes || 0}</span>
               </button>
-              <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); console.log('🧊 Ice button tapped for:', post.id); onIceVote?.(post.id); }}
-                onTouchEnd={(e) => { e.stopPropagation(); }}
-                className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-500 active:scale-110 transition-transform py-1 px-1 min-h-[32px]"
-                style={{ touchAction: 'manipulation' }}
-              >
-                <Snowflake size={14} /> {post.ice_votes || 0}
-              </button>
-            </>
-          ) : (
+            )}
             <button
-              onClick={(e) => { e.preventDefault(); e.stopPropagation(); console.log('❤️ Like button tapped for:', post.id); onLike?.(post.id); }}
-              onTouchEnd={(e) => { e.stopPropagation(); }}
-              className={`flex items-center gap-1 text-xs ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} active:scale-110 transition-transform py-1 px-1 -ml-1 min-h-[32px]`}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onComment?.(post.id); }}
+              onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); onComment?.(post.id); }}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-500 active:scale-110 transition-transform py-1 px-1 min-h-[32px]"
               style={{ touchAction: 'manipulation' }}
             >
-              <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
-              <span>{post.likes || 0}</span>
+              <MessageCircle size={14} />
+              <span>{post.comments || 0}</span>
             </button>
-          )}
-          <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onComment?.(post.id); }}
-            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); onComment?.(post.id); }}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-purple-500 active:scale-110 transition-transform py-1 px-1 min-h-[32px]"
-            style={{ touchAction: 'manipulation' }}
-          >
-            <MessageCircle size={14} />
-            <span>{post.comments || 0}</span>
-          </button>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-export function UserContentCarousel({ posts, title, onLike, onComment, onFireVote, onIceVote, likedPosts, currentUserId }: UserContentCarouselProps) {
+export function UserContentCarousel({ posts, title, onLike, onComment, onFireVote, onIceVote, likedPosts, currentUserId, activeCommentPostId, renderCommentsForPost, onCloseComments }: UserContentCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   if (!posts || posts.length === 0) return null;
@@ -267,6 +286,9 @@ export function UserContentCarousel({ posts, title, onLike, onComment, onFireVot
           onFireVote={onFireVote}
           onIceVote={onIceVote}
           isLiked={likedPosts?.has(posts[0].id)}
+          isCommentsActive={activeCommentPostId === posts[0].id}
+          renderComments={activeCommentPostId === posts[0].id && renderCommentsForPost ? () => renderCommentsForPost(posts[0].id) : undefined}
+          onCloseComments={onCloseComments}
         />
       </div>
     );
@@ -294,6 +316,9 @@ export function UserContentCarousel({ posts, title, onLike, onComment, onFireVot
               onFireVote={onFireVote}
               onIceVote={onIceVote}
               isLiked={likedPosts?.has(post.id)}
+              isCommentsActive={activeCommentPostId === post.id}
+              renderComments={activeCommentPostId === post.id && renderCommentsForPost ? () => renderCommentsForPost(post.id) : undefined}
+              onCloseComments={onCloseComments}
             />
           </div>
         ))}

@@ -2802,30 +2802,23 @@ export default function Feed() {
     setActiveCommentPostId(prev => prev === postId ? null : postId);
   };
 
-  const renderCarouselInlineComments = (posts: any[]) => {
-    if (!activeCommentPostId || !posts?.some((p: any) => p.id === activeCommentPostId)) return null;
+  const renderCommentsForPost = (postId: string) => {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm -mt-2">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-gray-700">Comments</span>
-          <button onClick={() => setActiveCommentPostId(null)} className="text-gray-400 hover:text-gray-600 text-xs">Close</button>
-        </div>
-        <CommentsSection
-          postId={activeCommentPostId}
-          fetchComments={fetchComments}
-          session={session}
-          commentInput={commentInputs[activeCommentPostId] || ''}
-          onCommentInputChange={(value) => handleCommentInputChange(activeCommentPostId!, value)}
-          onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(activeCommentPostId!, parentCommentId, content)}
-          isSubmitting={commentMutation.isPending}
-          currentUserId={user?.id}
-          onDeleteComment={handleDeleteComment}
-          onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
-          onVoteComment={handleVoteComment}
-          likedComments={likedComments}
-          commentVotes={commentVotes}
-        />
-      </div>
+      <CommentsSection
+        postId={postId}
+        fetchComments={fetchComments}
+        session={session}
+        commentInput={commentInputs[postId] || ''}
+        onCommentInputChange={(value) => handleCommentInputChange(postId, value)}
+        onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(postId, parentCommentId, content)}
+        isSubmitting={commentMutation.isPending}
+        currentUserId={user?.id}
+        onDeleteComment={handleDeleteComment}
+        onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+        onVoteComment={handleVoteComment}
+        likedComments={likedComments}
+        commentVotes={commentVotes}
+      />
     );
   };
 
@@ -3486,10 +3479,7 @@ export default function Feed() {
 
               {/* UGC Slot 0 - Discovery carousel (6 items) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[0]?.length > 0 && (
-                <>
-                  <UserContentCarousel posts={ugcSlots[0]} title="What People Are Saying" onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
-                  {renderCarouselInlineComments(ugcSlots[0])}
-                </>
+                <UserContentCarousel posts={ugcSlots[0]} title="What People Are Saying" onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} renderCommentsForPost={renderCommentsForPost} onCloseComments={() => setActiveCommentPostId(null)} />
               )}
 
               {/* Filtered views - show only the selected category */}
@@ -3528,10 +3518,7 @@ export default function Feed() {
 
               {/* UGC Slot 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[1]?.length > 0 && (
-                <>
-                  <UserContentCarousel posts={ugcSlots[1]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
-                  {renderCarouselInlineComments(ugcSlots[1])}
-                </>
+                <UserContentCarousel posts={ugcSlots[1]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} renderCommentsForPost={renderCommentsForPost} onCloseComments={() => setActiveCommentPostId(null)} />
               )}
 
               {/* DNA Moment Card - in All or DNA filter */}
@@ -3546,10 +3533,7 @@ export default function Feed() {
 
               {/* UGC Slot 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[2]?.length > 0 && (
-                <>
-                  <UserContentCarousel posts={ugcSlots[2]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
-                  {renderCarouselInlineComments(ugcSlots[2])}
-                </>
+                <UserContentCarousel posts={ugcSlots[2]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} renderCommentsForPost={renderCommentsForPost} onCloseComments={() => setActiveCommentPostId(null)} />
               )}
 
               {/* Cast Your Friends Game */}
@@ -3649,10 +3633,7 @@ export default function Feed() {
 
               {/* UGC Slot 3 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[3]?.length > 0 && (
-                <>
-                  <UserContentCarousel posts={ugcSlots[3]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
-                  {renderCarouselInlineComments(ugcSlots[3])}
-                </>
+                <UserContentCarousel posts={ugcSlots[3]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} renderCommentsForPost={renderCommentsForPost} onCloseComments={() => setActiveCommentPostId(null)} />
               )}
 
               {/* Cast Your Friends - Approved Casts Carousel */}
@@ -3853,10 +3834,7 @@ export default function Feed() {
 
               {/* UGC Slot 4 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[4]?.length > 0 && (
-                <>
-                  <UserContentCarousel posts={ugcSlots[4]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
-                  {renderCarouselInlineComments(ugcSlots[4])}
-                </>
+                <UserContentCarousel posts={ugcSlots[4]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} renderCommentsForPost={renderCommentsForPost} onCloseComments={() => setActiveCommentPostId(null)} />
               )}
 
               {/* Leaderboard - Poll Masters */}
@@ -3887,10 +3865,7 @@ export default function Feed() {
 
               {/* UGC Slot 5 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[5]?.length > 0 && (
-                <>
-                  <UserContentCarousel posts={ugcSlots[5]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
-                  {renderCarouselInlineComments(ugcSlots[5])}
-                </>
+                <UserContentCarousel posts={ugcSlots[5]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} renderCommentsForPost={renderCommentsForPost} onCloseComments={() => setActiveCommentPostId(null)} />
               )}
 
               {/* Leaderboard - Media Leaders */}
@@ -3943,10 +3918,7 @@ export default function Feed() {
 
               {/* UGC Slot 6 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[6]?.length > 0 && (
-                <>
-                  <UserContentCarousel posts={ugcSlots[6]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
-                  {renderCarouselInlineComments(ugcSlots[6])}
-                </>
+                <UserContentCarousel posts={ugcSlots[6]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} renderCommentsForPost={renderCommentsForPost} onCloseComments={() => setActiveCommentPostId(null)} />
               )}
 
               {/* TRIVIA - Podcasts category */}
@@ -3961,18 +3933,12 @@ export default function Feed() {
 
               {/* UGC Slot 7 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[7]?.length > 0 && (
-                <>
-                  <UserContentCarousel posts={ugcSlots[7]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
-                  {renderCarouselInlineComments(ugcSlots[7])}
-                </>
+                <UserContentCarousel posts={ugcSlots[7]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} renderCommentsForPost={renderCommentsForPost} onCloseComments={() => setActiveCommentPostId(null)} />
               )}
 
               {/* UGC Slot 8 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[8]?.length > 0 && (
-                <>
-                  <UserContentCarousel posts={ugcSlots[8]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
-                  {renderCarouselInlineComments(ugcSlots[8])}
-                </>
+                <UserContentCarousel posts={ugcSlots[8]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} renderCommentsForPost={renderCommentsForPost} onCloseComments={() => setActiveCommentPostId(null)} />
               )}
 
               {/* TRIVIA - Sports category */}
@@ -3982,18 +3948,12 @@ export default function Feed() {
 
               {/* UGC Slot 9 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[9]?.length > 0 && (
-                <>
-                  <UserContentCarousel posts={ugcSlots[9]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
-                  {renderCarouselInlineComments(ugcSlots[9])}
-                </>
+                <UserContentCarousel posts={ugcSlots[9]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} renderCommentsForPost={renderCommentsForPost} onCloseComments={() => setActiveCommentPostId(null)} />
               )}
 
               {/* UGC Slot 10+ (remaining) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[10]?.length > 0 && (
-                <>
-                  <UserContentCarousel posts={ugcSlots[10]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} />
-                  {renderCarouselInlineComments(ugcSlots[10])}
-                </>
+                <UserContentCarousel posts={ugcSlots[10]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} renderCommentsForPost={renderCommentsForPost} onCloseComments={() => setActiveCommentPostId(null)} />
               )}
 
               {/* Social Posts */}
