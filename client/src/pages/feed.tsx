@@ -1002,6 +1002,7 @@ export default function Feed() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showCategoryPills, setShowCategoryPills] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [expandedAddRecInput, setExpandedAddRecInput] = useState<Set<string>>(new Set()); // Track recs posts with add input expanded
   const [commentInputs, setCommentInputs] = useState<{ [postId: string]: string }>({});
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
@@ -2798,6 +2799,7 @@ export default function Feed() {
       }
       return newSet;
     });
+    setActiveCommentPostId(prev => prev === postId ? null : postId);
   };
 
   const handleCommentInputChange = (postId: string, value: string) => {
@@ -5495,7 +5497,7 @@ export default function Feed() {
                         )}
                         <button 
                           onClick={() => toggleComments(realPostId)}
-                          className={`flex items-center space-x-2 transition-colors ${expandedComments.has(realPostId) ? 'text-purple-600' : 'text-gray-500 hover:text-blue-500'}`}
+                          className={`flex items-center space-x-2 transition-colors ${activeCommentPostId === realPostId ? 'text-purple-600' : 'text-gray-500 hover:text-blue-500'}`}
                         >
                           <MessageCircle size={18} />
                           <span className="text-sm">{post.comments}</span>
@@ -5601,7 +5603,7 @@ export default function Feed() {
                       </div>
                     </div>
 
-                    {expandedComments.has(realPostId) && (
+                    {activeCommentPostId === realPostId && (
                       <div className="mt-3 pt-3 border-t border-gray-100">
                         <CommentsSection 
                           postId={realPostId}
