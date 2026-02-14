@@ -261,8 +261,7 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
           )}
         </div>
 
-        {!isCommentsActive && (
-          <div className="flex-1 min-h-0 overflow-hidden">
+        <div className={`${isCommentsActive ? '' : 'flex-1'} min-h-0 overflow-hidden`}>
             {post.type === 'poll' ? (
               <div>
                 {post.mediaTitle && (
@@ -339,10 +338,9 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
               </div>
             )}
           </div>
-        )}
 
         {isCommentsActive && (
-          <div className="flex-1 min-h-0">
+          <div className="mt-3 pt-3 border-t border-gray-100">
             <InlineComments
               postId={post.id}
               fetchComments={fetchComments}
