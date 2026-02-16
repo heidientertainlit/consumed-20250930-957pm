@@ -915,7 +915,7 @@ serve(async (req) => {
         const hasMedia = post.media_title && post.media_title.trim() !== '' && post.media_external_id;
         
         // These post types need special handling - don't group them with media
-        const specialPostTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'cast_approved'];
+        const specialPostTypes = ['prediction', 'predict', 'poll', 'trivia', 'rank_share', 'cast_approved'];
         const isSpecialType = specialPostTypes.includes(post.post_type);
         
         // When grouping is disabled, treat all media posts as single posts (groupPosts.length === 1 path)
