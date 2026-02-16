@@ -418,12 +418,13 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         </div>
         <div className="flex items-center gap-2">
           {answeredCount > 0 && (
-            <span className="text-gray-500 text-xs">{seenCount}/{answeredCount}</span>
+            <span className="text-purple-500 text-xs font-medium">{answeredCount} of {currentSet.items.length} done</span>
           )}
           {incompleteSets.length > 1 && (
-            <span className="text-gray-400 text-xs">{currentSetIndex + 1}/{incompleteSets.length}</span>
+            <button onClick={() => setCurrentSetIndex(prev => (prev + 1) % incompleteSets.length)}>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            </button>
           )}
-          <ChevronRight className="w-4 h-4 text-gray-400" />
         </div>
       </div>
 
@@ -485,39 +486,37 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
               
               <p className="text-gray-900 text-xs font-medium mt-1.5 truncate">{item.title}</p>
               
-              {!answered ? (
-                <div className="mt-1.5 space-y-1">
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, false); }}
-                      className="flex-1 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-600 text-[11px] font-medium hover:bg-gray-200 active:scale-95 transition-all relative z-10 touch-manipulation"
-                    >
-                      Nope
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, true); }}
-                      className="flex-1 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-600 text-[11px] font-medium hover:bg-gray-200 active:scale-95 transition-all relative z-10 touch-manipulation"
-                    >
-                      {mediaConfig.actionYes}
-                    </button>
-                  </div>
+              <div className={`mt-1.5 space-y-1 ${answered ? 'opacity-40' : ''}`}>
+                <div className="flex gap-1">
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, 'want_to'); }}
-                    className="w-full py-0.5 rounded-full bg-purple-500 text-white text-[10px] font-medium hover:bg-purple-600 active:scale-95 transition-all relative z-10 touch-manipulation"
+                    onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, false); }}
+                    className={`flex-1 py-1 rounded-full text-[11px] font-medium active:scale-95 transition-all relative z-10 touch-manipulation ${
+                      response === false ? 'bg-gray-300 border border-gray-300 text-gray-700' : 'bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200'
+                    }`}
                   >
-                    Want to
+                    Nope
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, true); }}
+                    className={`flex-1 py-1 rounded-full text-[11px] font-medium active:scale-95 transition-all relative z-10 touch-manipulation ${
+                      response === true ? 'bg-purple-500 border border-purple-500 text-white' : 'bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {response === true ? `✓ ${mediaConfig.actionDone}` : mediaConfig.actionYes}
                   </button>
                 </div>
-              ) : (
-                <div className={`mt-1.5 py-1 rounded-full text-center text-[11px] font-medium ${
-                  response === true ? 'bg-purple-500 text-white' : response === 'want_to' ? 'bg-purple-500 text-white' : 'bg-gray-100 border border-gray-200 text-gray-400'
-                }`}>
-                  {response === true ? `✓ ${mediaConfig.actionDone}` : response === 'want_to' ? '+ Want to' : '✗ Nope'}
-                </div>
-              )}
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, 'want_to'); }}
+                  className={`w-full py-0.5 rounded-full text-[10px] font-medium active:scale-95 transition-all relative z-10 touch-manipulation ${
+                    response === 'want_to' ? 'bg-purple-600 text-white' : 'bg-purple-500 text-white hover:bg-purple-600'
+                  }`}
+                >
+                  {response === 'want_to' ? '+ Want to' : 'Want to'}
+                </button>
+              </div>
             </div>
           );
         })}
