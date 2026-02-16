@@ -1014,7 +1014,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                   {[
                     { id: 'thought', label: 'Thought' },
                     { id: 'hot_take', label: 'Hot Take' },
-                    { id: 'ask', label: 'Ask' },
                     { id: 'poll', label: 'Poll' },
                   ].map((type) => (
                     <button
