@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -90,6 +90,21 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
   const [pendingDnfListId, setPendingDnfListId] = useState<string>("");
   const [rewatchCount, setRewatchCount] = useState<number>(1);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      const el = drawerRef.current;
+      if (el) {
+        el.style.maxHeight = `${vv.height * 0.85}px`;
+      }
+    };
+    vv.addEventListener('resize', onResize);
+    return () => vv.removeEventListener('resize', onResize);
+  }, [isOpen]);
   
   // TV-specific options
   const [tvSeason, setTvSeason] = useState<string>("");
@@ -732,7 +747,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
   return (
     <>
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent className="bg-white rounded-t-3xl max-h-[90vh] overflow-hidden flex flex-col [&>div:first-child]:hidden">
+      <DrawerContent ref={drawerRef} className="bg-white rounded-t-3xl max-h-[85dvh] overflow-hidden flex flex-col [&>div:first-child]:hidden" style={{ maxHeight: '85dvh' }}>
         {stage === "search" ? (
           <>
             {/* Header */}
@@ -1036,8 +1051,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                     placeholder={defaultListId ? "Add a review (optional)..." : "What's on your mind?"}
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
-                    className="bg-white border-gray-200 resize-none min-h-[100px]"
-                    rows={4}
+                    onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
+                    className="bg-white border-gray-200 resize-none min-h-[80px]"
+                    rows={3}
                     data-testid="thought-textarea"
                   />
                 </>
@@ -1049,8 +1065,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                     placeholder="Drop your hot take... 🔥"
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
-                    className="bg-white border-gray-200 resize-none min-h-[100px]"
-                    rows={4}
+                    onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
+                    className="bg-white border-gray-200 resize-none min-h-[80px]"
+                    rows={3}
                     data-testid="hot-take-textarea"
                   />
                   <p className="text-xs text-gray-500">Others will vote if your take is 🌶️ Spicy or ❄️ Cold</p>
@@ -1063,8 +1080,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                     placeholder="What are you looking for? (e.g., 'Looking for a feel-good comedy...')"
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
-                    className="bg-white border-gray-200 resize-none min-h-[100px]"
-                    rows={4}
+                    onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
+                    className="bg-white border-gray-200 resize-none min-h-[80px]"
+                    rows={3}
                     data-testid="ask-textarea"
                   />
                   <p className="text-xs text-gray-500">Your friends will recommend media for you</p>
