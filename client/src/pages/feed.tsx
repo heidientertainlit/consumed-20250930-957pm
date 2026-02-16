@@ -1590,7 +1590,7 @@ export default function Feed() {
     );
   };
 
-  const TOTAL_BATCH_SLOTS = 14;
+  const TOTAL_BATCH_SLOTS = 15;
   const renderRemainingPosts = () => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
     const remainingBatches = postBatches.slice(TOTAL_BATCH_SLOTS);
@@ -3889,6 +3889,8 @@ export default function Feed() {
                 </div>
               )}
 
+              {renderRoomCarousel(0, "The Room")}
+
               {/* Empty state for filtered views */}
               {feedFilter === 'friends' && filteredPosts.length === 0 && (
                 <div className="bg-white rounded-2xl p-8 text-center border border-gray-100" data-testid="empty-filter-state">
@@ -4065,8 +4067,6 @@ export default function Feed() {
 
               {renderPostBatchByIndex(1)}
 
-              {renderRoomCarousel(0, "The Room")}
-
               {/* DNA Moment Card - in All or DNA filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <DnaMomentCard />
@@ -4086,12 +4086,14 @@ export default function Feed() {
                 </div>
               )}
 
+              {renderPostBatchByIndex(3)}
+
               {/* Seen It Game */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <SeenItGame onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
-              {renderPostBatchByIndex(3)}
+              {renderPostBatchByIndex(4)}
 
               {/* Cast Your Friends - Approved Casts Carousel */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && filteredPosts.filter((item: any) => item.type === 'cast_approved').length > 0 && (
@@ -4280,7 +4282,7 @@ export default function Feed() {
 
               {renderRoomCarousel(1, "The Room")}
 
-              {renderPostBatchByIndex(4)}
+              {renderPostBatchByIndex(5)}
 
               {/* Oscar Ballot Completions - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
@@ -4293,7 +4295,7 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
               )}
 
-              {renderPostBatchByIndex(5)}
+              {renderPostBatchByIndex(6)}
 
               {/* Leaderboard - Poll Masters */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
@@ -4307,7 +4309,7 @@ export default function Feed() {
 
               {renderRoomCarousel(2, "The Room")}
 
-              {renderPostBatchByIndex(6)}
+              {renderPostBatchByIndex(7)}
 
               {/* POLLS filter - TV category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
@@ -4325,7 +4327,7 @@ export default function Feed() {
                 <RanksCarousel offset={1} />
               )}
 
-              {renderPostBatchByIndex(7)}
+              {renderPostBatchByIndex(8)}
 
               {/* Leaderboard - Media Leaders */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
@@ -4339,14 +4341,14 @@ export default function Feed() {
 
               {renderRoomCarousel(3, "The Room")}
 
-              {renderPostBatchByIndex(8)}
+              {renderPostBatchByIndex(9)}
 
               {/* TRIVIA - Books category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
               )}
 
-              {renderPostBatchByIndex(9)}
+              {renderPostBatchByIndex(10)}
 
               {/* TRIVIA - Podcasts category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
@@ -4358,18 +4360,18 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
               )}
 
-              {renderPostBatchByIndex(10)}
-
               {renderPostBatchByIndex(11)}
+
+              {renderPostBatchByIndex(12)}
 
               {/* TRIVIA - Sports category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Sports" />
               )}
 
-              {renderPostBatchByIndex(12)}
-
               {renderPostBatchByIndex(13)}
+
+              {renderPostBatchByIndex(14)}
 
               {renderRemainingPosts()}
 
