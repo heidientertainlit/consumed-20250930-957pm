@@ -2237,18 +2237,35 @@ export default function Feed() {
     },
   });
 
+  const isPredictionPost = (postId: string): boolean => {
+    const allPosts = socialPosts || [];
+    const post = allPosts.find((p: any) => p.id === postId);
+    return !!(post && (post.type === 'prediction' || post.type === 'predict' || (post as any).poolId));
+  };
+
   // Comment mutation with support for replies
   const commentMutation = useMutation({
     mutationFn: async ({ postId, content, parentCommentId }: { postId: string; content: string; parentCommentId?: string }) => {
-      console.log('🔥 Submitting comment:', { postId, content, parentCommentId });
+      const isPrediction = isPredictionPost(postId);
+      console.log('🔥 Submitting comment:', { postId, content, parentCommentId, isPrediction });
       if (!session?.access_token) throw new Error('Not authenticated');
 
-      const body: any = { post_id: postId, content };
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      let body: any;
+      let endpoint: string;
+
+      if (isPrediction) {
+        endpoint = `${baseUrl}/functions/v1/prediction-comments`;
+        body = { pool_id: postId, content };
+      } else {
+        endpoint = `${baseUrl}/functions/v1/social-feed-comments`;
+        body = { post_id: postId, content };
+      }
       if (parentCommentId) {
         body.parent_comment_id = parentCommentId;
       }
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -2369,13 +2386,19 @@ export default function Feed() {
     mutationFn: async ({ commentId, postId }: { commentId: string; postId: string }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/delete-comment`, {
+      const isPrediction = isPredictionPost(postId);
+      const baseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const endpoint = isPrediction
+        ? `${baseUrl}/functions/v1/prediction-comments?comment_id=${commentId}`
+        : `${baseUrl}/functions/v1/delete-comment`;
+
+      const response = await fetch(endpoint, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ comment_id: commentId }),
+        ...(isPrediction ? {} : { body: JSON.stringify({ comment_id: commentId }) }),
       });
 
       if (!response.ok) {
@@ -2527,11 +2550,17 @@ export default function Feed() {
   const fetchComments = async (postId: string) => {
     if (!session?.access_token) throw new Error('Not authenticated');
 
-    console.log('🔍 Fetching comments for post:', postId);
+    const isPrediction = isPredictionPost(postId);
+    console.log('🔍 Fetching comments for post:', postId, 'isPrediction:', isPrediction);
     
-    // Add include=meta parameter if feature flag is enabled
     const includeParam = commentLikesEnabled ? '&include=meta' : '';
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments?post_id=${postId}${includeParam}`, {
+    const baseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+    
+    const url = isPrediction
+      ? `${baseUrl}/functions/v1/prediction-comments?pool_id=${postId}${includeParam}`
+      : `${baseUrl}/functions/v1/social-feed-comments?post_id=${postId}${includeParam}`;
+
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
