@@ -179,6 +179,18 @@ export function JustTrackedSheet({
     }
   };
 
+  const getConfirmationTitle = (list?: string, mediaVerb?: string) => {
+    switch (list?.toLowerCase()) {
+      case 'finished': return `Nice! You ${mediaVerb} it.`;
+      case 'currently': return `Enjoy!`;
+      case 'want to': return `On your radar!`;
+      case 'favorites': return `Added to Favorites!`;
+      case 'did not finish':
+      case 'dnf': return `No worries, moving on.`;
+      default: return `Added!`;
+    }
+  };
+
   const handleIdentityAnswer = async (answer: string) => {
     setIdentityAnswer(answer);
     setIsSavingAnswer(true);
@@ -258,7 +270,7 @@ export function JustTrackedSheet({
             </div>
           </div>
           <DrawerTitle className="text-lg font-semibold text-gray-900">
-            Nice! You {verb} it.
+            {getConfirmationTitle(listName, verb)}
           </DrawerTitle>
           <p className="text-sm text-gray-500 mt-1">
             <span className="font-medium text-gray-700">{media.title}</span>
