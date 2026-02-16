@@ -165,29 +165,26 @@ serve(async (req) => {
     }
 
     const actualPostId = post.id;
-    console.log('Hiding post from feed:', actualPostId);
+    console.log('Deleting post from feed:', actualPostId);
     
-    // Set hidden = true instead of deleting (keeps rating data intact)
-    const { data: hiddenRows, error: hideError } = await serviceSupabase
+    const { error: deleteError } = await serviceSupabase
       .from('social_posts')
-      .update({ hidden: true })
-      .eq('id', actualPostId)
-      .select();
+      .delete()
+      .eq('id', actualPostId);
 
-    if (hideError) {
-      console.error('Hide error:', hideError);
-      return new Response(JSON.stringify({ error: hideError.message }), {
+    if (deleteError) {
+      console.error('Delete error:', deleteError);
+      return new Response(JSON.stringify({ error: deleteError.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log('Hide result - rows:', hiddenRows?.length || 0);
+    console.log('Post deleted successfully:', actualPostId);
     
     return new Response(JSON.stringify({ 
       success: true, 
-      hidden_post_id: post_id,
-      rows_hidden: hiddenRows?.length || 0
+      deleted_post_id: post_id
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
