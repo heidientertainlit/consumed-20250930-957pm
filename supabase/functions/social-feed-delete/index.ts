@@ -84,20 +84,30 @@ serve(async (req) => {
       });
     }
 
-    const { data: post, error: postError } = await serviceSupabase
+    let { data: post, error: postError } = await serviceSupabase
       .from('social_posts')
-      .select('user_id, prediction_pool_id')
+      .select('id, user_id, prediction_pool_id')
       .eq('id', post_id)
       .single();
 
-    console.log('Post lookup:', post?.user_id, 'error:', postError?.message);
-
     if (postError || !post) {
-      return new Response(JSON.stringify({ error: 'Post not found', post_id }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      const { data: poolPost, error: poolPostError } = await serviceSupabase
+        .from('social_posts')
+        .select('id, user_id, prediction_pool_id')
+        .eq('prediction_pool_id', post_id)
+        .single();
+
+      if (poolPostError || !poolPost) {
+        console.log('Post not found by id or pool_id:', post_id);
+        return new Response(JSON.stringify({ error: 'Post not found', post_id }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      post = poolPost;
     }
+
+    console.log('Post lookup:', post?.user_id, 'post.id:', post?.id);
 
     console.log('Ownership check: post.user_id=', post.user_id, 'appUser.id=', appUser.id);
     
@@ -130,13 +140,14 @@ serve(async (req) => {
       if (poolError) console.error('Error deleting pool:', poolError);
     }
 
-    console.log('Hiding post from feed:', post_id);
+    const actualPostId = post.id;
+    console.log('Hiding post from feed:', actualPostId);
     
     // Set hidden = true instead of deleting (keeps rating data intact)
     const { data: hiddenRows, error: hideError } = await serviceSupabase
       .from('social_posts')
       .update({ hidden: true })
-      .eq('id', post_id)
+      .eq('id', actualPostId)
       .select();
 
     if (hideError) {

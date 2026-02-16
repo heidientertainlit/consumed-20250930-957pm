@@ -25,9 +25,11 @@ export interface UGCPost {
   fire_votes?: number;
   ice_votes?: number;
   options?: string[];
-  optionVotes?: Array<{ option: string; count: number }>;
+  optionVotes?: Array<{ option: string; count: number; percentage?: number }>;
   timestamp?: string;
   pollId?: string;
+  userHasVoted?: boolean;
+  userVotedOption?: string;
 }
 
 interface UserContentCarouselProps {
@@ -37,6 +39,7 @@ interface UserContentCarouselProps {
   onComment?: (postId: string) => void;
   onFireVote?: (postId: string) => void;
   onIceVote?: (postId: string) => void;
+  onVotePrediction?: (poolId: string, option: string) => void;
   likedPosts?: Set<string>;
   currentUserId?: string;
   activeCommentPostId?: string | null;
@@ -219,12 +222,13 @@ function InlineComments({ postId, fetchComments, onSubmitComment, isSubmitting, 
   );
 }
 
-function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLiked, isCommentsActive, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, currentUserId, onDeleteComment, onDeletePost }: { 
+function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, onVotePrediction, isLiked, isCommentsActive, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, currentUserId, onDeleteComment, onDeletePost }: { 
   post: UGCPost; 
   onLike?: (id: string) => void; 
   onComment?: (id: string) => void; 
   onFireVote?: (id: string) => void;
   onIceVote?: (id: string) => void;
+  onVotePrediction?: (poolId: string, option: string) => void;
   isLiked?: boolean;
   isCommentsActive?: boolean;
   onCloseComments?: () => void;
@@ -236,6 +240,7 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
   onDeleteComment?: (commentId: string, postId: string) => void;
   onDeletePost?: (postId: string) => void;
 }) {
+  const [localVoted, setLocalVoted] = useState<string | null>(null);
   const typeInfo = getTypeLabel(post.type);
   const TypeIcon = typeInfo.icon;
   const MediaIcon = getMediaIcon(post.mediaType);
@@ -243,7 +248,7 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
   const avatarLetter = username[0]?.toUpperCase() || '?';
 
   return (
-    <div className={`flex-shrink-0 rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm flex flex-col ${isCommentsActive ? 'w-[300px]' : 'w-[260px] h-[240px]'}`}>
+    <div className={`flex-shrink-0 rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm flex flex-col ${isCommentsActive ? 'w-[300px]' : (post.type === 'poll' || post.type === 'predict') && post.options?.length ? 'w-[260px] min-h-[240px]' : 'w-[260px] h-[240px]'}`}>
       <div className="p-4 flex flex-col flex-1 min-h-0">
         <div className="flex items-center gap-2.5 mb-3 flex-shrink-0">
           <Link href={`/user/${post.user?.id || ''}`}>
@@ -288,32 +293,76 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
                   <p className="text-[10px] text-gray-500 mb-0.5 truncate">{post.mediaTitle}</p>
                 )}
                 <p className="text-sm font-bold text-gray-900 line-clamp-2 mb-2">{post.content}</p>
-                {post.options && post.options.length > 0 && (
-                  <div className="flex gap-2">
-                    {post.mediaImage && post.mediaImage.startsWith('http') && (
-                      <img
-                        src={post.mediaImage}
-                        alt={post.mediaTitle || ''}
-                        className="w-12 h-16 rounded-lg object-cover flex-shrink-0"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      />
-                    )}
-                    <div className="flex-1 space-y-1">
-                      {post.options.slice(0, 3).map((opt, i) => (
-                        <div key={i} className="bg-gray-100 rounded-full px-3 py-1.5 text-xs font-medium text-gray-800 truncate">
-                          {opt}
-                        </div>
-                      ))}
-                      {post.options.length > 3 && (
-                        <p className="text-[10px] text-gray-400 pl-1">+{post.options.length - 3} more</p>
+                {post.options && post.options.length > 0 && (() => {
+                  const hasVoted = localVoted !== null || post.userHasVoted;
+                  const votedOption = localVoted || post.userVotedOption;
+                  const totalVotes = post.optionVotes?.reduce((sum, v) => sum + (v.count || 0), 0) || 0;
+                  const adjustedTotal = localVoted && !post.userHasVoted ? totalVotes + 1 : totalVotes;
+
+                  return (
+                    <div className="flex gap-2">
+                      {post.mediaImage && post.mediaImage.startsWith('http') && (
+                        <img
+                          src={post.mediaImage}
+                          alt={post.mediaTitle || ''}
+                          className="w-12 h-16 rounded-lg object-cover flex-shrink-0"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
                       )}
+                      <div className="flex-1 space-y-1.5">
+                        {post.options.slice(0, 4).map((opt, i) => {
+                          const voteData = post.optionVotes?.find(v => v.option === opt);
+                          const rawCount = voteData?.count || 0;
+                          const count = localVoted === opt && !post.userHasVoted ? rawCount + 1 : rawCount;
+                          const pct = adjustedTotal > 0 ? Math.round((count / adjustedTotal) * 100) : 0;
+                          const isSelected = votedOption === opt;
+
+                          if (hasVoted) {
+                            return (
+                              <div key={i} className="relative rounded-full overflow-hidden h-7">
+                                <div
+                                  className={`absolute inset-0 rounded-full ${isSelected ? 'bg-purple-100' : 'bg-gray-100'}`}
+                                />
+                                <div
+                                  className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${isSelected ? 'bg-purple-200' : 'bg-gray-200'}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                                <div className="relative flex items-center justify-between px-3 h-full">
+                                  <span className={`text-xs font-medium truncate ${isSelected ? 'text-purple-900' : 'text-gray-700'}`}>
+                                    {isSelected && <CheckCircle2 size={10} className="inline mr-1" />}
+                                    {opt}
+                                  </span>
+                                  <span className={`text-xs font-semibold ml-1 flex-shrink-0 ${isSelected ? 'text-purple-700' : 'text-gray-500'}`}>{pct}%</span>
+                                </div>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <button
+                              key={i}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setLocalVoted(opt);
+                                onVotePrediction?.(post.pollId || post.id, opt);
+                              }}
+                              className="w-full bg-gray-100 hover:bg-purple-50 hover:border-purple-300 border border-transparent rounded-full px-3 py-1.5 text-xs font-medium text-gray-800 truncate text-left transition-colors active:bg-purple-100"
+                            >
+                              {opt}
+                            </button>
+                          );
+                        })}
+                        {post.options.length > 4 && (
+                          <p className="text-[10px] text-gray-400 pl-1">+{post.options.length - 4} more</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-                {post.optionVotes && post.optionVotes.length > 0 && (
+                  );
+                })()}
+                {(localVoted || post.userHasVoted) && (
                   <div className="flex items-center gap-1 mt-1.5 text-xs text-gray-500">
                     <Users size={11} />
-                    <span>{post.optionVotes.reduce((sum, v) => sum + (v.count || 0), 0)} votes</span>
+                    <span>{(post.optionVotes?.reduce((sum, v) => sum + (v.count || 0), 0) || 0) + (localVoted && !post.userHasVoted ? 1 : 0)} votes</span>
                   </div>
                 )}
               </div>
@@ -421,7 +470,7 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
   );
 }
 
-export function UserContentCarousel({ posts, title, onLike, onComment, onFireVote, onIceVote, likedPosts, currentUserId, activeCommentPostId, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, onDeleteComment, onDeletePost }: UserContentCarouselProps) {
+export function UserContentCarousel({ posts, title, onLike, onComment, onFireVote, onIceVote, onVotePrediction, likedPosts, currentUserId, activeCommentPostId, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, onDeleteComment, onDeletePost }: UserContentCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   if (!posts || posts.length === 0) return null;
@@ -431,6 +480,7 @@ export function UserContentCarousel({ posts, title, onLike, onComment, onFireVot
     onComment,
     onFireVote,
     onIceVote,
+    onVotePrediction,
     onCloseComments,
     fetchComments,
     onSubmitComment,
