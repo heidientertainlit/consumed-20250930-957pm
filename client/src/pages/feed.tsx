@@ -1518,6 +1518,173 @@ export default function Feed() {
     );
   })();
 
+  const POSTS_PER_BATCH = 3;
+  const postBatches = useMemo(() => {
+    const batches: UGCPost[][] = [];
+    for (let i = 0; i < standaloneUGCPosts.length; i += POSTS_PER_BATCH) {
+      batches.push(standaloneUGCPosts.slice(i, i + POSTS_PER_BATCH));
+    }
+    return batches;
+  }, [standaloneUGCPosts]);
+
+  const renderPostBatchByIndex = (batchIndex: number) => {
+    if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
+    const batch = postBatches[batchIndex];
+    if (!batch || batch.length === 0) return null;
+    return (
+      <>
+        {batch.map((post) => (
+          <StandalonePost
+            key={`standalone-${post.id}`}
+            post={post}
+            onLike={handleLike}
+            onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+            onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+            onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+            isLiked={likedPosts.has(post.id)}
+            isCommentsActive={activeCommentPostId === post.id}
+            onCloseComments={() => setActiveCommentPostId(null)}
+            fetchComments={fetchComments}
+            onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+            isSubmitting={commentMutation.isPending}
+            session={session}
+            currentUserId={currentAppUserId || undefined}
+            onDeleteComment={handleDeleteComment}
+            onDeletePost={handleDeletePost}
+          />
+        ))}
+      </>
+    );
+  };
+
+  const TOTAL_BATCH_SLOTS = 14;
+  const renderRemainingPosts = () => {
+    if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
+    const remainingBatches = postBatches.slice(TOTAL_BATCH_SLOTS);
+    if (remainingBatches.length === 0) return null;
+    return (
+      <>
+        {remainingBatches.flat().map((post) => (
+          <StandalonePost
+            key={`standalone-remaining-${post.id}`}
+            post={post}
+            onLike={handleLike}
+            onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+            onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+            onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+            isLiked={likedPosts.has(post.id)}
+            isCommentsActive={activeCommentPostId === post.id}
+            onCloseComments={() => setActiveCommentPostId(null)}
+            fetchComments={fetchComments}
+            onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+            isSubmitting={commentMutation.isPending}
+            session={session}
+            currentUserId={currentAppUserId || undefined}
+            onDeleteComment={handleDeleteComment}
+            onDeletePost={handleDeletePost}
+          />
+        ))}
+      </>
+    );
+  };
+
+  const roomItems = useMemo(() => {
+    if (!socialPosts || socialPosts.length === 0) return [];
+    const filtered = filterByCategory(socialPosts || [])
+      .filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved');
+    const seen = new Map<string, any>();
+    const isAutoAdd = (text: string) => /^"?Added .+ to .+"?$/i.test(text) || text.startsWith('Added ');
+    const getListName = (text: string) => {
+      const m = text.match(/to\s+["']?([^"']+)["']?\s*$/i) || text.match(/Added .+ to (.+?)["']?\s*$/i);
+      return m ? m[1].replace(/"/g, '').trim() : '';
+    };
+    for (const p of filtered) {
+      const mediaId = p.mediaItems?.[0]?.externalId || p.mediaItems?.[0]?.external_id || p.mediaItems?.[0]?.id || '';
+      const mediaTitle = (p.mediaItems?.[0]?.title || '').toLowerCase().trim();
+      const userId = p.user?.id || '';
+      const idKey = `${userId}-id-${mediaId}`;
+      const titleKey = mediaTitle ? `${userId}-title-${mediaTitle}` : '';
+      const existingById = seen.get(idKey);
+      const existingByTitle = titleKey ? seen.get(titleKey) : undefined;
+      const existing = existingById || existingByTitle;
+      if (!existing) {
+        const clone = { ...p };
+        const content = (clone.content || '').trim();
+        if (isAutoAdd(content)) {
+          clone._listName = getListName(content);
+        }
+        seen.set(idKey, clone);
+        if (titleKey) seen.set(titleKey, clone);
+      } else {
+        const content = (p.content || '').trim();
+        const hasRating = p.rating && p.rating > 0;
+        const existingHasRating = existing.rating && existing.rating > 0;
+        if (isAutoAdd(content)) {
+          existing._listName = existing._listName || getListName(content);
+        }
+        if (hasRating && !existingHasRating) {
+          const merged = { ...p, _listName: existing._listName };
+          seen.set(idKey, merged);
+          if (titleKey) seen.set(titleKey, merged);
+        } else if (hasRating) {
+          existing._listName = existing._listName || getListName(content);
+        } else if (!existingHasRating && !isAutoAdd(content) && content.length > (existing.content || '').length) {
+          const merged = { ...p, _listName: existing._listName };
+          seen.set(idKey, merged);
+          if (titleKey) seen.set(titleKey, merged);
+        }
+      }
+    }
+    const uniquePosts = new Map<string, any>();
+    for (const [, p] of seen) {
+      uniquePosts.set(p.id, p);
+    }
+    return Array.from(uniquePosts.values()).map((p: any) => ({
+      id: p.id,
+      type: 'media_added' as const,
+      userId: p.user?.id || '',
+      username: p.user?.username || '',
+      displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '',
+      avatar: p.user?.avatar_url || p.user?.avatarUrl,
+      mediaTitle: p.mediaItems[0]?.title || '',
+      mediaType: p.mediaItems[0]?.mediaType || p.mediaItems[0]?.media_type || p.mediaItems[0]?.type || 'movie',
+      mediaImage: p.mediaItems[0]?.imageUrl || p.mediaItems[0]?.image_url || p.mediaItems[0]?.poster_url || '',
+      mediaExternalId: p.mediaItems[0]?.externalId || p.mediaItems[0]?.external_id || '',
+      mediaExternalSource: p.mediaItems[0]?.externalSource || p.mediaItems[0]?.external_source || 'tmdb',
+      activityText: p.rating && p._listName
+        ? `rated ${p.rating}/5 · ${p._listName}`
+        : p.rating ? `rated ${p.rating}/5`
+        : p._listName ? `added to ${p._listName}`
+        : (p.activityText || 'added'),
+      rating: p.rating || null,
+      review: p.content || p.review || null,
+      timestamp: p.createdAt || new Date().toISOString()
+    }));
+  }, [socialPosts, selectedCategory]);
+
+  const ROOM_BATCH_SIZE = 6;
+  const roomBatches = useMemo(() => {
+    const batches: typeof roomItems[] = [];
+    for (let i = 0; i < roomItems.length; i += ROOM_BATCH_SIZE) {
+      batches.push(roomItems.slice(i, i + ROOM_BATCH_SIZE));
+    }
+    return batches;
+  }, [roomItems]);
+
+  const renderRoomCarousel = (batchIndex: number, title?: string) => {
+    if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
+    const batch = roomBatches[batchIndex];
+    if (!batch || batch.length === 0) return null;
+    return (
+      <ConsumptionCarousel
+        items={batch}
+        title={title || "The Room"}
+        onItemDeleted={() => queryClient.invalidateQueries({ queryKey: ["social-feed"] })}
+        currentUserId={currentAppUserId}
+      />
+    );
+  };
+
   // Group same-user activities within same-day windows into consolidated cards BY ACTIVITY TYPE
   // Ratings consolidate if 2+ in same day, list adds go to Quick Glimpse (don't consolidate)
   const TIME_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours (same day)
@@ -3832,26 +3999,7 @@ export default function Feed() {
                 </Link>
               )}
 
-              {/* Standalone Post 0 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[0] && (
-                <StandalonePost 
-                  post={standaloneUGCPosts[0]} 
-                  onLike={handleLike} 
-                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-                  isLiked={likedPosts.has(standaloneUGCPosts[0].id)}
-                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[0].id}
-                  onCloseComments={() => setActiveCommentPostId(null)}
-                  fetchComments={fetchComments}
-                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
-                  isSubmitting={commentMutation.isPending}
-                  session={session}
-                  currentUserId={currentAppUserId || undefined}
-                  onDeleteComment={handleDeleteComment}
-                  onDeletePost={handleDeletePost}
-                />
-              )}
+              {renderPostBatchByIndex(0)}
 
               {/* Filtered views - show only the selected category */}
               {/* TRIVIA filter - Movies category */}
@@ -3882,26 +4030,7 @@ export default function Feed() {
                 <LeaderboardFeedCard variant="trivia" />
               )}
 
-              {/* Standalone Post 1 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[1] && (
-                <StandalonePost 
-                  post={standaloneUGCPosts[1]} 
-                  onLike={handleLike} 
-                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-                  isLiked={likedPosts.has(standaloneUGCPosts[1].id)}
-                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[1].id}
-                  onCloseComments={() => setActiveCommentPostId(null)}
-                  fetchComments={fetchComments}
-                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
-                  isSubmitting={commentMutation.isPending}
-                  session={session}
-                  currentUserId={currentAppUserId || undefined}
-                  onDeleteComment={handleDeleteComment}
-                  onDeletePost={handleDeletePost}
-                />
-              )}
+              {renderPostBatchByIndex(1)}
 
               {/* DNA Moment Card - in All or DNA filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
@@ -3913,26 +4042,7 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
               )}
 
-              {/* Standalone Post 2 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[2] && (
-                <StandalonePost 
-                  post={standaloneUGCPosts[2]} 
-                  onLike={handleLike} 
-                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-                  isLiked={likedPosts.has(standaloneUGCPosts[2].id)}
-                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[2].id}
-                  onCloseComments={() => setActiveCommentPostId(null)}
-                  fetchComments={fetchComments}
-                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
-                  isSubmitting={commentMutation.isPending}
-                  session={session}
-                  currentUserId={currentAppUserId || undefined}
-                  onDeleteComment={handleDeleteComment}
-                  onDeletePost={handleDeletePost}
-                />
-              )}
+              {renderPostBatchByIndex(2)}
 
               {/* Cast Your Friends Game */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
@@ -3946,109 +4056,9 @@ export default function Feed() {
                 <SeenItGame onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
-              {/* The Room - Friend Activity with reactions */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && socialPosts && socialPosts.length > 0 && filterByCategory(socialPosts || []).filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved').length > 0 && (
-                <ConsumptionCarousel 
-                  items={(() => {
-                    const filtered = filterByCategory(socialPosts || [])
-                      .filter((p: any) => p.mediaItems?.length > 0 && p.user && p.user.id && p.user.username !== 'Unknown' && p.type !== 'cast_approved');
-                    const seen = new Map<string, any>();
-                    const isAutoAdd = (text: string) => /^"?Added .+ to .+"?$/i.test(text) || text.startsWith('Added ');
-                    const getListName = (text: string) => {
-                      const m = text.match(/to\s+["']?([^"']+)["']?\s*$/i) || text.match(/Added .+ to (.+?)["']?\s*$/i);
-                      return m ? m[1].replace(/"/g, '').trim() : '';
-                    };
-                    for (const p of filtered) {
-                      const mediaId = p.mediaItems?.[0]?.externalId || p.mediaItems?.[0]?.external_id || p.mediaItems?.[0]?.id || '';
-                      const mediaTitle = (p.mediaItems?.[0]?.title || '').toLowerCase().trim();
-                      const userId = p.user?.id || '';
-                      const idKey = `${userId}-id-${mediaId}`;
-                      const titleKey = mediaTitle ? `${userId}-title-${mediaTitle}` : '';
-                      const existingById = seen.get(idKey);
-                      const existingByTitle = titleKey ? seen.get(titleKey) : undefined;
-                      const existing = existingById || existingByTitle;
-                      if (!existing) {
-                        const clone = { ...p };
-                        const content = (clone.content || '').trim();
-                        if (isAutoAdd(content)) {
-                          clone._listName = getListName(content);
-                        }
-                        seen.set(idKey, clone);
-                        if (titleKey) seen.set(titleKey, clone);
-                      } else {
-                        const content = (p.content || '').trim();
-                        const hasRating = p.rating && p.rating > 0;
-                        const existingHasRating = existing.rating && existing.rating > 0;
-                        if (isAutoAdd(content)) {
-                          existing._listName = existing._listName || getListName(content);
-                        }
-                        if (hasRating && !existingHasRating) {
-                          const merged = { ...p, _listName: existing._listName };
-                          seen.set(idKey, merged);
-                          if (titleKey) seen.set(titleKey, merged);
-                        } else if (hasRating) {
-                          existing._listName = existing._listName || getListName(content);
-                        } else if (!existingHasRating && !isAutoAdd(content) && content.length > (existing.content || '').length) {
-                          const merged = { ...p, _listName: existing._listName };
-                          seen.set(idKey, merged);
-                          if (titleKey) seen.set(titleKey, merged);
-                        }
-                      }
-                    }
-                    const uniquePosts = new Map<string, any>();
-                    for (const [, p] of seen) {
-                      uniquePosts.set(p.id, p);
-                    }
-                    return Array.from(uniquePosts.values());
-                  })()
-                    .slice(0, 10)
-                    .map((p: any) => ({
-                      id: p.id,
-                      type: 'media_added' as const,
-                      userId: p.user?.id || '',
-                      username: p.user?.username || '',
-                      displayName: p.user?.displayName || p.user?.display_name || p.user?.username || '',
-                      avatar: p.user?.avatar_url || p.user?.avatarUrl,
-                      mediaTitle: p.mediaItems[0]?.title || '',
-                      mediaType: p.mediaItems[0]?.mediaType || p.mediaItems[0]?.media_type || p.mediaItems[0]?.type || 'movie',
-                      mediaImage: p.mediaItems[0]?.imageUrl || p.mediaItems[0]?.image_url || p.mediaItems[0]?.poster_url || '',
-                      mediaExternalId: p.mediaItems[0]?.externalId || p.mediaItems[0]?.external_id || '',
-                      mediaExternalSource: p.mediaItems[0]?.externalSource || p.mediaItems[0]?.external_source || 'tmdb',
-                      activityText: p.rating && p._listName
-                        ? `rated ${p.rating}/5 · ${p._listName}`
-                        : p.rating ? `rated ${p.rating}/5`
-                        : p._listName ? `added to ${p._listName}`
-                        : (p.activityText || 'added'),
-                      rating: p.rating || null,
-                      review: p.content || p.review || null,
-                      timestamp: p.createdAt || new Date().toISOString()
-                    }))}
-                  title="The Room"
-                  onItemDeleted={() => queryClient.invalidateQueries({ queryKey: ["social-feed"] })}
-                  currentUserId={currentAppUserId}
-                />
-              )}
+              {renderRoomCarousel(0, "The Room")}
 
-              {/* Standalone Post 3 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[3] && (
-                <StandalonePost 
-                  post={standaloneUGCPosts[3]} 
-                  onLike={handleLike} 
-                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-                  isLiked={likedPosts.has(standaloneUGCPosts[3].id)}
-                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[3].id}
-                  onCloseComments={() => setActiveCommentPostId(null)}
-                  fetchComments={fetchComments}
-                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
-                  isSubmitting={commentMutation.isPending}
-                  session={session}
-                  currentUserId={currentAppUserId || undefined}
-                  onDeleteComment={handleDeleteComment}
-                  onDeletePost={handleDeletePost}
-                />
-              )}
+              {renderPostBatchByIndex(3)}
 
               {/* Cast Your Friends - Approved Casts Carousel */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && filteredPosts.filter((item: any) => item.type === 'cast_approved').length > 0 && (
@@ -4235,6 +4245,10 @@ export default function Feed() {
                 <RanksCarousel offset={0} />
               )}
 
+              {renderRoomCarousel(1, "The Room")}
+
+              {renderPostBatchByIndex(4)}
+
               {/* Oscar Ballot Completions - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <AwardsCompletionFeed />
@@ -4246,26 +4260,7 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
               )}
 
-              {/* Standalone Post 4 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[4] && (
-                <StandalonePost 
-                  post={standaloneUGCPosts[4]} 
-                  onLike={handleLike} 
-                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-                  isLiked={likedPosts.has(standaloneUGCPosts[4].id)}
-                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[4].id}
-                  onCloseComments={() => setActiveCommentPostId(null)}
-                  fetchComments={fetchComments}
-                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
-                  isSubmitting={commentMutation.isPending}
-                  session={session}
-                  currentUserId={currentAppUserId || undefined}
-                  onDeleteComment={handleDeleteComment}
-                  onDeletePost={handleDeletePost}
-                />
-              )}
+              {renderPostBatchByIndex(5)}
 
               {/* Leaderboard - Poll Masters */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
@@ -4276,6 +4271,10 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
+
+              {renderRoomCarousel(2, "The Room")}
+
+              {renderPostBatchByIndex(6)}
 
               {/* POLLS filter - TV category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
@@ -4293,26 +4292,7 @@ export default function Feed() {
                 <RanksCarousel offset={1} />
               )}
 
-              {/* Standalone Post 5 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[5] && (
-                <StandalonePost 
-                  post={standaloneUGCPosts[5]} 
-                  onLike={handleLike} 
-                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-                  isLiked={likedPosts.has(standaloneUGCPosts[5].id)}
-                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[5].id}
-                  onCloseComments={() => setActiveCommentPostId(null)}
-                  fetchComments={fetchComments}
-                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
-                  isSubmitting={commentMutation.isPending}
-                  session={session}
-                  currentUserId={currentAppUserId || undefined}
-                  onDeleteComment={handleDeleteComment}
-                  onDeletePost={handleDeletePost}
-                />
-              )}
+              {renderPostBatchByIndex(7)}
 
               {/* Leaderboard - Media Leaders */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
@@ -4324,32 +4304,16 @@ export default function Feed() {
                 <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
+              {renderRoomCarousel(3, "The Room")}
+
+              {renderPostBatchByIndex(8)}
 
               {/* TRIVIA - Books category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
               )}
 
-              {/* Standalone Post 6 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[6] && (
-                <StandalonePost 
-                  post={standaloneUGCPosts[6]} 
-                  onLike={handleLike} 
-                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-                  isLiked={likedPosts.has(standaloneUGCPosts[6].id)}
-                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[6].id}
-                  onCloseComments={() => setActiveCommentPostId(null)}
-                  fetchComments={fetchComments}
-                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
-                  isSubmitting={commentMutation.isPending}
-                  session={session}
-                  currentUserId={currentAppUserId || undefined}
-                  onDeleteComment={handleDeleteComment}
-                  onDeletePost={handleDeletePost}
-                />
-              )}
+              {renderPostBatchByIndex(9)}
 
               {/* TRIVIA - Podcasts category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
@@ -4361,94 +4325,20 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
               )}
 
-              {/* Standalone Post 7 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[7] && (
-                <StandalonePost 
-                  post={standaloneUGCPosts[7]} 
-                  onLike={handleLike} 
-                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-                  isLiked={likedPosts.has(standaloneUGCPosts[7].id)}
-                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[7].id}
-                  onCloseComments={() => setActiveCommentPostId(null)}
-                  fetchComments={fetchComments}
-                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
-                  isSubmitting={commentMutation.isPending}
-                  session={session}
-                  currentUserId={currentAppUserId || undefined}
-                  onDeleteComment={handleDeleteComment}
-                  onDeletePost={handleDeletePost}
-                />
-              )}
+              {renderPostBatchByIndex(10)}
 
-              {/* Standalone Post 8 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[8] && (
-                <StandalonePost 
-                  post={standaloneUGCPosts[8]} 
-                  onLike={handleLike} 
-                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-                  isLiked={likedPosts.has(standaloneUGCPosts[8].id)}
-                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[8].id}
-                  onCloseComments={() => setActiveCommentPostId(null)}
-                  fetchComments={fetchComments}
-                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
-                  isSubmitting={commentMutation.isPending}
-                  session={session}
-                  currentUserId={currentAppUserId || undefined}
-                  onDeleteComment={handleDeleteComment}
-                  onDeletePost={handleDeletePost}
-                />
-              )}
+              {renderPostBatchByIndex(11)}
 
               {/* TRIVIA - Sports category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Sports" />
               )}
 
-              {/* Standalone Post 9 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[9] && (
-                <StandalonePost 
-                  post={standaloneUGCPosts[9]} 
-                  onLike={handleLike} 
-                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-                  isLiked={likedPosts.has(standaloneUGCPosts[9].id)}
-                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[9].id}
-                  onCloseComments={() => setActiveCommentPostId(null)}
-                  fetchComments={fetchComments}
-                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
-                  isSubmitting={commentMutation.isPending}
-                  session={session}
-                  currentUserId={currentAppUserId || undefined}
-                  onDeleteComment={handleDeleteComment}
-                  onDeletePost={handleDeletePost}
-                />
-              )}
+              {renderPostBatchByIndex(12)}
 
-              {/* Standalone Post 10 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[10] && (
-                <StandalonePost 
-                  post={standaloneUGCPosts[10]} 
-                  onLike={handleLike} 
-                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-                  isLiked={likedPosts.has(standaloneUGCPosts[10].id)}
-                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[10].id}
-                  onCloseComments={() => setActiveCommentPostId(null)}
-                  fetchComments={fetchComments}
-                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
-                  isSubmitting={commentMutation.isPending}
-                  session={session}
-                  currentUserId={currentAppUserId || undefined}
-                  onDeleteComment={handleDeleteComment}
-                  onDeletePost={handleDeletePost}
-                />
-              )}
+              {renderPostBatchByIndex(13)}
+
+              {renderRemainingPosts()}
 
               {/* Social Posts */}
               {(() => {
