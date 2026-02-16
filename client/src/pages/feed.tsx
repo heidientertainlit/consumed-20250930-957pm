@@ -3406,9 +3406,9 @@ export default function Feed() {
                                 });
                                 setIsQuickAddOpen(true);
                               }}
-                              className="absolute top-1 right-1 w-4 h-4 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-all"
+                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-all"
                             >
-                              <Plus size={10} className="text-white/80" strokeWidth={2.5} />
+                              <Plus size={12} className="text-white" strokeWidth={2.5} />
                             </button>
                           </div>
                           <p className="text-[10px] text-gray-300 truncate font-medium">{item.title}</p>
