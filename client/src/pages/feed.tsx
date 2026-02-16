@@ -26,7 +26,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 import { HotTakeFeedCard } from "@/components/hot-take-feed-card";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal } from "lucide-react";
+import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -1101,6 +1101,79 @@ export default function Feed() {
 
   // Create a Set of friend user IDs for quick lookup
   const friendIds = new Set(friendsData.map((friend: any) => friend.id));
+
+  const { data: friendsConsuming = [] } = useQuery({
+    queryKey: ['friends-consuming', Array.from(friendIds).sort().join(',')],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
+      const targetIds = friendIds.size > 0 ? Array.from(friendIds) : [];
+      
+      const { data: currentlyLists, error: listsErr } = await supabase
+        .from('lists')
+        .select('id, user_id, title')
+        .eq('title', 'Currently')
+        .in('user_id', targetIds.length > 0 ? targetIds : ['__none__']);
+      
+      if (listsErr || !currentlyLists?.length) {
+        if (targetIds.length === 0) {
+          const { data: allCurrentlyLists } = await supabase
+            .from('lists')
+            .select('id, user_id, title')
+            .eq('title', 'Currently')
+            .limit(20);
+          if (!allCurrentlyLists?.length) return [];
+          const listIds = allCurrentlyLists.map((l: any) => l.id);
+          const userMap = new Map(allCurrentlyLists.map((l: any) => [l.id, l.user_id]));
+          const { data: items } = await supabase
+            .from('list_items')
+            .select('*')
+            .in('list_id', listIds)
+            .order('created_at', { ascending: false })
+            .limit(20);
+          if (!items?.length) return [];
+          const ownerIds = [...new Set(items.map((i: any) => userMap.get(i.list_id)).filter(Boolean))];
+          const { data: users } = await supabase
+            .from('users')
+            .select('id, display_name, user_name, avatar')
+            .in('id', ownerIds as string[]);
+          const usersMap = new Map((users || []).map((u: any) => [u.id, u]));
+          return items.map((item: any) => {
+            const ownerId = userMap.get(item.list_id);
+            const owner = usersMap.get(ownerId) || {};
+            return { ...item, owner };
+          });
+        }
+        return [];
+      }
+      
+      const listIds = currentlyLists.map((l: any) => l.id);
+      const userMap = new Map(currentlyLists.map((l: any) => [l.id, l.user_id]));
+      
+      const { data: items, error: itemsErr } = await supabase
+        .from('list_items')
+        .select('*')
+        .in('list_id', listIds)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (itemsErr || !items?.length) return [];
+      
+      const ownerIds = [...new Set(items.map((i: any) => userMap.get(i.list_id)).filter(Boolean))];
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, display_name, user_name, avatar')
+        .in('id', ownerIds as string[]);
+      const usersMap = new Map((users || []).map((u: any) => [u.id, u]));
+      
+      return items.map((item: any) => {
+        const ownerId = userMap.get(item.list_id);
+        const owner = usersMap.get(ownerId) || {};
+        return { ...item, owner };
+      });
+    },
+    enabled: !!session?.access_token,
+    staleTime: 60000,
+  });
 
   const { 
     data: infinitePosts, 
@@ -3314,6 +3387,48 @@ export default function Feed() {
                 </div>
               )}
 
+
+              {/* What Friends Are Consuming - horizontal carousel */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && friendsConsuming.length > 0 && (
+                <div className="bg-gradient-to-br from-gray-900 via-purple-950 to-gray-900 rounded-2xl p-4 border border-purple-800/30">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                      <Play size={14} className="text-purple-400" />
+                      What Friends Are Consuming
+                    </h3>
+                    <span className="text-[10px] text-purple-400 font-medium">{friendsConsuming.length} items</span>
+                  </div>
+                  <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+                    {friendsConsuming.map((item: any, idx: number) => (
+                      <Link key={item.id || idx} href={`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`}>
+                        <div className="w-[72px] flex-shrink-0 cursor-pointer group">
+                          <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-1.5 ring-1 ring-white/10 group-hover:ring-purple-500/50 transition-all">
+                            {item.image_url ? (
+                              <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-purple-800 to-blue-900 flex items-center justify-center">
+                                <Film size={16} className="text-purple-300" />
+                              </div>
+                            )}
+                            {item.owner?.avatar && (
+                              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-gray-900 overflow-hidden bg-purple-600">
+                                <img src={item.owner.avatar} alt="" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                            {!item.owner?.avatar && item.owner?.display_name && (
+                              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-gray-900 bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                                <span className="text-[8px] text-white font-bold">{item.owner.display_name[0]?.toUpperCase()}</span>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-gray-300 truncate font-medium">{item.title}</p>
+                          <p className="text-[9px] text-purple-400 truncate">{item.owner?.display_name || item.owner?.user_name || 'User'}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Empty state for filtered views */}
               {feedFilter === 'friends' && filteredPosts.length === 0 && (
