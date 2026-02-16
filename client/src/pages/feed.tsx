@@ -3626,11 +3626,6 @@ export default function Feed() {
                 <LeaderboardFeedCard variant="trivia" />
               )}
 
-              {/* Hot Takes Card - Share a thought about what you're consuming */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'commentary') && !selectedCategory && (
-                <QuickReactCard />
-              )}
-
               {/* UGC Slot 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[1]?.length > 0 && (
                 <UserContentCarousel posts={ugcSlots[1]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
