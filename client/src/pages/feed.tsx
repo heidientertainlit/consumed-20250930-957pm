@@ -1107,69 +1107,33 @@ export default function Feed() {
     queryFn: async () => {
       if (!session?.access_token) return [];
       const targetIds = friendIds.size > 0 ? Array.from(friendIds) : [];
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
       
-      const { data: currentlyLists, error: listsErr } = await supabase
-        .from('lists')
-        .select('id, user_id, title')
-        .eq('title', 'Currently')
-        .in('user_id', targetIds.length > 0 ? targetIds : ['__none__']);
-      
-      if (listsErr || !currentlyLists?.length) {
-        if (targetIds.length === 0) {
-          const { data: allCurrentlyLists } = await supabase
-            .from('lists')
-            .select('id, user_id, title')
-            .eq('title', 'Currently')
-            .limit(20);
-          if (!allCurrentlyLists?.length) return [];
-          const listIds = allCurrentlyLists.map((l: any) => l.id);
-          const userMap = new Map(allCurrentlyLists.map((l: any) => [l.id, l.user_id]));
-          const { data: items } = await supabase
-            .from('list_items')
-            .select('*')
-            .in('list_id', listIds)
-            .order('created_at', { ascending: false })
-            .limit(20);
-          if (!items?.length) return [];
-          const ownerIds = [...new Set(items.map((i: any) => userMap.get(i.list_id)).filter(Boolean))];
-          const { data: users } = await supabase
-            .from('users')
-            .select('id, display_name, user_name, avatar')
-            .in('id', ownerIds as string[]);
-          const usersMap = new Map((users || []).map((u: any) => [u.id, u]));
-          return items.map((item: any) => {
-            const ownerId = userMap.get(item.list_id);
-            const owner = usersMap.get(ownerId) || {};
-            return { ...item, owner };
-          });
+      try {
+        console.log('🍿 Fetching friends consuming... targetIds:', targetIds.length);
+        const response = await fetch(`${supabaseUrl}/functions/v1/get-friends-consuming`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+          },
+          body: JSON.stringify({ friendIds: targetIds }),
+        });
+        
+        if (!response.ok) {
+          const errText = await response.text().catch(() => '');
+          console.log('🍿 Friends consuming fetch failed:', response.status, errText);
+          return [];
         }
+        
+        const data = await response.json();
+        console.log('🍿 Friends consuming data:', data.items?.length || 0, 'items');
+        return data.items || [];
+      } catch (err: any) {
+        console.error('🍿 Friends consuming error:', err?.message || err);
         return [];
       }
-      
-      const listIds = currentlyLists.map((l: any) => l.id);
-      const userMap = new Map(currentlyLists.map((l: any) => [l.id, l.user_id]));
-      
-      const { data: items, error: itemsErr } = await supabase
-        .from('list_items')
-        .select('*')
-        .in('list_id', listIds)
-        .order('created_at', { ascending: false })
-        .limit(20);
-      
-      if (itemsErr || !items?.length) return [];
-      
-      const ownerIds = [...new Set(items.map((i: any) => userMap.get(i.list_id)).filter(Boolean))];
-      const { data: users } = await supabase
-        .from('users')
-        .select('id, display_name, user_name, avatar')
-        .in('id', ownerIds as string[]);
-      const usersMap = new Map((users || []).map((u: any) => [u.id, u]));
-      
-      return items.map((item: any) => {
-        const ownerId = userMap.get(item.list_id);
-        const owner = usersMap.get(ownerId) || {};
-        return { ...item, owner };
-      });
     },
     enabled: !!session?.access_token,
     staleTime: 60000,
