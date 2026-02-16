@@ -632,6 +632,239 @@ const formatDate = (dateStr: string) => {
   });
 };
 
+function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLiked, isCommentsActive, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, currentUserId, onDeleteComment, onDeletePost }: {
+  post: UGCPost;
+  onLike?: (id: string) => void;
+  onComment?: (id: string) => void;
+  onFireVote?: (id: string) => void;
+  onIceVote?: (id: string) => void;
+  isLiked?: boolean;
+  isCommentsActive?: boolean;
+  onCloseComments?: () => void;
+  fetchComments?: (postId: string) => Promise<any[]>;
+  onSubmitComment?: (postId: string, content: string) => void;
+  isSubmitting?: boolean;
+  session?: any;
+  currentUserId?: string;
+  onDeleteComment?: (commentId: string, postId: string) => void;
+  onDeletePost?: (postId: string) => void;
+}) {
+  const username = post.user?.displayName || post.user?.username || 'Someone';
+  const avatarLetter = username[0]?.toUpperCase() || '?';
+  const [commentText, setCommentText] = useState('');
+  const [comments, setComments] = useState<any[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const hasFetchedComments = useRef(false);
+
+  const getTypeInfo = (type: string) => {
+    switch (type) {
+      case 'hot_take': return { label: 'Hot Take', color: 'text-orange-500', bg: 'bg-orange-50', icon: Flame };
+      case 'review': return { label: 'Review', color: 'text-yellow-500', bg: 'bg-yellow-50', icon: Star };
+      case 'rating': return { label: 'Rating', color: 'text-yellow-500', bg: 'bg-yellow-50', icon: Star };
+      case 'thought': return { label: 'Thought', color: 'text-blue-400', bg: 'bg-blue-50', icon: MessageCircle };
+      default: return { label: 'Post', color: 'text-gray-400', bg: 'bg-gray-50', icon: MessageCircle };
+    }
+  };
+
+  const typeInfo = getTypeInfo(post.type);
+  const TypeIcon = typeInfo.icon;
+
+  const timeAgo = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const now = new Date();
+    const d = new Date(dateStr);
+    const mins = Math.floor((now.getTime() - d.getTime()) / 60000);
+    if (mins < 1) return 'now';
+    if (mins < 60) return `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7) return `${days}d`;
+    return `${Math.floor(days / 7)}w`;
+  };
+
+  useEffect(() => {
+    if (isCommentsActive && !hasFetchedComments.current && fetchComments) {
+      hasFetchedComments.current = true;
+      setLoadingComments(true);
+      fetchComments(post.id).then(data => {
+        setComments(data || []);
+        setLoadingComments(false);
+      }).catch(() => setLoadingComments(false));
+    }
+  }, [isCommentsActive, post.id]);
+
+  const handleSubmitComment = () => {
+    if (!commentText.trim() || !onSubmitComment) return;
+    onSubmitComment(post.id, commentText.trim());
+    setCommentText('');
+    setTimeout(() => {
+      if (fetchComments) {
+        fetchComments(post.id).then(data => setComments(data || []));
+      }
+    }, 1000);
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="p-4">
+        <div className="flex items-start gap-3">
+          <Link href={`/user/${post.user?.id || ''}`}>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-semibold cursor-pointer flex-shrink-0">
+              {post.user?.avatar ? (
+                <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+              ) : avatarLetter}
+            </div>
+          </Link>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <Link href={`/user/${post.user?.id || ''}`}>
+                <span className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer text-sm">{username}</span>
+              </Link>
+              <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
+              <div className="ml-auto flex items-center gap-1">
+                <span className={`text-[11px] font-medium ${typeInfo.color} flex items-center gap-1 ${typeInfo.bg} px-2 py-0.5 rounded-full`}>
+                  <TypeIcon size={11} />
+                  {typeInfo.label}
+                </span>
+                {currentUserId && post.user?.id === currentUserId && onDeletePost && (
+                  <button onClick={() => onDeletePost(post.id)} className="text-gray-300 hover:text-red-500 p-1">
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {post.mediaTitle && (
+              <div className="flex items-center gap-2.5 mt-3 mb-2">
+                {post.mediaImage && post.mediaImage.startsWith('http') && (
+                  <img
+                    src={post.mediaImage}
+                    alt={post.mediaTitle}
+                    className="w-14 h-20 rounded-lg object-cover flex-shrink-0 shadow-sm"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 line-clamp-1">{post.mediaTitle}</p>
+                  {post.rating && post.rating > 0 && (
+                    <div className="flex items-center gap-0.5 mt-0.5">
+                      {[1, 2, 3, 4, 5].map(s => (
+                        <Star key={s} size={13} className={s <= post.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!post.mediaTitle && post.rating && post.rating > 0 && (
+              <div className="flex items-center gap-0.5 mt-2">
+                {[1, 2, 3, 4, 5].map(s => (
+                  <Star key={s} size={13} className={s <= post.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
+                ))}
+              </div>
+            )}
+
+            <p className="text-gray-800 text-sm leading-relaxed mt-2">{post.content}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50 ml-[52px]">
+          {post.type === 'hot_take' ? (
+            <>
+              <button
+                onClick={() => onFireVote?.(post.id)}
+                className="flex items-center gap-1.5 text-sm text-orange-500 hover:text-orange-600 active:scale-110 transition-transform"
+              >
+                <Flame size={16} /> <span className="text-xs">{post.fire_votes || 0}</span>
+              </button>
+              <button
+                onClick={() => onIceVote?.(post.id)}
+                className="flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-500 active:scale-110 transition-transform"
+              >
+                <Snowflake size={16} /> <span className="text-xs">{post.ice_votes || 0}</span>
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => onLike?.(post.id)}
+              className={`flex items-center gap-1.5 text-sm ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} active:scale-110 transition-transform`}
+            >
+              <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
+              <span className="text-xs">{post.likes || 0}</span>
+            </button>
+          )}
+          <button
+            onClick={() => onComment?.(post.id)}
+            className={`flex items-center gap-1.5 text-sm ${isCommentsActive ? 'text-purple-500' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
+          >
+            <MessageCircle size={16} />
+            <span className="text-xs">{post.comments || 0}</span>
+          </button>
+        </div>
+
+        {isCommentsActive && (
+          <div className="mt-3 pt-3 border-t border-gray-100 ml-[52px]">
+            {loadingComments ? (
+              <p className="text-xs text-gray-400 text-center py-2">Loading...</p>
+            ) : comments.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-2">No comments yet</p>
+            ) : (
+              <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto mb-2">
+                {comments.slice(0, 5).map((comment: any) => (
+                  <div key={comment.id} className="flex items-start gap-2">
+                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <User size={12} className="text-gray-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-gray-800">{comment.user?.username || comment.user?.displayName || 'User'}</span>
+                        <span className="text-[10px] text-gray-400">{timeAgo(comment.createdAt)}</span>
+                        {currentUserId && comment.user?.id === currentUserId && onDeleteComment && (
+                          <button
+                            onClick={() => {
+                              onDeleteComment(String(comment.id), post.id);
+                              setComments(prev => prev.filter(c => c.id !== comment.id));
+                            }}
+                            className="text-gray-400 hover:text-red-500 ml-auto p-1"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600 leading-tight">{comment.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {session && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitComment(); }}
+                  placeholder="Add comment..."
+                  className="flex-1 text-xs bg-gray-50 border border-gray-200 rounded-full px-3 py-2 outline-none focus:border-purple-300 placeholder-gray-400"
+                />
+                <button
+                  onClick={handleSubmitComment}
+                  disabled={!commentText.trim() || isSubmitting}
+                  className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white disabled:opacity-40 flex-shrink-0"
+                >
+                  <Send size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Currently Consuming Feed Card Component (extracted to use hooks properly)
 function CurrentlyConsumingFeedCard({
   post,
@@ -1277,6 +1510,13 @@ export default function Feed() {
   })();
 
   const ugcUsedIds = new Set(ugcSlots.flat().map(p => p.id));
+
+  const standaloneUGCPosts: UGCPost[] = (() => {
+    const allUGC = ugcSlots.flat();
+    return allUGC.filter(p => 
+      p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating'
+    ).slice(0, 5);
+  })();
 
   // Group same-user activities within same-day windows into consolidated cards BY ACTIVITY TYPE
   // Ratings consolidate if 2+ in same day, list adds go to Quick Glimpse (don't consolidate)
@@ -3626,6 +3866,27 @@ export default function Feed() {
                 <LeaderboardFeedCard variant="trivia" />
               )}
 
+              {/* Standalone Post 0 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[0] && (
+                <StandalonePost 
+                  post={standaloneUGCPosts[0]} 
+                  onLike={handleLike} 
+                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+                  isLiked={likedPosts.has(standaloneUGCPosts[0].id)}
+                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[0].id}
+                  onCloseComments={() => setActiveCommentPostId(null)}
+                  fetchComments={fetchComments}
+                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+                  isSubmitting={commentMutation.isPending}
+                  session={session}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeleteComment={handleDeleteComment}
+                  onDeletePost={handleDeletePost}
+                />
+              )}
+
               {/* UGC Slot 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[1]?.length > 0 && (
                 <UserContentCarousel posts={ugcSlots[1]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
@@ -3644,6 +3905,27 @@ export default function Feed() {
               {/* UGC Slot 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[2]?.length > 0 && (
                 <UserContentCarousel posts={ugcSlots[2]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
+              )}
+
+              {/* Standalone Post 1 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[1] && (
+                <StandalonePost 
+                  post={standaloneUGCPosts[1]} 
+                  onLike={handleLike} 
+                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+                  isLiked={likedPosts.has(standaloneUGCPosts[1].id)}
+                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[1].id}
+                  onCloseComments={() => setActiveCommentPostId(null)}
+                  fetchComments={fetchComments}
+                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+                  isSubmitting={commentMutation.isPending}
+                  session={session}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeleteComment={handleDeleteComment}
+                  onDeletePost={handleDeletePost}
+                />
               )}
 
               {/* Cast Your Friends Game */}
@@ -3981,33 +4263,6 @@ export default function Feed() {
               {/* Leaderboard - Media Leaders */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
                 <LeaderboardFeedCard variant="consumption" />
-              )}
-
-              {/* Complete Your DNA Card */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
-                <div className="bg-gradient-to-br from-purple-600 via-teal-500 to-cyan-500 rounded-2xl p-4 shadow-lg">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                      <Dna className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-white font-semibold">Complete Your DNA</h3>
-                      <p className="text-white/70 text-xs">Answer more questions to unlock personalized insights</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 ml-[52px]">
-                    <Link href="/entertainment-dna">
-                      <button className="bg-white text-purple-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-white/90 transition-colors">
-                        Take DNA Quiz
-                      </button>
-                    </Link>
-                    <Link href="/profile#dna">
-                      <button className="bg-white/20 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-white/30 transition-colors">
-                        View My DNA
-                      </button>
-                    </Link>
-                  </div>
-                </div>
               )}
 
               {/* Listened to It? - Music & Podcasts */}
