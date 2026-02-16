@@ -1222,7 +1222,7 @@ export default function Feed() {
         if (p.type === 'cast_approved') return true;
         if (p.type === 'hot_take' || p.post_type === 'hot_take') return true;
         if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
-        if (p.type === 'poll' && (p as any).question) return true;
+        if ((p.type === 'poll' || p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) return true;
         if (p.type === 'rank' || p.type === 'shared_rank') return true;
         const content = (p.content || '').trim();
         if (p.rating && p.rating > 0) return true;
@@ -1235,7 +1235,8 @@ export default function Feed() {
         const content = (p.content || '').trim();
         if (p.type === 'hot_take' || p.post_type === 'hot_take') postType = 'hot_take';
         else if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') postType = 'ask_for_rec';
-        else if (p.type === 'poll' && (p as any).question) postType = 'poll';
+        else if ((p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) postType = 'predict';
+        else if (p.type === 'poll' && ((p as any).question || (p as any).options)) postType = 'poll';
         else if (p.type === 'cast_approved') postType = 'cast_approved';
         else if (p.type === 'rank' || p.type === 'shared_rank') postType = 'rank';
         else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
@@ -1254,7 +1255,7 @@ export default function Feed() {
         return {
           id: p.id, type: postType,
           user: { id: userObj?.id || '', username: userObj?.username || '', displayName: userObj?.displayName || userObj?.display_name || userObj?.username || '', avatar: userObj?.avatar_url || userObj?.avatarUrl || userObj?.avatar || '' },
-          content: postType === 'poll' ? ((p as any).question || content) : content,
+          content: (postType === 'poll' || postType === 'predict') ? ((p as any).question || content) : content,
           mediaTitle: media?.title || (p as any).mediaTitle, mediaType: media?.mediaType || media?.type, mediaImage: mediaImg,
           rating: p.rating, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
           fire_votes: p.fire_votes || 0, ice_votes: p.ice_votes || 0,
@@ -1506,7 +1507,7 @@ export default function Feed() {
     const postType = post.type?.toLowerCase() || '';
     
     // Tier 1: Jump-in moments (high engagement, interactive)
-    if (['prediction', 'poll', 'vote', 'bet'].includes(postType)) {
+    if (['prediction', 'predict', 'poll', 'vote', 'bet'].includes(postType)) {
       return 1;
     }
     
@@ -1581,7 +1582,7 @@ export default function Feed() {
     ];
     
     // Game/engagement posts should NEVER be consumption posts - always show prominently
-    const gameTypes = ['trivia', 'poll', 'prediction', 'vote', 'ask_for_recs', 'ask_for_rec', 'rank_share', 'media_group', 'cast_approved'];
+    const gameTypes = ['trivia', 'poll', 'prediction', 'predict', 'vote', 'ask_for_recs', 'ask_for_rec', 'rank_share', 'media_group', 'cast_approved'];
     if (gameTypes.includes(postType)) return false;
     
     // Check explicit consumption types
@@ -1841,7 +1842,7 @@ export default function Feed() {
     // Apply media category pill filter (Movies, TV, Music, Books, etc.)
     // Only filter regular media posts - skip special types that are rendered separately
     if (selectedCategory) {
-      const skipFilterTypes = ['cast_approved', 'hot_take', 'prediction', 'poll', 'vote', 'trivia', 'rank_share', 'ask_for_recs', 'ask_for_rec', 'friend_list_group'];
+      const skipFilterTypes = ['cast_approved', 'hot_take', 'prediction', 'predict', 'poll', 'vote', 'trivia', 'rank_share', 'ask_for_recs', 'ask_for_rec', 'friend_list_group'];
       const postType = post.type?.toLowerCase() || '';
       if (!skipFilterTypes.includes(postType)) {
         const allowedTypes = categoryToMediaTypeMap[selectedCategory] || [];
@@ -4205,12 +4206,8 @@ export default function Feed() {
                 
                 // Check if this item is a prediction from the API
                 // Skip user-generated predictions - only show Consumed-created ones
-                if (post.type === 'prediction' && (post as any).question) {
+                if ((post.type === 'prediction' || post.type === 'predict') && (post as any).question) {
                   const predPost = post as any;
-                  const isUserGenerated = predPost.origin_type === 'user' || (!predPost.origin_type && predPost.origin_user_id);
-                  if (isUserGenerated) {
-                    return null; // Hide user-generated predictions
-                  }
                   const predictionCardData = {
                     ...post,
                     id: predPost.poolId || post.id,

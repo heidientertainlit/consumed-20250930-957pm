@@ -1061,7 +1061,7 @@ serve(async (req) => {
       // Filter out ALL polls/predictions regardless of prediction_pool_id to avoid duplicates
       // But KEEP rank_share posts - they need special handling
       const transformedNonMediaPosts = nonMediaPosts
-        .filter(post => post.post_type !== 'prediction' && post.post_type !== 'poll' && post.post_type !== 'trivia')
+        .filter(post => post.post_type !== 'prediction' && post.post_type !== 'predict' && post.post_type !== 'poll' && post.post_type !== 'trivia')
         .map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
