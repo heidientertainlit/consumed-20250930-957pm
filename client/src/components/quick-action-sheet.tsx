@@ -546,7 +546,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
 
   const playActions = [
     { id: "poll" as ActionType, label: "Create a Poll", icon: Vote, desc: "Ask your friends" },
-    { id: "rank" as ActionType, label: "Add to Ranking", icon: Trophy, desc: "Build a ranked list" },
     { id: "challenge" as ActionType, label: "Challenge a Friend", icon: Swords, desc: "Coming soon" },
   ];
 
@@ -556,7 +555,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
     { id: "hot_take" as ActionType, label: "Hot Take", icon: Flame, iconColor: "text-orange-500", bgColor: "bg-orange-50", desc: "Drop a spicy opinion" },
     { id: "poll" as ActionType, label: "Poll", icon: Vote, iconColor: "text-purple-500", bgColor: "bg-purple-50", desc: "Ask your friends" },
     { id: "ask_for_recs" as ActionType, label: "Ask for Recs", icon: HelpCircle, iconColor: "text-green-500", bgColor: "bg-green-50", desc: "Get suggestions" },
-    { id: "rank" as ActionType, label: "Rank", icon: Trophy, iconColor: "text-amber-500", bgColor: "bg-amber-50", desc: "Add to a ranked list" },
     { id: "challenge" as ActionType, label: "Challenge", icon: Swords, iconColor: "text-pink-500", bgColor: "bg-pink-50", desc: "Challenge a friend" },
   ];
 
