@@ -1100,7 +1100,7 @@ export default function Feed() {
   });
 
   // Create a Set of friend user IDs for quick lookup
-  const friendIds = new Set(friendsData.map((friend: any) => friend.id));
+  const friendIds = new Set(friendsData.map((friend: any) => friend.friend?.id || friend.id).filter(Boolean));
 
   const { data: friendsConsuming = [] } = useQuery({
     queryKey: ['friends-consuming', Array.from(friendIds).sort().join(',')],
