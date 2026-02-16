@@ -1545,9 +1545,10 @@ export default function Feed() {
 
   const standaloneUGCPosts: UGCPost[] = (() => {
     const allUGC = ugcSlots.flat();
-    return allUGC.filter(p => 
-      p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank'
-    );
+    return allUGC.filter(p => {
+      if (p.type === 'rating' && (!p.content || p.content.trim().length < 10)) return false;
+      return p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank';
+    });
   })();
 
   const POSTS_PER_BATCH = 3;
