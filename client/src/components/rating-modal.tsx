@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -156,50 +155,40 @@ export default function RatingModal({
           <div>
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3">Rate this media (optional)</h3>
             <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-              {/* Star Display */}
-              <div className="flex items-center gap-0.5 sm:gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setRating(star === rating ? 0 : star)}
-                    className="p-0.5 sm:p-1 hover:scale-110 transition-transform"
-                    data-testid={`star-${star}`}
-                  >
-                    <Star
-                      size={22}
-                      className={`${
-                        star <= Math.floor(rating)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : star <= rating
-                          ? 'fill-yellow-200 text-yellow-200'
-                          : 'fill-gray-200 text-gray-200'
-                      } hover:fill-yellow-300 hover:text-yellow-300 transition-colors cursor-pointer`}
-                    />
-                  </button>
-                ))}
-              </div>
-
-              {/* Rating Input */}
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
+              <div className="relative flex items-center gap-1">
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <div 
+                      key={star} 
+                      className="relative"
+                      style={{ width: 28, height: 28 }}
+                    >
+                      <Star size={28} className="absolute inset-0 text-gray-300" />
+                      <div 
+                        className="absolute inset-0 overflow-hidden pointer-events-none"
+                        style={{ 
+                          width: rating >= star ? '100%' : rating >= star - 0.5 ? '50%' : '0%'
+                        }}
+                      >
+                        <Star size={28} className="fill-yellow-400 text-yellow-400" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <input
+                  type="range"
                   min="0"
                   max="5"
-                  step="0.1"
-                  value={rating || ''}
-                  onChange={(e) => {
-                    const value = parseFloat(e.target.value);
-                    if (value >= 0 && value <= 5) {
-                      setRating(value);
-                    } else if (e.target.value === '') {
-                      setRating(0);
-                    }
-                  }}
-                  className="w-14 text-center bg-white text-black border-gray-300 focus:border-purple-500 focus:ring-purple-500"
-                  placeholder="0"
-                  data-testid="rating-input"
+                  step="0.5"
+                  value={rating}
+                  onChange={(e) => setRating(parseFloat(e.target.value))}
+                  className="absolute left-0 w-[140px] h-7 opacity-0 cursor-pointer z-10"
+                  style={{ margin: 0 }}
+                  data-testid="rating-slider"
                 />
-                <span className="text-xs sm:text-sm text-gray-500">(0-5)</span>
+                {rating > 0 && (
+                  <span className="ml-2 text-sm text-gray-600">{rating}/5</span>
+                )}
               </div>
             </div>
           </div>

@@ -8,7 +8,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
-import RatingModal from "@/components/rating-modal";
 import CreateListDialog from "@/components/create-list-dialog";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickActionSheet } from "@/components/quick-action-sheet";
@@ -35,7 +34,6 @@ export default function MediaDetail() {
     id: `${paramsPrefixed.prefix}/${paramsPrefixed.id}`
   } : paramsStandard;
   const { session, user } = useAuth();
-  const [showRatingModal, setShowRatingModal] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [showReviews, setShowReviews] = useState(false);
   const [showConversations, setShowConversations] = useState(false);
@@ -1542,17 +1540,6 @@ export default function MediaDetail() {
 
         </div>
       </div>
-      
-      <RatingModal 
-        isOpen={showRatingModal} 
-        onClose={() => setShowRatingModal(false)}
-        mediaTitle={mediaItem?.title || mediaData.title}
-        mediaType={mediaItem?.type || mediaData.type}
-        mediaCreator={mediaItem?.creator || mediaData.creator}
-        mediaImage={resolvedImageUrl || mediaData.artwork}
-        mediaExternalId={params?.id}
-        mediaExternalSource={params?.source}
-      />
       
       <CreateListDialog 
         open={showCreateListDialog} 
