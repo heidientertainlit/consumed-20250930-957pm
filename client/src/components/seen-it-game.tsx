@@ -388,9 +388,9 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
 
   if (isLoading && !mediaTypeFilter) {
     return (
-      <Card className="bg-gradient-to-br from-[#2d1b4e] via-[#1a1035] to-[#0f0a1a] border-0 p-4 rounded-xl">
+      <Card className="bg-white border border-gray-100 shadow-sm p-4 rounded-2xl">
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
         </div>
       </Card>
     );
@@ -409,27 +409,27 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   const MediaIcon = mediaConfig.icon;
 
   return (
-    <Card className="bg-gradient-to-br from-[#2d1b4e] via-[#1a1035] to-[#0f0a1a] border-0 p-4 rounded-xl">
-      <div className="flex items-center justify-between mb-4">
+    <Card className="bg-white border border-gray-100 shadow-sm p-4 rounded-2xl">
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <MediaIcon className={`w-4 h-4 ${mediaConfig.iconColor}`} />
-          <h3 className="text-white font-medium text-sm">{mediaConfig.prompt}</h3>
-          <span className="text-purple-400 text-xs">• {currentSet.title}</span>
+          <h3 className="text-gray-900 font-semibold text-sm">{mediaConfig.prompt}</h3>
+          <span className="text-purple-500 text-xs font-medium">• {currentSet.title}</span>
         </div>
         <div className="flex items-center gap-2">
           {answeredCount > 0 && (
-            <span className="text-purple-300 text-xs">{seenCount}/{answeredCount}</span>
+            <span className="text-gray-500 text-xs">{seenCount}/{answeredCount}</span>
           )}
           {incompleteSets.length > 1 && (
-            <span className="text-purple-500 text-xs">{currentSetIndex + 1}/{incompleteSets.length}</span>
+            <span className="text-gray-400 text-xs">{currentSetIndex + 1}/{incompleteSets.length}</span>
           )}
-          <ChevronRight className="w-4 h-4 text-purple-400" />
+          <ChevronRight className="w-4 h-4 text-gray-400" />
         </div>
       </div>
 
       <div 
         ref={scrollRef}
-        className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
+        className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-hide"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {currentSet.items.map((item) => {
@@ -438,18 +438,18 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
           
           const mediaDetailLink = `/media/${item.media_type || currentSet.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`;
           return (
-            <div key={item.id} className="flex-shrink-0 w-32">
+            <div key={item.id} className="flex-shrink-0 w-[105px]">
               <div className="relative">
                 <Link href={mediaDetailLink}>
                   <img 
                     src={item.image_url} 
                     alt={item.title}
-                    className={`w-32 h-48 rounded-lg object-cover transition-all cursor-pointer hover:opacity-80 ${
+                    className={`w-[105px] h-[155px] rounded-xl object-cover transition-all cursor-pointer hover:opacity-80 shadow-sm ${
                       answered ? 'opacity-60' : ''
                     }`}
                   />
                 </Link>
-                <div className="absolute top-2 right-2 flex flex-col gap-1">
+                <div className="absolute top-1.5 right-1.5 flex flex-col gap-1">
                   <button 
                     onClick={(e) => {
                       e.preventDefault();
@@ -462,43 +462,43 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
                         imageUrl: item.image_url || '',
                       });
                     }}
-                    className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all"
+                    className="w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 active:scale-90 transition-all"
                   >
-                    <Plus className="w-4 h-4 text-white" />
+                    <Plus className="w-3.5 h-3.5 text-white" />
                   </button>
-                  <button className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all">
-                    <Star className="w-4 h-4 text-white" />
+                  <button className="w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 active:scale-90 transition-all">
+                    <Star className="w-3.5 h-3.5 text-white" />
                   </button>
                 </div>
                 {answered && (
-                  <div className={`absolute inset-0 flex items-center justify-center rounded-lg ${
+                  <div className={`absolute inset-0 flex items-center justify-center rounded-xl ${
                     response ? 'bg-green-500/30' : 'bg-red-500/30'
                   }`}>
                     {response ? (
-                      <Check className="w-10 h-10 text-green-400" />
+                      <Check className="w-8 h-8 text-green-500" />
                     ) : (
-                      <X className="w-10 h-10 text-red-400" />
+                      <X className="w-8 h-8 text-red-400" />
                     )}
                   </div>
                 )}
               </div>
               
-              <p className="text-white text-sm font-medium mt-2 truncate">{item.title}</p>
+              <p className="text-gray-900 text-xs font-medium mt-1.5 truncate">{item.title}</p>
               
               {!answered ? (
-                <div className="mt-2 space-y-1">
+                <div className="mt-1.5 space-y-1">
                   <div className="flex gap-1">
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, false); }}
-                      className="flex-1 py-1.5 rounded-full bg-black/60 border border-white/15 text-white text-xs font-medium hover:bg-black/80 active:scale-95 transition-all relative z-10 touch-manipulation"
+                      className="flex-1 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-600 text-[11px] font-medium hover:bg-gray-200 active:scale-95 transition-all relative z-10 touch-manipulation"
                     >
                       Nope
                     </button>
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, true); }}
-                      className="flex-1 py-1.5 rounded-full bg-black/60 border border-white/15 text-white text-xs font-medium hover:bg-black/80 active:scale-95 transition-all relative z-10 touch-manipulation"
+                      className="flex-1 py-1 rounded-full bg-gray-100 border border-gray-200 text-gray-600 text-[11px] font-medium hover:bg-gray-200 active:scale-95 transition-all relative z-10 touch-manipulation"
                     >
                       {mediaConfig.actionYes}
                     </button>
@@ -506,14 +506,14 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, 'want_to'); }}
-                    className="w-full py-1 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-[10px] font-medium hover:opacity-90 active:scale-95 transition-all relative z-10 touch-manipulation"
+                    className="w-full py-0.5 rounded-full bg-purple-500 text-white text-[10px] font-medium hover:bg-purple-600 active:scale-95 transition-all relative z-10 touch-manipulation"
                   >
                     Want to
                   </button>
                 </div>
               ) : (
-                <div className={`mt-2 py-1.5 rounded-full text-center text-xs font-medium ${
-                  response === true ? 'bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white' : response === 'want_to' ? 'bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white' : 'bg-black/60 border border-white/15 text-white/60'
+                <div className={`mt-1.5 py-1 rounded-full text-center text-[11px] font-medium ${
+                  response === true ? 'bg-purple-500 text-white' : response === 'want_to' ? 'bg-purple-500 text-white' : 'bg-gray-100 border border-gray-200 text-gray-400'
                 }`}>
                   {response === true ? `✓ ${mediaConfig.actionDone}` : response === 'want_to' ? '+ Want to' : '✗ Nope'}
                 </div>
@@ -524,30 +524,30 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         
         {isComplete && (() => {
           return (
-            <div className="flex-shrink-0 w-32">
-              <div className="w-32 h-48 rounded-lg bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-800 flex flex-col items-center justify-center p-3">
+            <div className="flex-shrink-0 w-[105px]">
+              <div className="w-[105px] h-[155px] rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex flex-col items-center justify-center p-3 shadow-sm">
                 <Sparkles className="w-5 h-5 text-yellow-300 mb-1" />
                 <span className="text-white font-bold text-lg">{seenCount}/{currentSet.items.length}</span>
-                <span className="text-purple-200 text-[10px] text-center">{mediaConfig.actionDone}</span>
+                <span className="text-purple-100 text-[10px] text-center">{mediaConfig.actionDone}</span>
                 {wantToCount > 0 && (
-                  <span className="text-purple-300 text-[9px] mt-1.5">+{wantToCount} on your list</span>
+                  <span className="text-purple-200 text-[9px] mt-1.5">+{wantToCount} on your list</span>
                 )}
               </div>
 
-              <p className="text-white text-sm font-medium mt-2 text-center">Complete!</p>
+              <p className="text-gray-900 text-xs font-medium mt-1.5 text-center">Complete!</p>
 
-              <div className="flex flex-col gap-1 mt-2">
+              <div className="flex flex-col gap-1 mt-1.5">
                 {incompleteSets.length > 1 && currentSetIndex < incompleteSets.length - 1 ? (
                   <button
                     type="button"
                     onClick={() => { saveSetCompletion(currentSet.id, seenCount, currentSet.items.length); setCurrentSetIndex(prev => Math.min(prev, incompleteSets.length - 2)); }}
-                    className="w-full py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all"
+                    className="w-full py-1 rounded-full bg-purple-500 text-white text-[11px] font-medium hover:bg-purple-600 active:scale-95 transition-all"
                   >
                     Next Set →
                   </button>
                 ) : (
                   <Link href="/profile">
-                    <button type="button" onClick={() => saveSetCompletion(currentSet.id, seenCount, currentSet.items.length)} className="w-full py-1.5 rounded-full bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] text-white text-xs font-medium hover:opacity-90 active:scale-95 transition-all">
+                    <button type="button" onClick={() => saveSetCompletion(currentSet.id, seenCount, currentSet.items.length)} className="w-full py-1 rounded-full bg-purple-500 text-white text-[11px] font-medium hover:bg-purple-600 active:scale-95 transition-all">
                       View DNA
                     </button>
                   </Link>
@@ -558,15 +558,14 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
         })()}
       </div>
 
-      
       {incompleteSets.length > 1 && (
-        <div className="flex justify-center gap-1.5 mt-3">
+        <div className="flex justify-center gap-1.5 mt-2">
           {incompleteSets.map((_, idx) => (
             <button
               key={idx}
               onClick={() => setCurrentSetIndex(idx)}
               className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                idx === currentSetIndex ? 'bg-purple-400' : 'bg-purple-700'
+                idx === currentSetIndex ? 'bg-purple-500' : 'bg-gray-200'
               }`}
             />
           ))}
