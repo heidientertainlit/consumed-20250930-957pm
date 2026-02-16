@@ -385,7 +385,6 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
           ) : null}
           <div className={`w-full h-full bg-gradient-to-br from-purple-800 to-blue-900 flex flex-col items-center justify-center p-1.5 ${item.image_url ? 'hidden absolute inset-0' : ''}`}>
             {getMediaIcon()}
-            <p className="text-[8px] text-white/90 font-medium text-center leading-tight mt-1 line-clamp-3">{item.title}</p>
           </div>
           
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-6 pb-1.5 px-1.5">
