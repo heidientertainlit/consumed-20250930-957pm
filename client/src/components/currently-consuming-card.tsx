@@ -416,7 +416,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
           </div>
         </div>
 
-        <h4 className="text-xs font-medium text-white truncate px-0.5">{item.title}</h4>
+        <h4 className="text-[10px] font-medium text-gray-800 truncate px-0.5 mt-0.5">{item.title}</h4>
       </div>
 
       <Sheet open={isProgressSheetOpen} onOpenChange={setIsProgressSheetOpen}>
