@@ -4015,11 +4015,6 @@ export default function Feed() {
                 <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
-              {/* Recommendations - For You */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <RecommendationsGlimpse />
-              )}
-
 
               {/* TRIVIA - Books category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
@@ -4197,8 +4192,7 @@ export default function Feed() {
                 const leaderboardVariant = leaderboardVariants[leaderboardOccurrence % leaderboardVariants.length];
                 // Media carousel at positions 9, 21, 33... (every 12 posts starting at 9)
                 const shouldShowMediaCarousel = postIndex === 9 || (postIndex > 9 && (postIndex - 9) % 12 === 0);
-                // Recommendations only at position 2 (early in feed)
-                const shouldShowRecommendations = postIndex === 2 && recommendedContent && recommendedContent.length > 0;
+                const shouldShowRecommendations = false;
                 
                 // Rotate through different carousel types
                 const carouselTypes = [
