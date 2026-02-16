@@ -111,7 +111,6 @@ serve(async (req) => {
       .insert({
         id: poolId,
         title: question.substring(0, 100),
-        description: question,
         type: poolType,
         status: 'open',
         category: poolCategory,

@@ -165,7 +165,6 @@ serve(async (req) => {
         const poolData = {
           id: poolId,
           title: prediction_question.substring(0, 100),
-          description: prediction_question,
           type: 'predict',
           status: 'open',
           category: 'movie',
@@ -274,7 +273,6 @@ serve(async (req) => {
         const poolData = {
           id: poolId,
           title: poll_question.substring(0, 100),
-          description: poll_question,
           type: 'vote',
           status: 'open',
           category: 'movie',
