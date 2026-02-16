@@ -4065,6 +4065,8 @@ export default function Feed() {
 
               {renderPostBatchByIndex(1)}
 
+              {renderRoomCarousel(0, "The Room")}
+
               {/* DNA Moment Card - in All or DNA filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <DnaMomentCard />
@@ -4088,8 +4090,6 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <SeenItGame onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
-
-              {renderRoomCarousel(0, "The Room")}
 
               {renderPostBatchByIndex(3)}
 
