@@ -735,32 +735,6 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
               </div>
             </div>
 
-            {post.mediaTitle && (
-              <div className="flex gap-3 mt-3 mb-1">
-                {post.mediaImage && post.mediaImage.startsWith('http') && (
-                  <img
-                    src={post.mediaImage}
-                    alt={post.mediaTitle}
-                    className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                )}
-                <div className="min-w-0 flex-1 flex flex-col justify-center">
-                  <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
-                  {post.rating && post.rating > 0 && (
-                    <div className="flex items-center gap-0.5 mt-1">
-                      {[1, 2, 3, 4, 5].map(s => (
-                        <Star key={s} size={14} className={s <= post.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
-                      ))}
-                    </div>
-                  )}
-                  {post.content && (
-                    <p className="text-gray-700 text-sm leading-relaxed mt-1.5 line-clamp-3">{post.content}</p>
-                  )}
-                </div>
-              </div>
-            )}
-
             {!post.mediaTitle && post.rating && post.rating > 0 && (
               <div className="flex items-center gap-0.5 mt-2">
                 {[1, 2, 3, 4, 5].map(s => (
@@ -769,11 +743,40 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
               </div>
             )}
 
-            {post.content && (!post.mediaTitle || !(post.mediaImage && post.mediaImage.startsWith('http'))) && (
+            {post.content && !post.mediaTitle && (
               <p className="text-gray-800 text-sm leading-relaxed mt-2">{post.content}</p>
             )}
           </div>
         </div>
+
+        {post.mediaTitle && (
+          <div className="flex gap-3 mt-2 px-4">
+            {post.mediaImage && post.mediaImage.startsWith('http') && (
+              <img
+                src={post.mediaImage}
+                alt={post.mediaTitle}
+                className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            )}
+            <div className="min-w-0 flex-1 flex flex-col justify-center">
+              <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
+              {post.rating && post.rating > 0 && (
+                <div className="flex items-center gap-0.5 mt-1">
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <Star key={s} size={14} className={s <= post.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
+                  ))}
+                </div>
+              )}
+              {post.content && (
+                <p className="text-gray-700 text-sm leading-relaxed mt-1.5 line-clamp-3">{post.content}</p>
+              )}
+            </div>
+          </div>
+        )}
+        {post.mediaTitle && !(post.mediaImage && post.mediaImage.startsWith('http')) && post.content && (
+          <p className="text-gray-800 text-sm leading-relaxed mt-2 px-4">{post.content}</p>
+        )}
 
         <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50 ml-[52px]">
           {post.type === 'hot_take' ? (
