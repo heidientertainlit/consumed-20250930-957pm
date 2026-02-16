@@ -6,6 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: { persistSession: false }
+});
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -106,7 +113,7 @@ serve(async (req) => {
     console.log('DEBUG: Creating pool with id:', poolId, 'type:', poolType, 'category:', poolCategory);
 
     // Insert into prediction_pools with CORRECT values matching existing data
-    const { data: pool, error: poolError } = await supabase
+    const { data: pool, error: poolError } = await adminClient
       .from('prediction_pools')
       .insert({
         id: poolId,
@@ -143,7 +150,7 @@ serve(async (req) => {
     // Create associated social post with proper type for polls/predictions
     // Use 'poll' for vote pools, 'predict' for prediction pools so feed can identify them
     const postType = isPoll ? 'poll' : 'predict';
-    const { data: post, error: postError } = await supabase
+    const { data: post, error: postError } = await adminClient
       .from('social_posts')
       .insert({
         user_id: appUser.id,
