@@ -722,7 +722,12 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
                 <span className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer text-sm">{username}</span>
               </Link>
               <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
-              <div className="ml-auto flex items-center gap-1">
+              <div className="ml-auto flex items-center gap-1.5">
+                {post.mediaType && (
+                  <span className="text-[11px] font-medium text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full capitalize">
+                    {post.mediaType === 'tv' ? 'TV' : post.mediaType}
+                  </span>
+                )}
                 <span className={`text-[11px] font-medium ${typeInfo.color} flex items-center gap-1 ${typeInfo.bg} px-2 py-0.5 rounded-full`}>
                   <TypeIcon size={11} />
                   {typeInfo.label}
@@ -752,15 +757,32 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
         {post.mediaTitle && (
           <div className="flex gap-3 mt-2">
             {post.mediaImage && post.mediaImage.startsWith('http') && (
-              <img
-                src={post.mediaImage}
-                alt={post.mediaTitle}
-                className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-              />
+              post.externalId && post.externalSource ? (
+                <Link href={`/media/${post.mediaType || 'movie'}/${post.externalSource}/${post.externalId}`}>
+                  <img
+                    src={post.mediaImage}
+                    alt={post.mediaTitle}
+                    className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </Link>
+              ) : (
+                <img
+                  src={post.mediaImage}
+                  alt={post.mediaTitle}
+                  className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              )
             )}
             <div className="min-w-0 flex-1 flex flex-col justify-center">
-              <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
+              {post.externalId && post.externalSource ? (
+                <Link href={`/media/${post.mediaType || 'movie'}/${post.externalSource}/${post.externalId}`}>
+                  <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{post.mediaTitle}</p>
+                </Link>
+              ) : (
+                <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
+              )}
               {post.rating && post.rating > 0 && (
                 <div className="flex items-center gap-0.5 mt-1">
                   {[1, 2, 3, 4, 5].map(s => (
@@ -1497,7 +1519,7 @@ export default function Feed() {
           id: p.id, type: postType,
           user: { id: userObj?.id || '', username: userObj?.username || '', displayName: userObj?.displayName || userObj?.display_name || userObj?.username || '', avatar: userObj?.avatar_url || userObj?.avatarUrl || userObj?.avatar || '' },
           content: (postType === 'poll' || postType === 'predict') ? ((p as any).question || content) : content,
-          mediaTitle: media?.title || (p as any).mediaTitle, mediaType: media?.mediaType || media?.type, mediaImage: mediaImg,
+          mediaTitle: media?.title || (p as any).mediaTitle, mediaType: media?.mediaType || media?.type, mediaImage: mediaImg, externalId: eid, externalSource: src,
           rating: p.rating, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
           fire_votes: p.fire_votes || 0, ice_votes: p.ice_votes || 0,
           options: (p as any).options || [], optionVotes: (p as any).optionVotes || [], timestamp: p.createdAt || p.created_at || p.timestamp, pollId: (p as any).poolId || p.id,

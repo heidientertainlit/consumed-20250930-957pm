@@ -19,6 +19,8 @@ export interface UGCPost {
   mediaTitle?: string;
   mediaType?: string;
   mediaImage?: string;
+  externalId?: string;
+  externalSource?: string;
   rating?: number;
   likes?: number;
   comments?: number;
