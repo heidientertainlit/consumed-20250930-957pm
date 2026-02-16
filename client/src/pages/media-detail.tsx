@@ -47,11 +47,12 @@ export default function MediaDetail() {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Record<string, any[]>>({});
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
-  const [composeType, setComposeType] = useState<'thought' | 'hot_take' | 'ask' | 'poll' | 'rank'>('thought');
+  const [composeType, setComposeType] = useState<'review' | 'hot_take' | 'prediction' | 'thought'>('review');
   const [composeText, setComposeText] = useState('');
   const [composeRating, setComposeRating] = useState(0);
   const [composeSelectedList, setComposeSelectedList] = useState<{ name: string; isCustom: boolean; id?: string } | null>(null);
   const [isComposePosting, setIsComposePosting] = useState(false);
+  const [composePredictionOptions, setComposePredictionOptions] = useState<string[]>(["", ""]);
   const composeSectionRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -711,46 +712,69 @@ export default function MediaDetail() {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) throw new Error('Not authenticated');
 
-      if (composeText.trim()) {
-        await supabase.from('social_posts').insert({
-          user_id: authUser.id,
-          content: composeText,
-          post_type: composeType,
-          visibility: 'public',
-          media_title: mediaItem.title,
-          media_type: (mediaItem.type || params?.type || 'movie').toLowerCase(),
-          media_external_id: params?.id,
-          media_external_source: params?.source || 'tmdb',
-          image_url: resolvedImageUrl || '',
-          fire_votes: 0,
-          ice_votes: 0,
-        });
-      }
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
-      if (composeRating > 0) {
-        const rateResponse = await fetch(
-          "https://mahpgcogwpawvviapqza.supabase.co/functions/v1/rate-media",
-          {
+      if (composeType === 'prediction') {
+        const filledOptions = composePredictionOptions.filter(opt => opt.trim());
+        if (composeText.trim() && filledOptions.length >= 2) {
+          const predResponse = await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
             method: "POST",
             headers: {
               "Authorization": `Bearer ${session.access_token}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              media: {
-                title: mediaItem.title,
-                mediaType: mediaItem.type || params?.type,
-                creator: mediaItem.creator,
-                imageUrl: resolvedImageUrl,
-                externalId: params?.id,
-                externalSource: params?.source,
-              },
-              rating: composeRating,
-              review: composeText.trim() || null,
+              question: composeText.trim(),
+              options: filledOptions,
+              type: "predict",
+              media_external_id: params?.id || null,
+              media_external_source: params?.source || null,
             }),
-          }
-        );
-        if (!rateResponse.ok) console.error('Rating failed');
+          });
+          if (!predResponse.ok) throw new Error("Failed to create prediction");
+        }
+      } else {
+        if (composeText.trim()) {
+          await supabase.from('social_posts').insert({
+            user_id: authUser.id,
+            content: composeText,
+            post_type: composeType === 'review' ? 'rate-review' : composeType,
+            visibility: 'public',
+            media_title: mediaItem.title,
+            media_type: (mediaItem.type || params?.type || 'movie').toLowerCase(),
+            media_external_id: params?.id,
+            media_external_source: params?.source || 'tmdb',
+            image_url: resolvedImageUrl || '',
+            fire_votes: 0,
+            ice_votes: 0,
+          });
+        }
+
+        if (composeType === 'review' && composeRating > 0) {
+          const rateResponse = await fetch(
+            `${supabaseUrl}/functions/v1/rate-media`,
+            {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${session.access_token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                media: {
+                  title: mediaItem.title,
+                  mediaType: mediaItem.type || params?.type,
+                  creator: mediaItem.creator,
+                  imageUrl: resolvedImageUrl,
+                  externalId: params?.id,
+                  externalSource: params?.source,
+                },
+                rating: composeRating,
+                review: composeText.trim() || null,
+              }),
+            }
+          );
+          if (!rateResponse.ok) console.error('Rating failed');
+        }
       }
 
       if (composeSelectedList) {
@@ -763,6 +787,7 @@ export default function MediaDetail() {
       setComposeText('');
       setComposeRating(0);
       setComposeSelectedList(null);
+      setComposePredictionOptions(["", ""]);
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       queryClient.invalidateQueries({ queryKey: ['media-reviews'] });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
@@ -1100,17 +1125,22 @@ export default function MediaDetail() {
             <h3 className="text-base font-bold text-gray-900 mb-3">Say something</h3>
             <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
               <div className="flex flex-wrap gap-2 mb-3">
-                {(['thought', 'hot_take'] as const).map((type) => (
+                {([
+                  { key: 'review' as const, label: 'Review' },
+                  { key: 'hot_take' as const, label: 'Hot Take' },
+                  { key: 'prediction' as const, label: 'Prediction' },
+                  { key: 'thought' as const, label: 'Thought' },
+                ]).map(({ key, label }) => (
                   <button
-                    key={type}
-                    onClick={() => setComposeType(type)}
+                    key={key}
+                    onClick={() => setComposeType(key)}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                      composeType === type
+                      composeType === key
                         ? 'bg-gray-900 text-white border-gray-900'
                         : 'bg-white text-gray-700 border-gray-200 active:bg-gray-100'
                     }`}
                   >
-                    {type === 'thought' ? 'Thought' : 'Hot Take'}
+                    {label}
                   </button>
                 ))}
               </div>
@@ -1118,11 +1148,17 @@ export default function MediaDetail() {
               <textarea
                 value={composeText}
                 onChange={(e) => setComposeText(e.target.value)}
-                placeholder={composeType === 'hot_take' ? "What's your hot take?" : composeType === 'ask' ? "What do you want to know?" : "What's on your mind?"}
+                placeholder={
+                  composeType === 'review' ? "Write your review..." :
+                  composeType === 'hot_take' ? "Drop your spiciest take..." :
+                  composeType === 'prediction' ? "What do you predict?" :
+                  "What's on your mind?"
+                }
                 className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-purple-400 resize-none mb-3"
                 rows={3}
               />
 
+              {composeType === 'review' && (
               <div className="flex items-center gap-0 mb-3">
                 <span className="text-sm text-gray-600 mr-2">Rating:</span>
                 {[1, 2, 3, 4, 5].map((star) => {
@@ -1157,10 +1193,31 @@ export default function MediaDetail() {
                   <span className="text-sm font-medium text-gray-700 ml-2">{composeRating}/5</span>
                 )}
               </div>
+              )}
+
+              {composeType === 'prediction' && (
+              <div className="space-y-2 p-3 bg-gray-100 rounded-lg mb-3">
+                <span className="text-xs text-gray-500">Prediction options:</span>
+                {composePredictionOptions.map((option, index) => (
+                  <input
+                    key={index}
+                    type="text"
+                    value={option}
+                    onChange={(e) => {
+                      const newOpts = [...composePredictionOptions];
+                      newOpts[index] = e.target.value;
+                      setComposePredictionOptions(newOpts);
+                    }}
+                    placeholder={`Option ${index + 1}`}
+                    className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white"
+                  />
+                ))}
+              </div>
+              )}
 
               <Button
                 onClick={handleComposePost}
-                disabled={isComposePosting || (!composeText.trim() && !composeRating)}
+                disabled={isComposePosting || (!composeText.trim() && composeType !== 'review') || (composeType === 'review' && !composeText.trim() && !composeRating)}
                 className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl py-5 text-sm font-semibold"
               >
                 {isComposePosting ? (

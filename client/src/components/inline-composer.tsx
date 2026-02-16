@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Star, Target, Vote, MessageCircle, Loader2, Search, ListPlus, Plus, User, ChevronDown, Flame, HelpCircle } from "lucide-react";
+import { X, Star, Target, Vote, MessageCircle, Loader2, Search, ListPlus, Plus, User, ChevronDown, Flame } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -15,7 +15,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 
 type ComposerStage = "open" | "media-search";
-type PostType = "thought" | "rating" | "prediction" | "poll" | "hot_take" | "ask_for_recs";
+type PostType = "thought" | "review" | "prediction" | "hot_take";
 
 export default function InlineComposer() {
   const { session, user } = useAuth();
@@ -44,11 +44,7 @@ export default function InlineComposer() {
   const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
   const [creatorPrediction, setCreatorPrediction] = useState<string>("");
   
-  // Poll-specific state
-  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   
-  // Ask for Recs-specific state
-  const [recCategory, setRecCategory] = useState<string>(""); // 'movies', 'tv', 'books', 'music', 'podcasts', 'games', or '' for anything
   
   // Optional actions - Add to list / Add to rank
   const [addToList, setAddToList] = useState(false);
@@ -153,8 +149,6 @@ export default function InlineComposer() {
     setRewatchCount(1);
     setPredictionOptions(["", ""]);
     setCreatorPrediction("");
-    setPollOptions(["", ""]);
-    setRecCategory("");
     setAddToList(false);
     setAddToRank(false);
     setSelectedListId("");
@@ -445,11 +439,10 @@ export default function InlineComposer() {
       return;
     }
 
-    // Media required only for rating posts
-    if (!selectedMedia && postType === "rating") {
+    if (!selectedMedia && postType === "review") {
       toast({
         title: "Media Required",
-        description: "Please add what you're rating first.",
+        description: "Please add what you're reviewing first.",
         variant: "destructive",
       });
       return;
@@ -486,11 +479,10 @@ export default function InlineComposer() {
           media_external_source: selectedMedia?.external_source || selectedMedia?.source || 'tmdb',
           list_id: addToList && selectedListId ? selectedListId : undefined,
         };
-      } else if (postType === "rating") {
-        // At least rating or review required
+      } else if (postType === "review") {
         if (ratingValue === 0 && !contentText.trim()) {
           toast({
-            title: "Rating or Review Required",
+            title: "Review Required",
             description: "Please rate or write a review.",
             variant: "destructive",
           });
@@ -498,7 +490,7 @@ export default function InlineComposer() {
           return;
         }
         
-        let content = contentText.trim() || (ratingValue > 0 ? `Rated ${selectedMedia.title}` : `Added ${selectedMedia.title}`);
+        let content = contentText.trim() || (ratingValue > 0 ? `Rated ${selectedMedia.title}` : `Reviewed ${selectedMedia.title}`);
         
         payload = {
           content: content,
@@ -518,69 +510,48 @@ export default function InlineComposer() {
         if (!contentText.trim()) {
           toast({
             title: "Question Required",
-            description: "Please enter your prediction question.",
+            description: "What's your prediction?",
             variant: "destructive",
           });
           setIsPosting(false);
           return;
         }
 
-        const option1 = predictionOptions[0]?.trim();
-        const option2 = predictionOptions[1]?.trim();
-
-        if (!option1 || !option2) {
+        const filledOptions = predictionOptions.filter(opt => opt.trim());
+        if (filledOptions.length < 2) {
           toast({
             title: "Incomplete Options",
-            description: "Please fill in both prediction options.",
+            description: "Please fill in at least 2 options.",
             variant: "destructive",
           });
           setIsPosting(false);
           return;
         }
 
-        payload = {
-          content: contentText.trim(),
-          type: "prediction",
-          visibility: "public",
-          contains_spoilers: containsSpoilers,
-          prediction_question: contentText.trim(),
-          prediction_options: [option1, option2],
-          // Media is optional for predictions
-          ...(selectedMedia && {
-            media_title: selectedMedia.title,
-            media_type: selectedMedia.type,
-            media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
-            media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail,
-            media_external_id: selectedMedia.external_id || selectedMedia.id,
-            media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+        const predResponse = await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            question: contentText.trim(),
+            options: filledOptions,
+            type: "predict",
+            media_external_id: selectedMedia?.external_id || selectedMedia?.id || null,
+            media_external_source: selectedMedia?.external_source || selectedMedia?.source || null,
           }),
-        };
-      } else if (postType === "poll") {
-        const filledOptions = pollOptions.filter(opt => opt.trim()).filter(opt => opt.length > 0);
-        if (!contentText.trim() || filledOptions.length < 2) {
-          toast({
-            title: "Incomplete Poll",
-            description: "Please add a question and at least 2 options.",
-            variant: "destructive",
-          });
-          setIsPosting(false);
-          return;
-        }
-        payload = {
-          content: contentText.trim(),
-          type: "poll",
-          visibility: "public",
-          contains_spoilers: containsSpoilers,
-          poll_question: contentText.trim(),
-          poll_options: filledOptions,
-          // Media is optional for polls
-          ...(selectedMedia && {
-            media_title: selectedMedia.title,
-            media_type: selectedMedia.type,
-            media_external_id: selectedMedia.external_id || selectedMedia.id,
-            media_external_source: selectedMedia.external_source || selectedMedia.source,
-          }),
-        };
+        });
+
+        if (!predResponse.ok) throw new Error("Failed to create prediction");
+
+        queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+        queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+        resetComposer();
+        setIsPosting(false);
+        toast({ title: "Prediction posted!" });
+        return;
       } else if (postType === "hot_take") {
         if (!contentText.trim()) {
           toast({
@@ -605,23 +576,6 @@ export default function InlineComposer() {
             media_external_id: selectedMedia.external_id || selectedMedia.id,
             media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
           }),
-        };
-      } else if (postType === "ask_for_recs") {
-        if (!contentText.trim()) {
-          toast({
-            title: "Request Required",
-            description: "Please describe what you're looking for.",
-            variant: "destructive",
-          });
-          setIsPosting(false);
-          return;
-        }
-        payload = {
-          content: contentText.trim(),
-          type: "ask_for_recs",
-          visibility: "public",
-          contains_spoilers: false,
-          rec_category: recCategory || null, // 'movies', 'tv', etc. or null for anything
         };
       }
 
@@ -687,7 +641,7 @@ export default function InlineComposer() {
       if (!response.ok) throw new Error("Failed to post");
       
       // Auto-track media to "All" list when rating (if not already adding to a specific list)
-      if (postType === "rating" && selectedMedia && !addToList) {
+      if (postType === "review" && selectedMedia && !addToList) {
         try {
           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
           await fetch(`${supabaseUrl}/functions/v1/track-media`, {
@@ -737,11 +691,9 @@ export default function InlineComposer() {
   const getPlaceholder = () => {
     switch (postType) {
       case "thought": return "What are you watching, reading, or listening to?";
-      case "rating": return "Share your thoughts (optional)...";
+      case "review": return "Write your review (optional)...";
       case "prediction": return "What do you predict will happen?";
-      case "poll": return "Ask your friends a question...";
       case "hot_take": return "Drop your spiciest take...";
-      case "ask_for_recs": return "What are you looking for?";
       default: return "Share what you're consuming...";
     }
   };
@@ -761,20 +713,11 @@ export default function InlineComposer() {
         }
         // Allow posting with just media OR just text (either is sufficient)
         return contentText.trim().length > 0 || selectedMedia;
-      case "rating":
+      case "review":
         return selectedMedia && (ratingValue > 0 || contentText.trim().length > 0);
       case "prediction":
-        // Predictions can be posted without media
         return contentText.trim().length > 0 && predictionOptions[0]?.trim() && predictionOptions[1]?.trim();
-      case "poll":
-        // Polls can be posted without media
-        const filledOptions = pollOptions.filter(opt => opt.trim());
-        return contentText.trim().length > 0 && filledOptions.length >= 2;
       case "hot_take":
-        // Hot takes just need content
-        return contentText.trim().length > 0;
-      case "ask_for_recs":
-        // Ask for recs just needs content (category is optional)
         return contentText.trim().length > 0;
       default:
         return false;
@@ -1039,37 +982,20 @@ export default function InlineComposer() {
                       <span>Add media</span>
                     </button>
 
-                    {/* Track & Rate */}
+                    {/* Review */}
                     <button
                       onClick={() => {
-                        setPostType("rating");
+                        setPostType("review");
                         if (!selectedMedia) setIsMediaSearchOpen(true);
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                        postType === "rating" && selectedMedia
+                        postType === "review" && selectedMedia
                           ? "bg-yellow-100 text-yellow-700" 
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
-                      data-testid="button-type-rating"
                     >
                       <Star className="w-3.5 h-3.5" />
-                      <span>Track & Rate</span>
-                    </button>
-
-                    {/* Poll */}
-                    <button
-                      onClick={() => {
-                        setPostType("poll");
-                      }}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                        postType === "poll"
-                          ? "bg-blue-100 text-blue-700" 
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                      data-testid="button-type-poll"
-                    >
-                      <Vote className="w-3.5 h-3.5" />
-                      <span>Poll</span>
+                      <span>Review</span>
                     </button>
 
                     {/* Hot Take */}
@@ -1082,26 +1008,24 @@ export default function InlineComposer() {
                           ? "bg-orange-100 text-orange-700" 
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
-                      data-testid="button-type-hot-take"
                     >
                       <Flame className="w-3.5 h-3.5" />
                       <span>Hot Take</span>
                     </button>
 
-                    {/* Ask for Recs */}
+                    {/* Prediction */}
                     <button
                       onClick={() => {
-                        setPostType("ask_for_recs");
+                        setPostType("prediction");
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                        postType === "ask_for_recs"
-                          ? "bg-green-100 text-green-700" 
+                        postType === "prediction"
+                          ? "bg-blue-100 text-blue-700" 
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
-                      data-testid="button-type-ask-recs"
                     >
-                      <HelpCircle className="w-3.5 h-3.5" />
-                      <span>Ask for Recs</span>
+                      <Vote className="w-3.5 h-3.5" />
+                      <span>Prediction</span>
                     </button>
                   </div>
 
@@ -1178,7 +1102,7 @@ export default function InlineComposer() {
                   </div>
 
                 {/* Rating stars when Track & Rate is selected */}
-                {postType === "rating" && selectedMedia && (
+                {postType === "review" && selectedMedia && (
                   <div className="px-4 pb-3">
                     <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                       <span className="text-xs text-gray-500">Rating:</span>
@@ -1256,46 +1180,6 @@ export default function InlineComposer() {
                   </div>
                 )}
 
-                {/* Poll options when Poll is selected */}
-                {postType === "poll" && (
-                  <div className="px-4 pb-3">
-                    <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
-                      <span className="text-xs text-gray-500">Poll options:</span>
-                      {pollOptions.map((option, index) => (
-                        <div key={index} className="flex gap-2">
-                          <input
-                            type="text"
-                            value={option}
-                            onChange={(e) => {
-                              const newOptions = [...pollOptions];
-                              newOptions[index] = e.target.value;
-                              setPollOptions(newOptions);
-                            }}
-                            placeholder={`Option ${index + 1}`}
-                            className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white"
-                          />
-                          {pollOptions.length > 2 && (
-                            <button
-                              onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== index))}
-                              className="text-gray-400 hover:text-gray-600 p-1"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      {pollOptions.length < 4 && (
-                        <button
-                          onClick={() => setPollOptions([...pollOptions, ""])}
-                          className="text-xs text-purple-600 hover:text-purple-700"
-                        >
-                          + Add option
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-
                 {/* Hot Take indicator when Hot Take is selected */}
                 {postType === "hot_take" && (
                   <div className="px-4 pb-3">
@@ -1304,39 +1188,6 @@ export default function InlineComposer() {
                       <div>
                         <span className="text-sm font-medium text-orange-700">Hot Take Mode</span>
                         <p className="text-xs text-orange-600">Friends will vote 🔥 or 🧊 on your take</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Ask for Recs category picker when selected */}
-                {postType === "ask_for_recs" && (
-                  <div className="px-4 pb-3">
-                    <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                      <span className="text-xs text-green-700 font-medium mb-2 block">What are you looking for?</span>
-                      <div className="flex flex-wrap gap-2">
-                        {[
-                          { value: "", label: "Anything", emoji: "✨" },
-                          { value: "movies", label: "Movies", emoji: "🎬" },
-                          { value: "tv", label: "TV", emoji: "📺" },
-                          { value: "books", label: "Books", emoji: "📚" },
-                          { value: "music", label: "Music", emoji: "🎵" },
-                          { value: "podcasts", label: "Podcasts", emoji: "🎙️" },
-                          { value: "games", label: "Games", emoji: "🎮" },
-                        ].map((cat) => (
-                          <button
-                            key={cat.value}
-                            onClick={() => setRecCategory(cat.value)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                              recCategory === cat.value
-                                ? "bg-green-600 text-white"
-                                : "bg-white text-green-700 border border-green-300 hover:bg-green-100"
-                            }`}
-                            data-testid={`button-rec-category-${cat.value || 'anything'}`}
-                          >
-                            {cat.emoji} {cat.label}
-                          </button>
-                        ))}
                       </div>
                     </div>
                   </div>
