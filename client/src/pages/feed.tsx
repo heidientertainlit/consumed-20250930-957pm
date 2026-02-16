@@ -1800,23 +1800,12 @@ export default function Feed() {
     // Never filter out the highlighted post from a notification
     if (highlightPostId && post.id === highlightPostId) return true;
     
-    // Hide user-generated predictions - only show Consumed-created ones
-    // But allow user-generated polls through since those are social content
     const postType = post.type?.toLowerCase() || '';
-    if (['prediction'].includes(postType)) {
-      const postData = post as any;
-      const isUserGenerated = postData.origin_type === 'user' || 
-        (!postData.origin_type && postData.origin_user_id) ||
-        (postData.user && !postData.origin_type);
-      if (isUserGenerated) {
-        return false; // Hide user-generated predictions
-      }
-    }
     
     // Hide malformed posts: short content (looks like just a title), no media items, 
     // and not a special post type (prediction/poll/trivia/rank_share)
     // Note: 'add-to-list' (from track-media) is also a valid type
-    const specialTypes = ['prediction', 'poll', 'trivia', 'rank_share', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'ask_for_rec', 'friend_list_group', 'cast_approved', 'hot_take'];
+    const specialTypes = ['prediction', 'predict', 'poll', 'vote', 'trivia', 'rank_share', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'ask_for_rec', 'friend_list_group', 'cast_approved', 'hot_take'];
     const isSpecialType = specialTypes.includes(post.type || '');
     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
     const hasListData = !!(post as any).listData;
@@ -1889,14 +1878,14 @@ export default function Feed() {
       
       if (selectedFilter === 'games') {
         // Show all game types: trivia, poll, prediction
-        const gameTypes = ['trivia', 'poll', 'prediction', 'vote'];
+        const gameTypes = ['trivia', 'poll', 'prediction', 'predict', 'vote'];
         if (!gameTypes.includes(postType)) return false;
       } else if (selectedFilter === 'trivia') {
         if (postType !== 'trivia') return false;
       } else if (selectedFilter === 'polls') {
         if (postType !== 'poll' && postType !== 'vote') return false;
       } else if (selectedFilter === 'predictions') {
-        if (postType !== 'prediction') return false;
+        if (postType !== 'prediction' && postType !== 'predict') return false;
       }
     }
 
