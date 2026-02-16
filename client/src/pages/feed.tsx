@@ -3393,16 +3393,23 @@ export default function Feed() {
                                 <Film size={16} className="text-purple-300" />
                               </div>
                             )}
-                            {item.owner?.avatar && (
-                              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-gray-900 overflow-hidden bg-purple-600">
-                                <img src={item.owner.avatar} alt="" className="w-full h-full object-cover" />
-                              </div>
-                            )}
-                            {!item.owner?.avatar && item.owner?.display_name && (
-                              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-gray-900 bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                                <span className="text-[8px] text-white font-bold">{item.owner.display_name[0]?.toUpperCase()}</span>
-                              </div>
-                            )}
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setQuickAddMedia({
+                                  title: item.title,
+                                  mediaType: item.media_type || 'movie',
+                                  externalId: item.external_id || item.id,
+                                  externalSource: item.external_source || 'tmdb',
+                                  imageUrl: item.image_url || '',
+                                });
+                                setIsQuickAddOpen(true);
+                              }}
+                              className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-gray-900 bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center hover:from-purple-400 hover:to-blue-400 transition-all"
+                            >
+                              <Plus size={10} className="text-white" strokeWidth={3} />
+                            </button>
                           </div>
                           <p className="text-[10px] text-gray-300 truncate font-medium">{item.title}</p>
                           <p className="text-[9px] text-purple-400 truncate">{item.owner?.display_name || item.owner?.user_name || 'User'}</p>
