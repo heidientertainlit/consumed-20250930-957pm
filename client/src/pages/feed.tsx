@@ -1233,15 +1233,6 @@ export default function Feed() {
     let cur = 0;
     for (const s of sizes) { slots.push(unique.slice(cur, cur + s)); cur += s; }
     if (cur < unique.length) slots.push(unique.slice(cur));
-
-    if (unique.length > 0 && unique.length < sizes.reduce((a, b) => a + b, 0)) {
-      for (let i = 0; i < slots.length; i++) {
-        if (slots[i].length === 0 && unique.length >= 2) {
-          const start = (i * 2) % unique.length;
-          slots[i] = [unique[start % unique.length], unique[(start + 1) % unique.length]];
-        }
-      }
-    }
     return slots;
   })();
 
