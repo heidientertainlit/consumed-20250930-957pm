@@ -397,7 +397,7 @@ export default function MediaDetail() {
         const poolIds = postsWithPools.map(p => p.prediction_pool_id);
         const { data: pools } = await supabase
           .from('prediction_pools')
-          .select('id, game_type, question, description, options, total_participants')
+          .select('id, type, title, options, total_participants')
           .in('id', poolIds);
 
         // Attach pool data to posts
@@ -418,8 +418,8 @@ export default function MediaDetail() {
 
   // Separate reviews from other activity
   const reviews = socialActivity.filter((post: any) => post.rating);
-  const predictions = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.game_type === 'prediction');
-  const polls = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.game_type === 'poll');
+  const predictions = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.type === 'predict');
+  const polls = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.type === 'vote');
   const conversations = socialActivity.filter((post: any) => !post.rating && !post.prediction_pool_id && post.content && post.content.trim());
 
   // Fetch similar media across different types using AI
@@ -1439,7 +1439,7 @@ export default function MediaDetail() {
                         </div>
                         <div className="flex-1">
                           <p className="font-medium text-gray-900 mb-1">
-                            {pred.prediction_pools?.question}
+                            {pred.prediction_pools?.title || pred.content}
                           </p>
                           <p className="text-sm text-gray-600">
                             {pred.prediction_pools?.total_participants || 0} participants
@@ -1584,7 +1584,7 @@ export default function MediaDetail() {
                         </div>
                         <div className="flex-1">
                           <p className="font-medium text-gray-900 mb-1">
-                            {poll.prediction_pools?.question}
+                            {poll.prediction_pools?.title || poll.content}
                           </p>
                           <p className="text-sm text-gray-600">
                             {poll.prediction_pools?.total_participants || 0} votes
