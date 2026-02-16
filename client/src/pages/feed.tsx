@@ -31,7 +31,7 @@ import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
 import { UserPollsCarousel } from "@/components/user-polls-carousel";
-import { UserContentCarousel, type UGCPost } from "@/components/user-content-carousel";
+import { type UGCPost } from "@/components/user-content-carousel";
 import ConversationsPanel from "@/components/conversations-panel";
 import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog";
 import RankFeedCard from "@/components/rank-feed-card";
@@ -1514,8 +1514,8 @@ export default function Feed() {
   const standaloneUGCPosts: UGCPost[] = (() => {
     const allUGC = ugcSlots.flat();
     return allUGC.filter(p => 
-      p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating'
-    ).slice(0, 5);
+      p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank'
+    );
   })();
 
   // Group same-user activities within same-day windows into consolidated cards BY ACTIVITY TYPE
@@ -3832,9 +3832,25 @@ export default function Feed() {
                 </Link>
               )}
 
-              {/* UGC Slot 0 - Discovery carousel (6 items) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[0]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[0]} title="What People Are Saying" onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
+              {/* Standalone Post 0 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[0] && (
+                <StandalonePost 
+                  post={standaloneUGCPosts[0]} 
+                  onLike={handleLike} 
+                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+                  isLiked={likedPosts.has(standaloneUGCPosts[0].id)}
+                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[0].id}
+                  onCloseComments={() => setActiveCommentPostId(null)}
+                  fetchComments={fetchComments}
+                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+                  isSubmitting={commentMutation.isPending}
+                  session={session}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeleteComment={handleDeleteComment}
+                  onDeletePost={handleDeletePost}
+                />
               )}
 
               {/* Filtered views - show only the selected category */}
@@ -3866,16 +3882,16 @@ export default function Feed() {
                 <LeaderboardFeedCard variant="trivia" />
               )}
 
-              {/* Standalone Post 0 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[0] && (
+              {/* Standalone Post 1 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[1] && (
                 <StandalonePost 
-                  post={standaloneUGCPosts[0]} 
+                  post={standaloneUGCPosts[1]} 
                   onLike={handleLike} 
                   onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
                   onFireVote={(id) => handleHotTakeVote(id, 'fire')}
                   onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-                  isLiked={likedPosts.has(standaloneUGCPosts[0].id)}
-                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[0].id}
+                  isLiked={likedPosts.has(standaloneUGCPosts[1].id)}
+                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[1].id}
                   onCloseComments={() => setActiveCommentPostId(null)}
                   fetchComments={fetchComments}
                   onSubmitComment={(id, content) => handleComment(id, undefined, content)}
@@ -3885,11 +3901,6 @@ export default function Feed() {
                   onDeleteComment={handleDeleteComment}
                   onDeletePost={handleDeletePost}
                 />
-              )}
-
-              {/* UGC Slot 1 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[1]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[1]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
               )}
 
               {/* DNA Moment Card - in All or DNA filter */}
@@ -3902,21 +3913,16 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
               )}
 
-              {/* UGC Slot 2 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[2]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[2]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
-              )}
-
-              {/* Standalone Post 1 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[1] && (
+              {/* Standalone Post 2 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[2] && (
                 <StandalonePost 
-                  post={standaloneUGCPosts[1]} 
+                  post={standaloneUGCPosts[2]} 
                   onLike={handleLike} 
                   onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
                   onFireVote={(id) => handleHotTakeVote(id, 'fire')}
                   onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-                  isLiked={likedPosts.has(standaloneUGCPosts[1].id)}
-                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[1].id}
+                  isLiked={likedPosts.has(standaloneUGCPosts[2].id)}
+                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[2].id}
                   onCloseComments={() => setActiveCommentPostId(null)}
                   fetchComments={fetchComments}
                   onSubmitComment={(id, content) => handleComment(id, undefined, content)}
@@ -4023,9 +4029,25 @@ export default function Feed() {
                 />
               )}
 
-              {/* UGC Slot 3 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[3]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[3]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
+              {/* Standalone Post 3 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[3] && (
+                <StandalonePost 
+                  post={standaloneUGCPosts[3]} 
+                  onLike={handleLike} 
+                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+                  isLiked={likedPosts.has(standaloneUGCPosts[3].id)}
+                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[3].id}
+                  onCloseComments={() => setActiveCommentPostId(null)}
+                  fetchComments={fetchComments}
+                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+                  isSubmitting={commentMutation.isPending}
+                  session={session}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeleteComment={handleDeleteComment}
+                  onDeletePost={handleDeletePost}
+                />
               )}
 
               {/* Cast Your Friends - Approved Casts Carousel */}
@@ -4224,9 +4246,25 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
               )}
 
-              {/* UGC Slot 4 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[4]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[4]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
+              {/* Standalone Post 4 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[4] && (
+                <StandalonePost 
+                  post={standaloneUGCPosts[4]} 
+                  onLike={handleLike} 
+                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+                  isLiked={likedPosts.has(standaloneUGCPosts[4].id)}
+                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[4].id}
+                  onCloseComments={() => setActiveCommentPostId(null)}
+                  fetchComments={fetchComments}
+                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+                  isSubmitting={commentMutation.isPending}
+                  session={session}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeleteComment={handleDeleteComment}
+                  onDeletePost={handleDeletePost}
+                />
               )}
 
               {/* Leaderboard - Poll Masters */}
@@ -4255,9 +4293,25 @@ export default function Feed() {
                 <RanksCarousel offset={1} />
               )}
 
-              {/* UGC Slot 5 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[5]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[5]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
+              {/* Standalone Post 5 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[5] && (
+                <StandalonePost 
+                  post={standaloneUGCPosts[5]} 
+                  onLike={handleLike} 
+                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+                  isLiked={likedPosts.has(standaloneUGCPosts[5].id)}
+                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[5].id}
+                  onCloseComments={() => setActiveCommentPostId(null)}
+                  fetchComments={fetchComments}
+                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+                  isSubmitting={commentMutation.isPending}
+                  session={session}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeleteComment={handleDeleteComment}
+                  onDeletePost={handleDeletePost}
+                />
               )}
 
               {/* Leaderboard - Media Leaders */}
@@ -4276,9 +4330,25 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
               )}
 
-              {/* UGC Slot 6 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[6]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[6]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
+              {/* Standalone Post 6 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[6] && (
+                <StandalonePost 
+                  post={standaloneUGCPosts[6]} 
+                  onLike={handleLike} 
+                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+                  isLiked={likedPosts.has(standaloneUGCPosts[6].id)}
+                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[6].id}
+                  onCloseComments={() => setActiveCommentPostId(null)}
+                  fetchComments={fetchComments}
+                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+                  isSubmitting={commentMutation.isPending}
+                  session={session}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeleteComment={handleDeleteComment}
+                  onDeletePost={handleDeletePost}
+                />
               )}
 
               {/* TRIVIA - Podcasts category */}
@@ -4291,14 +4361,46 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
               )}
 
-              {/* UGC Slot 7 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[7]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[7]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
+              {/* Standalone Post 7 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[7] && (
+                <StandalonePost 
+                  post={standaloneUGCPosts[7]} 
+                  onLike={handleLike} 
+                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+                  isLiked={likedPosts.has(standaloneUGCPosts[7].id)}
+                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[7].id}
+                  onCloseComments={() => setActiveCommentPostId(null)}
+                  fetchComments={fetchComments}
+                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+                  isSubmitting={commentMutation.isPending}
+                  session={session}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeleteComment={handleDeleteComment}
+                  onDeletePost={handleDeletePost}
+                />
               )}
 
-              {/* UGC Slot 8 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[8]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[8]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
+              {/* Standalone Post 8 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[8] && (
+                <StandalonePost 
+                  post={standaloneUGCPosts[8]} 
+                  onLike={handleLike} 
+                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+                  isLiked={likedPosts.has(standaloneUGCPosts[8].id)}
+                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[8].id}
+                  onCloseComments={() => setActiveCommentPostId(null)}
+                  fetchComments={fetchComments}
+                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+                  isSubmitting={commentMutation.isPending}
+                  session={session}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeleteComment={handleDeleteComment}
+                  onDeletePost={handleDeletePost}
+                />
               )}
 
               {/* TRIVIA - Sports category */}
@@ -4306,14 +4408,46 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Sports" />
               )}
 
-              {/* UGC Slot 9 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[9]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[9]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
+              {/* Standalone Post 9 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[9] && (
+                <StandalonePost 
+                  post={standaloneUGCPosts[9]} 
+                  onLike={handleLike} 
+                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+                  isLiked={likedPosts.has(standaloneUGCPosts[9].id)}
+                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[9].id}
+                  onCloseComments={() => setActiveCommentPostId(null)}
+                  fetchComments={fetchComments}
+                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+                  isSubmitting={commentMutation.isPending}
+                  session={session}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeleteComment={handleDeleteComment}
+                  onDeletePost={handleDeletePost}
+                />
               )}
 
-              {/* UGC Slot 10+ (remaining) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && ugcSlots[10]?.length > 0 && (
-                <UserContentCarousel posts={ugcSlots[10]} onLike={handleLike} onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)} onFireVote={(id) => handleHotTakeVote(id, 'fire')} onIceVote={(id) => handleHotTakeVote(id, 'ice')} onVotePrediction={handleVotePrediction} likedPosts={likedPosts} activeCommentPostId={activeCommentPostId} onCloseComments={() => setActiveCommentPostId(null)} fetchComments={fetchComments} onSubmitComment={(id, content) => handleComment(id, undefined, content)} isSubmitting={commentMutation.isPending} session={session} onDeleteComment={handleDeleteComment} currentUserId={currentAppUserId || undefined} onDeletePost={handleDeletePost} />
+              {/* Standalone Post 10 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && standaloneUGCPosts[10] && (
+                <StandalonePost 
+                  post={standaloneUGCPosts[10]} 
+                  onLike={handleLike} 
+                  onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+                  onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+                  onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+                  isLiked={likedPosts.has(standaloneUGCPosts[10].id)}
+                  isCommentsActive={activeCommentPostId === standaloneUGCPosts[10].id}
+                  onCloseComments={() => setActiveCommentPostId(null)}
+                  fetchComments={fetchComments}
+                  onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+                  isSubmitting={commentMutation.isPending}
+                  session={session}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeleteComment={handleDeleteComment}
+                  onDeletePost={handleDeletePost}
+                />
               )}
 
               {/* Social Posts */}
