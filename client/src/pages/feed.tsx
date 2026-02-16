@@ -750,7 +750,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
         </div>
 
         {post.mediaTitle && (
-          <div className="flex gap-3 mt-2 px-4">
+          <div className="flex gap-3 mt-2">
             {post.mediaImage && post.mediaImage.startsWith('http') && (
               <img
                 src={post.mediaImage}
@@ -775,7 +775,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
           </div>
         )}
         {post.mediaTitle && !(post.mediaImage && post.mediaImage.startsWith('http')) && post.content && (
-          <p className="text-gray-800 text-sm leading-relaxed mt-2 px-4">{post.content}</p>
+          <p className="text-gray-800 text-sm leading-relaxed mt-2">{post.content}</p>
         )}
 
         <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50 ml-[52px]">
