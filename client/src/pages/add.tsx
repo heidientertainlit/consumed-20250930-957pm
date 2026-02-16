@@ -307,6 +307,16 @@ export default function Search() {
         console.log('📺 Currently Consuming - All lists:', data.lists?.map((l: any) => ({ title: l.title, itemCount: l.items?.length })));
         const currentlyList = (data.lists || []).find((list: any) => list.title === 'Currently');
         console.log('📺 Currently list found:', currentlyList?.title, 'Items:', currentlyList?.items?.length);
+        if (currentlyList?.items?.length > 0) {
+          console.log('📺 First item fields:', JSON.stringify({ 
+            id: currentlyList.items[0].id,
+            title: currentlyList.items[0].title,
+            progress: currentlyList.items[0].progress,
+            progress_total: currentlyList.items[0].progress_total,
+            progress_mode: currentlyList.items[0].progress_mode,
+            image_url: currentlyList.items[0].image_url?.substring(0, 50),
+          }));
+        }
         setCurrentlyItems(currentlyList?.items?.slice(0, 10) || []);
       } else {
         console.error('📺 Failed to fetch lists:', response.status);
@@ -328,6 +338,13 @@ export default function Search() {
   const updateProgressMutation = useMutation({
     mutationFn: async ({ itemId, progress, total, mode, progressDisplay }: { itemId: string; progress: number; total?: number; mode: string; progressDisplay: string }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
+      const payload = {
+        item_id: itemId,
+        progress,
+        progress_total: total,
+        progress_mode: mode,
+      };
+      console.log('📝 Updating progress:', payload);
       const response = await fetch(
         'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-item-progress',
         {
@@ -336,16 +353,13 @@ export default function Search() {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            item_id: itemId,
-            progress,
-            progress_total: total,
-            progress_mode: mode,
-          }),
+          body: JSON.stringify(payload),
         }
       );
-      if (!response.ok) throw new Error('Failed to update progress');
-      return { ...await response.json(), progressDisplay };
+      const responseData = await response.json();
+      console.log('📝 Progress update response:', response.status, responseData);
+      if (!response.ok) throw new Error(responseData?.error || 'Failed to update progress');
+      return { ...responseData, progressDisplay };
     },
     onSuccess: (data) => {
       toast({ title: `Progress updated to ${data.progressDisplay}` });

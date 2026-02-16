@@ -43,12 +43,23 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
     return 100;
   };
 
+  const itemTotal = item.progress_total ?? item.total;
   const [localProgress, setLocalProgress] = useState(item.progress || 0);
-  const [localTotal, setLocalTotal] = useState(item.progress_total ?? getDefaultTotal());
+  const [localTotal, setLocalTotal] = useState(itemTotal ?? getDefaultTotal());
   const [editProgress, setEditProgress] = useState(item.progress || 0);
-  const [editTotal, setEditTotal] = useState(item.progress_total ?? getDefaultTotal());
-  const [editSeason, setEditSeason] = useState(item.progress_total ?? 1);
+  const [editTotal, setEditTotal] = useState(itemTotal ?? getDefaultTotal());
+  const [editSeason, setEditSeason] = useState(itemTotal ?? 1);
   const [editEpisode, setEditEpisode] = useState(item.progress || 1);
+
+  useEffect(() => {
+    const t = item.progress_total ?? item.total;
+    setLocalProgress(item.progress || 0);
+    setLocalTotal(t ?? getDefaultTotal());
+    setEditProgress(item.progress || 0);
+    setEditTotal(t ?? getDefaultTotal());
+    setEditSeason(t ?? 1);
+    setEditEpisode(item.progress || (isTv ? 1 : 0));
+  }, [item.progress, item.progress_total, item.total, item.progress_mode]);
 
   const { data: tvShowData, isLoading: isTvDataLoading } = useQuery({
     queryKey: ['tv-show-seasons', item.external_source, item.external_id],
@@ -369,12 +380,13 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
               src={item.image_url} 
               alt={item.title}
               className="w-full h-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement; if (fallback) fallback.style.display = 'flex'; }}
             />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-purple-800 to-blue-900 flex items-center justify-center">
-              {getMediaIcon()}
-            </div>
-          )}
+          ) : null}
+          <div className={`w-full h-full bg-gradient-to-br from-purple-800 to-blue-900 flex flex-col items-center justify-center p-1.5 ${item.image_url ? 'hidden absolute inset-0' : ''}`}>
+            {getMediaIcon()}
+            <p className="text-[8px] text-white/90 font-medium text-center leading-tight mt-1 line-clamp-3">{item.title}</p>
+          </div>
           
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-6 pb-1.5 px-1.5">
             <div className="h-0.5 bg-gray-700/50 rounded-full mb-1.5 overflow-hidden">

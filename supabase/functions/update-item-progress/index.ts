@@ -30,7 +30,9 @@ serve(async (req) => {
       throw new Error('Not authenticated');
     }
 
-    const { item_id, progress, total, progress_mode } = await req.json();
+    const body = await req.json();
+    const { item_id, progress, progress_mode } = body;
+    const total = body.progress_total ?? body.total;
 
     if (!item_id) {
       throw new Error('item_id is required');
@@ -58,13 +60,16 @@ serve(async (req) => {
       }
     }
 
-    // Update the list item's progress
     const updateData: any = { progress };
-    if (total !== undefined) {
+    if (total !== undefined && total !== null) {
       updateData.total = total;
     }
-    if (progress_mode !== undefined) {
+    if (progress_mode !== undefined && progress_mode !== null) {
       updateData.progress_mode = progress_mode;
+    }
+    if (progress_mode === 'episode') {
+      updateData.season_number = total;
+      updateData.episode_number = progress;
     }
 
     const { data, error } = await supabaseClient
