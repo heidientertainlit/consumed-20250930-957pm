@@ -98,9 +98,33 @@ serve(async (req) => {
         .single();
 
       if (poolPostError || !poolPost) {
-        console.log('Post not found by id or pool_id:', post_id);
-        return new Response(JSON.stringify({ error: 'Post not found', post_id }), {
-          status: 404,
+        // Check if post_id is a prediction_pool that exists directly (no social_post linked)
+        const { data: pool } = await serviceSupabase
+          .from('prediction_pools')
+          .select('id, origin_user_id')
+          .eq('id', post_id)
+          .single();
+
+        if (pool) {
+          // Verify ownership
+          if (pool.origin_user_id !== appUser.id) {
+            return new Response(JSON.stringify({ error: 'Unauthorized - you can only delete your own posts' }), {
+              status: 403,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+          // Delete votes then pool directly
+          console.log('Deleting orphan prediction pool directly:', pool.id);
+          await serviceSupabase.from('user_predictions').delete().eq('pool_id', pool.id);
+          await serviceSupabase.from('prediction_pools').delete().eq('id', pool.id);
+          return new Response(JSON.stringify({ success: true, hidden_post_id: post_id, deleted_pool: true }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        // Neither social_post nor prediction_pool found - treat as already deleted
+        console.log('Post/pool not found, treating as already deleted:', post_id);
+        return new Response(JSON.stringify({ success: true, hidden_post_id: post_id, already_deleted: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }

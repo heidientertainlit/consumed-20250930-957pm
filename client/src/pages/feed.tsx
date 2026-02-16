@@ -2678,6 +2678,7 @@ export default function Feed() {
     if (!session?.access_token) return;
     
     try {
+      console.log('🗑️ handleDeletePost called with postId:', postId);
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-delete`,
         {
@@ -2690,17 +2691,21 @@ export default function Feed() {
         }
       );
       
+      const responseData = await response.json().catch(() => ({}));
+      console.log('🗑️ Delete response:', response.status, responseData);
+      
       if (response.ok) {
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
         toast({
           title: "Post deleted",
-          description: "Your cast has been removed from the feed.",
+          description: "Your post has been removed from the feed.",
         });
       } else {
-        throw new Error('Failed to delete');
+        console.error('🗑️ Delete failed:', response.status, responseData);
+        throw new Error(responseData?.error || 'Failed to delete');
       }
-    } catch (error) {
-      console.error('Error deleting post:', error);
+    } catch (error: any) {
+      console.error('Error deleting post:', error?.message || error);
       toast({
         title: "Error",
         description: "Could not delete the post. Please try again.",
