@@ -721,17 +721,12 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
               <Link href={`/user/${post.user?.id || ''}`}>
                 <span className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer text-sm">{username}</span>
               </Link>
-              <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
               <div className="ml-auto flex items-center gap-1.5">
                 {post.mediaType && (
                   <span className="text-[11px] font-medium text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full capitalize">
                     {post.mediaType === 'tv' ? 'TV' : post.mediaType}
                   </span>
                 )}
-                <span className={`text-[11px] font-medium ${typeInfo.color} flex items-center gap-1 ${typeInfo.bg} px-2 py-0.5 rounded-full`}>
-                  <TypeIcon size={11} />
-                  {typeInfo.label}
-                </span>
                 {currentUserId && post.user?.id === currentUserId && onDeletePost && (
                   <button onClick={() => onDeletePost(post.id)} className="text-gray-300 hover:text-red-500 p-1">
                     <Trash2 size={14} />
@@ -800,7 +795,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
           <p className="text-gray-800 text-sm leading-relaxed mt-2">{post.content}</p>
         )}
 
-        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50 ml-[52px]">
+        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
           {post.type === 'hot_take' ? (
             <>
               <button
@@ -832,10 +827,17 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
             <MessageCircle size={16} />
             <span className="text-xs">{post.comments || 0}</span>
           </button>
+          <div className="ml-auto flex items-center gap-1.5">
+            <span className={`text-[11px] font-medium ${typeInfo.color} flex items-center gap-1 ${typeInfo.bg} px-2 py-0.5 rounded-full`}>
+              <TypeIcon size={11} />
+              {typeInfo.label}
+            </span>
+            <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
+          </div>
         </div>
 
         {isCommentsActive && (
-          <div className="mt-3 pt-3 border-t border-gray-100 ml-[52px]">
+          <div className="mt-3 pt-3 border-t border-gray-100">
             {loadingComments ? (
               <p className="text-xs text-gray-400 text-center py-2">Loading...</p>
             ) : comments.length === 0 ? (
