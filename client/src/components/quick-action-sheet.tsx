@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 type IntentType = "capture" | "say" | "play" | null;
-type ActionType = "track" | "post" | "hot_take" | "poll" | "ask_for_recs" | "rank" | "challenge" | null;
+type ActionType = "track" | "post" | "hot_take" | "prediction" | "rank" | "challenge" | null;
 
 interface QuickActionSheetProps {
   isOpen: boolean;
@@ -351,10 +351,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
               ice_votes: 0,
             });
           }
-          } else if (trackPostType === 'poll' && contentText.trim()) {
-          const validTrackPollOptions = pollOptions.filter(o => o.trim());
-          if (validTrackPollOptions.length >= 2) {
-            await fetch(`${supabaseUrl}/functions/v1/create-poll`, {
+          } else if (trackPostType === 'prediction' && contentText.trim()) {
+          const validPredOptions = pollOptions.filter(o => o.trim());
+          if (validPredOptions.length >= 2) {
+            await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${session.access_token}`,
@@ -362,13 +362,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
               },
               body: JSON.stringify({
                 question: contentText,
-                options: validTrackPollOptions,
-                contains_spoilers: containsSpoilers,
-                media_title: selectedMedia.title || null,
-                media_type: selectedMedia.type?.toLowerCase() || null,
+                options: validPredOptions,
+                type: "predict",
                 media_external_id: selectedMedia.external_id || null,
                 media_external_source: selectedMedia.external_source || null,
-                media_image_url: selectedMedia.image || selectedMedia.image_url || '',
               }),
             });
           }
@@ -409,18 +406,18 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
         queryClient.invalidateQueries({ queryKey: ['feed'] });
         
-      } else if (selectedAction === "poll") {
+      } else if (selectedAction === "prediction") {
         const validOptions = pollOptions.filter(o => o.trim());
         if (validOptions.length < 2) {
           toast({ title: "Add at least 2 options", variant: "destructive" });
           return;
         }
         if (!contentText.trim()) {
-          toast({ title: "Please add a question", variant: "destructive" });
+          toast({ title: "Please add your prediction question", variant: "destructive" });
           return;
         }
         
-        const response = await fetch(`${supabaseUrl}/functions/v1/create-poll`, {
+        const response = await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
@@ -429,51 +426,19 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           body: JSON.stringify({
             question: contentText,
             options: validOptions,
-            contains_spoilers: containsSpoilers,
-            media_title: selectedMedia?.title || null,
-            media_type: selectedMedia?.type?.toLowerCase() || null,
+            type: "predict",
             media_external_id: selectedMedia?.external_id || null,
             media_external_source: selectedMedia?.external_source || null,
-            media_image_url: selectedMedia?.image || selectedMedia?.image_url || '',
           }),
         });
         
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
-          console.error('Create poll error:', errData);
-          throw new Error('Failed to create poll');
+          console.error('Create prediction error:', errData);
+          throw new Error('Failed to create prediction');
         }
         
-        toast({ title: "Poll created!" });
-        queryClient.invalidateQueries({ queryKey: ['social-feed'] });
-        queryClient.invalidateQueries({ queryKey: ['feed'] });
-        
-      } else if (selectedAction === "ask_for_recs") {
-        if (!contentText.trim()) {
-          toast({ title: "Please describe what you're looking for", variant: "destructive" });
-          return;
-        }
-        
-        const { data: { user: recUser } } = await supabase.auth.getUser();
-        if (!recUser) throw new Error('Not authenticated');
-        
-        const { error: recError } = await supabase.from('social_posts').insert({
-          user_id: recUser.id,
-          content: contentText,
-          post_type: 'ask_for_recs',
-          visibility: 'public',
-          media_title: selectedMedia?.title || null,
-          media_type: selectedMedia?.type?.toLowerCase() || null,
-          media_external_id: selectedMedia?.external_id || null,
-          media_external_source: selectedMedia?.external_source || null,
-          image_url: selectedMedia?.image || selectedMedia?.image_url || '',
-          fire_votes: 0,
-          ice_votes: 0,
-        });
-        
-        if (recError) throw recError;
-        
-        toast({ title: "Rec request posted!" });
+        toast({ title: "Prediction posted!" });
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
         queryClient.invalidateQueries({ queryKey: ['feed'] });
         
@@ -545,7 +510,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   ];
 
   const playActions = [
-    { id: "poll" as ActionType, label: "Create a Poll", icon: Vote, desc: "Ask your friends" },
+    { id: "prediction" as ActionType, label: "Create a Prediction", icon: Vote, desc: "Predict what happens next" },
     { id: "challenge" as ActionType, label: "Challenge a Friend", icon: Swords, desc: "Coming soon" },
   ];
 
@@ -553,13 +518,12 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
     { id: "track" as ActionType, label: "Track & Rate", icon: Star, iconColor: "text-yellow-500", bgColor: "bg-yellow-50", desc: "Log something you finished" },
     { id: "post" as ActionType, label: "Post", icon: MessageSquare, iconColor: "text-blue-500", bgColor: "bg-blue-50", desc: "Share a thought" },
     { id: "hot_take" as ActionType, label: "Hot Take", icon: Flame, iconColor: "text-orange-500", bgColor: "bg-orange-50", desc: "Drop a spicy opinion" },
-    { id: "poll" as ActionType, label: "Poll", icon: Vote, iconColor: "text-purple-500", bgColor: "bg-purple-50", desc: "Ask your friends" },
-    { id: "ask_for_recs" as ActionType, label: "Ask for Recs", icon: HelpCircle, iconColor: "text-green-500", bgColor: "bg-green-50", desc: "Get suggestions" },
+    { id: "prediction" as ActionType, label: "Prediction", icon: Vote, iconColor: "text-purple-500", bgColor: "bg-purple-50", desc: "Predict what happens next" },
     { id: "challenge" as ActionType, label: "Challenge", icon: Swords, iconColor: "text-pink-500", bgColor: "bg-pink-50", desc: "Challenge a friend" },
   ];
 
   // Post type state for the inline toggle in track form
-  const [trackPostType, setTrackPostType] = useState<"thought" | "hot_take" | "poll">("thought");
+  const [trackPostType, setTrackPostType] = useState<"thought" | "review" | "hot_take" | "prediction">("thought");
 
   const renderActionContent = () => {
     if (selectedAction === "track") {
@@ -663,58 +627,42 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 )}
               </div>
               
-              {/* Post type toggle - Thought, Hot Take, Poll */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setTrackPostType("thought")}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    trackPostType === "thought"
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Thought
-                </button>
-                <button
-                  onClick={() => setTrackPostType("hot_take")}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
-                    trackPostType === "hot_take"
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <Flame size={14} className={trackPostType === "hot_take" ? 'text-white' : 'text-orange-500'} />
-                  Hot Take
-                </button>
-                <button
-                  onClick={() => setTrackPostType("poll")}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
-                    trackPostType === "poll"
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <Vote size={14} className={trackPostType === "poll" ? 'text-white' : 'text-purple-500'} />
-                  Poll
-                </button>
+              {/* Post type toggle */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {([
+                  { key: 'thought' as const, label: 'Thought' },
+                  { key: 'review' as const, label: 'Review' },
+                  { key: 'hot_take' as const, label: 'Hot Take' },
+                  { key: 'prediction' as const, label: 'Prediction' },
+                ] as const).map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setTrackPostType(key)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      trackPostType === key
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
               
-              {/* Review/Content - right under post type */}
               <textarea
                 value={contentText}
                 onChange={(e) => setContentText(e.target.value)}
                 placeholder={
-                  trackPostType === 'thought' ? "Add a review (optional)..." :
-                  trackPostType === 'hot_take' ? "Drop your hot take... 🔥" :
-                  "Ask a question for your poll..."
+                  trackPostType === 'thought' ? "What's on your mind?" :
+                  trackPostType === 'review' ? "Write your review..." :
+                  trackPostType === 'hot_take' ? "Drop your hot take..." :
+                  "What do you predict?"
                 }
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none text-sm"
                 rows={2}
-                data-testid="track-review-input"
               />
               
-              {/* Poll options - only show when poll is selected */}
-              {trackPostType === 'poll' && (
+              {trackPostType === 'prediction' && (
                 <div className="space-y-2">
                   {pollOptions.map((option, idx) => (
                     <div key={idx} className="flex items-center gap-2">
@@ -962,16 +910,15 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
       );
     }
     
-    if (selectedAction === "poll") {
+    if (selectedAction === "prediction") {
       return (
         <div className="space-y-4">
           <textarea
             value={contentText}
             onChange={(e) => setContentText(e.target.value)}
-            placeholder="Ask a question..."
+            placeholder="What do you predict?"
             className="w-full px-3 py-3 border rounded-lg resize-none"
             rows={2}
-            data-testid="poll-question-input"
           />
           
           <div className="space-y-2">
@@ -988,7 +935,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                   }}
                   placeholder={`Option ${idx + 1}`}
                   className="flex-1 px-3 py-2 border rounded-lg"
-                  data-testid={`poll-option-${idx}`}
                 />
                 {pollOptions.length > 2 && (
                   <button
@@ -1000,52 +946,12 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 )}
               </div>
             ))}
-            {pollOptions.length < 6 && (
-              <button
-                onClick={() => setPollOptions([...pollOptions, ""])}
-                className="text-sm text-purple-600 font-medium"
-              >
-                + Add option
-              </button>
-            )}
           </div>
           
           <label className="flex items-center gap-2 text-sm text-gray-600">
             <Checkbox checked={containsSpoilers} onCheckedChange={(c) => setContainsSpoilers(!!c)} />
             Contains spoilers
           </label>
-        </div>
-      );
-    }
-    
-    if (selectedAction === "ask_for_recs") {
-      return (
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">What are you looking for?</label>
-            <select
-              value={recCategory}
-              onChange={(e) => setRecCategory(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg"
-            >
-              <option value="">Anything</option>
-              <option value="movies">Movies</option>
-              <option value="tv">TV Shows</option>
-              <option value="books">Books</option>
-              <option value="music">Music</option>
-              <option value="podcasts">Podcasts</option>
-              <option value="games">Games</option>
-            </select>
-          </div>
-          
-          <textarea
-            value={contentText}
-            onChange={(e) => setContentText(e.target.value)}
-            placeholder="Describe what you're in the mood for..."
-            className="w-full px-3 py-3 border rounded-lg resize-none"
-            rows={4}
-            data-testid="recs-content-input"
-          />
         </div>
       );
     }
@@ -1220,8 +1126,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
     if (selectedAction === "track") return !!selectedMedia;
     // Allow posting with just a rating OR just content (text is optional if rating is set)
     if (selectedAction === "post" || selectedAction === "hot_take") return !!contentText.trim() || ratingValue > 0;
-    if (selectedAction === "poll") return !!contentText.trim() && pollOptions.filter(o => o.trim()).length >= 2;
-    if (selectedAction === "ask_for_recs") return !!contentText.trim();
+    if (selectedAction === "prediction") return !!contentText.trim() && pollOptions.filter(o => o.trim()).length >= 2;
     if (selectedAction === "rank") return !!selectedMedia && !!selectedRankId;
     if (selectedAction === "challenge") return false;
     return false;
@@ -1293,17 +1198,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           >
             Hot Take
           </button>
-          <button
-            onClick={() => { setSayMode("ask"); setSelectedAction("ask_for_recs"); }}
-            className={`flex-1 py-2.5 px-4 rounded-full text-sm font-medium transition-all ${
-              sayMode === "ask" 
-                ? "bg-gray-100 text-gray-900 border border-gray-200" 
-                : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
-            }`}
-            data-testid="say-mode-ask"
-          >
-            Ask
-          </button>
         </div>
         
         <MentionTextarea
@@ -1311,9 +1205,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           onChange={setContentText}
           session={session}
           placeholder={
-            sayMode === "thought" ? "What's on your mind?" :
             sayMode === "hot_take" ? "Drop your spicy take..." :
-            "What are you looking for?"
+            "What's on your mind?"
           }
           className="min-h-[100px] bg-white text-gray-900 border border-gray-200 rounded-xl"
           testId="say-content-input"
@@ -1464,7 +1357,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
             
             {selectedIntent === "play" && !selectedAction ? (
               renderPlayHub()
-            ) : selectedIntent === "say" && selectedAction !== "poll" && selectedAction !== "rank" ? (
+            ) : selectedIntent === "say" && selectedAction !== "prediction" && selectedAction !== "rank" ? (
               renderSayContent()
             ) : (
               renderActionContent()

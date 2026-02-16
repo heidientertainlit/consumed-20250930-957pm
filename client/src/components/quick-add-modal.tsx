@@ -60,7 +60,7 @@ interface QuickAddModalProps {
 }
 
 type Stage = "search" | "composer";
-type PostType = "thought" | "hot_take" | "ask" | "poll" | "rank";
+type PostType = "thought" | "hot_take" | "review" | "prediction" | "rank";
 
 export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId }: QuickAddModalProps) {
   const { user, session } = useAuth();
@@ -116,8 +116,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
   // Post type for composer
   const [postType, setPostType] = useState<PostType>("thought");
   
-  // Poll-specific options
-  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+  const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
 
   const { data: listsData } = useQuery({
     queryKey: ['user-lists-metadata', user?.id],
@@ -248,7 +247,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
     setTvEpisode("");
     setMusicFormat("album");
     setPostType("thought");
-    setPollOptions(["", ""]);
+    setPredictionOptions(["", ""]);
   };
   
   const getSelectedListName = () => {
@@ -317,7 +316,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
     setTvEpisode("");
     setMusicFormat("album");
     setPostType("thought");
-    setPollOptions(["", ""]);
+    setPredictionOptions(["", ""]);
   };
   
   const handleJustPost = () => {
@@ -348,13 +347,12 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
       return;
     }
     
-    // For polls, validate options
-    if (postType === 'poll') {
-      const validOptions = pollOptions.filter(o => o.trim());
+    if (postType === 'prediction') {
+      const validOptions = predictionOptions.filter(o => o.trim());
       if (validOptions.length < 2) {
         toast({
-          title: "Add poll options",
-          description: "Please add at least 2 options for your poll.",
+          title: "Add prediction options",
+          description: "Please add at least 2 options for your prediction.",
           variant: "destructive",
         });
         return;
@@ -398,12 +396,11 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
       console.log('🎯 Composer: Posting', { postType, hasMedia: !!selectedMedia, mediaData, reviewText: reviewText.substring(0, 50) });
       
       // Handle based on post type
-      if (postType === 'thought' || postType === 'hot_take' || postType === 'ask') {
-        // Map post types to API types
+      if (postType === 'thought' || postType === 'hot_take' || postType === 'review') {
         const typeMap: Record<string, string> = {
           'thought': 'thought',
           'hot_take': 'hot_take',
-          'ask': 'ask_for_rec',
+          'review': 'rate-review',
         };
         
         // Create the social post (unless private mode is enabled)
@@ -447,12 +444,11 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
           await addRating(supabaseUrl, session.access_token, selectedMedia, externalId!, externalSource!, reviewText.trim(), containsSpoilers, privateMode);
         }
         
-      } else if (postType === 'poll') {
-        // Create poll using existing poll endpoint
-        const validOptions = pollOptions.filter(o => o.trim());
+      } else if (postType === 'prediction') {
+        const validOptions = predictionOptions.filter(o => o.trim());
         
         const response = await fetch(
-          `${supabaseUrl}/functions/v1/create-poll`,
+          `${supabaseUrl}/functions/v1/create-prediction`,
           {
             method: 'POST',
             headers: {
@@ -462,22 +458,16 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
             body: JSON.stringify({
               question: reviewText.trim(),
               options: validOptions,
-              is_private: privateMode,
-              contains_spoilers: containsSpoilers,
-              ...(selectedMedia && {
-                media_title: selectedMedia.title,
-                media_type: selectedMedia.type,
-                media_external_id: externalId,
-                media_external_source: externalSource,
-                media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image,
-              }),
+              type: "predict",
+              media_external_id: externalId || null,
+              media_external_source: externalSource || null,
             }),
           }
         );
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Failed to create poll');
+          throw new Error(errorData.error || 'Failed to create prediction');
         }
         
       } else if (postType === 'rank') {
@@ -1013,8 +1003,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                 <div className="flex flex-wrap gap-2">
                   {[
                     { id: 'thought', label: 'Thought' },
+                    { id: 'review', label: 'Review' },
                     { id: 'hot_take', label: 'Hot Take' },
-                    { id: 'poll', label: 'Poll' },
+                    { id: 'prediction', label: 'Prediction' },
                   ].map((type) => (
                     <button
                       key={type.id}
@@ -1072,61 +1063,43 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                 </>
               )}
 
-              {postType === 'ask' && (
+              {postType === 'review' && (
                 <>
                   <Textarea
-                    placeholder="What are you looking for? (e.g., 'Looking for a feel-good comedy...')"
+                    placeholder="Write your review..."
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
                     onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
                     className="bg-white border-gray-200 resize-none min-h-[80px]"
                     rows={3}
-                    data-testid="ask-textarea"
                   />
-                  <p className="text-xs text-gray-500">Your friends will recommend media for you</p>
                 </>
               )}
 
-              {postType === 'poll' && (
+              {postType === 'prediction' && (
                 <>
-                  <Input
-                    placeholder="What's your poll question?"
+                  <Textarea
+                    placeholder="What do you predict?"
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
-                    className="bg-white border-gray-200"
-                    data-testid="poll-question"
+                    onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
+                    className="bg-white border-gray-200 resize-none min-h-[80px]"
+                    rows={2}
                   />
                   <div className="space-y-2">
-                    {pollOptions.map((option, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <Input
-                          placeholder={`Option ${index + 1}`}
-                          value={option}
-                          onChange={(e) => {
-                            const newOptions = [...pollOptions];
-                            newOptions[index] = e.target.value;
-                            setPollOptions(newOptions);
-                          }}
-                          className="bg-white border-gray-200 flex-1"
-                        />
-                        {pollOptions.length > 2 && (
-                          <button
-                            onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== index))}
-                            className="text-gray-400 hover:text-red-500"
-                          >
-                            <X size={16} />
-                          </button>
-                        )}
-                      </div>
+                    {predictionOptions.map((option, index) => (
+                      <Input
+                        key={index}
+                        placeholder={`Option ${index + 1}`}
+                        value={option}
+                        onChange={(e) => {
+                          const newOpts = [...predictionOptions];
+                          newOpts[index] = e.target.value;
+                          setPredictionOptions(newOpts);
+                        }}
+                        className="bg-white border-gray-200"
+                      />
                     ))}
-                    {pollOptions.length < 6 && (
-                      <button
-                        onClick={() => setPollOptions([...pollOptions, ""])}
-                        className="text-sm text-purple-600 hover:text-purple-700"
-                      >
-                        + Add option
-                      </button>
-                    )}
                   </div>
                 </>
               )}
@@ -1158,7 +1131,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               )}
 
               {/* Show rating and list options when media is attached (for thought/hot_take) or in add-to-list mode */}
-              {(defaultListId || (selectedMedia && (postType === 'thought' || postType === 'hot_take'))) && (
+              {(defaultListId || (selectedMedia && (postType === 'thought' || postType === 'hot_take' || postType === 'review'))) && (
                 <>
                   {/* Rating */}
                   <div className="flex items-center gap-2">
