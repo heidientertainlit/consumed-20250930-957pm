@@ -2696,10 +2696,6 @@ export default function Feed() {
       
       if (response.ok) {
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
-        toast({
-          title: "Post deleted",
-          description: "Your post has been removed from the feed.",
-        });
       } else {
         console.error('🗑️ Delete failed:', response.status, responseData);
         throw new Error(responseData?.error || 'Failed to delete');
