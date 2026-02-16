@@ -8,7 +8,7 @@ import {
 
 export interface UGCPost {
   id: string;
-  type: 'hot_take' | 'ask_for_rec' | 'ask_for_recs' | 'poll' | 'rating' | 'review' | 'thought' | 'cast_approved' | 'rank' | 'finished' | 'general';
+  type: 'hot_take' | 'ask_for_rec' | 'ask_for_recs' | 'poll' | 'predict' | 'rating' | 'review' | 'thought' | 'cast_approved' | 'rank' | 'finished' | 'general';
   user?: {
     id: string;
     username: string;
@@ -58,6 +58,8 @@ function getTypeLabel(type: string): { label: string; iconColor: string; icon: a
       return { label: 'Asking for Recs', iconColor: 'text-purple-500', icon: HelpCircle };
     case 'poll':
       return { label: 'Poll', iconColor: 'text-blue-500', icon: BarChart3 };
+    case 'predict':
+      return { label: 'Prediction', iconColor: 'text-indigo-500', icon: BarChart3 };
     case 'cast_approved':
       return { label: 'Cast', iconColor: 'text-amber-500', icon: Trophy };
     case 'rank':
@@ -280,7 +282,7 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, isLik
         </div>
 
         <div className={`${isCommentsActive ? '' : 'flex-1'} min-h-0 overflow-hidden`}>
-            {post.type === 'poll' ? (
+            {(post.type === 'poll' || post.type === 'predict') ? (
               <div>
                 {post.mediaTitle && (
                   <p className="text-[10px] text-gray-500 mb-0.5 truncate">{post.mediaTitle}</p>

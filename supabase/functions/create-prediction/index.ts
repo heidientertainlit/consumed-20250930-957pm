@@ -67,6 +67,8 @@ serve(async (req) => {
       option_2_label,
       media_external_id,
       media_external_source,
+      media_title,
+      media_type,
       deadline,
       points_reward = 20
     } = body;
@@ -157,8 +159,8 @@ serve(async (req) => {
         content: question,
         post_type: postType,
         prediction_pool_id: pool.id,
-        media_title: question.substring(0, 100),
-        media_type: 'Movie',
+        media_title: media_title || null,
+        media_type: media_type || null,
         media_external_id: media_external_id || null,
         media_external_source: media_external_source || null,
         contains_spoilers: false

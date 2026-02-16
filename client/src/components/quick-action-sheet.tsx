@@ -366,6 +366,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 type: "predict",
                 media_external_id: selectedMedia.external_id || null,
                 media_external_source: selectedMedia.external_source || null,
+                media_title: selectedMedia.title || null,
+                media_type: selectedMedia.media_type || selectedMedia.type || null,
               }),
             });
           }
@@ -429,6 +431,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
             type: "predict",
             media_external_id: selectedMedia?.external_id || null,
             media_external_source: selectedMedia?.external_source || null,
+            media_title: selectedMedia?.title || null,
+            media_type: selectedMedia?.media_type || selectedMedia?.type || null,
           }),
         });
         

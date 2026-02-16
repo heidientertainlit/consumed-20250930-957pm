@@ -729,6 +729,8 @@ export default function MediaDetail() {
               type: "predict",
               media_external_id: params?.id || null,
               media_external_source: params?.source || null,
+              media_title: mediaItem?.title || null,
+              media_type: (mediaItem?.type || params?.type || null),
             }),
           });
           if (!predResponse.ok) throw new Error("Failed to create prediction");
