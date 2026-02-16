@@ -43,9 +43,10 @@ const getMediaTypeConfig = (mediaType: string) => {
 
 interface SeenItGameProps {
   mediaTypeFilter?: string;
+  onAddToList?: (media: { title: string; mediaType: string; externalId: string; externalSource: string; imageUrl: string }) => void;
 }
 
-export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
+export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameProps = {}) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -449,7 +450,20 @@ export default function SeenItGame({ mediaTypeFilter }: SeenItGameProps = {}) {
                   />
                 </Link>
                 <div className="absolute top-2 right-2 flex flex-col gap-1">
-                  <button className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all">
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onAddToList?.({
+                        title: item.title,
+                        mediaType: item.media_type || currentSet.media_type || 'movie',
+                        externalId: item.external_id || item.id,
+                        externalSource: item.external_source || 'tmdb',
+                        imageUrl: item.image_url || '',
+                      });
+                    }}
+                    className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all"
+                  >
                     <Plus className="w-4 h-4 text-white" />
                   </button>
                   <button className="w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all">

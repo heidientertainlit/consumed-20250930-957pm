@@ -3631,7 +3631,7 @@ export default function Feed() {
 
               {/* Seen It Game */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <SeenItGame />
+                <SeenItGame onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
               {/* The Room - Friend Activity with reactions */}
@@ -3930,7 +3930,7 @@ export default function Feed() {
 
               {/* Read It? - Books (appears after Cast Your Friends carousel) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <SeenItGame mediaTypeFilter="book" />
+                <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
               {/* POLLS filter - TV category */}
@@ -3988,7 +3988,7 @@ export default function Feed() {
 
               {/* Listened to It? - Music & Podcasts */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <SeenItGame mediaTypeFilter="music" />
+                <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
               {/* Recommendations - For You */}
