@@ -214,8 +214,8 @@ serve(async (req) => {
       const existingTitles = new Set(filteredSystemLists.map(l => l.title));
       const missingLists = requiredSystemLists.filter(title => !existingTitles.has(title));
 
-      if (missingLists.length > 0 && appUser?.id) {
-        console.log(`Auto-migration: Backfilling ${missingLists.length} missing system lists`);
+      if (missingLists.length > 0 && targetUserId) {
+        console.log(`Auto-migration: Backfilling ${missingLists.length} missing system lists for user ${targetUserId}`);
         
         const supabaseAdmin = createClient(
           Deno.env.get('SUPABASE_URL') ?? '',
@@ -226,7 +226,7 @@ serve(async (req) => {
           const { error: listError } = await supabaseAdmin
             .from('lists')
             .upsert({
-              user_id: appUser.id,
+              user_id: targetUserId,
               title: listTitle,
               is_default: true,
               is_private: false
