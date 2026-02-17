@@ -413,7 +413,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-sm">🧬</span>
-          <h3 className="text-gray-900 font-semibold text-sm">Entertainment DNA Check</h3>
+          <h3 className="text-gray-900 font-semibold text-sm">eDNA Check</h3>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${mediaConfig.pillBg}`}>{mediaConfig.pill}</span>
         </div>
         <div className="flex items-center gap-2">
