@@ -3855,7 +3855,7 @@ export default function Feed() {
                   <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
                     {friendsConsuming.map((item: any, idx: number) => (
                       <Link key={item.id || idx} href={`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`}>
-                        <div className="w-[72px] flex-shrink-0 cursor-pointer group">
+                        <div className="w-[80px] flex-shrink-0 cursor-pointer group">
                           <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-1.5 ring-1 ring-gray-200 group-hover:ring-purple-400 transition-all">
                             {item.image_url ? (
                               <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
@@ -3883,6 +3883,7 @@ export default function Feed() {
                             </button>
                           </div>
                           <p className="text-[10px] text-gray-800 truncate font-medium">{item.title}</p>
+                          <p className="text-[9px] text-gray-400 truncate capitalize">{(item.media_type || 'movie').replace('_', ' ')}</p>
                           <p className="text-[9px] text-purple-500 truncate">{item.owner?.display_name || item.owner?.user_name || 'User'}</p>
                         </div>
                       </Link>
