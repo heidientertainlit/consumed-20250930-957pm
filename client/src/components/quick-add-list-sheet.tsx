@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import { JustTrackedSheet } from "./just-tracked-sheet";
 
 interface QuickAddListSheetProps {
@@ -33,6 +34,8 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   const [hoveredRating, setHoveredRating] = useState<number>(0);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
 
+  const REQUIRED_SYSTEM_LISTS = ['Currently', 'Want To', 'Finished', 'Did Not Finish', 'Favorites'];
+
   const { data: userListsData, isLoading: isLoadingLists } = useQuery<any>({
     queryKey: ['user-lists-with-media'],
     queryFn: async () => {
@@ -43,7 +46,38 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         headers: { "Authorization": `Bearer ${session.access_token}` },
       });
       if (!response.ok) throw new Error('Failed to fetch user lists');
-      return response.json();
+      const data = await response.json();
+      
+      const lists = data?.lists || [];
+      const existingTitles = new Set(lists.map((l: any) => l.title));
+      const missingSystemLists = REQUIRED_SYSTEM_LISTS.filter(t => !existingTitles.has(t));
+      
+      if (missingSystemLists.length > 0 && session?.user?.id) {
+        console.log('📋 Missing system lists, creating:', missingSystemLists);
+        for (const title of missingSystemLists) {
+          const { data: newList, error } = await supabase
+            .from('lists')
+            .upsert({
+              user_id: session.user.id,
+              title,
+              is_default: true,
+              is_private: false,
+            }, {
+              onConflict: 'user_id,title',
+              ignoreDuplicates: true,
+            })
+            .select('id, title, is_private')
+            .maybeSingle();
+          
+          if (newList && !error) {
+            lists.push({ ...newList, is_default: true });
+          } else if (error) {
+            console.warn(`Failed to create ${title} list:`, error);
+          }
+        }
+      }
+      
+      return { ...data, lists };
     },
     enabled: !!session?.access_token && isOpen,
   });
