@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Check, Flame, Star, Users, Sparkles, ChevronRight, Dna } from "lucide-react";
+import { Check, Flame, Star, Users, Sparkles, ChevronRight, Dna, HelpCircle, Gamepad2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 
@@ -121,6 +121,10 @@ export function JustTrackedSheet({
   const [phase, setPhase] = useState<'identity' | 'actions'>('identity');
   const [identityAnswer, setIdentityAnswer] = useState<string | null>(null);
   const [isSavingAnswer, setIsSavingAnswer] = useState(false);
+  const [triviaAnswer, setTriviaAnswer] = useState<string | null>(null);
+  const [triviaRevealed, setTriviaRevealed] = useState(false);
+
+  const isWantToList = listName?.toLowerCase().includes('want') || listName?.toLowerCase().includes('queue');
 
   const { data: tasteStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['taste-stats', user?.id, media?.mediaType],
@@ -152,12 +156,53 @@ export function JustTrackedSheet({
     staleTime: 30000,
   });
 
+  const { data: triviaQuestion } = useQuery({
+    queryKey: ['want-to-trivia', media?.mediaType],
+    queryFn: async () => {
+      const categoryMap: Record<string, string[]> = {
+        'movie': ['Movies', 'movies', 'Movie', 'movie'],
+        'tv': ['TV', 'tv', 'Television', 'television'],
+        'music': ['Music', 'music'],
+        'book': ['Books', 'books', 'Book', 'book'],
+        'podcast': ['Podcasts', 'podcasts', 'Podcast', 'podcast'],
+      };
+      const categories = categoryMap[media?.mediaType?.toLowerCase() || ''] || [media?.mediaType || ''];
+      
+      const { data: triviaItems } = await supabase
+        .from('prediction_pools')
+        .select('id, title, options, correct_answer, category, points_reward, media_title')
+        .eq('type', 'trivia')
+        .eq('status', 'open')
+        .in('category', categories)
+        .limit(10);
+      
+      if (triviaItems && triviaItems.length > 0) {
+        const randomIndex = Math.floor(Math.random() * triviaItems.length);
+        const item = triviaItems[randomIndex];
+        return {
+          id: item.id,
+          title: item.title,
+          options: Array.isArray(item.options) ? item.options : JSON.parse(item.options || '[]'),
+          correct_answer: item.correct_answer || '',
+          category: item.category || '',
+          points_reward: item.points_reward || 10,
+          media_title: item.media_title,
+        };
+      }
+      return null;
+    },
+    enabled: isOpen && !!isWantToList && !!media?.mediaType,
+    staleTime: 0,
+  });
+
   const insight = tasteStats && media ? generateInsight(media, tasteStats.typeStats, tasteStats.creatorCount) : null;
 
   useEffect(() => {
     if (isOpen) {
       setPhase('identity');
       setIdentityAnswer(null);
+      setTriviaAnswer(null);
+      setTriviaRevealed(false);
     }
   }, [isOpen]);
 
@@ -374,7 +419,67 @@ export function JustTrackedSheet({
               </button>
             )}
 
-            {showRateOption && onRateIt && (
+            {isWantToList && triviaQuestion ? (
+              <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 border border-purple-100">
+                <div className="flex items-center gap-2 mb-3">
+                  <HelpCircle size={16} className="text-purple-500" />
+                  <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Quick Trivia</span>
+                </div>
+                
+                <p className="text-gray-900 font-semibold text-sm mb-3">{triviaQuestion.title}</p>
+                
+                <div className="space-y-2">
+                  {triviaQuestion.options.map((option: string, idx: number) => {
+                    const isSelected = triviaAnswer === option;
+                    const isCorrectOption = option === triviaQuestion.correct_answer;
+                    
+                    let btnClass = 'w-full py-2.5 px-4 rounded-xl border text-sm font-medium text-left transition-all duration-200 ';
+                    
+                    if (triviaRevealed) {
+                      if (isCorrectOption) {
+                        btnClass += 'bg-green-100 border-green-400 text-green-900';
+                      } else if (isSelected && !isCorrectOption) {
+                        btnClass += 'bg-red-100 border-red-400 text-red-900';
+                      } else {
+                        btnClass += 'bg-gray-50 border-gray-200 text-gray-400';
+                      }
+                    } else {
+                      btnClass += 'bg-white border-gray-200 text-gray-900 hover:bg-purple-50 hover:border-purple-300';
+                    }
+                    
+                    return (
+                      <button
+                        key={idx}
+                        className={btnClass}
+                        onClick={() => {
+                          if (!triviaRevealed) {
+                            setTriviaAnswer(option);
+                            setTriviaRevealed(true);
+                          }
+                        }}
+                        disabled={triviaRevealed}
+                      >
+                        {option}
+                        {triviaRevealed && isCorrectOption && <span className="ml-2">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                {triviaRevealed && (
+                  <div className={`mt-3 p-2 rounded-lg text-center text-sm font-medium ${
+                    triviaAnswer === triviaQuestion.correct_answer
+                      ? 'bg-green-100 text-green-700' 
+                      : 'bg-orange-100 text-orange-700'
+                  }`}>
+                    {triviaAnswer === triviaQuestion.correct_answer
+                      ? `Nice! +${triviaQuestion.points_reward} points` 
+                      : `The answer was: ${triviaQuestion.correct_answer}`
+                    }
+                  </div>
+                )}
+              </div>
+            ) : showRateOption && onRateIt ? (
               <button
                 onClick={onRateIt}
                 className="w-full p-4 text-left rounded-xl bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 flex items-center gap-3 transition-colors border border-yellow-100"
@@ -388,7 +493,7 @@ export function JustTrackedSheet({
                 </div>
                 <ChevronRight className="text-gray-400" size={18} />
               </button>
-            )}
+            ) : null}
 
             <button
               onClick={handleChallenge}
@@ -409,7 +514,7 @@ export function JustTrackedSheet({
                 onClick={onClose}
                 className="w-full py-3 text-gray-400 text-sm hover:text-gray-600 transition-colors"
               >
-                Maybe later
+                {isWantToList && triviaRevealed ? 'Done' : 'Maybe later'}
               </button>
             </div>
           </div>
