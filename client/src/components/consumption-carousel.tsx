@@ -688,7 +688,6 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
           </div>
           <div>
             <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-            <p className="text-[10px] text-gray-500">See what fans are consuming</p>
           </div>
         </div>
         <div className="flex items-center gap-1">

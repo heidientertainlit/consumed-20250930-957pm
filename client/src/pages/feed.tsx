@@ -1711,7 +1711,7 @@ export default function Feed() {
     return (
       <ConsumptionCarousel
         items={batch}
-        title={title || "The Room"}
+        title={title || "Quick Glimpse"}
         onItemDeleted={() => queryClient.invalidateQueries({ queryKey: ["social-feed"] })}
         currentUserId={currentAppUserId}
       />
@@ -3889,7 +3889,7 @@ export default function Feed() {
                 </div>
               )}
 
-              {renderRoomCarousel(0, "The Room")}
+              {renderRoomCarousel(0, "Quick Glimpse")}
 
               {/* Empty state for filtered views */}
               {feedFilter === 'friends' && filteredPosts.length === 0 && (
@@ -4079,13 +4079,6 @@ export default function Feed() {
 
               {renderPostBatchByIndex(2)}
 
-              {/* Cast Your Friends Game */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <div id="cast-friends-game">
-                  <CastFriendsGame />
-                </div>
-              )}
-
               {renderPostBatchByIndex(3)}
 
               {/* Seen It Game */}
@@ -4096,151 +4089,6 @@ export default function Feed() {
               {renderPostBatchByIndex(4)}
 
               {/* Cast Your Friends - Approved Casts Carousel */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && filteredPosts.filter((item: any) => item.type === 'cast_approved').length > 0 && (
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-amber-500 flex items-center justify-center">
-                        <Users size={16} className="text-white" />
-                      </div>
-                      <h3 className="font-semibold text-gray-900">Cast Your Friends</h3>
-                    </div>
-                    <button 
-                      onClick={() => {
-                        const el = document.getElementById('cast-friends-game');
-                        if (el) {
-                          const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
-                          window.scrollTo({ top: y, behavior: 'smooth' });
-                        }
-                      }}
-                      className="text-sm text-purple-600 hover:text-purple-700 font-medium"
-                    >
-                      Play →
-                    </button>
-                  </div>
-                  <div 
-                    className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
-                  >
-                    {filteredPosts
-                      .filter((item: any) => item.type === 'cast_approved')
-                      .slice(0, 10)
-                      .map((post: any) => {
-                        const celebName = post.mediaItems?.[0]?.title || 'a celebrity';
-                        const celebImage = post.mediaItems?.[0]?.imageUrl;
-                        const targetUserName = post.content || 'their friend';
-                        const userName = post.user?.displayName || post.user?.username || 'Someone';
-                        
-                        return (
-                          <div 
-                            key={`cast-carousel-${post.id}`}
-                            className="flex-shrink-0 w-56 rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm"
-                          >
-                            <div className="p-3">
-                              <div className="flex items-center gap-2 mb-2">
-                                {post.user && (
-                                  <Link href={`/user/${post.user.id}`}>
-                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer flex-shrink-0">
-                                      {post.user.avatar ? (
-                                        <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                                      ) : (
-                                        post.user.username?.[0]?.toUpperCase() || '?'
-                                      )}
-                                    </div>
-                                  </Link>
-                                )}
-                                <span className="text-xs text-gray-700">
-                                  <span className="font-medium">{userName}</span> cast
-                                </span>
-                              </div>
-                              
-                              <div className="flex items-center gap-3 p-2 bg-gradient-to-r from-purple-50 to-amber-50 rounded-lg">
-                                {celebImage && (
-                                  <img 
-                                    src={celebImage} 
-                                    alt={celebName}
-                                    className="w-12 h-16 rounded-lg object-cover shadow-sm flex-shrink-0"
-                                  />
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs text-gray-500 mb-0.5">{targetUserName} as</p>
-                                  <p className="font-semibold text-sm text-gray-900 line-clamp-2">{celebName}</p>
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-100">
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleLike(post.id); }}
-                                  className={`flex items-center gap-1 text-xs ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
-                                >
-                                  <Heart size={12} fill={likedPosts.has(post.id) ? 'currentColor' : 'none'} />
-                                  <span>{(post.likes_count ?? post.likes) || 0}</span>
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setExpandedComments(prev => {
-                                      const newSet = new Set(prev);
-                                      if (newSet.has(post.id)) newSet.delete(post.id);
-                                      else newSet.add(post.id);
-                                      return newSet;
-                                    });
-                                  }}
-                                  className={`flex items-center gap-1 text-xs ${expandedComments.has(post.id) ? 'text-purple-600' : 'text-gray-400 hover:text-gray-600'}`}
-                                >
-                                  <MessageCircle size={12} />
-                                  <span>{(post.comments_count ?? post.comments) || 0}</span>
-                                </button>
-                              </div>
-                              
-                              {/* Inline comments section when expanded */}
-                              {expandedComments.has(post.id) && (
-                                <div className="mt-2 pt-2 border-t border-gray-100">
-                                  <CommentsSection
-                                    postId={post.id}
-                                    isLiked={likedPosts.has(post.id)}
-                                    onLike={handleLike}
-                                    expandedComments={true}
-                                    onToggleComments={() => {}}
-                                    fetchComments={fetchComments}
-                                    commentInput={commentInputs[post.id] || ''}
-                                    onCommentInputChange={(value) => handleCommentInputChange(post.id, value)}
-                                    onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(post.id, parentCommentId, content)}
-                                    isSubmitting={commentMutation.isPending}
-                                    currentUserId={user?.id}
-                                    onDeleteComment={handleDeleteComment}
-                                    onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
-                                    onVoteComment={handleVoteComment}
-                                    likedComments={likedComments}
-                                    session={session}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    
-                    {/* Play Card at the end */}
-                    <button 
-                      onClick={() => {
-                        const el = document.getElementById('cast-friends-game');
-                        if (el) {
-                          const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
-                          window.scrollTo({ top: y, behavior: 'smooth' });
-                        }
-                      }}
-                      className="flex-shrink-0"
-                    >
-                      <div className="w-48 h-full rounded-xl bg-gradient-to-br from-purple-600 to-amber-500 overflow-hidden shadow-sm flex flex-col items-center justify-center p-4 min-h-[140px]">
-                        <Users size={28} className="text-white mb-2" />
-                        <p className="text-white font-bold text-center">Cast Your Friends</p>
-                        <p className="text-white/80 text-xs text-center mt-1">Who would play them in a movie?</p>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              )}
 
               {/* POLLS filter - Movies category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
@@ -4280,7 +4128,7 @@ export default function Feed() {
                 <RanksCarousel offset={0} />
               )}
 
-              {renderRoomCarousel(1, "The Room")}
+              {renderRoomCarousel(1, "Quick Glimpse")}
 
               {renderPostBatchByIndex(5)}
 
@@ -4307,7 +4155,7 @@ export default function Feed() {
                 <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
-              {renderRoomCarousel(2, "The Room")}
+              {renderRoomCarousel(2, "Quick Glimpse")}
 
               {renderPostBatchByIndex(7)}
 
@@ -4339,7 +4187,7 @@ export default function Feed() {
                 <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
-              {renderRoomCarousel(3, "The Room")}
+              {renderRoomCarousel(3, "Quick Glimpse")}
 
               {renderPostBatchByIndex(9)}
 
