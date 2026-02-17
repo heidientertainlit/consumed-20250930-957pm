@@ -52,28 +52,10 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
       const existingTitles = new Set(lists.map((l: any) => l.title));
       const missingSystemLists = REQUIRED_SYSTEM_LISTS.filter(t => !existingTitles.has(t));
       
-      if (missingSystemLists.length > 0 && session?.user?.id) {
-        console.log('📋 Missing system lists, creating:', missingSystemLists);
+      if (missingSystemLists.length > 0) {
+        console.log('📋 Missing system lists, adding placeholders:', missingSystemLists);
         for (const title of missingSystemLists) {
-          const { data: newList, error } = await supabase
-            .from('lists')
-            .upsert({
-              user_id: session.user.id,
-              title,
-              is_default: true,
-              is_private: false,
-            }, {
-              onConflict: 'user_id,title',
-              ignoreDuplicates: true,
-            })
-            .select('id, title, is_private')
-            .maybeSingle();
-          
-          if (newList && !error) {
-            lists.push({ ...newList, is_default: true });
-          } else if (error) {
-            console.warn(`Failed to create ${title} list:`, error);
-          }
+          lists.push({ id: `__placeholder_${title}`, title, is_default: true, is_private: false });
         }
       }
       
@@ -138,6 +120,34 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     setIsAdding(listId);
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      
+      let actualListId = listId;
+      if (listId.startsWith('__placeholder_')) {
+        console.log('📋 Creating missing system list:', listName);
+        const createResponse = await fetch(`${supabaseUrl}/functions/v1/create-custom-list`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: listName,
+            is_default: true,
+            is_private: false,
+          }),
+        });
+        const createData = await createResponse.json();
+        if (createData?.list?.id) {
+          actualListId = createData.list.id;
+          console.log('📋 Created system list:', actualListId);
+        } else if (createData?.id) {
+          actualListId = createData.id;
+        } else {
+          throw new Error('Failed to create list');
+        }
+        queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      }
+      
       const response = await fetch(`${supabaseUrl}/functions/v1/add-media-to-list`, {
         method: 'POST',
         headers: {
@@ -145,7 +155,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          list_id: listId,
+          list_id: actualListId,
           media_title: media.title,
           media_type: media.mediaType,
           media_creator: media.creator || '',
