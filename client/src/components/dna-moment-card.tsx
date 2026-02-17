@@ -122,18 +122,24 @@ export function DnaMomentCard() {
 
       const answerValue = answer || (answers ? answers.join(',') : '');
       
-      const { error: insertError } = await supabase
+      console.log('🧬 Saving DNA answer:', { momentId, answerValue, userId });
+      
+      const { data: insertData, error: insertError } = await supabase
         .from('dna_moment_responses')
         .insert({
           user_id: userId,
           moment_id: momentId,
           answer: answerValue,
           points_earned: 5,
-        });
+        })
+        .select();
       
       if (insertError) {
+        console.error('🧬 DNA answer save error:', insertError);
         throw new Error(insertError.message);
       }
+      
+      console.log('🧬 DNA answer saved successfully:', insertData);
 
       const { data: allResponses } = await supabase
         .from('dna_moment_responses')
@@ -380,11 +386,6 @@ export function DnaMomentCard() {
         </div>
       </Link>
 
-      {answerMutation.isPending && (
-        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-2xl">
-          <Loader2 className="w-6 h-6 animate-spin text-teal-500" />
-        </div>
-      )}
     </Card>
   );
 }
