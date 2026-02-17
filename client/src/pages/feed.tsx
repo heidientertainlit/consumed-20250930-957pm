@@ -3847,7 +3847,7 @@ export default function Feed() {
                 <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                      <Play size={14} className="text-purple-500" />
+                      <Activity size={14} className="text-purple-500" />
                       What Friends Are Consuming
                     </h3>
                     <span className="text-[10px] text-purple-500 font-medium">{friendsConsuming.length} items</span>
