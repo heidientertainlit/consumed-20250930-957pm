@@ -3857,8 +3857,10 @@ export default function Feed() {
                       <Link key={item.id || idx} href={`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`}>
                         <div className="w-[80px] flex-shrink-0 cursor-pointer group">
                           <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-1.5 ring-1 ring-gray-200 group-hover:ring-purple-400 transition-all">
-                            {item.image_url ? (
+                            {(item.image_url && item.image_url.startsWith('http')) ? (
                               <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                            ) : item.image_url && !item.image_url.startsWith('http') ? (
+                              <img src={`https://image.tmdb.org/t/p/w200${item.image_url}`} alt={item.title} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center">
                                 <Film size={16} className="text-purple-400" />
@@ -3883,7 +3885,11 @@ export default function Feed() {
                             </button>
                           </div>
                           <p className="text-[10px] text-gray-800 truncate font-medium">{item.title}</p>
-                          <p className="text-[9px] text-gray-400 truncate capitalize">{(item.media_type || 'movie').replace('_', ' ')}</p>
+                          <p className="text-[9px] text-gray-400 truncate capitalize">{
+                            item.media_type && item.media_type.toLowerCase() !== 'mixed' 
+                              ? (item.media_type === 'tv' ? 'TV' : item.media_type.replace('_', ' '))
+                              : ''
+                          }</p>
                           <p className="text-[9px] text-purple-500 truncate">{item.owner?.display_name || item.owner?.user_name || 'User'}</p>
                         </div>
                       </Link>
