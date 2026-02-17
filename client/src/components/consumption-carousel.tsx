@@ -215,9 +215,8 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
 
   // Group items into pages
   const ITEMS_PER_PAGE = 3;
-  const hasLbPage = !!lbConfig && lbTop3.length > 0;
-  const itemPages = Math.ceil(items.length / ITEMS_PER_PAGE);
-  const totalPages = itemPages + (hasLbPage ? 1 : 0);
+  const hasLbInline = !!lbConfig && lbTop3.length > 0;
+  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
 
   const scrollToNext = () => {
     if (scrollRef.current && currentIndex < totalPages - 1) {
@@ -346,10 +345,14 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
 
   if (!items || items.length === 0) return null;
 
-  // Create pages array
+  // Create pages array - if leaderboard is inline, first page gets 2 items (leaderboard takes 1 slot)
   const pages: FriendActivityItem[][] = [];
-  for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
-    pages.push(items.slice(i, i + ITEMS_PER_PAGE));
+  const firstPageSize = hasLbInline ? ITEMS_PER_PAGE - 1 : ITEMS_PER_PAGE;
+  if (items.length > 0) {
+    pages.push(items.slice(0, firstPageSize));
+    for (let i = firstPageSize; i < items.length; i += ITEMS_PER_PAGE) {
+      pages.push(items.slice(i, i + ITEMS_PER_PAGE));
+    }
   }
 
   const [expandedReview, setExpandedReview] = useState<string | null>(null);
@@ -751,68 +754,62 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
     return null;
   };
 
+  const renderLeaderboardItem = () => {
+    if (!lbConfig || lbTop3.length === 0) return null;
+    const LbIcon = lbConfig.icon;
+    const getRankBadge = (rank: number) => {
+      return rank === 1 ? 'bg-amber-400 text-amber-900' : rank === 2 ? 'bg-gray-300 text-gray-700' : 'bg-orange-300 text-orange-800';
+    };
+    return (
+      <Link href="/leaderboard" key="leaderboard-inline">
+        <div className={`py-2.5 border-b border-gray-100 cursor-pointer hover:opacity-90 transition-opacity`}>
+          <div className={`bg-gradient-to-r ${lbConfig.bgGradient} rounded-xl px-3 py-2`}>
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <LbIcon className={lbConfig.accentColor} size={13} />
+                <span className={`text-[11px] font-semibold ${lbConfig.accentColor}`}>{lbConfig.title}</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-gray-400" />
+            </div>
+            <div className="flex items-center gap-3">
+              {lbTop3.map((entry: any) => (
+                <div key={entry.userId} className="flex items-center gap-1.5 flex-1 min-w-0">
+                  <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${getRankBadge(entry.rank)}`}>
+                    {entry.rank}
+                  </div>
+                  <div className="w-5 h-5 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                    {entry.avatarUrl ? (
+                      <img src={entry.avatarUrl} alt={entry.username} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-[8px]">👤</div>
+                    )}
+                  </div>
+                  <span className={`text-[10px] font-medium truncate ${entry.isCurrentUser ? 'text-purple-700' : 'text-gray-700'}`}>
+                    {entry.isCurrentUser ? 'You' : entry.username}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {lbCurrentUser && lbCurrentUser.rank > 3 && lbPointsGap > 0 && (
+              <p className="text-[9px] text-gray-500 mt-1">
+                You're <span className="font-semibold text-purple-600">{lbPointsGap.toLocaleString()} XP</span> from #{lbCurrentUser.rank - 1}
+              </p>
+            )}
+          </div>
+        </div>
+      </Link>
+    );
+  };
+
   const renderPage = (pageItems: FriendActivityItem[], pageIndex: number) => (
     <div
       key={pageIndex}
       className="flex-shrink-0 w-full snap-center"
     >
+      {pageIndex === 0 && hasLbInline && renderLeaderboardItem()}
       {pageItems.map((item, i) => renderItem(item, pageIndex * ITEMS_PER_PAGE + i))}
     </div>
   );
-
-  const getRankBadge = (rank: number) => {
-    const colors = rank === 1 ? 'bg-amber-400 text-amber-900' : rank === 2 ? 'bg-gray-300 text-gray-700' : 'bg-orange-300 text-orange-800';
-    return colors;
-  };
-
-  const renderLeaderboardPage = () => {
-    if (!lbConfig || lbTop3.length === 0) return null;
-    const LbIcon = lbConfig.icon;
-    return (
-      <div key="leaderboard-page" className="flex-shrink-0 w-full snap-center">
-        <div className={`bg-gradient-to-b ${lbConfig.bgGradient} rounded-xl p-3 h-full`}>
-          <div className="flex items-center gap-1.5 mb-2">
-            <LbIcon className={`${lbConfig.accentColor}`} size={15} />
-            <span className={`text-xs font-semibold ${lbConfig.accentColor}`}>{lbConfig.title}</span>
-          </div>
-          <div className="space-y-1.5">
-            {lbTop3.map((entry: any) => (
-              <div key={entry.userId} className={`flex items-center gap-2 p-1.5 rounded-lg ${entry.isCurrentUser ? 'bg-purple-100/80 border border-purple-200' : 'bg-white/60'}`}>
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${getRankBadge(entry.rank)}`}>
-                  {entry.rank}
-                </div>
-                <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                  {entry.avatarUrl ? (
-                    <img src={entry.avatarUrl} alt={entry.username} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-[10px]">
-                      👤
-                    </div>
-                  )}
-                </div>
-                {entry.isCurrentUser ? (
-                  <span className="flex-1 text-xs font-medium truncate text-purple-700">You</span>
-                ) : (
-                  <Link href={`/user/${entry.userId}`} className="flex-1 text-xs font-medium truncate text-gray-800 hover:text-purple-600 transition-colors">
-                    {entry.username}
-                  </Link>
-                )}
-                <span className="text-xs font-semibold text-gray-700">{entry.points.toLocaleString()}</span>
-              </div>
-            ))}
-          </div>
-          {lbCurrentUser && lbCurrentUser.rank > 3 && lbPointsGap > 0 && (
-            <p className="text-[10px] text-gray-600 mt-2 text-center">
-              You're <span className="font-semibold text-purple-600">{lbPointsGap.toLocaleString()} XP</span> from #{lbCurrentUser.rank - 1}!
-            </p>
-          )}
-          <Link href="/leaderboard" className={`block text-center text-[10px] font-medium ${lbConfig.accentColor} mt-2 hover:underline`}>
-            View Full Leaderboard →
-          </Link>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
@@ -852,7 +849,6 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
         className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
       >
         {pages.map((pageItems, pageIndex) => renderPage(pageItems, pageIndex))}
-        {hasLbPage && renderLeaderboardPage()}
       </div>
 
       {showAddModal && (
