@@ -3844,24 +3844,24 @@ export default function Feed() {
 
               {/* What Friends Are Consuming - horizontal carousel */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && friendsConsuming.length > 0 && (
-                <div className="bg-gradient-to-br from-gray-900 via-purple-950 to-gray-900 rounded-2xl p-4 border border-purple-800/30">
+                <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                      <Play size={14} className="text-purple-400" />
+                    <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                      <Play size={14} className="text-purple-500" />
                       What Friends Are Consuming
                     </h3>
-                    <span className="text-[10px] text-purple-400 font-medium">{friendsConsuming.length} items</span>
+                    <span className="text-[10px] text-purple-500 font-medium">{friendsConsuming.length} items</span>
                   </div>
                   <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
                     {friendsConsuming.map((item: any, idx: number) => (
                       <Link key={item.id || idx} href={`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`}>
                         <div className="w-[72px] flex-shrink-0 cursor-pointer group">
-                          <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-1.5 ring-1 ring-white/10 group-hover:ring-purple-500/50 transition-all">
+                          <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-1.5 ring-1 ring-gray-200 group-hover:ring-purple-400 transition-all">
                             {item.image_url ? (
                               <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-purple-800 to-blue-900 flex items-center justify-center">
-                                <Film size={16} className="text-purple-300" />
+                              <div className="w-full h-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center">
+                                <Film size={16} className="text-purple-400" />
                               </div>
                             )}
                             <button
@@ -3877,13 +3877,13 @@ export default function Feed() {
                                 });
                                 setIsQuickAddOpen(true);
                               }}
-                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 transition-all"
+                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-all"
                             >
                               <Plus size={12} className="text-white" strokeWidth={2.5} />
                             </button>
                           </div>
-                          <p className="text-[10px] text-gray-300 truncate font-medium">{item.title}</p>
-                          <p className="text-[9px] text-purple-400 truncate">{item.owner?.display_name || item.owner?.user_name || 'User'}</p>
+                          <p className="text-[10px] text-gray-800 truncate font-medium">{item.title}</p>
+                          <p className="text-[9px] text-purple-500 truncate">{item.owner?.display_name || item.owner?.user_name || 'User'}</p>
                         </div>
                       </Link>
                     ))}

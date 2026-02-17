@@ -30,14 +30,14 @@ interface SeenItSet {
 const getMediaTypeConfig = (mediaType: string) => {
   switch (mediaType) {
     case 'book':
-      return { icon: BookOpen, pill: 'Books', actionYes: 'Read It', actionDone: 'Read', iconColor: 'text-emerald-400', pillBg: 'bg-emerald-100 text-emerald-700' };
+      return { icon: BookOpen, pill: 'Books', subtitle: 'What have you read?', actionYes: 'Read It', actionDone: 'Read', iconColor: 'text-emerald-400', pillBg: 'bg-emerald-100 text-emerald-700' };
     case 'music':
     case 'podcast':
-      return { icon: Headphones, pill: 'Music', actionYes: 'Heard It', actionDone: 'Heard', iconColor: 'text-pink-400', pillBg: 'bg-pink-100 text-pink-700' };
+      return { icon: Headphones, pill: 'Music', subtitle: 'What have you listened to?', actionYes: 'Heard It', actionDone: 'Heard', iconColor: 'text-pink-400', pillBg: 'bg-pink-100 text-pink-700' };
     case 'game':
-      return { icon: Gamepad2, pill: 'Games', actionYes: 'Played It', actionDone: 'Played', iconColor: 'text-blue-400', pillBg: 'bg-blue-100 text-blue-700' };
+      return { icon: Gamepad2, pill: 'Games', subtitle: 'What have you played?', actionYes: 'Played It', actionDone: 'Played', iconColor: 'text-blue-400', pillBg: 'bg-blue-100 text-blue-700' };
     default:
-      return { icon: Eye, pill: 'Movies', actionYes: 'Seen It', actionDone: 'Seen', iconColor: 'text-yellow-400', pillBg: 'bg-yellow-100 text-yellow-700' };
+      return { icon: Eye, pill: 'Movies', subtitle: 'What have you watched?', actionYes: 'Seen It', actionDone: 'Seen', iconColor: 'text-yellow-400', pillBg: 'bg-yellow-100 text-yellow-700' };
   }
 };
 
@@ -411,10 +411,13 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
   return (
     <Card className="bg-white border border-gray-100 shadow-sm p-4 rounded-2xl">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Dna className="w-4 h-4 text-purple-500" />
-          <h3 className="text-gray-900 font-semibold text-sm">eDNA Check</h3>
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${mediaConfig.pillBg}`}>{mediaConfig.pill}</span>
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            <Dna className="w-4 h-4 text-purple-500" />
+            <h3 className="text-gray-900 font-semibold text-sm">eDNA Check</h3>
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${mediaConfig.pillBg}`}>{mediaConfig.pill}</span>
+          </div>
+          <p className="text-[11px] text-gray-400 ml-6">{mediaConfig.subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
           {answeredCount > 0 && (
