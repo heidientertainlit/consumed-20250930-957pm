@@ -7,7 +7,6 @@ import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
 import InlineGameCard from "@/components/inline-game-card";
-import LeaderboardFeedCard from "@/components/leaderboard-feed-card";
 import PointsAchievementCard from "@/components/points-achievement-card";
 import MediaCarousel from "@/components/media-carousel";
 import FeedHero from "@/components/feed-hero";
@@ -4063,11 +4062,6 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
               )}
 
-              {/* Leaderboard - Trivia Champions */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
-                <LeaderboardFeedCard variant="trivia" />
-              )}
-
               {renderPostBatchByIndex(1)}
 
               {/* DNA Moment Card - in All or DNA filter */}
@@ -4116,11 +4110,6 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Games" />
               )}
 
-              {/* Leaderboard - Top Engagers */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
-                <LeaderboardFeedCard variant="overall" />
-              )}
-
               {/* Points Glimpse - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <PointsGlimpse />
@@ -4148,11 +4137,6 @@ export default function Feed() {
 
               {renderPostBatchByIndex(6)}
 
-              {/* Leaderboard - Poll Masters */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
-                <LeaderboardFeedCard variant="polls" />
-              )}
-
               {/* Read It? - Books (appears after Cast Your Friends carousel) */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
@@ -4168,22 +4152,12 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
               )}
 
-              {/* Leaderboard - Prediction Pros */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
-                <LeaderboardFeedCard variant="predictions" />
-              )}
-
               {/* More Ranks */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <RanksCarousel offset={1} />
               )}
 
               {renderPostBatchByIndex(8)}
-
-              {/* Leaderboard - Media Leaders */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && !selectedCategory && (
-                <LeaderboardFeedCard variant="consumption" />
-              )}
 
               {/* Listened to It? - Music & Podcasts */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
@@ -4349,12 +4323,6 @@ export default function Feed() {
                 
                 // Points achievement at positions 5, 17, 29... (every 12 posts starting at 5)
                 const shouldShowPointsAchievements = postIndex === 5 || (postIndex > 5 && (postIndex - 5) % 12 === 0);
-                // Leaderboard at positions 1, 13, 25... (every 12 posts starting at 1)
-                const shouldShowLeaderboard = postIndex === 1 || (postIndex > 1 && (postIndex - 1) % 12 === 0);
-                // Rotate through leaderboard variants
-                const leaderboardVariants = ['trivia', 'overall', 'consumption', 'polls', 'predictions'] as const;
-                const leaderboardOccurrence = shouldShowLeaderboard ? Math.floor((postIndex - 1) / 12) : 0;
-                const leaderboardVariant = leaderboardVariants[leaderboardOccurrence % leaderboardVariants.length];
                 // Media carousel at positions 9, 21, 33... (every 12 posts starting at 9)
                 const shouldShowMediaCarousel = postIndex === 9 || (postIndex > 9 && (postIndex - 9) % 12 === 0);
                 const shouldShowRecommendations = false;
@@ -4403,11 +4371,6 @@ export default function Feed() {
                     {shouldShowPointsAchievements && !isFilterActive && (
                       <div className="mb-4">
                         <PointsAchievementCard cardIndex={Math.floor((postIndex - 3) / 8)} />
-                      </div>
-                    )}
-                    {shouldShowLeaderboard && !isFilterActive && (
-                      <div className="mb-4">
-                        <LeaderboardFeedCard variant={leaderboardVariant} />
                       </div>
                     )}
                     {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
