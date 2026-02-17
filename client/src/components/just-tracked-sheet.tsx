@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Check, Flame, Star, Users, Sparkles, ChevronRight, Dna, HelpCircle, Gamepad2 } from "lucide-react";
+import { Check, Flame, Star, Users, Sparkles, ChevronRight, Dna, HelpCircle, Gamepad2, Film, Tv, BookOpen, Music, Headphones, Gamepad } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
+import { useLocation } from "wouter";
 
 interface JustTrackedMedia {
   title: string;
@@ -105,6 +106,43 @@ function generateInsight(
     question: `Are you ${identityLabel}?`,
     momentId: `identity-type-${media.mediaType?.toLowerCase() || 'other'}`,
   };
+}
+
+const triviaCategories = [
+  { label: 'Movies', icon: Film, type: 'movie', color: 'from-red-400 to-pink-500' },
+  { label: 'TV', icon: Tv, type: 'tv', color: 'from-blue-400 to-indigo-500' },
+  { label: 'Books', icon: BookOpen, type: 'book', color: 'from-amber-400 to-orange-500' },
+  { label: 'Music', icon: Music, type: 'music', color: 'from-green-400 to-emerald-500' },
+  { label: 'Podcasts', icon: Headphones, type: 'podcast', color: 'from-purple-400 to-violet-500' },
+];
+
+function TriviaMorePrompt({ onClose }: { onClose: () => void }) {
+  const [, navigate] = useLocation();
+
+  const handleCategoryPick = (type: string) => {
+    onClose();
+    navigate(`/play/trivia?category=${type}`);
+  };
+
+  return (
+    <div className="mt-3 pt-3 border-t border-purple-100">
+      <p className="text-sm font-semibold text-gray-900 text-center mb-3">Want more trivia?</p>
+      <div className="flex gap-2 justify-center flex-wrap">
+        {triviaCategories.map((cat) => (
+          <button
+            key={cat.type}
+            onClick={() => handleCategoryPick(cat.type)}
+            className="flex flex-col items-center gap-1 py-2 px-3 rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${cat.color} flex items-center justify-center`}>
+              <cat.icon size={16} className="text-white" />
+            </div>
+            <span className="text-xs text-gray-600 font-medium">{cat.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function JustTrackedSheet({ 
@@ -420,6 +458,7 @@ export function JustTrackedSheet({
             )}
 
             {isWantToList && triviaQuestion ? (
+              <>
               <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 border border-purple-100">
                 <p className="text-gray-900 font-bold text-base mb-3">
                 Know your {media.mediaType?.toLowerCase() === 'tv' ? 'TV' : media.mediaType?.toLowerCase() || 'entertainment'} trivia?
@@ -478,6 +517,10 @@ export function JustTrackedSheet({
                   </div>
                 )}
               </div>
+              {triviaRevealed && (
+                <TriviaMorePrompt onClose={onClose} />
+              )}
+              </>
             ) : showRateOption && onRateIt ? (
               <button
                 onClick={onRateIt}
