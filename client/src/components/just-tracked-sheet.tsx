@@ -421,12 +421,11 @@ export function JustTrackedSheet({
 
             {isWantToList && triviaQuestion ? (
               <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 border border-purple-100">
-                <div className="flex items-center gap-2 mb-3">
-                  <HelpCircle size={16} className="text-purple-500" />
-                  <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Quick Trivia</span>
-                </div>
+                <p className="text-gray-900 font-bold text-base mb-3">
+                Know your {media.mediaType?.toLowerCase() === 'tv' ? 'TV' : media.mediaType?.toLowerCase() || 'entertainment'} trivia?
+              </p>
                 
-                <p className="text-gray-900 font-semibold text-sm mb-3">{triviaQuestion.title}</p>
+              <p className="text-gray-700 text-sm mb-3">{triviaQuestion.title}</p>
                 
                 <div className="space-y-2">
                   {triviaQuestion.options.map((option: string, idx: number) => {
