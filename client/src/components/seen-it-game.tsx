@@ -30,14 +30,14 @@ interface SeenItSet {
 const getMediaTypeConfig = (mediaType: string) => {
   switch (mediaType) {
     case 'book':
-      return { icon: BookOpen, prompt: 'Read It?', actionYes: 'Read It', actionDone: 'Read', iconColor: 'text-emerald-400' };
+      return { icon: BookOpen, pill: 'Books', actionYes: 'Read It', actionDone: 'Read', iconColor: 'text-emerald-400', pillBg: 'bg-emerald-100 text-emerald-700' };
     case 'music':
     case 'podcast':
-      return { icon: Headphones, prompt: 'Listened to It?', actionYes: 'Heard It', actionDone: 'Heard', iconColor: 'text-pink-400' };
+      return { icon: Headphones, pill: 'Music', actionYes: 'Heard It', actionDone: 'Heard', iconColor: 'text-pink-400', pillBg: 'bg-pink-100 text-pink-700' };
     case 'game':
-      return { icon: Gamepad2, prompt: 'Played It?', actionYes: 'Played It', actionDone: 'Played', iconColor: 'text-blue-400' };
+      return { icon: Gamepad2, pill: 'Games', actionYes: 'Played It', actionDone: 'Played', iconColor: 'text-blue-400', pillBg: 'bg-blue-100 text-blue-700' };
     default:
-      return { icon: Eye, prompt: 'Seen It?', actionYes: 'Seen It', actionDone: 'Seen', iconColor: 'text-yellow-400' };
+      return { icon: Eye, pill: 'Movies', actionYes: 'Seen It', actionDone: 'Seen', iconColor: 'text-yellow-400', pillBg: 'bg-yellow-100 text-yellow-700' };
   }
 };
 
@@ -412,9 +412,9 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     <Card className="bg-white border border-gray-100 shadow-sm p-4 rounded-2xl">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <MediaIcon className={`w-4 h-4 ${mediaConfig.iconColor}`} />
-          <h3 className="text-gray-900 font-semibold text-sm">{mediaConfig.prompt}</h3>
-          <span className="text-purple-500 text-xs font-medium">• {currentSet.title}</span>
+          <span className="text-sm">🧬</span>
+          <h3 className="text-gray-900 font-semibold text-sm">Entertainment DNA Check</h3>
+          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${mediaConfig.pillBg}`}>{mediaConfig.pill}</span>
         </div>
         <div className="flex items-center gap-2">
           {answeredCount > 0 && (
