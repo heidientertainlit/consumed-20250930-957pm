@@ -1588,7 +1588,7 @@ export default function Feed() {
     );
   };
 
-  const TOTAL_BATCH_SLOTS = 15;
+  const TOTAL_BATCH_SLOTS = 22;
   const renderRemainingPosts = () => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
     const remainingBatches = postBatches.slice(TOTAL_BATCH_SLOTS);
@@ -4064,17 +4064,17 @@ export default function Feed() {
 
               {renderPostBatchByIndex(1)}
 
-              {/* DNA Moment Card - in All or DNA filter */}
+              {/* Entertainment DNA Card #1 - in All or DNA filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <DnaMomentCard />
               )}
 
-              {/* TV Polls - after DNA Moment */}
+              {renderPostBatchByIndex(2)}
+
+              {/* TV Polls */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
               )}
-
-              {renderPostBatchByIndex(2)}
 
               {renderPostBatchByIndex(3)}
 
@@ -4084,8 +4084,6 @@ export default function Feed() {
               )}
 
               {renderPostBatchByIndex(4)}
-
-              {/* Cast Your Friends - Approved Casts Carousel */}
 
               {/* POLLS filter - Movies category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
@@ -4110,24 +4108,32 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Games" />
               )}
 
+              {renderPostBatchByIndex(5)}
+
               {/* Points Glimpse - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <PointsGlimpse />
               )}
+
+              {renderPostBatchByIndex(6)}
 
               {/* Consumed Rankings Carousel - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <RanksCarousel offset={0} />
               )}
 
+              {renderPostBatchByIndex(7)}
+
               {renderRoomCarousel(1, "Quick Glimpse")}
 
-              {renderPostBatchByIndex(5)}
+              {renderPostBatchByIndex(8)}
 
               {/* Oscar Ballot Completions - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <AwardsCompletionFeed />
               )}
+
+              {renderPostBatchByIndex(9)}
 
               {/* TRIVIA filter - TV category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && 
@@ -4135,16 +4141,25 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
               )}
 
-              {renderPostBatchByIndex(6)}
+              {renderPostBatchByIndex(10)}
 
-              {/* Read It? - Books (appears after Cast Your Friends carousel) */}
+              {/* Read It? - Books */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
+              {renderPostBatchByIndex(11)}
+
               {renderRoomCarousel(2, "Quick Glimpse")}
 
-              {renderPostBatchByIndex(7)}
+              {renderPostBatchByIndex(12)}
+
+              {/* Entertainment DNA Card #2 - second instance deeper in feed */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
+                <DnaMomentCard />
+              )}
+
+              {renderPostBatchByIndex(13)}
 
               {/* POLLS filter - TV category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
@@ -4152,51 +4167,53 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
               )}
 
+              {renderPostBatchByIndex(14)}
+
               {/* More Ranks */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <RanksCarousel offset={1} />
               )}
 
-              {renderPostBatchByIndex(8)}
+              {renderPostBatchByIndex(15)}
 
               {/* Listened to It? - Music & Podcasts */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
+              {renderPostBatchByIndex(16)}
+
               {renderRoomCarousel(3, "Quick Glimpse")}
 
-              {renderPostBatchByIndex(9)}
+              {renderPostBatchByIndex(17)}
 
               {/* TRIVIA - Books category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
               )}
 
-              {renderPostBatchByIndex(10)}
+              {renderPostBatchByIndex(18)}
 
               {/* TRIVIA - Podcasts category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Podcasts" />
               )}
 
+              {renderPostBatchByIndex(19)}
+
               {/* TRIVIA - Gaming category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
               )}
 
-              {renderPostBatchByIndex(11)}
-
-              {renderPostBatchByIndex(12)}
+              {renderPostBatchByIndex(20)}
 
               {/* TRIVIA - Sports category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Sports" />
               )}
 
-              {renderPostBatchByIndex(13)}
-
-              {renderPostBatchByIndex(14)}
+              {renderPostBatchByIndex(21)}
 
               {renderRemainingPosts()}
 
@@ -6019,7 +6036,7 @@ export default function Feed() {
                 <div className="text-center py-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-100 mt-4">
                   <div className="text-3xl mb-2">🧬</div>
                   <p className="text-gray-600 font-medium">That's all for now!</p>
-                  <p className="text-gray-500 text-sm mt-1">Check back later for more DNA moments</p>
+                  <p className="text-gray-500 text-sm mt-1">Check back later for more Entertainment DNA</p>
                 </div>
               )}
 
