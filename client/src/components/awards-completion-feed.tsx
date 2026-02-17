@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Trophy, ChevronRight } from "lucide-react";
+import { Trophy, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 
@@ -102,7 +103,13 @@ export function AwardsCompletionFeed() {
     staleTime: 60000,
   });
 
+  const [expanded, setExpanded] = useState(false);
+
   if (!completions || completions.length === 0) return null;
+
+  const INITIAL_SHOW = 3;
+  const visibleCompletions = expanded ? completions : completions.slice(0, INITIAL_SHOW);
+  const hasMore = completions.length > INITIAL_SHOW;
 
   return (
     <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl border border-amber-200 overflow-hidden">
@@ -114,14 +121,14 @@ export function AwardsCompletionFeed() {
       </div>
       
       <div className="divide-y divide-amber-100">
-        {completions.map((completion, index) => {
+        {visibleCompletions.map((completion) => {
           const isCurrentUser = completion.user_id === currentUserId;
           const timeAgo = getTimeAgo(completion.completed_at);
           
           return (
-            <div key={`${completion.user_id}-${completion.event_slug}`} className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+            <div key={`${completion.user_id}-${completion.event_slug}`} className="p-3 px-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                   {completion.avatar_url ? (
                     <img src={completion.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
                   ) : (
@@ -130,27 +137,40 @@ export function AwardsCompletionFeed() {
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-800">
+                  <p className="text-xs text-gray-800">
                     <Link href={`/user/${completion.user_id}`} className="font-semibold text-gray-900 hover:text-amber-600">
                       {completion.display_name}
                     </Link>
                     {isCurrentUser && <span className="text-amber-600 ml-1">(You)</span>}
-                    {' '}completed {isCurrentUser ? 'your' : 'their'} {completion.event_year} {completion.event_name.includes('Academy') ? 'Oscars' : completion.event_name} ballot!
+                    {' '}completed their ballot
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">{timeAgo}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{timeAgo}</p>
                 </div>
               </div>
             </div>
           );
         })}
       </div>
+
+      {hasMore && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="w-full flex items-center justify-center gap-1 py-2 text-xs font-medium text-amber-600 hover:text-amber-700 border-t border-amber-100 transition-colors"
+        >
+          {expanded ? (
+            <>Show less <ChevronUp size={14} /></>
+          ) : (
+            <>See {completions.length - INITIAL_SHOW} more <ChevronDown size={14} /></>
+          )}
+        </button>
+      )}
       
       <Link 
         href="/play/awards/oscars-2026"
-        className="flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-medium hover:from-amber-600 hover:to-yellow-600 transition-colors"
+        className="flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-amber-500 to-yellow-500 text-white font-medium text-sm hover:from-amber-600 hover:to-yellow-600 transition-colors"
       >
         Make Your Picks
-        <ChevronRight size={18} />
+        <ChevronRight size={16} />
       </Link>
     </div>
   );

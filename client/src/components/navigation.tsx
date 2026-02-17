@@ -488,21 +488,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <Home className="text-white" size={28} />
           </Link>
 
-          {/* Add/Library - gradient circle with stack + plus */}
+          {/* Add - gradient circle with plus icon */}
           <Link
             href="/add"
             className="flex items-center justify-center"
             data-testid="nav-add"
           >
             <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #5B21B6, #7C3AED, #818CF8)' }}>
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-                <line x1="3" y1="4" x2="21" y2="4" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                <line x1="3" y1="10" x2="18" y2="10" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                <line x1="3" y1="16" x2="13" y2="16" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                <line x1="3" y1="22" x2="10" y2="22" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                <line x1="18" y1="15" x2="18" y2="23" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                <line x1="14" y1="19" x2="22" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-              </svg>
+              <Plus className="text-white" size={28} strokeWidth={2.5} />
             </div>
           </Link>
 
