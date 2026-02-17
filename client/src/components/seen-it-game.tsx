@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Eye, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, Search, BookOpen, Headphones, Gamepad2 } from "lucide-react";
+import { Eye, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, Search, BookOpen, Headphones, Gamepad2, Dna } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -412,7 +412,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     <Card className="bg-white border border-gray-100 shadow-sm p-4 rounded-2xl">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-sm">🧬</span>
+          <Dna className="w-4 h-4 text-purple-500" />
           <h3 className="text-gray-900 font-semibold text-sm">eDNA Check</h3>
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${mediaConfig.pillBg}`}>{mediaConfig.pill}</span>
         </div>
