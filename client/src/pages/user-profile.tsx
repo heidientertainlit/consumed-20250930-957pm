@@ -3391,8 +3391,8 @@ export default function UserProfile() {
         {/* Friends Manager - Only show on own profile */}
         {activeSection === 'friends' && isOwnProfile && user?.id && (
           <div ref={friendsRef} className="px-4 mb-8 space-y-4">
-            <CastFriendsGame />
             <FriendsManager userId={user.id} />
+            <CastFriendsGame />
           </div>
         )}
 
