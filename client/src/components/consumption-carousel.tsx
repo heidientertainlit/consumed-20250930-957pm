@@ -756,16 +756,14 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
 
   const renderLeaderboardItem = () => {
     if (!lbConfig || lbTop3.length === 0) return null;
-    const LbIcon = lbConfig.icon;
     const top2 = lbTop3.slice(0, 2);
-    const getRankEmoji = (rank: number) => rank === 1 ? '🥇' : '🥈';
+    const getRankBadgeColor = (rank: number) => rank === 1 ? 'bg-amber-400 text-amber-900' : 'bg-gray-300 text-gray-700';
     return (
       <div key="leaderboard-inline" className="py-3 border-b border-gray-100 last:border-b-0">
         <div className="flex gap-3">
           <Link href="/leaderboard">
-            <div className={`w-14 h-20 rounded-lg bg-gradient-to-br ${lbConfig.bgGradient} flex flex-col items-center justify-center flex-shrink-0 shadow-sm cursor-pointer hover:opacity-80 transition-opacity`}>
-              <LbIcon className={lbConfig.accentColor} size={20} />
-              <Trophy className="text-amber-400 mt-1" size={14} />
+            <div className="w-14 h-20 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0 shadow-sm cursor-pointer hover:opacity-80 transition-opacity">
+              <BarChart3 className="text-white" size={24} />
             </div>
           </Link>
           <div className="flex-1 min-w-0">
@@ -774,25 +772,20 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
                 <span className={`text-xs font-medium ${lbConfig.accentColor} hover:underline cursor-pointer`}>{lbConfig.title}</span>
               </Link>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               {top2.map((entry: any) => (
-                <div key={entry.userId} className="flex items-center gap-1.5">
-                  <span className="text-sm">{getRankEmoji(entry.rank)}</span>
-                  <div className="w-5 h-5 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
-                    {entry.avatarUrl ? (
-                      <img src={entry.avatarUrl} alt={entry.username} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-[8px]">👤</div>
-                    )}
+                <div key={entry.userId} className="flex items-center gap-2">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${getRankBadgeColor(entry.rank)}`}>
+                    {entry.rank}
                   </div>
-                  <span className={`text-xs font-medium truncate ${entry.isCurrentUser ? 'text-purple-700' : 'text-gray-800'}`}>
+                  <span className={`text-sm font-semibold truncate ${entry.isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
                     {entry.isCurrentUser ? 'You' : entry.username}
                   </span>
-                  <span className="text-[10px] text-gray-500 ml-auto flex-shrink-0">{entry.points.toLocaleString()} pts</span>
+                  <span className="text-xs text-gray-500 ml-auto flex-shrink-0">{entry.points.toLocaleString()} pts</span>
                 </div>
               ))}
             </div>
-            <p className="text-[10px] text-gray-400 mt-1">
+            <p className="text-[10px] text-gray-400 mt-1.5">
               {lbCurrentUser && lbCurrentUser.rank > 2 
                 ? <>You're #{lbCurrentUser.rank} · <span className="text-purple-500">{lbPointsGap.toLocaleString()} XP</span> to next</>
                 : 'Tap to see full rankings'}
