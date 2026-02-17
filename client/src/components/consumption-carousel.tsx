@@ -785,11 +785,13 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
                 </div>
               ))}
             </div>
-            <p className="text-[10px] text-gray-400 mt-1.5">
-              {lbCurrentUser && lbCurrentUser.rank > 2 
-                ? <>You're #{lbCurrentUser.rank} · <span className="text-purple-500">{lbPointsGap.toLocaleString()} XP</span> to next</>
-                : 'Tap to see full rankings'}
-            </p>
+            <Link href="/leaderboard">
+              <p className="text-[10px] text-gray-400 mt-1.5 hover:text-purple-500 cursor-pointer">
+                {lbCurrentUser && lbCurrentUser.rank > 2 
+                  ? <>You're #{lbCurrentUser.rank} · <span className="text-purple-500">{lbPointsGap.toLocaleString()} XP</span> to next</>
+                  : 'Tap to see full rankings'}
+              </p>
+            </Link>
           </div>
         </div>
       </div>
