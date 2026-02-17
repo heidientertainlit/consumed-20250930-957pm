@@ -1703,16 +1703,20 @@ export default function Feed() {
     return batches;
   }, [roomItems]);
 
+  const ROOM_LEADERBOARD_VARIANTS: ('trivia' | 'overall' | 'consumption' | 'polls' | 'predictions')[] = ['trivia', 'polls', 'predictions', 'consumption', 'overall'];
+
   const renderRoomCarousel = (batchIndex: number, title?: string) => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
     const batch = roomBatches[batchIndex];
     if (!batch || batch.length === 0) return null;
+    const lbVariant = ROOM_LEADERBOARD_VARIANTS[batchIndex % ROOM_LEADERBOARD_VARIANTS.length];
     return (
       <ConsumptionCarousel
         items={batch}
         title={title || "Quick Glimpse"}
         onItemDeleted={() => queryClient.invalidateQueries({ queryKey: ["social-feed"] })}
         currentUserId={currentAppUserId}
+        leaderboardVariant={lbVariant}
       />
     );
   };

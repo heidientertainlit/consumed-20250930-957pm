@@ -1,10 +1,27 @@
 import { useState, useRef, useMemo } from 'react';
 import { Link } from 'wouter';
-import { ChevronLeft, ChevronRight, Users, ThumbsUp, ThumbsDown, HelpCircle, BarChart3, Sparkles, Film, Tv, BookOpen, Music, Star, Plus, Trash2, MessageCircle, Send, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, ThumbsUp, ThumbsDown, HelpCircle, BarChart3, Sparkles, Film, Tv, BookOpen, Music, Star, Plus, Trash2, MessageCircle, Send, Loader2, Trophy, Brain, Target, TrendingUp, Library } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 import { QuickAddModal } from './quick-add-modal';
+
+type LeaderboardVariant = 'trivia' | 'overall' | 'consumption' | 'polls' | 'predictions';
+
+const LEADERBOARD_CONFIG: Record<LeaderboardVariant, {
+  title: string;
+  apiCategory: string;
+  icon: typeof Trophy;
+  accentColor: string;
+  bgGradient: string;
+}> = {
+  trivia: { title: 'Trivia Champions', apiCategory: 'trivia', icon: Brain, accentColor: 'text-purple-600', bgGradient: 'from-purple-50 to-pink-50' },
+  overall: { title: 'Top Engagers', apiCategory: 'overall', icon: TrendingUp, accentColor: 'text-blue-600', bgGradient: 'from-blue-50 to-indigo-50' },
+  consumption: { title: 'Media Leaders', apiCategory: 'total_consumption', icon: Library, accentColor: 'text-emerald-600', bgGradient: 'from-emerald-50 to-teal-50' },
+  polls: { title: 'Poll Masters', apiCategory: 'polls', icon: Target, accentColor: 'text-orange-600', bgGradient: 'from-orange-50 to-amber-50' },
+  predictions: { title: 'Prediction Pros', apiCategory: 'predictions', icon: Trophy, accentColor: 'text-amber-600', bgGradient: 'from-amber-50 to-yellow-50' },
+};
 
 const getStablePercent = (id: string, min = 40, max = 80) => {
   let hash = 0;
@@ -48,6 +65,7 @@ interface ConsumptionCarouselProps {
   title?: string;
   onItemDeleted?: () => void;
   currentUserId?: string | null;
+  leaderboardVariant?: LeaderboardVariant;
 }
 
 const getMediaIcon = (mediaType?: string) => {
@@ -79,7 +97,7 @@ const getTypeIcon = (type: string) => {
   }
 };
 
-export default function ConsumptionCarousel({ items, title = "Community", onItemDeleted, currentUserId }: ConsumptionCarouselProps) {
+export default function ConsumptionCarousel({ items, title = "Community", onItemDeleted, currentUserId, leaderboardVariant }: ConsumptionCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reactions, setReactions] = useState<Record<string, 'agree' | 'disagree'>>({});
@@ -97,6 +115,67 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  const lbConfig = leaderboardVariant ? LEADERBOARD_CONFIG[leaderboardVariant] : null;
+
+  const { data: lbSession } = useQuery({
+    queryKey: ['session-for-carousel-lb'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session;
+    },
+    enabled: !!leaderboardVariant,
+  });
+
+  const { data: currentUserProfile } = useQuery({
+    queryKey: ['current-user-profile-lb'],
+    queryFn: async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return null;
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('id, username, avatar_url')
+        .eq('auth_id', authUser.id)
+        .single();
+      return profile;
+    },
+    enabled: !!leaderboardVariant,
+  });
+
+  const { data: lbData = [] } = useQuery({
+    queryKey: ['carousel-leaderboard', leaderboardVariant, lbSession?.access_token],
+    queryFn: async () => {
+      if (!lbSession?.access_token || !lbConfig) return [];
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=all&scope=global&period=weekly`,
+        { headers: { 'Authorization': `Bearer ${lbSession.access_token}`, 'Content-Type': 'application/json' } }
+      );
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data?.categories?.[lbConfig.apiCategory] || [];
+    },
+    enabled: !!leaderboardVariant && !!lbSession?.access_token,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  const lbEntries = useMemo(() => {
+    if (!lbData || !Array.isArray(lbData)) return [];
+    return lbData.map((entry: any, index: number) => ({
+      rank: entry.rank || index + 1,
+      userId: entry.user_id || entry.id,
+      username: entry.username || 'unknown',
+      displayName: entry.display_name || entry.username || 'Unknown',
+      avatarUrl: entry.avatar_url,
+      points: entry.score || entry.total_points || entry.points || 0,
+      isCurrentUser: currentUserProfile?.id === (entry.user_id || entry.id),
+    }));
+  }, [lbData, currentUserProfile]);
+
+  const lbTop3 = lbEntries.slice(0, 3);
+  const lbCurrentUser = lbEntries.find((e: any) => e.isCurrentUser);
+  const lbUserAbove = lbCurrentUser && lbCurrentUser.rank > 1 ? lbEntries[lbCurrentUser.rank - 2] : null;
+  const lbPointsGap = lbUserAbove ? lbUserAbove.points - (lbCurrentUser?.points || 0) : 0;
 
   const handleDelete = async (itemId: string) => {
     const deleteUserId = currentUserId || user?.id;
@@ -136,7 +215,9 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
 
   // Group items into pages
   const ITEMS_PER_PAGE = 3;
-  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  const hasLbPage = !!lbConfig && lbTop3.length > 0;
+  const itemPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  const totalPages = itemPages + (hasLbPage ? 1 : 0);
 
   const scrollToNext = () => {
     if (scrollRef.current && currentIndex < totalPages - 1) {
@@ -679,6 +760,60 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
     </div>
   );
 
+  const getRankBadge = (rank: number) => {
+    const colors = rank === 1 ? 'bg-amber-400 text-amber-900' : rank === 2 ? 'bg-gray-300 text-gray-700' : 'bg-orange-300 text-orange-800';
+    return colors;
+  };
+
+  const renderLeaderboardPage = () => {
+    if (!lbConfig || lbTop3.length === 0) return null;
+    const LbIcon = lbConfig.icon;
+    return (
+      <div key="leaderboard-page" className="flex-shrink-0 w-full snap-center">
+        <div className={`bg-gradient-to-b ${lbConfig.bgGradient} rounded-xl p-3 h-full`}>
+          <div className="flex items-center gap-1.5 mb-2">
+            <LbIcon className={`${lbConfig.accentColor}`} size={15} />
+            <span className={`text-xs font-semibold ${lbConfig.accentColor}`}>{lbConfig.title}</span>
+          </div>
+          <div className="space-y-1.5">
+            {lbTop3.map((entry: any) => (
+              <div key={entry.userId} className={`flex items-center gap-2 p-1.5 rounded-lg ${entry.isCurrentUser ? 'bg-purple-100/80 border border-purple-200' : 'bg-white/60'}`}>
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${getRankBadge(entry.rank)}`}>
+                  {entry.rank}
+                </div>
+                <div className="w-6 h-6 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                  {entry.avatarUrl ? (
+                    <img src={entry.avatarUrl} alt={entry.username} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-[10px]">
+                      👤
+                    </div>
+                  )}
+                </div>
+                {entry.isCurrentUser ? (
+                  <span className="flex-1 text-xs font-medium truncate text-purple-700">You</span>
+                ) : (
+                  <Link href={`/user/${entry.userId}`} className="flex-1 text-xs font-medium truncate text-gray-800 hover:text-purple-600 transition-colors">
+                    {entry.username}
+                  </Link>
+                )}
+                <span className="text-xs font-semibold text-gray-700">{entry.points.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+          {lbCurrentUser && lbCurrentUser.rank > 3 && lbPointsGap > 0 && (
+            <p className="text-[10px] text-gray-600 mt-2 text-center">
+              You're <span className="font-semibold text-purple-600">{lbPointsGap.toLocaleString()} XP</span> from #{lbCurrentUser.rank - 1}!
+            </p>
+          )}
+          <Link href="/leaderboard" className={`block text-center text-[10px] font-medium ${lbConfig.accentColor} mt-2 hover:underline`}>
+            View Full Leaderboard →
+          </Link>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
       <div className="flex items-center justify-between mb-3">
@@ -699,7 +834,7 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
               <ChevronLeft className="w-4 h-4 text-gray-600" />
             </button>
           )}
-          {currentIndex < pages.length - 1 && (
+          {currentIndex < totalPages - 1 && (
             <button
               onClick={scrollToNext}
               className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
@@ -707,7 +842,7 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
               <ChevronRight className="w-4 h-4 text-gray-600" />
             </button>
           )}
-          <span className="text-xs text-gray-400 ml-1">{currentIndex + 1}/{pages.length}</span>
+          <span className="text-xs text-gray-400 ml-1">{currentIndex + 1}/{totalPages}</span>
         </div>
       </div>
 
@@ -717,6 +852,7 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
         className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
       >
         {pages.map((pageItems, pageIndex) => renderPage(pageItems, pageIndex))}
+        {hasLbPage && renderLeaderboardPage()}
       </div>
 
       {showAddModal && (
