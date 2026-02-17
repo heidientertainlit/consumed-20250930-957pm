@@ -3392,7 +3392,10 @@ export default function UserProfile() {
         {activeSection === 'friends' && isOwnProfile && user?.id && (
           <div ref={friendsRef} className="px-4 mb-8 space-y-4">
             <FriendsManager userId={user.id} />
-            <CastFriendsGame />
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>Do Together</h3>
+              <CastFriendsGame />
+            </div>
           </div>
         )}
 
