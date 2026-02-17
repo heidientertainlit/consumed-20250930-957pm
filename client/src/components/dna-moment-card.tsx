@@ -67,31 +67,44 @@ export function DnaMomentCard() {
   };
 
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['dna-moments-carousel'],
+    queryKey: ['dna-moments-carousel', session?.user?.id],
     queryFn: async () => {
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/get-dna-moment?count=5`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token || ''}`
-        }
-      });
+      const userId = session?.user?.id;
       
-      if (!response.ok) {
+      const { data: allMoments, error: momentsError } = await supabase
+        .from('dna_moments')
+        .select('*')
+        .order('created_at', { ascending: true });
+      
+      if (momentsError || !allMoments) {
         throw new Error('Failed to load DNA moments');
       }
-      
-      const result = await response.json();
-      
-      if (result.moments && result.moments.length > 0) {
-        return result as { moments: DnaMoment[], answeredIds: string[] };
+
+      let answeredIds: string[] = [];
+      if (userId) {
+        const { data: responses } = await supabase
+          .from('dna_moment_responses')
+          .select('moment_id')
+          .eq('user_id', userId);
+        
+        answeredIds = (responses || []).map((r: any) => r.moment_id);
       }
+
+      const unanswered = allMoments.filter((m: any) => !answeredIds.includes(m.id));
       
-      if (result.moment) {
-        return { moments: [result.moment], answeredIds: result.hasAnswered ? [result.moment.id] : [] };
-      }
-      
-      return { moments: [], answeredIds: [] };
+      const momentsToShow = unanswered.slice(0, 5).map((m: any) => ({
+        id: m.id,
+        questionText: m.question_text,
+        optionA: m.option_a,
+        optionB: m.option_b,
+        optionC: m.option_c || undefined,
+        optionD: m.option_d || undefined,
+        optionE: m.option_e || undefined,
+        category: m.category || 'general',
+        isMultiSelect: m.is_multi_select || false,
+      }));
+
+      return { moments: momentsToShow, answeredIds };
     },
     enabled: !!session?.access_token
   });
@@ -104,28 +117,54 @@ export function DnaMomentCard() {
 
   const answerMutation = useMutation({
     mutationFn: async ({ momentId, answer, answers }: { momentId: string, answer?: string, answers?: string[] }) => {
-      if (!session?.access_token) throw new Error('Missing data');
+      const userId = session?.user?.id;
+      if (!userId) throw new Error('Not logged in');
 
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/answer-dna-moment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ momentId, answer, answers })
-      });
+      const answerValue = answer || (answers ? answers.join(',') : '');
       
-      const result = await response.json();
-      if (result.error) {
-        throw new Error(result.error);
+      const { error: insertError } = await supabase
+        .from('dna_moment_responses')
+        .insert({
+          user_id: userId,
+          moment_id: momentId,
+          answer: answerValue,
+          points_earned: 5,
+        });
+      
+      if (insertError) {
+        throw new Error(insertError.message);
       }
+
+      const { data: allResponses } = await supabase
+        .from('dna_moment_responses')
+        .select('answer')
+        .eq('moment_id', momentId);
       
-      return { momentId, result };
+      const total = allResponses?.length || 1;
+      const optionCounts: Record<string, number> = {};
+      (allResponses || []).forEach((r: any) => {
+        const a = r.answer || '';
+        a.split(',').forEach((val: string) => {
+          optionCounts[val] = (optionCounts[val] || 0) + 1;
+        });
+      });
+
+      const stats = {
+        totalResponses: total,
+        optionAPercent: Math.round(((optionCounts['a'] || 0) / total) * 100),
+        optionBPercent: Math.round(((optionCounts['b'] || 0) / total) * 100),
+        optionCPercent: Math.round(((optionCounts['c'] || 0) / total) * 100),
+        optionDPercent: Math.round(((optionCounts['d'] || 0) / total) * 100),
+        optionEPercent: Math.round(((optionCounts['e'] || 0) / total) * 100),
+      };
+
+      return { momentId, result: { stats, pointsEarned: 5 } };
     },
     onSuccess: ({ momentId, result }) => {
       setAnsweredMoments(prev => new Set([...prev, momentId]));
       setMomentResults(prev => ({ ...prev, [momentId]: result }));
       
+      queryClient.invalidateQueries({ queryKey: ['dna-moments-carousel'] });
       incrementActivityCount();
       trackEvent('dna_moment_answered', { moment_id: momentId, points_earned: result.pointsEarned });
     },
