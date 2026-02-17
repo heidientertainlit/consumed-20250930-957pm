@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { X, Loader2, Check, Play, Clock, Ban, Heart, Folder, Star, MessageSquare, Share2 } from "lucide-react";
+import { X, Loader2, Check, Play, Clock, Ban, Heart, Folder, Star, MessageSquare, Share2, HelpCircle, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -22,7 +22,17 @@ interface QuickAddListSheetProps {
   onOpenHotTakeComposer?: (media: { title: string; mediaType: string; imageUrl?: string; externalId?: string; externalSource?: string }) => void;
 }
 
-type SheetStep = 'select-list' | 'rate' | 'recommend' | 'just-tracked';
+type SheetStep = 'select-list' | 'rate' | 'recommend' | 'just-tracked' | 'trivia';
+
+interface TriviaQuestion {
+  id: string;
+  title: string;
+  options: string[];
+  correct_answer: string;
+  category: string;
+  points_reward: number;
+  media_title?: string;
+}
 
 export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeComposer }: QuickAddListSheetProps) {
   const { session } = useAuth();
@@ -33,6 +43,9 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   const [selectedRating, setSelectedRating] = useState<number>(0);
   const [hoveredRating, setHoveredRating] = useState<number>(0);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [triviaQuestion, setTriviaQuestion] = useState<TriviaQuestion | null>(null);
+  const [triviaAnswer, setTriviaAnswer] = useState<string | null>(null);
+  const [triviaRevealed, setTriviaRevealed] = useState(false);
 
   const REQUIRED_SYSTEM_LISTS = ['Currently', 'Want To', 'Finished', 'Did Not Finish', 'Favorites'];
 
@@ -71,7 +84,55 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     setAddedListName('');
     setSelectedRating(0);
     setHoveredRating(0);
+    setTriviaQuestion(null);
+    setTriviaAnswer(null);
+    setTriviaRevealed(false);
     onClose();
+  };
+
+  const isWantToList = (listName: string) => {
+    const lower = listName.toLowerCase();
+    return lower.includes('want') || lower.includes('queue');
+  };
+
+  const fetchTriviaForMediaType = async (mediaType: string) => {
+    try {
+      const categoryMap: Record<string, string[]> = {
+        'movie': ['Movies', 'movies', 'Movie', 'movie'],
+        'tv': ['TV', 'tv', 'Television', 'television'],
+        'music': ['Music', 'music'],
+        'book': ['Books', 'books', 'Book', 'book'],
+        'podcast': ['Podcasts', 'podcasts', 'Podcast', 'podcast'],
+      };
+      const categories = categoryMap[mediaType?.toLowerCase()] || [mediaType];
+      
+      const { data: triviaItems } = await supabase
+        .from('prediction_pools')
+        .select('id, title, options, correct_answer, category, points_reward, media_title')
+        .eq('type', 'trivia')
+        .eq('status', 'open')
+        .in('category', categories)
+        .limit(10);
+      
+      if (triviaItems && triviaItems.length > 0) {
+        const randomIndex = Math.floor(Math.random() * triviaItems.length);
+        const item = triviaItems[randomIndex];
+        setTriviaQuestion({
+          id: item.id,
+          title: item.title,
+          options: Array.isArray(item.options) ? item.options : JSON.parse(item.options || '[]'),
+          correct_answer: item.correct_answer || '',
+          category: item.category || mediaType,
+          points_reward: item.points_reward || 10,
+          media_title: item.media_title,
+        });
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.warn('Failed to fetch trivia:', err);
+      return false;
+    }
   };
 
   const getListStyle = (title: string) => {
@@ -174,11 +235,17 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       
-      if (shouldShowFollowUp(listName)) {
-        setAddedListName(listName);
+      setAddedListName(listName);
+      if (isWantToList(listName) && media?.mediaType) {
+        const hasTrivia = await fetchTriviaForMediaType(media.mediaType);
+        if (hasTrivia) {
+          setStep('trivia');
+        } else {
+          setStep('just-tracked');
+        }
+      } else if (shouldShowFollowUp(listName)) {
         setStep('rate');
       } else {
-        setAddedListName(listName);
         setStep('just-tracked');
       }
     } catch (error: any) {
@@ -339,6 +406,108 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
               data-testid="skip-rating-btn"
             >
               Skip for now
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  if (step === 'trivia' && triviaQuestion) {
+    const handleTriviaAnswer = (answer: string) => {
+      setTriviaAnswer(answer);
+      setTriviaRevealed(true);
+    };
+
+    const isCorrect = triviaAnswer === triviaQuestion.correct_answer;
+
+    return (
+      <Drawer open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+        <DrawerContent className="bg-white rounded-t-2xl">
+          <DrawerHeader className="text-center pb-2 border-b border-gray-100">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <Check className="text-green-600" size={18} />
+              </div>
+              <DrawerTitle className="text-lg font-semibold text-gray-900">
+                Added!
+              </DrawerTitle>
+            </div>
+            {media && (
+              <p className="text-sm text-gray-500">
+                <span className="font-medium text-gray-700">{media.title}</span> added to {addedListName}
+              </p>
+            )}
+          </DrawerHeader>
+          
+          <div className="px-4 py-4 space-y-4">
+            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4 border border-purple-100">
+              <div className="flex items-center gap-2 mb-3">
+                <HelpCircle size={16} className="text-purple-500" />
+                <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Quick Trivia</span>
+                {triviaQuestion.media_title && (
+                  <span className="text-xs text-gray-500">- {triviaQuestion.media_title}</span>
+                )}
+              </div>
+              
+              <p className="text-gray-900 font-semibold text-sm mb-3">{triviaQuestion.title}</p>
+              
+              <div className="space-y-2">
+                {triviaQuestion.options.map((option, idx) => {
+                  const isSelected = triviaAnswer === option;
+                  const isCorrectOption = option === triviaQuestion.correct_answer;
+                  
+                  let buttonClass = 'w-full py-2.5 px-4 rounded-xl border text-sm font-medium text-left transition-all duration-200 ';
+                  
+                  if (triviaRevealed) {
+                    if (isCorrectOption) {
+                      buttonClass += 'bg-green-100 border-green-400 text-green-900';
+                    } else if (isSelected && !isCorrectOption) {
+                      buttonClass += 'bg-red-100 border-red-400 text-red-900';
+                    } else {
+                      buttonClass += 'bg-gray-50 border-gray-200 text-gray-400';
+                    }
+                  } else {
+                    buttonClass += 'bg-white border-gray-200 text-gray-900 hover:bg-purple-50 hover:border-purple-300';
+                  }
+                  
+                  return (
+                    <button
+                      key={idx}
+                      className={buttonClass}
+                      onClick={() => !triviaRevealed && handleTriviaAnswer(option)}
+                      disabled={triviaRevealed}
+                    >
+                      {option}
+                      {triviaRevealed && isCorrectOption && <span className="ml-2">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              {triviaRevealed && (
+                <div className={`mt-3 p-2 rounded-lg text-center text-sm font-medium ${
+                  isCorrect 
+                    ? 'bg-green-100 text-green-700' 
+                    : 'bg-orange-100 text-orange-700'
+                }`}>
+                  {isCorrect 
+                    ? `Nice! +${triviaQuestion.points_reward} points` 
+                    : `The answer was: ${triviaQuestion.correct_answer}`
+                  }
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleClose}
+              className={`w-full py-3 rounded-xl text-sm font-medium transition-colors ${
+                triviaRevealed 
+                  ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {triviaRevealed ? 'Done' : 'Skip'}
             </button>
           </div>
         </DrawerContent>
