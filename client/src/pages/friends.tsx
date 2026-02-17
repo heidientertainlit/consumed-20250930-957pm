@@ -451,7 +451,7 @@ export default function FriendsPage() {
               )
             ) : (
               <div className="text-center py-4 text-gray-500">
-                Type at least 3 characters to search for friends
+                Keep typing to search...
               </div>
             )}
           </div>

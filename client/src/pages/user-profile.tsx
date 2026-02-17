@@ -5,6 +5,7 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
 import FriendsManager from "@/components/friends-manager";
+import CastFriendsGame from "@/components/cast-friends-game";
 import CreateRankDialog from "@/components/create-rank-dialog";
 import CreateListDialog from "@/components/create-list-dialog";
 import { Button } from "@/components/ui/button";
@@ -3389,7 +3390,8 @@ export default function UserProfile() {
 
         {/* Friends Manager - Only show on own profile */}
         {activeSection === 'friends' && isOwnProfile && user?.id && (
-          <div ref={friendsRef} className="px-4 mb-8">
+          <div ref={friendsRef} className="px-4 mb-8 space-y-4">
+            <CastFriendsGame />
             <FriendsManager userId={user.id} />
           </div>
         )}

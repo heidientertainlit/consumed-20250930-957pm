@@ -14,7 +14,6 @@ import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { TriviaCarousel } from "@/components/trivia-carousel";
-import CastFriendsGame from "@/components/cast-friends-game";
 import CastApprovalCard from "@/components/cast-approval-card";
 import SeenItGame from "@/components/seen-it-game";
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";

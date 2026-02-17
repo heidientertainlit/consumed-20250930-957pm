@@ -199,6 +199,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
         </div>
 
         {/* Search Results */}
+        {searchQuery.length > 0 && (
         <div className="space-y-3 max-h-64 overflow-y-auto">
           {searchQuery.length >= 3 ? (
             searchLoading ? (
@@ -242,10 +243,11 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
             )
           ) : (
             <div className="text-center py-4 text-gray-500">
-              Type at least 3 characters to search for friends
+              Keep typing to search...
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );
