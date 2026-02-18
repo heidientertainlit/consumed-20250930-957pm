@@ -1451,6 +1451,19 @@ export default function Feed() {
     ? [highlightedPost, ...basePosts]
     : basePosts;
 
+  // Helper: resolve media type from various fields
+  const resolveItemMediaType = (m: any): string => {
+    const raw = (m.mediaType || m.media_type || m.type || '').toLowerCase();
+    if (raw) return raw;
+    const src = (m.externalSource || m.external_source || '').toLowerCase();
+    if (src === 'spotify') return 'music';
+    if (src === 'googlebooks' || src === 'open_library') return 'book';
+    if (src === 'tmdb' || src === 'tmdb_movie') return 'movie';
+    if (src === 'tmdb_tv') return 'tv';
+    if (src === 'youtube') return 'tv';
+    return '';
+  };
+
   // Helper: filter social posts by selected media category
   const categoryToMediaTypeMap: { [key: string]: string[] } = {
     'movies': ['movie', 'film'],
@@ -1468,10 +1481,7 @@ export default function Feed() {
     if (allowedTypes.length === 0) return posts;
     return posts.filter((p: any) => {
       if (!p.mediaItems || p.mediaItems.length === 0) return false;
-      return p.mediaItems.some((m: any) => {
-        const mt = m.mediaType?.toLowerCase() || '';
-        return allowedTypes.includes(mt);
-      });
+      return p.mediaItems.some((m: any) => allowedTypes.includes(resolveItemMediaType(m)));
     });
   };
 
@@ -2276,9 +2286,8 @@ export default function Feed() {
     // Apply media type filter from detailed filters dialog
     if (detailedFilters.mediaTypes.length > 0) {
       if (!post.mediaItems || post.mediaItems.length === 0) return false;
-      const hasMatchingMedia = post.mediaItems.some(media => {
-        const mediaType = media.mediaType?.toLowerCase();
-        return detailedFilters.mediaTypes.includes(mediaType || '');
+      const hasMatchingMedia = post.mediaItems.some((media: any) => {
+        return detailedFilters.mediaTypes.includes(resolveItemMediaType(media));
       });
       if (!hasMatchingMedia) return false;
     }
@@ -2292,9 +2301,8 @@ export default function Feed() {
         const allowedTypes = categoryToMediaTypeMap[selectedCategory] || [];
         if (allowedTypes.length > 0) {
           if (!post.mediaItems || post.mediaItems.length === 0) return false;
-          const hasMatchingMedia = post.mediaItems.some(media => {
-            const mediaType = media.mediaType?.toLowerCase() || '';
-            return allowedTypes.includes(mediaType);
+          const hasMatchingMedia = post.mediaItems.some((media: any) => {
+            return allowedTypes.includes(resolveItemMediaType(media));
           });
           if (!hasMatchingMedia) return false;
         }
@@ -6053,12 +6061,21 @@ export default function Feed() {
               )}
 
             </div>
-          ) : mediaTypeFilter !== "all" ? (
+          ) : (mediaTypeFilter !== "all" || selectedCategory) ? (
             <div className="text-center py-12 bg-white rounded-xl border border-gray-200 shadow-sm">
               <div className="text-5xl mb-4">🔍</div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-800">No {mediaTypeFilter === "movie" ? "Movies" : mediaTypeFilter === "tv" ? "TV Shows" : mediaTypeFilter === "book" ? "Books" : mediaTypeFilter === "music" ? "Music" : mediaTypeFilter === "podcast" ? "Podcasts" : "Games"} Found</h3>
+              <h3 className="text-xl font-semibold mb-3 text-gray-800">No {
+                selectedCategory === 'movies' ? "Movies" :
+                selectedCategory === 'tv' ? "TV Shows" :
+                selectedCategory === 'music' ? "Music" :
+                selectedCategory === 'books' ? "Books" :
+                selectedCategory === 'sports' ? "Sports" :
+                selectedCategory === 'podcasts' ? "Podcasts" :
+                selectedCategory === 'gaming' ? "Games" :
+                mediaTypeFilter === "movie" ? "Movies" : mediaTypeFilter === "tv" ? "TV Shows" : mediaTypeFilter === "book" ? "Books" : mediaTypeFilter === "music" ? "Music" : mediaTypeFilter === "podcast" ? "Podcasts" : "Games"
+              } Activity Yet</h3>
               <p className="text-gray-600 max-w-sm mx-auto">
-                Try selecting a different media type filter or check back later for updates.
+                Try selecting a different category or check back later for updates.
               </p>
             </div>
           ) : (
