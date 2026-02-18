@@ -509,6 +509,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           <Link
             href="/dna"
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/dna" ? "bg-white/15" : ""}`}
+            style={{ marginRight: -6 }}
             data-testid="nav-dna"
           >
             <Dna className="text-white" size={22} />
@@ -516,12 +517,13 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           </Link>
 
           {/* Spacer for center button */}
-          <div style={{ width: 68 }} />
+          <div style={{ width: 56 }} />
 
           {/* Library */}
           <Link
             href="/my-library"
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/my-library" ? "bg-white/15" : ""}`}
+            style={{ marginLeft: -6 }}
             data-testid="nav-library"
             onTouchStart={prefetchCollections}
             onMouseEnter={prefetchCollections}

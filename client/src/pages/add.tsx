@@ -712,19 +712,20 @@ export default function Search() {
       {/* Hero - Purple Gradient */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-8 px-4 -mt-px">
         <div className="text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          <h1 className="text-white text-2xl font-bold tracking-tight">All your entertainment.<br />All in one place.</h1>
+          <h1 className="text-white text-2xl font-bold tracking-tight mb-2">All your entertainment.<br />All in one place.</h1>
+          <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase">TRACK. CONNECT. PLAY.</p>
         </div>
       </div>
 
       {/* Search Section - White */}
-      <div className="bg-white px-4 pt-6 pb-4">
-        <div className="text-center mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          <div className="text-gray-500 text-sm tracking-tight flex items-baseline justify-center gap-0">
+      <div className="bg-white px-4 pt-8 pb-4">
+        <div className="text-center mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <div className="text-gray-500 text-base tracking-tight flex items-baseline justify-center gap-0">
             <span>What are you </span>
             <AnimatedWord />
             <span>?</span>
           </div>
-          <p className="text-gray-800 text-base font-semibold mt-1 mb-4">Add what you're into</p>
+          <p className="text-gray-800 text-lg font-semibold mt-2 mb-5">Add what you're into</p>
         </div>
 
         {/* Search Bar */}
