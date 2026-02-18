@@ -396,8 +396,8 @@ export default function MyLibrary() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e]" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 56px)' }}>
-        <div className="pt-2 pb-4 px-4 text-center">
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] -mt-px">
+        <div className="pt-3 pb-4 px-4 text-center">
           <h2 className="text-white text-2xl font-bold tracking-tight">My Library</h2>
         </div>
 
