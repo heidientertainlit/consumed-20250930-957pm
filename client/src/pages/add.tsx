@@ -736,12 +736,7 @@ export default function Search() {
       <Navigation />
       
       {/* Hero - Purple Gradient with search */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-8 px-4 -mt-px">
-        <div className="text-center mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          <h1 className="text-white text-2xl font-bold tracking-tight mb-2">All your entertainment.<br />All in one place.</h1>
-          <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase">TRACK. PLAY. CONNECT.</p>
-        </div>
-
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-6 pb-8 px-4 -mt-px">
         <p className="text-white/80 text-sm font-medium text-center mb-3">Add what you're into</p>
 
         {/* Search Bar */}
@@ -785,7 +780,11 @@ export default function Search() {
 
       {/* In Progress + Friends Right Now - White Section (secondary to search) */}
       {!searchQuery.trim() && (
-        <div className="bg-white px-4 pt-4 pb-4 space-y-5">
+        <div className="bg-white px-4 pt-5 pb-4 space-y-5">
+          <div className="text-center mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h1 className="text-gray-800 text-lg font-semibold tracking-tight mb-1">All your entertainment.<br />All in one place.</h1>
+            <p className="text-purple-400 text-[10px] font-semibold tracking-[0.25em] uppercase">TRACK. PLAY. CONNECT.</p>
+          </div>
           {/* In Progress */}
           {currentlyItems.length > 0 && (
             <div className="opacity-80">
