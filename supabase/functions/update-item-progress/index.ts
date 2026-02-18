@@ -42,19 +42,16 @@ serve(async (req) => {
       throw new Error('progress is required');
     }
 
-    // Validate progress_mode if provided
     const validModes = ['percent', 'page', 'episode', 'track'];
     if (progress_mode && !validModes.includes(progress_mode)) {
       throw new Error(`Invalid progress_mode. Must be one of: ${validModes.join(', ')}`);
     }
 
-    // Validate progress value based on mode
     if (progress_mode === 'percent') {
       if (progress < 0 || progress > 100) {
         throw new Error('Progress must be between 0-100 for percent mode');
       }
     } else {
-      // For page, episode, track modes, progress should be a positive integer
       if (!Number.isInteger(progress) || progress < 0) {
         throw new Error('Progress must be a positive integer for page/episode/track mode');
       }
@@ -67,16 +64,12 @@ serve(async (req) => {
     if (progress_mode !== undefined && progress_mode !== null) {
       updateData.progress_mode = progress_mode;
     }
-    if (progress_mode === 'episode') {
-      updateData.season_number = total;
-      updateData.episode_number = progress;
-    }
 
     const { data, error } = await supabaseClient
       .from('list_items')
       .update(updateData)
       .eq('id', item_id)
-      .eq('user_id', user.id) // Ensure user owns this item
+      .eq('user_id', user.id)
       .select()
       .single();
 

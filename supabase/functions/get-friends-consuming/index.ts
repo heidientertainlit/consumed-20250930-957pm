@@ -6,6 +6,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function resolveMediaType(item: any): string {
+  const itemType = item.media_type?.toLowerCase();
+  if (itemType && itemType !== 'mixed' && itemType !== 'unknown') {
+    return itemType;
+  }
+  const source = (item.external_source || '').toLowerCase();
+  if (source === 'tmdb' || source === 'tmdb_tv') return 'tv';
+  if (source === 'tmdb_movie') return 'movie';
+  if (source === 'spotify') return 'music';
+  if (source === 'open_library' || source === 'google_books') return 'book';
+  if (source === 'youtube') return 'video';
+  return '';
+}
+
+function resolveImageUrl(item: any): string {
+  const url = item.image_url || '';
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/')) return `https://image.tmdb.org/t/p/w300${url}`;
+  return '';
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -78,7 +99,12 @@ serve(async (req) => {
       const usersMap = new Map((users || []).map((u: any) => [u.id, u]));
       const result = items.map((item: any) => {
         const ownerId = userMap.get(item.list_id);
-        return { ...item, owner: usersMap.get(ownerId) || {} };
+        return {
+          ...item,
+          media_type: resolveMediaType(item),
+          image_url: resolveImageUrl(item),
+          owner: usersMap.get(ownerId) || {},
+        };
       });
 
       return new Response(JSON.stringify({ items: result }), {
@@ -123,7 +149,12 @@ serve(async (req) => {
     const usersMap = new Map((users || []).map((u: any) => [u.id, u]));
     const result = items.map((item: any) => {
       const ownerId = userMap.get(item.list_id);
-      return { ...item, owner: usersMap.get(ownerId) || {} };
+      return {
+        ...item,
+        media_type: resolveMediaType(item),
+        image_url: resolveImageUrl(item),
+        owner: usersMap.get(ownerId) || {},
+      };
     });
 
     return new Response(JSON.stringify({ items: result }), {
