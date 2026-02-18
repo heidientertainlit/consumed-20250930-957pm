@@ -497,15 +497,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <Activity className="text-white" size={28} />
           </Link>
 
-          {/* My Library */}
-          <Link
-            href="/my-library"
-            className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/my-library" ? "bg-white/15" : ""}`}
-            data-testid="nav-library"
-          >
-            <Library className="text-white" size={28} />
-          </Link>
-
           {/* Leaderboard */}
           <Link
             href="/leaderboard"

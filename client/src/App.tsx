@@ -205,9 +205,7 @@ function Router() {
           <RedirectTo to="/activity" />
         </Route>
         <Route path="/my-library">
-          <ProtectedRoute>
-            <MyLibrary />
-          </ProtectedRoute>
+          <RedirectTo to="/" />
         </Route>
         <Route path="/collections">
           <RedirectTo to="/add" />
