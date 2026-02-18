@@ -3704,14 +3704,13 @@ export default function Feed() {
       <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e] pb-5 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-6">
           
-          <h2 className="text-white text-2xl font-bold tracking-tight mb-4">What Everyone Is Into</h2>
+          <h2 className="text-white text-2xl font-bold tracking-tight text-center mb-4">What Everyone Is Into</h2>
 
           {/* What Friends Are Consuming - subtle inline row */}
           {friendsConsuming.length > 0 && (
             <div className="mb-1">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">Friends</span>
-                <div className="flex-1 h-px bg-white/10" />
+              <div className="mb-2">
+                <h3 className="text-sm font-medium text-white/80">Friends</h3>
               </div>
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
                 {friendsConsuming.map((item: any, idx: number) => (
