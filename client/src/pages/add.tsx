@@ -709,19 +709,26 @@ export default function Search() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       
-      {/* Page Title + Search */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-10 px-4 -mt-px">
-        <div className="text-center mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          <h1 className="text-white text-2xl font-bold tracking-tight mb-4">All your entertainment.<br />All in one place.</h1>
-          <div className="text-white/60 text-sm tracking-tight flex items-baseline justify-center gap-0">
+      {/* Hero - Purple Gradient */}
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-8 px-4 -mt-px">
+        <div className="text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-white text-2xl font-bold tracking-tight">All your entertainment.<br />All in one place.</h1>
+        </div>
+      </div>
+
+      {/* Search Section - White */}
+      <div className="bg-white px-4 pt-6 pb-4">
+        <div className="text-center mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <div className="text-gray-500 text-sm tracking-tight flex items-baseline justify-center gap-0">
             <span>What are you </span>
             <AnimatedWord />
             <span>?</span>
           </div>
+          <p className="text-gray-800 text-base font-semibold mt-1 mb-4">Add what you're into</p>
         </div>
-        
+
         {/* Search Bar */}
-        <div className="bg-white rounded-2xl p-3 shadow-lg max-w-xl mx-auto">
+        <div className="bg-gray-50 rounded-2xl p-3 border border-gray-200 max-w-xl mx-auto">
           <div className="flex items-center gap-2">
             <SearchIcon className="text-gray-400 ml-2 flex-shrink-0" size={20} />
             <Input
