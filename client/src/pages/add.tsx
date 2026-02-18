@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, TrendingUp, Plus, Users, Mic, Gamepad2, MessageSquarePlus, Star } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, TrendingUp, Plus, Users, Mic, Gamepad2, MessageSquarePlus, Star, ArrowLeft, X } from "lucide-react";
+import InlineComposer from "@/components/inline-composer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import MediaCarousel from "@/components/media-carousel";
@@ -122,6 +123,8 @@ function deduplicateMediaItems<T extends { id: string; externalId?: string; exte
 
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showComposerModal, setShowComposerModal] = useState(false);
+  const [composerDefaultType, setComposerDefaultType] = useState<"thought" | "review" | "prediction" | "hot_take">("thought");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isAiMode, setIsAiMode] = useState(false);
@@ -782,80 +785,44 @@ export default function Search() {
           </div>
         )}
 
-        {/* Friends Right Now - in hero gradient */}
+        {/* Say Something pills */}
         {!searchQuery.trim() && (
-          <div className="mt-6 opacity-90">
-            <div className="flex items-center justify-between mb-2.5">
-              <h3 className="text-white/50 text-xs font-medium uppercase tracking-wide">Friends Right Now</h3>
-              <Link href="/activity" className="text-purple-400/70 text-xs font-normal">See Activity &rarr;</Link>
+          <div className="mt-6">
+            <p className="text-white/50 text-xs font-medium uppercase tracking-wide mb-2.5">Say something</p>
+            <div className="flex flex-wrap gap-2">
+              {(['Thought', 'Review', 'Hot Take', 'Prediction'] as const).map((label) => (
+                <button
+                  key={label}
+                  onClick={() => {
+                    setComposerDefaultType(label === 'Hot Take' ? 'hot_take' : label.toLowerCase() as any);
+                    setShowComposerModal(true);
+                  }}
+                  className="px-4 py-2 rounded-full text-sm font-medium bg-white/10 text-white/80 hover:bg-white/20 transition-colors"
+                >
+                  {label}
+                </button>
+              ))}
             </div>
-            {friendsList.length > 0 ? (
-              <div className="space-y-2">
-                {friendsList.slice(0, 3).map((friend: any) => (
-                  <div key={friend.id} className="flex items-center gap-2.5" onClick={() => setLocation(`/user/${friend.id}`)}>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white text-[10px] font-semibold flex-shrink-0">
-                      {friend.avatar ? (
-                        <img src={friend.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        (friend.display_name || friend.user_name || '?')[0].toUpperCase()
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white/80 text-sm font-normal truncate">{friend.display_name || friend.user_name}</p>
-                      {friend.user_name && <p className="text-white/40 text-xs truncate">@{friend.user_name}</p>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 py-2">
-                <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-white/10 border-2 border-white/20" />
-                  <div className="w-8 h-8 rounded-full bg-white/10 border-2 border-white/20" />
-                  <div className="w-8 h-8 rounded-full bg-white/10 border-2 border-white/20" />
-                </div>
-                <p className="text-xs text-white/40">Add friends to see what they're into</p>
-              </div>
-            )}
           </div>
         )}
       </div>
 
-      {/* In Progress - White Section (secondary to search) */}
-      {!searchQuery.trim() && currentlyItems.length > 0 && (
-        <div className="bg-white px-4 pt-4 pb-4">
-          <div className="opacity-80">
-            <div className="flex items-center justify-between mb-2.5">
-              <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wide">In Progress</h3>
-              <Link href="/my-library" className="text-purple-400 text-xs font-normal">See All &rarr;</Link>
+      {/* Composer Modal */}
+      {showComposerModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowComposerModal(false)} />
+          <div className="relative bg-white w-full max-w-lg rounded-t-2xl max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between rounded-t-2xl z-10">
+              <button onClick={() => setShowComposerModal(false)} className="text-gray-600">
+                <ArrowLeft size={20} />
+              </button>
+              <h2 className="text-lg font-bold text-gray-900">Say something</h2>
+              <button onClick={() => setShowComposerModal(false)} className="text-gray-400">
+                <X size={20} />
+              </button>
             </div>
-            <div 
-              className="flex gap-2 overflow-x-auto scrollbar-hide pb-1"
-              style={{ WebkitOverflowScrolling: 'touch' }}
-            >
-              {currentlyItems.slice(0, 4).map((item: any) => (
-                <CurrentlyConsumingCard 
-                  key={item.id} 
-                  item={item}
-                  onUpdateProgress={(progress, total, mode, progressDisplay) => {
-                    updateProgressMutation.mutate({
-                      itemId: item.id,
-                      progress,
-                      total,
-                      mode,
-                      progressDisplay
-                    });
-                  }}
-                  onMoveToList={(targetList, listName) => {
-                    moveToListMutation.mutate({
-                      itemId: item.id,
-                      targetList,
-                      listName
-                    });
-                  }}
-                  isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
-                />
-              ))}
+            <div className="p-4">
+              <InlineComposer key={composerDefaultType} defaultType={composerDefaultType} onPostSuccess={() => setShowComposerModal(false)} />
             </div>
           </div>
         </div>

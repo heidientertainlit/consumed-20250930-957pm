@@ -17,16 +17,21 @@ import { useQuery } from "@tanstack/react-query";
 type ComposerStage = "open" | "media-search";
 type PostType = "thought" | "review" | "prediction" | "hot_take";
 
-export default function InlineComposer() {
+interface InlineComposerProps {
+  defaultType?: PostType;
+  onPostSuccess?: () => void;
+}
+
+export default function InlineComposer({ defaultType, onPostSuccess }: InlineComposerProps = {}) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   
   // Stage management - start open for frictionless experience
   const [stage, setStage] = useState<ComposerStage>("open");
-  const [isExpanded, setIsExpanded] = useState(false); // Expands when user taps/types
+  const [isExpanded, setIsExpanded] = useState(!!defaultType); // Auto-expand when opened with a type
   const [isMediaSearchOpen, setIsMediaSearchOpen] = useState(false); // Inline media search
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
-  const [postType, setPostType] = useState<PostType>("thought");
+  const [postType, setPostType] = useState<PostType>(defaultType || "thought");
   
   // Media search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -675,6 +680,7 @@ export default function InlineComposer() {
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       resetComposer();
+      onPostSuccess?.();
     } catch (error) {
       console.error("Post error:", error);
       toast({
