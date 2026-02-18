@@ -783,15 +783,15 @@ export default function Search() {
         )}
       </div>
 
-      {/* In Progress + Friends Right Now - White Section */}
+      {/* In Progress + Friends Right Now - White Section (secondary to search) */}
       {!searchQuery.trim() && (
-        <div className="bg-white px-4 pt-5 pb-4 space-y-6">
+        <div className="bg-white px-4 pt-4 pb-4 space-y-5">
           {/* In Progress */}
           {currentlyItems.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-gray-900 text-sm font-semibold">In Progress</h3>
-                <Link href="/my-library" className="text-purple-600 text-xs font-medium">See All &rarr;</Link>
+            <div className="opacity-80">
+              <div className="flex items-center justify-between mb-2.5">
+                <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wide">In Progress</h3>
+                <Link href="/my-library" className="text-purple-400 text-xs font-normal">See All &rarr;</Link>
               </div>
               <div 
                 className="flex gap-2 overflow-x-auto scrollbar-hide pb-1"
@@ -825,16 +825,16 @@ export default function Search() {
           )}
 
           {/* Friends Right Now */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-gray-900 text-sm font-semibold">Friends Right Now</h3>
-              <Link href="/activity" className="text-purple-600 text-xs font-medium">See Activity &rarr;</Link>
+          <div className="opacity-80">
+            <div className="flex items-center justify-between mb-2.5">
+              <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wide">Friends Right Now</h3>
+              <Link href="/activity" className="text-purple-400 text-xs font-normal">See Activity &rarr;</Link>
             </div>
             {friendsList.length > 0 ? (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {friendsList.slice(0, 3).map((friend: any) => (
-                  <div key={friend.id} className="flex items-center gap-3" onClick={() => setLocation(`/user/${friend.id}`)}>
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                  <div key={friend.id} className="flex items-center gap-2.5" onClick={() => setLocation(`/user/${friend.id}`)}>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-300 to-blue-400 flex items-center justify-center text-white text-[10px] font-semibold flex-shrink-0">
                       {friend.avatar ? (
                         <img src={friend.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                       ) : (
@@ -842,7 +842,7 @@ export default function Search() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-gray-900 text-sm font-medium truncate">{friend.display_name || friend.user_name}</p>
+                      <p className="text-gray-600 text-sm font-normal truncate">{friend.display_name || friend.user_name}</p>
                       {friend.user_name && <p className="text-gray-400 text-xs truncate">@{friend.user_name}</p>}
                     </div>
                   </div>
