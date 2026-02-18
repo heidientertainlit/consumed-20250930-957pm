@@ -478,32 +478,33 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ overflow: 'visible' }}>
-        {/* Floating plus button - sits in the notch */}
-        <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: -18 }}>
+        {/* Floating plus button */}
+        <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: -22 }}>
           <Link
             href="/"
             className="flex items-center justify-center"
             data-testid="nav-home"
           >
-            <div className="w-[56px] h-[56px] rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-600/50">
-              <Plus className="text-white" size={28} strokeWidth={2.5} />
+            <div className="w-[54px] h-[54px] rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-600/50">
+              <Plus className="text-white" size={26} strokeWidth={2.5} />
             </div>
           </Link>
         </div>
 
-        {/* Nav bar with curved notch as top edge */}
+        {/* Nav top edge with wide notch cutout - transparent gap around button */}
         <svg
           className="block w-full"
-          height="18"
-          viewBox="0 0 400 18"
+          height="24"
+          viewBox="0 0 400 24"
           preserveAspectRatio="none"
+          style={{ filter: 'drop-shadow(0 -1px 3px rgba(0,0,0,0.1))' }}
         >
           <path
-            d="M0,0 L152,0 C160,0 166,2 172,7 C180,15 189,18 200,18 C211,18 220,15 228,7 C234,2 240,0 248,0 L400,0 L400,18 L0,18 Z"
+            d="M0,0 L145,0 Q155,0 162,6 Q175,22 200,22 Q225,22 238,6 Q245,0 255,0 L400,0 L400,24 L0,24 Z"
             fill="#0a0a0f"
           />
         </svg>
-        <div className="flex justify-around items-center px-2 -mt-px" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 16px), 16px)', paddingTop: '2px' }}>
+        <div className="flex justify-around items-center px-2 -mt-px" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 12px), 12px)', paddingTop: '0px' }}>
           {/* Activity Feed */}
           <Link
             href="/activity"
