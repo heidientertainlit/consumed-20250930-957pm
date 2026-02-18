@@ -42,7 +42,7 @@ function AnimatedWord() {
   }, []);
 
   return (
-    <span className="inline-block overflow-hidden align-bottom" style={{ height: '1.4em' }}>
+    <span className="inline-block overflow-hidden align-bottom text-sm" style={{ height: '1.4em' }}>
       <span 
         className={`inline-block font-medium ${words[currentIndex].color} transition-transform ease-out ${
           isScrolling ? 'translate-y-full' : 'translate-y-0'
@@ -1296,14 +1296,12 @@ export default function Search() {
       {/* Page Title + Search */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-10 px-4 -mt-px">
         <div className="text-center mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          <p className="text-gray-300 text-sm tracking-wide mb-1">All your entertainment. All in one place.</p>
-          <p className="text-purple-400 text-xs font-medium tracking-widest uppercase mb-4">Track. Play. Connect.</p>
-          <div className="text-white text-center tracking-tight">
-            <div className="text-3xl font-bold">What are you</div>
-            <div className="flex items-center justify-center gap-1 text-2xl font-bold">
-              <AnimatedWord />
-              <span>?</span>
-            </div>
+          <h1 className="text-white text-2xl font-bold tracking-tight mb-0.5">All your entertainment. All in one place.</h1>
+          <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase mb-4">TRACK. PLAY. CONNECT.</p>
+          <div className="text-white/60 text-center tracking-tight">
+            <span className="text-sm">What are you </span>
+            <AnimatedWord />
+            <span className="text-sm"> ?</span>
           </div>
         </div>
         
