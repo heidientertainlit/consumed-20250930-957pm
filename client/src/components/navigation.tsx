@@ -478,33 +478,23 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ overflow: 'visible' }}>
-        {/* Floating plus button */}
-        <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: -22 }}>
+        {/* Floating plus button with white ring for gap effect */}
+        <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: -24 }}>
           <Link
             href="/"
             className="flex items-center justify-center"
             data-testid="nav-home"
           >
-            <div className="w-[54px] h-[54px] rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 flex items-center justify-center shadow-lg shadow-purple-600/50">
-              <Plus className="text-white" size={26} strokeWidth={2.5} />
+            <div className="w-[58px] h-[58px] rounded-full bg-white flex items-center justify-center p-[4px]">
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 flex items-center justify-center">
+                <Plus className="text-white" size={26} strokeWidth={2.5} />
+              </div>
             </div>
           </Link>
         </div>
 
-        {/* Nav top edge with wide notch cutout - transparent gap around button */}
-        <svg
-          className="block w-full"
-          height="24"
-          viewBox="0 0 400 24"
-          preserveAspectRatio="none"
-          style={{ filter: 'drop-shadow(0 -1px 3px rgba(0,0,0,0.1))' }}
-        >
-          <path
-            d="M0,0 L145,0 Q155,0 162,6 Q175,22 200,22 Q225,22 238,6 Q245,0 255,0 L400,0 L400,24 L0,24 Z"
-            fill="#0a0a0f"
-          />
-        </svg>
-        <div className="flex justify-around items-center px-2 -mt-px" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 12px), 12px)', paddingTop: '0px' }}>
+        {/* Thin nav bar */}
+        <div className="flex justify-around items-center px-2" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 8px), 8px)', paddingTop: '8px' }}>
           {/* Activity Feed */}
           <Link
             href="/activity"
