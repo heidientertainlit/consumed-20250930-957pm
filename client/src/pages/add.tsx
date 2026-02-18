@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import MediaCarousel from "@/components/media-carousel";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { QuickAddModal } from "@/components/quick-add-modal";
@@ -709,27 +709,17 @@ export default function Search() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       
-      {/* Hero - Purple Gradient */}
+      {/* Hero - Purple Gradient with search */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-8 px-4 -mt-px">
-        <div className="text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className="text-center mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <h1 className="text-white text-2xl font-bold tracking-tight mb-2">All your entertainment.<br />All in one place.</h1>
           <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase">TRACK. CONNECT. PLAY.</p>
         </div>
-      </div>
 
-      {/* Search Section - White */}
-      <div className="bg-white px-4 pt-8 pb-4">
-        <div className="text-center mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          <div className="text-gray-500 text-base tracking-tight flex items-baseline justify-center gap-0">
-            <span>What are you </span>
-            <AnimatedWord />
-            <span>?</span>
-          </div>
-          <p className="text-gray-800 text-lg font-semibold mt-2 mb-5">Add what you're into</p>
-        </div>
+        <p className="text-white/80 text-sm font-medium text-center mb-3">Add what you're into</p>
 
         {/* Search Bar */}
-        <div className="bg-gray-50 rounded-2xl p-3 border border-gray-200 max-w-xl mx-auto">
+        <div className="bg-white rounded-2xl p-3 shadow-lg max-w-xl mx-auto">
           <div className="flex items-center gap-2">
             <SearchIcon className="text-gray-400 ml-2 flex-shrink-0" size={20} />
             <Input
@@ -761,11 +751,72 @@ export default function Search() {
         
         {/* AI Mode hint */}
         {isAiMode && (
-          <div className="text-center text-sm text-gray-400 mt-2">
+          <div className="text-center text-sm text-purple-300/60 mt-2">
             <p>Ask for recommendations like "movies similar to Inception"</p>
           </div>
         )}
       </div>
+
+      {/* In Progress + Friends Right Now - White Section */}
+      {!searchQuery.trim() && (
+        <div className="bg-white px-4 pt-5 pb-4 space-y-6">
+          {/* In Progress */}
+          {currentlyItems.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-gray-900 text-sm font-semibold">In Progress</h3>
+                <Link href="/my-library" className="text-purple-600 text-xs font-medium">See All &rarr;</Link>
+              </div>
+              <div 
+                className="flex gap-2 overflow-x-auto scrollbar-hide pb-1"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
+                {currentlyItems.slice(0, 4).map((item: any) => (
+                  <CurrentlyConsumingCard 
+                    key={item.id} 
+                    item={item}
+                    onUpdateProgress={(progress, total, mode, progressDisplay) => {
+                      updateProgressMutation.mutate({
+                        itemId: item.id,
+                        progress,
+                        total,
+                        mode,
+                        progressDisplay
+                      });
+                    }}
+                    onMoveToList={(targetList, listName) => {
+                      moveToListMutation.mutate({
+                        itemId: item.id,
+                        targetList,
+                        listName
+                      });
+                    }}
+                    isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Friends Right Now */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-gray-900 text-sm font-semibold">Friends Right Now</h3>
+              <Link href="/activity" className="text-purple-600 text-xs font-medium">See Activity &rarr;</Link>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 text-gray-400 py-2">
+                <div className="flex -space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white" />
+                  <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white" />
+                  <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white" />
+                </div>
+                <p className="text-xs text-gray-400">Follow friends to see what they're into</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Search Results Section - Shows right under search bar when searching */}
       {!isAiMode && searchQuery.trim() && (
