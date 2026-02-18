@@ -479,24 +479,22 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50">
         <div className="flex justify-around items-center px-2 pt-4" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 24px), 24px)' }}>
-          {/* Home (main game feed) */}
+          {/* Home (add/search page) */}
           <Link
-            href="/activity"
-            className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/activity" || location === "/" ? "bg-white/15" : ""}`}
+            href="/"
+            className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/" || location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-home"
           >
             <Home className="text-white" size={28} />
           </Link>
 
-          {/* Add - gradient circle with plus icon */}
+          {/* Activity Feed */}
           <Link
-            href="/add"
-            className="flex items-center justify-center"
-            data-testid="nav-add"
+            href="/activity"
+            className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
+            data-testid="nav-activity"
           >
-            <div className="w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg flex items-center justify-center hover:from-purple-700 hover:to-blue-700 transition-all">
-              <Plus className="text-white" size={26} strokeWidth={2.5} />
-            </div>
+            <Activity className="text-white" size={28} />
           </Link>
 
           {/* My Library */}

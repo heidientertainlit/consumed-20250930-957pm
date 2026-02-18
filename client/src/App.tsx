@@ -134,7 +134,7 @@ function Router() {
         </Route>
         <Route path="/">
           <ProtectedRoute>
-            <Feed />
+            <Add />
           </ProtectedRoute>
         </Route>
         <Route path="/quick-log">
@@ -148,7 +148,7 @@ function Router() {
           </ProtectedRoute>
         </Route>
         <Route path="/track">
-          <RedirectTo to="/" />
+          <RedirectTo to="/add" />
         </Route>
         <Route path="/leaderboard">
           <ProtectedRoute>

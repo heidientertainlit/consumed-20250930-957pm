@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, Plus, Users, Mic, Gamepad2, ChevronRight, Star, MessageSquarePlus } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, X, Plus, Users, Mic, Gamepad2, ChevronRight, Star, MessageSquarePlus, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/navigation";
@@ -298,6 +298,8 @@ export default function Search() {
       {/* Page Title + Search */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-10 px-4 -mt-px">
         <div className="text-center mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <p className="text-gray-300 text-sm tracking-wide mb-1">All your entertainment. All in one place.</p>
+          <p className="text-purple-400 text-xs font-medium tracking-widest uppercase mb-4">Track. Play. Connect.</p>
           <div className="text-white text-center tracking-tight">
             <div className="text-3xl font-bold">What are you</div>
             <div className="flex items-center justify-center gap-1 text-2xl font-bold">
