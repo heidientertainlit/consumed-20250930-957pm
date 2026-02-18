@@ -64,6 +64,7 @@ import ResetPasswordPage from "./pages/reset-password";
 import EntertainmentDNAPage from "./pages/entertainment-dna";
 import NotFoundPage from "./pages/not-found";
 import MyLibrary from "@/pages/my-library";
+import DnaPage from "@/pages/dna";
 import About from "@/pages/about";
 import PointsBreakdown from "@/pages/points-breakdown";
 import AwardsList from "@/pages/awards-list";
@@ -205,7 +206,14 @@ function Router() {
           <RedirectTo to="/activity" />
         </Route>
         <Route path="/my-library">
-          <RedirectTo to="/" />
+          <ProtectedRoute>
+            <MyLibrary />
+          </ProtectedRoute>
+        </Route>
+        <Route path="/dna">
+          <ProtectedRoute>
+            <DnaPage />
+          </ProtectedRoute>
         </Route>
         <Route path="/collections">
           <RedirectTo to="/add" />

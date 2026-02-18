@@ -482,28 +482,53 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           {/* Home (add/search page) */}
           <Link
             href="/"
-            className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/" || location === "/add" ? "bg-white/15" : ""}`}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/" || location === "/add" ? "bg-white/15" : ""}`}
             data-testid="nav-home"
           >
-            <Home className="text-white" size={28} />
+            <Home className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">Home</span>
+          </Link>
+
+          {/* Library */}
+          <Link
+            href="/my-library"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/my-library" ? "bg-white/15" : ""}`}
+            data-testid="nav-library"
+            onTouchStart={prefetchCollections}
+            onMouseEnter={prefetchCollections}
+          >
+            <Library className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">Library</span>
           </Link>
 
           {/* Activity Feed */}
           <Link
             href="/activity"
-            className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
             data-testid="nav-activity"
           >
-            <Activity className="text-white" size={28} />
+            <Activity className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">Activity</span>
+          </Link>
+
+          {/* DNA */}
+          <Link
+            href="/dna"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/dna" ? "bg-white/15" : ""}`}
+            data-testid="nav-dna"
+          >
+            <Dna className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">DNA</span>
           </Link>
 
           {/* Leaderboard */}
           <Link
             href="/leaderboard"
-            className={`flex items-center justify-center p-3 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
             data-testid="nav-leaderboard"
           >
-            <Trophy className="text-white" size={28} />
+            <Trophy className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">Board</span>
           </Link>
         </div>
       </nav>
