@@ -290,7 +290,7 @@ export default function DnaPage() {
         <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-5 px-4 -mt-px text-center">
           <p className="text-purple-400 text-xs font-semibold tracking-[0.3em] uppercase mb-1">Your</p>
           <h2 className="text-white text-xl font-semibold tracking-tight">Entertainment DNA</h2>
-          <p className="text-white/50 text-sm mt-1">Discover what your entertainment says about you.</p>
+          <p className="text-white/50 text-sm mt-1">Discover what your entertainment<br />says about you.</p>
 
           <div className="flex gap-2 justify-center pt-4 pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <button
