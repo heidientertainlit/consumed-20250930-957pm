@@ -539,7 +539,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             data-testid="nav-leaderboard"
           >
             <Trophy className="text-white" size={22} />
-            <span className="text-white text-[10px] mt-0.5">Board</span>
+            <span className="text-white text-[10px] mt-0.5">Leaders</span>
           </Link>
         </div>
       </nav>
