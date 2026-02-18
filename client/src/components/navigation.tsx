@@ -477,8 +477,8 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       </div>
 
       {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50">
-        <div className="flex justify-around items-center px-2 pt-4" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 24px), 24px)' }}>
+      <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ overflow: 'visible' }}>
+        <div className="flex justify-around items-end px-2 pt-4" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 24px), 24px)', overflow: 'visible' }}>
           {/* Activity Feed */}
           <Link
             href="/activity"
@@ -488,6 +488,30 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <Activity className="text-white" size={22} />
             <span className="text-white text-[10px] mt-0.5">Activity</span>
           </Link>
+
+          {/* DNA */}
+          <Link
+            href="/dna"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/dna" ? "bg-white/15" : ""}`}
+            data-testid="nav-dna"
+          >
+            <Dna className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">DNA</span>
+          </Link>
+
+          {/* Add (center circle - raised) */}
+          <div className="relative flex items-center justify-center" style={{ width: 68, height: 40 }}>
+            <Link
+              href="/"
+              className="absolute flex items-center justify-center"
+              style={{ top: -28 }}
+              data-testid="nav-home"
+            >
+              <div className="w-[58px] h-[58px] rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 flex items-center justify-center shadow-xl shadow-purple-600/50 ring-4 ring-[#0d0d18]">
+                <Plus className="text-white" size={28} strokeWidth={2.5} />
+              </div>
+            </Link>
+          </div>
 
           {/* Library */}
           <Link
@@ -499,29 +523,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           >
             <Library className="text-white" size={22} />
             <span className="text-white text-[10px] mt-0.5">Library</span>
-          </Link>
-
-          {/* Add (center circle - raised) */}
-          <div className="relative flex items-center justify-center" style={{ width: 68 }}>
-            <Link
-              href="/"
-              className="absolute -top-8 flex items-center justify-center"
-              data-testid="nav-home"
-            >
-              <div className="w-[60px] h-[60px] rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 flex items-center justify-center shadow-xl shadow-purple-600/40 ring-[3px] ring-[#0a0a0f]">
-                <Plus className="text-white" size={30} strokeWidth={2.5} />
-              </div>
-            </Link>
-          </div>
-
-          {/* DNA */}
-          <Link
-            href="/dna"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/dna" ? "bg-white/15" : ""}`}
-            data-testid="nav-dna"
-          >
-            <Dna className="text-white" size={22} />
-            <span className="text-white text-[10px] mt-0.5">DNA</span>
           </Link>
 
           {/* Leaderboard */}
