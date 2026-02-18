@@ -286,8 +286,8 @@ export default function DnaPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
-      <div className="pt-16">
-        <div className="bg-white pt-6 pb-3 px-4 -mt-px text-center">
+      <div>
+        <div className="bg-white pt-3 pb-3 px-4 -mt-px text-center">
           <p className="text-purple-500 text-xs font-semibold tracking-[0.3em] uppercase mb-0">Your</p>
           <h2 className="text-gray-900 text-2xl font-bold tracking-tight">Entertainment DNA</h2>
           <p className="text-gray-400 text-sm mt-0.5">Discover what your entertainment says about you.</p>
