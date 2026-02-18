@@ -501,16 +501,18 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-white text-[10px] mt-0.5">Library</span>
           </Link>
 
-          {/* Add (center circle) */}
-          <Link
-            href="/"
-            className="flex items-center justify-center -mt-6"
-            data-testid="nav-home"
-          >
-            <div className={`w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-lg shadow-purple-900/40 border-2 border-purple-400/30 ${location === "/" || location === "/add" ? "ring-2 ring-white/30" : ""}`}>
-              <Plus className="text-white" size={28} strokeWidth={2.5} />
-            </div>
-          </Link>
+          {/* Add (center circle - raised) */}
+          <div className="relative flex items-center justify-center" style={{ width: 68 }}>
+            <Link
+              href="/"
+              className="absolute -top-8 flex items-center justify-center"
+              data-testid="nav-home"
+            >
+              <div className="w-[60px] h-[60px] rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 flex items-center justify-center shadow-xl shadow-purple-600/40 ring-[3px] ring-[#0a0a0f]">
+                <Plus className="text-white" size={30} strokeWidth={2.5} />
+              </div>
+            </Link>
+          </div>
 
           {/* DNA */}
           <Link
