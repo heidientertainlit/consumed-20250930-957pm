@@ -3689,10 +3689,10 @@ export default function Feed() {
       <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e] pb-4 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
           
-          {/* Daily Challenge */}
-          <div className="mb-2">
+          {/* Daily Challenge - Hidden for now */}
+          {/* <div className="mb-2">
             <DailyChallengeCard />
-          </div>
+          </div> */}
           
           
         </div>

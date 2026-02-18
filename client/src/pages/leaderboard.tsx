@@ -577,82 +577,11 @@ export default function Leaderboard() {
             </TabsContent>
 
             <TabsContent value="games">
-              {/* Daily Call Streak Leaders */}
+              {/* Daily Call Streak Leaders - Hidden for now
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
-                <button
-                  onClick={() => setExpandedStreaks(!expandedStreaks)}
-                  className="w-full bg-gradient-to-r from-purple-700 to-purple-900 p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Flame className="text-white" size={20} />
-                      <h3 className="text-base font-bold text-white">Daily Call Streak Leaders</h3>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Link 
-                        href="/"
-                        className="text-white/90 hover:text-white text-sm font-medium"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Play Daily Call →
-                      </Link>
-                      {expandedStreaks ? <ChevronUp size={18} className="text-white" /> : <ChevronDown size={18} className="text-white" />}
-                    </div>
-                  </div>
-                </button>
-                
-                {expandedStreaks && (
-                  <div className="divide-y divide-gray-100">
-                    {(scope === 'friends' ? streakData?.friends : streakData?.global)?.length ? (
-                      (scope === 'friends' ? streakData?.friends : streakData?.global)?.slice(0, 10).map((entry, index) => {
-                        const isCurrentUser = entry.userId === user?.id;
-                        const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
-                        
-                        return (
-                          <div
-                            key={entry.userId}
-                            className={`flex items-center gap-4 p-4 ${isCurrentUser ? 'bg-purple-50' : 'hover:bg-gray-50'} transition-colors`}
-                          >
-                            <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-                              {index < 3 ? (
-                                <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
-                                  {index + 1}
-                                </div>
-                              ) : (
-                                <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
-                              )}
-                            </div>
-
-                            <Link 
-                              href={`/user/${entry.userId}`}
-                              className="flex-1 min-w-0"
-                            >
-                              <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
-                                {entry.displayName}
-                                {isCurrentUser && <span className="ml-2 text-xs text-purple-600">(You)</span>}
-                              </p>
-                              <p className="text-xs text-gray-500">@{entry.userName}</p>
-                            </Link>
-
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <Flame className="text-purple-500" size={18} />
-                              <div className="text-right">
-                                <p className="font-bold text-lg text-purple-600">{entry.currentStreak}</p>
-                                <p className="text-xs text-gray-500">day{entry.currentStreak !== 1 ? 's' : ''}</p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="p-8 text-center text-gray-500">
-                        <Flame className="mx-auto mb-2 text-purple-300" size={32} />
-                        <p className="text-sm">No streaks yet. Complete Daily Call to start your streak!</p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                ...
               </div>
+              */}
 
               {renderCategoryCard(
                 'Trivia Champions',
