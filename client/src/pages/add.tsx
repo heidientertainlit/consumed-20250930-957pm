@@ -605,63 +605,25 @@ export default function Search() {
     staleTime: 1000 * 60 * 60 * 6,
   });
 
-  const doMediaSearch = async (query: string) => {
-    if (!query.trim() || !session?.access_token) return [];
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query })
-    });
-    if (!response.ok) return [];
-    const data = await response.json();
-    return (data.results || []).map((r: any) => ({
-      ...r,
-      image_url: r.image_url || r.poster_url || r.image || r.poster_path || '',
-    }));
-  };
-
-  // Quick search - media results with AI smart fallback (only when NOT in AI mode)
-  const [smartSearchUsed, setSmartSearchUsed] = useState<string | null>(null);
+  // Quick search - media results (only when NOT in AI mode)
   const { data: quickMediaResults = [], isLoading: isLoadingMedia } = useQuery({
     queryKey: ['quick-media-search', searchQuery],
     queryFn: async () => {
-      setSmartSearchUsed(null);
-      const results = await doMediaSearch(searchQuery);
-      if (results.length > 0) return results;
-
-      try {
-        const aiResponse = await fetch('/api/smart-search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: searchQuery }),
-        });
-        if (!aiResponse.ok) return results;
-        const aiData = await aiResponse.json();
-        const suggestions = aiData.suggestions || [];
-        if (suggestions.length === 0) return results;
-
-        const allResults: any[] = [];
-        const seenIds = new Set<string>();
-        for (const suggestion of suggestions.slice(0, 2)) {
-          const aiResults = await doMediaSearch(suggestion.title);
-          for (const r of aiResults) {
-            const key = `${r.external_id}-${r.external_source}`;
-            if (!seenIds.has(key)) {
-              seenIds.add(key);
-              allResults.push(r);
-            }
-          }
-        }
-        if (allResults.length > 0) {
-          setSmartSearchUsed(suggestions[0].title);
-        }
-        return allResults;
-      } catch {
-        return results;
-      }
+      if (!searchQuery.trim() || !session?.access_token) return [];
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: searchQuery })
+      });
+      if (!response.ok) return [];
+      const data = await response.json();
+      return (data.results || []).map((r: any) => ({
+        ...r,
+        image_url: r.image_url || r.poster_url || r.image || r.poster_path || '',
+      }));
     },
     enabled: !isAiMode && !!searchQuery.trim() && !!session?.access_token,
     staleTime: 1000 * 60 * 5,
@@ -984,12 +946,6 @@ export default function Search() {
                 <h3 className="font-semibold text-gray-900 text-sm flex items-center gap-2">
                   <Film size={14} className="text-purple-600" />
                   Media
-                  {smartSearchUsed && (
-                    <span className="text-[10px] text-purple-500 font-normal ml-auto flex items-center gap-1">
-                      <Sparkles size={10} />
-                      Showing results for "{smartSearchUsed}"
-                    </span>
-                  )}
                 </h3>
               </div>
               <div className="divide-y divide-gray-100">
@@ -1199,12 +1155,6 @@ export default function Search() {
                       <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                         <Film size={16} className="text-purple-600" />
                         Media
-                        {smartSearchUsed && (
-                          <span className="text-[10px] text-purple-500 font-normal ml-auto flex items-center gap-1">
-                            <Sparkles size={10} />
-                            Showing results for "{smartSearchUsed}"
-                          </span>
-                        )}
                       </h3>
                     </div>
                     <div className="divide-y divide-gray-100">
