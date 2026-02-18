@@ -3700,37 +3700,31 @@ export default function Feed() {
       <div id="feed-page">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
-      {/* Header Section - Track First */}
-      <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e] pb-4 -mt-px">
-        <div className="max-w-4xl mx-auto px-4 pt-4">
+      {/* Header Section */}
+      <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e] pb-5 -mt-px">
+        <div className="max-w-4xl mx-auto px-4 pt-6">
           
-          {/* Daily Challenge - Hidden for now */}
-          {/* <div className="mb-2">
-            <DailyChallengeCard />
-          </div> */}
+          <h2 className="text-white text-lg font-bold tracking-tight mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>What Everyone Is Into</h2>
 
-          {/* What Friends Are Consuming - in hero */}
+          {/* What Friends Are Consuming - subtle inline row */}
           {friendsConsuming.length > 0 && (
-            <div className="mb-2">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <Activity size={14} className="text-purple-400" />
-                  What Friends Are Consuming
-                </h3>
-                <span className="text-[10px] text-purple-400 font-medium">{friendsConsuming.length} items</span>
+            <div className="mb-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">Friends</span>
+                <div className="flex-1 h-px bg-white/10" />
               </div>
-              <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
                 {friendsConsuming.map((item: any, idx: number) => (
                   <Link key={item.id || idx} href={`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`}>
-                    <div className="w-[80px] flex-shrink-0 cursor-pointer group">
-                      <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-1.5 ring-1 ring-white/20 group-hover:ring-purple-400 transition-all">
+                    <div className="w-[56px] flex-shrink-0 cursor-pointer group">
+                      <div className="relative aspect-[2/3] rounded-md overflow-hidden mb-1 ring-1 ring-white/10 group-hover:ring-purple-400/50 transition-all">
                         {(item.image_url && item.image_url.startsWith('http')) ? (
                           <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
                         ) : item.image_url && !item.image_url.startsWith('http') ? (
                           <img src={`https://image.tmdb.org/t/p/w200${item.image_url}`} alt={item.title} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-purple-800 to-indigo-800 flex items-center justify-center">
-                            <Film size={16} className="text-purple-300" />
+                          <div className="w-full h-full bg-gradient-to-br from-purple-900/60 to-indigo-900/60 flex items-center justify-center">
+                            <Film size={12} className="text-purple-400/50" />
                           </div>
                         )}
                         <button
@@ -3746,18 +3740,12 @@ export default function Feed() {
                             });
                             setIsQuickAddOpen(true);
                           }}
-                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-all"
+                          className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <Plus size={12} className="text-white" strokeWidth={2.5} />
+                          <Plus size={10} className="text-white" strokeWidth={2.5} />
                         </button>
                       </div>
-                      <p className="text-[10px] text-white/90 truncate font-medium">{item.title}</p>
-                      <p className="text-[9px] text-white/50 truncate capitalize">{
-                        item.media_type && item.media_type.toLowerCase() !== 'mixed' 
-                          ? (item.media_type === 'tv' ? 'TV' : item.media_type.replace('_', ' '))
-                          : ''
-                      }</p>
-                      <p className="text-[9px] text-purple-400 truncate">{item.owner?.display_name || item.owner?.user_name || ''}</p>
+                      <p className="text-[9px] text-white/60 truncate leading-tight">{item.title}</p>
                     </div>
                   </Link>
                 ))}
