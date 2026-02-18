@@ -164,6 +164,35 @@ export default function Search() {
     staleTime: 60000,
   });
 
+  const friendIds = new Set((friendsList || []).map((f: any) => f.id).filter(Boolean));
+
+  const { data: friendsConsuming = [] } = useQuery({
+    queryKey: ['friends-consuming-add', Array.from(friendIds).sort().join(',')],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
+      const targetIds = friendIds.size > 0 ? Array.from(friendIds) : [];
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      try {
+        const response = await fetch(`${supabaseUrl}/functions/v1/get-friends-consuming`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+          },
+          body: JSON.stringify({ friendIds: targetIds }),
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.items || [];
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!session?.access_token,
+    staleTime: 60000,
+  });
+
   // Fetch user lists with media for Currently Consuming
   const [currentlyItems, setCurrentlyItems] = useState<any[]>([]);
   const [isLoadingCurrently, setIsLoadingCurrently] = useState(false);
@@ -641,8 +670,8 @@ export default function Search() {
     staleTime: 1000 * 60 * 2,
   });
 
-  // Create sets of friend IDs for quick lookup
-  const friendIds = new Set((friendsData?.friends || []).map((f: any) => f.id));
+  // Create sets of friend IDs for quick lookup (reuse friendIds from above)
+  const friendIdsFromData = new Set((friendsData?.friends || []).map((f: any) => f.id));
   const pendingIds = new Set((friendsData?.pending || []).map((f: any) => f.id));
 
   // Send friend request mutation
@@ -785,46 +814,65 @@ export default function Search() {
 
       </div>
 
-      {/* Quick Add - White Section */}
+      {/* What People Are Adding - White Section */}
       {!searchQuery.trim() && (
         <div className="bg-white px-4 pt-4 pb-4">
-          <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wide mb-3">Quick Add</h3>
-          <div className="space-y-2">
-            {[...(trendingMovies || []).slice(0, 2), ...(trendingTVShows || []).slice(0, 2)].slice(0, 4).map((item: any) => (
-              <div
-                key={item.id || item.external_id}
-                className="flex items-center gap-3 py-1.5 cursor-pointer"
-                onClick={() => {
-                  setQuickAddMedia(item);
-                  setIsQuickAddOpen(true);
-                }}
-              >
-                <div className="w-10 h-14 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
-                  {(item.poster_url || item.image || item.image_url) ? (
-                    <img src={item.poster_url || item.image || item.image_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Film size={16} className="text-gray-300" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-gray-800 text-sm font-medium truncate">{item.title}</p>
-                  <p className="text-gray-400 text-xs truncate">{item.type === 'tv' ? 'TV Show' : item.type === 'movie' ? 'Movie' : item.type} {item.year ? `· ${item.year}` : ''}</p>
-                </div>
-                <button
-                  className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setQuickAddMedia(item);
-                    setIsQuickAddOpen(true);
-                  }}
-                >
-                  <Plus size={16} className="text-purple-600" />
-                </button>
-              </div>
-            ))}
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+              <TrendingUp size={14} className="text-purple-500" />
+              What People Are Adding
+            </h3>
+            {friendsConsuming.length > 0 && (
+              <span className="text-[10px] text-purple-500 font-medium">{friendsConsuming.length} items</span>
+            )}
           </div>
+          {friendsConsuming.length > 0 ? (
+            <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+              {friendsConsuming.map((item: any, idx: number) => (
+                <Link key={item.id || idx} href={`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`}>
+                  <div className="w-[80px] flex-shrink-0 cursor-pointer group">
+                    <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-1.5 ring-1 ring-gray-200 group-hover:ring-purple-400 transition-all">
+                      {(item.image_url && item.image_url.startsWith('http')) ? (
+                        <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                      ) : item.image_url && !item.image_url.startsWith('http') ? (
+                        <img src={`https://image.tmdb.org/t/p/w200${item.image_url}`} alt={item.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center">
+                          <Film size={16} className="text-purple-400" />
+                        </div>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setQuickAddMedia({
+                            title: item.title,
+                            mediaType: item.media_type || 'movie',
+                            externalId: item.external_id || item.id,
+                            externalSource: item.external_source || 'tmdb',
+                            imageUrl: item.image_url || '',
+                          });
+                          setIsQuickAddOpen(true);
+                        }}
+                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-all"
+                      >
+                        <Plus size={12} className="text-white" strokeWidth={2.5} />
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-gray-800 truncate font-medium">{item.title}</p>
+                    <p className="text-[9px] text-gray-400 truncate capitalize">{
+                      item.media_type && item.media_type.toLowerCase() !== 'mixed' 
+                        ? (item.media_type === 'tv' ? 'TV' : item.media_type.replace('_', ' '))
+                        : ''
+                    }</p>
+                    <p className="text-[9px] text-purple-500 truncate">{item.owner?.display_name || item.owner?.user_name || ''}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400 text-sm">Add friends to see what they're adding</p>
+          )}
         </div>
       )}
       
