@@ -466,22 +466,20 @@ export default function Leaderboard() {
     <div className="min-h-screen bg-gray-50 pb-32">
       <Navigation />
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-semibold text-black mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Leaderboard
-          </h1>
-          <p className="text-base text-gray-600">
-            See how you stack up.
-          </p>
-        </div>
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-5 px-4 -mt-px text-center">
+        <h1 className="text-xl font-semibold text-white tracking-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          Leaderboard
+        </h1>
+        <p className="text-white/50 text-sm mt-1">
+          See how you stack up.
+        </p>
 
-        <div className="flex justify-center gap-2 mb-4">
+        <div className="flex justify-center gap-2 mt-4">
           <Button
             size="sm"
             variant={scope === 'global' ? 'default' : 'outline'}
             onClick={() => setScope('global')}
-            className={scope === 'global' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+            className={scope === 'global' ? 'bg-purple-600 hover:bg-purple-700 border-purple-600' : 'border-white/30 text-white hover:bg-white/10'}
             data-testid="button-scope-global"
           >
             <Globe size={14} className="mr-1" />
@@ -491,13 +489,16 @@ export default function Leaderboard() {
             size="sm"
             variant={scope === 'friends' ? 'default' : 'outline'}
             onClick={() => setScope('friends')}
-            className={scope === 'friends' ? 'bg-purple-600 hover:bg-purple-700' : ''}
+            className={scope === 'friends' ? 'bg-purple-600 hover:bg-purple-700 border-purple-600' : 'border-white/30 text-white hover:bg-white/10'}
             data-testid="button-scope-friends"
           >
             <Users size={14} className="mr-1" />
             Friends
           </Button>
         </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 py-4">
 
         <div className="flex justify-center gap-2 mb-6">
           {(['weekly', 'monthly', 'all_time'] as const).map((p) => (
