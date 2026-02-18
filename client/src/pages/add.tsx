@@ -1521,6 +1521,13 @@ export default function Search() {
         </div>
       )}
 
+      {/* Entertainment DNA Header */}
+      <div className="bg-white pt-6 pb-5 px-4 -mt-px text-center">
+        <p className="text-purple-500 text-[10px] font-semibold tracking-[0.3em] uppercase mb-1">Your</p>
+        <h2 className="text-gray-900 text-xl font-bold tracking-tight">Entertainment DNA</h2>
+        <p className="text-gray-400 text-xs mt-1">What your entertainment says about you.</p>
+      </div>
+
       {/* In Progress Section - White Background */}
       <div className="bg-white pt-4 pb-2 -mt-px">
         <div className="max-w-3xl lg:mx-auto px-4">
