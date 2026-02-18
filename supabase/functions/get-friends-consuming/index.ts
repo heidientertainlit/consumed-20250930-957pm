@@ -29,26 +29,55 @@ function resolveImageUrl(item: any): string {
 
 async function fetchMissingPosters(items: any[], supabaseAdmin: any): Promise<void> {
   const tmdbKey = Deno.env.get('TMDB_API_KEY') || '';
-  const needsPoster = items.filter(i => !i.image_url && i.external_id && !isNaN(Number(i.external_id)));
+  const needsPoster = items.filter(i => !i.image_url && i.title);
   if (!tmdbKey || needsPoster.length === 0) return;
 
   await Promise.allSettled(needsPoster.map(async (item) => {
     try {
+      let poster = '';
+      let foundExternalId = item.external_id;
       const type = resolveMediaType(item);
       const endpoint = type === 'movie' ? 'movie' : 'tv';
-      const res = await fetch(`https://api.themoviedb.org/3/${endpoint}/${item.external_id}?api_key=${tmdbKey}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const poster = data.poster_path ? `https://image.tmdb.org/t/p/w300${data.poster_path}` : '';
+
+      if (item.external_id && !isNaN(Number(item.external_id))) {
+        const res = await fetch(`https://api.themoviedb.org/3/${endpoint}/${item.external_id}?api_key=${tmdbKey}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.poster_path) poster = `https://image.tmdb.org/t/p/w300${data.poster_path}`;
+        }
+      }
+
+      if (!poster && item.title) {
+        const searchType = type === 'movie' ? 'movie' : 'tv';
+        const searchRes = await fetch(`https://api.themoviedb.org/3/search/${searchType}?api_key=${tmdbKey}&query=${encodeURIComponent(item.title)}&page=1`);
+        if (searchRes.ok) {
+          const searchData = await searchRes.json();
+          const match = searchData.results?.[0];
+          if (match?.poster_path) {
+            poster = `https://image.tmdb.org/t/p/w300${match.poster_path}`;
+            foundExternalId = String(match.id);
+          }
+        }
+      }
+
       if (poster) {
         item.image_url = poster;
+        const updateData: any = { image_url: poster };
+        if (!item.external_id && foundExternalId) {
+          updateData.external_id = foundExternalId;
+          item.external_id = foundExternalId;
+        }
+        if (item.media_type === 'mixed' || !item.media_type) {
+          updateData.media_type = type || 'tv';
+          item.media_type = type || 'tv';
+        }
         await supabaseAdmin
           .from('list_items')
-          .update({ image_url: poster })
+          .update(updateData)
           .eq('id', item.id)
           .then(() => {});
       }
-    } catch { }
+    } catch (_e) { }
   }));
 }
 
