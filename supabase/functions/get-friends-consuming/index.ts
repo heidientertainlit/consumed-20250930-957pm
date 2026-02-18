@@ -27,6 +27,31 @@ function resolveImageUrl(item: any): string {
   return '';
 }
 
+async function fetchMissingPosters(items: any[], supabaseAdmin: any): Promise<void> {
+  const tmdbKey = Deno.env.get('TMDB_API_KEY') || '';
+  const needsPoster = items.filter(i => !i.image_url && i.external_id && !isNaN(Number(i.external_id)));
+  if (!tmdbKey || needsPoster.length === 0) return;
+
+  await Promise.allSettled(needsPoster.map(async (item) => {
+    try {
+      const type = resolveMediaType(item);
+      const endpoint = type === 'movie' ? 'movie' : 'tv';
+      const res = await fetch(`https://api.themoviedb.org/3/${endpoint}/${item.external_id}?api_key=${tmdbKey}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const poster = data.poster_path ? `https://image.tmdb.org/t/p/w300${data.poster_path}` : '';
+      if (poster) {
+        item.image_url = poster;
+        await supabaseAdmin
+          .from('list_items')
+          .update({ image_url: poster })
+          .eq('id', item.id)
+          .then(() => {});
+      }
+    } catch { }
+  }));
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -96,6 +121,8 @@ serve(async (req) => {
         .select('id, display_name, user_name, avatar')
         .in('id', ownerIds);
 
+      await fetchMissingPosters(items, supabaseAdmin);
+
       const usersMap = new Map((users || []).map((u: any) => [u.id, u]));
       const result = items.map((item: any) => {
         const ownerId = userMap.get(item.list_id);
@@ -139,6 +166,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+
+    await fetchMissingPosters(items, supabaseAdmin);
 
     const ownerIds = [...new Set(items.map((i: any) => userMap.get(i.list_id)).filter(Boolean))];
     const { data: users } = await supabaseAdmin
