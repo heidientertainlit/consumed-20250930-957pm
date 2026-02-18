@@ -398,7 +398,7 @@ export default function MyLibrary() {
       <Navigation />
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] -mt-px">
         <div className="pt-3 pb-4 px-4 text-center">
-          <h2 className="text-white text-2xl font-bold tracking-tight">My Library</h2>
+          <h2 className="text-white text-2xl font-medium tracking-tight">My Library</h2>
         </div>
 
         <div className="px-4 pb-6">
