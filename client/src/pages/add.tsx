@@ -712,8 +712,7 @@ export default function Search() {
       {/* Page Title + Search */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-10 px-4 -mt-px">
         <div className="text-center mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          <h1 className="text-white text-2xl font-bold tracking-tight mb-0.5">All your entertainment.<br />All in one place.</h1>
-          <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase mb-4">TRACK. PLAY. CONNECT.</p>
+          <h1 className="text-white text-2xl font-bold tracking-tight mb-4">All your entertainment.<br />All in one place.</h1>
           <div className="text-white/60 text-sm tracking-tight flex items-baseline justify-center gap-0">
             <span>What are you </span>
             <AnimatedWord />
