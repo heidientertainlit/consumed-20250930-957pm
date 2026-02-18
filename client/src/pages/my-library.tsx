@@ -397,14 +397,14 @@ export default function MyLibrary() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       <div className="pt-16 bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e]">
-        <div className="pt-6 pb-6 px-4 text-center">
+        <div className="pt-3 pb-4 px-4 text-center">
           <h2 className="text-white text-2xl font-bold tracking-tight">My Library</h2>
         </div>
 
-        <div className="bg-white pt-2 pb-2 -mt-px">
-          <div className="max-w-3xl lg:mx-auto px-4">
+        <div className="px-4 pb-6">
+          <div className="max-w-3xl lg:mx-auto">
             <div className="mb-2">
-              <h2 className="text-sm font-medium text-gray-900">In Progress</h2>
+              <h2 className="text-sm font-medium text-white/80">In Progress</h2>
             </div>
             {currentlyItems.length > 0 ? (
               <div 
@@ -437,18 +437,18 @@ export default function MyLibrary() {
               </div>
             ) : (
               <div className="pb-1">
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                  <Clock className="mx-auto mb-1 text-gray-400" size={18} />
-                  <p className="text-gray-600 text-xs">No items in your Currently list yet</p>
-                  <p className="text-gray-400 text-[10px] mt-0.5">Search and add to "Currently" to track progress</p>
+                <div className="bg-white/10 border border-white/20 rounded-lg p-3 text-center">
+                  <Clock className="mx-auto mb-1 text-white/40" size={18} />
+                  <p className="text-white/70 text-xs">No items in your Currently list yet</p>
+                  <p className="text-white/40 text-[10px] mt-0.5">Search and add to "Currently" to track progress</p>
                 </div>
               </div>
             )}
           </div>
-          <div className="border-t border-gray-200 mx-4 mt-2 mb-2"></div>
         </div>
+      </div>
 
-        <div className="bg-white max-w-7xl mx-auto px-4 pt-0 pb-6 space-y-4">
+      <div className="bg-white max-w-7xl mx-auto px-4 pt-4 pb-6 space-y-4">
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <button
               onClick={() => setActiveTab('lists')}
@@ -796,7 +796,6 @@ export default function MyLibrary() {
             </div>
           )}
         </div>
-      </div>
 
       <CreateListDialog open={isCreateListOpen} onOpenChange={setIsCreateListOpen} />
     </div>
