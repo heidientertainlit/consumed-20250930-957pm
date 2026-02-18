@@ -287,20 +287,18 @@ export default function DnaPage() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       <div>
-        <div className="bg-white pt-3 pb-3 px-4 -mt-px text-center">
-          <p className="text-purple-500 text-xs font-semibold tracking-[0.3em] uppercase mb-0">Your</p>
-          <h2 className="text-gray-900 text-2xl font-bold tracking-tight">Entertainment DNA</h2>
-          <p className="text-gray-400 text-sm mt-0.5">Discover what your entertainment says about you.</p>
-        </div>
+        <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-5 px-4 -mt-px text-center">
+          <p className="text-purple-400 text-xs font-semibold tracking-[0.3em] uppercase mb-1">Your</p>
+          <h2 className="text-white text-xl font-semibold tracking-tight">Entertainment DNA</h2>
+          <p className="text-white/50 text-sm mt-1">Discover what your entertainment says about you.</p>
 
-        <div className="bg-white max-w-7xl mx-auto px-4 pt-2 pb-6 space-y-4">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div className="flex gap-2 justify-center pt-4 pb-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <button
               onClick={() => setActiveTab('dna')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 activeTab === 'dna'
                   ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+                  : 'bg-white/10 text-white/70 border border-white/20 hover:border-purple-400'
               }`}
             >
               <Dna size={14} />
@@ -311,14 +309,16 @@ export default function DnaPage() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 activeTab === 'compare'
                   ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+                  : 'bg-white/10 text-white/70 border border-white/20 hover:border-purple-400'
               }`}
             >
               <Users size={14} />
               Compare
             </button>
           </div>
+        </div>
 
+        <div className="max-w-7xl mx-auto px-4 pt-4 pb-6 space-y-4">
           {activeTab === 'dna' && (
             <div className="space-y-4">
               <div className="bg-gradient-to-r from-purple-500 via-blue-500 to-teal-400 rounded-xl p-4">
