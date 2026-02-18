@@ -478,62 +478,79 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ overflow: 'visible' }}>
-        <div className="flex justify-around items-end px-2 pt-4" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 24px), 24px)', overflow: 'visible' }}>
-          {/* Activity Feed */}
+        {/* Floating plus button */}
+        <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: -26 }}>
           <Link
-            href="/activity"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
-            data-testid="nav-activity"
+            href="/"
+            className="flex items-center justify-center"
+            data-testid="nav-home"
           >
-            <Activity className="text-white" size={22} />
-            <span className="text-white text-[10px] mt-0.5">Activity</span>
+            <div className="w-[62px] h-[62px] rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 flex items-center justify-center shadow-xl shadow-purple-600/50">
+              <Plus className="text-white" size={30} strokeWidth={2.5} />
+            </div>
           </Link>
+        </div>
 
-          {/* DNA */}
-          <Link
-            href="/dna"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/dna" ? "bg-white/15" : ""}`}
-            data-testid="nav-dna"
+        {/* Nav bar with notch */}
+        <div className="relative" style={{ overflow: 'visible' }}>
+          <svg
+            className="absolute top-0 left-0 w-full"
+            height="30"
+            viewBox="0 0 400 30"
+            preserveAspectRatio="none"
+            style={{ marginTop: -1 }}
           >
-            <Dna className="text-white" size={22} />
-            <span className="text-white text-[10px] mt-0.5">DNA</span>
-          </Link>
-
-          {/* Add (center circle - raised) */}
-          <div className="relative flex items-center justify-center" style={{ width: 68, height: 40 }}>
+            <path
+              d="M0,30 L0,0 L155,0 C160,0 165,0 170,5 C178,18 185,26 200,26 C215,26 222,18 230,5 C235,0 240,0 245,0 L400,0 L400,30 Z"
+              fill="#0a0a0f"
+            />
+          </svg>
+          <div className="flex justify-around items-end px-2 pt-8" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 24px), 24px)' }}>
+            {/* Activity Feed */}
             <Link
-              href="/"
-              className="absolute flex items-center justify-center"
-              style={{ top: -28 }}
-              data-testid="nav-home"
+              href="/activity"
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
+              data-testid="nav-activity"
             >
-              <div className="w-[58px] h-[58px] rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 flex items-center justify-center shadow-xl shadow-purple-600/50 ring-4 ring-[#0d0d18]">
-                <Plus className="text-white" size={28} strokeWidth={2.5} />
-              </div>
+              <Activity className="text-white" size={22} />
+              <span className="text-white text-[10px] mt-0.5">Activity</span>
+            </Link>
+
+            {/* DNA */}
+            <Link
+              href="/dna"
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/dna" ? "bg-white/15" : ""}`}
+              data-testid="nav-dna"
+            >
+              <Dna className="text-white" size={22} />
+              <span className="text-white text-[10px] mt-0.5">DNA</span>
+            </Link>
+
+            {/* Spacer for center button */}
+            <div style={{ width: 68 }} />
+
+            {/* Library */}
+            <Link
+              href="/my-library"
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/my-library" ? "bg-white/15" : ""}`}
+              data-testid="nav-library"
+              onTouchStart={prefetchCollections}
+              onMouseEnter={prefetchCollections}
+            >
+              <Library className="text-white" size={22} />
+              <span className="text-white text-[10px] mt-0.5">Library</span>
+            </Link>
+
+            {/* Leaderboard */}
+            <Link
+              href="/leaderboard"
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
+              data-testid="nav-leaderboard"
+            >
+              <Trophy className="text-white" size={22} />
+              <span className="text-white text-[10px] mt-0.5">Board</span>
             </Link>
           </div>
-
-          {/* Library */}
-          <Link
-            href="/my-library"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/my-library" ? "bg-white/15" : ""}`}
-            data-testid="nav-library"
-            onTouchStart={prefetchCollections}
-            onMouseEnter={prefetchCollections}
-          >
-            <Library className="text-white" size={22} />
-            <span className="text-white text-[10px] mt-0.5">Library</span>
-          </Link>
-
-          {/* Leaderboard */}
-          <Link
-            href="/leaderboard"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
-            data-testid="nav-leaderboard"
-          >
-            <Trophy className="text-white" size={22} />
-            <span className="text-white text-[10px] mt-0.5">Board</span>
-          </Link>
         </div>
       </nav>
 
