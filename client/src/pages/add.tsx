@@ -814,64 +814,57 @@ export default function Search() {
 
       </div>
 
-      {/* What People Are Adding - White Section */}
+      {/* What People Are Adding - Subtle rows */}
       {!searchQuery.trim() && (
-        <div className="bg-white px-4 pt-6 pb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-              <TrendingUp size={14} className="text-purple-500" />
-              What People Are Adding
-            </h3>
-            {friendsConsuming.length > 0 && (
-              <span className="text-[10px] text-purple-500 font-medium">{friendsConsuming.length} items</span>
-            )}
-          </div>
+        <div className="bg-white px-4 pt-5 pb-4">
+          <p className="text-gray-400 text-[10px] font-medium uppercase tracking-wide mb-3">What People Are Adding</p>
           {friendsConsuming.length > 0 ? (
-            <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
-              {friendsConsuming.map((item: any, idx: number) => (
-                <Link key={item.id || idx} href={`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`}>
-                  <div className="w-[80px] flex-shrink-0 cursor-pointer group">
-                    <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-1.5 ring-1 ring-gray-200 group-hover:ring-purple-400 transition-all">
-                      {(item.image_url && item.image_url.startsWith('http')) ? (
-                        <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
-                      ) : item.image_url && !item.image_url.startsWith('http') ? (
-                        <img src={`https://image.tmdb.org/t/p/w200${item.image_url}`} alt={item.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center">
-                          <Film size={16} className="text-purple-400" />
-                        </div>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setQuickAddMedia({
-                            title: item.title,
-                            mediaType: item.media_type || 'movie',
-                            externalId: item.external_id || item.id,
-                            externalSource: item.external_source || 'tmdb',
-                            imageUrl: item.image_url || '',
-                          });
-                          setIsQuickAddOpen(true);
-                        }}
-                        className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center hover:bg-black/60 transition-all"
-                      >
-                        <Plus size={12} className="text-white" strokeWidth={2.5} />
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-gray-800 truncate font-medium">{item.title}</p>
-                    <p className="text-[9px] text-gray-400 truncate capitalize">{
-                      item.media_type && item.media_type.toLowerCase() !== 'mixed' 
-                        ? (item.media_type === 'tv' ? 'TV' : item.media_type.replace('_', ' '))
-                        : ''
-                    }</p>
-                    <p className="text-[9px] text-purple-500 truncate">{item.owner?.display_name || item.owner?.user_name || ''}</p>
+            <div className="space-y-1.5">
+              {friendsConsuming.slice(0, 5).map((item: any, idx: number) => (
+                <div
+                  key={item.id || idx}
+                  className="flex items-center gap-2.5 py-1 cursor-pointer"
+                  onClick={() => setLocation(`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`)}
+                >
+                  <div className="w-8 h-11 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+                    {(item.image_url && item.image_url.startsWith('http')) ? (
+                      <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                    ) : item.image_url && !item.image_url.startsWith('http') ? (
+                      <img src={`https://image.tmdb.org/t/p/w92${item.image_url}`} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                        <Film size={12} className="text-gray-300" />
+                      </div>
+                    )}
                   </div>
-                </Link>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-gray-700 text-xs font-medium truncate">{item.title}</p>
+                    <p className="text-gray-400 text-[10px] truncate">
+                      {item.media_type === 'tv' ? 'TV' : item.media_type === 'movie' ? 'Movie' : item.media_type || ''}
+                      {item.owner?.display_name ? ` · ${item.owner.display_name}` : item.owner?.user_name ? ` · ${item.owner.user_name}` : ''}
+                    </p>
+                  </div>
+                  <button
+                    className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setQuickAddMedia({
+                        title: item.title,
+                        mediaType: item.media_type || 'movie',
+                        externalId: item.external_id || item.id,
+                        externalSource: item.external_source || 'tmdb',
+                        imageUrl: item.image_url || '',
+                      });
+                      setIsQuickAddOpen(true);
+                    }}
+                  >
+                    <Plus size={12} className="text-gray-400" />
+                  </button>
+                </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-400 text-sm">Add friends to see what they're adding</p>
+            <p className="text-gray-300 text-xs">Add friends to see what they're adding</p>
           )}
         </div>
       )}
