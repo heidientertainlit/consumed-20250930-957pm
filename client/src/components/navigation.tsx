@@ -479,7 +479,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ overflow: 'visible' }}>
         {/* Floating plus button */}
-        <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: -26 }}>
+        <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: -32 }}>
           <Link
             href="/"
             className="flex items-center justify-center"
@@ -491,66 +491,63 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
           </Link>
         </div>
 
-        {/* Nav bar with notch */}
-        <div className="relative" style={{ overflow: 'visible' }}>
-          <svg
-            className="absolute top-0 left-0 w-full"
-            height="30"
-            viewBox="0 0 400 30"
-            preserveAspectRatio="none"
-            style={{ marginTop: -1 }}
+        {/* Nav bar with curved notch as top edge */}
+        <svg
+          className="block w-full"
+          height="20"
+          viewBox="0 0 400 20"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0,0 L150,0 C158,0 164,2 170,8 C178,17 188,20 200,20 C212,20 222,17 230,8 C236,2 242,0 250,0 L400,0 L400,20 L0,20 Z"
+            fill="#0a0a0f"
+          />
+        </svg>
+        <div className="flex justify-around items-center px-2 -mt-px" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 20px), 20px)', paddingTop: '4px' }}>
+          {/* Activity Feed */}
+          <Link
+            href="/activity"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
+            data-testid="nav-activity"
           >
-            <path
-              d="M0,30 L0,0 L155,0 C160,0 165,0 170,5 C178,18 185,26 200,26 C215,26 222,18 230,5 C235,0 240,0 245,0 L400,0 L400,30 Z"
-              fill="#0a0a0f"
-            />
-          </svg>
-          <div className="flex justify-around items-end px-2 pt-8" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 24px), 24px)' }}>
-            {/* Activity Feed */}
-            <Link
-              href="/activity"
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
-              data-testid="nav-activity"
-            >
-              <Activity className="text-white" size={22} />
-              <span className="text-white text-[10px] mt-0.5">Activity</span>
-            </Link>
+            <Activity className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">Activity</span>
+          </Link>
 
-            {/* DNA */}
-            <Link
-              href="/dna"
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/dna" ? "bg-white/15" : ""}`}
-              data-testid="nav-dna"
-            >
-              <Dna className="text-white" size={22} />
-              <span className="text-white text-[10px] mt-0.5">DNA</span>
-            </Link>
+          {/* DNA */}
+          <Link
+            href="/dna"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/dna" ? "bg-white/15" : ""}`}
+            data-testid="nav-dna"
+          >
+            <Dna className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">DNA</span>
+          </Link>
 
-            {/* Spacer for center button */}
-            <div style={{ width: 68 }} />
+          {/* Spacer for center button */}
+          <div style={{ width: 68 }} />
 
-            {/* Library */}
-            <Link
-              href="/my-library"
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/my-library" ? "bg-white/15" : ""}`}
-              data-testid="nav-library"
-              onTouchStart={prefetchCollections}
-              onMouseEnter={prefetchCollections}
-            >
-              <Library className="text-white" size={22} />
-              <span className="text-white text-[10px] mt-0.5">Library</span>
-            </Link>
+          {/* Library */}
+          <Link
+            href="/my-library"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/my-library" ? "bg-white/15" : ""}`}
+            data-testid="nav-library"
+            onTouchStart={prefetchCollections}
+            onMouseEnter={prefetchCollections}
+          >
+            <Library className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">Library</span>
+          </Link>
 
-            {/* Leaderboard */}
-            <Link
-              href="/leaderboard"
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
-              data-testid="nav-leaderboard"
-            >
-              <Trophy className="text-white" size={22} />
-              <span className="text-white text-[10px] mt-0.5">Board</span>
-            </Link>
-          </div>
+          {/* Leaderboard */}
+          <Link
+            href="/leaderboard"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
+            data-testid="nav-leaderboard"
+          >
+            <Trophy className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">Board</span>
+          </Link>
         </div>
       </nav>
 
