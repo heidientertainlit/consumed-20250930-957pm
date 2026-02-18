@@ -494,8 +494,8 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className="flex items-center justify-center"
             data-testid="nav-add"
           >
-            <div className="w-[52px] h-[52px] rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #5B21B6, #7C3AED, #818CF8)' }}>
-              <Plus className="text-white" size={28} strokeWidth={2.5} />
+            <div className="w-14 h-14 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg flex items-center justify-center hover:from-purple-700 hover:to-blue-700 transition-all">
+              <Plus className="text-white" size={26} strokeWidth={2.5} />
             </div>
           </Link>
 

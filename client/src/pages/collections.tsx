@@ -1197,15 +1197,6 @@ export default function CollectionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Floating Action Button - Opens Library Actions */}
-      <button
-        onClick={() => setIsLibraryActionOpen(true)}
-        className="fixed bottom-24 right-4 w-14 h-14 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full shadow-lg flex items-center justify-center text-white hover:from-purple-700 hover:to-blue-700 transition-all hover:scale-105 z-40"
-        data-testid="fab-library-action"
-        aria-label="Library actions"
-      >
-        <Plus size={24} />
-      </button>
 
       {/* Library Action Sheet */}
       <Sheet open={isLibraryActionOpen} onOpenChange={setIsLibraryActionOpen}>

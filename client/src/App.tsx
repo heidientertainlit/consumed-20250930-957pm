@@ -204,12 +204,10 @@ function Router() {
           <RedirectTo to="/activity" />
         </Route>
         <Route path="/my-library">
-          <ProtectedRoute>
-            <CollectionsPage />
-          </ProtectedRoute>
+          <RedirectTo to="/add" />
         </Route>
         <Route path="/collections">
-          <RedirectTo to="/my-library" />
+          <RedirectTo to="/add" />
         </Route>
         <Route path="/trivia">
           <RedirectTo to="/activity" />
