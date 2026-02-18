@@ -479,14 +479,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       {/* Bottom navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50">
         <div className="flex justify-around items-center px-2 pt-4" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 24px), 24px)' }}>
-          {/* Home (add/search page) */}
+          {/* Activity Feed */}
           <Link
-            href="/"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/" || location === "/add" ? "bg-white/15" : ""}`}
-            data-testid="nav-home"
+            href="/activity"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
+            data-testid="nav-activity"
           >
-            <Home className="text-white" size={22} />
-            <span className="text-white text-[10px] mt-0.5">Home</span>
+            <Activity className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">Activity</span>
           </Link>
 
           {/* Library */}
@@ -501,14 +501,15 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-white text-[10px] mt-0.5">Library</span>
           </Link>
 
-          {/* Activity Feed */}
+          {/* Add (center circle) */}
           <Link
-            href="/activity"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
-            data-testid="nav-activity"
+            href="/"
+            className="flex items-center justify-center -mt-6"
+            data-testid="nav-home"
           >
-            <Activity className="text-white" size={22} />
-            <span className="text-white text-[10px] mt-0.5">Activity</span>
+            <div className={`w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center shadow-lg shadow-purple-900/40 border-2 border-purple-400/30 ${location === "/" || location === "/add" ? "ring-2 ring-white/30" : ""}`}>
+              <Plus className="text-white" size={28} strokeWidth={2.5} />
+            </div>
           </Link>
 
           {/* DNA */}
