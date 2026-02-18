@@ -448,6 +448,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/smart-search", async (req, res) => {
+    try {
+      const { query } = req.body;
+      if (!query || typeof query !== 'string') {
+        return res.status(400).json({ error: "Query required" });
+      }
+
+      const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+      if (!OPENAI_API_KEY) {
+        return res.status(500).json({ error: "OpenAI not configured" });
+      }
+
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content: `You are a media identification assistant. The user will give you a vague or fuzzy description of a movie, TV show, book, song, album, podcast, or game. Return the most likely exact title(s) they're looking for. Return a JSON array of objects with "title" and "type" (movie, tv, book, music, podcast, game). Return at most 3 results, ordered by likelihood. Only return the JSON array, nothing else.`
+            },
+            {
+              role: "user",
+              content: query
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 200,
+        }),
+      });
+
+      if (!response.ok) {
+        return res.status(502).json({ error: "AI service error" });
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || "[]";
+      
+      let suggestions;
+      try {
+        const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        suggestions = JSON.parse(cleaned);
+      } catch {
+        suggestions = [];
+      }
+
+      res.json({ suggestions });
+    } catch (error) {
+      console.error("Smart search error:", error);
+      res.status(500).json({ error: "Smart search failed" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
