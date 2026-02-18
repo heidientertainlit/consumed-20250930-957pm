@@ -135,6 +135,32 @@ export default function Search() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Fetch friends list
+  const { data: friendsList = [] } = useQuery({
+    queryKey: ['user-friends-home'],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/manage-friendships`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'getFriends' })
+      });
+      if (!response.ok) return [];
+      const data = await response.json();
+      return (data.friends || []).map((f: any) => ({
+        id: f.friend?.id || f.id,
+        display_name: f.friend?.display_name || f.display_name,
+        user_name: f.friend?.user_name || f.user_name,
+        avatar: f.friend?.avatar || f.avatar,
+      }));
+    },
+    enabled: !!session?.access_token,
+    staleTime: 60000,
+  });
+
   // Fetch user lists with media for Currently Consuming
   const [currentlyItems, setCurrentlyItems] = useState<any[]>([]);
   const [isLoadingCurrently, setIsLoadingCurrently] = useState(false);
@@ -804,16 +830,34 @@ export default function Search() {
               <h3 className="text-gray-900 text-sm font-semibold">Friends Right Now</h3>
               <Link href="/activity" className="text-purple-600 text-xs font-medium">See Activity &rarr;</Link>
             </div>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-gray-400 py-2">
+            {friendsList.length > 0 ? (
+              <div className="space-y-2.5">
+                {friendsList.slice(0, 3).map((friend: any) => (
+                  <div key={friend.id} className="flex items-center gap-3" onClick={() => setLocation(`/user/${friend.id}`)}>
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                      {friend.avatar ? (
+                        <img src={friend.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        (friend.display_name || friend.user_name || '?')[0].toUpperCase()
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-900 text-sm font-medium truncate">{friend.display_name || friend.user_name}</p>
+                      {friend.user_name && <p className="text-gray-400 text-xs truncate">@{friend.user_name}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 py-2">
                 <div className="flex -space-x-2">
                   <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white" />
                   <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white" />
                   <div className="w-8 h-8 rounded-full bg-gray-200 border-2 border-white" />
                 </div>
-                <p className="text-xs text-gray-400">Follow friends to see what they're into</p>
+                <p className="text-xs text-gray-400">Add friends to see what they're into</p>
               </div>
-            </div>
+            )}
           </div>
         </div>
       )}
