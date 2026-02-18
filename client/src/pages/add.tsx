@@ -1298,8 +1298,8 @@ export default function Search() {
         <div className="text-center mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <h1 className="text-white text-2xl font-bold tracking-tight mb-0.5">All your entertainment.<br />All in one place.</h1>
           <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase mb-4">TRACK. PLAY. CONNECT.</p>
-          <div className="text-white/60 text-sm tracking-tight flex items-baseline justify-center gap-0.5">
-            <span>What are you</span>
+          <div className="text-white/60 text-sm tracking-tight flex items-baseline justify-center gap-0">
+            <span>What are you </span>
             <AnimatedWord />
             <span>?</span>
           </div>
