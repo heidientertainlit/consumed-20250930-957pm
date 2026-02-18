@@ -479,7 +479,7 @@ export default function Leaderboard() {
             size="sm"
             variant={scope === 'global' ? 'default' : 'outline'}
             onClick={() => setScope('global')}
-            className={scope === 'global' ? 'bg-purple-600 hover:bg-purple-700 border-purple-600' : 'border-white/30 text-white hover:bg-white/10'}
+            className={scope === 'global' ? 'bg-purple-600 hover:bg-purple-700 border-purple-600' : 'border-white/30 text-white hover:bg-white/10 bg-transparent'}
             data-testid="button-scope-global"
           >
             <Globe size={14} className="mr-1" />
@@ -489,7 +489,7 @@ export default function Leaderboard() {
             size="sm"
             variant={scope === 'friends' ? 'default' : 'outline'}
             onClick={() => setScope('friends')}
-            className={scope === 'friends' ? 'bg-purple-600 hover:bg-purple-700 border-purple-600' : 'border-white/30 text-white hover:bg-white/10'}
+            className={scope === 'friends' ? 'bg-purple-600 hover:bg-purple-700 border-purple-600' : 'border-white/30 text-white hover:bg-white/10 bg-transparent'}
             data-testid="button-scope-friends"
           >
             <Users size={14} className="mr-1" />
