@@ -3739,7 +3739,7 @@ export default function Feed() {
                             });
                             setIsQuickAddOpen(true);
                           }}
-                          className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center"
                         >
                           <Plus size={10} className="text-white" strokeWidth={2.5} />
                         </button>
