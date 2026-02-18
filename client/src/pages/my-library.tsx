@@ -396,8 +396,8 @@ export default function MyLibrary() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
-      <div className="pt-16">
-        <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-6 pb-6 px-4 -mt-px text-center">
+      <div className="pt-16 bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e]">
+        <div className="pt-6 pb-6 px-4 text-center">
           <h2 className="text-white text-2xl font-bold tracking-tight">My Library</h2>
         </div>
 
