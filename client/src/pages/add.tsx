@@ -742,10 +742,8 @@ export default function Search() {
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-8 px-4 -mt-px">
         <div className="text-center mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <h1 className="text-white text-2xl font-bold tracking-tight mb-2">All your entertainment.<br />All in one place.</h1>
-          <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase">TRACK. PLAY. CONNECT.</p>
+          <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase">ADD MEDIA</p>
         </div>
-
-        <p className="text-white/80 text-sm font-medium text-center mb-3">Add what you're into</p>
 
         {/* Search Bar */}
         <div className="bg-white rounded-2xl p-3 shadow-lg max-w-xl mx-auto">
@@ -785,45 +783,47 @@ export default function Search() {
           </div>
         )}
 
-        {/* Say Something pills */}
-        {!searchQuery.trim() && (
-          <div className="mt-6">
-            <p className="text-white/50 text-xs font-medium uppercase tracking-wide mb-2.5">Say something</p>
-            <div className="flex flex-wrap gap-2">
-              {(['Thought', 'Review', 'Hot Take', 'Prediction'] as const).map((label) => (
-                <button
-                  key={label}
-                  onClick={() => {
-                    setComposerDefaultType(label === 'Hot Take' ? 'hot_take' : label.toLowerCase() as any);
-                    setShowComposerModal(true);
-                  }}
-                  className="px-4 py-2 rounded-full text-sm font-medium bg-white/10 text-white/80 hover:bg-white/20 transition-colors"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Composer Modal */}
-      {showComposerModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowComposerModal(false)} />
-          <div className="relative bg-white w-full max-w-lg rounded-t-2xl max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between rounded-t-2xl z-10">
-              <button onClick={() => setShowComposerModal(false)} className="text-gray-600">
-                <ArrowLeft size={20} />
-              </button>
-              <h2 className="text-lg font-bold text-gray-900">Say something</h2>
-              <button onClick={() => setShowComposerModal(false)} className="text-gray-400">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="p-4">
-              <InlineComposer key={composerDefaultType} defaultType={composerDefaultType} onPostSuccess={() => setShowComposerModal(false)} />
-            </div>
+      {/* Quick Add - White Section */}
+      {!searchQuery.trim() && (
+        <div className="bg-white px-4 pt-4 pb-4">
+          <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wide mb-3">Quick Add</h3>
+          <div className="space-y-2">
+            {[...(trendingMovies || []).slice(0, 2), ...(trendingTVShows || []).slice(0, 2)].slice(0, 4).map((item: any) => (
+              <div
+                key={item.id || item.external_id}
+                className="flex items-center gap-3 py-1.5 cursor-pointer"
+                onClick={() => {
+                  setQuickAddMedia(item);
+                  setIsQuickAddOpen(true);
+                }}
+              >
+                <div className="w-10 h-14 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                  {(item.poster_url || item.image || item.image_url) ? (
+                    <img src={item.poster_url || item.image || item.image_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Film size={16} className="text-gray-300" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-gray-800 text-sm font-medium truncate">{item.title}</p>
+                  <p className="text-gray-400 text-xs truncate">{item.type === 'tv' ? 'TV Show' : item.type === 'movie' ? 'Movie' : item.type} {item.year ? `· ${item.year}` : ''}</p>
+                </div>
+                <button
+                  className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setQuickAddMedia(item);
+                    setIsQuickAddOpen(true);
+                  }}
+                >
+                  <Plus size={16} className="text-purple-600" />
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}
