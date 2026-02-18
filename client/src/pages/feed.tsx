@@ -3702,9 +3702,9 @@ export default function Feed() {
 
       {/* Header Section */}
       <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1a1a2e] pb-5 -mt-px">
-        <div className="max-w-4xl mx-auto px-4 pt-6">
+        <div className="max-w-4xl mx-auto px-4 pt-8">
           
-          <h2 className="text-white text-xl font-medium tracking-tight text-center mb-4">What's Everyone Into?</h2>
+          <h2 className="text-white text-xl font-semibold tracking-tight text-center mb-4">What's Everyone Into?</h2>
 
           {/* What Friends Are Consuming - subtle inline row */}
           {friendsConsuming.length > 0 && (
