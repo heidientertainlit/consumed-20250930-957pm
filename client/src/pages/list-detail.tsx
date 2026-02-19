@@ -197,8 +197,17 @@ export default function ListDetail() {
       }
 
       if (!session?.access_token) {
-        console.log('No session token available for list detail');
-        throw new Error('Authentication required');
+        console.log('No session - trying public list lookup by ID...');
+        if (isUuid) {
+          const collabResponse = await fetch(`/api/list-by-id/${urlListName}`);
+          if (collabResponse.ok) {
+            const collabData = await collabResponse.json();
+            if (collabData.list) {
+              return { lists: [collabData.list] };
+            }
+          }
+        }
+        return { lists: [] };
       }
 
       const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
@@ -862,11 +871,20 @@ export default function ListDetail() {
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">List not found</h1>
             <p className="text-gray-600 mb-4">
-              {sharedUserId ? 'This list may be private or does not exist.' : 'Please log in to view your lists.'}
+              {sharedUserId ? 'This list may be private or does not exist.' : !session ? 'Log in to view this list or browse your own.' : 'This list does not exist or may have been deleted.'}
             </p>
-            <Button onClick={() => setLocation("/track")}>
-              Back to Track
-            </Button>
+            {!session ? (
+              <Button onClick={() => {
+                sessionStorage.setItem('returnUrl', window.location.pathname + window.location.search);
+                setLocation("/login");
+              }}>
+                Log In
+              </Button>
+            ) : (
+              <Button onClick={() => setLocation("/track")}>
+                Back to Track
+              </Button>
+            )}
           </div>
         </div>
       </div>

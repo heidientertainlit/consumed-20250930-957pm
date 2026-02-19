@@ -290,9 +290,7 @@ function Router() {
           </ProtectedRoute>
         </Route>
         <Route path="/list/:id">
-          <ProtectedRoute>
             <ListDetail />
-          </ProtectedRoute>
         </Route>
         <Route path="/create-rank">
           <ProtectedRoute>
