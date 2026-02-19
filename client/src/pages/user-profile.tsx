@@ -108,6 +108,7 @@ export default function UserProfile() {
   // Entertainment DNA states
   const [dnaProfileStatus, setDnaProfileStatus] = useState<'no_profile' | 'has_profile' | 'generating'>('no_profile');
   const [isGeneratingProfile, setIsGeneratingProfile] = useState(false);
+  const [isSubmittingSurvey, setIsSubmittingSurvey] = useState(false);
   const [dnaProfile, setDnaProfile] = useState<any>(null);
   
   // DNA Level states (0=No Survey, 1=DNA Summary (10+ items), 2=Friend Compare (30+ items))
@@ -2028,6 +2029,7 @@ export default function UserProfile() {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       // Survey complete - submit to edge functions
+      setIsSubmittingSurvey(true);
       try {
         console.log('Survey completed with answers:', surveyAnswers);
 
@@ -2046,6 +2048,8 @@ export default function UserProfile() {
         console.error('Failed to complete survey:', error);
         console.error('Error details:', error.message, error.stack);
         alert(`Survey submission failed: ${error.message || 'Unknown error'}. Please try again.`);
+      } finally {
+        setIsSubmittingSurvey(false);
       }
     }
   };
@@ -4173,16 +4177,29 @@ export default function UserProfile() {
 
                 <Button
                   onClick={handleSurveyNext}
-                  disabled={surveyQuestions.length === 0 || !getCurrentSurveyAnswer() || (Array.isArray(getCurrentSurveyAnswer()) && getCurrentSurveyAnswer().length === 0)}
+                  disabled={isSubmittingSurvey || surveyQuestions.length === 0 || !getCurrentSurveyAnswer() || (Array.isArray(getCurrentSurveyAnswer()) && getCurrentSurveyAnswer().length === 0)}
                   size="sm"
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white flex items-center space-x-1 disabled:opacity-50 px-2.5 py-1.5 h-8"
+                  className={`text-white flex items-center space-x-1 disabled:opacity-50 px-2.5 py-1.5 h-8 transition-all ${
+                    isSubmittingSurvey 
+                      ? 'bg-purple-800 scale-95' 
+                      : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 active:scale-95 active:brightness-75'
+                  }`}
                   data-testid="next-question-button"
                 >
-                  <span className="text-xs">{surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? "Generate" : "Next"}</span>
-                  {surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? (
-                    <Sparkles size={14} />
+                  {isSubmittingSurvey ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span className="text-xs">Submitting...</span>
+                    </>
                   ) : (
-                    <ChevronRight size={14} />
+                    <>
+                      <span className="text-xs">{surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? "Generate" : "Next"}</span>
+                      {surveyQuestions.length > 0 && currentQuestion === surveyQuestions.length - 1 ? (
+                        <Sparkles size={14} />
+                      ) : (
+                        <ChevronRight size={14} />
+                      )}
+                    </>
                   )}
                 </Button>
               </div>
