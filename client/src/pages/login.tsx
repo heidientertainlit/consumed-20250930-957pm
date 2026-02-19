@@ -4,13 +4,10 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { Eye, EyeOff, Mail, Lock, User, AtSign } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff } from "lucide-react";
-import "./auth.css";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -30,7 +27,6 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Redirect after login: check for returnUrl first, otherwise go to activity
     if (!loading && user && !justSignedUp) {
       const returnUrl = sessionStorage.getItem('returnUrl');
       if (returnUrl) {
@@ -65,7 +61,6 @@ export default function LoginPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate username is provided
     if (!username || username.trim() === '') {
       toast({
         title: "Username Required",
@@ -76,7 +71,6 @@ export default function LoginPage() {
       return;
     }
 
-    // Validate username format
     const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
     if (!usernameRegex.test(username.trim())) {
       toast({
@@ -104,13 +98,9 @@ export default function LoginPage() {
       });
       setSubmitting(false);
     } else {
-      // New users go straight to activity feed (onboarding removed)
-      
-      // Check if there's a referrer and send friend request
       const referrerId = localStorage.getItem('consumed_referrer');
       if (referrerId && data?.user?.id) {
         try {
-          // Get a fresh session for the new user
           const { data: sessionData } = await supabase.auth.getSession();
           if (sessionData?.session?.access_token) {
             await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-friendships`, {
@@ -158,10 +148,9 @@ export default function LoginPage() {
     setResetting(false);
   };
 
-  // Show loading spinner while auth state is being determined
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <div className="text-white text-sm mt-4">Loading...</div>
@@ -170,10 +159,9 @@ export default function LoginPage() {
     );
   }
 
-  // If user is logged in, show redirecting message (useEffect will redirect)
   if (user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-purple-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <div className="text-white text-xl mt-4">Redirecting to Feed...</div>
@@ -182,10 +170,12 @@ export default function LoginPage() {
     );
   }
 
+  const inputClasses = "w-full h-12 bg-gray-100/80 border-0 rounded-full px-12 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:bg-white transition-all";
+  const labelClasses = "text-sm font-medium text-gray-600 ml-1";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black from-30% via-purple-950 via-70% to-purple-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        {/* Logo and welcome section */}
         <div className="text-center mb-8 mt-8">
           <div className="flex justify-center mb-3">
             <img 
@@ -197,29 +187,25 @@ export default function LoginPage() {
           <h1 className="text-white text-lg font-semibold mb-2 leading-tight">
             How you do entertainment.
           </h1>
-          <p className="text-gray-300 text-xs max-w-xs mx-auto">
+          <p className="text-gray-400 text-xs max-w-xs mx-auto">
             Play trivia, track what you consume,<br />and discover your entertainment DNA.
           </p>
         </div>
         
-        {/* Auth form */}
-        <div 
-          id="auth"
-          className="bg-white rounded-2xl p-8 shadow-2xl border border-gray-200"
-        >
+        <div className="bg-white rounded-3xl p-8 shadow-2xl">
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 rounded-lg p-1">
+            <TabsList className="grid w-full grid-cols-2 mb-8 bg-gray-100 rounded-full p-1 h-12">
               <TabsTrigger 
                 value="signin" 
                 data-testid="tab-signin"
-                className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-500 rounded-md transition-all"
+                className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-md data-[state=inactive]:text-gray-400 rounded-full transition-all text-sm font-medium h-10"
               >
                 Sign In
               </TabsTrigger>
               <TabsTrigger 
                 value="signup" 
                 data-testid="tab-signup"
-                className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm data-[state=inactive]:text-gray-500 rounded-md transition-all"
+                className="data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-md data-[state=inactive]:text-gray-400 rounded-full transition-all text-sm font-medium h-10"
               >
                 Sign Up
               </TabsTrigger>
@@ -227,52 +213,58 @@ export default function LoginPage() {
             
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email" className="form-text-black">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    data-testid="input-signin-email"
-                    className="bg-white form-text-black form-placeholder-black"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password" className="form-text-black">Password</Label>
+                <div className="space-y-1.5">
                   <div className="relative">
-                    <Input
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      id="signin-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      placeholder="Email address"
+                      data-testid="input-signin-email"
+                      className={inputClasses}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
                       id="signin-password"
                       type={showSignInPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      placeholder="Password"
                       data-testid="input-signin-password"
-                      className="bg-white form-text-black form-placeholder-black pr-10"
+                      className={inputClasses + " pr-12"}
                     />
                     <button
                       type="button"
                       onClick={() => setShowSignInPassword(!showSignInPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                       data-testid="button-toggle-signin-password"
                       aria-label={showSignInPassword ? "Hide password" : "Show password"}
                     >
                       {showSignInPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsForgotPasswordOpen(true)}
-                    className="text-sm text-gray-600 hover:text-gray-800 hover:underline"
-                    data-testid="link-forgot-password"
-                  >
-                    Forgot password?
-                  </button>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotPasswordOpen(true)}
+                      className="text-xs text-purple-500 hover:text-purple-700 font-medium transition-colors"
+                      data-testid="link-forgot-password"
+                    >
+                      I forgot password
+                    </button>
+                  </div>
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-black hover:bg-gray-900 text-white"
+                  className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white rounded-full text-sm font-semibold shadow-lg shadow-purple-500/25 transition-all"
                   disabled={submitting}
                   data-testid="button-signin"
                 >
@@ -282,85 +274,87 @@ export default function LoginPage() {
             </TabsContent>
             
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
+              <form onSubmit={handleSignUp} className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-firstname" className="form-text-black">First Name</Label>
-                    <Input
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
                       id="signup-firstname"
                       type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       required
+                      placeholder="First name"
                       data-testid="input-signup-firstname"
-                      className="bg-white form-text-black form-placeholder-black"
+                      className={inputClasses}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-lastname" className="form-text-black">Last Name</Label>
-                    <Input
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
                       id="signup-lastname"
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       required
+                      placeholder="Last name"
                       data-testid="input-signup-lastname"
-                      className="bg-white form-text-black form-placeholder-black"
+                      className={inputClasses}
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-username" className="form-text-black">Username</Label>
-                  <Input
+                <div className="relative">
+                  <AtSign className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
                     id="signup-username"
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
+                    placeholder="Username"
                     data-testid="input-signup-username"
-                    className="bg-white form-text-black form-placeholder-black"
-                    placeholder="letters, numbers, underscores only"
+                    className={inputClasses}
                   />
-                  <p className="text-xs text-gray-500">3-20 characters, no spaces</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email" className="form-text-black">Email</Label>
-                  <Input
+                <p className="text-[11px] text-gray-400 ml-4 -mt-1">3-20 characters, letters, numbers, underscores</p>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
                     id="signup-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    placeholder="Email address"
                     data-testid="input-signup-email"
-                    className="bg-white form-text-black form-placeholder-black"
+                    className={inputClasses}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password" className="form-text-black">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="signup-password"
-                      type={showSignUpPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      data-testid="input-signup-password"
-                      className="bg-white form-text-black form-placeholder-black pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowSignUpPassword(!showSignUpPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                      data-testid="button-toggle-signup-password"
-                      aria-label={showSignUpPassword ? "Hide password" : "Show password"}
-                    >
-                      {showSignUpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    id="signup-password"
+                    type={showSignUpPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="Password"
+                    data-testid="input-signup-password"
+                    className={inputClasses + " pr-12"}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    data-testid="button-toggle-signup-password"
+                    aria-label={showSignUpPassword ? "Hide password" : "Show password"}
+                  >
+                    {showSignUpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-black hover:bg-gray-900 text-white"
+                  className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white rounded-full text-sm font-semibold shadow-lg shadow-purple-500/25 transition-all"
                   disabled={submitting}
                   data-testid="button-signup"
                 >
@@ -373,19 +367,19 @@ export default function LoginPage() {
         
       </div>
 
-      {/* Forgot Password Modal */}
       <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
-        <DialogContent className="sm:max-w-md bg-white">
+        <DialogContent className="sm:max-w-md bg-white rounded-3xl border-0 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-black">Reset Password</DialogTitle>
-            <DialogDescription className="text-gray-600">
-              Enter your email address and we'll send you a link to reset your password. <strong>(Make sure to check your spam for the email)</strong>
+            <DialogTitle className="text-gray-900 text-xl font-bold text-center">Reset Password</DialogTitle>
+            <DialogDescription className="text-gray-500 text-center text-sm">
+              Enter your email and we'll send you a reset link.<br />
+              <span className="text-purple-600 font-medium">Check your spam folder too!</span>
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleForgotPassword} className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="reset-email" className="text-black">Email</Label>
-              <Input
+          <form onSubmit={handleForgotPassword} className="space-y-4 py-2">
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
                 id="reset-email"
                 type="email"
                 value={resetEmail}
@@ -393,12 +387,12 @@ export default function LoginPage() {
                 required
                 placeholder="you@example.com"
                 data-testid="input-reset-email"
-                className="bg-white text-black placeholder:text-gray-400"
+                className={inputClasses}
               />
             </div>
             <Button
               type="submit"
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white rounded-full text-sm font-semibold shadow-lg shadow-purple-500/25 transition-all"
               disabled={resetting}
               data-testid="button-send-reset-link"
             >
