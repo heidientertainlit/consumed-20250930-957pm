@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetting, setResetting] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const [justSignedUp, setJustSignedUp] = useState(false);
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
@@ -137,12 +138,7 @@ export default function LoginPage() {
         variant: "destructive",
       });
     } else {
-      toast({
-        title: "Check your email",
-        description: "We've sent you a password reset link.",
-      });
-      setIsForgotPasswordOpen(false);
-      setResetEmail("");
+      setResetSent(true);
     }
     
     setResetting(false);
@@ -367,38 +363,76 @@ export default function LoginPage() {
         
       </div>
 
-      <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
+      <Dialog open={isForgotPasswordOpen} onOpenChange={(open) => {
+        setIsForgotPasswordOpen(open);
+        if (!open) {
+          setResetSent(false);
+          setResetEmail("");
+        }
+      }}>
         <DialogContent className="sm:max-w-md bg-white rounded-3xl border-0 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-gray-900 text-xl font-bold text-center">Reset Password</DialogTitle>
-            <DialogDescription className="text-gray-500 text-center text-sm">
-              Enter your email and we'll send you a reset link.<br />
-              <span className="text-purple-600 font-medium">Check your spam folder too!</span>
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleForgotPassword} className="space-y-4 py-2">
-            <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                id="reset-email"
-                type="email"
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-                data-testid="input-reset-email"
-                className={inputClasses}
-              />
+          {!resetSent ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-gray-900 text-xl font-bold text-center">Reset Password</DialogTitle>
+                <DialogDescription className="text-gray-500 text-center text-sm">
+                  Enter your email and we'll send you a reset link.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleForgotPassword} className="space-y-4 py-2">
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    id="reset-email"
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                    placeholder="you@example.com"
+                    data-testid="input-reset-email"
+                    className={inputClasses}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white rounded-full text-sm font-semibold shadow-lg shadow-purple-500/25 transition-all"
+                  disabled={resetting}
+                  data-testid="button-send-reset-link"
+                >
+                  {resetting ? "Sending..." : "Send Reset Link"}
+                </Button>
+              </form>
+            </>
+          ) : (
+            <div className="text-center py-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Check Your Email</h3>
+              <p className="text-gray-500 text-sm mb-5">
+                We sent a reset link to<br />
+                <span className="font-semibold text-gray-800">{resetEmail}</span>
+              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5">
+                <p className="text-amber-800 font-bold text-base mb-1">
+                  Don't see it? Check your spam!
+                </p>
+                <p className="text-amber-700 text-xs">
+                  The email often lands in your spam or junk folder. Look for an email from Supabase or noreply.
+                </p>
+              </div>
+              <Button
+                onClick={() => {
+                  setIsForgotPasswordOpen(false);
+                  setResetSent(false);
+                  setResetEmail("");
+                }}
+                className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white rounded-full text-sm font-semibold shadow-lg shadow-purple-500/25 transition-all"
+              >
+                Got it, back to Sign In
+              </Button>
             </div>
-            <Button
-              type="submit"
-              className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white rounded-full text-sm font-semibold shadow-lg shadow-purple-500/25 transition-all"
-              disabled={resetting}
-              data-testid="button-send-reset-link"
-            >
-              {resetting ? "Sending..." : "Send Reset Link"}
-            </Button>
-          </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>
