@@ -209,11 +209,12 @@ export default function ListDetail() {
         if (listRow) {
           console.log('Found list via direct query:', listRow);
           // Fetch media items for this list
-          const { data: mediaItems } = await supabase
+          const { data: mediaItems, error: itemsError } = await supabase
             .from('list_items')
             .select('*')
             .eq('list_id', listRow.id)
-            .order('position', { ascending: true });
+            .order('created_at', { ascending: false });
+          console.log('List items query result:', { count: mediaItems?.length, error: itemsError });
 
           return {
             lists: [{
