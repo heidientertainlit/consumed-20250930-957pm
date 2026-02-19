@@ -1694,33 +1694,25 @@ export default function UserProfile() {
     }
   };
 
-  // Fetch DNA profile - uses edge function for reliable cross-user access
   const fetchDnaProfile = async () => {
-    if (!session?.access_token || !viewingUserId) return;
+    if (!viewingUserId) return;
 
     try {
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-dna?user_id=${viewingUserId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const { data, error } = await supabase
+        .from('dna_profiles')
+        .select('*')
+        .eq('user_id', viewingUserId)
+        .single();
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          console.log('No DNA profile found for user via edge function');
-          setDnaProfileStatus('no_profile');
-          setDnaProfile(null);
-          return;
-        }
-        throw new Error(`Failed to fetch profile: ${response.statusText}`);
+      if (error || !data) {
+        console.log('No DNA profile found for user:', viewingUserId);
+        setDnaProfileStatus('no_profile');
+        setDnaProfile(null);
+        return;
       }
 
-      const data = await response.json();
-      const profile = data.dna_profile || data;
-      console.log('DNA profile loaded via edge function:', profile);
-      setDnaProfile(profile);
+      console.log('DNA profile loaded:', data);
+      setDnaProfile(data);
       setDnaProfileStatus('has_profile');
     } catch (error) {
       console.error('Failed to fetch DNA profile:', error);
