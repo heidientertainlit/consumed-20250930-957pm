@@ -2028,7 +2028,6 @@ export default function UserProfile() {
   };
 
   const handleGenerateDNAProfile = async () => {
-    // Check if user is authenticated
     if (!user || !session) {
       setIsAuthModalOpen(true);
       return;
@@ -2039,13 +2038,54 @@ export default function UserProfile() {
 
     try {
       await generateDNAProfile();
-      console.log("DNA Profile generated successfully");
-      // Refresh the profile data from the database
-      await fetchDnaProfile();
+      console.log("DNA Profile generation triggered, polling for result...");
+
+      let attempts = 0;
+      const maxAttempts = 20;
+      const pollInterval = 5000;
+
+      const poll = async (): Promise<boolean> => {
+        attempts++;
+        console.log(`Polling for DNA profile (attempt ${attempts}/${maxAttempts})...`);
+        try {
+          const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-dna?user_id=${viewingUserId}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data && (data.profile_text || data.dna_type)) {
+              console.log('DNA profile ready:', data);
+              setDnaProfile(data);
+              setDnaProfileStatus('has_profile');
+              setIsGeneratingProfile(false);
+              return true;
+            }
+          }
+        } catch (e) {
+          console.log('Poll attempt failed, retrying...', e);
+        }
+
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+          return poll();
+        }
+        return false;
+      };
+
+      const found = await poll();
+      if (!found) {
+        console.log('DNA profile not ready after polling, user may need to refresh');
+        setDnaProfileStatus('no_profile');
+        setIsGeneratingProfile(false);
+      }
     } catch (error) {
       console.error("Failed to generate DNA profile:", error);
       setDnaProfileStatus('no_profile');
-    } finally {
       setIsGeneratingProfile(false);
     }
   };
