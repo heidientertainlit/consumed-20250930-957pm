@@ -160,9 +160,11 @@ export default function ListDetail() {
   const urlParams = new URLSearchParams(window.location.search);
   const sharedUserId = urlParams.get('user');
 
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(urlListName || '');
+
   // Load REAL user data - works for both your own lists and shared public lists
   const { data: userListsData, isLoading: listsLoading } = useQuery({
-    queryKey: ['user-lists-with-media', sharedUserId || 'own'],
+    queryKey: ['user-lists-with-media', sharedUserId || 'own', urlListName],
     queryFn: async () => {
       // For shared links (has sharedUserId), use public list access
       if (sharedUserId) {
@@ -214,6 +216,46 @@ export default function ListDetail() {
 
       const data = await response.json();
       console.log('REAL user lists data for list detail:', data);
+
+      // If URL is a UUID (e.g. from notification) and list not found in own lists, try fetching by ID
+      if (isUuid && data.lists) {
+        const found = data.lists.find((l: any) => l.id === urlListName);
+        if (!found) {
+          console.log('List UUID not in own lists, trying collaborative list lookup...');
+          try {
+            const { data: listRow, error } = await supabase
+              .from('lists')
+              .select('*, list_items(*)')
+              .eq('id', urlListName)
+              .single();
+            if (!error && listRow) {
+              const collabList = {
+                id: listRow.id,
+                title: listRow.title,
+                is_private: listRow.is_private,
+                isCustom: true,
+                user_id: listRow.user_id,
+                items: (listRow.list_items || []).map((item: any) => ({
+                  id: item.id,
+                  title: item.title,
+                  creator: item.creator,
+                  media_type: item.media_type,
+                  image_url: item.image_url,
+                  external_id: item.external_id,
+                  external_source: item.external_source,
+                  progress: item.progress || 0,
+                  progress_mode: item.progress_mode,
+                })),
+              };
+              data.lists.push(collabList);
+              console.log('Found collaborative list:', collabList.title);
+            }
+          } catch (err) {
+            console.error('Collaborative list lookup failed:', err);
+          }
+        }
+      }
+
       return data;
     },
     enabled: !!urlListName && (sharedUserId ? true : !!session?.access_token),
