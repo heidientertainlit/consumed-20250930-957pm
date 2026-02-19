@@ -60,7 +60,7 @@ export default function EntertainmentDNAPage() {
   // 5 essential questions: gender, entertainment types, genres, favorites, drivers
   const questions = useMemo(() => {
     return surveyQuestions
-      .filter(q => [1, 2, 3, 4, 6].includes(q.display_order))
+      .filter(q => [1, 2, 3, 4, 5].includes(q.display_order))
       .filter(q => !q.depends_on_option);
   }, [surveyQuestions]);
 

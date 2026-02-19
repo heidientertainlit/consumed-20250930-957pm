@@ -1718,8 +1718,9 @@ export default function UserProfile() {
       }
 
       const data = await response.json();
-      console.log('DNA profile loaded via edge function:', data);
-      setDnaProfile(data);
+      const profile = data.dna_profile || data;
+      console.log('DNA profile loaded via edge function:', profile);
+      setDnaProfile(profile);
       setDnaProfileStatus('has_profile');
     } catch (error) {
       console.error('Failed to fetch DNA profile:', error);
@@ -1953,23 +1954,11 @@ export default function UserProfile() {
   };
 
   const handleTakeDNASurvey = async () => {
-    // Check if user is authenticated
     if (!user || !session) {
       setIsAuthModalOpen(true);
       return;
     }
-
-    setCurrentQuestion(0);
-    setSurveyAnswers([]);
-    setIsLoadingQuestions(true);
-    setIsDNASurveyOpen(true); // Open modal first to show loading
-
-    const success = await fetchSurveyQuestions();
-    setIsLoadingQuestions(false);
-
-    if (!success) {
-      setIsDNASurveyOpen(false); // Close if failed to load
-    }
+    setLocation('/entertainment-dna');
   };
 
   // Survey navigation functions
@@ -2091,7 +2080,7 @@ export default function UserProfile() {
   };
 
   const handleRetakeDNASurvey = () => {
-    setDnaProfileStatus('no_profile');
+    setLocation('/entertainment-dna');
   };
 
   const handleDownloadDNA = async () => {

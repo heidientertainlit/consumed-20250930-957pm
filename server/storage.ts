@@ -198,12 +198,6 @@ export class MemStorage implements IStorage {
         options: ["NFL (Football)", "NCAA Football", "NBA (Basketball)", "NCAA Basketball", "MLB (Baseball)", "NHL (Hockey)", "Soccer/Football", "Tennis", "Golf", "Other"]
       },
       {
-        id: "bcb1ea4f-1d93-4851-925a-bdfe3c6344f5",
-        question_text: "What are your teams and favorite players?",
-        question_type: "text",
-        options: []
-      },
-      {
         id: "1c190ac9-41f9-418a-93d5-10643dbb9fba",
         question_text: "What drives your entertainment choices?",
         question_type: "multi-select",
@@ -238,12 +232,6 @@ export class MemStorage implements IStorage {
         question_text: "Which genres do you like best?",
         question_type: "multi-select",
         options: ["Action", "Animation", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller"]
-      },
-      {
-        id: "71049fe4-3945-4213-a136-43d9ec6eb582",
-        question_text: "What's your go-to comfort entertainment?",
-        question_type: "text",
-        options: []
       },
       {
         id: "6e3289cb-b1eb-42ea-a134-a5f7997df9ca",
