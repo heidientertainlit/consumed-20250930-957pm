@@ -1694,39 +1694,37 @@ export default function UserProfile() {
     }
   };
 
-  // Fetch DNA profile from database
+  // Fetch DNA profile - uses edge function for reliable cross-user access
   const fetchDnaProfile = async () => {
     if (!session?.access_token || !viewingUserId) return;
 
     try {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY
-      );
+      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-dna?user_id=${viewingUserId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      const { data: profiles, error } = await supabase
-        .from('dna_profiles')
-        .select('*')
-        .eq('user_id', viewingUserId);
-
-      if (error) {
-        console.error('Error fetching DNA profile:', error);
-        setDnaProfileStatus('no_profile');
-        return;
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.log('No DNA profile found for user via edge function');
+          setDnaProfileStatus('no_profile');
+          setDnaProfile(null);
+          return;
+        }
+        throw new Error(`Failed to fetch profile: ${response.statusText}`);
       }
 
-      if (profiles && profiles.length > 0) {
-        const profile = profiles[0];
-        setDnaProfile(profile);
-        setDnaProfileStatus('has_profile');
-        console.log('DNA profile loaded:', profile);
-      } else {
-        setDnaProfileStatus('no_profile');
-      }
+      const data = await response.json();
+      console.log('DNA profile loaded via edge function:', data);
+      setDnaProfile(data);
+      setDnaProfileStatus('has_profile');
     } catch (error) {
       console.error('Failed to fetch DNA profile:', error);
       setDnaProfileStatus('no_profile');
+      setDnaProfile(null);
     }
   };
 
@@ -1954,43 +1952,6 @@ export default function UserProfile() {
     }
   };
 
-  const fetchDNAProfile = async () => {
-    if (!session?.access_token || !viewingUserId) {
-      console.log('No session or viewing user ID available');
-      setDnaProfileStatus('no_profile');
-      return;
-    }
-
-    try {
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-dna?user_id=${viewingUserId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          console.log('No DNA profile found for user');
-          setDnaProfileStatus('no_profile');
-          setDnaProfile(null);
-          return;
-        }
-        throw new Error(`Failed to fetch profile: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('DNA Profile fetched successfully:', data);
-      setDnaProfile(data);
-      setDnaProfileStatus('has_profile');
-    } catch (error) {
-      console.error('Error fetching DNA profile:', error);
-      setDnaProfileStatus('no_profile');
-      setDnaProfile(null);
-    }
-  };
-
   const handleTakeDNASurvey = async () => {
     // Check if user is authenticated
     if (!user || !session) {
@@ -2080,7 +2041,7 @@ export default function UserProfile() {
       await generateDNAProfile();
       console.log("DNA Profile generated successfully");
       // Refresh the profile data from the database
-      await fetchDNAProfile();
+      await fetchDnaProfile();
     } catch (error) {
       console.error("Failed to generate DNA profile:", error);
       setDnaProfileStatus('no_profile');
