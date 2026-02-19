@@ -505,6 +505,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/list-by-id/:id", async (req, res) => {
+    try {
+      const listId = req.params.id;
+      if (!listId || !supabaseServiceKey) {
+        return res.status(400).json({ error: "Missing list ID or service key" });
+      }
+
+      const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+
+      const { data: listRow, error: listError } = await adminClient
+        .from('lists')
+        .select('id, title, is_private, user_id')
+        .eq('id', listId)
+        .single();
+
+      if (listError || !listRow) {
+        return res.status(404).json({ error: "List not found" });
+      }
+
+      const { data: items, error: itemsError } = await adminClient
+        .from('list_items')
+        .select('*')
+        .eq('list_id', listId)
+        .order('created_at', { ascending: true });
+
+      res.json({
+        list: {
+          ...listRow,
+          isCustom: true,
+          items: items || [],
+        }
+      });
+    } catch (error) {
+      console.error("List by ID error:", error);
+      res.status(500).json({ error: "Failed to fetch list" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

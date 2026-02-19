@@ -223,32 +223,13 @@ export default function ListDetail() {
         if (!found) {
           console.log('List UUID not in own lists, trying collaborative list lookup...');
           try {
-            const { data: listRow, error } = await supabase
-              .from('lists')
-              .select('*, list_items(*)')
-              .eq('id', urlListName)
-              .single();
-            if (!error && listRow) {
-              const collabList = {
-                id: listRow.id,
-                title: listRow.title,
-                is_private: listRow.is_private,
-                isCustom: true,
-                user_id: listRow.user_id,
-                items: (listRow.list_items || []).map((item: any) => ({
-                  id: item.id,
-                  title: item.title,
-                  creator: item.creator,
-                  media_type: item.media_type,
-                  image_url: item.image_url,
-                  external_id: item.external_id,
-                  external_source: item.external_source,
-                  progress: item.progress || 0,
-                  progress_mode: item.progress_mode,
-                })),
-              };
-              data.lists.push(collabList);
-              console.log('Found collaborative list:', collabList.title);
+            const collabResponse = await fetch(`/api/list-by-id/${urlListName}`);
+            if (collabResponse.ok) {
+              const collabData = await collabResponse.json();
+              if (collabData.list) {
+                data.lists.push(collabData.list);
+                console.log('Found collaborative list:', collabData.list.title);
+              }
             }
           } catch (err) {
             console.error('Collaborative list lookup failed:', err);
