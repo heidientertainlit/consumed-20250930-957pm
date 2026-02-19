@@ -192,13 +192,18 @@ export default function ListDetail() {
           console.log('Edge function error, trying direct query...', e);
         }
 
-        // Fallback: query Supabase directly for the list by slug and user_id
+        // Fallback: query Supabase directly for the list by title and user_id
         const decodedSlug = decodeURIComponent(urlListName || '');
+        // Convert slug back to title: "lester's-little-list" -> try matching by title
+        const possibleTitle = decodedSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        console.log('Trying direct list lookup with title:', possibleTitle, 'or slug:', decodedSlug);
+
+        // Try matching by title (case-insensitive via ilike)
         const { data: listRow, error: listError } = await supabase
           .from('lists')
           .select('*')
           .eq('user_id', sharedUserId)
-          .eq('slug', decodedSlug)
+          .ilike('title', possibleTitle)
           .maybeSingle();
 
         if (listRow) {
