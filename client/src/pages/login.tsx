@@ -180,12 +180,12 @@ export default function LoginPage() {
               className="h-16 w-auto"
             />
           </div>
-          <h1 className="text-white text-lg font-semibold mb-2 leading-tight">
-            How you do entertainment.
-          </h1>
-          <p className="text-gray-400 text-xs max-w-xs mx-auto">
-            Play trivia, track what you consume,<br />and discover your entertainment DNA.
+          <p className="text-gray-300 text-sm mb-2">
+            All your entertainment, all in one place.
           </p>
+          <h1 className="text-white text-base font-bold tracking-widest">
+            TRACK. PLAY. CONNECT.
+          </h1>
         </div>
         
         <div className="bg-white rounded-3xl p-8 shadow-2xl">
