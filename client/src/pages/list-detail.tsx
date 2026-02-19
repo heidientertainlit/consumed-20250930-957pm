@@ -194,17 +194,19 @@ export default function ListDetail() {
 
         // Fallback: query Supabase directly for the list by title and user_id
         const decodedSlug = decodeURIComponent(urlListName || '');
-        // Convert slug back to title: "lester's-little-list" -> try matching by title
-        const possibleTitle = decodedSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        console.log('Trying direct list lookup with title:', possibleTitle, 'or slug:', decodedSlug);
+        // Convert slug back to title for matching - use wildcard pattern for flexibility
+        const slugAsPattern = decodedSlug.replace(/-/g, '_').replace(/'/g, '_');
+        console.log('Trying direct list lookup for user:', sharedUserId, 'slug pattern:', slugAsPattern);
 
-        // Try matching by title (case-insensitive via ilike)
-        const { data: listRow, error: listError } = await supabase
+        // Get all lists for this user and find the one whose title matches the slug
+        const { data: userLists, error: listError } = await supabase
           .from('lists')
           .select('*')
-          .eq('user_id', sharedUserId)
-          .ilike('title', possibleTitle)
-          .maybeSingle();
+          .eq('user_id', sharedUserId);
+        
+        const createSlugFromTitle = (title: string) => title.toLowerCase().replace(/\s+/g, '-');
+        const listRow = userLists?.find(l => createSlugFromTitle(l.title) === decodedSlug) || null;
+        console.log('List match result:', listRow?.title, 'from', userLists?.length, 'lists');
 
         if (listRow) {
           console.log('Found list via direct query:', listRow);
