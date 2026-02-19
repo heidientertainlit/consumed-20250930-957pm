@@ -1,21 +1,29 @@
 -- ============================================================
 -- PostHog Analytics Triggers for Consumed
 -- ============================================================
--- Run this ENTIRE script in your Supabase SQL Editor.
 -- 
--- BEFORE RUNNING: You must do these 2 things first:
---   1. Deploy the track-analytics edge function
---   2. Add POSTHOG_API_KEY as a secret in Supabase Edge Functions
+-- SETUP STEPS (do these in order):
 --
--- This uses Supabase's built-in pg_net extension to make HTTP calls
--- from database triggers without blocking user operations.
+-- 1. In Supabase Dashboard > Edge Functions, add these secrets:
+--    - POSTHOG_API_KEY = your PostHog project API key
+--    - ANALYTICS_WEBHOOK_SECRET = any random string you choose (e.g. "my-secret-key-123")
+--
+-- 2. Deploy the edge function (with no JWT verification):
+--    supabase functions deploy track-analytics --no-verify-jwt
+--
+-- 3. Run this SQL in Supabase SQL Editor
+--
+-- 4. After running, execute this one line (replace the secret with 
+--    the SAME value you used for ANALYTICS_WEBHOOK_SECRET above):
+--    ALTER DATABASE postgres SET app.settings.analytics_webhook_secret = 'my-secret-key-123';
+--
 -- ============================================================
 
--- Enable pg_net if not already enabled
+-- Enable pg_net for async HTTP calls from triggers
 CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
 
 -- ============================================================
--- The main trigger function
+-- Trigger function: sends events to PostHog via edge function
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.notify_posthog()
 RETURNS trigger
@@ -27,17 +35,14 @@ DECLARE
   event_name text := NULL;
   event_properties jsonb := '{}'::jsonb;
   user_id_val text := NULL;
-  edge_url text := 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-analytics';
-  svc_key text;
+  edge_url text;
+  webhook_secret text;
 BEGIN
-  -- Get service role key from vault or env
-  svc_key := current_setting('request.headers', true)::json->>'authorization';
+  -- Build edge function URL from Supabase project URL
+  edge_url := 'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/track-analytics';
   
-  -- Fallback: use the service role key directly
-  -- You'll set this below with ALTER DATABASE
-  IF svc_key IS NULL THEN
-    svc_key := current_setting('app.settings.service_role_key', true);
-  END IF;
+  -- Get the shared secret for authenticating with the edge function
+  webhook_secret := current_setting('app.settings.analytics_webhook_secret', true);
 
   -- ======== TABLE: list_items ========
   IF TG_TABLE_NAME = 'list_items' THEN
@@ -60,7 +65,7 @@ BEGIN
     END IF;
 
   -- ======== TABLE: user_predictions ========
-  ELSIF TG_TABLE_NAME = 'user_predictions' THEN
+  ELSIF TG_TABLE_NAME = 'user_predictions' AND TG_OP = 'INSERT' THEN
     user_id_val := COALESCE(NEW.user_id::text, '');
     event_name := 'prediction_made';
     event_properties := jsonb_build_object(
@@ -131,19 +136,18 @@ BEGIN
 
   END IF;
 
-  -- Send to PostHog via edge function (non-blocking)
+  -- Send to PostHog via edge function (non-blocking via pg_net)
   IF event_name IS NOT NULL AND user_id_val IS NOT NULL AND user_id_val != '' THEN
     PERFORM net.http_post(
       url := edge_url,
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
-        'Authorization', 'Bearer ' || svc_key
+        'x-analytics-key', COALESCE(webhook_secret, '')
       )::jsonb,
       body := jsonb_build_object(
         'event', event_name,
         'distinct_id', user_id_val,
-        'properties', event_properties,
-        'timestamp', extract(epoch from now())
+        'properties', event_properties
       )::jsonb
     );
   END IF;
@@ -151,7 +155,6 @@ BEGIN
   RETURN NEW;
 
 EXCEPTION WHEN OTHERS THEN
-  -- NEVER block the user's action if analytics fails
   RAISE WARNING 'PostHog tracking failed: %', SQLERRM;
   RETURN NEW;
 END;
@@ -159,68 +162,50 @@ $$;
 
 
 -- ============================================================
--- Create triggers on each table
--- All triggers fire AFTER so they never block the user's action
+-- Create triggers (AFTER = never blocks the user's action)
 -- ============================================================
 
--- list_items → media_added, media_status_changed
 DROP TRIGGER IF EXISTS posthog_list_items ON public.list_items;
 CREATE TRIGGER posthog_list_items
   AFTER INSERT OR UPDATE ON public.list_items
   FOR EACH ROW EXECUTE FUNCTION public.notify_posthog();
 
--- user_predictions → prediction_made
 DROP TRIGGER IF EXISTS posthog_user_predictions ON public.user_predictions;
 CREATE TRIGGER posthog_user_predictions
   AFTER INSERT ON public.user_predictions
   FOR EACH ROW EXECUTE FUNCTION public.notify_posthog();
 
--- dna_profiles → dna_profile_generated
 DROP TRIGGER IF EXISTS posthog_dna_profiles ON public.dna_profiles;
 CREATE TRIGGER posthog_dna_profiles
   AFTER INSERT ON public.dna_profiles
   FOR EACH ROW EXECUTE FUNCTION public.notify_posthog();
 
--- dna_moment_responses → dna_moment_answered
 DROP TRIGGER IF EXISTS posthog_dna_moment_responses ON public.dna_moment_responses;
 CREATE TRIGGER posthog_dna_moment_responses
   AFTER INSERT ON public.dna_moment_responses
   FOR EACH ROW EXECUTE FUNCTION public.notify_posthog();
 
--- lists → list_created
 DROP TRIGGER IF EXISTS posthog_lists ON public.lists;
 CREATE TRIGGER posthog_lists
   AFTER INSERT ON public.lists
   FOR EACH ROW EXECUTE FUNCTION public.notify_posthog();
 
--- login_streaks → streak_updated
 DROP TRIGGER IF EXISTS posthog_login_streaks ON public.login_streaks;
 CREATE TRIGGER posthog_login_streaks
   AFTER INSERT OR UPDATE ON public.login_streaks
   FOR EACH ROW EXECUTE FUNCTION public.notify_posthog();
 
--- friendships → friend_request_sent, friend_added
 DROP TRIGGER IF EXISTS posthog_friendships ON public.friendships;
 CREATE TRIGGER posthog_friendships
   AFTER INSERT OR UPDATE ON public.friendships
   FOR EACH ROW EXECUTE FUNCTION public.notify_posthog();
 
--- posts → post_created
 DROP TRIGGER IF EXISTS posthog_posts ON public.posts;
 CREATE TRIGGER posthog_posts
   AFTER INSERT ON public.posts
   FOR EACH ROW EXECUTE FUNCTION public.notify_posthog();
 
--- users → user_signed_up
 DROP TRIGGER IF EXISTS posthog_users ON public.users;
 CREATE TRIGGER posthog_users
   AFTER INSERT ON public.users
   FOR EACH ROW EXECUTE FUNCTION public.notify_posthog();
-
-
--- ============================================================
--- IMPORTANT: Set your service role key
--- Replace YOUR_SERVICE_ROLE_KEY with your actual key from
--- Supabase Dashboard > Settings > API > service_role key
--- ============================================================
--- ALTER DATABASE postgres SET app.settings.service_role_key = 'YOUR_SERVICE_ROLE_KEY';
