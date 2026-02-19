@@ -170,29 +170,56 @@ export default function ListDetail() {
       if (sharedUserId) {
         console.log('Loading shared public list data for user:', sharedUserId);
 
-        const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-list?list_slug=${urlListName}&user_id=${sharedUserId}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-        });
+        try {
+          const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-list?list_slug=${encodeURIComponent(urlListName || '')}&user_id=${sharedUserId}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            },
+          });
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Public list fetch failed:', response.status, errorText);
-          throw new Error('Failed to fetch public list');
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Public list data:', data);
+            if (data.list) {
+              return { lists: [data.list] };
+            }
+          } else {
+            console.log('Edge function failed, trying direct Supabase query...');
+          }
+        } catch (e) {
+          console.log('Edge function error, trying direct query...', e);
         }
 
-        const data = await response.json();
-        console.log('Public list data:', data);
+        // Fallback: query Supabase directly for the list by slug and user_id
+        const decodedSlug = decodeURIComponent(urlListName || '');
+        const { data: listRow, error: listError } = await supabase
+          .from('user_media_lists')
+          .select('*')
+          .eq('user_id', sharedUserId)
+          .eq('slug', decodedSlug)
+          .maybeSingle();
 
-        // Convert to expected format - ensure we have the right structure
-        if (data.list) {
+        if (listRow) {
+          console.log('Found list via direct query:', listRow);
+          // Fetch media items for this list
+          const { data: mediaItems } = await supabase
+            .from('user_media_list_items')
+            .select('*')
+            .eq('list_id', listRow.id)
+            .order('position', { ascending: true });
+
           return {
-            lists: [data.list]
+            lists: [{
+              ...listRow,
+              items: mediaItems || [],
+              media_items: mediaItems || [],
+            }]
           };
         }
+
+        console.log('List not found via direct query either', listError);
         return { lists: [] };
       }
 
