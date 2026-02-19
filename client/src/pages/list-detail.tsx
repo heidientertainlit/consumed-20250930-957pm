@@ -195,7 +195,7 @@ export default function ListDetail() {
         // Fallback: query Supabase directly for the list by slug and user_id
         const decodedSlug = decodeURIComponent(urlListName || '');
         const { data: listRow, error: listError } = await supabase
-          .from('user_media_lists')
+          .from('lists')
           .select('*')
           .eq('user_id', sharedUserId)
           .eq('slug', decodedSlug)
@@ -205,7 +205,7 @@ export default function ListDetail() {
           console.log('Found list via direct query:', listRow);
           // Fetch media items for this list
           const { data: mediaItems } = await supabase
-            .from('user_media_list_items')
+            .from('list_items')
             .select('*')
             .eq('list_id', listRow.id)
             .order('position', { ascending: true });
