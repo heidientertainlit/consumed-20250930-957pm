@@ -54,7 +54,7 @@ import PostDetail from "@/pages/post-detail";
 import CreateRank from "@/pages/create-rank";
 import RankDetail from "@/pages/rank-detail";
 import EdnaSharePage from "@/pages/edna-share";
-import AdminDashboard from "@/pages/admin";
+
 import CTVDemo from "@/pages/ctv";
 import CTVRoku from "@/pages/ctv-roku";
 import EngagePage from "@/pages/engage";
@@ -334,11 +334,6 @@ function Router() {
         </Route>
         <Route path="/edna/:id">
           <EdnaSharePage />
-        </Route>
-        <Route path="/admin">
-          <ProtectedRoute>
-            <AdminDashboard />
-          </ProtectedRoute>
         </Route>
         <Route path="/ctv">
           <CTVDemo />
