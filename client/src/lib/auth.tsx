@@ -24,28 +24,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
       
       if (session?.user?.id) {
         sessionTracker.startSession(session.user.id)
-        const { data: profile } = await supabase
+        supabase
           .from('users')
           .select('user_name, display_name')
           .eq('id', session.user.id)
           .maybeSingle()
-        identifyUser(session.user.id, {
-          email: session.user.email,
-          name: profile?.display_name || profile?.user_name || session.user.email,
-          username: profile?.user_name,
-        })
+          .then(({ data: profile }) => {
+            identifyUser(session.user.id, {
+              email: session.user.email,
+              name: profile?.display_name || profile?.user_name || session.user.email,
+              username: profile?.user_name,
+            })
+          })
       }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('🔐 Auth event:', event, session ? 'Session active' : 'No session');
         setSession(session)
         setUser(session?.user ?? null)
@@ -53,16 +55,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (event === 'SIGNED_IN' && session?.user?.id) {
           sessionTracker.startSession(session.user.id)
-          const { data: profile } = await supabase
+          supabase
             .from('users')
             .select('user_name, display_name')
             .eq('id', session.user.id)
             .maybeSingle()
-          identifyUser(session.user.id, {
-            email: session.user.email,
-            name: profile?.display_name || profile?.user_name || session.user.email,
-            username: profile?.user_name,
-          })
+            .then(({ data: profile }) => {
+              identifyUser(session.user.id, {
+                email: session.user.email,
+                name: profile?.display_name || profile?.user_name || session.user.email,
+                username: profile?.user_name,
+              })
+            })
           trackEvent('user_signed_in')
         } else if (event === 'SIGNED_OUT') {
           sessionTracker.endSession()
