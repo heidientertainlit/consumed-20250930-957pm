@@ -186,7 +186,7 @@ export default function Search() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const debouncedSearchQuery = useDebounce(searchQuery, 400);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch friends list
@@ -684,21 +684,22 @@ export default function Search() {
       };
 
       if (fuzzySearchEnabled && isFuzzyQuery(debouncedSearchQuery)) {
-        const smartResult = await smartSearchCleanup(debouncedSearchQuery);
+        const [smartResult, directResults] = await Promise.all([
+          smartSearchCleanup(debouncedSearchQuery),
+          searchMedia(debouncedSearchQuery),
+        ]);
         if (smartResult.suggestions.length > 0) {
           const topSuggestions = smartResult.suggestions.slice(0, 3);
-          const searches = [
-            searchMedia(debouncedSearchQuery),
-            ...topSuggestions.map(s => searchMedia(s.title, s.type))
-          ];
-          const allResults = await Promise.all(searches);
+          const extraResults = await Promise.all(
+            topSuggestions.map(s => searchMedia(s.title, s.type))
+          );
           const titlesWithResults = topSuggestions
-            .filter((_, i) => allResults[i + 1].length > 0)
+            .filter((_, i) => extraResults[i].length > 0)
             .map(s => s.title);
           const tmdbTitles = smartResult.tmdbResults.map((r: any) => r.title).filter(Boolean);
           const allFoundTitles = [...new Set([...titlesWithResults, ...tmdbTitles])];
           setFuzzyTitles(allFoundTitles);
-          const combined = [...smartResult.tmdbResults, ...allResults.flat()];
+          const combined = [...smartResult.tmdbResults, ...directResults, ...extraResults.flat()];
           const seen = new Set<string>();
           const deduped = combined.filter((r: any) => {
             const key = `${r.external_source || ''}-${r.external_id || r.title || ''}`;
@@ -708,6 +709,7 @@ export default function Search() {
           });
           return deduped;
         }
+        return directResults;
       }
 
       return await searchMedia(debouncedSearchQuery);

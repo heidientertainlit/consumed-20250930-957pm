@@ -509,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const endpoint = isTv ? 'search/tv' : isMovie ? 'search/movie' : 'search/multi';
               const resolvedType = isTv ? 'tv' : isMovie ? 'movie' : undefined;
               const controller = new AbortController();
-              const timeout = setTimeout(() => controller.abort(), 4000);
+              const timeout = setTimeout(() => controller.abort(), 2500);
               const tmdbRes = await fetch(
                 `https://api.themoviedb.org/3/${endpoint}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(s.title)}&page=1&include_adult=false`,
                 { signal: controller.signal }
