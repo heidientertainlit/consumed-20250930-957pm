@@ -202,7 +202,7 @@ export default function UserProfile() {
   const friendsRef = useRef<HTMLDivElement>(null);
   const listsRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
-  const [activeSection, setActiveSection] = useState<string>('badges');
+  const [activeSection, setActiveSection] = useState<string>('friends');
   const initialSectionSet = useRef(false);
   const [collectionsSubTab, setCollectionsSubTab] = useState<'lists' | 'history'>('lists');
   const [activitySubFilter, setActivitySubFilter] = useState<'posts' | 'history' | 'bets'>('posts');
@@ -1309,7 +1309,7 @@ export default function UserProfile() {
     
     if (tab) {
       // Map 'lists' to 'collections' for backward compatibility
-      const validTabs = ['stats', 'badges', 'friends', 'collections', 'activity'];
+      const validTabs = ['stats', 'friends', 'collections', 'activity'];
       const normalizedTab = tab === 'lists' ? 'collections' : tab;
       if (validTabs.includes(normalizedTab)) {
         setActiveSection(normalizedTab);
@@ -2896,17 +2896,7 @@ export default function UserProfile() {
         {isOwnProfile && (
         <div className="sticky top-16 z-20 bg-gray-50 border-b border-gray-200 px-4 py-3 -mx-0">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-            <button
-              onClick={() => setActiveSection('badges')}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                activeSection === 'badges'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-              }`}
-              data-testid="nav-badges"
-            >
-              Badges
-            </button>
+            {/* Badges tab hidden - keep functionality for reimplementation */}
             <button
               onClick={() => setActiveSection('friends')}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
