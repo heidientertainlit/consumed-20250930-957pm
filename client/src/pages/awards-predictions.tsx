@@ -1056,19 +1056,11 @@ export default function AwardsPredictions() {
                 src="/consumed-logo-white.png"
                 alt="Consumed"
                 style={{
-                  height: 40,
-                  marginBottom: 32,
+                  height: 48,
+                  marginBottom: 40,
                   opacity: 0.9,
                 }}
               />
-              <div style={{
-                width: 100, height: 100, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: 24, boxShadow: '0 12px 40px rgba(245, 158, 11, 0.35)',
-              }}>
-                <span style={{ fontSize: 52 }}>🏆</span>
-              </div>
               <h1 style={{
                 fontSize: 64, fontWeight: 800, color: '#ffffff',
                 margin: '0 0 12px 0', letterSpacing: '-1px',
