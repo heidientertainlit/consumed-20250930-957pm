@@ -507,12 +507,10 @@ export default function AwardsPredictions() {
       
       {/* Hero Header - Dark purple gradient matching app */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-12 pt-6 -mt-px text-center">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 mb-3 shadow-lg">
-            <Trophy className="w-7 h-7 text-white" />
-          </div>
-          
-          <h1 className="text-2xl font-bold text-white mb-1">
-            {event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}
+          <div className="relative inline-flex items-center justify-center mb-3">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg">
+              <Trophy className="w-7 h-7 text-white" />
+            </div>
             <button
               onClick={() => {
                 const shareUrl = `${window.location.origin}/play/awards/${eventSlug}`;
@@ -526,13 +524,14 @@ export default function AwardsPredictions() {
                   navigator.clipboard.writeText(shareUrl);
                 }
               }}
-              className="inline-flex items-center justify-center ml-2 align-middle hover:opacity-80 transition-opacity"
-              style={{ verticalAlign: 'middle' }}
+              className="absolute -right-10 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 transition-colors"
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" className="text-white">
-                <path d="M21 12l-7-7v4C7 10 4 15 3 20c2.5-3.5 6-5.1 11-5.1V19l7-7z"/>
-              </svg>
+              <Share2 size={16} className="text-white" />
             </button>
+          </div>
+          
+          <h1 className="text-2xl font-bold text-white mb-1">
+            {event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}
           </h1>
           <p className="text-gray-400 max-w-md mx-auto text-sm">
             {event.deadline && event.status === 'open' ? (
