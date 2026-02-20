@@ -148,6 +148,7 @@ export default function Search() {
   const [isSearching, setIsSearching] = useState(false);
   const [isAiMode, setIsAiMode] = useState(false);
   const [fuzzySearchEnabled, setFuzzySearchEnabled] = useState(true);
+  const [fuzzyTitles, setFuzzyTitles] = useState<string[]>([]);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isFullAddModalOpen, setIsFullAddModalOpen] = useState(false);
@@ -630,6 +631,7 @@ export default function Search() {
     queryKey: ['quick-media-search', searchQuery, fuzzySearchEnabled],
     queryFn: async () => {
       if (!searchQuery.trim() || !session?.access_token) return [];
+      setFuzzyTitles([]);
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
       const searchMedia = async (q: string) => {
@@ -652,7 +654,9 @@ export default function Search() {
       if (fuzzySearchEnabled && isFuzzyQuery(searchQuery)) {
         const cleanTitles = await smartSearchCleanup(searchQuery);
         if (cleanTitles.length > 0) {
-          const allResults = await Promise.all(cleanTitles.slice(0, 3).map(t => searchMedia(t)));
+          setFuzzyTitles(cleanTitles);
+          const searches = [searchMedia(searchQuery), ...cleanTitles.slice(0, 3).map(t => searchMedia(t))];
+          const allResults = await Promise.all(searches);
           const combined = allResults.flat();
           const seen = new Set<string>();
           return combined.filter((r: any) => {
@@ -780,6 +784,7 @@ export default function Search() {
                 setSearchQuery(e.target.value);
                 if (!e.target.value.trim()) {
                   setFuzzySearchEnabled(true);
+                  setFuzzyTitles([]);
                 }
               }}
               onKeyDown={(e) => {
@@ -853,6 +858,16 @@ export default function Search() {
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="animate-spin text-purple-600" size={24} />
                     <span className="ml-2 text-gray-600">{isFuzzyQuery(searchQuery) && fuzzySearchEnabled ? "AI is interpreting your search..." : "Searching..."}</span>
+                  </div>
+                )}
+
+                {/* AI-enhanced results banner */}
+                {!isLoadingMedia && fuzzyTitles.length > 0 && quickMediaResults.length > 0 && (
+                  <div className="flex items-center gap-2 bg-purple-50/80 border border-purple-100 rounded-lg px-3 py-2 text-xs text-purple-700">
+                    <Sparkles size={12} className="text-purple-400 flex-shrink-0" />
+                    <span>Also showing results for {fuzzyTitles.map((t, i) => (
+                      <span key={i}>{i > 0 && ', '}<strong>{t}</strong></span>
+                    ))}</span>
                   </div>
                 )}
 
