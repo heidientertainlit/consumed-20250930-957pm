@@ -3468,18 +3468,27 @@ export default function UserProfile() {
               <Button 
                 variant="outline" 
                 className="border-gray-300 text-red-600 hover:bg-red-50 hover:border-red-300 min-h-[44px]"
-                onClick={async () => {
-                  await queryClient.cancelQueries();
-                  queryClient.clear();
-                  const { error } = await signOut();
-                  if (error) {
-                    toast({
-                      title: "Error",
-                      description: "Failed to log out. Please try again.",
-                      variant: "destructive"
-                    });
-                  } else {
-                    setLocation('/login');
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  try {
+                    queryClient.cancelQueries();
+                    queryClient.clear();
+                  } catch (err) {
+                  }
+                  try {
+                    const { error } = await signOut();
+                    if (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to log out. Please try again.",
+                        variant: "destructive"
+                      });
+                    } else {
+                      window.location.href = '/login';
+                    }
+                  } catch (err) {
+                    window.location.href = '/login';
                   }
                 }}
                 data-testid="button-logout"
