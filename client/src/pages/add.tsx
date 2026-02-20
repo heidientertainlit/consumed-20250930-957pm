@@ -767,15 +767,15 @@ export default function Search() {
     <div className="min-h-screen bg-gradient-to-b from-[#08080d] via-[#0f0f1a] via-[#1a1530] to-[#2d1f4e] pb-24">
       <Navigation />
       
-      {/* Hero - Purple Gradient with search */}
-      <div className="pt-12 pb-12 px-4 -mt-px">
+      {/* Hero - Centered search */}
+      <div className="flex flex-col items-center justify-center px-4 -mt-px" style={{ minHeight: 'calc(100vh - 140px)' }}>
         <div className="text-center mb-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <h1 className="text-white text-2xl font-bold tracking-tight mb-4">All your entertainment.<br />All in one place.</h1>
           <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase">ADD MEDIA. BUILD YOUR DNA.</p>
         </div>
 
         {/* Search Bar */}
-        <div className="bg-white rounded-2xl p-3 shadow-lg max-w-xl mx-auto">
+        <div className="bg-white rounded-2xl p-3 shadow-lg w-full max-w-xl">
           <div className="flex items-center gap-2">
             <SearchIcon className="text-gray-400 ml-2 flex-shrink-0" size={20} />
             <Input
