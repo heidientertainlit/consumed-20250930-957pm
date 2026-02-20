@@ -1702,20 +1702,17 @@ export default function UserProfile() {
         .from('dna_profiles')
         .select('*')
         .eq('user_id', viewingUserId)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
-        console.log('No DNA profile found for user:', viewingUserId);
         setDnaProfileStatus('no_profile');
         setDnaProfile(null);
         return;
       }
 
-      console.log('DNA profile loaded:', data);
       setDnaProfile(data);
       setDnaProfileStatus('has_profile');
     } catch (error) {
-      console.error('Failed to fetch DNA profile:', error);
       setDnaProfileStatus('no_profile');
       setDnaProfile(null);
     }
