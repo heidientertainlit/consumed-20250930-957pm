@@ -533,7 +533,7 @@ export default function AwardsPredictions() {
       if (isMobile && navigator.share && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({ files: [file] });
-          toast({ title: "Saved!", description: "Use 'Save Image' from the menu to save to your photos" });
+          toast({ title: "Tap 'Save Image' to save to your photos!", description: "Select it from the menu that appeared" });
         } catch (err) {
           // user cancelled share sheet - that's ok
         }
@@ -1058,7 +1058,7 @@ export default function AwardsPredictions() {
                     ) : (
                       <Download size={16} className="mr-1.5" />
                     )}
-                    Save Image
+                    Save to Photos
                   </Button>
                   <Button
                     onClick={handleShareImage}
