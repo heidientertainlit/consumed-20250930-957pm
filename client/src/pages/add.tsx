@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, TrendingUp, Plus, Users, Mic, Gamepad2, MessageSquarePlus, Star, ArrowLeft, X } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, TrendingUp, Plus, Mic, Gamepad2, MessageSquarePlus, Star, ArrowLeft, X } from "lucide-react";
 import InlineComposer from "@/components/inline-composer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,12 +88,6 @@ interface ConversationResult {
   engagement_count?: number;
 }
 
-interface UserResult {
-  id: string;
-  user_name: string;
-  display_name?: string;
-  email?: string;
-}
 
 interface SearchResult {
   type: 'conversational' | 'direct' | 'error';
@@ -154,7 +148,6 @@ export default function Search() {
   const [isSearching, setIsSearching] = useState(false);
   const [isAiMode, setIsAiMode] = useState(false);
   const [fuzzySearchEnabled, setFuzzySearchEnabled] = useState(true);
-  const [fuzzyInterpreted, setFuzzyInterpreted] = useState<string | null>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isFullAddModalOpen, setIsFullAddModalOpen] = useState(false);
@@ -637,7 +630,6 @@ export default function Search() {
     queryKey: ['quick-media-search', searchQuery, fuzzySearchEnabled],
     queryFn: async () => {
       if (!searchQuery.trim() || !session?.access_token) return [];
-      setFuzzyInterpreted(null);
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
       const searchMedia = async (q: string) => {
@@ -660,7 +652,6 @@ export default function Search() {
       if (fuzzySearchEnabled && isFuzzyQuery(searchQuery)) {
         const cleanTitles = await smartSearchCleanup(searchQuery);
         if (cleanTitles.length > 0) {
-          setFuzzyInterpreted(cleanTitles.join(', '));
           const allResults = await Promise.all(cleanTitles.slice(0, 3).map(t => searchMedia(t)));
           const combined = allResults.flat();
           const seen = new Set<string>();
@@ -679,52 +670,7 @@ export default function Search() {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Quick search - user results (only when NOT in AI mode)
-  const { data: quickUserResults = [], isLoading: isLoadingUsers } = useQuery({
-    queryKey: ['quick-user-search', searchQuery],
-    queryFn: async () => {
-      if (!searchQuery.trim() || !session?.access_token) return [];
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/manage-friendships`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action: 'searchUsers', query: searchQuery })
-      });
-      if (!response.ok) return [];
-      const data = await response.json();
-      return data.users || [];
-    },
-    enabled: !isAiMode && !!searchQuery.trim() && !!session?.access_token,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  // Fetch current friends to check status
-  const { data: friendsData } = useQuery({
-    queryKey: ['friends-list-search'],
-    queryFn: async () => {
-      if (!session?.access_token) return { friends: [], pending: [] };
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/manage-friendships`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action: 'getFriends' })
-      });
-      if (!response.ok) return { friends: [], pending: [] };
-      return response.json();
-    },
-    enabled: !!session?.access_token,
-    staleTime: 1000 * 60 * 2,
-  });
-
-  // Create sets of friend IDs for quick lookup (reuse friendIds from above)
-  const friendIdsFromData = new Set((friendsData?.friends || []).map((f: any) => f.id));
-  const pendingIds = new Set((friendsData?.pending || []).map((f: any) => f.id));
-
-  // Send friend request mutation
+  // Send friend request mutation (kept for other uses)
   const sendFriendRequestMutation = useMutation({
     mutationFn: async (targetUserId: string) => {
       if (!session?.access_token) throw new Error('Not authenticated');
@@ -745,9 +691,7 @@ export default function Search() {
     },
     onSuccess: () => {
       toast({ title: "Friend request sent!" });
-      queryClient.invalidateQueries({ queryKey: ['quick-user-search'] });
       queryClient.invalidateQueries({ queryKey: ['friends'] });
-      queryClient.invalidateQueries({ queryKey: ['friends-list-search'] });
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message || "Could not send friend request", variant: "destructive" });
@@ -836,7 +780,6 @@ export default function Search() {
                 setSearchQuery(e.target.value);
                 if (!e.target.value.trim()) {
                   setFuzzySearchEnabled(true);
-                  setFuzzyInterpreted(null);
                 }
               }}
               onKeyDown={(e) => {
@@ -905,28 +848,8 @@ export default function Search() {
           <>
             {searchQuery.trim() && (
               <div className="space-y-6">
-                {/* Fuzzy search indicator */}
-                {fuzzyInterpreted && !isLoadingMedia && (
-                  <div className="flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 text-sm">
-                    <Sparkles size={14} className="text-purple-500 flex-shrink-0" />
-                    <span className="text-purple-800 flex-1">
-                      Searched for: <span className="font-medium">{fuzzyInterpreted}</span>
-                    </span>
-                    <button
-                      onClick={() => {
-                        setFuzzySearchEnabled(false);
-                        setFuzzyInterpreted(null);
-                        queryClient.invalidateQueries({ queryKey: ['quick-media-search'] });
-                      }}
-                      className="text-purple-400 hover:text-purple-600 text-xs underline flex-shrink-0"
-                    >
-                      Search exact instead
-                    </button>
-                  </div>
-                )}
-
                 {/* Loading */}
-                {(isLoadingMedia || isLoadingUsers) && (
+                {isLoadingMedia && (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="animate-spin text-purple-600" size={24} />
                     <span className="ml-2 text-gray-600">{isFuzzyQuery(searchQuery) && fuzzySearchEnabled ? "AI is interpreting your search..." : "Searching..."}</span>
@@ -1030,7 +953,7 @@ export default function Search() {
                 )}
 
                 {/* No Results */}
-                {!isLoadingMedia && !isLoadingUsers && quickMediaResults.length === 0 && quickUserResults.length === 0 && (
+                {!isLoadingMedia && quickMediaResults.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <SearchIcon size={32} className="mx-auto mb-2 opacity-50" />
                     <p>No results found for "{searchQuery}"</p>
