@@ -1052,6 +1052,15 @@ export default function AwardsPredictions() {
             }}
           >
             <div style={{ textAlign: 'center', marginBottom: 60 }}>
+              <img
+                src="/consumed-logo-white.png"
+                alt="Consumed"
+                style={{
+                  height: 40,
+                  marginBottom: 32,
+                  opacity: 0.9,
+                }}
+              />
               <div style={{
                 width: 100, height: 100, borderRadius: '50%',
                 background: 'linear-gradient(135deg, #f59e0b, #d97706)',

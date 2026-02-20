@@ -664,7 +664,10 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
     }
   };
 
-  const typeInfo = getTypeInfo(post.type);
+  const isLeaderboard = post.content ? isLeaderboardRankingPost(post.content) : false;
+  const typeInfo = isLeaderboard 
+    ? { label: 'Leaderboard', color: 'text-purple-500', bg: 'bg-purple-50', icon: Trophy }
+    : getTypeInfo(post.type);
   const TypeIcon = typeInfo.icon;
 
   const timeAgo = (dateStr?: string) => {
