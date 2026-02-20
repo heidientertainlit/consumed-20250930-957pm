@@ -764,11 +764,11 @@ export default function Search() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-[#08080d] via-[#0f0f1a] via-[#1a1530] to-[#2d1f4e] pb-24">
       <Navigation />
       
       {/* Hero - Purple Gradient with search */}
-      <div className="bg-gradient-to-b from-[#08080d] via-[#0f0f1a] via-[#1a1530] to-[#2d1f4e] pt-12 pb-12 px-4 -mt-px">
+      <div className="pt-12 pb-12 px-4 -mt-px">
         <div className="text-center mb-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <h1 className="text-white text-2xl font-bold tracking-tight mb-4">All your entertainment.<br />All in one place.</h1>
           <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase">ADD MEDIA. BUILD YOUR DNA.</p>
@@ -814,63 +814,8 @@ export default function Search() {
 
       </div>
 
-      {/* What People Are Adding - Subtle rows */}
-      {!searchQuery.trim() && (
-        <div className="bg-white px-4 pt-5 pb-4">
-          <p className="text-gray-400 text-[10px] font-medium uppercase tracking-wide mb-3">What People Are Adding</p>
-          {friendsConsuming.length > 0 ? (
-            <div className="space-y-1.5">
-              {friendsConsuming.slice(0, 5).map((item: any, idx: number) => (
-                <div
-                  key={item.id || idx}
-                  className="flex items-center gap-2.5 py-1 cursor-pointer"
-                  onClick={() => setLocation(`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`)}
-                >
-                  <div className="w-8 h-11 rounded overflow-hidden bg-gray-100 flex-shrink-0">
-                    {(item.image_url && item.image_url.startsWith('http')) ? (
-                      <img src={item.image_url} alt="" className="w-full h-full object-cover" />
-                    ) : item.image_url && !item.image_url.startsWith('http') ? (
-                      <img src={`https://image.tmdb.org/t/p/w92${item.image_url}`} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-50">
-                        <Film size={12} className="text-gray-300" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-700 text-xs font-medium truncate">{item.title}</p>
-                    <p className="text-gray-400 text-[10px] truncate">
-                      {item.media_type === 'tv' ? 'TV' : item.media_type === 'movie' ? 'Movie' : item.media_type || ''}
-                      {item.owner?.display_name ? ` · ${item.owner.display_name}` : item.owner?.user_name ? ` · ${item.owner.user_name}` : ''}
-                    </p>
-                  </div>
-                  <button
-                    className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setQuickAddMedia({
-                        title: item.title,
-                        mediaType: item.media_type || 'movie',
-                        externalId: item.external_id || item.id,
-                        externalSource: item.external_source || 'tmdb',
-                        imageUrl: item.image_url || '',
-                      });
-                      setIsQuickAddOpen(true);
-                    }}
-                  >
-                    <Plus size={12} className="text-gray-400" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-300 text-xs">Add friends to see what they're adding</p>
-          )}
-        </div>
-      )}
-      
-      {/* Main Content Area - Light Background */}
-      <div className="bg-white max-w-7xl mx-auto px-4 pt-4 pb-6 space-y-4 -mt-px">
+      {/* Main Content Area */}
+      <div className="max-w-7xl mx-auto px-4 pt-4 pb-6 space-y-4">
 
         {/* AI Search Loading State */}
         {isAiMode && isSearching && (
@@ -1242,14 +1187,6 @@ export default function Search() {
             </div>
           )}
 
-        <div className="pb-32 pt-8">
-          <Link href="/activity">
-            <div className="text-center py-6 mx-4 rounded-xl border border-gray-200 bg-white hover:bg-purple-50 hover:border-purple-200 transition-colors cursor-pointer">
-              <p className="text-sm text-gray-500">Want to see what everyone's up to?</p>
-              <p className="text-purple-600 font-medium text-sm mt-1">See more activity →</p>
-            </div>
-          </Link>
-        </div>
       </div>
 
       <QuickAddListSheet
