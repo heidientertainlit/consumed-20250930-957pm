@@ -106,6 +106,29 @@ interface SearchResult {
   mediaResults?: DirectResult[];
 }
 
+function isFuzzyQuery(query: string): boolean {
+  const trimmed = query.trim();
+  const words = trimmed.split(/\s+/);
+  if (words.length < 3) return false;
+  const fuzzyPatterns = /\b(the one|that one|about|where|with|starring|directed by|like|similar|remember|forgot|something|what's that|who played|came out|released)\b/i;
+  return fuzzyPatterns.test(trimmed);
+}
+
+async function smartSearchCleanup(query: string): Promise<string[]> {
+  try {
+    const response = await fetch('/api/smart-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+    if (!response.ok) return [];
+    const data = await response.json();
+    return (data.suggestions || []).map((s: any) => s.title).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 // Helper function to deduplicate media items based on their unique identifier
 function deduplicateMediaItems<T extends { id: string; externalId?: string; externalSource?: string }>(items: T[]): T[] {
   const seen = new Set<string>();
@@ -128,6 +151,8 @@ export default function Search() {
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isAiMode, setIsAiMode] = useState(false);
+  const [fuzzySearchEnabled, setFuzzySearchEnabled] = useState(true);
+  const [fuzzyInterpreted, setFuzzyInterpreted] = useState<string | null>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isFullAddModalOpen, setIsFullAddModalOpen] = useState(false);
@@ -607,23 +632,46 @@ export default function Search() {
 
   // Quick search - media results (only when NOT in AI mode)
   const { data: quickMediaResults = [], isLoading: isLoadingMedia } = useQuery({
-    queryKey: ['quick-media-search', searchQuery],
+    queryKey: ['quick-media-search', searchQuery, fuzzySearchEnabled],
     queryFn: async () => {
       if (!searchQuery.trim() || !session?.access_token) return [];
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: searchQuery })
-      });
-      if (!response.ok) return [];
-      const data = await response.json();
-      return (data.results || []).map((r: any) => ({
-        ...r,
-        image_url: r.image_url || r.poster_url || r.image || r.poster_path || '',
-      }));
+      setFuzzyInterpreted(null);
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const searchMedia = async (q: string) => {
+        const response = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query: q })
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return (data.results || []).map((r: any) => ({
+          ...r,
+          image_url: r.image_url || r.poster_url || r.image || r.poster_path || '',
+        }));
+      };
+
+      if (fuzzySearchEnabled && isFuzzyQuery(searchQuery)) {
+        const cleanTitles = await smartSearchCleanup(searchQuery);
+        if (cleanTitles.length > 0) {
+          setFuzzyInterpreted(cleanTitles.join(', '));
+          const allResults = await Promise.all(cleanTitles.slice(0, 3).map(t => searchMedia(t)));
+          const combined = allResults.flat();
+          const seen = new Set<string>();
+          return combined.filter((r: any) => {
+            const key = `${r.external_source || ''}-${r.external_id || r.title || ''}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+        }
+      }
+
+      return searchMedia(searchQuery);
     },
     enabled: !isAiMode && !!searchQuery.trim() && !!session?.access_token,
     staleTime: 1000 * 60 * 5,
@@ -782,7 +830,13 @@ export default function Search() {
               type="text"
               placeholder={isAiMode ? "Ask AI for recommendations..." : "add a movie, book, game..."}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (!e.target.value.trim()) {
+                  setFuzzySearchEnabled(true);
+                  setFuzzyInterpreted(null);
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && isAiMode && !isSearching) {
                   handleSearch();
@@ -849,11 +903,31 @@ export default function Search() {
           <>
             {searchQuery.trim() && (
               <div className="space-y-6">
+                {/* Fuzzy search indicator */}
+                {fuzzyInterpreted && !isLoadingMedia && (
+                  <div className="flex items-center gap-2 bg-purple-50 border border-purple-200 rounded-lg px-3 py-2 text-sm">
+                    <Sparkles size={14} className="text-purple-500 flex-shrink-0" />
+                    <span className="text-purple-800 flex-1">
+                      Searched for: <span className="font-medium">{fuzzyInterpreted}</span>
+                    </span>
+                    <button
+                      onClick={() => {
+                        setFuzzySearchEnabled(false);
+                        setFuzzyInterpreted(null);
+                        queryClient.invalidateQueries({ queryKey: ['quick-media-search'] });
+                      }}
+                      className="text-purple-400 hover:text-purple-600 text-xs underline flex-shrink-0"
+                    >
+                      Search exact instead
+                    </button>
+                  </div>
+                )}
+
                 {/* Loading */}
                 {(isLoadingMedia || isLoadingUsers) && (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="animate-spin text-purple-600" size={24} />
-                    <span className="ml-2 text-gray-600">Searching...</span>
+                    <span className="ml-2 text-gray-600">{isFuzzyQuery(searchQuery) && fuzzySearchEnabled ? "AI is interpreting your search..." : "Searching..."}</span>
                   </div>
                 )}
 
