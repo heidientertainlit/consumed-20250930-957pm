@@ -654,21 +654,31 @@ export default function Search() {
       if (fuzzySearchEnabled && isFuzzyQuery(searchQuery)) {
         const cleanTitles = await smartSearchCleanup(searchQuery);
         if (cleanTitles.length > 0) {
-          setFuzzyTitles(cleanTitles);
-          const searches = [searchMedia(searchQuery), ...cleanTitles.slice(0, 3).map(t => searchMedia(t))];
+          const titleSearches = cleanTitles.slice(0, 3);
+          const searches = [searchMedia(searchQuery), ...titleSearches.map(t => searchMedia(t))];
           const allResults = await Promise.all(searches);
+          const titlesWithResults = titleSearches.filter((_, i) => allResults[i + 1].length > 0);
+          setFuzzyTitles(titlesWithResults);
           const combined = allResults.flat();
           const seen = new Set<string>();
-          return combined.filter((r: any) => {
+          const deduped = combined.filter((r: any) => {
             const key = `${r.external_source || ''}-${r.external_id || r.title || ''}`;
             if (seen.has(key)) return false;
             seen.add(key);
             return true;
           });
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+          return deduped;
         }
       }
 
-      return searchMedia(searchQuery);
+      const results = await searchMedia(searchQuery);
+      if (results.length > 0 && document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+      return results;
     },
     enabled: !isAiMode && !!searchQuery.trim() && !!session?.access_token,
     staleTime: 1000 * 60 * 5,
