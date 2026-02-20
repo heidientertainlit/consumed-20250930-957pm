@@ -190,14 +190,30 @@ export default function DnaPage() {
         useCORS: true,
         backgroundColor: null,
       });
-      const link = document.createElement('a');
-      link.download = 'my-entertainment-dna.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      toast({ title: "Saved!", description: "Your DNA summary is ready to share" });
+      canvas.toBlob(async (blob) => {
+        if (!blob) { setIsDownloading(false); return; }
+        const file = new File([blob], 'my-entertainment-dna.png', { type: 'image/png' });
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+        if (isMobile && navigator.share && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file] });
+            toast({ title: "Tap 'Save Image' to save to your photos!", description: "Select it from the menu that appeared" });
+          } catch (err) {}
+        } else {
+          const link = document.createElement('a');
+          link.download = 'my-entertainment-dna.png';
+          link.href = URL.createObjectURL(blob);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+          toast({ title: "Saved!", description: "Your DNA summary has been downloaded" });
+        }
+        setIsDownloading(false);
+      }, 'image/png');
     } catch (error) {
       toast({ title: "Error", description: "Could not save image", variant: "destructive" });
-    } finally {
       setIsDownloading(false);
     }
   };
@@ -224,11 +240,28 @@ export default function DnaPage() {
     if (!comparisonCardRef.current) return;
     try {
       const canvas = await html2canvas(comparisonCardRef.current, { scale: 3, backgroundColor: '#ffffff' });
-      const link = document.createElement('a');
-      link.download = `dna-match-${selectedFriend?.user_name || 'friend'}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      toast({ title: "Saved!", description: "Your DNA match card is ready to share" });
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        const fileName = `dna-match-${selectedFriend?.user_name || 'friend'}.png`;
+        const file = new File([blob], fileName, { type: 'image/png' });
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+        if (isMobile && navigator.share && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file] });
+            toast({ title: "Tap 'Save Image' to save to your photos!", description: "Select it from the menu that appeared" });
+          } catch (err) {}
+        } else {
+          const link = document.createElement('a');
+          link.download = fileName;
+          link.href = URL.createObjectURL(blob);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+          toast({ title: "Saved!", description: "Your DNA match card has been downloaded" });
+        }
+      }, 'image/png');
     } catch (error) {
       toast({ title: "Error", description: "Could not save image", variant: "destructive" });
     }
@@ -453,7 +486,7 @@ export default function DnaPage() {
                       className="flex items-center gap-1.5 text-xs"
                     >
                       <Download size={14} />
-                      {isDownloading ? 'Saving...' : 'Download'}
+                      {isDownloading ? 'Saving...' : 'Save to Photos'}
                     </Button>
                     <Button
                       onClick={handleShareSummary}
