@@ -521,14 +521,36 @@ export default function AwardsPredictions() {
     const canvas = await generateShareImage();
     if (!canvas) return;
 
-    const link = document.createElement('a');
-    link.download = 'my-oscar-picks.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        setIsGeneratingImage(false);
+        return;
+      }
 
-    toast({ title: "Saved!", description: "Image saved to your device" });
-    setIsGeneratingImage(false);
-    setShowShareGraphic(false);
+      const file = new File([blob], 'my-oscar-picks.png', { type: 'image/png' });
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (isMobile && navigator.share && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file] });
+          toast({ title: "Saved!", description: "Use 'Save Image' from the menu to save to your photos" });
+        } catch (err) {
+          // user cancelled share sheet - that's ok
+        }
+      } else {
+        const link = document.createElement('a');
+        link.download = 'my-oscar-picks.png';
+        link.href = URL.createObjectURL(blob);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+        toast({ title: "Saved!", description: "Image downloaded to your device" });
+      }
+
+      setIsGeneratingImage(false);
+      setShowShareGraphic(false);
+    }, 'image/png');
   };
 
   const handleShareImage = async () => {
