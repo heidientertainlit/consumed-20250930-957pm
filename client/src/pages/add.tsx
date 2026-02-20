@@ -159,6 +159,15 @@ function deduplicateMediaItems<T extends { id: string; externalId?: string; exte
   });
 }
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showComposerModal, setShowComposerModal] = useState(false);
@@ -177,6 +186,7 @@ export default function Search() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const debouncedSearchQuery = useDebounce(searchQuery, 400);
 
   // Fetch friends list
   const { data: friendsList = [] } = useQuery({
@@ -647,9 +657,9 @@ export default function Search() {
 
   // Quick search - media results (only when NOT in AI mode)
   const { data: quickMediaResults = [], isLoading: isLoadingMedia } = useQuery({
-    queryKey: ['quick-media-search', searchQuery, fuzzySearchEnabled],
+    queryKey: ['quick-media-search', debouncedSearchQuery, fuzzySearchEnabled],
     queryFn: async () => {
-      if (!searchQuery.trim() || !session?.access_token) return [];
+      if (!debouncedSearchQuery.trim() || !session?.access_token) return [];
       setFuzzyTitles([]);
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -672,12 +682,12 @@ export default function Search() {
         }));
       };
 
-      if (fuzzySearchEnabled && isFuzzyQuery(searchQuery)) {
-        const smartResult = await smartSearchCleanup(searchQuery);
+      if (fuzzySearchEnabled && isFuzzyQuery(debouncedSearchQuery)) {
+        const smartResult = await smartSearchCleanup(debouncedSearchQuery);
         if (smartResult.suggestions.length > 0) {
           const topSuggestions = smartResult.suggestions.slice(0, 3);
           const searches = [
-            searchMedia(searchQuery),
+            searchMedia(debouncedSearchQuery),
             ...topSuggestions.map(s => searchMedia(s.title, s.type))
           ];
           const allResults = await Promise.all(searches);
@@ -695,20 +705,13 @@ export default function Search() {
             seen.add(key);
             return true;
           });
-          if (document.activeElement instanceof HTMLElement) {
-            document.activeElement.blur();
-          }
           return deduped;
         }
       }
 
-      const results = await searchMedia(searchQuery);
-      if (results.length > 0 && document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
-      return results;
+      return await searchMedia(debouncedSearchQuery);
     },
-    enabled: !isAiMode && !!searchQuery.trim() && !!session?.access_token,
+    enabled: !isAiMode && !!debouncedSearchQuery.trim() && !!session?.access_token,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -892,7 +895,7 @@ export default function Search() {
             {searchQuery.trim() && (
               <div className="space-y-6">
                 {/* Loading */}
-                {isLoadingMedia && (
+                {(isLoadingMedia || (searchQuery !== debouncedSearchQuery && searchQuery.trim())) && (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="animate-spin text-purple-600" size={24} />
                     <span className="ml-2 text-gray-600">{isFuzzyQuery(searchQuery) && fuzzySearchEnabled ? "AI is interpreting your search..." : "Searching..."}</span>
@@ -1006,7 +1009,7 @@ export default function Search() {
                 )}
 
                 {/* No Results */}
-                {!isLoadingMedia && quickMediaResults.length === 0 && (
+                {!isLoadingMedia && searchQuery === debouncedSearchQuery && quickMediaResults.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <SearchIcon size={32} className="mx-auto mb-2 opacity-50" />
                     <p>No results found for "{searchQuery}"</p>
