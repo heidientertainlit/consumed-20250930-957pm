@@ -24,21 +24,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
       
-      // Start session tracking if user is logged in
       if (session?.user?.id) {
         sessionTracker.startSession(session.user.id)
+        const { data: profile } = await supabase
+          .from('users')
+          .select('user_name, display_name')
+          .eq('id', session.user.id)
+          .maybeSingle()
         identifyUser(session.user.id, {
           email: session.user.email,
+          name: profile?.display_name || profile?.user_name || session.user.email,
+          username: profile?.user_name,
         })
       }
     })
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔐 Auth event:', event, session ? 'Session active' : 'No session');
@@ -46,11 +51,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null)
         setLoading(false)
         
-        // Handle session tracking based on auth state
         if (event === 'SIGNED_IN' && session?.user?.id) {
           sessionTracker.startSession(session.user.id)
+          const { data: profile } = await supabase
+            .from('users')
+            .select('user_name, display_name')
+            .eq('id', session.user.id)
+            .maybeSingle()
           identifyUser(session.user.id, {
             email: session.user.email,
+            name: profile?.display_name || profile?.user_name || session.user.email,
+            username: profile?.user_name,
           })
           trackEvent('user_signed_in')
         } else if (event === 'SIGNED_OUT') {

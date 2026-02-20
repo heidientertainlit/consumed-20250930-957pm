@@ -10,10 +10,11 @@ export function initPostHog() {
   
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
-    capture_pageview: true,
+    capture_pageview: false,
     capture_pageleave: true,
     autocapture: true,
     persistence: 'localStorage',
+    person_profiles: 'identified_only',
   });
   
   initialized = true;
