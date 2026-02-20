@@ -3454,11 +3454,11 @@ export default function UserProfile() {
 
         {/* Feedback and Logout Buttons - Only shown on own profile, at bottom */}
         {isOwnProfile && (
-          <div className="px-4 pb-24 pt-12">
+          <div className="px-4 pb-32 pt-12 relative z-[51]">
             <div className="flex justify-center gap-3">
               <Button 
                 variant="outline" 
-                className="border-gray-300 text-purple-600 hover:bg-purple-50 hover:border-purple-300"
+                className="border-gray-300 text-purple-600 hover:bg-purple-50 hover:border-purple-300 min-h-[44px]"
                 onClick={() => setIsFeedbackOpen(true)}
                 data-testid="button-feedback"
               >
@@ -3467,7 +3467,7 @@ export default function UserProfile() {
               </Button>
               <Button 
                 variant="outline" 
-                className="border-gray-300 text-red-600 hover:bg-red-50 hover:border-red-300"
+                className="border-gray-300 text-red-600 hover:bg-red-50 hover:border-red-300 min-h-[44px]"
                 onClick={async () => {
                   await queryClient.cancelQueries();
                   queryClient.clear();
