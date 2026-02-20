@@ -673,6 +673,31 @@ export default function ListDetail() {
 
   const moveMutation = useMutation({
     mutationFn: async ({ itemId, targetListId }: { itemId: string; targetListId: number }) => {
+      const { data: sourceItem } = await supabase
+        .from('list_items')
+        .select('external_id, external_source')
+        .eq('id', itemId)
+        .single();
+
+      if (sourceItem) {
+        const { data: existing } = await supabase
+          .from('list_items')
+          .select('id')
+          .eq('list_id', targetListId)
+          .eq('external_id', sourceItem.external_id)
+          .eq('external_source', sourceItem.external_source)
+          .maybeSingle();
+
+        if (existing) {
+          const { error } = await supabase
+            .from('list_items')
+            .delete()
+            .eq('id', itemId);
+          if (error) throw new Error(error.message);
+          return { itemId, targetListId };
+        }
+      }
+
       const { error } = await supabase
         .from('list_items')
         .update({ list_id: targetListId })
