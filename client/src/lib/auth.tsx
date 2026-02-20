@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               name: profile?.display_name || profile?.user_name || session.user.email,
               username: profile?.user_name,
             })
+            console.log("PostHog identify", session.user.id)
           })
       }
     })
@@ -66,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 name: profile?.display_name || profile?.user_name || session.user.email,
                 username: profile?.user_name,
               })
+              console.log("PostHog identify", session.user.id)
             })
           trackEvent('user_signed_in')
         } else if (event === 'SIGNED_OUT') {

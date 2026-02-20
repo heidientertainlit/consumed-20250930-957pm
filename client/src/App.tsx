@@ -1,7 +1,7 @@
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 import { sessionTracker } from "./lib/sessionTracker";
-import { trackPageView } from "./lib/posthog";
+import { initPostHog, trackPageView } from "./lib/posthog";
 
 // Simple redirect component for wouter
 function RedirectTo({ to }: { to: string }) {
@@ -354,6 +354,11 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    initPostHog();
+    console.log("PostHog init attempted", !!import.meta.env.VITE_POSTHOG_KEY);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
