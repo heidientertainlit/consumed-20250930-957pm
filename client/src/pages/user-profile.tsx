@@ -3150,185 +3150,70 @@ export default function UserProfile() {
               </div>
             )}
           </div>
-          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl border border-purple-200 p-6 shadow-sm">
-            {/* Responsive Header: Stack on mobile, horizontal on larger screens */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="text-white" size={20} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-xl font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent">
-                    {isOwnProfile ? 'Your' : `${userProfileData?.display_name || userProfileData?.first_name || userProfileData?.user_name || 'Their'}'s`} Entertainment DNA
-                  </h2>
-                  {dnaProfileStatus === 'has_profile' && (
-                    <p className="text-sm text-gray-600">{isOwnProfile ? 'Your' : `${userProfileData?.display_name || userProfileData?.first_name || userProfileData?.user_name || 'Their'}'s`} Entertainment Personality</p>
-                  )}
-                  {dnaProfileStatus === 'no_profile' && isOwnProfile && (
-                    <p className="text-sm text-gray-600">Discover your unique entertainment personality</p>
-                  )}
-                  {dnaProfileStatus === 'no_profile' && !isOwnProfile && (
-                    <p className="text-sm text-gray-600">{userProfileData?.display_name || userProfileData?.first_name || 'This user'} hasn't taken the DNA survey yet</p>
-                  )}
-                  {dnaProfileStatus === 'generating' && (
-                    <p className="text-sm text-gray-600">Analyzing entertainment preferences...</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons based on status */}
-              <div className="flex items-center space-x-2 flex-shrink-0">
-                {dnaProfileStatus === 'no_profile' && isOwnProfile && (
-                  <Button 
-                    size="sm"
-                    onClick={handleTakeDNASurvey}
-                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
-                    data-testid="button-take-dna-survey"
-                  >
-                    <Brain size={14} className="mr-2" />
-                    Take DNA Survey
-                  </Button>
-                )}
-
-                {dnaProfileStatus === 'generating' && (
-                  <Button 
-                    size="sm"
-                    disabled
-                    className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white opacity-75"
-                  >
-                    <Loader2 size={14} className="mr-2 animate-spin" />
-                    Generating...
-                  </Button>
-                )}
-
-                {dnaProfileStatus === 'has_profile' && (
-                  <>
-                    <button
-                      onClick={handleRetakeDNASurvey}
-                      className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 transition-colors"
-                      data-testid="button-retake-dna-survey"
-                      aria-label="Retake DNA Survey"
-                    >
-                      <RefreshCw size={14} />
-                    </button>
-                    <Button 
-                      size="sm"
-                      onClick={handleDownloadDNA}
-                      className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white"
-                      data-testid="button-download-dna"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                      Download
-                    </Button>
-                    <Button 
-                      size="sm"
-                      onClick={handleShareDNAProfile}
-                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white"
-                      data-testid="button-share-dna"
-                    >
-                      <Share2 size={14} className="mr-2" />
-                      Share
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Conditional Content based on status */}
-            {dnaProfileStatus === 'no_profile' && (
-              <div className="bg-white rounded-xl p-6 text-center">
-                <div className="mb-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Brain className="text-white" size={32} />
+          <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+            <div className="p-4">
+              {dnaProfileStatus === 'has_profile' && dnaProfile ? (
+                <>
+                  <div className="text-center mb-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <Sparkles className="text-white" size={20} />
+                    </div>
+                    <h2 className="text-base font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                      {dnaProfile.label}
+                    </h2>
+                    <p className="text-gray-600 text-xs mt-0.5">{dnaProfile.tagline}</p>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {isOwnProfile ? 'Complete the Survey to Get Your Entertainment DNA' : `${userProfileData?.display_name || userProfileData?.first_name || 'This user'} hasn't created their DNA yet`}
-                  </h3>
-                  <p className="text-sm text-gray-600 max-w-md mx-auto">
-                    {isOwnProfile 
-                      ? 'Answer a few quick questions to unlock your unique entertainment personality profile and get personalized recommendations.'
-                      : `${userProfileData?.display_name || userProfileData?.first_name || 'This user'} hasn't completed their Entertainment DNA survey yet.`}
+
+                  {dnaProfile.profile_text && (
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 mb-3">
+                      <p className="text-gray-700 text-xs leading-relaxed">{dnaProfile.profile_text}</p>
+                    </div>
+                  )}
+
+                  {dnaProfile.favorite_genres && dnaProfile.favorite_genres.length > 0 && (
+                    <div className="flex flex-wrap gap-1 justify-center mb-3">
+                      {dnaProfile.favorite_genres.slice(0, 5).map((genre: string, i: number) => (
+                        <span key={i} className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
+                          {genre}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {isOwnProfile && (
+                    <div className="text-center pt-2 border-t border-gray-100">
+                      <button
+                        onClick={handleRetakeDNASurvey}
+                        className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+                      >
+                        Retake Survey
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <Sparkles className="text-white" size={20} />
+                  </div>
+                  <h2 className="text-base font-bold text-gray-900 mb-1">Entertainment DNA</h2>
+                  <p className="text-gray-500 text-xs mb-3">
+                    {isOwnProfile
+                      ? 'Discover your unique entertainment personality'
+                      : `${userProfileData?.display_name || userProfileData?.first_name || 'This user'} hasn't taken the DNA survey yet`}
                   </p>
-                </div>
-                {isOwnProfile && (
-                  <>
-                    <Button 
+                  {isOwnProfile && (
+                    <Button
                       onClick={handleTakeDNASurvey}
-                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8"
-                      data-testid="button-start-dna-survey"
+                      size="sm"
+                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs"
                     >
-                      <Brain size={16} className="mr-2" />
-                      Complete DNA Survey
+                      Take DNA Quiz
                     </Button>
-                    <p className="text-xs text-gray-500 mt-3">Takes about 2 minutes</p>
-                  </>
-                )}
-              </div>
-            )}
-
-            {dnaProfileStatus === 'generating' && (
-              <div className="bg-white rounded-xl p-6 text-center">
-                <div className="mb-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Loader2 className="text-white animate-spin" size={32} />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    Generating Your DNA Profile
-                  </h3>
-                  <p className="text-sm text-gray-600 max-w-md mx-auto mb-4">
-                    Our AI is analyzing your entertainment preferences and creating your unique personality profile...
-                  </p>
-                  <div className="w-full max-w-xs mx-auto bg-gray-200 rounded-full h-2">
-                    <div className="bg-gradient-to-r from-purple-500 to-indigo-600 h-2 rounded-full animate-pulse" style={{ width: '75%' }}></div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2">This usually takes 30-60 seconds</p>
-                </div>
-              </div>
-            )}
-
-            {dnaProfileStatus === 'has_profile' && dnaProfile && (
-              <div className="bg-white rounded-xl p-6">
-                {/* Entertainment DNA Label & Tagline - Always show if we have a profile */}
-                <div className="mb-6 text-center">
-                  <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-800 to-indigo-900 bg-clip-text text-transparent mb-2">
-                    {dnaProfile.label || 'Your DNA Profile'}
-                  </h3>
-                  {dnaProfile.tagline && (
-                    <p className="text-gray-600 italic text-lg">
-                      {dnaProfile.tagline}
-                    </p>
                   )}
                 </div>
-
-                {/* Full AI-Generated Description */}
-                <div className="mb-6">
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {dnaProfile.profile_text || "Your personalized Entertainment DNA profile will appear here."}
-                  </p>
-                </div>
-
-                {/* DNA Level indicator - simple inline */}
-                {isOwnProfile && (
-                  <div className="mb-4 flex items-center justify-between">
-                    <DNALevelBadge 
-                      level={dnaLevel} 
-                      itemCount={dnaItemCount} 
-                      showProgress={true} 
-                    />
-                    {dnaLevel === 1 && (
-                      <div className="text-right">
-                        <span className="text-xs text-purple-600 font-semibold">{dnaItemCount}/30 items</span>
-                        <Progress value={(dnaItemCount / 30) * 100} className="h-1.5 w-20 mt-1" />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-
-              </div>
-            )}
-
-
+              )}
+            </div>
           </div>
         </div>
         )}
