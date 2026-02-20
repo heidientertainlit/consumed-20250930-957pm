@@ -622,15 +622,26 @@ export default function ListDetail() {
         throw new Error('Failed to generate image');
       }
 
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.download = `${listFileName}-consumedapp.png`;
-      link.href = url;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-      toast({ title: "Image Downloaded", description: "Share it on social media!" });
+      const fileName = `${listFileName}-consumedapp.png`;
+      const file = new File([blob], fileName, { type: 'image/png' });
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+      if (isMobile && navigator.share && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file] });
+          toast({ title: "Tap 'Save Image' to save to your photos!", description: "Select it from the menu that appeared" });
+        } catch (err) {}
+      } else {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        toast({ title: "Image Downloaded", description: "Share it on social media!" });
+      }
     } catch (error) {
       console.error('Error generating image:', error);
       toast({ title: "Download Failed", description: "Could not generate image", variant: "destructive" });
@@ -1089,12 +1100,36 @@ export default function ListDetail() {
         {!sharedUserId && session && (
           <button
             onClick={() => setIsTrackModalOpen(true)}
-            className="w-full flex items-center justify-center gap-2 py-3 mb-4 rounded-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white font-semibold text-sm transition-all shadow-md"
+            className="w-full flex items-center justify-center gap-2 py-3 mb-3 rounded-full bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white font-semibold text-sm transition-all shadow-md"
             data-testid="button-add-item-prominent"
           >
             <Plus size={18} strokeWidth={2.5} />
             Add Media to This List
           </button>
+        )}
+
+        {listData?.items?.length > 0 && (
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={handleDownloadImage}
+              disabled={isGeneratingImage}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm active:scale-[0.98] transition-all disabled:opacity-50"
+            >
+              {isGeneratingImage ? (
+                <Download size={16} className="animate-pulse" />
+              ) : (
+                <Download size={16} />
+              )}
+              Save to Photos
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm active:scale-[0.98] transition-all"
+            >
+              {copied ? <Check size={16} className="text-green-500" /> : <Share2 size={16} />}
+              {copied ? 'Copied!' : 'Share Link'}
+            </button>
+          </div>
         )}
 
         {/* Search Bar */}
