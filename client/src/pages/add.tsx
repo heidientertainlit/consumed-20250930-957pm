@@ -1242,6 +1242,14 @@ export default function Search() {
             </div>
           )}
 
+        <div className="pb-32 pt-8">
+          <Link href="/activity">
+            <div className="text-center py-6 mx-4 rounded-xl border border-gray-200 bg-white hover:bg-purple-50 hover:border-purple-200 transition-colors cursor-pointer">
+              <p className="text-sm text-gray-500">Want to see what everyone's up to?</p>
+              <p className="text-purple-600 font-medium text-sm mt-1">See more activity →</p>
+            </div>
+          </Link>
+        </div>
       </div>
 
       <QuickAddListSheet
