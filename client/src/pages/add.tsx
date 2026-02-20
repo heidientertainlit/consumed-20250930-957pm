@@ -187,6 +187,7 @@ export default function Search() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch friends list
   const { data: friendsList = [] } = useQuery({
@@ -715,6 +716,19 @@ export default function Search() {
     staleTime: 1000 * 60 * 5,
   });
 
+  useEffect(() => {
+    if (
+      debouncedSearchQuery.trim() &&
+      searchQuery === debouncedSearchQuery &&
+      !isLoadingMedia &&
+      quickMediaResults.length > 0
+    ) {
+      if (searchInputRef.current && document.activeElement === searchInputRef.current) {
+        searchInputRef.current.blur();
+      }
+    }
+  }, [isLoadingMedia, quickMediaResults, debouncedSearchQuery, searchQuery]);
+
   // Send friend request mutation (kept for other uses)
   const sendFriendRequestMutation = useMutation({
     mutationFn: async (targetUserId: string) => {
@@ -818,6 +832,7 @@ export default function Search() {
           <div className="flex items-center gap-2">
             <SearchIcon className="text-gray-400 ml-2 flex-shrink-0" size={20} />
             <Input
+              ref={searchInputRef}
               type="text"
               placeholder={isAiMode ? "Ask AI for recommendations..." : "add a movie, book, game..."}
               value={searchQuery}
