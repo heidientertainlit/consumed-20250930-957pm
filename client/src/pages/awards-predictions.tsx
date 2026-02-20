@@ -1059,6 +1059,9 @@ export default function AwardsPredictions() {
                   height: 48,
                   marginBottom: 40,
                   opacity: 0.9,
+                  display: 'block',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
                 }}
               />
               <h1 style={{
