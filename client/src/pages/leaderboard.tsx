@@ -387,18 +387,7 @@ export default function Leaderboard() {
                     </p>
                   </div>
                   
-                  {isCurrentUser && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => shareRankMutation.mutate({ rank: index + 1, categoryName })}
-                      disabled={shareRankMutation.isPending}
-                      className="flex items-center gap-1.5"
-                      data-testid={`button-share-rank-${categoryName}`}
-                    >
-                      <Share2 size={14} />
-                    </Button>
-                  )}
+                  {/* Share button hidden for now */}
                 </div>
               </div>
             );
