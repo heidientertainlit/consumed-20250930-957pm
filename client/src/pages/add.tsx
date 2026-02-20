@@ -768,7 +768,7 @@ export default function Search() {
       <Navigation />
       
       {/* Hero - Centered search */}
-      <div className="flex flex-col items-center justify-center px-4 -mt-px" style={{ minHeight: 'calc(100vh - 140px)' }}>
+      <div className="flex flex-col items-center px-4 -mt-px pt-[15vh]">
         <div className="text-center mb-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <h1 className="text-white text-2xl font-bold tracking-tight mb-4">All your entertainment.<br />All in one place.</h1>
           <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase">ADD MEDIA. BUILD YOUR DNA.</p>
