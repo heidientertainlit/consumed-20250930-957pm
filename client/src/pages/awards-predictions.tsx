@@ -666,6 +666,22 @@ export default function AwardsPredictions() {
           </div>
         </button>
 
+        {picksCount > 0 && (
+          <button
+            onClick={() => setShowBallotModal(true)}
+            className="w-full mb-4 bg-gradient-to-r from-purple-600 to-purple-700 rounded-2xl p-3 flex items-center justify-between shadow-md active:scale-[0.98] transition-transform"
+          >
+            <div className="flex items-center gap-2">
+              <Trophy size={20} className="text-amber-400" />
+              <span className="text-white font-bold text-sm">View My Ballot & Share</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Image size={16} className="text-purple-200" />
+              <ChevronRight size={16} className="text-purple-200" />
+            </div>
+          </button>
+        )}
+
         {/* Who's Playing Section */}
         <div className="mb-3 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-2">
