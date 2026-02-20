@@ -5,12 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Trophy, Check, X, ChevronDown, ChevronUp, ChevronRight,
   Users, TrendingUp, Info, ArrowLeft, ChevronLeft,
-  Sparkles, Lock, Clock, Loader2, Share2, LogIn
+  Sparkles, Lock, Clock, Loader2, Share2, LogIn, Download, Image
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
+import html2canvas from "html2canvas";
 import Navigation from "@/components/navigation";
 
 interface Nominee {
@@ -57,8 +59,12 @@ export default function AwardsPredictions() {
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [showBallotModal, setShowBallotModal] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showShareGraphic, setShowShareGraphic] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [localPicks, setLocalPicks] = useState<Map<string, string>>(new Map());
   const tabsRef = useRef<HTMLDivElement>(null);
+  const shareCardRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
   const eventSlug = paramsPlay?.slug || paramsAwards?.eventId || 'golden-globes-2026';
 
@@ -455,6 +461,20 @@ export default function AwardsPredictions() {
     return picks;
   };
 
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile-share', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data } = await supabase
+        .from('users')
+        .select('display_name, user_name')
+        .eq('id', userId)
+        .single();
+      return data;
+    },
+    enabled: !!userId,
+  });
+
   const handleShare = async () => {
     if (!event) return;
     
@@ -469,6 +489,63 @@ export default function AwardsPredictions() {
       }
     } else {
       navigator.clipboard.writeText(shareUrl);
+    }
+  };
+
+  const handleDownloadShareGraphic = async () => {
+    setShowShareGraphic(true);
+    setIsGeneratingImage(true);
+    await new Promise(r => setTimeout(r, 500));
+    
+    if (!shareCardRef.current) {
+      setIsGeneratingImage(false);
+      return;
+    }
+
+    try {
+      const canvas = await html2canvas(shareCardRef.current, {
+        scale: 3,
+        backgroundColor: null,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+      });
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          setIsGeneratingImage(false);
+          return;
+        }
+        const file = new File([blob], 'my-oscar-picks.png', { type: 'image/png' });
+
+        if (navigator.share && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: `My ${event?.year} Oscar Picks`,
+              text: `Check out my ${event?.year} Oscar predictions!`,
+              files: [file],
+            });
+          } catch (err) {
+            const link = document.createElement('a');
+            link.download = 'my-oscar-picks.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+          }
+        } else {
+          const link = document.createElement('a');
+          link.download = 'my-oscar-picks.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        }
+
+        toast({ title: "Image ready!", description: "Your Oscar picks card has been saved" });
+        setIsGeneratingImage(false);
+        setShowShareGraphic(false);
+      }, 'image/png');
+    } catch (error) {
+      toast({ title: "Error", description: "Could not generate image", variant: "destructive" });
+      setIsGeneratingImage(false);
+      setShowShareGraphic(false);
     }
   };
 
@@ -913,14 +990,18 @@ export default function AwardsPredictions() {
                 
                 <div className="flex space-x-3">
                   <Button
-                    onClick={handleShare}
+                    onClick={handleDownloadShareGraphic}
                     variant="outline"
                     className="flex-1 border-gray-200 font-bold"
-                    disabled={picksCount === 0}
-                    data-testid="button-share-ballot"
+                    disabled={picksCount === 0 || isGeneratingImage}
+                    data-testid="button-share-graphic"
                   >
-                    <Share2 size={18} className="mr-2" />
-                    Share
+                    {isGeneratingImage ? (
+                      <Loader2 size={18} className="mr-2 animate-spin" />
+                    ) : (
+                      <Image size={18} className="mr-2" />
+                    )}
+                    Share as Image
                   </Button>
                   <Button
                     onClick={() => setShowBallotModal(false)}
@@ -936,6 +1017,108 @@ export default function AwardsPredictions() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Hidden Shareable Graphic Card */}
+      {showShareGraphic && (
+        <div style={{ position: 'fixed', left: '-9999px', top: 0 }}>
+          <div
+            ref={shareCardRef}
+            style={{
+              width: 1080,
+              padding: 60,
+              background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1035 30%, #2d1f5e 60%, #1a1035 100%)',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            }}
+          >
+            <div style={{ textAlign: 'center', marginBottom: 40 }}>
+              <div style={{
+                width: 80, height: 80, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: 16, boxShadow: '0 8px 32px rgba(245, 158, 11, 0.3)',
+              }}>
+                <span style={{ fontSize: 40 }}>🏆</span>
+              </div>
+              <h1 style={{
+                fontSize: 42, fontWeight: 800, color: '#ffffff',
+                margin: '0 0 8px 0', letterSpacing: '-0.5px',
+              }}>
+                My {event.year} Oscar Picks
+              </h1>
+              {userProfile && (
+                <p style={{ fontSize: 20, color: '#a78bfa', margin: 0, fontWeight: 600 }}>
+                  @{userProfile.user_name || userProfile.display_name}
+                </p>
+              )}
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 16,
+            }}>
+              {getBallotPicks().map((pick) => {
+                const category = event.categories.find(c => c.id === pick.categoryId);
+                const nominee = category?.nominees.find(n => n.id === pick.nomineeId);
+                return (
+                  <div
+                    key={pick.categoryId}
+                    style={{
+                      background: 'rgba(255,255,255,0.08)',
+                      borderRadius: 16,
+                      padding: 20,
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 14,
+                    }}
+                  >
+                    {nominee?.poster_url && (
+                      <img
+                        src={nominee.poster_url}
+                        alt=""
+                        crossOrigin="anonymous"
+                        style={{
+                          width: 60, height: 90, borderRadius: 10,
+                          objectFit: 'cover', flexShrink: 0,
+                        }}
+                      />
+                    )}
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <p style={{
+                        fontSize: 11, fontWeight: 700, color: '#a78bfa',
+                        textTransform: 'uppercase', letterSpacing: '1.5px',
+                        margin: '0 0 6px 0',
+                      }}>
+                        {pick.categoryName}
+                      </p>
+                      <p style={{
+                        fontSize: 18, fontWeight: 700, color: '#ffffff',
+                        margin: 0, lineHeight: 1.3,
+                        overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>
+                        {pick.nomineeName}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{
+              textAlign: 'center', marginTop: 40,
+              paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.1)',
+            }}>
+              <p style={{
+                fontSize: 16, color: 'rgba(255,255,255,0.4)',
+                margin: 0, fontWeight: 600,
+              }}>
+                consumedapp.com
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Login Prompt Dialog */}
       <Dialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
