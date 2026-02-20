@@ -202,7 +202,7 @@ export default function UserProfile() {
   const friendsRef = useRef<HTMLDivElement>(null);
   const listsRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
-  const [activeSection, setActiveSection] = useState<string>('dna');
+  const [activeSection, setActiveSection] = useState<string>('badges');
   const initialSectionSet = useRef(false);
   const [collectionsSubTab, setCollectionsSubTab] = useState<'lists' | 'history'>('lists');
   const [activitySubFilter, setActivitySubFilter] = useState<'posts' | 'history' | 'bets'>('posts');
@@ -1309,7 +1309,7 @@ export default function UserProfile() {
     
     if (tab) {
       // Map 'lists' to 'collections' for backward compatibility
-      const validTabs = ['stats', 'dna', 'badges', 'friends', 'collections', 'activity'];
+      const validTabs = ['stats', 'badges', 'friends', 'collections', 'activity'];
       const normalizedTab = tab === 'lists' ? 'collections' : tab;
       if (validTabs.includes(normalizedTab)) {
         setActiveSection(normalizedTab);
@@ -2897,17 +2897,6 @@ export default function UserProfile() {
         <div className="sticky top-16 z-20 bg-gray-50 border-b border-gray-200 px-4 py-3 -mx-0">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
             <button
-              onClick={() => setActiveSection('dna')}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                activeSection === 'dna'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-              }`}
-              data-testid="nav-dna"
-            >
-              DNA
-            </button>
-            <button
               onClick={() => setActiveSection('badges')}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 activeSection === 'badges'
@@ -3005,7 +2994,7 @@ export default function UserProfile() {
                     {dnaProfile.profile_text?.slice(0, 120)}...
                   </p>
                   <button 
-                    onClick={() => setActiveSection('dna')}
+                    onClick={() => setLocation('/dna')}
                     className="text-xs text-purple-600 font-medium mt-2 hover:text-purple-700"
                   >
                     View Full DNA →
@@ -3080,139 +3069,6 @@ export default function UserProfile() {
               />
             )}
           </div>
-        )}
-
-        {/* Entertainment DNA (includes Stats) - FULL VIEW */}
-        {activeSection === 'dna' && (
-        <div ref={dnaRef} className="px-4 mb-8">
-          {/* Stats Section */}
-          <div className="mb-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4" style={{ letterSpacing: '-0.02em', fontFamily: 'Poppins, sans-serif' }}>{isOwnProfile ? 'Your' : `${userProfileData?.display_name || userProfileData?.first_name || 'Their'}'s`} Stats</h3>
-            {isLoadingStats ? (
-              <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
-                <div className="flex items-center justify-center">
-                  <Loader2 className="animate-spin text-gray-400" size={24} />
-                  <span className="ml-2 text-gray-600">Loading your stats...</span>
-                </div>
-              </div>
-            ) : userStats ? (
-              <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mb-4">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-purple-700">{userStats.moviesWatched}</div>
-                    <div className="text-xs text-gray-600">Movies</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-pink-600">{userStats.tvShowsWatched}</div>
-                    <div className="text-xs text-gray-600">TV Shows</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-cyan-600">{userStats.booksRead}</div>
-                    <div className="text-xs text-gray-600">Books</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-green-600">{userStats.musicHours}h</div>
-                    <div className="text-xs text-gray-600">Music</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-blue-600">{userStats.podcastHours}h</div>
-                    <div className="text-xs text-gray-600">Podcasts</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-orange-600">{userStats.gamesPlayed}</div>
-                    <div className="text-xs text-gray-600">Games</div>
-                  </div>
-                </div>
-
-                <div className="flex justify-around border-t border-gray-200 pt-4">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-gray-900">{userStats.totalHours}h</div>
-                    <div className="text-xs text-gray-600">Total Hours</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-gray-900">{userStats.averageRating}</div>
-                    <div className="text-xs text-gray-600">Avg Rating</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-gray-900">{userStats.dayStreak}</div>
-                    <div className="text-xs text-gray-600">Day Streak</div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-sm">
-                <div className="text-center text-gray-600">
-                  <p>No stats available yet. Start tracking media to see your stats!</p>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
-            <div className="p-4">
-              {dnaProfileStatus === 'has_profile' && dnaProfile ? (
-                <>
-                  <div className="text-center mb-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                      <Sparkles className="text-white" size={20} />
-                    </div>
-                    <h2 className="text-base font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                      {dnaProfile.label}
-                    </h2>
-                    <p className="text-gray-600 text-xs mt-0.5">{dnaProfile.tagline}</p>
-                  </div>
-
-                  {dnaProfile.profile_text && (
-                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 mb-3">
-                      <p className="text-gray-700 text-xs leading-relaxed">{dnaProfile.profile_text}</p>
-                    </div>
-                  )}
-
-                  {dnaProfile.favorite_genres && dnaProfile.favorite_genres.length > 0 && (
-                    <div className="flex flex-wrap gap-1 justify-center mb-3">
-                      {dnaProfile.favorite_genres.slice(0, 5).map((genre: string, i: number) => (
-                        <span key={i} className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                          {genre}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {isOwnProfile && (
-                    <div className="text-center pt-2 border-t border-gray-100">
-                      <button
-                        onClick={handleRetakeDNASurvey}
-                        className="text-xs text-purple-600 hover:text-purple-700 font-medium"
-                      >
-                        Retake Survey
-                      </button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Sparkles className="text-white" size={20} />
-                  </div>
-                  <h2 className="text-base font-bold text-gray-900 mb-1">Entertainment DNA</h2>
-                  <p className="text-gray-500 text-xs mb-3">
-                    {isOwnProfile
-                      ? 'Discover your unique entertainment personality'
-                      : `${userProfileData?.display_name || userProfileData?.first_name || 'This user'} hasn't taken the DNA survey yet`}
-                  </p>
-                  {isOwnProfile && (
-                    <Button
-                      onClick={handleTakeDNASurvey}
-                      size="sm"
-                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs"
-                    >
-                      Take DNA Quiz
-                    </Button>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
         )}
 
         {/* Badges Section */}
