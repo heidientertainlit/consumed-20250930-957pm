@@ -129,6 +129,7 @@ export default function ListDetail() {
   const [isCollaboratorsDialogOpen, setIsCollaboratorsDialogOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [moveItem, setMoveItem] = useState<any>(null);
+  const [duplicateConfirm, setDuplicateConfirm] = useState<{ itemId: string; targetListId: number; targetName: string; itemTitle: string } | null>(null);
   
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -672,14 +673,14 @@ export default function ListDetail() {
   const allUserLists = userListsData?.lists || [];
 
   const moveMutation = useMutation({
-    mutationFn: async ({ itemId, targetListId }: { itemId: string; targetListId: number }) => {
+    mutationFn: async ({ itemId, targetListId, force }: { itemId: string; targetListId: number; force?: boolean }) => {
       const { data: sourceItem } = await supabase
         .from('list_items')
-        .select('external_id, external_source')
+        .select('external_id, external_source, title')
         .eq('id', itemId)
         .single();
 
-      if (sourceItem) {
+      if (sourceItem && !force) {
         const { data: existing } = await supabase
           .from('list_items')
           .select('id')
@@ -689,27 +690,35 @@ export default function ListDetail() {
           .maybeSingle();
 
         if (existing) {
-          const { error } = await supabase
-            .from('list_items')
-            .delete()
-            .eq('id', itemId);
-          if (error) throw new Error(error.message);
-          return { itemId, targetListId };
+          const targetList = allUserLists.find((l: any) => l.id === targetListId);
+          const targetName = targetList ? getDisplayTitle(targetList.title) : 'list';
+          setDuplicateConfirm({ itemId, targetListId, targetName, itemTitle: sourceItem.title || moveItem?.title || 'This item' });
+          setMoveItem(null);
+          return { itemId, targetListId, skipped: true };
         }
       }
 
-      const { error } = await supabase
-        .from('list_items')
-        .update({ list_id: targetListId })
-        .eq('id', itemId);
+      if (force) {
+        const { error } = await supabase
+          .from('list_items')
+          .delete()
+          .eq('id', itemId);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase
+          .from('list_items')
+          .update({ list_id: targetListId })
+          .eq('id', itemId);
+        if (error) throw new Error(error.message);
+      }
 
-      if (error) throw new Error(error.message);
-      return { itemId, targetListId };
+      return { itemId, targetListId, skipped: false };
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (result, variables) => {
+      if (result?.skipped) return;
       const targetList = allUserLists.find((l: any) => l.id === variables.targetListId);
       const targetName = targetList ? getDisplayTitle(targetList.title) : 'list';
-      toast({ title: `Moved to ${targetName}` });
+      toast({ title: variables.force ? `Removed from this list (already in ${targetName})` : `Moved to ${targetName}` });
       setMoveItem(null);
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
     },
@@ -1463,6 +1472,38 @@ export default function ListDetail() {
               className="w-full py-3 text-gray-400 text-sm hover:text-gray-600 transition-colors"
             >
               Cancel
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={!!duplicateConfirm} onOpenChange={(open) => !open && setDuplicateConfirm(null)}>
+        <DrawerContent className="bg-white rounded-t-2xl">
+          <DrawerHeader className="text-center pb-2 border-b border-gray-100">
+            <DrawerTitle className="text-lg font-semibold text-gray-900">
+              Already in {duplicateConfirm?.targetName}
+            </DrawerTitle>
+            <p className="text-sm text-gray-500 mt-2">
+              "{duplicateConfirm?.itemTitle}" is already in your {duplicateConfirm?.targetName} list. Would you like to remove it from this list?
+            </p>
+          </DrawerHeader>
+          <div className="px-4 py-4 space-y-2">
+            <button
+              onClick={() => {
+                if (duplicateConfirm) {
+                  moveMutation.mutate({ itemId: duplicateConfirm.itemId, targetListId: duplicateConfirm.targetListId, force: true });
+                  setDuplicateConfirm(null);
+                }
+              }}
+              className="w-full py-3 px-4 rounded-xl bg-purple-600 text-white font-medium text-sm hover:bg-purple-700 transition-colors"
+            >
+              Yes, remove from this list
+            </button>
+            <button
+              onClick={() => setDuplicateConfirm(null)}
+              className="w-full py-3 text-gray-400 text-sm hover:text-gray-600 transition-colors"
+            >
+              Keep in both lists
             </button>
           </div>
         </DrawerContent>
