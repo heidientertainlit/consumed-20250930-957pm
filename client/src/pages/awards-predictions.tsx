@@ -492,61 +492,80 @@ export default function AwardsPredictions() {
     }
   };
 
-  const handleDownloadShareGraphic = async () => {
+  const generateShareImage = async (): Promise<HTMLCanvasElement | null> => {
     setShowShareGraphic(true);
     setIsGeneratingImage(true);
     await new Promise(r => setTimeout(r, 500));
     
     if (!shareCardRef.current) {
       setIsGeneratingImage(false);
-      return;
+      return null;
     }
 
     try {
-      const canvas = await html2canvas(shareCardRef.current, {
+      return await html2canvas(shareCardRef.current, {
         scale: 3,
         backgroundColor: null,
         useCORS: true,
         allowTaint: true,
         logging: false,
       });
+    } catch {
+      setIsGeneratingImage(false);
+      setShowShareGraphic(false);
+      return null;
+    }
+  };
 
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          setIsGeneratingImage(false);
-          return;
-        }
-        const file = new File([blob], 'my-oscar-picks.png', { type: 'image/png' });
+  const handleSaveImage = async () => {
+    const canvas = await generateShareImage();
+    if (!canvas) return;
 
-        if (navigator.share && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              title: `My ${event?.year} Oscar Picks`,
-              text: `Check out my ${event?.year} Oscar predictions!`,
-              files: [file],
-            });
-          } catch (err) {
-            const link = document.createElement('a');
-            link.download = 'my-oscar-picks.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-          }
-        } else {
+    const link = document.createElement('a');
+    link.download = 'my-oscar-picks.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    toast({ title: "Saved!", description: "Image saved to your device" });
+    setIsGeneratingImage(false);
+    setShowShareGraphic(false);
+  };
+
+  const handleShareImage = async () => {
+    const canvas = await generateShareImage();
+    if (!canvas) return;
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        setIsGeneratingImage(false);
+        return;
+      }
+      const file = new File([blob], 'my-oscar-picks.png', { type: 'image/png' });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: `My ${event?.year} Oscar Picks`,
+            text: `Check out my ${event?.year} Oscar predictions!`,
+            files: [file],
+          });
+        } catch (err) {
           const link = document.createElement('a');
           link.download = 'my-oscar-picks.png';
           link.href = canvas.toDataURL('image/png');
           link.click();
         }
+      } else {
+        const link = document.createElement('a');
+        link.download = 'my-oscar-picks.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      }
 
-        toast({ title: "Image ready!", description: "Your Oscar picks card has been saved" });
-        setIsGeneratingImage(false);
-        setShowShareGraphic(false);
-      }, 'image/png');
-    } catch (error) {
-      toast({ title: "Error", description: "Could not generate image", variant: "destructive" });
+      toast({ title: "Image ready!", description: "Your Oscar picks card is ready to share" });
       setIsGeneratingImage(false);
       setShowShareGraphic(false);
-    }
+    }, 'image/png');
   };
 
   // Loading state
@@ -1004,28 +1023,33 @@ export default function AwardsPredictions() {
                   </span>
                 </div>
                 
-                <div className="flex space-x-3">
+                <div className="flex space-x-2">
                   <Button
-                    onClick={handleDownloadShareGraphic}
+                    onClick={handleSaveImage}
                     variant="outline"
                     className="flex-1 border-gray-200 font-bold"
+                    disabled={picksCount === 0 || isGeneratingImage}
+                    data-testid="button-save-image"
+                  >
+                    {isGeneratingImage ? (
+                      <Loader2 size={16} className="mr-1.5 animate-spin" />
+                    ) : (
+                      <Download size={16} className="mr-1.5" />
+                    )}
+                    Save Image
+                  </Button>
+                  <Button
+                    onClick={handleShareImage}
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold"
                     disabled={picksCount === 0 || isGeneratingImage}
                     data-testid="button-share-graphic"
                   >
                     {isGeneratingImage ? (
-                      <Loader2 size={18} className="mr-2 animate-spin" />
+                      <Loader2 size={16} className="mr-1.5 animate-spin" />
                     ) : (
-                      <Image size={18} className="mr-2" />
+                      <Share2 size={16} className="mr-1.5" />
                     )}
-                    Share as Image
-                  </Button>
-                  <Button
-                    onClick={() => setShowBallotModal(false)}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold"
-                    data-testid="button-done-ballot"
-                  >
-                    <Check size={18} className="mr-2" />
-                    Done
+                    Share
                   </Button>
                 </div>
               </div>
