@@ -110,18 +110,37 @@ function isFuzzyQuery(query: string): boolean {
   return false;
 }
 
-async function smartSearchCleanup(query: string): Promise<string[]> {
+interface SmartSuggestion {
+  title: string;
+  type?: string;
+}
+
+interface SmartSearchResult {
+  suggestions: SmartSuggestion[];
+  tmdbResults: any[];
+}
+
+async function smartSearchCleanup(query: string): Promise<SmartSearchResult> {
   try {
     const response = await fetch('/api/smart-search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query }),
     });
-    if (!response.ok) return [];
+    if (!response.ok) return { suggestions: [], tmdbResults: [] };
     const data = await response.json();
-    return (data.suggestions || []).map((s: any) => s.title).filter(Boolean);
+    return {
+      suggestions: (data.suggestions || []).filter((s: any) => s.title).map((s: any) => ({
+        title: s.title,
+        type: s.type || undefined,
+      })),
+      tmdbResults: (data.tmdbResults || []).map((r: any) => ({
+        ...r,
+        image_url: r.poster_url || '',
+      })),
+    };
   } catch {
-    return [];
+    return { suggestions: [], tmdbResults: [] };
   }
 }
 
@@ -634,14 +653,16 @@ export default function Search() {
       setFuzzyTitles([]);
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      const searchMedia = async (q: string) => {
+      const searchMedia = async (q: string, mediaType?: string) => {
+        const body: any = { query: q };
+        if (mediaType) body.type = mediaType;
         const response = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ query: q })
+          body: JSON.stringify(body)
         });
         if (!response.ok) return [];
         const data = await response.json();
@@ -652,14 +673,21 @@ export default function Search() {
       };
 
       if (fuzzySearchEnabled && isFuzzyQuery(searchQuery)) {
-        const cleanTitles = await smartSearchCleanup(searchQuery);
-        if (cleanTitles.length > 0) {
-          const titleSearches = cleanTitles.slice(0, 3);
-          const searches = [searchMedia(searchQuery), ...titleSearches.map(t => searchMedia(t))];
+        const smartResult = await smartSearchCleanup(searchQuery);
+        if (smartResult.suggestions.length > 0) {
+          const topSuggestions = smartResult.suggestions.slice(0, 3);
+          const searches = [
+            searchMedia(searchQuery),
+            ...topSuggestions.map(s => searchMedia(s.title, s.type))
+          ];
           const allResults = await Promise.all(searches);
-          const titlesWithResults = titleSearches.filter((_, i) => allResults[i + 1].length > 0);
-          setFuzzyTitles(titlesWithResults);
-          const combined = allResults.flat();
+          const titlesWithResults = topSuggestions
+            .filter((_, i) => allResults[i + 1].length > 0)
+            .map(s => s.title);
+          const tmdbTitles = smartResult.tmdbResults.map((r: any) => r.title).filter(Boolean);
+          const allFoundTitles = [...new Set([...titlesWithResults, ...tmdbTitles])];
+          setFuzzyTitles(allFoundTitles);
+          const combined = [...smartResult.tmdbResults, ...allResults.flat()];
           const seen = new Set<string>();
           const deduped = combined.filter((r: any) => {
             const key = `${r.external_source || ''}-${r.external_id || r.title || ''}`;

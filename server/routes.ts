@@ -471,7 +471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messages: [
             {
               role: "system",
-              content: `You are a media identification assistant. The user will describe a movie, TV show, book, song, album, podcast, or game — sometimes vaguely, sometimes with just a keyword and category (like "help movie"). Your job is to figure out the exact title(s) they most likely want. For short queries like "help movie", think of the most popular/well-known titles matching that keyword in that category (e.g. "The Help", "Send Help"). Return a JSON array of objects with "title" and "type" (movie, tv, book, music, podcast, game). Return at most 3 results, ordered by likelihood. Only return the JSON array, nothing else.`
+              content: `You are a media identification assistant. The user will describe a movie, TV show, book, song, album, podcast, or game — sometimes vaguely, sometimes with just a keyword and category (like "help movie"). Your job is to figure out the exact title(s) they most likely want. Prioritize titles that are currently popular, trending, in theaters, or recently released. For short queries like "help movie", think of the most popular/well-known titles matching that keyword in that category (e.g. "The Help", "Send Help"). Return a JSON array of objects with "title" and "type" (movie, tv, book, music, podcast, game). Return at most 3 results, ordered by cultural relevance (newest/trending first). Only return the JSON array, nothing else.`
             },
             {
               role: "user",
@@ -490,7 +490,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const data = await response.json();
       const content = data.choices?.[0]?.message?.content || "[]";
       
-      let suggestions;
+      let suggestions: any[] = [];
       try {
         const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         suggestions = JSON.parse(cleaned);
@@ -498,7 +498,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         suggestions = [];
       }
 
-      res.json({ suggestions });
+      const TMDB_API_KEY = process.env.TMDB_API_KEY;
+      if (TMDB_API_KEY && suggestions.length > 0) {
+        const tmdbResults: any[] = [];
+        await Promise.allSettled(
+          suggestions.slice(0, 3).map(async (s: any) => {
+            try {
+              const isMovie = s.type === 'movie';
+              const isTv = s.type === 'tv';
+              const endpoint = isTv ? 'search/tv' : isMovie ? 'search/movie' : 'search/multi';
+              const resolvedType = isTv ? 'tv' : isMovie ? 'movie' : undefined;
+              const controller = new AbortController();
+              const timeout = setTimeout(() => controller.abort(), 4000);
+              const tmdbRes = await fetch(
+                `https://api.themoviedb.org/3/${endpoint}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(s.title)}&page=1&include_adult=false`,
+                { signal: controller.signal }
+              );
+              clearTimeout(timeout);
+              if (tmdbRes.ok) {
+                const tmdbData = await tmdbRes.json();
+                const topResult = tmdbData.results?.[0];
+                if (topResult) {
+                  tmdbResults.push({
+                    title: topResult.title || topResult.name,
+                    type: resolvedType || topResult.media_type || s.type || 'movie',
+                    external_id: topResult.id?.toString(),
+                    external_source: 'tmdb',
+                    poster_url: topResult.poster_path ? `https://image.tmdb.org/t/p/w300${topResult.poster_path}` : '',
+                    year: (topResult.release_date || topResult.first_air_date || '').substring(0, 4) || null,
+                    description: topResult.overview || '',
+                    popularity: topResult.popularity || 0,
+                    ai_suggested: true,
+                  });
+                }
+              }
+            } catch (err) {
+              console.error('TMDB lookup error for:', s.title, err);
+            }
+          })
+        );
+        res.json({ suggestions, tmdbResults });
+      } else {
+        res.json({ suggestions });
+      }
     } catch (error) {
       console.error("Smart search error:", error);
       res.status(500).json({ error: "Smart search failed" });
