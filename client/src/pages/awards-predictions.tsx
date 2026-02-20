@@ -1052,70 +1052,92 @@ export default function AwardsPredictions() {
               )}
             </div>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: 16,
-            }}>
-              {getBallotPicks().map((pick) => {
-                const category = event.categories.find(c => c.id === pick.categoryId);
-                const nominee = category?.nominees.find(n => n.id === pick.nomineeId);
-                return (
-                  <div
-                    key={pick.categoryId}
-                    style={{
-                      background: 'rgba(255,255,255,0.08)',
-                      borderRadius: 16,
-                      padding: 20,
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 14,
-                    }}
-                  >
-                    {nominee?.poster_url && (
-                      <img
-                        src={nominee.poster_url}
-                        alt=""
-                        crossOrigin="anonymous"
-                        style={{
-                          width: 60, height: 90, borderRadius: 10,
-                          objectFit: 'cover', flexShrink: 0,
-                        }}
-                      />
-                    )}
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <p style={{
-                        fontSize: 11, fontWeight: 700, color: '#a78bfa',
-                        textTransform: 'uppercase', letterSpacing: '1.5px',
-                        margin: '0 0 6px 0',
-                      }}>
-                        {pick.categoryName}
-                      </p>
-                      <p style={{
-                        fontSize: 18, fontWeight: 700, color: '#ffffff',
-                        margin: 0, lineHeight: 1.3,
-                        overflow: 'hidden', textOverflow: 'ellipsis',
-                      }}>
-                        {pick.nomineeName}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {(() => {
+              const topCategoryKeywords = ['picture', 'director', 'actor', 'actress', 'sup actor', 'sup actress', 'supporting actor', 'supporting actress'];
+              const allPicks = getBallotPicks();
+              const topPicks = allPicks.filter(pick => {
+                const name = pick.categoryName.toLowerCase();
+                return topCategoryKeywords.some(kw => name.includes(kw));
+              }).slice(0, 6);
+              const remainingCount = allPicks.length - topPicks.length;
 
-            <div style={{
-              textAlign: 'center', marginTop: 40,
-              paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.1)',
-            }}>
-              <p style={{
-                fontSize: 16, color: 'rgba(255,255,255,0.4)',
-                margin: 0, fontWeight: 600,
-              }}>
-                consumedapp.com
-              </p>
-            </div>
+              return (
+                <>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, 1fr)',
+                    gap: 16,
+                  }}>
+                    {topPicks.map((pick) => {
+                      const category = event.categories.find(c => c.id === pick.categoryId);
+                      const nominee = category?.nominees.find(n => n.id === pick.nomineeId);
+                      return (
+                        <div
+                          key={pick.categoryId}
+                          style={{
+                            background: 'rgba(255,255,255,0.08)',
+                            borderRadius: 16,
+                            padding: 20,
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 14,
+                          }}
+                        >
+                          {nominee?.poster_url && (
+                            <img
+                              src={nominee.poster_url}
+                              alt=""
+                              crossOrigin="anonymous"
+                              style={{
+                                width: 60, height: 90, borderRadius: 10,
+                                objectFit: 'cover', flexShrink: 0,
+                              }}
+                            />
+                          )}
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <p style={{
+                              fontSize: 11, fontWeight: 700, color: '#a78bfa',
+                              textTransform: 'uppercase', letterSpacing: '1.5px',
+                              margin: '0 0 6px 0',
+                            }}>
+                              {pick.categoryName}
+                            </p>
+                            <p style={{
+                              fontSize: 18, fontWeight: 700, color: '#ffffff',
+                              margin: 0, lineHeight: 1.3,
+                              overflow: 'hidden', textOverflow: 'ellipsis',
+                            }}>
+                              {pick.nomineeName}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{
+                    textAlign: 'center', marginTop: 40,
+                    paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.1)',
+                  }}>
+                    {remainingCount > 0 && (
+                      <p style={{
+                        fontSize: 18, color: '#a78bfa', fontWeight: 700,
+                        margin: '0 0 12px 0',
+                      }}>
+                        + {remainingCount} more picks
+                      </p>
+                    )}
+                    <p style={{
+                      fontSize: 22, color: 'rgba(255,255,255,0.6)',
+                      margin: 0, fontWeight: 700,
+                    }}>
+                      See my full ballot on <span style={{ color: '#a78bfa' }}>@consumedapp</span>
+                    </p>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
