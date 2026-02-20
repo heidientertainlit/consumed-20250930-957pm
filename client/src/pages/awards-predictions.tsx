@@ -1034,35 +1034,40 @@ export default function AwardsPredictions() {
         )}
       </AnimatePresence>
 
-      {/* Hidden Shareable Graphic Card */}
+      {/* Hidden Shareable Graphic Card - Instagram Story 1080x1920 */}
       {showShareGraphic && (
         <div style={{ position: 'fixed', left: '-9999px', top: 0 }}>
           <div
             ref={shareCardRef}
             style={{
               width: 1080,
-              padding: 60,
-              background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1035 30%, #2d1f5e 60%, #1a1035 100%)',
+              height: 1920,
+              padding: '80px 60px',
+              background: 'linear-gradient(160deg, #0a0a1a 0%, #1a1035 25%, #2d1f5e 50%, #1a1035 75%, #0a0a1a 100%)',
               fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              boxSizing: 'border-box',
             }}
           >
-            <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{ textAlign: 'center', marginBottom: 60 }}>
               <div style={{
-                width: 80, height: 80, borderRadius: '50%',
+                width: 100, height: 100, borderRadius: '50%',
                 background: 'linear-gradient(135deg, #f59e0b, #d97706)',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: 16, boxShadow: '0 8px 32px rgba(245, 158, 11, 0.3)',
+                marginBottom: 24, boxShadow: '0 12px 40px rgba(245, 158, 11, 0.35)',
               }}>
-                <span style={{ fontSize: 40 }}>🏆</span>
+                <span style={{ fontSize: 52 }}>🏆</span>
               </div>
               <h1 style={{
-                fontSize: 42, fontWeight: 800, color: '#ffffff',
-                margin: '0 0 8px 0', letterSpacing: '-0.5px',
+                fontSize: 64, fontWeight: 800, color: '#ffffff',
+                margin: '0 0 12px 0', letterSpacing: '-1px',
               }}>
                 My {event.year} Oscar Picks
               </h1>
               {userProfile && (
-                <p style={{ fontSize: 20, color: '#a78bfa', margin: 0, fontWeight: 600 }}>
+                <p style={{ fontSize: 28, color: '#a78bfa', margin: 0, fontWeight: 600 }}>
                   @{userProfile.user_name || userProfile.display_name}
                 </p>
               )}
@@ -1079,73 +1084,45 @@ export default function AwardsPredictions() {
 
               return (
                 <>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: 16,
-                  }}>
-                    {topPicks.map((pick) => {
-                      const category = event.categories.find(c => c.id === pick.categoryId);
-                      const nominee = category?.nominees.find(n => n.id === pick.nomineeId);
-                      return (
-                        <div
-                          key={pick.categoryId}
-                          style={{
-                            background: 'rgba(255,255,255,0.08)',
-                            borderRadius: 16,
-                            padding: 20,
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 14,
-                          }}
-                        >
-                          {nominee?.poster_url && (
-                            <img
-                              src={nominee.poster_url}
-                              alt=""
-                              crossOrigin="anonymous"
-                              style={{
-                                width: 60, height: 90, borderRadius: 10,
-                                objectFit: 'cover', flexShrink: 0,
-                              }}
-                            />
-                          )}
-                          <div style={{ minWidth: 0, flex: 1 }}>
-                            <p style={{
-                              fontSize: 11, fontWeight: 700, color: '#a78bfa',
-                              textTransform: 'uppercase', letterSpacing: '1.5px',
-                              margin: '0 0 6px 0',
-                            }}>
-                              {pick.categoryName}
-                            </p>
-                            <p style={{
-                              fontSize: 18, fontWeight: 700, color: '#ffffff',
-                              margin: 0, lineHeight: 1.3,
-                              overflow: 'hidden', textOverflow: 'ellipsis',
-                            }}>
-                              {pick.nomineeName}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 60 }}>
+                    {topPicks.map((pick) => (
+                      <div
+                        key={pick.categoryId}
+                        style={{
+                          background: 'rgba(255,255,255,0.07)',
+                          borderRadius: 24,
+                          padding: '28px 36px',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                        }}
+                      >
+                        <p style={{
+                          fontSize: 16, fontWeight: 700, color: '#a78bfa',
+                          textTransform: 'uppercase', letterSpacing: '2.5px',
+                          margin: '0 0 10px 0',
+                        }}>
+                          {pick.categoryName}
+                        </p>
+                        <p style={{
+                          fontSize: 32, fontWeight: 700, color: '#ffffff',
+                          margin: 0, lineHeight: 1.2,
+                        }}>
+                          {pick.nomineeName}
+                        </p>
+                      </div>
+                    ))}
                   </div>
 
-                  <div style={{
-                    textAlign: 'center', marginTop: 40,
-                    paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.1)',
-                  }}>
+                  <div style={{ textAlign: 'center' }}>
                     {remainingCount > 0 && (
                       <p style={{
-                        fontSize: 18, color: '#a78bfa', fontWeight: 700,
-                        margin: '0 0 12px 0',
+                        fontSize: 24, color: '#a78bfa', fontWeight: 700,
+                        margin: '0 0 16px 0',
                       }}>
                         + {remainingCount} more picks
                       </p>
                     )}
                     <p style={{
-                      fontSize: 22, color: 'rgba(255,255,255,0.6)',
+                      fontSize: 28, color: 'rgba(255,255,255,0.5)',
                       margin: 0, fontWeight: 700,
                     }}>
                       See my full ballot on <span style={{ color: '#a78bfa' }}>@consumedapp</span>
