@@ -471,7 +471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messages: [
             {
               role: "system",
-              content: `You are a media identification assistant. The user will give you a vague or fuzzy description of a movie, TV show, book, song, album, podcast, or game. Return the most likely exact title(s) they're looking for. Return a JSON array of objects with "title" and "type" (movie, tv, book, music, podcast, game). Return at most 3 results, ordered by likelihood. Only return the JSON array, nothing else.`
+              content: `You are a media identification assistant. The user will describe a movie, TV show, book, song, album, podcast, or game — sometimes vaguely, sometimes with just a keyword and category (like "help movie"). Your job is to figure out the exact title(s) they most likely want. For short queries like "help movie", think of the most popular/well-known titles matching that keyword in that category (e.g. "The Help", "Send Help"). Return a JSON array of objects with "title" and "type" (movie, tv, book, music, podcast, game). Return at most 3 results, ordered by likelihood. Only return the JSON array, nothing else.`
             },
             {
               role: "user",

@@ -109,9 +109,11 @@ interface SearchResult {
 function isFuzzyQuery(query: string): boolean {
   const trimmed = query.trim();
   const words = trimmed.split(/\s+/);
-  if (words.length < 3) return false;
   const fuzzyPatterns = /\b(the one|that one|about|where|with|starring|directed by|like|similar|remember|forgot|something|what's that|who played|came out|released)\b/i;
-  return fuzzyPatterns.test(trimmed);
+  if (fuzzyPatterns.test(trimmed)) return true;
+  const categoryHints = /\b(movie|film|show|series|book|song|album|game|podcast|tv|anime|documentary)\b/i;
+  if (words.length >= 2 && categoryHints.test(trimmed)) return true;
+  return false;
 }
 
 async function smartSearchCleanup(query: string): Promise<string[]> {
@@ -928,65 +930,6 @@ export default function Search() {
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="animate-spin text-purple-600" size={24} />
                     <span className="ml-2 text-gray-600">{isFuzzyQuery(searchQuery) && fuzzySearchEnabled ? "AI is interpreting your search..." : "Searching..."}</span>
-                  </div>
-                )}
-
-                {/* User Results */}
-                {!isLoadingUsers && quickUserResults.length > 0 && (
-                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-                      <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                        <Users size={16} className="text-purple-600" />
-                        People
-                      </h3>
-                    </div>
-                    <div className="divide-y divide-gray-100">
-                      {quickUserResults.slice(0, 5).map((userResult: UserResult) => (
-                        <div
-                          key={userResult.id}
-                          className="flex items-center justify-between gap-3 p-4 hover:bg-gray-50"
-                          data-testid={`user-result-${userResult.id}`}
-                        >
-                          <div
-                            onClick={() => setLocation(`/user/${userResult.id}`)}
-                            className="flex items-center gap-3 flex-1 cursor-pointer"
-                          >
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
-                              {userResult.display_name?.[0] || userResult.user_name[0]}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-gray-900 truncate">
-                                {userResult.display_name || userResult.user_name}
-                              </p>
-                              <p className="text-sm text-gray-500 truncate">@{userResult.user_name}</p>
-                            </div>
-                          </div>
-                          {userResult.id !== user?.id && (
-                            friendIds.has(userResult.id) ? (
-                              <span className="text-sm text-green-600 font-medium px-3 py-1 bg-green-50 rounded-full">
-                                Friends
-                              </span>
-                            ) : pendingIds.has(userResult.id) ? (
-                              <span className="text-sm text-gray-500 font-medium px-3 py-1 bg-gray-100 rounded-full">
-                                Pending
-                              </span>
-                            ) : (
-                              <Button
-                                onClick={() => sendFriendRequestMutation.mutate(userResult.id)}
-                                size="sm"
-                                variant="outline"
-                                className="border-purple-300 text-purple-700 hover:bg-purple-50"
-                                disabled={sendFriendRequestMutation.isPending}
-                                data-testid={`add-friend-${userResult.id}`}
-                              >
-                                <Plus size={14} className="mr-1" />
-                                Add
-                              </Button>
-                            )
-                          )}
-                        </div>
-                      ))}
-                    </div>
                   </div>
                 )}
 
