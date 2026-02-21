@@ -145,6 +145,8 @@ export default function Search() {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  const voiceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const startVoiceRecognition = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -153,6 +155,7 @@ export default function Search() {
     }
     const recognition = new SpeechRecognition();
     recognition.lang = 'en-US';
+    recognition.continuous = false;
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     recognition.onstart = () => setIsListening(true);
@@ -160,22 +163,39 @@ export default function Search() {
       const transcript = event.results[0][0].transcript;
       setSearchQuery(transcript);
       setIsListening(false);
+      if (voiceTimeoutRef.current) clearTimeout(voiceTimeoutRef.current);
+      try { recognition.stop(); } catch (_) {}
+      setTimeout(() => searchInputRef.current?.focus(), 100);
     };
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => {
+      setIsListening(false);
+      if (voiceTimeoutRef.current) clearTimeout(voiceTimeoutRef.current);
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+      if (voiceTimeoutRef.current) clearTimeout(voiceTimeoutRef.current);
+    };
     recognitionRef.current = recognition;
     recognition.start();
+    voiceTimeoutRef.current = setTimeout(() => {
+      try { recognition.stop(); } catch (_) {}
+      setIsListening(false);
+    }, 5000);
   };
 
   const stopVoiceRecognition = () => {
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      try { recognitionRef.current.stop(); } catch (_) {}
     }
+    if (voiceTimeoutRef.current) clearTimeout(voiceTimeoutRef.current);
     setIsListening(false);
   };
 
   useEffect(() => {
-    return () => { if (recognitionRef.current) recognitionRef.current.stop(); };
+    return () => {
+      if (recognitionRef.current) try { recognitionRef.current.stop(); } catch (_) {}
+      if (voiceTimeoutRef.current) clearTimeout(voiceTimeoutRef.current);
+    };
   }, []);
 
   // Fetch friends list
