@@ -136,12 +136,47 @@ export default function Search() {
   const [isFullAddModalOpen, setIsFullAddModalOpen] = useState(false);
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
   const [fullAddMedia, setFullAddMedia] = useState<any>(null);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
   const { session, user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const startVoiceRecognition = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast({ title: "Voice not supported", description: "Your browser doesn't support voice input. Try Chrome or Safari.", variant: "destructive" });
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setSearchQuery(transcript);
+      setIsListening(false);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const stopVoiceRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsListening(false);
+  };
+
+  useEffect(() => {
+    return () => { if (recognitionRef.current) recognitionRef.current.stop(); };
+  }, []);
 
   // Fetch friends list
   const { data: friendsList = [] } = useQuery({
@@ -769,6 +804,13 @@ export default function Search() {
               data-testid="unified-search-input"
             />
             <button
+              onClick={isListening ? stopVoiceRecognition : startVoiceRecognition}
+              className={`flex-shrink-0 p-1 transition-all ${isListening ? 'animate-pulse' : ''}`}
+              data-testid="voice-search-btn"
+            >
+              <Mic size={18} className={isListening ? "text-red-500" : "text-gray-300"} />
+            </button>
+            <button
               onClick={() => {
                 setIsAiMode(!isAiMode);
                 setSearchResults(null);
@@ -783,18 +825,14 @@ export default function Search() {
         
         {/* Contextual hints banner */}
         {!searchQuery.trim() && (
-          <div className={`w-full rounded-xl px-4 py-3 mt-3 text-center text-sm ${
-            isAiMode 
-              ? 'bg-purple-500/10 border border-purple-500/20' 
-              : 'bg-gray-100 border border-gray-200'
-          }`}>
+          <div className="w-full max-w-xl rounded-xl px-4 py-2.5 mt-2 text-center bg-purple-100/80 border border-purple-200/60">
             {isAiMode ? (
-              <p className="text-purple-400">
-                Tap <Sparkles size={12} className="inline text-purple-300" /> to switch back to regular search and more
+              <p className="text-purple-500/80 text-xs leading-relaxed">
+                Tap <Sparkles size={10} className="inline text-purple-400" /> to switch back to regular search, and more
               </p>
             ) : (
-              <p className="text-gray-500">
-                Search to add to a list, share a thought, tap <Sparkles size={12} className="inline text-purple-400" /> for AI recommendations, and more
+              <p className="text-purple-500/80 text-xs leading-relaxed">
+                Search to add to a list, share a thought, tap <Sparkles size={10} className="inline text-purple-400" /> for AI recommendations, and more
               </p>
             )}
           </div>
