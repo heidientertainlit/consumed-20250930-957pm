@@ -346,7 +346,7 @@ export default function EntertainmentDNAPage() {
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-2.5 rounded-full shadow-lg text-sm"
             data-testid="complete-onboarding-button"
           >
-            Generate My DNA Profile
+            Back to My DNA
           </Button>
         </div>
       </div>

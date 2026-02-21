@@ -16,17 +16,5 @@ if ("serviceWorker" in navigator) {
   });
 }
 
-// OneSignal — only on native (iOS / Android) via Capacitor
-(async () => {
-  try {
-    const { Capacitor } = await import("@capacitor/core");
-    const platform = Capacitor.getPlatform();
-    if (platform === "ios" || platform === "android") {
-      const { default: OneSignal } = await import("onesignal-cordova-plugin");
-      OneSignal.initialize("f3e5ce59-cb78-4f05-8d7b-511c45dc2c76");
-      OneSignal.Notifications.requestPermission(true);
-    }
-  } catch (_) {}
-})();
 
 createRoot(document.getElementById("root")!).render(<App />);
