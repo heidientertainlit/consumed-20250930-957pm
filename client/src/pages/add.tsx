@@ -843,16 +843,16 @@ export default function Search() {
           </div>
         </div>
         
-        {/* Contextual hints banner */}
+        {/* Contextual hints */}
         {!searchQuery.trim() && (
-          <div className="w-full max-w-xl rounded-xl px-4 py-2.5 mt-2 text-center bg-purple-100/80 border border-purple-200/60">
+          <div className="w-full max-w-xl mt-1.5 text-center">
             {isAiMode ? (
-              <p className="text-purple-500/80 text-xs leading-relaxed">
-                Tap <Sparkles size={10} className="inline text-purple-400" /> to switch back to regular search, and more
+              <p className="text-purple-400/50 text-[10px] leading-tight">
+                Tap <Sparkles size={8} className="inline" /> to switch back to regular search, and more
               </p>
             ) : (
-              <p className="text-purple-500/80 text-xs leading-relaxed">
-                Search to add to a list, share a thought, tap <Sparkles size={10} className="inline text-purple-400" /> for AI recommendations, and more
+              <p className="text-purple-300/40 text-[10px] leading-tight">
+                Search to add to a list, share a thought, tap <Sparkles size={8} className="inline text-purple-400/50" /> for AI recs, and more
               </p>
             )}
           </div>
