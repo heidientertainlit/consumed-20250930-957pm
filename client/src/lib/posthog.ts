@@ -20,9 +20,24 @@ export function initPostHog() {
   initialized = true;
 }
 
-export function identifyUser(userId: string, properties?: Record<string, any>) {
+export function identifyUser(userId: string, properties: Record<string, any> = {}) {
   if (!initialized) return;
-  posthog.identify(userId, properties);
+
+  const email = properties?.email as string | undefined;
+
+  const is_internal =
+    (!!email &&
+      (
+        email.startsWith('thinkhp+') ||
+        email.endsWith('@consumedapp.com')
+      )) ||
+    window.location.hostname.includes('localhost');
+
+  posthog.identify(userId, {
+    ...properties,
+    email,
+    is_internal,
+  });
 }
 
 export function resetUser() {
