@@ -100,50 +100,6 @@ interface SearchResult {
   mediaResults?: DirectResult[];
 }
 
-function isFuzzyQuery(query: string): boolean {
-  const trimmed = query.trim();
-  const words = trimmed.split(/\s+/);
-  const fuzzyPatterns = /\b(the one|that one|about|where|with|starring|directed by|like|similar|remember|forgot|something|what's that|who played|came out|released)\b/i;
-  if (fuzzyPatterns.test(trimmed)) return true;
-  const categoryHints = /\b(movie|film|show|series|book|song|album|game|podcast|tv|anime|documentary)\b/i;
-  if (words.length >= 2 && categoryHints.test(trimmed)) return true;
-  return false;
-}
-
-interface SmartSuggestion {
-  title: string;
-  type?: string;
-}
-
-interface SmartSearchResult {
-  suggestions: SmartSuggestion[];
-  tmdbResults: any[];
-}
-
-async function smartSearchCleanup(query: string): Promise<SmartSearchResult> {
-  try {
-    const response = await fetch('/api/smart-search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
-    });
-    if (!response.ok) return { suggestions: [], tmdbResults: [] };
-    const data = await response.json();
-    return {
-      suggestions: (data.suggestions || []).filter((s: any) => s.title).map((s: any) => ({
-        title: s.title,
-        type: s.type || undefined,
-      })),
-      tmdbResults: (data.tmdbResults || []).map((r: any) => ({
-        ...r,
-        image_url: r.poster_url || '',
-      })),
-    };
-  } catch {
-    return { suggestions: [], tmdbResults: [] };
-  }
-}
-
 // Helper function to deduplicate media items based on their unique identifier
 function deduplicateMediaItems<T extends { id: string; externalId?: string; externalSource?: string }>(items: T[]): T[] {
   const seen = new Set<string>();
@@ -175,8 +131,6 @@ export default function Search() {
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isAiMode, setIsAiMode] = useState(false);
-  const [fuzzySearchEnabled, setFuzzySearchEnabled] = useState(true);
-  const [fuzzyTitles, setFuzzyTitles] = useState<string[]>([]);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isFullAddModalOpen, setIsFullAddModalOpen] = useState(false);
@@ -658,61 +612,25 @@ export default function Search() {
 
   // Quick search - media results (only when NOT in AI mode)
   const { data: quickMediaResults = [], isLoading: isLoadingMedia } = useQuery({
-    queryKey: ['quick-media-search', debouncedSearchQuery, fuzzySearchEnabled],
+    queryKey: ['quick-media-search', debouncedSearchQuery],
     queryFn: async () => {
       if (!debouncedSearchQuery.trim() || !session?.access_token) return [];
-      setFuzzyTitles([]);
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      const searchMedia = async (q: string, mediaType?: string) => {
-        const body: any = { query: q };
-        if (mediaType) body.type = mediaType;
-        const response = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body)
-        });
-        if (!response.ok) return [];
-        const data = await response.json();
-        return (data.results || []).map((r: any) => ({
-          ...r,
-          image_url: r.image_url || r.poster_url || r.image || r.poster_path || '',
-        }));
-      };
-
-      if (fuzzySearchEnabled && isFuzzyQuery(debouncedSearchQuery)) {
-        const [smartResult, directResults] = await Promise.all([
-          smartSearchCleanup(debouncedSearchQuery),
-          searchMedia(debouncedSearchQuery),
-        ]);
-        if (smartResult.suggestions.length > 0) {
-          const topSuggestions = smartResult.suggestions.slice(0, 3);
-          const extraResults = await Promise.all(
-            topSuggestions.map(s => searchMedia(s.title, s.type))
-          );
-          const titlesWithResults = topSuggestions
-            .filter((_, i) => extraResults[i].length > 0)
-            .map(s => s.title);
-          const tmdbTitles = smartResult.tmdbResults.map((r: any) => r.title).filter(Boolean);
-          const allFoundTitles = [...new Set([...titlesWithResults, ...tmdbTitles])];
-          setFuzzyTitles(allFoundTitles);
-          const combined = [...smartResult.tmdbResults, ...directResults, ...extraResults.flat()];
-          const seen = new Set<string>();
-          const deduped = combined.filter((r: any) => {
-            const key = `${r.external_source || ''}-${r.external_id || r.title || ''}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          });
-          return deduped;
-        }
-        return directResults;
-      }
-
-      return await searchMedia(debouncedSearchQuery);
+      const response = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: debouncedSearchQuery })
+      });
+      if (!response.ok) return [];
+      const data = await response.json();
+      return (data.results || []).map((r: any) => ({
+        ...r,
+        image_url: r.image_url || r.poster_url || r.image || r.poster_path || '',
+      }));
     },
     enabled: !isAiMode && !!debouncedSearchQuery.trim() && !!session?.access_token,
     staleTime: 1000 * 60 * 5,
@@ -840,10 +758,6 @@ export default function Search() {
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                if (!e.target.value.trim()) {
-                  setFuzzySearchEnabled(true);
-                  setFuzzyTitles([]);
-                }
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && isAiMode && !isSearching) {
@@ -867,10 +781,18 @@ export default function Search() {
           </div>
         </div>
         
-        {/* AI Mode hint */}
-        {isAiMode && (
-          <div className="text-center text-sm text-purple-300/60 mt-2">
-            <p>Ask for recommendations like "movies similar to Inception"</p>
+        {/* Contextual hints */}
+        {!searchQuery.trim() && (
+          <div className="text-center text-sm mt-3 max-w-md">
+            {isAiMode ? (
+              <p className="text-purple-300/70">
+                Tap <Sparkles size={12} className="inline text-purple-400" /> to switch back to regular search
+              </p>
+            ) : (
+              <p className="text-gray-400/70">
+                Search to add to a list or share a thought — or tap <Sparkles size={12} className="inline text-purple-400" /> for AI recommendations
+              </p>
+            )}
           </div>
         )}
 
@@ -915,17 +837,7 @@ export default function Search() {
                 {(isLoadingMedia || (searchQuery !== debouncedSearchQuery && searchQuery.trim())) && (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="animate-spin text-purple-600" size={24} />
-                    <span className="ml-2 text-gray-600">{isFuzzyQuery(searchQuery) && fuzzySearchEnabled ? "AI is interpreting your search..." : "Searching..."}</span>
-                  </div>
-                )}
-
-                {/* AI-enhanced results banner */}
-                {!isLoadingMedia && fuzzyTitles.length > 0 && quickMediaResults.length > 0 && (
-                  <div className="flex items-center gap-2 bg-purple-50/80 border border-purple-100 rounded-lg px-3 py-2 text-xs text-purple-700">
-                    <Sparkles size={12} className="text-purple-400 flex-shrink-0" />
-                    <span>Also showing results for {fuzzyTitles.map((t, i) => (
-                      <span key={i}>{i > 0 && ', '}<strong>{t}</strong></span>
-                    ))}</span>
+                    <span className="ml-2 text-gray-600">Searching...</span>
                   </div>
                 )}
 
@@ -1045,10 +957,10 @@ export default function Search() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {[
                 "Shows like The Bear",
-                "What are people saying about Bridgerton?",
+                "5 books my book club would love",
                 "Movies for a rainy Sunday",
-                "Did my friends like Project Hail Mary?",
-                "Hot takes on DWTS finale"
+                "I liked Inception and Interstellar — what else?",
+                "What should I watch tonight?"
               ].map((example) => (
                 <button
                   key={example}
