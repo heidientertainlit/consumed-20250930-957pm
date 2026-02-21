@@ -781,16 +781,20 @@ export default function Search() {
           </div>
         </div>
         
-        {/* Contextual hints */}
+        {/* Contextual hints banner */}
         {!searchQuery.trim() && (
-          <div className="text-center text-sm mt-3 max-w-md">
+          <div className={`w-full rounded-xl px-4 py-3 mt-3 text-center text-sm ${
+            isAiMode 
+              ? 'bg-purple-500/10 border border-purple-500/20' 
+              : 'bg-gray-100 border border-gray-200'
+          }`}>
             {isAiMode ? (
-              <p className="text-purple-300/70">
-                Tap <Sparkles size={12} className="inline text-purple-400" /> to switch back to regular search
+              <p className="text-purple-400">
+                Tap <Sparkles size={12} className="inline text-purple-300" /> to switch back to regular search and more
               </p>
             ) : (
-              <p className="text-gray-400/70">
-                Search to add to a list or share a thought — or tap <Sparkles size={12} className="inline text-purple-400" /> for AI recommendations
+              <p className="text-gray-500">
+                Search to add to a list, share a thought, tap <Sparkles size={12} className="inline text-purple-400" /> for AI recommendations, and more
               </p>
             )}
           </div>
