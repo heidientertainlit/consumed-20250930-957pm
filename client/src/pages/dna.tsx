@@ -430,19 +430,15 @@ export default function DnaPage() {
                   >
                     <div className="p-4">
                       <div className="text-center mb-3">
-                        {userProfile && (
-                          <p className="text-sm font-semibold text-gray-800 mb-1">
-                            {userProfile.first_name && userProfile.last_name
-                              ? `${userProfile.first_name} ${userProfile.last_name}`
-                              : userProfile.display_name || userProfile.user_name}
-                          </p>
-                        )}
                         <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
                           <Dna className="text-white" size={20} />
                         </div>
                         <h2 className="text-base font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                           {dnaProfile.label}
                         </h2>
+                        {userProfile?.user_name && (
+                          <p className="text-gray-500 text-xs mt-0.5">@{userProfile.user_name}</p>
+                        )}
                         <p className="text-gray-600 text-xs mt-0.5">{dnaProfile.tagline}</p>
                       </div>
                       
