@@ -672,8 +672,9 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
   onDeleteComment?: (commentId: string, postId: string) => void;
   onDeletePost?: (postId: string) => void;
 }) {
-  const username = post.user?.displayName || post.user?.username || 'Someone';
-  const avatarLetter = username[0]?.toUpperCase() || '?';
+  const displayName = post.user?.displayName || post.user?.username || 'Someone';
+  const rawUsername = post.user?.username || '';
+  const avatarLetter = (displayName || rawUsername)[0]?.toUpperCase() || '?';
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -744,10 +745,15 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
           </Link>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <Link href={`/user/${post.user?.id || ''}`}>
-                <span className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer text-sm">{username}</span>
-              </Link>
-              <div className="ml-auto flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Link href={`/user/${post.user?.id || ''}`}>
+                  <span className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer text-sm">{displayName}</span>
+                </Link>
+                {rawUsername && rawUsername !== displayName && (
+                  <span className="text-xs text-gray-400 truncate">@{rawUsername}</span>
+                )}
+              </div>
+              <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
                 {post.mediaType && (
                   <span className="text-[11px] font-medium text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full capitalize">
                     {post.mediaType === 'tv' ? 'TV' : post.mediaType}
@@ -1046,6 +1052,9 @@ function CurrentlyConsumingFeedCard({
                   <Link href={`/user/${post.user?.id}`}>
                     <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
                   </Link>
+                  {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
+                    <span className="text-xs text-gray-400 ml-1">@{post.user.username}</span>
+                  )}
                   {' '}added{' '}
                   <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
                     <span className="hover:text-purple-600 cursor-pointer">{media.title}</span>
@@ -1558,7 +1567,7 @@ export default function Feed() {
         const userObj = p.user || p.creator;
         return {
           id: p.id, type: postType,
-          user: { id: userObj?.id || '', username: userObj?.username || '', displayName: userObj?.displayName || userObj?.display_name || userObj?.username || '', avatar: userObj?.avatar_url || userObj?.avatarUrl || userObj?.avatar || '' },
+          user: { id: userObj?.id || '', username: userObj?.username || '', displayName: userObj?.displayName || userObj?.display_name || '', avatar: userObj?.avatar_url || userObj?.avatarUrl || userObj?.avatar || '' },
           content: (postType === 'poll' || postType === 'predict') ? ((p as any).question || content) : content,
           mediaTitle: media?.title || (p as any).mediaTitle, mediaType: media?.mediaType || media?.type, mediaImage: mediaImg, externalId: eid, externalSource: src,
           rating: p.rating, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
@@ -3980,11 +3989,16 @@ export default function Feed() {
                           </div>
                         </Link>
                         <div className="min-w-0 flex-1">
-                          <Link href={`/user/${highlightedPost.user.id}`}>
-                            <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">
-                              {highlightedPost.user.displayName || highlightedPost.user.username}
-                            </span>
-                          </Link>
+                          <div className="flex items-center gap-1.5">
+                            <Link href={`/user/${highlightedPost.user.id}`}>
+                              <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">
+                                {highlightedPost.user.displayName || highlightedPost.user.username}
+                              </span>
+                            </Link>
+                            {highlightedPost.user.username && highlightedPost.user.displayName && highlightedPost.user.username !== highlightedPost.user.displayName && (
+                              <span className="text-xs text-gray-400">@{highlightedPost.user.username}</span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-400">{highlightedPost.timestamp ? formatDate(highlightedPost.timestamp) : ''}</p>
                         </div>
                       </div>
@@ -4624,6 +4638,9 @@ export default function Feed() {
                                   <Link href={`/user/${post.user?.id}`}>
                                     <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || formatUsername(post.user?.username)}</span>
                                   </Link>
+                                  {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
+                                    <span className="text-xs text-gray-400 ml-1">@{post.user.username}</span>
+                                  )}
                                   {' '}{post.content}
                                 </p>
                                 <span className="text-xs text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
@@ -4776,6 +4793,9 @@ export default function Feed() {
                                   <Link href={`/user/${post.user?.id}`}>
                                     <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
                                   </Link>
+                                  {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
+                                    <span className="text-xs text-gray-400 ml-1">@{post.user.username}</span>
+                                  )}
                                   {' '}cast{' '}
                                   <span className="font-semibold">@{targetUserName}</span>
                                   {' '}as

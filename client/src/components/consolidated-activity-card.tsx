@@ -91,6 +91,7 @@ export default function ConsolidatedActivityCard({
 
   const getHeaderText = () => {
     const displayName = activity.user.displayName || activity.user.username;
+    const showUsername = activity.user.username && activity.user.displayName && activity.user.username !== activity.user.displayName;
     
     switch (activity.type) {
       case 'ratings':
@@ -99,6 +100,7 @@ export default function ConsolidatedActivityCard({
             <Link href={`/profile/${activity.user.username}`} className="font-semibold text-white hover:text-purple-300">
               {displayName}
             </Link>
+            {showUsername && <span className="text-xs text-purple-300/60 ml-1">@{activity.user.username}</span>}
             <span className="text-purple-200/70"> rated</span>
           </span>
         );
@@ -108,6 +110,7 @@ export default function ConsolidatedActivityCard({
             <Link href={`/profile/${activity.user.username}`} className="font-semibold text-white hover:text-purple-300">
               {displayName}
             </Link>
+            {showUsername && <span className="text-xs text-purple-300/60 ml-1">@{activity.user.username}</span>}
             <span className="text-purple-200/70"> finished</span>
           </span>
         );
@@ -123,6 +126,7 @@ export default function ConsolidatedActivityCard({
             <Link href={`/profile/${activity.user.username}`} className="font-semibold text-white hover:text-purple-300">
               {displayName}
             </Link>
+            {showUsername && <span className="text-xs text-purple-300/60 ml-1">@{activity.user.username}</span>}
             <span className="text-purple-200/70"> added to → </span>
             <span className="text-purple-300 font-medium">{listLabel}</span>
           </span>
@@ -133,6 +137,7 @@ export default function ConsolidatedActivityCard({
             <Link href={`/profile/${activity.user.username}`} className="font-semibold text-white hover:text-purple-300">
               {displayName}
             </Link>
+            {showUsername && <span className="text-xs text-purple-300/60 ml-1">@{activity.user.username}</span>}
             <span className="text-purple-200/70"> shared activity</span>
           </span>
         );
