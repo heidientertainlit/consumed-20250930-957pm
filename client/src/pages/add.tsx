@@ -869,8 +869,8 @@ export default function Search() {
               </div>
             )}
             <div className="border-t border-white/[0.05] pt-3 flex items-center gap-2">
-              <span className="text-white/25 text-[11px]">Or</span>
-              <Link href="/play" className="inline-flex items-center gap-1 text-purple-400/70 text-[11px] font-medium hover:text-purple-400 transition-colors">
+              <span className="text-white/25 text-[11px]">Next</span>
+              <Link href="/activity#trivia" className="inline-flex items-center gap-1 text-purple-400/70 text-[11px] font-medium hover:text-purple-400 transition-colors">
                 <Target size={10} /> Play today's game
               </Link>
               <span className="text-white/10 text-[11px]">·</span>
