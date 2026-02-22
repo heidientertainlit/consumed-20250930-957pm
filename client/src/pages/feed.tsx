@@ -1475,51 +1475,9 @@ export default function Feed() {
 
   // Flatten all pages into a single array, prepending highlighted post if not already included
   const basePosts = infinitePosts?.pages.flat() || [];
-  const rawSocialPosts = highlightedPost && !basePosts.find((p: any) => p.id === highlightedPost.id)
+  const socialPosts = highlightedPost && !basePosts.find((p: any) => p.id === highlightedPost.id)
     ? [highlightedPost, ...basePosts]
     : basePosts;
-
-  const feedUserIds = useMemo(() => {
-    const ids = new Set<string>();
-    rawSocialPosts.forEach((p: any) => {
-      if (p.user?.id) ids.add(p.user.id);
-      if (p.creator?.id) ids.add(p.creator.id);
-    });
-    return [...ids];
-  }, [rawSocialPosts]);
-
-  const { data: userDisplayNameMap } = useQuery({
-    queryKey: ['user-display-names', feedUserIds.join(',')],
-    queryFn: async () => {
-      if (feedUserIds.length === 0) return new Map<string, string>();
-      const { data: users } = await supabase
-        .from('users')
-        .select('id, display_name, user_name')
-        .in('id', feedUserIds);
-      const map = new Map<string, string>();
-      (users || []).forEach((u: any) => {
-        if (u.display_name) map.set(u.id, u.display_name);
-        else if (u.user_name) map.set(u.id, u.user_name);
-      });
-      return map;
-    },
-    enabled: feedUserIds.length > 0,
-    staleTime: 120000,
-  });
-
-  const socialPosts = useMemo(() => {
-    if (!userDisplayNameMap || userDisplayNameMap.size === 0) return rawSocialPosts;
-    return rawSocialPosts.map((post: any) => {
-      const userId = post.user?.id;
-      if (userId && userDisplayNameMap.has(userId)) {
-        return {
-          ...post,
-          user: { ...post.user, displayName: userDisplayNameMap.get(userId), display_name: userDisplayNameMap.get(userId) }
-        };
-      }
-      return post;
-    });
-  }, [rawSocialPosts, userDisplayNameMap]);
 
   // Helper: resolve media type from various fields
   const resolveItemMediaType = (m: any): string => {
