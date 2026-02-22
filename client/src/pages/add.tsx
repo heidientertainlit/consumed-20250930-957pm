@@ -843,7 +843,7 @@ export default function Search() {
               {totalItemsAdded >= 3 ? (
                 <div className="bg-purple-600/20 border border-purple-500/30 rounded-xl px-4 py-3">
                   <p className="text-white text-sm font-semibold">
-                    <span className="mr-1.5">🧠</span>Entertainment DNA: Active
+                    <span className="mr-1.5">🧠</span>You've unlocked your DNA.
                   </p>
                 </div>
               ) : (
