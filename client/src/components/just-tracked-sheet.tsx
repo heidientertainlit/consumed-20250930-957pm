@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Check, Flame, Star, Users, Sparkles, ChevronRight, Dna, HelpCircle, Gamepad2, Film, Tv, BookOpen, Music, Headphones, Gamepad } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -26,89 +27,16 @@ interface JustTrackedSheetProps {
   showRateOption?: boolean;
 }
 
-interface TasteInsight {
-  observation: string;
-  percentage: number;
-  question: string;
-  momentId: string;
-}
-
-function getMediaLabel(type: string): string {
-  switch (type?.toLowerCase()) {
-    case 'movie': return 'movies';
-    case 'tv': return 'TV shows';
-    case 'book': return 'books';
-    case 'podcast': return 'podcasts';
-    case 'music': return 'music';
-    case 'game': return 'games';
-    default: return 'titles';
-  }
-}
-
-function getIdentityLabel(type: string): string {
-  switch (type?.toLowerCase()) {
-    case 'movie': return 'a movie person';
-    case 'tv': return 'a TV binger';
-    case 'book': return 'a bookworm';
-    case 'podcast': return 'a podcast junkie';
-    case 'music': return 'a music head';
-    case 'game': return 'a gamer';
-    default: return 'into this';
-  }
-}
-
-function generateInsight(
-  media: JustTrackedMedia,
-  stats: { mediaType: string; count: number }[],
-  creatorCount: number,
-  alreadyAnsweredMoments?: Set<string>
-): TasteInsight | null {
-  const totalItems = stats.reduce((sum, s) => sum + s.count, 0);
-  if (totalItems < 1) return null;
-
-  const currentTypeStat = stats.find(s => s.mediaType?.toLowerCase() === media.mediaType?.toLowerCase());
-  const currentTypeCount = (currentTypeStat?.count || 0) + 1;
-  const totalWithNew = totalItems + 1;
-  const percentage = Math.round((currentTypeCount / totalWithNew) * 100);
-
-  const mediaLabel = getMediaLabel(media.mediaType);
-  const identityLabel = getIdentityLabel(media.mediaType);
-
-  const candidates: TasteInsight[] = [];
-
-  if (media.creator && creatorCount >= 2) {
-    candidates.push({
-      observation: `You've tracked ${creatorCount + 1} ${media.creator} titles.`,
-      percentage,
-      question: `Are you a ${media.creator} fan?`,
-      momentId: `identity-creator-${(media.creator || '').toLowerCase().replace(/\s+/g, '-')}`,
-    });
-  }
-
-  if (currentTypeCount >= 2) {
-    candidates.push({
-      observation: `That's ${currentTypeCount} ${mediaLabel} you've tracked.`,
-      percentage,
-      question: `Are you ${identityLabel}?`,
-      momentId: `identity-type-${media.mediaType?.toLowerCase() || 'other'}`,
-    });
-  }
-
-  if (currentTypeCount === 1) {
-    candidates.push({
-      observation: `Your first ${media.mediaType?.toLowerCase() || 'title'} on Consumed!`,
-      percentage: 100,
-      question: `Are you ${identityLabel}?`,
-      momentId: `identity-type-${media.mediaType?.toLowerCase() || 'other'}`,
-    });
-  }
-
-  if (alreadyAnsweredMoments && alreadyAnsweredMoments.size > 0) {
-    const unanswered = candidates.filter(c => !alreadyAnsweredMoments.has(c.momentId));
-    if (unanswered.length > 0) return unanswered[0];
-  }
-
-  return candidates.length > 0 ? candidates[0] : null;
+interface DnaMoment {
+  id: string;
+  question_text: string;
+  option_a: string;
+  option_b: string;
+  option_c?: string | null;
+  option_d?: string | null;
+  option_e?: string | null;
+  category: string;
+  is_multi_select?: boolean;
 }
 
 const triviaCategories = [
@@ -167,36 +95,6 @@ export function JustTrackedSheet({
 
   const isWantToList = listName?.toLowerCase().includes('want') || listName?.toLowerCase().includes('queue');
 
-  const { data: tasteStats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['taste-stats', user?.id, media?.mediaType],
-    queryFn: async () => {
-      if (!user?.id) return { typeStats: [], creatorCount: 0 };
-
-      const { data: items } = await supabase
-        .from('list_items')
-        .select('media_type, creator, user_id')
-        .eq('user_id', user.id);
-
-      if (!items || items.length === 0) return { typeStats: [], creatorCount: 0 };
-
-      const typeCounts: Record<string, number> = {};
-      let creatorCount = 0;
-
-      items.forEach((item: any) => {
-        const mt = item.media_type?.toLowerCase() || 'other';
-        typeCounts[mt] = (typeCounts[mt] || 0) + 1;
-        if (media?.creator && item.creator?.toLowerCase() === media.creator.toLowerCase()) {
-          creatorCount++;
-        }
-      });
-
-      const typeStats = Object.entries(typeCounts).map(([mediaType, count]) => ({ mediaType, count }));
-      return { typeStats, creatorCount };
-    },
-    enabled: isOpen && !!user?.id && !!media,
-    staleTime: 30000,
-  });
-
   const { data: triviaQuestion } = useQuery({
     queryKey: ['want-to-trivia', media?.mediaType],
     queryFn: async () => {
@@ -236,22 +134,28 @@ export function JustTrackedSheet({
     staleTime: 0,
   });
 
-  const { data: answeredMoments } = useQuery({
-    queryKey: ['answered-identity-moments', user?.id],
+  const { data: dnaMoment, isLoading: isLoadingMoment } = useQuery<DnaMoment | null>({
+    queryKey: ['unanswered-dna-moment', user?.id],
     queryFn: async () => {
-      if (!user?.id) return new Set<string>();
-      const { data } = await supabase
+      if (!user?.id) return null;
+      const { data: answered } = await supabase
         .from('dna_moment_responses')
         .select('moment_id')
-        .eq('user_id', user.id)
-        .like('moment_id', 'identity-%');
-      return new Set((data || []).map((r: any) => r.moment_id));
+        .eq('user_id', user.id);
+      const answeredIds = new Set((answered || []).map((r: any) => r.moment_id));
+
+      const { data: allMoments } = await supabase
+        .from('dna_moments')
+        .select('id, question_text, option_a, option_b, option_c, option_d, option_e, category, is_multi_select')
+        .eq('is_active', true);
+
+      const unanswered = (allMoments || []).filter((m: any) => !answeredIds.has(m.id));
+      if (unanswered.length === 0) return null;
+      return unanswered[Math.floor(Math.random() * unanswered.length)] as DnaMoment;
     },
     enabled: isOpen && !!user?.id,
     staleTime: 30000,
   });
-
-  const insight = tasteStats && media ? generateInsight(media, tasteStats.typeStats, tasteStats.creatorCount, answeredMoments) : null;
 
   useEffect(() => {
     if (isOpen) {
@@ -263,10 +167,10 @@ export function JustTrackedSheet({
   }, [isOpen]);
 
   useEffect(() => {
-    if (phase === 'identity' && tasteStats && !isLoadingStats && !insight) {
+    if (phase === 'identity' && !isLoadingMoment && !dnaMoment) {
       setPhase('actions');
     }
-  }, [phase, tasteStats, isLoadingStats, insight]);
+  }, [phase, isLoadingMoment, dnaMoment]);
 
   if (!media) return null;
 
@@ -297,35 +201,35 @@ export function JustTrackedSheet({
     setIsSavingAnswer(true);
 
     try {
-      if (user?.id && insight) {
-        const answerCode = answer === 'definitely' ? 'a' : answer === 'sometimes' ? 'b' : 'c';
-
+      if (user?.id && dnaMoment) {
         const { data: existing } = await supabase
           .from('dna_moment_responses')
           .select('id')
           .eq('user_id', user.id)
-          .eq('moment_id', insight.momentId)
+          .eq('moment_id', dnaMoment.id)
           .maybeSingle();
 
         if (existing) {
           await supabase
             .from('dna_moment_responses')
-            .update({ answer: answerCode })
+            .update({ answer })
             .eq('id', existing.id);
         } else {
           await supabase
             .from('dna_moment_responses')
             .insert({
-              id: `identity-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              id: `dna-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
               user_id: user.id,
-              moment_id: insight.momentId,
-              answer: answerCode,
+              moment_id: dnaMoment.id,
+              answer,
               points_earned: 5,
             });
         }
+
+        queryClient.invalidateQueries({ queryKey: ['unanswered-dna-moment'] });
       }
     } catch (err) {
-      console.log('Identity answer save failed (non-blocking):', err);
+      console.log('DNA moment answer save failed (non-blocking):', err);
     }
 
     setIsSavingAnswer(false);
@@ -379,66 +283,53 @@ export function JustTrackedSheet({
           </p>
         </DrawerHeader>
         
-        {phase === 'identity' && (isLoadingStats || !tasteStats) ? (
+        {phase === 'identity' && isLoadingMoment ? (
           <div className="px-4 py-8 flex flex-col items-center justify-center">
             <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mb-3" />
-            <p className="text-sm text-gray-400">Analyzing your taste...</p>
+            <p className="text-sm text-gray-400">Loading DNA check...</p>
           </div>
-        ) : phase === 'identity' && insight ? (
+        ) : phase === 'identity' && dnaMoment ? (
           <div className="px-4 py-5">
             <div className="text-center mb-5">
               <div className="flex items-center justify-center gap-1.5 mb-3">
                 <Dna className="w-4 h-4 text-teal-500" />
-                <span className="text-xs font-semibold text-teal-600 uppercase tracking-wider">Your Taste</span>
+                <span className="text-xs font-semibold text-teal-600 uppercase tracking-wider">DNA Check</span>
               </div>
 
-              <p className="text-sm text-gray-600 mb-1">{insight.observation}</p>
-
-              <div className="flex items-center justify-center gap-2 my-3">
-                <div className="h-2 flex-1 max-w-[180px] bg-gray-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-teal-400 to-blue-500 rounded-full transition-all duration-1000 ease-out"
-                    style={{ width: `${insight.percentage}%` }}
-                  />
-                </div>
-                <span className="text-sm font-bold text-teal-600">{insight.percentage}%</span>
-              </div>
-
-              <h3 className="text-lg font-bold text-gray-900 mt-3">{insight.question}</h3>
+              <h3 className="text-lg font-bold text-gray-900">{dnaMoment.question_text}</h3>
+              {dnaMoment.category && (
+                <span className="inline-block mt-2 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-teal-600 bg-teal-50 rounded-full">
+                  {dnaMoment.category}
+                </span>
+              )}
             </div>
 
             {!identityAnswer ? (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleIdentityAnswer('definitely')}
-                  disabled={isSavingAnswer}
-                  className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-teal-500 to-blue-500 text-white font-semibold text-sm hover:from-teal-600 hover:to-blue-600 transition-all"
-                >
-                  Definitely
-                </button>
-                <button
-                  onClick={() => handleIdentityAnswer('sometimes')}
-                  disabled={isSavingAnswer}
-                  className="flex-1 py-3 px-4 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 transition-all border border-gray-200"
-                >
-                  Sometimes
-                </button>
-                <button
-                  onClick={() => handleIdentityAnswer('not_really')}
-                  disabled={isSavingAnswer}
-                  className="flex-1 py-3 px-4 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 transition-all border border-gray-200"
-                >
-                  Not really
-                </button>
+              <div className="flex flex-wrap gap-2">
+                {[dnaMoment.option_a, dnaMoment.option_b, dnaMoment.option_c, dnaMoment.option_d, dnaMoment.option_e]
+                  .filter((opt): opt is string => !!opt)
+                  .map((option, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleIdentityAnswer(option)}
+                      disabled={isSavingAnswer}
+                      className={`flex-1 min-w-[calc(50%-4px)] py-3 px-4 rounded-xl font-semibold text-sm transition-all ${
+                        i === 0
+                          ? 'bg-gradient-to-r from-teal-500 to-blue-500 text-white hover:from-teal-600 hover:to-blue-600'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))
+                }
               </div>
             ) : (
               <div className="text-center py-2 animate-in fade-in duration-300">
                 <div className="flex items-center justify-center gap-2">
                   <Sparkles className="w-4 h-4 text-purple-500" />
                   <p className="text-sm text-purple-600 font-medium">
-                    {identityAnswer === 'definitely' ? 'Noted! That\'s part of your DNA now.' :
-                     identityAnswer === 'sometimes' ? 'Got it! We\'ll keep exploring.' :
-                     'Fair enough! Your taste is unique.'}
+                    Noted! That's part of your DNA now.
                   </p>
                 </div>
               </div>
