@@ -280,16 +280,25 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
       try {
         const { data: users } = await supabase
           .from('users')
-          .select('id, display_name, user_name')
+          .select('id, display_name, user_name, first_name, last_name')
           .in('id', userIds);
+        console.log('👤 Client user lookup:', users?.map((u: any) => ({ id: u.id?.slice(0,8), first_name: u.first_name, last_name: u.last_name, display_name: u.display_name, user_name: u.user_name })));
         if (users && users.length > 0) {
           const userMap = new Map(users.map((u: any) => [u.id, u]));
           fixedPosts.forEach((post: any) => {
             if (post.user?.id) {
               const dbUser = userMap.get(post.user.id);
               if (dbUser) {
-                post.user.displayName = dbUser.display_name || dbUser.user_name || post.user.username;
-                post.user.display_name = dbUser.display_name || dbUser.user_name || post.user.username;
+                const fullName = (dbUser.first_name && dbUser.last_name)
+                  ? `${dbUser.first_name} ${dbUser.last_name}`.trim()
+                  : dbUser.first_name || null;
+                const resolvedName = fullName || dbUser.display_name || dbUser.user_name || post.user.username;
+                post.user.displayName = resolvedName;
+                post.user.display_name = resolvedName;
+                if (dbUser.user_name) {
+                  post.user.username = dbUser.user_name;
+                  post.user.user_name = dbUser.user_name;
+                }
               }
             }
           });
@@ -1025,8 +1034,7 @@ function CurrentlyConsumingFeedCard({
     }
   };
   
-  // Get display name - prefer displayName from API, fallback to cleaned username
-  const displayName = post.user?.displayName || (post.user?.username || '').replace(/consumed|IsConsumed/gi, '').trim() || post.user?.username;
+  const displayName = post.user?.displayName || post.user?.username;
   
   return (
     <div id={`post-${post.id}`}>
