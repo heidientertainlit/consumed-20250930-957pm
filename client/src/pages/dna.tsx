@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Film, Tv, Users, Download, Share2, Dna, Sparkles, Clock, BarChart3, Send, Lock, Heart, X } from "lucide-react";
+import { Loader2, Film, Tv, Users, Share2, Dna, Sparkles, Clock, BarChart3, Send, Lock, Heart, X } from "lucide-react";
+import { ShareImageSheet } from "@/components/share-image-sheet";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
@@ -20,6 +21,9 @@ export default function DnaPage() {
   const comparisonCardRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+  const [shareSheetTitle, setShareSheetTitle] = useState("Your Entertainment DNA");
   const { session, user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -190,30 +194,13 @@ export default function DnaPage() {
         useCORS: true,
         backgroundColor: null,
       });
-      canvas.toBlob(async (blob) => {
-        if (!blob) { setIsDownloading(false); return; }
-        const file = new File([blob], 'my-entertainment-dna.png', { type: 'image/png' });
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-        if (isMobile && navigator.share && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file] });
-            toast({ title: "Tap 'Save Image' to save to your photos!", description: "Select it from the menu that appeared" });
-          } catch (err) {}
-        } else {
-          const link = document.createElement('a');
-          link.download = 'my-entertainment-dna.png';
-          link.href = URL.createObjectURL(blob);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(link.href);
-          toast({ title: "Saved!", description: "Your DNA summary has been downloaded" });
-        }
-        setIsDownloading(false);
-      }, 'image/png');
+      const dataUrl = canvas.toDataURL('image/png');
+      setShareImageUrl(dataUrl);
+      setShareSheetTitle("Your Entertainment DNA");
+      setShareSheetOpen(true);
+      setIsDownloading(false);
     } catch (error) {
-      toast({ title: "Error", description: "Could not save image", variant: "destructive" });
+      toast({ title: "Error", description: "Could not generate image", variant: "destructive" });
       setIsDownloading(false);
     }
   };
@@ -240,30 +227,12 @@ export default function DnaPage() {
     if (!comparisonCardRef.current) return;
     try {
       const canvas = await html2canvas(comparisonCardRef.current, { scale: 3, backgroundColor: '#ffffff' });
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
-        const fileName = `dna-match-${selectedFriend?.user_name || 'friend'}.png`;
-        const file = new File([blob], fileName, { type: 'image/png' });
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-        if (isMobile && navigator.share && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file] });
-            toast({ title: "Tap 'Save Image' to save to your photos!", description: "Select it from the menu that appeared" });
-          } catch (err) {}
-        } else {
-          const link = document.createElement('a');
-          link.download = fileName;
-          link.href = URL.createObjectURL(blob);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(link.href);
-          toast({ title: "Saved!", description: "Your DNA match card has been downloaded" });
-        }
-      }, 'image/png');
+      const dataUrl = canvas.toDataURL('image/png');
+      setShareImageUrl(dataUrl);
+      setShareSheetTitle("DNA Match");
+      setShareSheetOpen(true);
     } catch (error) {
-      toast({ title: "Error", description: "Could not save image", variant: "destructive" });
+      toast({ title: "Error", description: "Could not generate image", variant: "destructive" });
     }
   };
 
@@ -485,17 +454,8 @@ export default function DnaPage() {
                       size="sm"
                       className="flex items-center gap-1.5 text-xs"
                     >
-                      <Download size={14} />
-                      {isDownloading ? 'Saving...' : 'Save to Photos'}
-                    </Button>
-                    <Button
-                      onClick={handleShareSummary}
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-1.5 text-xs"
-                    >
                       <Share2 size={14} />
-                      Share
+                      {isDownloading ? 'Generating...' : 'Share Your DNA'}
                     </Button>
                   </div>
                 </>
@@ -702,17 +662,8 @@ export default function DnaPage() {
                               onClick={handleDownloadComparison}
                               className="border-purple-200 text-purple-600 text-xs"
                             >
-                              <Download size={12} className="mr-1" />
-                              Save
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleShareComparison}
-                              className="border-purple-200 text-purple-600 text-xs"
-                            >
                               <Share2 size={12} className="mr-1" />
-                              Share
+                              Share Match
                             </Button>
                           </div>
                         </div>
@@ -772,6 +723,14 @@ export default function DnaPage() {
           )}
         </div>
       </div>
+      <ShareImageSheet
+        open={shareSheetOpen}
+        onOpenChange={setShareSheetOpen}
+        imageDataUrl={shareImageUrl}
+        fileName="my-entertainment-dna.png"
+        title={shareSheetTitle}
+        shareText={dnaProfile ? `I'm a "${dnaProfile.label}" - ${dnaProfile.tagline}. Check out my entertainment DNA on Consumed!` : undefined}
+      />
     </div>
   );
 }
