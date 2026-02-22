@@ -866,7 +866,7 @@ export default function Search() {
 
             {/* Or jump in */}
             <div className="space-y-2">
-              <p className="text-purple-300/50 text-xs font-medium">Or jump in:</p>
+              <p className="text-purple-300/50 text-xs font-medium">Already know your taste?</p>
               <div className="flex flex-col gap-2">
                 <Link
                   href="/play"
