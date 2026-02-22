@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, TrendingUp, Plus, Mic, Gamepad2, MessageSquarePlus, Star, ArrowLeft, X } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, TrendingUp, Plus, Mic, Gamepad2, MessageSquarePlus, Star, ArrowLeft, X, Brain, Target, Flame, ChevronRight } from "lucide-react";
 import InlineComposer from "@/components/inline-composer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -834,31 +834,43 @@ export default function Search() {
 
         {/* DNA Progress + Jump In (only when no search query) */}
         {!searchQuery.trim() && (
-          <div className="w-full max-w-xl mt-5 space-y-4">
+          <div className="w-full max-w-xl mt-8 space-y-6">
             {/* DNA Progress Card */}
             <button
               onClick={() => searchInputRef.current?.focus()}
-              className="w-full text-left"
+              className="w-full text-left group"
             >
               {totalItemsAdded >= 3 ? (
-                <div className="bg-purple-600/20 border border-purple-500/30 rounded-xl px-4 py-3">
-                  <p className="text-white text-sm font-semibold">
-                    <span className="mr-1.5">🧠</span>You've unlocked your DNA.
-                  </p>
-                  <p className="text-purple-300/70 text-xs mt-0.5">Keep building to sharpen your profile.</p>
-                  <p className="text-purple-400/50 text-[10px] mt-1">{totalItemsAdded} title{totalItemsAdded !== 1 ? 's' : ''} added</p>
+                <div className="rounded-2xl px-5 py-4 backdrop-blur-md bg-white/[0.04] border border-white/[0.06]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-purple-500/15 flex items-center justify-center flex-shrink-0">
+                      <Brain size={16} className="text-purple-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white/90 text-[13px] font-medium tracking-tight">You've unlocked your DNA.</p>
+                      <p className="text-white/30 text-[11px] mt-0.5">Keep building to sharpen your profile.</p>
+                    </div>
+                    <span className="text-white/20 text-[10px] font-medium tabular-nums">{totalItemsAdded} title{totalItemsAdded !== 1 ? 's' : ''}</span>
+                  </div>
                 </div>
               ) : (
-                <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
-                  <p className="text-white text-sm font-semibold mb-0.5">
-                    Your Entertainment DNA: {Math.round((Math.min(totalItemsAdded, 3) / 3) * 100)}% unlocked.
-                  </p>
-                  <p className="text-purple-300/70 text-xs">
-                    Add {3 - Math.min(totalItemsAdded, 3)} title{3 - Math.min(totalItemsAdded, 3) !== 1 ? 's' : ''} to activate your profile.
-                  </p>
-                  <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
+                <div className="rounded-2xl px-5 py-4 backdrop-blur-md bg-white/[0.04] border border-white/[0.06]">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+                      <Brain size={16} className="text-white/40" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white/90 text-[13px] font-medium tracking-tight">
+                        Your Entertainment DNA: {Math.round((Math.min(totalItemsAdded, 3) / 3) * 100)}% unlocked.
+                      </p>
+                      <p className="text-white/30 text-[11px] mt-0.5">
+                        Add {3 - Math.min(totalItemsAdded, 3)} title{3 - Math.min(totalItemsAdded, 3) !== 1 ? 's' : ''} to activate your profile.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-700 ease-out"
                       style={{ width: `${(Math.min(totalItemsAdded, 3) / 3) * 100}%` }}
                     />
                   </div>
@@ -866,21 +878,25 @@ export default function Search() {
               )}
             </button>
 
-            {/* Or jump in */}
-            <div className="space-y-2">
-              <p className="text-purple-300/50 text-xs font-medium">Already know your taste?</p>
-              <div className="flex flex-col gap-2">
+            {/* Already know your taste? */}
+            <div className="space-y-2.5">
+              <p className="text-white/20 text-[11px] font-medium tracking-wide uppercase pl-1">Already know your taste?</p>
+              <div className="flex flex-col gap-1.5">
                 <Link
                   href="/play"
-                  className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-medium hover:bg-white/10 transition-colors active:scale-[0.98]"
+                  className="flex items-center gap-3 rounded-2xl px-5 py-3.5 backdrop-blur-md bg-white/[0.04] border border-white/[0.06] text-white/80 text-[13px] font-medium hover:bg-white/[0.07] transition-all active:scale-[0.98] group"
                 >
-                  <span>🎯</span> Play today's game
+                  <Target size={15} className="text-purple-400/80 flex-shrink-0" />
+                  <span className="flex-1">Play today's game</span>
+                  <ChevronRight size={14} className="text-white/15 group-hover:text-white/30 transition-colors" />
                 </Link>
                 <Link
                   href="/activity"
-                  className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-medium hover:bg-white/10 transition-colors active:scale-[0.98]"
+                  className="flex items-center gap-3 rounded-2xl px-5 py-3.5 backdrop-blur-md bg-white/[0.04] border border-white/[0.06] text-white/80 text-[13px] font-medium hover:bg-white/[0.07] transition-all active:scale-[0.98] group"
                 >
-                  <span>🔥</span> See what everyone's into
+                  <Flame size={15} className="text-orange-400/80 flex-shrink-0" />
+                  <span className="flex-1">See what everyone's into</span>
+                  <ChevronRight size={14} className="text-white/15 group-hover:text-white/30 transition-colors" />
                 </Link>
               </div>
             </div>
