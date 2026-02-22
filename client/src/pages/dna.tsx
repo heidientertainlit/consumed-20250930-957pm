@@ -46,6 +46,21 @@ export default function DnaPage() {
     staleTime: 60000,
   });
 
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile-dna', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('users')
+        .select('first_name, last_name, display_name, user_name')
+        .eq('id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+    staleTime: 60000,
+  });
+
   const { data: dnaProfile, isLoading: isLoadingDna, refetch: refetchDna } = useQuery({
     queryKey: ['dna-profile-summary', user?.id],
     queryFn: async () => {
@@ -415,6 +430,13 @@ export default function DnaPage() {
                   >
                     <div className="p-4">
                       <div className="text-center mb-3">
+                        {userProfile && (
+                          <p className="text-sm font-semibold text-gray-800 mb-1">
+                            {userProfile.first_name && userProfile.last_name
+                              ? `${userProfile.first_name} ${userProfile.last_name}`
+                              : userProfile.display_name || userProfile.user_name}
+                          </p>
+                        )}
                         <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
                           <Dna className="text-white" size={20} />
                         </div>
