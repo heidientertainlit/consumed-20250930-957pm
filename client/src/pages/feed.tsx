@@ -1585,8 +1585,7 @@ export default function Feed() {
   const standaloneUGCPosts: UGCPost[] = (() => {
     const allUGC = ugcSlots.flat();
     return allUGC.filter(p => {
-      if (p.type === 'rating' && (!p.content || p.content.trim().length < 10)) return false;
-      return p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank';
+      return p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved';
     });
   })();
 
@@ -4088,7 +4087,6 @@ export default function Feed() {
               )}
 
               {renderPostBatchByIndex(0)}
-              {renderPostBatchByIndex(1)}
 
               {renderRoomCarousel(0, "Quick Glimpse")}
 
@@ -4115,6 +4113,8 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'games' && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
               )}
+
+              {renderPostBatchByIndex(1)}
 
               {/* Entertainment DNA Card #1 - in All or DNA filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
