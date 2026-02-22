@@ -544,6 +544,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
       }
       
       onClose();
+      setLocation('/activity');
     } catch (error: any) {
       console.error("Error posting:", error);
       toast({
