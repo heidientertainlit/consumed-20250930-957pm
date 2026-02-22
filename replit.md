@@ -6,7 +6,8 @@ Consumed is a mobile-first platform designed to transform entertainment consumpt
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
-### CRITICAL Data Rules
+### CRITICAL Rules
+- **NEVER PUBLISH / DEPLOY the app.** User handles deployment themselves. Do not suggest or trigger publishing under any circumstances.
 - **NEVER add, seed, or modify data in Supabase without explicit user approval first.** Always double-check with the user before inserting, updating, or seeding any content (trivia, polls, predictions, etc.) to the production database.
 - All content data comes from user's spreadsheets - do not create fake/placeholder content.
 
