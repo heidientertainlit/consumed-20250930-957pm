@@ -835,31 +835,42 @@ export default function Search() {
         {/* DNA Progress + Jump In (only when no search query) */}
         {!searchQuery.trim() && (
           <div className="w-full max-w-xl mt-8 space-y-6">
-            {/* DNA Progress */}
+            {/* DNA Progress Card */}
             <button
               onClick={() => searchInputRef.current?.focus()}
-              className="w-full text-center"
+              className="w-full text-left group"
             >
               {totalItemsAdded >= 3 ? (
-                <div>
-                  <p className="text-white/50 text-[12px] font-medium">
-                    <Brain size={12} className="inline text-purple-400/70 mr-1 -mt-0.5" />
-                    You've unlocked your DNA. Keep building to sharpen your profile.
-                  </p>
-                  <p className="text-white/20 text-[10px] mt-1">{totalItemsAdded} title{totalItemsAdded !== 1 ? 's' : ''} added</p>
+                <div className="rounded-lg px-5 py-4 backdrop-blur-md bg-white/[0.04] border border-white/[0.06]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-purple-500/15 flex items-center justify-center flex-shrink-0">
+                      <Brain size={16} className="text-purple-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white/90 text-[13px] font-medium tracking-tight">You've unlocked your DNA.</p>
+                      <p className="text-white/30 text-[11px] mt-0.5">Keep building to sharpen your profile.</p>
+                    </div>
+                    <span className="text-white/20 text-[10px] font-medium tabular-nums">{totalItemsAdded} title{totalItemsAdded !== 1 ? 's' : ''}</span>
+                  </div>
                 </div>
               ) : (
-                <div>
-                  <p className="text-white/50 text-[12px] font-medium">
-                    <Brain size={12} className="inline text-white/30 mr-1 -mt-0.5" />
-                    Your Entertainment DNA: {Math.round((Math.min(totalItemsAdded, 3) / 3) * 100)}% unlocked.
-                  </p>
-                  <p className="text-white/25 text-[11px] mt-0.5">
-                    Add {3 - Math.min(totalItemsAdded, 3)} title{3 - Math.min(totalItemsAdded, 3) !== 1 ? 's' : ''} to activate your profile.
-                  </p>
-                  <div className="mx-auto mt-2 h-[2px] max-w-[120px] bg-white/[0.06] rounded-full overflow-hidden">
+                <div className="rounded-lg px-5 py-4 backdrop-blur-md bg-white/[0.04] border border-white/[0.06]">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+                      <Brain size={16} className="text-white/40" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white/90 text-[13px] font-medium tracking-tight">
+                        Your Entertainment DNA: {Math.round((Math.min(totalItemsAdded, 3) / 3) * 100)}% unlocked.
+                      </p>
+                      <p className="text-white/30 text-[11px] mt-0.5">
+                        Add {3 - Math.min(totalItemsAdded, 3)} title{3 - Math.min(totalItemsAdded, 3) !== 1 ? 's' : ''} to activate your profile.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="h-[3px] bg-white/[0.06] rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-purple-500/60 rounded-full transition-all duration-700 ease-out"
+                      className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-700 ease-out"
                       style={{ width: `${(Math.min(totalItemsAdded, 3) / 3) * 100}%` }}
                     />
                   </div>
