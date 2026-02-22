@@ -256,6 +256,7 @@ export default function Search() {
   // Fetch user lists with media for Currently Consuming
   const [currentlyItems, setCurrentlyItems] = useState<any[]>([]);
   const [isLoadingCurrently, setIsLoadingCurrently] = useState(false);
+  const [totalItemsAdded, setTotalItemsAdded] = useState(0);
 
   const fetchCurrentlyItems = async () => {
     if (!session?.access_token || !user?.id) return;
@@ -270,22 +271,10 @@ export default function Search() {
       });
       if (response.ok) {
         const data = await response.json();
-        console.log('📺 Currently Consuming - All lists:', data.lists?.map((l: any) => ({ title: l.title, itemCount: l.items?.length })));
         const currentlyList = (data.lists || []).find((list: any) => list.title === 'Currently');
-        console.log('📺 Currently list found:', currentlyList?.title, 'Items:', currentlyList?.items?.length);
-        if (currentlyList?.items?.length > 0) {
-          console.log('📺 First item fields:', JSON.stringify({ 
-            id: currentlyList.items[0].id,
-            title: currentlyList.items[0].title,
-            progress: currentlyList.items[0].progress,
-            progress_total: currentlyList.items[0].progress_total,
-            progress_mode: currentlyList.items[0].progress_mode,
-            image_url: currentlyList.items[0].image_url?.substring(0, 50),
-          }));
-        }
         setCurrentlyItems(currentlyList?.items?.slice(0, 10) || []);
-      } else {
-        console.error('📺 Failed to fetch lists:', response.status);
+        const total = (data.lists || []).reduce((sum: number, list: any) => sum + (list.items?.length || 0), 0);
+        setTotalItemsAdded(total);
       }
     } catch (error) {
       console.error('Error fetching currently items:', error);
@@ -799,7 +788,7 @@ export default function Search() {
       <div className="flex flex-col items-center px-4 -mt-px pt-[15vh]">
         <div className="text-center mb-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
           <h1 className="text-white text-2xl font-bold tracking-tight mb-4">All your entertainment.<br />All in one place.</h1>
-          <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase">ADD MEDIA. BUILD YOUR DNA.</p>
+          <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase">TRACK. PLAY. CONNECT.</p>
         </div>
 
         {/* Search Bar */}
@@ -842,19 +831,57 @@ export default function Search() {
             </button>
           </div>
         </div>
-        
-        {/* Contextual hints */}
+
+        {/* DNA Progress + Jump In (only when no search query) */}
         {!searchQuery.trim() && (
-          <div className="w-full max-w-xl mt-1.5 text-center">
-            {isAiMode ? (
-              <p className="text-purple-400/50 text-[10px] leading-tight">
-                Tap <Sparkles size={8} className="inline" /> to switch back to regular search, and more
-              </p>
-            ) : (
-              <p className="text-purple-300/40 text-[10px] leading-tight">
-                Search to add to a list, share a thought, tap <Sparkles size={8} className="inline text-purple-400/50" /> for AI recs, and more
-              </p>
-            )}
+          <div className="w-full max-w-xl mt-5 space-y-4">
+            {/* DNA Progress Card */}
+            <button
+              onClick={() => searchInputRef.current?.focus()}
+              className="w-full text-left"
+            >
+              {totalItemsAdded >= 3 ? (
+                <div className="bg-purple-600/20 border border-purple-500/30 rounded-xl px-4 py-3">
+                  <p className="text-white text-sm font-semibold">
+                    <span className="mr-1.5">🧠</span>Entertainment DNA: Active
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+                  <p className="text-white text-sm font-semibold mb-0.5">
+                    Your Entertainment DNA: {Math.round((Math.min(totalItemsAdded, 3) / 3) * 100)}% unlocked.
+                  </p>
+                  <p className="text-purple-300/70 text-xs">
+                    Add {3 - Math.min(totalItemsAdded, 3)} title{3 - Math.min(totalItemsAdded, 3) !== 1 ? 's' : ''} to activate your profile.
+                  </p>
+                  <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-purple-500 rounded-full transition-all duration-500"
+                      style={{ width: `${(Math.min(totalItemsAdded, 3) / 3) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </button>
+
+            {/* Or jump in */}
+            <div className="space-y-2">
+              <p className="text-purple-300/50 text-xs font-medium">Or jump in:</p>
+              <div className="flex flex-col gap-2">
+                <Link
+                  href="/play"
+                  className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-medium hover:bg-white/10 transition-colors active:scale-[0.98]"
+                >
+                  <span>🎯</span> Play today's game
+                </Link>
+                <Link
+                  href="/activity"
+                  className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-medium hover:bg-white/10 transition-colors active:scale-[0.98]"
+                >
+                  <span>🔥</span> See what everyone's into
+                </Link>
+              </div>
+            </div>
           </div>
         )}
 
