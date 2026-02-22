@@ -60,7 +60,8 @@ function getIdentityLabel(type: string): string {
 function generateInsight(
   media: JustTrackedMedia,
   stats: { mediaType: string; count: number }[],
-  creatorCount: number
+  creatorCount: number,
+  alreadyAnsweredMoments?: Set<string>
 ): TasteInsight | null {
   const totalItems = stats.reduce((sum, s) => sum + s.count, 0);
   if (totalItems < 1) return null;
@@ -73,39 +74,41 @@ function generateInsight(
   const mediaLabel = getMediaLabel(media.mediaType);
   const identityLabel = getIdentityLabel(media.mediaType);
 
+  const candidates: TasteInsight[] = [];
+
   if (media.creator && creatorCount >= 2) {
-    return {
+    candidates.push({
       observation: `You've tracked ${creatorCount + 1} ${media.creator} titles.`,
       percentage,
       question: `Are you a ${media.creator} fan?`,
       momentId: `identity-creator-${(media.creator || '').toLowerCase().replace(/\s+/g, '-')}`,
-    };
-  }
-
-  if (percentage >= 40 && currentTypeCount >= 3) {
-    return {
-      observation: `${percentage}% of your library is ${mediaLabel}.`,
-      percentage,
-      question: `Are you ${identityLabel}?`,
-      momentId: `identity-type-${media.mediaType?.toLowerCase() || 'other'}`,
-    };
+    });
   }
 
   if (currentTypeCount >= 2) {
-    return {
+    candidates.push({
       observation: `That's ${currentTypeCount} ${mediaLabel} you've tracked.`,
       percentage,
       question: `Are you ${identityLabel}?`,
       momentId: `identity-type-${media.mediaType?.toLowerCase() || 'other'}`,
-    };
+    });
   }
 
-  return {
-    observation: `Your first ${media.mediaType?.toLowerCase() || 'title'} on Consumed!`,
-    percentage: 100,
-    question: `Are you ${identityLabel}?`,
-    momentId: `identity-type-${media.mediaType?.toLowerCase() || 'other'}`,
-  };
+  if (currentTypeCount === 1) {
+    candidates.push({
+      observation: `Your first ${media.mediaType?.toLowerCase() || 'title'} on Consumed!`,
+      percentage: 100,
+      question: `Are you ${identityLabel}?`,
+      momentId: `identity-type-${media.mediaType?.toLowerCase() || 'other'}`,
+    });
+  }
+
+  if (alreadyAnsweredMoments && alreadyAnsweredMoments.size > 0) {
+    const unanswered = candidates.filter(c => !alreadyAnsweredMoments.has(c.momentId));
+    if (unanswered.length > 0) return unanswered[0];
+  }
+
+  return candidates.length > 0 ? candidates[0] : null;
 }
 
 const triviaCategories = [
@@ -233,7 +236,22 @@ export function JustTrackedSheet({
     staleTime: 0,
   });
 
-  const insight = tasteStats && media ? generateInsight(media, tasteStats.typeStats, tasteStats.creatorCount) : null;
+  const { data: answeredMoments } = useQuery({
+    queryKey: ['answered-identity-moments', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return new Set<string>();
+      const { data } = await supabase
+        .from('dna_moment_responses')
+        .select('moment_id')
+        .eq('user_id', user.id)
+        .like('moment_id', 'identity-%');
+      return new Set((data || []).map((r: any) => r.moment_id));
+    },
+    enabled: isOpen && !!user?.id,
+    staleTime: 30000,
+  });
+
+  const insight = tasteStats && media ? generateInsight(media, tasteStats.typeStats, tasteStats.creatorCount, answeredMoments) : null;
 
   useEffect(() => {
     if (isOpen) {
