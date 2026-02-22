@@ -93,55 +93,28 @@ export default function ConsolidatedActivityCard({
     const displayName = activity.user.displayName || activity.user.username;
     const showUsername = activity.user.username && activity.user.displayName && activity.user.username !== activity.user.displayName;
     
-    switch (activity.type) {
-      case 'ratings':
-        return (
-          <span className="text-sm">
-            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-white hover:text-purple-300">
-              {displayName}
-            </Link>
-            {showUsername && <span className="text-xs text-purple-300/60 ml-1">@{activity.user.username}</span>}
-            <span className="text-purple-200/70"> rated</span>
-          </span>
-        );
-      case 'finished':
-        return (
-          <span className="text-sm">
-            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-white hover:text-purple-300">
-              {displayName}
-            </Link>
-            {showUsername && <span className="text-xs text-purple-300/60 ml-1">@{activity.user.username}</span>}
-            <span className="text-purple-200/70"> finished</span>
-          </span>
-        );
-      case 'list_adds':
-        const uniqueLists = [...new Set(activity.listNames || [])];
-        const listLabel = uniqueLists.length === 0 
-          ? 'a list'
-          : uniqueLists.length === 1 
-            ? uniqueLists[0] 
-            : 'lists';
-        return (
-          <span className="text-sm">
-            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-white hover:text-purple-300">
-              {displayName}
-            </Link>
-            {showUsername && <span className="text-xs text-purple-300/60 ml-1">@{activity.user.username}</span>}
-            <span className="text-purple-200/70"> added to → </span>
-            <span className="text-purple-300 font-medium">{listLabel}</span>
-          </span>
-        );
-      default:
-        return (
-          <span className="text-sm">
-            <Link href={`/profile/${activity.user.username}`} className="font-semibold text-white hover:text-purple-300">
-              {displayName}
-            </Link>
-            {showUsername && <span className="text-xs text-purple-300/60 ml-1">@{activity.user.username}</span>}
-            <span className="text-purple-200/70"> shared activity</span>
-          </span>
-        );
-    }
+    const actionText = (() => {
+      switch (activity.type) {
+        case 'ratings': return <span className="text-purple-200/70"> rated</span>;
+        case 'finished': return <span className="text-purple-200/70"> finished</span>;
+        case 'list_adds': {
+          const uniqueLists = [...new Set(activity.listNames || [])];
+          const listLabel = uniqueLists.length === 0 ? 'a list' : uniqueLists.length === 1 ? uniqueLists[0] : 'lists';
+          return <><span className="text-purple-200/70"> added to → </span><span className="text-purple-300 font-medium">{listLabel}</span></>;
+        }
+        default: return <span className="text-purple-200/70"> shared activity</span>;
+      }
+    })();
+
+    return (
+      <div>
+        <Link href={`/profile/${activity.user.username}`} className="font-semibold text-sm text-white hover:text-purple-300">
+          {displayName}
+        </Link>
+        {showUsername && <p className="text-xs text-purple-300/60 leading-tight">@{activity.user.username}</p>}
+        <p className="text-sm">{actionText}</p>
+      </div>
+    );
   };
 
   const allItems = activity.items;

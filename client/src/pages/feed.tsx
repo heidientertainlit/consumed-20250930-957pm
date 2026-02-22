@@ -282,7 +282,6 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
           .from('users')
           .select('id, display_name, user_name, first_name, last_name')
           .in('id', userIds);
-        console.log('👤 Client user lookup:', users?.map((u: any) => ({ id: u.id?.slice(0,8), first_name: u.first_name, last_name: u.last_name, display_name: u.display_name, user_name: u.user_name })));
         if (users && users.length > 0) {
           const userMap = new Map(users.map((u: any) => [u.id, u]));
           fixedPosts.forEach((post: any) => {
@@ -1056,14 +1055,19 @@ function CurrentlyConsumingFeedCard({
                 </Link>
               )}
               <div className="min-w-0">
-                <p className="text-sm text-gray-900">
+                <div className="flex items-center gap-2">
                   <Link href={`/user/${post.user?.id}`}>
-                    <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+                    <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
                   </Link>
-                  {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
-                    <span className="text-xs text-gray-400 ml-1">@{post.user.username}</span>
+                  {post.mediaType && (
+                    <span className="text-xs px-2 py-0.5 rounded-full border border-purple-200 text-purple-500">{post.mediaType}</span>
                   )}
-                  {' '}added{' '}
+                </div>
+                {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
+                  <p className="text-xs text-gray-400">@{post.user.username}</p>
+                )}
+                <p className="text-sm text-gray-900 mt-0.5">
+                  added{' '}
                   <Link href={`/media/${media.mediaType}/${media.externalSource || 'tmdb'}/${media.externalId}`}>
                     <span className="hover:text-purple-600 cursor-pointer">{media.title}</span>
                   </Link>
@@ -3997,16 +4001,14 @@ export default function Feed() {
                           </div>
                         </Link>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <Link href={`/user/${highlightedPost.user.id}`}>
-                              <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">
-                                {highlightedPost.user.displayName || highlightedPost.user.username}
-                              </span>
-                            </Link>
-                            {highlightedPost.user.username && highlightedPost.user.displayName && highlightedPost.user.username !== highlightedPost.user.displayName && (
-                              <span className="text-xs text-gray-400">@{highlightedPost.user.username}</span>
-                            )}
-                          </div>
+                          <Link href={`/user/${highlightedPost.user.id}`}>
+                            <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">
+                              {highlightedPost.user.displayName || highlightedPost.user.username}
+                            </span>
+                          </Link>
+                          {highlightedPost.user.username && highlightedPost.user.displayName && highlightedPost.user.username !== highlightedPost.user.displayName && (
+                            <p className="text-xs text-gray-400 leading-tight">@{highlightedPost.user.username}</p>
+                          )}
                           <p className="text-xs text-gray-400">{highlightedPost.timestamp ? formatDate(highlightedPost.timestamp) : ''}</p>
                         </div>
                       </div>
