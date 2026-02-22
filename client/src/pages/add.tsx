@@ -832,58 +832,51 @@ export default function Search() {
           </div>
         </div>
 
-        {/* DNA Progress + Jump In (only when no search query) */}
+        {/* DNA + Quick Links (only when no search query) */}
         {!searchQuery.trim() && (
-          <div className="w-full max-w-xl mt-8 space-y-6">
-            {/* DNA Progress */}
-            <div className="text-center">
-              {totalItemsAdded >= 3 ? (
-                <div>
-                  <p className="text-white/40 text-[12px] font-medium">
-                    <Brain size={12} className="inline text-purple-400/60 mr-1.5 -mt-0.5" />
-                    You've unlocked your DNA. Keep building to sharpen your profile.
-                  </p>
-                  <p className="text-white/15 text-[10px] mt-1.5">{totalItemsAdded} title{totalItemsAdded !== 1 ? 's' : ''} added</p>
+          <div className="w-full max-w-xl mt-6 rounded-lg backdrop-blur-md bg-white/[0.03] border border-white/[0.06] px-5 py-4">
+            {totalItemsAdded >= 3 ? (
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-7 h-7 rounded-md bg-purple-500/15 flex items-center justify-center flex-shrink-0">
+                  <Brain size={14} className="text-purple-400" />
                 </div>
-              ) : (
-                <div>
-                  <p className="text-white/40 text-[12px] font-medium">
-                    <Brain size={12} className="inline text-white/25 mr-1.5 -mt-0.5" />
-                    Your Entertainment DNA: {Math.round((Math.min(totalItemsAdded, 3) / 3) * 100)}% unlocked.
-                  </p>
-                  <p className="text-white/20 text-[11px] mt-1">
-                    Add {3 - Math.min(totalItemsAdded, 3)} title{3 - Math.min(totalItemsAdded, 3) !== 1 ? 's' : ''} to activate your profile.
-                  </p>
-                  <div className="mx-auto mt-2.5 h-[2px] max-w-[100px] bg-white/[0.06] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-purple-500/50 rounded-full transition-all duration-700 ease-out"
-                      style={{ width: `${(Math.min(totalItemsAdded, 3) / 3) * 100}%` }}
-                    />
+                <div className="flex-1 min-w-0">
+                  <p className="text-white/80 text-[13px] font-medium tracking-tight">You've unlocked your DNA.</p>
+                  <p className="text-white/25 text-[11px]">Keep building to sharpen your profile. <span className="text-white/15">{totalItemsAdded} title{totalItemsAdded !== 1 ? 's' : ''}</span></p>
+                </div>
+              </div>
+            ) : (
+              <div className="mb-3">
+                <div className="flex items-center gap-3 mb-2.5">
+                  <div className="w-7 h-7 rounded-md bg-white/[0.05] flex items-center justify-center flex-shrink-0">
+                    <Brain size={14} className="text-white/30" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/80 text-[13px] font-medium tracking-tight">
+                      Entertainment DNA: {Math.round((Math.min(totalItemsAdded, 3) / 3) * 100)}% unlocked
+                    </p>
+                    <p className="text-white/25 text-[11px]">
+                      Add {3 - Math.min(totalItemsAdded, 3)} title{3 - Math.min(totalItemsAdded, 3) !== 1 ? 's' : ''} to activate your profile.
+                    </p>
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Already know your taste? */}
-            <div className="text-center space-y-1.5 pt-1">
-              <p className="text-white/20 text-[11px] font-medium">Already know your taste?</p>
-              <div className="flex items-center justify-center gap-4">
-                <Link
-                  href="/play"
-                  className="inline-flex items-center gap-1.5 text-white/50 text-[12px] font-medium hover:text-white/80 transition-colors"
-                >
-                  <Target size={12} className="text-purple-400/70" />
-                  Play today's game
-                </Link>
-                <span className="text-white/10">·</span>
-                <Link
-                  href="/activity"
-                  className="inline-flex items-center gap-1.5 text-white/50 text-[12px] font-medium hover:text-white/80 transition-colors"
-                >
-                  <Flame size={12} className="text-orange-400/70" />
-                  See what everyone's into
-                </Link>
+                <div className="h-[2px] bg-white/[0.06] rounded-full overflow-hidden ml-10">
+                  <div
+                    className="h-full bg-purple-500/50 rounded-full transition-all duration-700 ease-out"
+                    style={{ width: `${(Math.min(totalItemsAdded, 3) / 3) * 100}%` }}
+                  />
+                </div>
               </div>
+            )}
+            <div className="border-t border-white/[0.05] pt-3 flex items-center gap-1.5">
+              <span className="text-white/15 text-[11px]">Already know your taste?</span>
+              <Link href="/play" className="inline-flex items-center gap-1 text-purple-400/60 text-[11px] font-medium hover:text-purple-400 transition-colors">
+                <Target size={10} /> Play
+              </Link>
+              <span className="text-white/10 text-[11px]">·</span>
+              <Link href="/activity" className="inline-flex items-center gap-1 text-orange-400/60 text-[11px] font-medium hover:text-orange-400 transition-colors">
+                <Flame size={10} /> Explore
+              </Link>
             </div>
           </div>
         )}
