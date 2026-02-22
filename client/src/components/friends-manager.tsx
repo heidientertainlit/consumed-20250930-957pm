@@ -29,8 +29,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
 
   const handleInviteFriends = async () => {
     if (!userId) return;
-    const appBase = import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com';
-    const base = appBase.startsWith('http') ? appBase : `https://${appBase}`;
+    const base = window.location.origin;
     const inviteUrl = `${base}/u/${userId}`;
     const shareText = "I'm using Consumed to track everything I watch, read, and listen to. Join me and we can compare tastes!";
 
