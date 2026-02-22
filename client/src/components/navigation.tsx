@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home, Star } from "lucide-react";
 import { FeedbackDialog } from "./feedback-dialog";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { QuickActionSheet } from "./quick-action-sheet";
+import { QuickAddListSheet } from "./quick-add-list-sheet";
 
 interface NavigationProps {
   onTrackConsumption?: () => void;
@@ -51,6 +52,9 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
   const queryClient = useQueryClient();
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
+  const [actionSheetMedia, setActionSheetMedia] = useState<any>(null);
 
   // Prefetch Collections data on hover/touch
   const prefetchCollections = useCallback(async () => {
@@ -452,19 +456,60 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
                     {mediaResults.slice(0, 8).map((media, idx) => (
                       <div
                         key={`${media.external_id}-${idx}`}
-                        onClick={() => handleMediaClick(media)}
-                        className="flex items-center gap-3 px-3 py-2 hover:bg-white/5 cursor-pointer"
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-white/5"
                       >
-                        {media.image ? (
-                          <img src={media.image} alt={media.title} className="w-10 h-14 object-cover rounded" />
-                        ) : (
-                          <div className="w-10 h-14 bg-gray-700 rounded flex items-center justify-center">
-                            <Activity size={16} className="text-gray-500" />
+                        <div
+                          onClick={() => handleMediaClick(media)}
+                          className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                        >
+                          {media.image ? (
+                            <img src={media.image} alt={media.title} className="w-10 h-14 object-cover rounded" />
+                          ) : (
+                            <div className="w-10 h-14 bg-gray-700 rounded flex items-center justify-center">
+                              <Activity size={16} className="text-gray-500" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white text-sm font-medium truncate">{media.title}</p>
+                            <p className="text-gray-400 text-xs">{media.type} {media.year && `• ${media.year}`}</p>
                           </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white text-sm font-medium truncate">{media.title}</p>
-                          <p className="text-gray-400 text-xs">{media.type} {media.year && `• ${media.year}`}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setQuickAddMedia({
+                                title: media.title,
+                                mediaType: media.type || 'movie',
+                                imageUrl: media.image,
+                                externalId: media.external_id,
+                                externalSource: media.external_source || 'tmdb',
+                                creator: media.creator,
+                              });
+                              setIsQuickAddOpen(true);
+                            }}
+                            className="w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
+                          >
+                            <Plus size={16} className="text-white" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActionSheetMedia({
+                                title: media.title,
+                                mediaType: media.type || 'movie',
+                                imageUrl: media.image,
+                                externalId: media.external_id,
+                                externalSource: media.external_source || 'tmdb',
+                                creator: media.creator,
+                              });
+                              setIsQuickActionOpen(true);
+                            }}
+                            className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
+                          >
+                            <MessageSquarePlus size={14} className="text-white" />
+                            <Star size={8} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -547,7 +592,15 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
       {/* Quick Action Sheet */}
       <QuickActionSheet
         isOpen={isQuickActionOpen}
-        onClose={() => setIsQuickActionOpen(false)}
+        onClose={() => { setIsQuickActionOpen(false); setActionSheetMedia(null); }}
+        preselectedMedia={actionSheetMedia}
+      />
+
+      {/* Quick Add to List Sheet */}
+      <QuickAddListSheet
+        isOpen={isQuickAddOpen}
+        onClose={() => { setIsQuickAddOpen(false); setQuickAddMedia(null); }}
+        media={quickAddMedia}
       />
 
       {/* Feedback Dialog */}
