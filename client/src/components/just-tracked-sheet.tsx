@@ -171,8 +171,8 @@ export function JustTrackedSheet({
 
       const { data: items } = await supabase
         .from('list_items')
-        .select('media_type, creator, lists!inner(user_id)')
-        .eq('lists.user_id', user.id);
+        .select('media_type, creator, user_id')
+        .eq('user_id', user.id);
 
       if (!items || items.length === 0) return { typeStats: [], creatorCount: 0 };
 
