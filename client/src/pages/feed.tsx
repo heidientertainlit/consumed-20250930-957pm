@@ -274,6 +274,31 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
       }
       return post;
     });
+
+    const userIds = [...new Set(fixedPosts.map((p: any) => p.user?.id).filter(Boolean))];
+    if (userIds.length > 0) {
+      try {
+        const { data: users } = await supabase
+          .from('users')
+          .select('id, display_name, user_name')
+          .in('id', userIds);
+        if (users && users.length > 0) {
+          const userMap = new Map(users.map((u: any) => [u.id, u]));
+          fixedPosts.forEach((post: any) => {
+            if (post.user?.id) {
+              const dbUser = userMap.get(post.user.id);
+              if (dbUser) {
+                post.user.displayName = dbUser.display_name || dbUser.user_name || post.user.username;
+                post.user.display_name = dbUser.display_name || dbUser.user_name || post.user.username;
+              }
+            }
+          });
+        }
+      } catch (e) {
+        console.log('User display name lookup failed (non-blocking):', e);
+      }
+    }
+
     return fixedPosts;
   }
   

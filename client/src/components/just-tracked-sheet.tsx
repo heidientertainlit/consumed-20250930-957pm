@@ -167,7 +167,7 @@ export function JustTrackedSheet({
   }, [isOpen]);
 
   useEffect(() => {
-    if (phase === 'identity' && !isLoadingMoment && !dnaMoment) {
+    if (phase === 'identity' && !isLoadingMoment && dnaMoment === null) {
       setPhase('actions');
     }
   }, [phase, isLoadingMoment, dnaMoment]);
@@ -283,7 +283,7 @@ export function JustTrackedSheet({
           </p>
         </DrawerHeader>
         
-        {phase === 'identity' && isLoadingMoment ? (
+        {phase === 'identity' && (isLoadingMoment || dnaMoment === undefined) ? (
           <div className="px-4 py-8 flex flex-col items-center justify-center">
             <div className="w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mb-3" />
             <p className="text-sm text-gray-400">Loading DNA check...</p>
