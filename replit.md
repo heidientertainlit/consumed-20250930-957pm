@@ -5,6 +5,7 @@ Consumed is a mobile-first platform designed to transform entertainment consumpt
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+- When user asks "give me the code to push to git", provide `git push origin main` command. User deploys from their own git repo.
 
 ### CRITICAL Rules
 - **NEVER PUBLISH / DEPLOY the app.** User handles deployment themselves. Do not suggest or trigger publishing under any circumstances.
