@@ -32,7 +32,7 @@ export default function PublicProfilePage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate(`/user/${userId}`);
+      navigate(`/user/${userId}?ref=invite`);
     }
   }, [user, authLoading, userId, navigate]);
 

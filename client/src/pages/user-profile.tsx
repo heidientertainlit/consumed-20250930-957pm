@@ -1246,6 +1246,28 @@ export default function UserProfile() {
     }
   }, [session?.access_token, viewingUserId, isRouteResolving]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const isInvite = params.get('ref') === 'invite';
+    if (!isInvite) return;
+
+    const inviteKey = `invite_handled_${viewingUserId}`;
+    if (sessionStorage.getItem(inviteKey)) {
+      window.history.replaceState({}, '', window.location.pathname);
+      return;
+    }
+
+    if (!session?.access_token || !viewingUserId || isOwnProfile || friendshipStatus === 'loading') return;
+
+    if (friendshipStatus === 'none') {
+      sessionStorage.setItem(inviteKey, 'true');
+      window.history.replaceState({}, '', window.location.pathname);
+      sendFriendRequest(viewingUserId);
+    } else {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [friendshipStatus, isOwnProfile, viewingUserId, session?.access_token]);
+
   // Fetch DNA recommendations when DNA profile exists
   useEffect(() => {
     if (session?.access_token && dnaProfileStatus === 'has_profile' && isOwnProfile) {

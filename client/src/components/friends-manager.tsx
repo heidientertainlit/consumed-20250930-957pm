@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Search, Check, UserPlus, X, Share2 } from "lucide-react";
 import { useFriendsManagement } from "@/hooks/use-friends-management";
-import { copyLink } from "@/lib/share";
+import { urlFor } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 
 interface FriendsManagerProps {
@@ -29,11 +29,32 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
 
   const handleInviteFriends = async () => {
     if (!userId) return;
-    await copyLink({ kind: 'profile', id: userId });
-    toast({
-      title: "Invite Link Copied!",
-      description: "Share this link to invite friends to find you on consumed",
-    });
+    const inviteUrl = urlFor('profile', userId);
+    const shareText = "Join me on Consumed! Track what you're watching, reading, and listening to. Add me as a friend:";
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Join me on Consumed!",
+          text: shareText,
+          url: inviteUrl,
+        });
+        return;
+      } catch (err) {}
+    }
+
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      toast({
+        title: "Invite Link Copied!",
+        description: "Share this link to invite friends to find you on consumed",
+      });
+    } catch (err) {
+      toast({
+        title: "Your invite link",
+        description: inviteUrl,
+      });
+    }
   };
 
   return (
