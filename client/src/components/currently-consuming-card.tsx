@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -745,13 +746,14 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
         </SheetContent>
       </Sheet>
 
-      <Sheet open={isMoveSheetOpen} onOpenChange={setIsMoveSheetOpen}>
-        <SheetContent side="bottom" className="bg-white rounded-t-2xl">
-          <SheetHeader className="pb-4">
-            <SheetTitle className="text-lg font-semibold text-gray-900">Move to List</SheetTitle>
-          </SheetHeader>
+      <Drawer open={isMoveSheetOpen} onOpenChange={setIsMoveSheetOpen}>
+        <DrawerContent className="bg-white rounded-t-2xl">
+          <DrawerHeader className="text-center pb-2 border-b border-gray-100">
+            <DrawerTitle className="text-lg font-semibold text-gray-900">Add to List</DrawerTitle>
+            <p className="text-sm text-gray-500 mt-1">{item.title}</p>
+          </DrawerHeader>
           
-          <div className="space-y-2 pb-6">
+          <div className="px-4 py-4 max-h-[60vh] overflow-y-auto space-y-2">
             <button
               onClick={handleFinishWithRating}
               disabled={isUpdating}
@@ -813,8 +815,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
             </button>
 
             {customLists.length > 0 && (
-              <div className="border-t border-gray-100 my-2 pt-2">
-                <p className="px-4 py-1 text-xs font-medium text-gray-400 uppercase tracking-wide">Your Lists</p>
+              <>
                 {customLists.map((list: any) => (
                   <button
                     key={list.id}
@@ -831,7 +832,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
                     </div>
                   </button>
                 ))}
-              </div>
+              </>
             )}
 
             <div className="border-t border-gray-100 my-2 pt-2">
@@ -851,8 +852,8 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
               </button>
             </div>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DrawerContent>
+      </Drawer>
 
       <Sheet open={isRatingSheetOpen} onOpenChange={setIsRatingSheetOpen}>
         <SheetContent side="bottom" className="bg-white rounded-t-2xl p-0">

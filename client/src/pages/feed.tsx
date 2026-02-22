@@ -3718,7 +3718,7 @@ export default function Feed() {
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
                 {friendsConsuming.map((item: any, idx: number) => (
                   <Link key={item.id || idx} href={`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`}>
-                    <div className="w-[56px] flex-shrink-0 cursor-pointer group">
+                    <div className="w-[72px] flex-shrink-0 cursor-pointer group">
                       <div className="relative aspect-[2/3] rounded-md overflow-hidden mb-1 ring-1 ring-white/10 group-hover:ring-purple-400/50 transition-all">
                         {(item.image_url && item.image_url.startsWith('http')) ? (
                           <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
@@ -3747,7 +3747,7 @@ export default function Feed() {
                           <Plus size={10} className="text-white" strokeWidth={2.5} />
                         </button>
                       </div>
-                      <p className="text-[9px] text-white/60 truncate leading-tight">{item.title}</p>
+                      <p className="text-[10px] text-white/60 truncate leading-tight">{item.title}</p>
                     </div>
                   </Link>
                 ))}
