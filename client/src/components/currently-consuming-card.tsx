@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Film, Tv, BookOpen, Music, Headphones, Gamepad2, Play, MoreHorizontal, Check, X, Clock, Trophy, Star, Trash2 } from 'lucide-react';
+import { Film, Tv, BookOpen, Music, Headphones, Gamepad2, Play, Plus, Check, X, Clock, Trophy, Star, Trash2 } from 'lucide-react';
 import { DnfReasonDrawer } from '@/components/dnf-reason-drawer';
 
 interface CurrentlyConsumingCardProps {
@@ -368,7 +368,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
   return (
     <>
       <div 
-        className="w-20 flex-shrink-0"
+        className="w-28 flex-shrink-0"
         data-testid={`currently-card-${item.id}`}
       >
         <div 
@@ -399,7 +399,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
               <button 
                 onClick={(e) => { e.stopPropagation(); setIsProgressSheetOpen(true); }}
                 disabled={isUpdating}
-                className="flex-1 h-5 text-[9px] bg-purple-600/50 hover:bg-purple-600/70 text-white font-medium rounded px-1.5 transition-colors"
+                className="flex-1 h-6 text-[10px] bg-purple-600/50 hover:bg-purple-600/70 text-white font-medium rounded px-1.5 transition-colors"
                 data-testid={`button-edit-progress-${item.id}`}
               >
                 {getProgressDisplay()}
@@ -407,16 +407,16 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
               <button
                 onClick={(e) => { e.stopPropagation(); setIsMoveSheetOpen(true); }}
                 disabled={isUpdating}
-                className="h-5 w-5 bg-white/20 hover:bg-white/30 text-white rounded flex items-center justify-center"
+                className="h-6 w-6 bg-white/20 hover:bg-white/30 text-white rounded flex items-center justify-center"
                 data-testid={`button-more-${item.id}`}
               >
-                <MoreHorizontal size={10} />
+                <Plus size={10} />
               </button>
             </div>
           </div>
         </div>
 
-        <h4 className="text-[10px] font-medium text-gray-800 truncate px-0.5 mt-0.5">{item.title}</h4>
+        <h4 className="text-[11px] font-medium text-white truncate px-0.5 mt-0.5">{item.title}</h4>
       </div>
 
       <Sheet open={isProgressSheetOpen} onOpenChange={setIsProgressSheetOpen}>
