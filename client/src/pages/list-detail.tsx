@@ -74,7 +74,7 @@ function SortableListItem({ item, onRemove, onMove, isOwner }: SortableListItemP
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-gray-900 truncate text-sm">{item.title}</p>
+            <p className="font-medium text-gray-900 text-sm line-clamp-2">{item.title}</p>
             <p className="text-xs text-gray-500 truncate">{item.creator} · {item.type}</p>
           </div>
         </Link>
@@ -90,7 +90,7 @@ function SortableListItem({ item, onRemove, onMove, isOwner }: SortableListItemP
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-gray-900 truncate text-sm">{item.title}</p>
+            <p className="font-medium text-gray-900 text-sm line-clamp-2">{item.title}</p>
             <p className="text-xs text-gray-500 truncate">{item.creator} · {item.type}</p>
           </div>
         </div>
