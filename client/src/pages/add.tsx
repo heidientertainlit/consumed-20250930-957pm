@@ -868,14 +868,14 @@ export default function Search() {
                 </div>
               </div>
             )}
-            <div className="border-t border-white/[0.05] pt-3 flex items-center gap-1.5">
-              <span className="text-white/15 text-[11px]">Already know your taste?</span>
-              <Link href="/play" className="inline-flex items-center gap-1 text-purple-400/60 text-[11px] font-medium hover:text-purple-400 transition-colors">
-                <Target size={10} /> Play
+            <div className="border-t border-white/[0.05] pt-3 flex items-center gap-2">
+              <span className="text-white/25 text-[11px]">Or</span>
+              <Link href="/play" className="inline-flex items-center gap-1 text-purple-400/70 text-[11px] font-medium hover:text-purple-400 transition-colors">
+                <Target size={10} /> Play today's game
               </Link>
               <span className="text-white/10 text-[11px]">·</span>
-              <Link href="/activity" className="inline-flex items-center gap-1 text-orange-400/60 text-[11px] font-medium hover:text-orange-400 transition-colors">
-                <Flame size={10} /> Explore
+              <Link href="/activity" className="inline-flex items-center gap-1 text-orange-400/70 text-[11px] font-medium hover:text-orange-400 transition-colors">
+                <Flame size={10} /> See what's trending
               </Link>
             </div>
           </div>
