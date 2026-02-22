@@ -7,7 +7,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Film, Tv, BookOpen, Music, Headphones, Gamepad2, Play, Plus, Check, X, Clock, Trophy, Star, Trash2 } from 'lucide-react';
+import { Film, Tv, BookOpen, Music, Headphones, Gamepad2, Play, Plus, Check, X, Clock, Trophy, Star, Trash2, List } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { DnfReasonDrawer } from '@/components/dnf-reason-drawer';
 
 interface CurrentlyConsumingCardProps {
@@ -78,6 +79,70 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
     },
     enabled: isTv && isProgressSheetOpen && !!session?.access_token,
     staleTime: 1000 * 60 * 30,
+  });
+
+  const { data: customLists = [] } = useQuery({
+    queryKey: ['user-custom-lists-move', session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return [];
+      const { data: appUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', session.user.email)
+        .single();
+      if (!appUser) return [];
+      const { data, error } = await supabase
+        .from('lists')
+        .select('id, title, is_default')
+        .eq('user_id', appUser.id)
+        .eq('is_default', false)
+        .order('title');
+      if (error) return [];
+      return data || [];
+    },
+    enabled: isMoveSheetOpen && !!session?.user?.id,
+    staleTime: 60000,
+  });
+
+  const addToCustomListMutation = useMutation({
+    mutationFn: async ({ listId, listName }: { listId: string; listName: string }) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/add-to-custom-list`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            media: {
+              title: item.title,
+              mediaType: item.media_type || 'movie',
+              creator: item.creator || '',
+              imageUrl: item.image_url,
+              externalId: item.external_id,
+              externalSource: item.external_source,
+            },
+            customListId: listId,
+          }),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to add to list');
+      }
+      return { ...await response.json(), listName };
+    },
+    onSuccess: (data) => {
+      const isDuplicate = data?.message?.toLowerCase().includes('already');
+      toast({ title: isDuplicate ? 'Already in list!' : `Added to ${data.listName}` });
+      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      setIsMoveSheetOpen(false);
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to add to list', variant: 'destructive' });
+    },
   });
 
   const seasons = tvShowData?.seasons || [];
@@ -746,6 +811,28 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
                 <p className="text-sm text-gray-500">Add to your favorites</p>
               </div>
             </button>
+
+            {customLists.length > 0 && (
+              <div className="border-t border-gray-100 my-2 pt-2">
+                <p className="px-4 py-1 text-xs font-medium text-gray-400 uppercase tracking-wide">Your Lists</p>
+                {customLists.map((list: any) => (
+                  <button
+                    key={list.id}
+                    onClick={() => addToCustomListMutation.mutate({ listId: list.id, listName: list.title })}
+                    disabled={isUpdating || addToCustomListMutation.isPending}
+                    className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                  >
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      <List className="text-purple-600" size={20} />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{list.title}</p>
+                      <p className="text-sm text-gray-500">Add to this list</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="border-t border-gray-100 my-2 pt-2">
               <button
