@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Share2, Download, X, Check, Image } from "lucide-react";
+import { Share2, X, Check } from "lucide-react";
 
 interface ShareImageSheetProps {
   open: boolean;
@@ -21,41 +21,7 @@ export function ShareImageSheet({
   shareText,
   shareUrl,
 }: ShareImageSheetProps) {
-  const [saved, setSaved] = useState(false);
   const [shared, setShared] = useState(false);
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-  const handleShareWithImage = async () => {
-    if (!imageDataUrl) return;
-
-    try {
-      const response = await fetch(imageDataUrl);
-      const blob = await response.blob();
-      const file = new File([blob], fileName, { type: "image/png" });
-
-      if (navigator.share && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: title,
-          text: shareText || `Check this out on Consumed!`,
-        });
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-      }
-    } catch (err) {}
-  };
-
-  const handleDesktopDownload = () => {
-    if (!imageDataUrl) return;
-    const link = document.createElement("a");
-    link.download = fileName;
-    link.href = imageDataUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
 
   const handleShareLink = async () => {
     if (navigator.share) {
@@ -65,6 +31,12 @@ export function ShareImageSheet({
           text: shareText || `Check this out on Consumed!`,
           url: shareUrl || window.location.href,
         });
+        setShared(true);
+        setTimeout(() => setShared(false), 2000);
+      } catch (err) {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl || window.location.href);
         setShared(true);
         setTimeout(() => setShared(false), 2000);
       } catch (err) {}
@@ -79,48 +51,27 @@ export function ShareImageSheet({
         <h3 className="text-center font-semibold text-gray-900 mb-4">{title}</h3>
 
         {imageDataUrl && (
-          <div className="mx-auto mb-5 rounded-2xl overflow-hidden shadow-lg max-w-[280px]">
+          <div className="mx-auto mb-1 rounded-2xl overflow-hidden shadow-lg max-w-[280px]">
             <img
               src={imageDataUrl}
               alt="Preview"
               className="w-full h-auto"
             />
-            {isMobile && (
-              <p className="text-center text-[11px] text-gray-400 py-2 bg-gray-50">
-                Hold image above to save to photos
-              </p>
-            )}
           </div>
         )}
 
-        <div className="space-y-2 max-w-[320px] mx-auto">
-          {isMobile ? (
-            <button
-              onClick={handleShareWithImage}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-purple-600 text-white font-medium text-sm active:scale-[0.98] transition-all"
-            >
-              {saved ? <Check size={20} /> : <Share2 size={20} />}
-              <span className="flex-1 text-left">{saved ? "Done!" : "Share or Save Image"}</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleDesktopDownload}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-purple-600 text-white font-medium text-sm active:scale-[0.98] transition-all"
-            >
-              {saved ? <Check size={20} /> : <Download size={20} />}
-              <span className="flex-1 text-left">{saved ? "Saved!" : "Download Image"}</span>
-            </button>
-          )}
+        <p className="text-center text-[12px] text-gray-400 mb-5">
+          Hold image to save to your photos
+        </p>
 
-          {!isMobile && navigator.share && (
-            <button
-              onClick={handleShareLink}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-gray-100 text-gray-900 font-medium text-sm active:scale-[0.98] transition-all"
-            >
-              {shared ? <Check size={20} /> : <Share2 size={20} />}
-              <span className="flex-1 text-left">{shared ? "Shared!" : "Share Link"}</span>
-            </button>
-          )}
+        <div className="space-y-2 max-w-[320px] mx-auto">
+          <button
+            onClick={handleShareLink}
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-purple-600 text-white font-medium text-sm active:scale-[0.98] transition-all"
+          >
+            {shared ? <Check size={20} /> : <Share2 size={20} />}
+            <span className="flex-1 text-left">{shared ? "Link Copied!" : "Share Link"}</span>
+          </button>
 
           <button
             onClick={() => onOpenChange(false)}
