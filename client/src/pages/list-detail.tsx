@@ -130,6 +130,9 @@ export default function ListDetail() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [moveItem, setMoveItem] = useState<any>(null);
   const [duplicateConfirm, setDuplicateConfirm] = useState<{ itemId: string; targetListId: number; targetName: string; itemTitle: string } | null>(null);
+  const [rateAfterMoveItem, setRateAfterMoveItem] = useState<any>(null);
+  const [moveRating, setMoveRating] = useState(0);
+  const [isSubmittingMoveRating, setIsSubmittingMoveRating] = useState(false);
   
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState("");
@@ -730,6 +733,13 @@ export default function ListDetail() {
       const targetList = allUserLists.find((l: any) => l.id === variables.targetListId);
       const targetName = targetList ? getDisplayTitle(targetList.title) : 'list';
       toast({ title: variables.force ? `Removed from this list (already in ${targetName})` : `Moved to ${targetName}` });
+
+      const isFinishedList = targetList?.title?.toLowerCase() === 'finished';
+      if (isFinishedList && moveItem) {
+        setRateAfterMoveItem(moveItem);
+        setMoveRating(0);
+      }
+
       setMoveItem(null);
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
     },
@@ -1539,6 +1549,88 @@ export default function ListDetail() {
               className="w-full py-3 text-gray-400 text-sm hover:text-gray-600 transition-colors"
             >
               Keep in both lists
+            </button>
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      <Drawer open={!!rateAfterMoveItem} onOpenChange={(open) => { if (!open) { setRateAfterMoveItem(null); setMoveRating(0); } }}>
+        <DrawerContent className="bg-white rounded-t-2xl">
+          <DrawerHeader className="text-center pb-2 border-b border-gray-100">
+            <DrawerTitle className="text-lg font-semibold text-gray-900">You finished it!</DrawerTitle>
+            <p className="text-sm text-gray-500 mt-1">Rate &amp; review "{rateAfterMoveItem?.title}"?</p>
+          </DrawerHeader>
+          <div className="px-4 py-6 space-y-5">
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+              {rateAfterMoveItem?.artwork && rateAfterMoveItem.artwork.startsWith('http') ? (
+                <img src={rateAfterMoveItem.artwork} alt={rateAfterMoveItem.title} className="w-12 h-16 object-cover rounded-lg" />
+              ) : (
+                <div className="w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
+                  <Film size={16} className="text-purple-400" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-gray-900 text-sm line-clamp-2">{rateAfterMoveItem?.title}</p>
+                <p className="text-xs text-gray-500">{rateAfterMoveItem?.creator} · {rateAfterMoveItem?.type}</p>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <p className="text-sm font-medium text-gray-700 mb-3">How would you rate it?</p>
+              <div className="flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setMoveRating(s)}
+                    className="p-1 transition-transform hover:scale-110"
+                  >
+                    <Star size={32} className={s <= moveRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={async () => {
+                if (!session?.access_token || !rateAfterMoveItem || moveRating === 0) return;
+                setIsSubmittingMoveRating(true);
+                try {
+                  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+                  await fetch(`${supabaseUrl}/functions/v1/rate-media`, {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${session.access_token}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      media_external_id: rateAfterMoveItem.external_id,
+                      media_external_source: rateAfterMoveItem.external_source || 'tmdb',
+                      media_title: rateAfterMoveItem.title,
+                      media_type: rateAfterMoveItem.type || rateAfterMoveItem.media_type || 'movie',
+                      rating: moveRating,
+                    }),
+                  });
+                  toast({ title: `Rated ${rateAfterMoveItem.title} ${moveRating} stars` });
+                  queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+                  queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+                } catch {
+                  toast({ title: 'Failed to submit rating', variant: 'destructive' });
+                } finally {
+                  setIsSubmittingMoveRating(false);
+                  setRateAfterMoveItem(null);
+                  setMoveRating(0);
+                }
+              }}
+              disabled={moveRating === 0 || isSubmittingMoveRating}
+              className="w-full py-3 px-4 rounded-xl bg-purple-600 text-white font-medium text-sm hover:bg-purple-700 transition-colors disabled:opacity-50"
+            >
+              {isSubmittingMoveRating ? 'Submitting...' : 'Submit Rating'}
+            </button>
+            <button
+              onClick={() => { setRateAfterMoveItem(null); setMoveRating(0); }}
+              className="w-full py-3 text-gray-400 text-sm hover:text-gray-600 transition-colors"
+            >
+              Skip for now
             </button>
           </div>
         </DrawerContent>
