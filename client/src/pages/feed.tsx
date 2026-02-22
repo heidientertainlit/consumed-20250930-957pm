@@ -752,16 +752,16 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
             </div>
           </Link>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
                 <Link href={`/user/${post.user?.id || ''}`}>
                   <span className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer text-sm">{displayName}</span>
                 </Link>
                 {rawUsername && rawUsername !== displayName && (
-                  <span className="text-xs text-gray-400 truncate">@{rawUsername}</span>
+                  <p className="text-xs text-gray-400 leading-tight">@{rawUsername}</p>
                 )}
               </div>
-              <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">
+              <div className="flex items-center gap-1.5 flex-shrink-0">
                 {post.mediaType && (
                   <span className="text-[11px] font-medium text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full capitalize">
                     {post.mediaType === 'tv' ? 'TV' : post.mediaType}
@@ -4644,15 +4644,13 @@ export default function Feed() {
                                 </Link>
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className="text-gray-900">
-                                  <Link href={`/user/${post.user?.id}`}>
-                                    <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || formatUsername(post.user?.username)}</span>
-                                  </Link>
-                                  {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
-                                    <span className="text-xs text-gray-400 ml-1">@{post.user.username}</span>
-                                  )}
-                                  {' '}{post.content}
-                                </p>
+                                <Link href={`/user/${post.user?.id}`}>
+                                  <span className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">{post.user?.displayName || formatUsername(post.user?.username)}</span>
+                                </Link>
+                                {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
+                                  <p className="text-xs text-gray-400 leading-tight">@{post.user.username}</p>
+                                )}
+                                <p className="text-gray-900">{post.content}</p>
                                 <span className="text-xs text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
                               </div>
                             </div>
@@ -4799,14 +4797,14 @@ export default function Feed() {
                                 </Link>
                               )}
                               <div className="flex-1">
+                                <Link href={`/user/${post.user?.id}`}>
+                                  <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+                                </Link>
+                                {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
+                                  <p className="text-xs text-gray-400 leading-tight">@{post.user.username}</p>
+                                )}
                                 <p className="text-sm text-gray-900">
-                                  <Link href={`/user/${post.user?.id}`}>
-                                    <span className="font-semibold hover:text-purple-600 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
-                                  </Link>
-                                  {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
-                                    <span className="text-xs text-gray-400 ml-1">@{post.user.username}</span>
-                                  )}
-                                  {' '}cast{' '}
+                                  cast{' '}
                                   <span className="font-semibold">@{targetUserName}</span>
                                   {' '}as
                                 </p>
