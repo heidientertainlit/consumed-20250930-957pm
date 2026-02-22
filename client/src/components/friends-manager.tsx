@@ -29,13 +29,15 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
 
   const handleInviteFriends = async () => {
     if (!userId) return;
-    const inviteUrl = urlFor('profile', userId);
-    const shareText = "Join me on Consumed! Track what you're watching, reading, and listening to. Add me as a friend:";
+    const appBase = import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com';
+    const base = appBase.startsWith('http') ? appBase : `https://${appBase}`;
+    const inviteUrl = `${base}/u/${userId}`;
+    const shareText = "I'm using Consumed to track everything I watch, read, and listen to. Join me and we can compare tastes!";
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "Join me on Consumed!",
+          title: "Join me on Consumed",
           text: shareText,
           url: inviteUrl,
         });
@@ -44,10 +46,11 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
     }
 
     try {
-      await navigator.clipboard.writeText(inviteUrl);
+      const fullText = `${shareText}\n${inviteUrl}`;
+      await navigator.clipboard.writeText(fullText);
       toast({
-        title: "Invite Link Copied!",
-        description: "Share this link to invite friends to find you on consumed",
+        title: "Invite copied!",
+        description: "Paste and send to a friend to invite them.",
       });
     } catch (err) {
       toast({
