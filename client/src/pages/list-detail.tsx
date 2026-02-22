@@ -513,17 +513,21 @@ export default function ListDetail() {
 
     try {
       const allItems = listData.items || [];
+      const maxItems = 20;
+      const displayItems = allItems.slice(0, maxItems);
+      const extraCount = allItems.length - displayItems.length;
       const cols = 4;
       const canvasWidth = 1080;
       const padding = 60;
       const gap = 12;
       const cellWidth = Math.floor((canvasWidth - padding * 2 - gap * (cols - 1)) / cols);
       const cellHeight = Math.floor(cellWidth * 1.5);
-      const rows = Math.ceil(allItems.length / cols);
+      const rows = Math.ceil(displayItems.length / cols);
 
       const titleHeight = 100;
+      const moreHeight = extraCount > 0 ? 50 : 0;
       const footerHeight = 80;
-      const canvasHeight = padding + titleHeight + rows * cellHeight + (rows - 1) * gap + footerHeight + padding;
+      const canvasHeight = padding + titleHeight + rows * cellHeight + (rows - 1) * gap + moreHeight + footerHeight + padding;
 
       const scale = 2;
       const canvas = document.createElement('canvas');
@@ -546,7 +550,7 @@ export default function ListDetail() {
 
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
       ctx.font = '400 20px system-ui, -apple-system, sans-serif';
-      ctx.fillText(`${listData.items.length} items`, canvasWidth / 2, padding + 78);
+      ctx.fillText(`${allItems.length} items`, canvasWidth / 2, padding + 78);
 
       const loadImage = (url: string): Promise<HTMLImageElement | null> => {
         return new Promise((resolve) => {
@@ -560,12 +564,12 @@ export default function ListDetail() {
       };
 
       const images = await Promise.all(
-        allItems.map((item: any) => item.artwork ? loadImage(item.artwork) : Promise.resolve(null))
+        displayItems.map((item: any) => item.artwork ? loadImage(item.artwork) : Promise.resolve(null))
       );
 
       const gridTop = padding + titleHeight;
 
-      allItems.forEach((item: any, idx: number) => {
+      displayItems.forEach((item: any, idx: number) => {
         const col = idx % cols;
         const row = Math.floor(idx / cols);
         const x = padding + col * (cellWidth + gap);
@@ -612,6 +616,15 @@ export default function ListDetail() {
 
         ctx.restore();
       });
+
+      const afterGrid = gridTop + rows * cellHeight + (rows - 1) * gap;
+
+      if (extraCount > 0) {
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = '500 24px system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`+ ${extraCount} more`, canvasWidth / 2, afterGrid + 35);
+      }
 
       ctx.fillStyle = 'rgba(255,255,255,0.8)';
       ctx.font = '700 40px system-ui, -apple-system, sans-serif';
