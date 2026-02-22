@@ -879,24 +879,23 @@ export default function Search() {
             </button>
 
             {/* Already know your taste? */}
-            <div className="space-y-2.5">
-              <p className="text-white/20 text-[11px] font-medium tracking-wide uppercase pl-1">Already know your taste?</p>
-              <div className="flex flex-col gap-1.5">
+            <div className="text-center space-y-1.5 pt-1">
+              <p className="text-white/20 text-[11px] font-medium tracking-wide uppercase">Already know your taste?</p>
+              <div className="flex items-center justify-center gap-4">
                 <Link
                   href="/play"
-                  className="flex items-center gap-3 rounded-2xl px-5 py-3.5 backdrop-blur-md bg-white/[0.04] border border-white/[0.06] text-white/80 text-[13px] font-medium hover:bg-white/[0.07] transition-all active:scale-[0.98] group"
+                  className="inline-flex items-center gap-1.5 text-white/50 text-[12px] font-medium hover:text-white/80 transition-colors"
                 >
-                  <Target size={15} className="text-purple-400/80 flex-shrink-0" />
-                  <span className="flex-1">Play today's game</span>
-                  <ChevronRight size={14} className="text-white/15 group-hover:text-white/30 transition-colors" />
+                  <Target size={12} className="text-purple-400/70" />
+                  Play today's game
                 </Link>
+                <span className="text-white/10">·</span>
                 <Link
                   href="/activity"
-                  className="flex items-center gap-3 rounded-2xl px-5 py-3.5 backdrop-blur-md bg-white/[0.04] border border-white/[0.06] text-white/80 text-[13px] font-medium hover:bg-white/[0.07] transition-all active:scale-[0.98] group"
+                  className="inline-flex items-center gap-1.5 text-white/50 text-[12px] font-medium hover:text-white/80 transition-colors"
                 >
-                  <Flame size={15} className="text-orange-400/80 flex-shrink-0" />
-                  <span className="flex-1">See what everyone's into</span>
-                  <ChevronRight size={14} className="text-white/15 group-hover:text-white/30 transition-colors" />
+                  <Flame size={12} className="text-orange-400/70" />
+                  See what everyone's into
                 </Link>
               </div>
             </div>
