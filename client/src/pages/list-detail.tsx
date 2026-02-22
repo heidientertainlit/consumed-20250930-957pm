@@ -4,6 +4,7 @@ import { QuickAddModal } from "@/components/quick-add-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical, LayoutGrid, List, Search, Film, Tv, BookOpen, Music, ChevronRight, Star, GripVertical, Download, ArrowRightLeft } from "lucide-react";
+import { ShareImageSheet } from "@/components/share-image-sheet";
 import { Switch } from "@/components/ui/switch";
 import { useLocation, Link } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -503,6 +504,8 @@ export default function ListDetail() {
   };
 
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
 
   const handleDownloadImage = useCallback(async () => {
     if (!listData?.items?.length || isGeneratingImage) return;
@@ -615,39 +618,12 @@ export default function ListDetail() {
       ctx.textAlign = 'center';
       ctx.fillText('@consumedapp', canvasWidth / 2, canvasHeight - padding + 10);
 
-      const listFileName = (listData.name || 'list').toLowerCase().replace(/\s+/g, '-');
-
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob((b) => resolve(b), 'image/png')
-      );
-
-      if (!blob) {
-        throw new Error('Failed to generate image');
-      }
-
-      const fileName = `${listFileName}-consumedapp.png`;
-      const file = new File([blob], fileName, { type: 'image/png' });
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-      if (isMobile && navigator.share && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file] });
-          toast({ title: "Tap 'Save Image' to save to your photos!", description: "Select it from the menu that appeared" });
-        } catch (err) {}
-      } else {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = fileName;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
-        toast({ title: "Image Downloaded", description: "Share it on social media!" });
-      }
+      const dataUrl = canvas.toDataURL('image/png');
+      setShareImageUrl(dataUrl);
+      setShareSheetOpen(true);
     } catch (error) {
       console.error('Error generating image:', error);
-      toast({ title: "Download Failed", description: "Could not generate image", variant: "destructive" });
+      toast({ title: "Error", description: "Could not generate image", variant: "destructive" });
     } finally {
       setIsGeneratingImage(false);
     }
@@ -1064,7 +1040,7 @@ export default function ListDetail() {
                 disabled={isGeneratingImage || !listData?.items?.length}
                 className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors disabled:opacity-40"
                 data-testid="button-download-list"
-                aria-label="Download as image"
+                aria-label="Share as image"
               >
                 <Download size={16} className={isGeneratingImage ? 'animate-pulse' : ''} />
               </button>
@@ -1126,18 +1102,11 @@ export default function ListDetail() {
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm active:scale-[0.98] transition-all disabled:opacity-50"
             >
               {isGeneratingImage ? (
-                <Download size={16} className="animate-pulse" />
+                <Share2 size={16} className="animate-pulse" />
               ) : (
-                <Download size={16} />
+                <Share2 size={16} />
               )}
-              Save to Photos
-            </button>
-            <button
-              onClick={handleShare}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold text-sm active:scale-[0.98] transition-all"
-            >
-              {copied ? <Check size={16} className="text-green-500" /> : <Share2 size={16} />}
-              {copied ? 'Copied!' : 'Share Link'}
+              {isGeneratingImage ? 'Generating...' : 'Share List'}
             </button>
           </div>
         )}
@@ -1635,6 +1604,15 @@ export default function ListDetail() {
           </div>
         </DrawerContent>
       </Drawer>
+
+      <ShareImageSheet
+        open={shareSheetOpen}
+        onOpenChange={setShareSheetOpen}
+        imageDataUrl={shareImageUrl}
+        fileName={`${(listData?.name || 'list').toLowerCase().replace(/\s+/g, '-')}-consumedapp.png`}
+        title={listData?.name || 'Your List'}
+        shareText={`Check out my "${listData?.name}" list on Consumed!`}
+      />
 
     </div>
   );
