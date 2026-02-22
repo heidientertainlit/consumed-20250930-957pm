@@ -845,6 +845,8 @@ export default function Search() {
                   <p className="text-white text-sm font-semibold">
                     <span className="mr-1.5">🧠</span>You've unlocked your DNA.
                   </p>
+                  <p className="text-purple-300/70 text-xs mt-0.5">Keep building to sharpen your profile.</p>
+                  <p className="text-purple-400/50 text-[10px] mt-1">{totalItemsAdded} title{totalItemsAdded !== 1 ? 's' : ''} added</p>
                 </div>
               ) : (
                 <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3">
