@@ -403,8 +403,11 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
           'review': 'rate-review',
         };
         
-        // Create the social post (unless private mode is enabled)
-        if (!privateMode) {
+        // If rating is provided, let rate-media handle the social post (it stores ratings properly)
+        // Otherwise use inline-post for thoughts/hot takes
+        if (selectedMedia && rating > 0) {
+          await addRating(supabaseUrl, session.access_token, selectedMedia, externalId!, externalSource!, reviewText.trim(), containsSpoilers, privateMode);
+        } else if (!privateMode) {
           const response = await fetch(
             `${supabaseUrl}/functions/v1/inline-post`,
             {
@@ -423,7 +426,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                   media_external_source: externalSource,
                   media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image,
                 }),
-                ...(rating > 0 && { rating }),
                 contains_spoilers: containsSpoilers,
               }),
             }
@@ -438,13 +440,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
         // If media is attached AND user selected a list, track it
         if (selectedMedia && mediaData && selectedListId && selectedListId !== '' && selectedListId !== 'none') {
           await trackMediaToList(supabaseUrl, session.access_token, mediaData, selectedListId, privateMode, rewatchCount, dnfReason);
-        }
-        
-        // If rating is provided, save the rating
-        // Skip the social post from rate-media since inline-post already created one above
-        if (selectedMedia && rating > 0) {
-          const alreadyPosted = !privateMode;
-          await addRating(supabaseUrl, session.access_token, selectedMedia, externalId!, externalSource!, alreadyPosted ? '' : reviewText.trim(), containsSpoilers, alreadyPosted);
         }
         
       } else if (postType === 'prediction') {
