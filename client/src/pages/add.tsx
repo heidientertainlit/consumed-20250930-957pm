@@ -147,6 +147,21 @@ export default function Search() {
 
   const voiceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const { data: dnaProfile } = useQuery({
+    queryKey: ['dna-profile-home', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('dna_profiles')
+        .select('label, tagline')
+        .eq('user_id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 10,
+  });
+
   const startVoiceRecognition = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -835,15 +850,36 @@ export default function Search() {
         {/* DNA + Quick Links (only when no search query) */}
         {!searchQuery.trim() && (
           <div className="w-full max-w-xl mt-6 rounded-lg backdrop-blur-md bg-white/[0.03] border border-white/[0.06] px-5 py-4">
-            {totalItemsAdded >= 3 ? (
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-7 h-7 rounded-md bg-purple-500/15 flex items-center justify-center flex-shrink-0">
-                  <Brain size={14} className="text-purple-400" />
+            {totalItemsAdded >= 3 && dnaProfile ? (
+              <div className="mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-md bg-purple-500/15 flex items-center justify-center flex-shrink-0">
+                    <Brain size={14} className="text-purple-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/80 text-[13px] font-medium tracking-tight">You've unlocked your DNA.</p>
+                    <p className="text-white/30 text-[11px]">{dnaProfile.label} <span className="text-white/15 mx-1">·</span> <span className="text-white/20">{totalItemsAdded} title{totalItemsAdded !== 1 ? 's' : ''}</span></p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white/80 text-[13px] font-medium tracking-tight">You've unlocked your DNA.</p>
-                  <p className="text-white/25 text-[11px]">Keep building to sharpen your profile. <span className="text-white/15">{totalItemsAdded} title{totalItemsAdded !== 1 ? 's' : ''}</span></p>
+                <p className="text-white/25 text-[11px] mt-2 ml-10">Add more media to sharpen your profile.</p>
+              </div>
+            ) : totalItemsAdded >= 3 && !dnaProfile ? (
+              <div className="mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-md bg-purple-500/15 flex items-center justify-center flex-shrink-0">
+                    <Brain size={14} className="text-purple-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/80 text-[13px] font-medium tracking-tight">You've added {totalItemsAdded} titles.</p>
+                    <p className="text-white/30 text-[11px]">Take the DNA Quiz to unlock your entertainment profile.</p>
+                  </div>
                 </div>
+                <Link
+                  href="/entertainment-dna"
+                  className="mt-2 ml-10 inline-flex items-center gap-1.5 text-purple-400/80 text-[11px] font-medium hover:text-purple-400 transition-colors"
+                >
+                  <Sparkles size={10} /> Take the Quiz
+                </Link>
               </div>
             ) : (
               <div className="mb-3">
