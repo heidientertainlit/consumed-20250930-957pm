@@ -18,7 +18,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus, Trash2 } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { 
@@ -3518,6 +3518,46 @@ export default function UserProfile() {
                 <LogOut size={16} className="mr-2" />
                 Logout
               </Button>
+            </div>
+
+            <div className="flex justify-center mt-16">
+              <button
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors underline"
+                onClick={async () => {
+                  const firstConfirm = confirm('Are you sure? This permanently deletes your account.');
+                  if (!firstConfirm) return;
+                  const secondConfirm = confirm('This cannot be undone. All your data, lists, reviews, and friends will be permanently removed. Continue?');
+                  if (!secondConfirm) return;
+                  
+                  try {
+                    const session = (await supabase.auth.getSession()).data.session;
+                    if (!session) {
+                      toast({ title: "Error", description: "Please log in again to delete your account.", variant: "destructive" });
+                      return;
+                    }
+                    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                    const response = await fetch(`${supabaseUrl}/functions/v1/delete-account`, {
+                      method: 'POST',
+                      headers: {
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'Content-Type': 'application/json',
+                      },
+                    });
+                    if (!response.ok) {
+                      const err = await response.json().catch(() => ({}));
+                      throw new Error(err.error || 'Failed to delete account');
+                    }
+                    await supabase.auth.signOut();
+                    window.location.href = '/login';
+                  } catch (err: any) {
+                    toast({ title: "Error", description: err.message || "Failed to delete account. Please try again.", variant: "destructive" });
+                  }
+                }}
+                data-testid="button-delete-account"
+              >
+                <Trash2 size={12} className="inline mr-1" />
+                Delete Account
+              </button>
             </div>
           </div>
         )}
