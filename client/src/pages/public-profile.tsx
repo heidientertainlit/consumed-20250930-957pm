@@ -41,17 +41,21 @@ export default function PublicProfilePage() {
     queryFn: async () => {
       if (!userId) throw new Error('No user ID');
       
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-profile?user_id=${userId}`,
         {
           headers: {
             'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'apikey': anonKey,
+            'Authorization': `Bearer ${anonKey}`,
           },
         }
       );
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Public profile fetch failed:', response.status, errorText);
         throw new Error('Failed to fetch profile');
       }
       
