@@ -628,6 +628,8 @@ export default function MediaDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       queryClient.invalidateQueries({ queryKey: ['media-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['media-social-activity', params?.source, params?.id] });
+      queryClient.invalidateQueries({ queryKey: ['user-media-rating', params?.source, params?.id] });
       toast({
         title: "Review deleted",
         description: "Your review has been removed",
@@ -736,7 +738,29 @@ export default function MediaDetail() {
           if (!predResponse.ok) throw new Error("Failed to create prediction");
         }
       } else {
-        if (composeText.trim()) {
+        if (composeType === 'review' && composeRating > 0) {
+          const rateResponse = await fetch(
+            `${supabaseUrl}/functions/v1/rate-media`,
+            {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${session.access_token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                media_external_id: params?.id,
+                media_external_source: params?.source,
+                media_title: mediaItem.title,
+                media_type: (mediaItem.type || params?.type || 'movie').toLowerCase(),
+                media_image_url: resolvedImageUrl,
+                rating: composeRating,
+                review_content: composeText.trim() || null,
+                skip_social_post: false,
+              }),
+            }
+          );
+          if (!rateResponse.ok) console.error('Rating failed');
+        } else if (composeText.trim()) {
           await supabase.from('social_posts').insert({
             user_id: authUser.id,
             content: composeText,
@@ -750,32 +774,6 @@ export default function MediaDetail() {
             fire_votes: 0,
             ice_votes: 0,
           });
-        }
-
-        if (composeType === 'review' && composeRating > 0) {
-          const rateResponse = await fetch(
-            `${supabaseUrl}/functions/v1/rate-media`,
-            {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${session.access_token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                media: {
-                  title: mediaItem.title,
-                  mediaType: mediaItem.type || params?.type,
-                  creator: mediaItem.creator,
-                  imageUrl: resolvedImageUrl,
-                  externalId: params?.id,
-                  externalSource: params?.source,
-                },
-                rating: composeRating,
-                review: composeText.trim() || null,
-              }),
-            }
-          );
-          if (!rateResponse.ok) console.error('Rating failed');
         }
       }
 
@@ -792,6 +790,8 @@ export default function MediaDetail() {
       setComposePredictionOptions(["", ""]);
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
       queryClient.invalidateQueries({ queryKey: ['media-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['media-social-activity', params?.source, params?.id] });
+      queryClient.invalidateQueries({ queryKey: ['user-media-rating', params?.source, params?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       toast({ title: "Posted!", description: "Your post has been shared." });
     } catch (error) {
@@ -1255,12 +1255,34 @@ export default function MediaDetail() {
                   <div className="bg-purple-50 rounded-xl p-4 mt-3 border border-purple-100">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold text-purple-700">Your Rating</span>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                        <span className="font-bold text-gray-900">{userReview?.rating || userRating?.rating}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                          <span className="font-bold text-gray-900">{userReview?.rating || userRating?.rating}</span>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            if (!confirm('Delete your rating and review for this media?')) return;
+                            try {
+                              if (userReview) {
+                                await supabase.from('social_posts').delete().eq('id', userReview.id).eq('user_id', user?.id);
+                              }
+                              await supabase.from('media_ratings').delete().eq('media_external_id', params?.id).eq('media_external_source', params?.source).eq('user_id', user?.id);
+                              queryClient.invalidateQueries({ queryKey: ['media-social-activity', params?.source, params?.id] });
+                              queryClient.invalidateQueries({ queryKey: ['user-media-rating', params?.source, params?.id] });
+                              queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+                              toast({ title: "Rating deleted", description: "Your rating has been removed" });
+                            } catch (err) {
+                              toast({ title: "Error", description: "Failed to delete rating", variant: "destructive" });
+                            }
+                          }}
+                          className="text-gray-400 hover:text-red-500 transition-colors"
+                          title="Delete your rating"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
-                    {/* Show user's review if they have one */}
                     {userReview?.content && (
                       <p className="text-gray-700 text-sm leading-relaxed mt-2">{userReview.content}</p>
                     )}
