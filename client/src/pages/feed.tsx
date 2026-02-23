@@ -24,7 +24,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 import { HotTakeFeedCard } from "@/components/hot-take-feed-card";
-import { Star, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play } from "lucide-react";
+import { Star, StarHalf, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -777,9 +777,12 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
 
             {!post.mediaTitle && post.rating && post.rating > 0 && (
               <div className="flex items-center gap-0.5 mt-2">
-                {[1, 2, 3, 4, 5].map(s => (
-                  <Star key={s} size={13} className={s <= post.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
-                ))}
+                {[1, 2, 3, 4, 5].map(s => {
+                  const r = post.rating!;
+                  if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
+                  if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                  return <Star key={s} size={13} className="text-gray-200" />;
+                })}
               </div>
             )}
 
@@ -820,9 +823,12 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
               )}
               {post.rating && post.rating > 0 && (
                 <div className="flex items-center gap-0.5 mt-1">
-                  {[1, 2, 3, 4, 5].map(s => (
-                    <Star key={s} size={14} className={s <= post.rating! ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
-                  ))}
+                  {[1, 2, 3, 4, 5].map(s => {
+                    const r = post.rating!;
+                    if (s <= Math.floor(r)) return <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />;
+                    if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={14} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={14} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                    return <Star key={s} size={14} className="text-gray-200" />;
+                  })}
                 </div>
               )}
               {post.content && (
