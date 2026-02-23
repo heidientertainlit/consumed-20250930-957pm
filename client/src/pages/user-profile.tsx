@@ -3476,7 +3476,7 @@ export default function UserProfile() {
 
         {/* Feedback and Logout Buttons - Only shown on own profile, at bottom */}
         {isOwnProfile && (
-          <div className="px-4 pb-32 pt-12 relative z-[51]">
+          <div className="px-4 pb-32 pt-12">
             <div className="flex justify-center gap-3">
               <Button 
                 variant="outline" 

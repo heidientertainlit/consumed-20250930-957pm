@@ -254,7 +254,7 @@ export default function LoginPage() {
                       className="text-xs text-purple-500 hover:text-purple-700 font-medium transition-colors"
                       data-testid="link-forgot-password"
                     >
-                      I forgot password
+                      Forgot password
                     </button>
                   </div>
                 </div>
