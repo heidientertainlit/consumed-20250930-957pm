@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Film, Tv, Users, Share2, Dna, Sparkles, Clock, BarChart3, Send, Lock, Heart, X } from "lucide-react";
+import { Loader2, Film, Tv, Users, Share2, Dna, Sparkles, Clock, BarChart3, Send, Lock, Heart, X, RefreshCw, Check } from "lucide-react";
 import { ShareImageSheet } from "@/components/share-image-sheet";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
@@ -338,26 +338,59 @@ export default function DnaPage() {
         <div className="max-w-7xl mx-auto px-4 pt-4 pb-6 space-y-4">
           {activeTab === 'dna' && (
             <div className="space-y-4">
-              <div className="bg-gradient-to-r from-purple-500 via-blue-500 to-teal-400 rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Dna className="text-white" size={20} />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-sm text-white">Complete Your DNA</h3>
-                    <p className="text-white/80 text-xs">Answer more questions to unlock personalized insights</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => setLocation('/entertainment-dna')}
-                      size="sm"
-                      className="bg-white text-purple-600 hover:bg-white/90 text-xs font-semibold"
-                    >
-                      Take DNA Quiz
-                    </Button>
+              {hasSurvey ? (
+                <div className="bg-gradient-to-r from-purple-500 via-blue-500 to-teal-400 rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Check className="text-white" size={20} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-sm text-white">DNA Quiz Complete</h3>
+                      <p className="text-white/80 text-xs">Share your results or retake to update your profile</p>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <Button
+                        onClick={handleShareSummary}
+                        size="sm"
+                        className="bg-white text-purple-600 hover:bg-white/90 text-xs font-semibold"
+                      >
+                        <Share2 size={12} className="mr-1" />
+                        Share
+                      </Button>
+                      <Button
+                        onClick={() => setLocation('/entertainment-dna')}
+                        size="sm"
+                        variant="outline"
+                        className="border-white/40 text-white hover:bg-white/10 text-xs font-semibold"
+                      >
+                        <RefreshCw size={12} className="mr-1" />
+                        Retake
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-gradient-to-r from-purple-500 via-blue-500 to-teal-400 rounded-xl p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Dna className="text-white" size={20} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-sm text-white">Complete Your DNA</h3>
+                      <p className="text-white/80 text-xs">Answer more questions to unlock personalized insights</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => setLocation('/entertainment-dna')}
+                        size="sm"
+                        className="bg-white text-purple-600 hover:bg-white/90 text-xs font-semibold"
+                      >
+                        Take DNA Quiz
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                 <h2 className="text-base font-semibold text-gray-900 mb-3">Your Stats</h2>
