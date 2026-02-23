@@ -124,9 +124,7 @@ export default function PublicProfilePage() {
         </Helmet>
         <div className="min-h-screen bg-gradient-to-b from-purple-900 via-gray-900 to-black flex flex-col items-center justify-center p-4">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              consumed
-            </h1>
+            <img src="/consumed-logo-new.png" alt="consumed" className="h-8 mx-auto mb-2" />
             <p className="text-purple-300 text-sm">Track. Play. Connect.</p>
           </div>
 
@@ -136,16 +134,15 @@ export default function PublicProfilePage() {
             </div>
             <h2 className="text-xl font-bold text-white mb-2">You've been invited!</h2>
             <p className="text-white/60 text-sm mb-6 leading-relaxed">
-              Your friend wants you to join consumed — track what you watch, read, and listen to, take quizzes, and compare entertainment tastes.
+              Your friend wants you to join consumed — track what you watch, read, and listen to, take quizzes, and discover your entertainment DNA.
             </p>
             <Button 
               onClick={handleJoin}
               className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 text-base"
               data-testid="button-join-invited"
             >
-              Join consumed — It's Free
+              Join your friends on consumed
             </Button>
-            <p className="text-white/30 text-xs mt-3">No credit card required</p>
           </div>
 
           <div className="mt-8 grid grid-cols-3 gap-4 max-w-sm w-full">
