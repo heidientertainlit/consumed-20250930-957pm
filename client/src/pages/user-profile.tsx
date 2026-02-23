@@ -3536,16 +3536,19 @@ export default function UserProfile() {
                       return;
                     }
                     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+                    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
                     const response = await fetch(`${supabaseUrl}/functions/v1/delete-account`, {
                       method: 'POST',
                       headers: {
                         'Authorization': `Bearer ${session.access_token}`,
+                        'apikey': anonKey,
                         'Content-Type': 'application/json',
                       },
                     });
                     if (!response.ok) {
                       const err = await response.json().catch(() => ({}));
-                      throw new Error(err.error || 'Failed to delete account');
+                      console.error('Delete account response:', JSON.stringify(err));
+                      throw new Error(err.authError || err.error || 'Failed to delete account');
                     }
                     await supabase.auth.signOut();
                     window.location.href = '/login';
