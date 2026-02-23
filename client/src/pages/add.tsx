@@ -859,9 +859,9 @@ export default function Search() {
                   <div className="flex-1 min-w-0">
                     <p className="text-white/80 text-[13px] font-medium tracking-tight">You've unlocked your DNA.</p>
                     <p className="text-white/30 text-[11px]">{dnaProfile.label} <span className="text-white/15 mx-1">·</span> <span className="text-white/20">{totalItemsAdded} title{totalItemsAdded !== 1 ? 's' : ''}</span></p>
+                    <p className="text-white/25 text-[11px] mt-0.5">Add more media to sharpen your profile.</p>
                   </div>
                 </div>
-                <p className="text-white/25 text-[11px] mt-2 ml-10">Add more media to sharpen your profile.</p>
               </div>
             ) : totalItemsAdded >= 3 && !dnaProfile ? (
               <div className="mb-3">
