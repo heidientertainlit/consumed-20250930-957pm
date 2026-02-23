@@ -340,7 +340,7 @@ export default function DnaPage() {
             <div className="space-y-4">
               {hasSurvey ? (
                 <div className="bg-gradient-to-r from-purple-500 via-blue-500 to-teal-400 rounded-xl p-4">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
                       <Check className="text-white" size={20} />
                     </div>
@@ -348,25 +348,24 @@ export default function DnaPage() {
                       <h3 className="font-semibold text-sm text-white">DNA Quiz Complete</h3>
                       <p className="text-white/80 text-xs">Share your results or retake to update your profile</p>
                     </div>
-                    <div className="flex gap-1.5">
-                      <Button
-                        onClick={handleShareSummary}
-                        size="sm"
-                        className="bg-white text-purple-600 hover:bg-white/90 text-xs font-semibold"
-                      >
-                        <Share2 size={12} className="mr-1" />
-                        Share
-                      </Button>
-                      <Button
-                        onClick={() => setLocation('/entertainment-dna')}
-                        size="sm"
-                        variant="outline"
-                        className="border-white/40 text-white hover:bg-white/10 text-xs font-semibold"
-                      >
-                        <RefreshCw size={12} className="mr-1" />
-                        Retake
-                      </Button>
-                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleShareSummary}
+                      size="sm"
+                      className="flex-1 bg-white text-purple-600 hover:bg-white/90 text-xs font-semibold"
+                    >
+                      <Share2 size={12} className="mr-1" />
+                      Share Results
+                    </Button>
+                    <Button
+                      onClick={() => setLocation('/entertainment-dna')}
+                      size="sm"
+                      className="flex-1 bg-white/20 text-white hover:bg-white/30 text-xs font-semibold"
+                    >
+                      <RefreshCw size={12} className="mr-1" />
+                      Retake Quiz
+                    </Button>
                   </div>
                 </div>
               ) : (
