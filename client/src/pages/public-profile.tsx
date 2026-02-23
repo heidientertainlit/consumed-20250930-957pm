@@ -115,15 +115,55 @@ export default function PublicProfilePage() {
 
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-900 via-gray-900 to-black flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl p-8 max-w-md text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile Not Found</h2>
-          <p className="text-gray-600 mb-6">This profile doesn't exist or is private.</p>
-          <Button onClick={() => navigate('/login')} className="bg-purple-600 hover:bg-purple-700">
-            Join consumed
-          </Button>
+      <>
+        <Helmet>
+          <title>You're Invited to consumed</title>
+          <meta name="description" content="Track everything you watch, read, and listen to. Join consumed and compare tastes with friends." />
+          <meta property="og:title" content="You're Invited to consumed" />
+          <meta property="og:description" content="Track everything you watch, read, and listen to. Compare tastes with friends." />
+        </Helmet>
+        <div className="min-h-screen bg-gradient-to-b from-purple-900 via-gray-900 to-black flex flex-col items-center justify-center p-4">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              consumed
+            </h1>
+            <p className="text-purple-300 text-sm">Track. Play. Connect.</p>
+          </div>
+
+          <div className="bg-white/[0.06] backdrop-blur-md border border-white/[0.1] rounded-2xl p-8 max-w-sm w-full text-center">
+            <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
+              <Star className="w-8 h-8 text-purple-400" />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">You've been invited!</h2>
+            <p className="text-white/60 text-sm mb-6 leading-relaxed">
+              Your friend wants you to join consumed — track what you watch, read, and listen to, take quizzes, and compare entertainment tastes.
+            </p>
+            <Button 
+              onClick={handleJoin}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 text-base"
+              data-testid="button-join-invited"
+            >
+              Join consumed — It's Free
+            </Button>
+            <p className="text-white/30 text-xs mt-3">No credit card required</p>
+          </div>
+
+          <div className="mt-8 grid grid-cols-3 gap-4 max-w-sm w-full">
+            <div className="bg-white/[0.04] rounded-xl p-3 text-center">
+              <Film className="w-5 h-5 text-purple-400 mx-auto mb-1" />
+              <p className="text-white/50 text-[10px]">Track Media</p>
+            </div>
+            <div className="bg-white/[0.04] rounded-xl p-3 text-center">
+              <Trophy className="w-5 h-5 text-purple-400 mx-auto mb-1" />
+              <p className="text-white/50 text-[10px]">Play & Compete</p>
+            </div>
+            <div className="bg-white/[0.04] rounded-xl p-3 text-center">
+              <TrendingUp className="w-5 h-5 text-purple-400 mx-auto mb-1" />
+              <p className="text-white/50 text-[10px]">Compare Tastes</p>
+            </div>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
