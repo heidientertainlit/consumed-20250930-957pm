@@ -440,8 +440,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
         }
         
         // If rating is provided, add it (with review content and spoiler flag)
+        // Skip social post since inline-post already created one above
         if (selectedMedia && rating > 0) {
-          await addRating(supabaseUrl, session.access_token, selectedMedia, externalId!, externalSource!, reviewText.trim(), containsSpoilers, privateMode);
+          await addRating(supabaseUrl, session.access_token, selectedMedia, externalId!, externalSource!, reviewText.trim(), containsSpoilers, true);
         }
         
       } else if (postType === 'prediction') {
