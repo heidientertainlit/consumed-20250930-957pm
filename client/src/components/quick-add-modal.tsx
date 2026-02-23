@@ -439,10 +439,11 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
           await trackMediaToList(supabaseUrl, session.access_token, mediaData, selectedListId, privateMode, rewatchCount, dnfReason);
         }
         
-        // If rating is provided, add it (with review content and spoiler flag)
-        // Skip social post since inline-post already created one above
+        // If rating is provided, save the rating
+        // Skip the social post from rate-media since inline-post already created one above
         if (selectedMedia && rating > 0) {
-          await addRating(supabaseUrl, session.access_token, selectedMedia, externalId!, externalSource!, reviewText.trim(), containsSpoilers, true);
+          const alreadyPosted = !privateMode;
+          await addRating(supabaseUrl, session.access_token, selectedMedia, externalId!, externalSource!, alreadyPosted ? '' : reviewText.trim(), containsSpoilers, alreadyPosted);
         }
         
       } else if (postType === 'prediction') {
