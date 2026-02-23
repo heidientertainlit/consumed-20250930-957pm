@@ -6,6 +6,15 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+async function deleteRows(client: any, table: string, column: string, value: string) {
+  try {
+    const { error } = await client.from(table).delete().eq(column, value);
+    return error ? `error: ${error.message}` : "ok";
+  } catch (e: any) {
+    return `exception: ${e.message}`;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -24,172 +33,146 @@ serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
-    console.log("Service role key present:", !!serviceRoleKey);
-    console.log("Anon key present:", !!anonKey);
-
-    // Authenticate the user with the anon client
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
     const { data: { user }, error: userError } = await userClient.auth.getUser();
     if (userError || !user) {
-      console.error("Auth error:", userError?.message);
-      return new Response(JSON.stringify({ error: "Invalid user", details: userError?.message }), {
+      return new Response(JSON.stringify({ error: "Invalid user" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const userId = user.id;
-    console.log("Deleting account for user:", userId, user.email);
+    console.log("Deleting account for user:", userId);
 
-    // Admin client with service role
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
-
-    // Delete in order: children first, then parents
-    // Order matters due to foreign key constraints
-    const deleteSteps = [
-      // Likes/votes/comments on posts (children of posts)
-      "social_comment_likes",
-      "social_comment_votes",
-      "social_post_likes",
-      "social_post_comments",
-      "post_votes",
-      // Prediction related (children first)
-      "prediction_comment_likes",
-      "prediction_comment_votes",
-      "prediction_comments",
-      "prediction_likes",
-      "predictions",
-      "user_predictions",
-      "user_prediction_stats",
-      // Posts
-      "social_posts",
-      // Media related
-      "media_ratings",
-      "ratings",
-      "reviews",
-      "media_statuses",
-      "media_history_log",
-      "user_media_items",
-      "user_media",
-      // Lists
-      "list_collaborators",
-      "list_items",
-      "user_lists",
-      "lists",
-      // Ranks
-      "rank_item_votes",
-      "rank_comments",
-      "rank_items",
-      "ranks",
-      // DNA
-      "dna_comparisons",
-      "dna_moment_responses",
-      "dna_profiles",
-      "entertainment_dna",
-      "edna_responses",
-      "user_dna_levels",
-      "user_dna_signals",
-      "celebrity_dna",
-      // Social
-      "friend_cast_responses",
-      "friend_casts",
-      "friend_invitations",
-      "friends_trivia",
-      "followed_creators",
-      "hot_take_votes",
-      "hot_take_passes",
-      // Polls/pools
-      "poll_responses",
-      "pool_answers",
-      "pool_members",
-      // Awards
-      "awards_picks",
-      "awards_ballot_completions",
-      // Daily/trivia/seen-it
-      "daily_challenge_responses",
-      "daily_runs",
-      "seen_it_responses",
-      "seen_it_completions",
-      "trivia_answers",
-      "trivia_results",
-      "trivia_user_points",
-      // Activity/points/misc
-      "activity_logs",
-      "user_activity",
-      "user_last_activity",
-      "points_log",
-      "user_points",
-      "notifications",
-      "user_highlights",
-      "user_badges",
-      "user_creator_stats",
-      "user_flags",
-      "login_streaks",
-      "bets",
-      "cached_recommendations",
-      "rec_requests",
-      "media_goals",
-      "strand_likes",
-      "strand_comments",
-      "strand_media",
-      "strands",
-      "beta_feedback",
-      // Profile tables
-      "profiles",
-    ];
-
+    const admin = createClient(supabaseUrl, serviceRoleKey);
     const results: Record<string, string> = {};
 
-    for (const table of deleteSteps) {
-      try {
-        const { error, count } = await adminClient
-          .from(table)
-          .delete()
-          .eq("user_id", userId);
-        
-        if (error) {
-          results[table] = `error: ${error.message}`;
-          console.log(`${table}: ${error.message}`);
-        } else {
-          results[table] = "ok";
-        }
-      } catch (e) {
-        results[table] = `exception: ${e.message}`;
-        console.log(`${table} exception: ${e.message}`);
+    // Step 1: Get IDs of user's posts, ranks, strands, lists for cascading deletes
+    const { data: userPosts } = await admin.from("social_posts").select("id").eq("user_id", userId);
+    const postIds = (userPosts || []).map((p: any) => p.id);
+
+    const { data: userRanks } = await admin.from("ranks").select("id").eq("user_id", userId);
+    const rankIds = (userRanks || []).map((r: any) => r.id);
+
+    const { data: userStrands } = await admin.from("strands").select("id").eq("user_id", userId);
+    const strandIds = (userStrands || []).map((s: any) => s.id);
+
+    const { data: userLists } = await admin.from("lists").select("id").eq("user_id", userId);
+    const listIds = (userLists || []).map((l: any) => l.id);
+
+    const { data: userComments } = await admin.from("social_post_comments").select("id").eq("user_id", userId);
+    const commentIds = (userComments || []).map((c: any) => c.id);
+
+    console.log(`Found: ${postIds.length} posts, ${rankIds.length} ranks, ${strandIds.length} strands, ${listIds.length} lists, ${commentIds.length} comments`);
+
+    // Step 2: Delete children of user's content (likes/votes on their posts)
+    if (postIds.length > 0) {
+      for (const pid of postIds) {
+        await admin.from("social_post_likes").delete().eq("post_id", pid);
+        await admin.from("social_post_comments").delete().eq("post_id", pid);
+        await admin.from("post_votes").delete().eq("post_id", pid);
       }
     }
 
-    // Friendships (user can be on either side)
-    try {
-      await adminClient.from("friendships").delete().eq("user_id", userId);
-      await adminClient.from("friendships").delete().eq("friend_id", userId);
-      results["friendships"] = "ok";
-    } catch (e) {
-      results["friendships"] = `exception: ${e.message}`;
+    if (commentIds.length > 0) {
+      for (const cid of commentIds) {
+        await admin.from("social_comment_likes").delete().eq("comment_id", cid);
+        await admin.from("social_comment_votes").delete().eq("comment_id", cid);
+      }
     }
 
-    // Try profiles with 'id' column too
-    try {
-      await adminClient.from("profiles").delete().eq("id", userId);
-    } catch (e) {
-      // ignore
+    if (rankIds.length > 0) {
+      for (const rid of rankIds) {
+        await admin.from("rank_item_votes").delete().eq("rank_id", rid);
+        await admin.from("rank_comments").delete().eq("rank_id", rid);
+        await admin.from("rank_items").delete().eq("rank_id", rid);
+      }
     }
 
-    console.log("Table deletion results:", JSON.stringify(results));
+    if (strandIds.length > 0) {
+      for (const sid of strandIds) {
+        await admin.from("strand_likes").delete().eq("strand_id", sid);
+        await admin.from("strand_comments").delete().eq("strand_id", sid);
+        await admin.from("strand_media").delete().eq("strand_id", sid);
+      }
+    }
 
-    // Finally delete the auth user
-    console.log("Attempting to delete auth user...");
-    const { error: deleteError } = await adminClient.auth.admin.deleteUser(userId);
-    
+    if (listIds.length > 0) {
+      for (const lid of listIds) {
+        await admin.from("list_items").delete().eq("list_id", lid);
+        await admin.from("list_collaborators").delete().eq("list_id", lid);
+      }
+    }
+
+    // Step 3: Delete all user_id referenced data
+    const userIdTables = [
+      "social_comment_likes", "social_comment_votes",
+      "social_post_likes", "social_post_comments", "post_votes", "social_posts",
+      "prediction_comment_likes", "prediction_comment_votes",
+      "prediction_comments", "prediction_likes", "predictions",
+      "user_predictions", "user_prediction_stats",
+      "media_ratings", "ratings", "reviews",
+      "media_history_log", "user_media_items", "user_media",
+      "list_collaborators", "list_items", "user_lists", "lists",
+      "rank_comments", "rank_items", "ranks",
+      "dna_moment_responses", "dna_profiles", "edna_responses",
+      "user_dna_levels", "user_dna_signals", "celebrity_dna",
+      "entertainment_dna",
+      "friend_cast_responses", "friend_casts",
+      "friends_trivia", "followed_creators",
+      "hot_take_votes", "hot_take_passes",
+      "poll_responses", "pool_answers", "pool_members",
+      "awards_picks", "awards_ballot_completions",
+      "daily_challenge_responses", "daily_runs",
+      "seen_it_responses", "seen_it_completions",
+      "trivia_answers", "trivia_results", "trivia_user_points",
+      "activity_logs", "user_activity", "user_last_activity",
+      "points_log", "user_points",
+      "notifications", "user_highlights", "user_badges",
+      "user_creator_stats", "user_flags",
+      "login_streaks", "bets",
+      "cached_recommendations", "rec_requests", "media_goals",
+      "beta_feedback",
+      "strand_likes", "strand_comments", "strand_media", "strands",
+      "public_feed", "user_sessions",
+    ];
+
+    for (const table of userIdTables) {
+      results[table] = await deleteRows(admin, table, "user_id", userId);
+    }
+
+    // Tables that use different column names
+    results["friendships_user"] = await deleteRows(admin, "friendships", "user_id", userId);
+    results["friendships_friend"] = await deleteRows(admin, "friendships", "friend_id", userId);
+    results["friend_invitations_inviter"] = await deleteRows(admin, "friend_invitations", "inviter_id", userId);
+    results["friend_invitations_invitee"] = await deleteRows(admin, "friend_invitations", "invitee_id", userId);
+    results["dna_comparisons_user"] = await deleteRows(admin, "dna_comparisons", "user_id", userId);
+    results["dna_comparisons_friend"] = await deleteRows(admin, "dna_comparisons", "friend_id", userId);
+    results["rank_item_votes_voter"] = await deleteRows(admin, "rank_item_votes", "voter_id", userId);
+
+    // Profiles table - try both id and user_id
+    results["profiles_id"] = await deleteRows(admin, "profiles", "id", userId);
+    results["profiles_user_id"] = await deleteRows(admin, "profiles", "user_id", userId);
+
+    // Log failures only
+    const failures = Object.entries(results).filter(([_, v]) => v !== "ok" && !v.includes("does not exist"));
+    console.log("Failures:", JSON.stringify(failures));
+    console.log("Total tables processed:", Object.keys(results).length);
+
+    // Step 4: Delete auth user
+    console.log("Deleting auth user...");
+    const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
+
     if (deleteError) {
-      console.error("Auth deletion error:", JSON.stringify(deleteError));
-      return new Response(JSON.stringify({ 
-        error: "Failed to delete auth account", 
+      console.error("Auth deletion failed:", JSON.stringify(deleteError));
+      return new Response(JSON.stringify({
+        error: "Failed to delete auth account",
         authError: deleteError.message,
-        tableResults: results 
+        failures
       }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -201,7 +184,7 @@ serve(async (req) => {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Delete account error:", err);
     return new Response(JSON.stringify({ error: err.message || "Internal server error" }), {
       status: 500,
