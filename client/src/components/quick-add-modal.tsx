@@ -423,6 +423,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                   media_external_source: externalSource,
                   media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image,
                 }),
+                ...(rating > 0 && { rating }),
                 contains_spoilers: containsSpoilers,
               }),
             }
