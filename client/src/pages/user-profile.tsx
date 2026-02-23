@@ -3550,8 +3550,9 @@ export default function UserProfile() {
                       console.error('Delete account response:', JSON.stringify(err));
                       throw new Error(err.authError || err.error || 'Failed to delete account');
                     }
+                    toast({ title: "Account Deleted", description: "Your account has been successfully deleted. Redirecting..." });
                     await supabase.auth.signOut();
-                    window.location.href = '/login';
+                    setTimeout(() => { window.location.href = '/login'; }, 2000);
                   } catch (err: any) {
                     toast({ title: "Error", description: err.message || "Failed to delete account. Please try again.", variant: "destructive" });
                   }
