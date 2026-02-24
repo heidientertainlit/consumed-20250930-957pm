@@ -3,13 +3,19 @@ import { User, Session } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { sessionTracker } from './sessionTracker'
 import { identifyUser, resetUser, trackEvent } from './posthog'
+import { Capacitor } from "@capacitor/core"
+import OneSignal from "onesignal-cordova-plugin"
 
 interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
-  signUp: (email: string, password: string, metadata?: { firstName?: string; lastName?: string; username?: string }) => Promise<{ error: any; data?: any }>
+  signUp: (
+    email: string,
+    password: string,
+    metadata?: { firstName?: string; lastName?: string; username?: string }
+  ) => Promise<{ error: any; data?: any }>
   signOut: () => Promise<{ error: any }>
   resetPassword: (email: string) => Promise<{ error: any }>
   updatePassword: (newPassword: string) => Promise<{ error: any }>
@@ -22,15 +28,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // ✅ Request push permission ONLY on native, after OneSignal has had a moment to init.
+  const requestPushPermissionIfNative = async () => {
+    const platform = Capacitor.getPlatform()
+    if (platform !== "ios" && platform !== "android") return
+
+    try {
+      // Small delay helps on cold start so OneSignal is ready
+      await new Promise((r) => setTimeout(r, 800))
+
+      console.log("🔔 Requesting push permission (post-login)...")
+      await OneSignal.Notifications.requestPermission(true)
+      console.log("🔔 requestPermission finished")
+    } catch (e) {
+      console.log("🔔 Push permission request failed:", e)
+    }
+  }
+
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
-      
+
       if (session?.user?.id) {
         sessionTracker.startSession(session.user.id)
+
         supabase
           .from('users')
           .select('user_name, display_name')
@@ -44,18 +68,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             })
             console.log("PostHog identify", session.user.id)
           })
+
+        // ✅ If user is already logged in on app launch, Supabase may NOT fire SIGNED_IN
+        await requestPushPermissionIfNative()
       }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('🔐 Auth event:', event, session ? 'Session active' : 'No session');
+      async (event, session) => {
+        console.log('🔐 Auth event:', event, session ? 'Session active' : 'No session')
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
-        
+
         if (event === 'SIGNED_IN' && session?.user?.id) {
           sessionTracker.startSession(session.user.id)
+
           supabase
             .from('users')
             .select('user_name, display_name')
@@ -69,7 +97,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               })
               console.log("PostHog identify", session.user.id)
             })
+
           trackEvent('user_signed_in')
+
+          // ✅ Ask for push permission AFTER sign-in (native only)
+          await requestPushPermissionIfNative()
+
         } else if (event === 'SIGNED_OUT') {
           sessionTracker.endSession()
           resetUser()
@@ -80,7 +113,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       subscription.unsubscribe()
-      // Clean up session on unmount
       sessionTracker.endSession()
     }
   }, [])
@@ -93,7 +125,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error }
   }
 
-  const signUp = async (email: string, password: string, metadata?: { firstName?: string; lastName?: string; username?: string }) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    metadata?: { firstName?: string; lastName?: string; username?: string }
+  ) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
