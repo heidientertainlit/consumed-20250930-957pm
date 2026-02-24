@@ -33,12 +33,18 @@ if (
       | undefined;
 
     if (route) {
-      // Supports either full URLs or in-app paths
-      const target = route.startsWith("http") ? route : route;
+      // Save route so App.tsx can handle it after router mounts
+      localStorage.setItem("pendingRoute", route);
 
-      // Small delay helps on cold start
+      // Try immediate in-app navigation (no full reload)
       setTimeout(() => {
-        window.location.href = target;
+        if (window.location.hash.startsWith("#")) {
+          const path = route.startsWith("/") ? route : `/${route}`;
+          window.location.hash = `#${path}`;
+        } else {
+          window.history.pushState({}, "", route);
+          window.dispatchEvent(new PopStateEvent("popstate"));
+        }
       }, 300);
     }
   });
