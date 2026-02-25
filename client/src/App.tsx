@@ -178,7 +178,7 @@ function Router() {
 
           <Route path="/">
             <ProtectedRoute>
-              <Add />
+              <Feed />
             </ProtectedRoute>
           </Route>
 
