@@ -1752,7 +1752,7 @@ export default function Feed() {
     return result;
   })();
 
-  const POSTS_PER_BATCH = 3;
+  const POSTS_PER_BATCH = 1;
   const postBatches = useMemo(() => {
     const batches: UGCPost[][] = [];
     for (let i = 0; i < standaloneUGCPosts.length; i += POSTS_PER_BATCH) {
