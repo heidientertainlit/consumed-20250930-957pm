@@ -1380,8 +1380,8 @@ export default function Feed() {
     }
   }, [searchString]);
   
-  // Feature flag for comment likes
-  const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
+  // Comment likes always enabled
+  const commentLikesEnabled = true;
   
   // Debug session state
   useEffect(() => {
@@ -3186,7 +3186,6 @@ export default function Feed() {
   };
 
   const handleLikeComment = (commentId: string) => {
-    if (!commentLikesEnabled) return; // Safety check
     const wasLiked = likedComments.has(commentId);
     commentLikeMutation.mutate({ commentId, wasLiked });
   };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Send, User, Trash2, MessageCircle, ArrowBigUp, ArrowBigDown, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, User, Trash2, MessageCircle, ArrowBigUp, ArrowBigDown, ChevronDown, ChevronUp, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { renderMentions } from "@/lib/mentions";
 import MentionInput from "@/components/mention-input";
@@ -354,53 +354,37 @@ function CommentItem({
           )}
           
           {/* Action buttons */}
-          <div className="flex items-center space-x-3">
-            {/* Upvote/Downvote Buttons - Rank style with separate counts */}
-            {onVoteComment && (
-              <div className="flex items-center space-x-1">
-                <button
-                  onClick={() => onVoteComment(comment.id, 'up')}
-                  className={`flex items-center space-x-0.5 p-0.5 rounded transition-colors ${
-                    (comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up')
-                      ? 'text-green-500' 
-                      : 'text-gray-400 hover:text-green-500'
-                  }`}
-                  data-testid={`button-upvote-comment-${comment.id}`}
-                  title="Upvote"
-                >
-                  <ArrowBigUp 
-                    size={18} 
-                    fill={(comment.currentUserVote === 'up' || commentVotes.get(comment.id) === 'up') ? 'currentColor' : 'none'} 
-                  />
-                  <span className="text-xs font-medium">+{comment.upVoteCount || 0}</span>
-                </button>
-                <button
-                  onClick={() => onVoteComment(comment.id, 'down')}
-                  className={`flex items-center space-x-0.5 p-0.5 rounded transition-colors ${
-                    (comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down')
-                      ? 'text-red-500' 
-                      : 'text-gray-400 hover:text-red-500'
-                  }`}
-                  data-testid={`button-downvote-comment-${comment.id}`}
-                  title="Downvote"
-                >
-                  <ArrowBigDown 
-                    size={18} 
-                    fill={(comment.currentUserVote === 'down' || commentVotes.get(comment.id) === 'down') ? 'currentColor' : 'none'} 
-                  />
-                  <span className="text-xs font-medium">-{comment.downVoteCount || 0}</span>
-                </button>
-              </div>
-            )}
-            
+          <div className="flex items-center gap-3">
+            {/* Like button */}
+            <button
+              onClick={() => onLikeComment?.(comment.id)}
+              className={`flex items-center gap-1 transition-colors ${
+                likedComments.has(comment.id) || comment.likedByCurrentUser
+                  ? 'text-red-500'
+                  : 'text-gray-400 hover:text-red-400'
+              }`}
+              data-testid={`button-like-comment-${comment.id}`}
+              title="Like comment"
+            >
+              <Heart
+                size={13}
+                fill={likedComments.has(comment.id) || comment.likedByCurrentUser ? 'currentColor' : 'none'}
+              />
+              {(comment.likesCount || 0) > 0 && (
+                <span className="text-xs">{comment.likesCount}</span>
+              )}
+            </button>
+
             {/* Reply Button */}
             <button
               onClick={() => setShowReplyInput(!showReplyInput)}
-              className="flex items-center space-x-1 text-gray-400 hover:text-purple-500 transition-colors"
+              className={`flex items-center gap-1 transition-colors ${
+                showReplyInput ? 'text-purple-500' : 'text-gray-400 hover:text-purple-500'
+              }`}
               data-testid={`button-reply-comment-${comment.id}`}
               title="Reply to comment"
             >
-              <MessageCircle size={14} />
+              <MessageCircle size={13} />
               <span className="text-xs">Reply</span>
             </button>
 
@@ -408,12 +392,12 @@ function CommentItem({
             {hasReplies && (
               <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="flex items-center space-x-1 text-gray-400 hover:text-gray-600 transition-colors"
+                className="flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors"
                 data-testid={`button-toggle-replies-${comment.id}`}
                 title={isCollapsed ? 'Show replies' : 'Hide replies'}
               >
                 <span className="text-xs">
-                  {isCollapsed ? `Show ${comment.replies?.length || 0} ${(comment.replies?.length || 0) === 1 ? 'reply' : 'replies'}` : 'Hide replies'}
+                  {isCollapsed ? `${comment.replies?.length || 0} ${(comment.replies?.length || 0) === 1 ? 'reply' : 'replies'}` : 'Hide replies'}
                 </span>
               </button>
             )}
