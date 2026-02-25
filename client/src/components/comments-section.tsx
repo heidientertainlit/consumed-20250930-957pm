@@ -491,8 +491,7 @@ export default function CommentsSection({
   forceShowAddInput = false,
   hotTakeMode = false,
 }: CommentsSectionProps) {
-  // Feature flag for comment likes (defaults to OFF for safety)
-  const commentLikesEnabled = import.meta.env.VITE_FEED_COMMENT_LIKES === 'true';
+  const commentLikesEnabled = true;
   
   // For recs mode: collapse the add input by default, but allow parent to force it open
   const [showAddRecInput, setShowAddRecInput] = useState(forceShowAddInput);

@@ -1670,20 +1670,45 @@ export default function Feed() {
       return p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved';
     });
 
-    // Spread posts so the same user never appears consecutively in the feed.
-    // Look ahead up to 5 slots to find a post from a different user.
-    const result: UGCPost[] = [];
-    const remaining = [...allUGC];
-    let lastUserId = '';
+    // Step 1: Deduplicate — same user + same media keeps only the best post
+    // (prefer post with rating, then longer content)
+    const dedupMap = new Map<string, UGCPost>();
+    for (const post of allUGC) {
+      const mediaKey = post.externalId
+        ? post.externalId
+        : (post.mediaTitle || `no-media-${post.id}`);
+      const key = `${post.user?.id || 'anon'}-${mediaKey}`;
+      const existing = dedupMap.get(key);
+      if (!existing) {
+        dedupMap.set(key, post);
+      } else {
+        const existingScore = (existing.rating ? 100 : 0) + (existing.content?.length || 0);
+        const newScore = (post.rating ? 100 : 0) + (post.content?.length || 0);
+        if (newScore > existingScore) dedupMap.set(key, post);
+      }
+    }
+    const deduped = Array.from(dedupMap.values());
 
+    // Step 2: Per-user cap — no single user gets more than 4 posts
+    const MAX_PER_USER = 4;
+    const userCount = new Map<string, number>();
+    const capped = deduped.filter(post => {
+      const uid = post.user?.id || '';
+      const n = userCount.get(uid) || 0;
+      if (n >= MAX_PER_USER) return false;
+      userCount.set(uid, n + 1);
+      return true;
+    });
+
+    // Step 3: Spread — look ahead up to 5 to find a post from a different user
+    const result: UGCPost[] = [];
+    const remaining = [...capped];
+    let lastUserId = '';
     while (remaining.length > 0) {
       const lookAhead = Math.min(remaining.length, 5);
       let chosen = 0;
       for (let i = 0; i < lookAhead; i++) {
-        if ((remaining[i].user?.id || '') !== lastUserId) {
-          chosen = i;
-          break;
-        }
+        if ((remaining[i].user?.id || '') !== lastUserId) { chosen = i; break; }
       }
       const post = remaining.splice(chosen, 1)[0];
       result.push(post);
