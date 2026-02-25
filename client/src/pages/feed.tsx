@@ -663,7 +663,7 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLiked, isCommentsActive, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, currentUserId, onDeleteComment, onDeletePost }: {
+function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLiked, isCommentsActive, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, currentUserId, onDeleteComment, onDeletePost, onLikeComment }: {
   post: UGCPost;
   onLike?: (id: string) => void;
   onComment?: (id: string) => void;
@@ -679,6 +679,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
   currentUserId?: string;
   onDeleteComment?: (commentId: string, postId: string) => void;
   onDeletePost?: (postId: string) => void;
+  onLikeComment?: (commentId: string) => void;
 }) {
   const displayName = post.user?.displayName || post.user?.username || 'Someone';
   const rawUsername = post.user?.username || '';
@@ -687,6 +688,29 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
   const [comments, setComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const hasFetchedComments = useRef(false);
+  const [localLikedComments, setLocalLikedComments] = useState<Set<string>>(new Set());
+  const [replyingTo, setReplyingTo] = useState<{ id: string; name: string } | null>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCommentLike = (commentId: string, commentLikesCount: number) => {
+    const wasLiked = localLikedComments.has(commentId);
+    setLocalLikedComments(prev => {
+      const next = new Set(prev);
+      if (wasLiked) next.delete(commentId);
+      else next.add(commentId);
+      return next;
+    });
+    setComments(prev => prev.map(c =>
+      c.id === commentId ? { ...c, likesCount: (c.likesCount || 0) + (wasLiked ? -1 : 1) } : c
+    ));
+    onLikeComment?.(commentId);
+  };
+
+  const handleReplyTo = (commentId: string, displayName: string) => {
+    setReplyingTo({ id: commentId, name: displayName });
+    setCommentText(`@${displayName} `);
+    setTimeout(() => commentInputRef.current?.focus(), 100);
+  };
 
   const getTypeInfo = (type: string) => {
     switch (type) {
@@ -890,36 +914,64 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
               <p className="text-xs text-gray-400 text-center py-2">No comments yet</p>
             ) : (
               <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto mb-2">
-                {comments.slice(0, 5).map((comment: any) => (
-                  <div key={comment.id} className="flex items-start gap-2">
-                    <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <User size={12} className="text-gray-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-semibold text-gray-800">{comment.user?.username || comment.user?.displayName || 'User'}</span>
-                        <span className="text-[10px] text-gray-400">{timeAgo(comment.createdAt)}</span>
-                        {currentUserId && comment.user?.id === currentUserId && onDeleteComment && (
-                          <button
-                            onClick={() => {
-                              onDeleteComment(String(comment.id), post.id);
-                              setComments(prev => prev.filter(c => c.id !== comment.id));
-                            }}
-                            className="text-gray-400 hover:text-red-500 ml-auto p-1"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        )}
+                {comments.slice(0, 5).map((comment: any) => {
+                  const commenterName = comment.user?.username || comment.user?.displayName || 'User';
+                  const isLikedByMe = localLikedComments.has(String(comment.id)) || comment.likedByCurrentUser;
+                  const likeCount = comment.likesCount || 0;
+                  return (
+                    <div key={comment.id} className="flex items-start gap-2">
+                      <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <User size={12} className="text-gray-400" />
                       </div>
-                      <p className="text-xs text-gray-600 leading-tight">{comment.content}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-semibold text-gray-800">{commenterName}</span>
+                          <span className="text-[10px] text-gray-400">{timeAgo(comment.createdAt)}</span>
+                          {currentUserId && comment.user?.id === currentUserId && onDeleteComment && (
+                            <button
+                              onClick={() => {
+                                onDeleteComment(String(comment.id), post.id);
+                                setComments(prev => prev.filter(c => c.id !== comment.id));
+                              }}
+                              className="text-gray-400 hover:text-red-500 ml-auto p-1"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 leading-tight mb-1">{comment.content}</p>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => handleCommentLike(String(comment.id), likeCount)}
+                            className={`flex items-center gap-1 transition-colors ${isLikedByMe ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+                          >
+                            <Heart size={12} fill={isLikedByMe ? 'currentColor' : 'none'} />
+                            {likeCount > 0 && <span className="text-[10px]">{likeCount}</span>}
+                          </button>
+                          <button
+                            onClick={() => handleReplyTo(String(comment.id), commenterName)}
+                            className="flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors"
+                          >
+                            <MessageCircle size={12} />
+                            <span className="text-[10px]">Reply</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
             {session && (
               <div className="flex items-center gap-2">
+                {replyingTo && (
+                  <div className="flex items-center gap-1 text-[10px] text-purple-500 px-1">
+                    <span>@{replyingTo.name}</span>
+                    <button onClick={() => { setReplyingTo(null); setCommentText(''); }} className="text-gray-400 hover:text-red-400 ml-1">×</button>
+                  </div>
+                )}
                 <input
+                  ref={commentInputRef}
                   type="text"
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
@@ -1649,6 +1701,7 @@ export default function Feed() {
             currentUserId={currentAppUserId || undefined}
             onDeleteComment={handleDeleteComment}
             onDeletePost={handleDeletePost}
+            onLikeComment={handleLikeComment}
           />
         ))}
       </>
@@ -1680,6 +1733,7 @@ export default function Feed() {
             currentUserId={currentAppUserId || undefined}
             onDeleteComment={handleDeleteComment}
             onDeletePost={handleDeletePost}
+            onLikeComment={handleLikeComment}
           />
         ))}
       </>
