@@ -1689,24 +1689,9 @@ export default function Feed() {
     }
     const deduped = Array.from(dedupMap.values());
 
-    // Step 2: Per-user cap — proportional + absolute ceiling
-    // If few users have posts, be strict so no one dominates
-    const activeUserIds = new Set(deduped.map(p => p.user?.id || ''));
-    const numActiveUsers = Math.max(1, activeUserIds.size);
-    // At most 2 posts per user absolute; if many users, allow proportionally more (but never > 2)
-    const MAX_PER_USER = Math.min(2, Math.max(1, Math.floor(8 / numActiveUsers)));
-    const userCount = new Map<string, number>();
-    const capped = deduped.filter(post => {
-      const uid = post.user?.id || '';
-      const n = userCount.get(uid) || 0;
-      if (n >= MAX_PER_USER) return false;
-      userCount.set(uid, n + 1);
-      return true;
-    });
-
-    // Step 3: Spread — look ahead up to 5 to find a post from a different user
+    // Step 2: Spread — look ahead up to 5 to find a post from a different user
     const result: UGCPost[] = [];
-    const remaining = [...capped];
+    const remaining = [...deduped];
     let lastUserId = '';
     while (remaining.length > 0) {
       const lookAhead = Math.min(remaining.length, 5);
