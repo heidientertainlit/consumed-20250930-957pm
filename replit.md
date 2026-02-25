@@ -137,6 +137,28 @@ supabase functions deploy <function-name>
 supabase functions deploy
 ```
 
+### Social Feed Architecture — CRITICAL Rules
+
+**Feed fetch limit (`client/src/pages/feed.tsx`, `fetchSocialFeed` function)**
+- `const limit = 50;` — NEVER lower this below 50.
+- **Why it matters**: The social-feed API returns posts ordered by `created_at` DESC. If the limit is too low (e.g., 15), the first page only returns posts from the most recently active users. Active users like "Elias" with 7 posts dominate the first page, meaning less-active friends (Heidi, Sam, Peter, etc.) are invisible until the user scrolls. Setting it to 50 ensures the first fetch is diverse enough to show posts from many different friends.
+- **Symptom of a too-low limit**: Only 2–4 users' posts visible in the feed despite having 20+ friends with posts. Fix: raise `limit` in `fetchSocialFeed`.
+
+**Infinite scroll (unlimited feed)**
+- Implemented via `IntersectionObserver` on `loadMoreRef` div at the bottom of the feed.
+- When the sentinel div enters the viewport, `fetchNextPage()` is called automatically.
+- `getNextPageParam` returns `undefined` only when a page returns 0 posts — so the feed truly never ends until all posts are exhausted.
+- Each scroll page fetches the next 50 posts (`offset = pageParam * limit`).
+- **Do NOT add a hard cap on total posts or pages loaded.**
+
+**UGC post rendering pipeline (feed.tsx)**
+- `socialPosts` = all posts fetched so far (flattened from all infinite-scroll pages)
+- `ugcSlots` IIFE = quality-filters `socialPosts` into a pool of user posts worth showing
+- `standaloneUGCPosts` IIFE = deduplicates + groups same-user posts within 12h windows → users with 2+ posts get a swipeable group carousel; solo posters get a `StandalonePost` card
+- `slotAssignments` useMemo = maps each item to a sequential feed slot (item 0 → slot 0, item 1 → slot 1, …)
+- `renderPostBatchByIndex(N)` = renders the item at slot N, interleaved between trivia/polls/DNA cards in the JSX
+- **Do NOT filter out `consumption_carousel` or `swipeable_ratings` from the main feed** — those blocks previously carried friend activity and removing them silently hides user content.
+
 ## External Dependencies
 
 -   **Database & Backend**: Supabase (PostgreSQL + Edge Functions)
