@@ -1752,13 +1752,20 @@ export default function Feed() {
     return result;
   })();
 
-  const POSTS_PER_BATCH = 1;
-  const postBatches = useMemo(() => {
-    const batches: UGCPost[][] = [];
-    for (let i = 0; i < standaloneUGCPosts.length; i += POSTS_PER_BATCH) {
-      batches.push(standaloneUGCPosts.slice(i, i + POSTS_PER_BATCH));
-    }
-    return batches;
+  const TOTAL_BATCH_SLOTS_COUNT = 22;
+  // Spread items evenly across all 22 feed slot positions so posts appear
+  // throughout the feed (top, middle, bottom) rather than piling at the top.
+  const slotAssignments = useMemo(() => {
+    const map = new Map<number, any>();
+    const items = standaloneUGCPosts;
+    if (items.length === 0) return map;
+    items.forEach((item, i) => {
+      const slotIdx = items.length === 1
+        ? 0
+        : Math.round((i / (items.length - 1)) * (TOTAL_BATCH_SLOTS_COUNT - 1));
+      map.set(slotIdx, item);
+    });
+    return map;
   }, [standaloneUGCPosts]);
 
   // Renders one feed item — either a single post or a grouped user activity carousel
@@ -1910,22 +1917,12 @@ export default function Feed() {
 
   const renderPostBatchByIndex = (batchIndex: number) => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
-    const batch = postBatches[batchIndex];
-    if (!batch || batch.length === 0) return null;
-    return <>{batch.map((item: any) => renderFeedItem(item, 'batch'))}</>;
+    const item = slotAssignments.get(batchIndex);
+    if (!item) return null;
+    return renderFeedItem(item, 'batch');
   };
 
-  const TOTAL_BATCH_SLOTS = 22;
-  const renderRemainingPosts = () => {
-    if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
-    const remainingBatches = postBatches.slice(TOTAL_BATCH_SLOTS);
-    if (remainingBatches.length === 0) return null;
-    return (
-      <>
-        {remainingBatches.flat().map((item: any) => renderFeedItem(item, 'remaining'))}
-      </>
-    );
-  };
+  const renderRemainingPosts = () => null;
 
 
   const roomItems = useMemo(() => {
