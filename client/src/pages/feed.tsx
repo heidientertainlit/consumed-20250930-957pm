@@ -663,6 +663,193 @@ const formatDate = (dateStr: string) => {
   });
 };
 
+function UGCGroupCard({ post, onLike, isLiked, session, fetchComments }: {
+  post: UGCPost;
+  onLike: (id: string) => void;
+  isLiked: boolean;
+  session: any;
+  fetchComments: (postId: string) => Promise<any[]>;
+}) {
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [commentText, setCommentText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const hasFetched = useRef(false);
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+
+  const timeAgo = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const mins = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+    if (mins < 1) return 'now';
+    if (mins < 60) return `${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h`;
+    return `${Math.floor(hrs / 24)}d`;
+  };
+
+  const handleCommentToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!showComments && !hasFetched.current) {
+      hasFetched.current = true;
+      setLoadingComments(true);
+      try {
+        const data = await fetchComments(post.id);
+        setComments(data || []);
+      } catch (_) {}
+      setLoadingComments(false);
+    }
+    setShowComments(s => !s);
+  };
+
+  const submitComment = async () => {
+    if (!session?.access_token || !commentText.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/social-feed-comments`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post_id: post.id, content: commentText.trim() }),
+      });
+      if (res.ok) {
+        setCommentText('');
+        hasFetched.current = false;
+        const data = await fetchComments(post.id);
+        setComments(data || []);
+        hasFetched.current = true;
+      }
+    } catch (_) {}
+    setSubmitting(false);
+  };
+
+  const getTypeInfo = () => {
+    if (post.type === 'hot_take') return { label: 'Hot Take', color: 'text-orange-500', bg: 'bg-orange-50' };
+    if (post.type === 'review') return { label: 'Review', color: 'text-yellow-500', bg: 'bg-yellow-50' };
+    if (post.type === 'rating') return { label: 'Rating', color: 'text-yellow-500', bg: 'bg-yellow-50' };
+    if (post.type === 'finished') return { label: 'Finished', color: 'text-green-500', bg: 'bg-green-50' };
+    return { label: 'Post', color: 'text-gray-400', bg: 'bg-gray-50' };
+  };
+
+  const ti = getTypeInfo();
+  const mediaTypeLabel = post.mediaType === 'tv' ? 'TV' : post.mediaType;
+
+  return (
+    <div className="snap-start flex-shrink-0 w-[78vw] max-w-[300px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="p-4">
+        {mediaTypeLabel && (
+          <div className="flex justify-end mb-2">
+            <span className="text-[11px] font-medium text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full capitalize">{mediaTypeLabel}</span>
+          </div>
+        )}
+        {post.mediaTitle ? (
+          <div className="flex gap-3">
+            {post.mediaImage && post.mediaImage.startsWith('http') ? (
+              post.externalId && post.externalSource ? (
+                <Link href={`/media/${post.mediaType || 'movie'}/${post.externalSource}/${post.externalId}`}>
+                  <img src={post.mediaImage} alt={post.mediaTitle} className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md cursor-pointer hover:opacity-90 transition-opacity" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                </Link>
+              ) : (
+                <img src={post.mediaImage} alt={post.mediaTitle} className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              )
+            ) : null}
+            <div className="min-w-0 flex-1 flex flex-col justify-center">
+              {post.externalId && post.externalSource ? (
+                <Link href={`/media/${post.mediaType || 'movie'}/${post.externalSource}/${post.externalId}`}>
+                  <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{post.mediaTitle}</p>
+                </Link>
+              ) : (
+                <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
+              )}
+              {post.rating && post.rating > 0 && (
+                <div className="flex items-center gap-0.5 mt-1">
+                  {[1,2,3,4,5].map(s => {
+                    const r = post.rating!;
+                    if (s <= Math.floor(r)) return <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />;
+                    if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={14} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={14} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                    return <Star key={s} size={14} className="text-gray-200" />;
+                  })}
+                </div>
+              )}
+              {post.content && (
+                <p className="text-gray-700 text-sm leading-relaxed mt-1.5 line-clamp-2">{post.content}</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          post.content && <p className="text-gray-800 text-sm leading-relaxed">{post.content}</p>
+        )}
+
+        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
+          <button
+            onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
+            className={`flex items-center gap-1.5 text-sm ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} active:scale-110 transition-transform`}
+          >
+            <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
+            <span className="text-xs">{post.likes || 0}</span>
+          </button>
+          <button
+            onClick={handleCommentToggle}
+            className={`flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
+          >
+            <MessageCircle size={16} />
+            <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
+          </button>
+          <div className="ml-auto flex items-center gap-1.5">
+            <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
+            <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
+          </div>
+        </div>
+      </div>
+
+      {showComments && (
+        <div className="border-t border-gray-100 px-4 pb-4 bg-gray-50/50">
+          {loadingComments ? (
+            <p className="text-xs text-gray-400 text-center py-3">Loading...</p>
+          ) : comments.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-3">No comments yet. Be the first!</p>
+          ) : (
+            <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pt-3 mb-2">
+              {comments.slice(0, 5).map((c: any) => (
+                <div key={c.id} className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <User size={12} className="text-purple-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-semibold text-gray-800 mr-1">{c.user?.username || c.username || 'User'}</span>
+                    <span className="text-xs text-gray-600">{c.content}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {session && (
+            <div className="flex gap-2 pt-2">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Add a comment..."
+                className="flex-1 text-xs px-3 py-2 rounded-full border border-gray-200 focus:outline-none focus:border-purple-400 bg-white"
+                onKeyPress={(e) => e.key === 'Enter' && submitComment()}
+              />
+              <button
+                onClick={submitComment}
+                disabled={!commentText.trim() || submitting}
+                className="p-2 rounded-full bg-purple-600 text-white disabled:opacity-50"
+              >
+                <Send size={14} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLiked, isCommentsActive, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, currentUserId, onDeleteComment, onDeletePost, onLikeComment }: {
   post: UGCPost;
   onLike?: (id: string) => void;
@@ -1772,26 +1959,6 @@ export default function Feed() {
       const rawUsername = grp.user?.username || '';
       const avatarLetter = (displayName || rawUsername)[0]?.toUpperCase() || '?';
 
-      const timeAgo = (dateStr?: string) => {
-        if (!dateStr) return '';
-        const mins = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
-        if (mins < 1) return 'now';
-        if (mins < 60) return `${mins}m`;
-        const hrs = Math.floor(mins / 60);
-        if (hrs < 24) return `${hrs}h`;
-        return `${Math.floor(hrs / 24)}d`;
-      };
-
-      const getTypeInfo = (p: UGCPost) => {
-        if (p.type === 'hot_take') return { label: 'Hot Take', color: 'text-orange-500', bg: 'bg-orange-50' };
-        if (p.type === 'review') return { label: 'Review', color: 'text-yellow-500', bg: 'bg-yellow-50' };
-        if (p.type === 'rating') return { label: 'Rating', color: 'text-yellow-500', bg: 'bg-yellow-50' };
-        if (p.type === 'finished') return { label: 'Finished', color: 'text-green-500', bg: 'bg-green-50' };
-        if (p.type === 'poll') return { label: 'Poll', color: 'text-blue-500', bg: 'bg-blue-50' };
-        if (p.type === 'predict') return { label: 'Prediction', color: 'text-purple-500', bg: 'bg-purple-50' };
-        return { label: 'Post', color: 'text-gray-400', bg: 'bg-gray-50' };
-      };
-
       return (
         <div key={`${keyPrefix}-${grp.id}`} className="mb-4">
           {/* User header — shown once above all carousel cards */}
@@ -1814,73 +1981,16 @@ export default function Feed() {
 
           {/* Horizontally swipeable post cards */}
           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
-            {grp.posts.map((p) => {
-              const ti = getTypeInfo(p);
-              const mediaTypeLabel = p.mediaType === 'tv' ? 'TV' : p.mediaType;
-              return (
-                <div key={p.id} className="snap-start flex-shrink-0 w-[78vw] max-w-[300px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  <div className="p-4">
-                    {/* Media type badge */}
-                    {mediaTypeLabel && (
-                      <div className="flex justify-end mb-2">
-                        <span className="text-[11px] font-medium text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full capitalize">{mediaTypeLabel}</span>
-                      </div>
-                    )}
-                    {/* Media row: poster + title + stars + content */}
-                    {p.mediaTitle ? (
-                      <div className="flex gap-3">
-                        {p.mediaImage && p.mediaImage.startsWith('http') ? (
-                          p.externalId && p.externalSource ? (
-                            <Link href={`/media/${p.mediaType || 'movie'}/${p.externalSource}/${p.externalId}`}>
-                              <img src={p.mediaImage} alt={p.mediaTitle} className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md cursor-pointer hover:opacity-90 transition-opacity" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                            </Link>
-                          ) : (
-                            <img src={p.mediaImage} alt={p.mediaTitle} className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                          )
-                        ) : null}
-                        <div className="min-w-0 flex-1 flex flex-col justify-center">
-                          {p.externalId && p.externalSource ? (
-                            <Link href={`/media/${p.mediaType || 'movie'}/${p.externalSource}/${p.externalId}`}>
-                              <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{p.mediaTitle}</p>
-                            </Link>
-                          ) : (
-                            <p className="text-sm font-semibold text-gray-900 line-clamp-2">{p.mediaTitle}</p>
-                          )}
-                          {p.rating && p.rating > 0 && (
-                            <div className="flex items-center gap-0.5 mt-1">
-                              {[1,2,3,4,5].map(s => {
-                                const r = p.rating!;
-                                if (s <= Math.floor(r)) return <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />;
-                                if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={14} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={14} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                                return <Star key={s} size={14} className="text-gray-200" />;
-                              })}
-                            </div>
-                          )}
-                          {p.content && (
-                            <p className="text-gray-700 text-sm leading-relaxed mt-1.5 line-clamp-2">{p.content}</p>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      p.content && <p className="text-gray-800 text-sm leading-relaxed">{p.content}</p>
-                    )}
-                    {/* Footer */}
-                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
-                      <button className="flex items-center gap-1.5 text-sm text-gray-400">
-                        <Heart size={16} fill="none" /><span className="text-xs">{p.likes || 0}</span>
-                      </button>
-                      <button className="flex items-center gap-1.5 text-sm text-gray-400">
-                        <MessageCircle size={16} /><span className="text-xs">{p.comments || 0}</span>
-                      </button>
-                      <div className="ml-auto flex items-center gap-1.5">
-                        <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
-                        <span className="text-xs text-gray-400">{timeAgo(p.timestamp)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {grp.posts.map((p) => (
+              <UGCGroupCard
+                key={p.id}
+                post={p}
+                onLike={handleLike}
+                isLiked={likedPosts.has(p.id)}
+                session={session}
+                fetchComments={fetchComments}
+              />
+            ))}
           </div>
         </div>
       );
