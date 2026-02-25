@@ -1688,31 +1688,34 @@ export default function Feed() {
 
     // Step 2: Group posts per user — if a user has multiple posts within 12 hours,
     // bundle them into a swipeable group card instead of individual cards.
+    // We preserve the original API order (firstIndex) for inter-user ordering so
+    // that users without timestamps don't sink to the bottom.
     const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
-    const byUser = new Map<string, UGCPost[]>();
-    for (const post of deduped) {
+    const byUser = new Map<string, { posts: UGCPost[]; firstIndex: number }>();
+    deduped.forEach((post, idx) => {
       const uid = post.user?.id || 'anon';
-      if (!byUser.has(uid)) byUser.set(uid, []);
-      byUser.get(uid)!.push(post);
-    }
+      if (!byUser.has(uid)) byUser.set(uid, { posts: [], firstIndex: idx });
+      byUser.get(uid)!.posts.push(post);
+    });
 
     const feedItems: any[] = [];
-    for (const [, posts] of byUser) {
-      // Sort newest first
+    for (const [, { posts, firstIndex }] of byUser) {
+      // Sort newest first within each user's posts
       posts.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
       // Group into 12-hour windows
       let grp: UGCPost[] = [posts[0]];
-      const flushGrp = () => {
-        if (grp.length >= 2) {
+      const flushGrp = (g: UGCPost[]) => {
+        if (g.length >= 2) {
           feedItems.push({
-            id: `ugc-group-${grp[0].id}`,
+            id: `ugc-group-${g[0].id}`,
             type: 'ugc_group',
-            user: grp[0].user,
-            posts: grp,
-            timestamp: grp[0].timestamp,
+            user: g[0].user,
+            posts: g,
+            timestamp: g[0].timestamp,
+            _sortIndex: firstIndex,
           });
         } else {
-          feedItems.push(grp[0]);
+          feedItems.push({ ...g[0], _sortIndex: firstIndex });
         }
       };
       for (let i = 1; i < posts.length; i++) {
@@ -1721,15 +1724,15 @@ export default function Feed() {
         if (grpTop - cur < TWELVE_HOURS_MS) {
           grp.push(posts[i]);
         } else {
-          flushGrp();
+          flushGrp(grp);
           grp = [posts[i]];
         }
       }
-      flushGrp();
+      flushGrp(grp);
     }
 
-    // Sort all feed items by timestamp (newest first)
-    feedItems.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
+    // Sort by original API position (not timestamp) so users without timestamps stay visible
+    feedItems.sort((a, b) => (a._sortIndex || 0) - (b._sortIndex || 0));
 
     // Step 3: Spread — prevent consecutive same-user items
     const result: any[] = [];
@@ -1758,60 +1761,124 @@ export default function Feed() {
     return batches;
   }, [standaloneUGCPosts]);
 
-  // Renders one feed item — either a single post or a grouped user activity card
+  // Renders one feed item — either a single post or a grouped user activity carousel
   const renderFeedItem = (item: any, keyPrefix: string) => {
     if (item?.type === 'ugc_group') {
       const grp = item as { id: string; user: UGCPost['user']; posts: UGCPost[]; timestamp: string };
       const avatar = grp.user?.avatar;
       const displayName = grp.user?.displayName || grp.user?.username || 'Someone';
-      const getTypeLabel = (p: UGCPost) => {
-        if (p.type === 'rating' || p.type === 'review') return p.rating ? `${p.rating}★` : 'Review';
-        if (p.type === 'finished') return 'Finished';
-        if (p.type === 'hot_take') return 'Hot Take';
-        if (p.type === 'poll') return 'Poll';
-        if (p.type === 'predict') return 'Prediction';
-        return 'Post';
+      const rawUsername = grp.user?.username || '';
+      const avatarLetter = (displayName || rawUsername)[0]?.toUpperCase() || '?';
+
+      const timeAgo = (dateStr?: string) => {
+        if (!dateStr) return '';
+        const mins = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+        if (mins < 1) return 'now';
+        if (mins < 60) return `${mins}m`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `${hrs}h`;
+        return `${Math.floor(hrs / 24)}d`;
       };
+
+      const getTypeInfo = (p: UGCPost) => {
+        if (p.type === 'hot_take') return { label: 'Hot Take', color: 'text-orange-500', bg: 'bg-orange-50' };
+        if (p.type === 'review') return { label: 'Review', color: 'text-yellow-500', bg: 'bg-yellow-50' };
+        if (p.type === 'rating') return { label: 'Rating', color: 'text-yellow-500', bg: 'bg-yellow-50' };
+        if (p.type === 'finished') return { label: 'Finished', color: 'text-green-500', bg: 'bg-green-50' };
+        if (p.type === 'poll') return { label: 'Poll', color: 'text-blue-500', bg: 'bg-blue-50' };
+        if (p.type === 'predict') return { label: 'Prediction', color: 'text-purple-500', bg: 'bg-purple-50' };
+        return { label: 'Post', color: 'text-gray-400', bg: 'bg-gray-50' };
+      };
+
       return (
-        <div key={`${keyPrefix}-${grp.id}`} className="mb-4 rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-white">
-          {/* Header */}
-          <div className="flex items-center gap-2.5 px-4 pt-3 pb-2">
-            {avatar ? (
-              <img src={avatar} alt={displayName} className="w-8 h-8 rounded-full object-cover" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                {displayName[0]?.toUpperCase()}
+        <div key={`${keyPrefix}-${grp.id}`} className="mb-4">
+          {/* User header — shown once above all carousel cards */}
+          <div className="flex items-start gap-3 px-1 mb-2">
+            <Link href={`/user/${grp.user?.id || ''}`}>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-semibold cursor-pointer flex-shrink-0 overflow-hidden">
+                {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : avatarLetter}
               </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
-              <p className="text-xs text-gray-500">{grp.posts.length} updates</p>
+            </Link>
+            <div className="flex-1 min-w-0 pt-0.5">
+              <Link href={`/user/${grp.user?.id || ''}`}>
+                <span className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer text-sm">{displayName}</span>
+              </Link>
+              {rawUsername && rawUsername !== displayName && (
+                <p className="text-xs text-gray-400 leading-tight">@{rawUsername}</p>
+              )}
             </div>
+            <span className="text-xs text-gray-400 pt-1 flex-shrink-0">{grp.posts.length} updates</span>
           </div>
-          {/* Horizontal swipeable cards */}
-          <div className="flex gap-3 overflow-x-auto px-4 pb-4 pt-1 scrollbar-hide snap-x snap-mandatory">
-            {grp.posts.map((p) => (
-              <div key={p.id} className="snap-start flex-shrink-0 w-40 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden">
-                {p.mediaImage && p.mediaImage.startsWith('http') ? (
-                  <img src={p.mediaImage} alt={p.mediaTitle || ''} className="w-full h-24 object-cover" />
-                ) : (
-                  <div className="w-full h-24 bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
-                    <span className="text-purple-400 text-2xl">🎬</span>
+
+          {/* Horizontally swipeable post cards */}
+          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
+            {grp.posts.map((p) => {
+              const ti = getTypeInfo(p);
+              const mediaTypeLabel = p.mediaType === 'tv' ? 'TV' : p.mediaType;
+              return (
+                <div key={p.id} className="snap-start flex-shrink-0 w-[78vw] max-w-[300px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="p-4">
+                    {/* Media type badge */}
+                    {mediaTypeLabel && (
+                      <div className="flex justify-end mb-2">
+                        <span className="text-[11px] font-medium text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full capitalize">{mediaTypeLabel}</span>
+                      </div>
+                    )}
+                    {/* Media row: poster + title + stars + content */}
+                    {p.mediaTitle ? (
+                      <div className="flex gap-3">
+                        {p.mediaImage && p.mediaImage.startsWith('http') ? (
+                          p.externalId && p.externalSource ? (
+                            <Link href={`/media/${p.mediaType || 'movie'}/${p.externalSource}/${p.externalId}`}>
+                              <img src={p.mediaImage} alt={p.mediaTitle} className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md cursor-pointer hover:opacity-90 transition-opacity" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                            </Link>
+                          ) : (
+                            <img src={p.mediaImage} alt={p.mediaTitle} className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                          )
+                        ) : null}
+                        <div className="min-w-0 flex-1 flex flex-col justify-center">
+                          {p.externalId && p.externalSource ? (
+                            <Link href={`/media/${p.mediaType || 'movie'}/${p.externalSource}/${p.externalId}`}>
+                              <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{p.mediaTitle}</p>
+                            </Link>
+                          ) : (
+                            <p className="text-sm font-semibold text-gray-900 line-clamp-2">{p.mediaTitle}</p>
+                          )}
+                          {p.rating && p.rating > 0 && (
+                            <div className="flex items-center gap-0.5 mt-1">
+                              {[1,2,3,4,5].map(s => {
+                                const r = p.rating!;
+                                if (s <= Math.floor(r)) return <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />;
+                                if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={14} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={14} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                                return <Star key={s} size={14} className="text-gray-200" />;
+                              })}
+                            </div>
+                          )}
+                          {p.content && (
+                            <p className="text-gray-700 text-sm leading-relaxed mt-1.5 line-clamp-2">{p.content}</p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      p.content && <p className="text-gray-800 text-sm leading-relaxed">{p.content}</p>
+                    )}
+                    {/* Footer */}
+                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
+                      <button className="flex items-center gap-1.5 text-sm text-gray-400">
+                        <Heart size={16} fill="none" /><span className="text-xs">{p.likes || 0}</span>
+                      </button>
+                      <button className="flex items-center gap-1.5 text-sm text-gray-400">
+                        <MessageCircle size={16} /><span className="text-xs">{p.comments || 0}</span>
+                      </button>
+                      <div className="ml-auto flex items-center gap-1.5">
+                        <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
+                        <span className="text-xs text-gray-400">{timeAgo(p.timestamp)}</span>
+                      </div>
+                    </div>
                   </div>
-                )}
-                <div className="p-2">
-                  <p className="text-[11px] font-semibold text-gray-900 line-clamp-2 leading-tight mb-1">
-                    {p.mediaTitle || 'Untitled'}
-                  </p>
-                  <span className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                    {getTypeLabel(p)}
-                  </span>
-                  {p.content && !p.content.startsWith('Added ') && (
-                    <p className="text-[10px] text-gray-500 mt-1 line-clamp-2 leading-tight">{p.content}</p>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       );
