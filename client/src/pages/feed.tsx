@@ -1753,17 +1753,12 @@ export default function Feed() {
   })();
 
   const TOTAL_BATCH_SLOTS_COUNT = 22;
-  // Spread items evenly across all 22 feed slot positions so posts appear
-  // throughout the feed (top, middle, bottom) rather than piling at the top.
+  // Map each post/group to a sequential slot index so item 0 appears at slot 0,
+  // item 1 at slot 1, etc. — interleaved between game cards in the feed.
   const slotAssignments = useMemo(() => {
     const map = new Map<number, any>();
-    const items = standaloneUGCPosts;
-    if (items.length === 0) return map;
-    items.forEach((item, i) => {
-      const slotIdx = items.length === 1
-        ? 0
-        : Math.round((i / (items.length - 1)) * (TOTAL_BATCH_SLOTS_COUNT - 1));
-      map.set(slotIdx, item);
+    standaloneUGCPosts.forEach((item, i) => {
+      map.set(i, item);
     });
     return map;
   }, [standaloneUGCPosts]);
