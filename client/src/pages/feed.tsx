@@ -1689,8 +1689,12 @@ export default function Feed() {
     }
     const deduped = Array.from(dedupMap.values());
 
-    // Step 2: Per-user cap — no single user gets more than 4 posts
-    const MAX_PER_USER = 4;
+    // Step 2: Per-user cap — proportional + absolute ceiling
+    // If few users have posts, be strict so no one dominates
+    const activeUserIds = new Set(deduped.map(p => p.user?.id || ''));
+    const numActiveUsers = Math.max(1, activeUserIds.size);
+    // At most 2 posts per user absolute; if many users, allow proportionally more (but never > 2)
+    const MAX_PER_USER = Math.min(2, Math.max(1, Math.floor(8 / numActiveUsers)));
     const userCount = new Map<string, number>();
     const capped = deduped.filter(post => {
       const uid = post.user?.id || '';
