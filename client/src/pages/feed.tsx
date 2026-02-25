@@ -1665,18 +1665,15 @@ export default function Feed() {
 
   const ugcUsedIds = new Set(ugcSlots.flat().map(p => p.id));
 
-  const standaloneUGCPosts: UGCPost[] = (() => {
+  const standaloneUGCPosts: any[] = (() => {
     const allUGC = ugcSlots.flat().filter(p => {
       return p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved';
     });
 
     // Step 1: Deduplicate — same user + same media keeps only the best post
-    // (prefer post with rating, then longer content)
     const dedupMap = new Map<string, UGCPost>();
     for (const post of allUGC) {
-      const mediaKey = post.externalId
-        ? post.externalId
-        : (post.mediaTitle || `no-media-${post.id}`);
+      const mediaKey = post.externalId || post.mediaTitle || `no-media-${post.id}`;
       const key = `${post.user?.id || 'anon'}-${mediaKey}`;
       const existing = dedupMap.get(key);
       if (!existing) {
@@ -1689,9 +1686,54 @@ export default function Feed() {
     }
     const deduped = Array.from(dedupMap.values());
 
-    // Step 2: Spread — look ahead up to 5 to find a post from a different user
-    const result: UGCPost[] = [];
-    const remaining = [...deduped];
+    // Step 2: Group posts per user — if a user has multiple posts within 12 hours,
+    // bundle them into a swipeable group card instead of individual cards.
+    const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+    const byUser = new Map<string, UGCPost[]>();
+    for (const post of deduped) {
+      const uid = post.user?.id || 'anon';
+      if (!byUser.has(uid)) byUser.set(uid, []);
+      byUser.get(uid)!.push(post);
+    }
+
+    const feedItems: any[] = [];
+    for (const [, posts] of byUser) {
+      // Sort newest first
+      posts.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
+      // Group into 12-hour windows
+      let grp: UGCPost[] = [posts[0]];
+      const flushGrp = () => {
+        if (grp.length >= 2) {
+          feedItems.push({
+            id: `ugc-group-${grp[0].id}`,
+            type: 'ugc_group',
+            user: grp[0].user,
+            posts: grp,
+            timestamp: grp[0].timestamp,
+          });
+        } else {
+          feedItems.push(grp[0]);
+        }
+      };
+      for (let i = 1; i < posts.length; i++) {
+        const grpTop = new Date(grp[0].timestamp || 0).getTime();
+        const cur = new Date(posts[i].timestamp || 0).getTime();
+        if (grpTop - cur < TWELVE_HOURS_MS) {
+          grp.push(posts[i]);
+        } else {
+          flushGrp();
+          grp = [posts[i]];
+        }
+      }
+      flushGrp();
+    }
+
+    // Sort all feed items by timestamp (newest first)
+    feedItems.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
+
+    // Step 3: Spread — prevent consecutive same-user items
+    const result: any[] = [];
+    const remaining = [...feedItems];
     let lastUserId = '';
     while (remaining.length > 0) {
       const lookAhead = Math.min(remaining.length, 5);
@@ -1699,9 +1741,9 @@ export default function Feed() {
       for (let i = 0; i < lookAhead; i++) {
         if ((remaining[i].user?.id || '') !== lastUserId) { chosen = i; break; }
       }
-      const post = remaining.splice(chosen, 1)[0];
-      result.push(post);
-      lastUserId = post.user?.id || '';
+      const item = remaining.splice(chosen, 1)[0];
+      result.push(item);
+      lastUserId = item.user?.id || '';
     }
 
     return result;
@@ -1716,35 +1758,94 @@ export default function Feed() {
     return batches;
   }, [standaloneUGCPosts]);
 
+  // Renders one feed item — either a single post or a grouped user activity card
+  const renderFeedItem = (item: any, keyPrefix: string) => {
+    if (item?.type === 'ugc_group') {
+      const grp = item as { id: string; user: UGCPost['user']; posts: UGCPost[]; timestamp: string };
+      const avatar = grp.user?.avatar;
+      const displayName = grp.user?.displayName || grp.user?.username || 'Someone';
+      const getTypeLabel = (p: UGCPost) => {
+        if (p.type === 'rating' || p.type === 'review') return p.rating ? `${p.rating}★` : 'Review';
+        if (p.type === 'finished') return 'Finished';
+        if (p.type === 'hot_take') return 'Hot Take';
+        if (p.type === 'poll') return 'Poll';
+        if (p.type === 'predict') return 'Prediction';
+        return 'Post';
+      };
+      return (
+        <div key={`${keyPrefix}-${grp.id}`} className="mb-4 rounded-2xl overflow-hidden border border-gray-100 shadow-sm bg-white">
+          {/* Header */}
+          <div className="flex items-center gap-2.5 px-4 pt-3 pb-2">
+            {avatar ? (
+              <img src={avatar} alt={displayName} className="w-8 h-8 rounded-full object-cover" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                {displayName[0]?.toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+              <p className="text-xs text-gray-500">{grp.posts.length} updates</p>
+            </div>
+          </div>
+          {/* Horizontal swipeable cards */}
+          <div className="flex gap-3 overflow-x-auto px-4 pb-4 pt-1 scrollbar-hide snap-x snap-mandatory">
+            {grp.posts.map((p) => (
+              <div key={p.id} className="snap-start flex-shrink-0 w-40 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden">
+                {p.mediaImage && p.mediaImage.startsWith('http') ? (
+                  <img src={p.mediaImage} alt={p.mediaTitle || ''} className="w-full h-24 object-cover" />
+                ) : (
+                  <div className="w-full h-24 bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                    <span className="text-purple-400 text-2xl">🎬</span>
+                  </div>
+                )}
+                <div className="p-2">
+                  <p className="text-[11px] font-semibold text-gray-900 line-clamp-2 leading-tight mb-1">
+                    {p.mediaTitle || 'Untitled'}
+                  </p>
+                  <span className="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                    {getTypeLabel(p)}
+                  </span>
+                  {p.content && !p.content.startsWith('Added ') && (
+                    <p className="text-[10px] text-gray-500 mt-1 line-clamp-2 leading-tight">{p.content}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    // Regular single post
+    const post = item as UGCPost;
+    return (
+      <StandalonePost
+        key={`${keyPrefix}-${post.id}`}
+        post={post}
+        onLike={handleLike}
+        onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
+        onFireVote={(id) => handleHotTakeVote(id, 'fire')}
+        onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+        isLiked={likedPosts.has(post.id)}
+        isCommentsActive={activeCommentPostId === post.id}
+        onCloseComments={() => setActiveCommentPostId(null)}
+        fetchComments={fetchComments}
+        onSubmitComment={(id, content) => handleComment(id, undefined, content)}
+        isSubmitting={commentMutation.isPending}
+        session={session}
+        currentUserId={currentAppUserId || undefined}
+        onDeleteComment={handleDeleteComment}
+        onDeletePost={handleDeletePost}
+        onLikeComment={handleLikeComment}
+      />
+    );
+  };
+
   const renderPostBatchByIndex = (batchIndex: number) => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
     const batch = postBatches[batchIndex];
     if (!batch || batch.length === 0) return null;
-    return (
-      <>
-        {batch.map((post) => (
-          <StandalonePost
-            key={`standalone-${post.id}`}
-            post={post}
-            onLike={handleLike}
-            onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-            onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-            onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-            isLiked={likedPosts.has(post.id)}
-            isCommentsActive={activeCommentPostId === post.id}
-            onCloseComments={() => setActiveCommentPostId(null)}
-            fetchComments={fetchComments}
-            onSubmitComment={(id, content) => handleComment(id, undefined, content)}
-            isSubmitting={commentMutation.isPending}
-            session={session}
-            currentUserId={currentAppUserId || undefined}
-            onDeleteComment={handleDeleteComment}
-            onDeletePost={handleDeletePost}
-            onLikeComment={handleLikeComment}
-          />
-        ))}
-      </>
-    );
+    return <>{batch.map((item: any) => renderFeedItem(item, 'batch'))}</>;
   };
 
   const TOTAL_BATCH_SLOTS = 22;
@@ -1754,30 +1855,11 @@ export default function Feed() {
     if (remainingBatches.length === 0) return null;
     return (
       <>
-        {remainingBatches.flat().map((post) => (
-          <StandalonePost
-            key={`standalone-remaining-${post.id}`}
-            post={post}
-            onLike={handleLike}
-            onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-            onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-            onIceVote={(id) => handleHotTakeVote(id, 'ice')}
-            isLiked={likedPosts.has(post.id)}
-            isCommentsActive={activeCommentPostId === post.id}
-            onCloseComments={() => setActiveCommentPostId(null)}
-            fetchComments={fetchComments}
-            onSubmitComment={(id, content) => handleComment(id, undefined, content)}
-            isSubmitting={commentMutation.isPending}
-            session={session}
-            currentUserId={currentAppUserId || undefined}
-            onDeleteComment={handleDeleteComment}
-            onDeletePost={handleDeletePost}
-            onLikeComment={handleLikeComment}
-          />
-        ))}
+        {remainingBatches.flat().map((item: any) => renderFeedItem(item, 'remaining'))}
       </>
     );
   };
+
 
   const roomItems = useMemo(() => {
     if (!socialPosts || socialPosts.length === 0) return [];
@@ -3531,23 +3613,6 @@ export default function Feed() {
     };
 
     return artworkMap[title] || `https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=100&h=100&fit=crop`;
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 1) return 'Today';
-    if (diffDays === 2) return 'Yesterday';
-    if (diffDays <= 7) return `${diffDays - 1} days ago`;
-
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-    });
   };
 
   const formatFullDate = (dateStr: string) => {
