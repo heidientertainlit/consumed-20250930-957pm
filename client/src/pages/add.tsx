@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, TrendingUp, Plus, Mic, Gamepad2, MessageSquarePlus, Star, ArrowLeft, X, Brain, Target, Flame, ChevronRight } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, TrendingUp, Plus, Mic, Gamepad2, MessageSquarePlus, Star, ArrowLeft, X, Brain, ChevronRight } from "lucide-react";
 import InlineComposer from "@/components/inline-composer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -904,16 +904,6 @@ export default function Search() {
                 </div>
               </div>
             )}
-            <div className="border-t border-white/[0.05] pt-3 flex items-center gap-2">
-              <span className="text-white/25 text-[11px]">Next</span>
-              <Link href="/activity#trivia" className="inline-flex items-center gap-1 text-purple-400/70 text-[11px] font-medium hover:text-purple-400 transition-colors">
-                <Target size={10} /> Play today's game
-              </Link>
-              <span className="text-white/10 text-[11px]">·</span>
-              <Link href="/activity" className="inline-flex items-center gap-1 text-orange-400/70 text-[11px] font-medium hover:text-orange-400 transition-colors">
-                <Flame size={10} /> See what's trending
-              </Link>
-            </div>
           </div>
         )}
 
