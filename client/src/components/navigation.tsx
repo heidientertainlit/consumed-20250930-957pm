@@ -526,7 +526,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
         {/* Floating plus button with white ring for gap effect */}
         <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: -24 }}>
           <Link
-            href="/"
+            href="/add"
             className="flex items-center justify-center"
             data-testid="nav-home"
           >
