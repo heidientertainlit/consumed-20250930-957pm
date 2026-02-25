@@ -1607,6 +1607,8 @@ export default function Feed() {
         if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
         if ((p.type === 'poll' || p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) return true;
         if (p.type === 'rank' || p.type === 'shared_rank') return true;
+        if (p.type === 'review' || p.post_type === 'review') return true;
+        if (p.type === 'thought' || p.post_type === 'thought') return true;
         const content = (p.content || '').trim();
         if (p.rating && p.rating > 0) return true;
         if (content.length > 20 && !isAutoGen(content)) return true;
@@ -1623,6 +1625,8 @@ export default function Feed() {
         else if (p.type === 'cast_approved') postType = 'cast_approved';
         else if (p.type === 'rank' || p.type === 'shared_rank') postType = 'rank';
         else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
+        else if ((p.type === 'review' || p.post_type === 'review') && content) postType = p.rating && p.rating > 0 ? 'review' : 'thought';
+        else if (p.type === 'thought' || p.post_type === 'thought') postType = 'thought';
         else if (p.rating && p.rating > 0 && content.length > 20) postType = 'review';
         else if (p.rating && p.rating > 0) postType = 'rating';
         else postType = 'thought';
@@ -1662,10 +1666,31 @@ export default function Feed() {
   const ugcUsedIds = new Set(ugcSlots.flat().map(p => p.id));
 
   const standaloneUGCPosts: UGCPost[] = (() => {
-    const allUGC = ugcSlots.flat();
-    return allUGC.filter(p => {
+    const allUGC = ugcSlots.flat().filter(p => {
       return p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved';
     });
+
+    // Spread posts so the same user never appears consecutively in the feed.
+    // Look ahead up to 5 slots to find a post from a different user.
+    const result: UGCPost[] = [];
+    const remaining = [...allUGC];
+    let lastUserId = '';
+
+    while (remaining.length > 0) {
+      const lookAhead = Math.min(remaining.length, 5);
+      let chosen = 0;
+      for (let i = 0; i < lookAhead; i++) {
+        if ((remaining[i].user?.id || '') !== lastUserId) {
+          chosen = i;
+          break;
+        }
+      }
+      const post = remaining.splice(chosen, 1)[0];
+      result.push(post);
+      lastUserId = post.user?.id || '';
+    }
+
+    return result;
   })();
 
   const POSTS_PER_BATCH = 3;
