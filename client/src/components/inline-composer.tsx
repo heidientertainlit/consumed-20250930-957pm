@@ -546,6 +546,9 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
             type: "predict",
             media_external_id: selectedMedia?.external_id || selectedMedia?.id || null,
             media_external_source: selectedMedia?.external_source || selectedMedia?.source || null,
+            media_title: selectedMedia?.title || null,
+            media_type: selectedMedia?.type || null,
+            media_image_url: selectedMedia?.poster_url || selectedMedia?.image_url || selectedMedia?.image || selectedMedia?.thumbnail || null,
           }),
         });
 

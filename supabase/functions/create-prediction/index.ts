@@ -69,6 +69,7 @@ serve(async (req) => {
       media_external_source,
       media_title,
       media_type,
+      media_image_url,
       deadline,
       points_reward = 20
     } = body;
@@ -163,6 +164,7 @@ serve(async (req) => {
         media_type: media_type || null,
         media_external_id: media_external_id || null,
         media_external_source: media_external_source || null,
+        image_url: media_image_url || null,
         contains_spoilers: false
       })
       .select()
