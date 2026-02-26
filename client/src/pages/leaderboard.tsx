@@ -467,7 +467,7 @@ export default function Leaderboard() {
       <Navigation />
 
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pt-8 pb-5 px-4 -mt-px text-center">
-        <h1 className="text-xl font-semibold text-white tracking-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <h1 className="text-2xl font-semibold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
           Leaderboard
         </h1>
         <p className="text-white/50 text-sm mt-1">
