@@ -682,6 +682,12 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
         await handleAddToRank(selectedMedia, selectedRankId);
       }
 
+      const successMessages: Record<string, string> = {
+        thought: "Thought shared!",
+        review: "Review posted!",
+        hot_take: "Hot take dropped!",
+      };
+      toast({ title: successMessages[postType] || "Post shared!" });
       resetComposer();
       onPostSuccess?.();
       setTimeout(() => {

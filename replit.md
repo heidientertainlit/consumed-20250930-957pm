@@ -98,6 +98,8 @@ Preferred communication style: Simple, everyday language.
     - `_rawPost` pattern: `ugcSlots` attaches the full original `SocialPost` as `_rawPost` for `renderFeedItem`.
     - `feedData.map()` MUST skip `cast_approved` and `prediction`/`predict` when `selectedFilter !== 'predictions'`.
     - Feed refresh: Use `setTimeout(() => queryClient.refetchQueries({ queryKey: ['social-feed'] }), 800)` after posting.
+    - Dedup exemption: `predict`, `prediction`, `poll`, and `cast_approved` are EXEMPT from dedup in `standaloneUGCPosts`. They use key `exempt-${postId}` so they never compete with thoughts/reviews about the same media. Removing this exemption silently erases thoughts when a prediction exists for the same media.
+    - `rate-review` type: social-feed returns `type: 'rate-review'` for review posts. ugcSlots filter and map must check for this explicitly alongside `'review'`. Do not remove this check.
 
 ## External Dependencies
 

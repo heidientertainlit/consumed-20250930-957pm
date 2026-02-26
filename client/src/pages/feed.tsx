@@ -1828,7 +1828,7 @@ export default function Feed() {
         if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
         if ((p.type === 'poll' || p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) return true;
         if (p.type === 'rank' || p.type === 'shared_rank') return true;
-        if (p.type === 'review' || p.post_type === 'review') return true;
+        if (p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review') return true;
         if (p.type === 'thought' || p.post_type === 'thought') return true;
         const content = (p.content || '').trim();
         if (p.rating && p.rating > 0) return true;
@@ -1846,7 +1846,7 @@ export default function Feed() {
         else if (p.type === 'cast_approved') postType = 'cast_approved';
         else if (p.type === 'rank' || p.type === 'shared_rank') postType = 'rank';
         else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
-        else if ((p.type === 'review' || p.post_type === 'review') && content) postType = p.rating && p.rating > 0 ? 'review' : 'thought';
+        else if ((p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review') && content) postType = p.rating && p.rating > 0 ? 'review' : 'thought';
         else if (p.type === 'thought' || p.post_type === 'thought') postType = 'thought';
         else if (p.rating && p.rating > 0 && content.length > 20) postType = 'review';
         else if (p.rating && p.rating > 0) postType = 'rating';
@@ -1892,9 +1892,18 @@ export default function Feed() {
       return p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved';
     });
 
-    // Step 1: Deduplicate — same user + same media keeps only the best post
+    // Step 1: Deduplicate — same user + same media keeps only the best post.
+    // Predictions, polls, and cast_approved are EXEMPT from dedup — they are distinct
+    // content types that must coexist with thoughts/reviews about the same media.
+    // Including them in the same dedup key would silently erase thoughts/reviews.
+    const DEDUP_EXEMPT = new Set(['predict', 'prediction', 'poll', 'cast_approved']);
     const dedupMap = new Map<string, UGCPost>();
     for (const post of allUGC) {
+      if (DEDUP_EXEMPT.has(post.type)) {
+        // Give exempt posts a unique key so they are never deduplicated
+        dedupMap.set(`exempt-${post.id}`, post);
+        continue;
+      }
       const mediaKey = post.externalId || post.mediaTitle || `no-media-${post.id}`;
       const key = `${post.user?.id || 'anon'}-${mediaKey}`;
       const existing = dedupMap.get(key);
