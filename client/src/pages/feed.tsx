@@ -2579,28 +2579,22 @@ export default function Feed() {
   const isConsumptionPost = (post: SocialPost): boolean => {
     const postType = post.type?.toLowerCase() || '';
     
-    // Explicit consumption/tracking types - all tracking activity goes here
+    // These types always show as standalone feed cards — never treat as consumption
+    const alwaysStandaloneTypes = [
+      'thought', 'rate-review', 'review', 'reviewed', 'hot_take',
+      'trivia', 'poll', 'prediction', 'predict', 'vote',
+      'ask_for_recs', 'ask_for_rec', 'rank_share', 'media_group', 'cast_approved'
+    ];
+    if (alwaysStandaloneTypes.includes(postType)) return false;
+    
+    // Explicit consumption/tracking types - silent tracking activity goes here
     const consumptionTypes = [
-      'added_to_list', 'add-to-list', 'added', 
-      'rate', 'rate-review', 'rated', 'review', 'reviewed',
+      'added_to_list', 'add-to-list', 'added',
+      'rate', 'rated',
       'finished', 'consuming', 'progress', 'update', 'started',
       'watched', 'read', 'listening', 'played'
     ];
-    
-    // Game/engagement posts should NEVER be consumption posts - always show prominently
-    const gameTypes = ['trivia', 'poll', 'prediction', 'predict', 'vote', 'ask_for_recs', 'ask_for_rec', 'rank_share', 'media_group', 'cast_approved'];
-    if (gameTypes.includes(postType)) return false;
-    
-    // Check explicit consumption types
     if (consumptionTypes.includes(postType)) return true;
-    
-    // Posts with media items but without substantial engagement content are consumption posts
-    const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
-    
-    // If it has media and isn't a game type, it's consumption
-    if (hasMediaItems && !gameTypes.includes(postType)) {
-      return true;
-    }
     
     return false;
   };
@@ -4783,6 +4777,8 @@ export default function Feed() {
                 if ((item as any).type === 'friend_activity_block') return true;
                 if ((item as any).type === 'consumption_carousel') return false;
                 if ((item as any).type === 'swipeable_ratings') return false;
+                // In 'All' mode, skip posts already rendered via standaloneUGCPosts to prevent duplicates
+                if ((selectedFilter === 'All' || selectedFilter === 'all') && item.id && ugcUsedIds.has(item.id)) return false;
                 const post = item as SocialPost;
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }) : [];
