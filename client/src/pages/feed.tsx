@@ -733,6 +733,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     if (post.type === 'review') return { label: 'Review', color: 'text-yellow-500', bg: 'bg-yellow-50' };
     if (post.type === 'rating') return { label: 'Rating', color: 'text-yellow-500', bg: 'bg-yellow-50' };
     if (post.type === 'finished') return { label: 'Finished', color: 'text-green-500', bg: 'bg-green-50' };
+    if (post.type === 'predict' || post.type === 'prediction') return { label: 'Prediction', color: 'text-purple-500', bg: 'bg-purple-50' };
+    if (post.type === 'poll') return { label: 'Poll', color: 'text-purple-500', bg: 'bg-purple-50' };
     return { label: 'Post', color: 'text-gray-400', bg: 'bg-gray-50' };
   };
 
@@ -929,6 +931,9 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
       case 'review': return { label: 'Review', color: 'text-yellow-500', bg: 'bg-yellow-50', icon: Star };
       case 'rating': return { label: 'Rating', color: 'text-yellow-500', bg: 'bg-yellow-50', icon: Star };
       case 'thought': return { label: 'Thought', color: 'text-blue-400', bg: 'bg-blue-50', icon: MessageCircle };
+      case 'predict':
+      case 'prediction': return { label: 'Prediction', color: 'text-purple-500', bg: 'bg-purple-50', icon: Target };
+      case 'poll': return { label: 'Poll', color: 'text-purple-500', bg: 'bg-purple-50', icon: Target };
       default: return { label: 'Post', color: 'text-gray-400', bg: 'bg-gray-50', icon: MessageCircle };
     }
   };

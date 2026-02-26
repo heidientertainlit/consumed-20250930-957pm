@@ -479,7 +479,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
           media_title: selectedMedia?.title,
           media_type: selectedMedia?.type,
           media_creator: selectedMedia?.creator || selectedMedia?.author || selectedMedia?.artist,
-          media_image_url: selectedMedia?.poster_url || selectedMedia?.image_url || selectedMedia?.image || selectedMedia?.thumbnail,
+          media_image_url: selectedMedia?.poster_url || selectedMedia?.image_url || selectedMedia?.imageUrl || selectedMedia?.image || selectedMedia?.thumbnail,
           media_external_id: selectedMedia?.external_id || selectedMedia?.id,
           media_external_source: selectedMedia?.external_source || selectedMedia?.source || 'tmdb',
           list_id: addToList && selectedListId ? selectedListId : undefined,
@@ -506,7 +506,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
           media_title: selectedMedia.title,
           media_type: selectedMedia.type,
           media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
-          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail,
+          media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.imageUrl || selectedMedia.image || selectedMedia.thumbnail,
           media_external_id: selectedMedia.external_id || selectedMedia.id,
           media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
           list_id: addToList && selectedListId ? selectedListId : undefined,
@@ -548,7 +548,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
             media_external_source: selectedMedia?.external_source || selectedMedia?.source || null,
             media_title: selectedMedia?.title || null,
             media_type: selectedMedia?.type || null,
-            media_image_url: selectedMedia?.poster_url || selectedMedia?.image_url || selectedMedia?.image || selectedMedia?.thumbnail || null,
+            media_image_url: selectedMedia?.poster_url || selectedMedia?.image_url || selectedMedia?.imageUrl || selectedMedia?.image || selectedMedia?.thumbnail || null,
           }),
         });
 
@@ -580,7 +580,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
             media_title: selectedMedia.title,
             media_type: selectedMedia.type,
             media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
-            media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail,
+            media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.imageUrl || selectedMedia.image || selectedMedia.thumbnail,
             media_external_id: selectedMedia.external_id || selectedMedia.id,
             media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
           }),
@@ -603,7 +603,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
               media_type: selectedMedia.type || "movie",
               media_subtype: selectedMedia.type === 'tv' && selectedEpisode ? 'episode' : (selectedMedia.type === 'tv' ? 'series' : null),
               media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
-              media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
+              media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.imageUrl || selectedMedia.image || selectedMedia.thumbnail || "",
               media_external_id: selectedMedia.external_id || selectedMedia.id || "",
               media_external_source: selectedMedia.external_source || selectedMedia.source || "tmdb",
               season_number: selectedSeason || null,
@@ -663,7 +663,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
                 title: selectedMedia.title || "",
                 mediaType: selectedMedia.type || "movie",
                 creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist || "",
-                imageUrl: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image || selectedMedia.thumbnail || "",
+                imageUrl: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.imageUrl || selectedMedia.image || selectedMedia.thumbnail || "",
                 externalId: selectedMedia.external_id || selectedMedia.id || "",
                 externalSource: selectedMedia.external_source || selectedMedia.source || "tmdb",
               },
@@ -760,9 +760,9 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
               {selectedMedia && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <div className="flex items-center gap-3">
-                    {(selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image) && (
+                    {(selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.imageUrl || selectedMedia.image) && (
                       <img
-                        src={selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.image}
+                        src={selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.imageUrl || selectedMedia.image}
                         alt={selectedMedia.title}
                         className="w-10 h-14 object-cover rounded"
                       />
