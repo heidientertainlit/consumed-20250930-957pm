@@ -4266,7 +4266,7 @@ export default function Feed() {
           {friendsConsuming.length > 0 && (
             <div className="mb-1">
               <div className="mb-2">
-                <h3 className="text-sm font-medium text-white/80">Friends</h3>
+                <h3 className="text-sm font-medium text-white/80">Trending with Friends</h3>
               </div>
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
                 {friendsConsuming.map((item: any, idx: number) => (
