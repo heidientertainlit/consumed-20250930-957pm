@@ -60,7 +60,7 @@ interface QuickAddModalProps {
 }
 
 type Stage = "search" | "composer";
-type PostType = "thought" | "hot_take" | "review" | "prediction" | "rank";
+type PostType = "thought" | "review" | "prediction" | "rank";
 
 export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId }: QuickAddModalProps) {
   const { user, session } = useAuth();
@@ -396,10 +396,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
       console.log('🎯 Composer: Posting', { postType, hasMedia: !!selectedMedia, mediaData, reviewText: reviewText.substring(0, 50) });
       
       // Handle based on post type
-      if (postType === 'thought' || postType === 'hot_take' || postType === 'review') {
+      if (postType === 'thought' || postType === 'review') {
         const typeMap: Record<string, string> = {
           'thought': 'thought',
-          'hot_take': 'hot_take',
           'review': 'rate-review',
         };
         
@@ -1005,7 +1004,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                   {[
                     { id: 'thought', label: 'Thought' },
                     { id: 'review', label: 'Review' },
-                    { id: 'hot_take', label: 'Hot Take' },
                     { id: 'prediction', label: 'Prediction' },
                   ].map((type) => (
                     <button
@@ -1049,20 +1047,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                 </>
               )}
 
-              {postType === 'hot_take' && (
-                <>
-                  <Textarea
-                    placeholder="Drop your hot take... 🔥"
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
-                    className="bg-white border-gray-200 resize-none min-h-[80px]"
-                    rows={3}
-                    data-testid="hot-take-textarea"
-                  />
-                  <p className="text-xs text-gray-500">Others will vote if your take is 🌶️ Spicy or ❄️ Cold</p>
-                </>
-              )}
 
               {postType === 'review' && (
                 <>
@@ -1131,8 +1115,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                 </>
               )}
 
-              {/* Show rating and list options when media is attached (for thought/hot_take) or in add-to-list mode */}
-              {(defaultListId || (selectedMedia && (postType === 'thought' || postType === 'hot_take' || postType === 'review'))) && (
+              {/* Show rating and list options when media is attached or in add-to-list mode */}
+              {(defaultListId || (selectedMedia && (postType === 'thought' || postType === 'review'))) && (
                 <>
                   {/* Rating */}
                   <div className="flex items-center gap-2">
