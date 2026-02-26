@@ -663,18 +663,21 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-function UGCGroupCard({ post, onLike, isLiked, session, fetchComments }: {
+function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost }: {
   post: UGCPost;
   onLike: (id: string) => void;
   isLiked: boolean;
   session: any;
   fetchComments: (postId: string) => Promise<any[]>;
+  currentUserId?: string;
+  onDeletePost?: (postId: string) => void;
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [contentExpanded, setContentExpanded] = useState(false);
   const hasFetched = useRef(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
@@ -774,12 +777,24 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments }: {
                 </div>
               )}
               {post.content && (
-                <p className="text-gray-700 text-sm leading-relaxed mt-1.5 line-clamp-2">{post.content}</p>
+                <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mt-1.5">
+                  <p className={`text-gray-700 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
+                  {!contentExpanded && post.content.length > 100 && (
+                    <span className="text-purple-500 text-xs font-medium">Read more</span>
+                  )}
+                </div>
               )}
             </div>
           </div>
         ) : (
-          post.content && <p className="text-gray-800 text-sm leading-relaxed">{post.content}</p>
+          post.content && (
+            <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
+              <p className={`text-gray-800 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
+              {!contentExpanded && post.content.length > 100 && (
+                <span className="text-purple-500 text-xs font-medium">Read more</span>
+              )}
+            </div>
+          )
         )}
 
         <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
@@ -800,6 +815,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments }: {
           <div className="ml-auto flex items-center gap-1.5">
             <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
             <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
+            {currentUserId && post.user?.id === currentUserId && onDeletePost && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }}
+                className="text-gray-300 hover:text-red-500 p-1 transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -1995,6 +2018,8 @@ export default function Feed() {
                 isLiked={likedPosts.has(p.id)}
                 session={session}
                 fetchComments={fetchComments}
+                currentUserId={currentUserId}
+                onDeletePost={handleDeletePost}
               />
             ))}
           </div>
