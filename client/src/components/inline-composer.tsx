@@ -1017,20 +1017,6 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
                       <span>Review</span>
                     </button>
 
-                    {/* Hot Take */}
-                    <button
-                      onClick={() => {
-                        setPostType("hot_take");
-                      }}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                        postType === "hot_take"
-                          ? "bg-orange-100 text-orange-700" 
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                    >
-                      <Flame className="w-3.5 h-3.5" />
-                      <span>Hot Take</span>
-                    </button>
 
                     {/* Prediction */}
                     <button
@@ -1199,18 +1185,6 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
                   </div>
                 )}
 
-                {/* Hot Take indicator when Hot Take is selected */}
-                {postType === "hot_take" && (
-                  <div className="px-4 pb-3">
-                    <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-orange-50 to-red-50 rounded-lg border border-orange-200">
-                      <Flame className="w-5 h-5 text-orange-500" />
-                      <div>
-                        <span className="text-sm font-medium text-orange-700">Hot Take Mode</span>
-                        <p className="text-xs text-orange-600">Friends will vote 🔥 or 🧊 on your take</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {/* Bottom Row - Spoilers left, Post right */}
                 <div className="px-4 pb-4 flex items-center justify-between">

@@ -127,7 +127,7 @@ function useDebounce<T>(value: T, delay: number): T {
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showComposerModal, setShowComposerModal] = useState(false);
-  const [composerDefaultType, setComposerDefaultType] = useState<"thought" | "review" | "prediction" | "hot_take">("thought");
+  const [composerDefaultType, setComposerDefaultType] = useState<"thought" | "review" | "prediction">("thought");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isAiMode, setIsAiMode] = useState(false);

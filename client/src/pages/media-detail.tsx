@@ -47,7 +47,7 @@ export default function MediaDetail() {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Record<string, any[]>>({});
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
-  const [composeType, setComposeType] = useState<'review' | 'hot_take' | 'prediction' | 'thought'>('review');
+  const [composeType, setComposeType] = useState<'review' | 'prediction' | 'thought'>('review');
   const [composeText, setComposeText] = useState('');
   const [composeRating, setComposeRating] = useState(0);
   const [composeSelectedList, setComposeSelectedList] = useState<{ name: string; isCustom: boolean; id?: string } | null>(null);
@@ -1129,7 +1129,6 @@ export default function MediaDetail() {
               <div className="flex flex-wrap gap-2 mb-3">
                 {([
                   { key: 'review' as const, label: 'Review' },
-                  { key: 'hot_take' as const, label: 'Hot Take' },
                   { key: 'prediction' as const, label: 'Prediction' },
                   { key: 'thought' as const, label: 'Thought' },
                 ]).map(({ key, label }) => (
@@ -1152,7 +1151,6 @@ export default function MediaDetail() {
                 onChange={(e) => setComposeText(e.target.value)}
                 placeholder={
                   composeType === 'review' ? "Write your review..." :
-                  composeType === 'hot_take' ? "Drop your spiciest take..." :
                   composeType === 'prediction' ? "What do you predict?" :
                   "What's on your mind?"
                 }
