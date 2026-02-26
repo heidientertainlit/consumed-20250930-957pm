@@ -1021,7 +1021,6 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
                     <button
                       onClick={() => {
                         setPostType("hot_take");
-                        setRatingValue(0);
                       }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                         postType === "hot_take"
