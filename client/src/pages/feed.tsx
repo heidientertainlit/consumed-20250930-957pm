@@ -4258,13 +4258,13 @@ export default function Feed() {
 
       {/* Header Section */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-5 -mt-px">
-        <div className="max-w-4xl mx-auto px-4 pt-8">
+        <div className="max-w-4xl mx-auto px-4 pt-4">
           
           {/* What Friends Are Consuming - subtle inline row */}
           {friendsConsuming.length > 0 && (
             <div className="mb-1">
-              <div className="mb-4">
-                <h1 className="text-2xl font-semibold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>Trending</h1>
+              <div className="mb-6">
+                <h1 className="text-3xl font-semibold text-white text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>Trending</h1>
               </div>
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
                 {friendsConsuming.map((item: any, idx: number) => (
