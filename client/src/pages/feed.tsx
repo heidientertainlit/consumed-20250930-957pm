@@ -1826,7 +1826,7 @@ export default function Feed() {
         if (p.type === 'cast_approved') return true;
         if (p.type === 'hot_take' || p.post_type === 'hot_take') return true;
         if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
-        if (p.type === 'poll' && ((p as any).question || (p as any).options)) return true;
+        if ((p.type === 'poll' || p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) return true;
         if (p.type === 'rank' || p.type === 'shared_rank') return true;
         if (p.type === 'review' || p.post_type === 'review') return true;
         if (p.type === 'thought' || p.post_type === 'thought') return true;
@@ -1841,6 +1841,7 @@ export default function Feed() {
         const content = (p.content || '').trim();
         if (p.type === 'hot_take' || p.post_type === 'hot_take') postType = 'hot_take';
         else if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') postType = 'ask_for_rec';
+        else if ((p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) postType = 'predict';
         else if (p.type === 'poll' && ((p as any).question || (p as any).options)) postType = 'poll';
         else if (p.type === 'cast_approved') postType = 'cast_approved';
         else if (p.type === 'rank' || p.type === 'shared_rank') postType = 'rank';
@@ -1869,6 +1870,7 @@ export default function Feed() {
           options: (p as any).options || [], optionVotes: (p as any).optionVotes || [], timestamp: p.createdAt || p.created_at || p.timestamp, pollId: (p as any).poolId || p.id,
           userHasVoted: (p as any).userHasAnswered || false,
           userVotedOption: (p as any).userVotes?.[0]?.vote || undefined,
+          _rawPost: p,
         };
       });
 
@@ -1887,7 +1889,7 @@ export default function Feed() {
 
   const standaloneUGCPosts: any[] = (() => {
     const allUGC = ugcSlots.flat().filter(p => {
-      return p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved';
+      return p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved';
     });
 
     // Step 1: Deduplicate — same user + same media keeps only the best post
@@ -2030,6 +2032,36 @@ export default function Feed() {
         </div>
       );
     }
+    // Prediction posts — render as interactive voting card
+    if (item?.type === 'predict' && (item._rawPost || item.options?.length > 0)) {
+      const raw = item._rawPost || item;
+      const predictionCardData = {
+        ...raw,
+        id: raw.poolId || raw.id,
+        title: raw.question || raw.content,
+        mediaTitle: raw.mediaTitle || raw.mediaItems?.[0]?.title,
+        mediaItems: raw.mediaItems || [],
+        creator: raw.creator || raw.user || { username: 'Unknown' },
+        poolId: raw.poolId || raw.id,
+        options: raw.options || item.options || [],
+        optionVotes: raw.optionVotes || item.optionVotes || [],
+        userVotes: raw.userVotes || [],
+        userHasAnswered: raw.userHasAnswered || item.userHasVoted || false,
+        likesCount: raw.likes || 0,
+        commentsCount: raw.comments || 0,
+        isLiked: raw.isLiked || false,
+        origin_type: raw.origin_type || 'user',
+        origin_user_id: raw.origin_user_id,
+        status: raw.status || 'open',
+        type: raw.poolType || 'predict',
+      };
+      return (
+        <div key={`${keyPrefix}-pred-${item.id}`} className="mb-4">
+          <CollaborativePredictionCard prediction={predictionCardData as any} />
+        </div>
+      );
+    }
+
     // Regular single post
     const post = item as UGCPost;
     return (
@@ -4846,9 +4878,10 @@ export default function Feed() {
                   </>
                 );
                 
-                // Check if this item is a prediction from the API
-                // Skip user-generated predictions - only show Consumed-created ones
+                // Predictions are rendered inline via renderPostBatchByIndex in the main feed.
+                // Only fall through to render here when the Predictions filter is active (renderPostBatchByIndex is off).
                 if ((post.type === 'prediction' || post.type === 'predict') && (post as any).question) {
+                  if (selectedFilter !== 'predictions') return null;
                   const predPost = post as any;
                   const predictionCardData = {
                     ...post,
@@ -4870,15 +4903,9 @@ export default function Feed() {
                     status: predPost.status || 'open',
                     type: predPost.poolType || 'predict',
                   };
-
                   return (
-                    <div key={`prediction-${post.id}`}>
-                      {carouselElements}
-                      <div className="mb-4">
-                        <CollaborativePredictionCard 
-                          prediction={predictionCardData as any}
-                        />
-                      </div>
+                    <div key={`prediction-${post.id}`} className="mb-4">
+                      <CollaborativePredictionCard prediction={predictionCardData as any} />
                     </div>
                   );
                 }
