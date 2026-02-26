@@ -47,6 +47,14 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>LSApplicationCategoryType</key>
+	<string></string>
+	<key>CFBundleSignature</key>
+	<string></string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Consumed does not collect or store your precise location. Location access is only requested if required by system services or third-party SDK functionality.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 </dict>
