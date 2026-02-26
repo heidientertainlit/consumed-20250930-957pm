@@ -4270,7 +4270,7 @@ export default function Feed() {
               </div>
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
                 {friendsConsuming.map((item: any, idx: number) => (
-                  <Link key={item.id || idx} href={`/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id || item.id}`}>
+                  <Link key={item.id || idx} href={item.external_id && !isNaN(Number(item.external_id)) ? `/media/${item.media_type || 'movie'}/${item.external_source || 'tmdb'}/${item.external_id}` : '#'}>
                     <div className="w-[72px] flex-shrink-0 cursor-pointer group">
                       <div className="relative aspect-[2/3] rounded-md overflow-hidden mb-1 ring-1 ring-white/10 group-hover:ring-purple-400/50 transition-all">
                         {(item.image_url && item.image_url.startsWith('http')) ? (

@@ -27,55 +27,64 @@ function resolveImageUrl(item: any): string {
   return '';
 }
 
-async function fetchMissingPosters(items: any[], supabaseAdmin: any): Promise<void> {
+function isTmdbSource(item: any): boolean {
+  const src = (item.external_source || '').toLowerCase();
+  return src === 'tmdb' || src === 'tmdb_tv' || src === 'tmdb_movie' || src === '';
+}
+
+function hasValidExternalId(item: any): boolean {
+  return !!item.external_id && !isNaN(Number(item.external_id));
+}
+
+async function fixMissingData(items: any[], supabaseAdmin: any): Promise<void> {
   const tmdbKey = Deno.env.get('TMDB_API_KEY') || '';
-  const needsPoster = items.filter(i => !i.image_url && i.title);
-  if (!tmdbKey || needsPoster.length === 0) return;
+  if (!tmdbKey) return;
 
-  await Promise.allSettled(needsPoster.map(async (item) => {
+  // Fix items missing a poster OR missing a valid numeric external_id (for TMDB items)
+  const needsFix = items.filter(i =>
+    i.title && isTmdbSource(i) && (!i.image_url || !hasValidExternalId(i))
+  );
+  if (needsFix.length === 0) return;
+
+  await Promise.allSettled(needsFix.map(async (item) => {
     try {
-      let poster = '';
-      let foundExternalId = item.external_id;
+      let poster = item.image_url || '';
+      let foundExternalId = hasValidExternalId(item) ? item.external_id : null;
       const type = resolveMediaType(item);
-      const endpoint = type === 'movie' ? 'movie' : 'tv';
+      const searchType = type === 'movie' ? 'movie' : 'tv';
 
-      if (item.external_id && !isNaN(Number(item.external_id))) {
-        const res = await fetch(`https://api.themoviedb.org/3/${endpoint}/${item.external_id}?api_key=${tmdbKey}`);
+      // If we already have a valid numeric ID, just fetch the poster
+      if (foundExternalId && !poster) {
+        const res = await fetch(`https://api.themoviedb.org/3/${searchType}/${foundExternalId}?api_key=${tmdbKey}`);
         if (res.ok) {
           const data = await res.json();
           if (data.poster_path) poster = `https://image.tmdb.org/t/p/w300${data.poster_path}`;
         }
       }
 
-      if (!poster && item.title) {
-        const searchType = type === 'movie' ? 'movie' : 'tv';
+      // Search by title if still missing poster or external_id
+      if ((!poster || !foundExternalId) && item.title) {
         const searchRes = await fetch(`https://api.themoviedb.org/3/search/${searchType}?api_key=${tmdbKey}&query=${encodeURIComponent(item.title)}&page=1`);
         if (searchRes.ok) {
           const searchData = await searchRes.json();
           const match = searchData.results?.[0];
-          if (match?.poster_path) {
-            poster = `https://image.tmdb.org/t/p/w300${match.poster_path}`;
-            foundExternalId = String(match.id);
+          if (match) {
+            if (!poster && match.poster_path) poster = `https://image.tmdb.org/t/p/w300${match.poster_path}`;
+            if (!foundExternalId) foundExternalId = String(match.id);
           }
         }
       }
 
-      if (poster) {
-        item.image_url = poster;
-        const updateData: any = { image_url: poster };
-        if (!item.external_id && foundExternalId) {
-          updateData.external_id = foundExternalId;
-          item.external_id = foundExternalId;
-        }
-        if (item.media_type === 'mixed' || !item.media_type) {
-          updateData.media_type = type || 'tv';
-          item.media_type = type || 'tv';
-        }
-        await supabaseAdmin
-          .from('list_items')
-          .update(updateData)
-          .eq('id', item.id)
-          .then(() => {});
+      const updateData: any = {};
+      if (poster && !item.image_url) updateData.image_url = poster;
+      if (foundExternalId && !hasValidExternalId(item)) updateData.external_id = foundExternalId;
+      if (item.media_type === 'mixed' || !item.media_type) updateData.media_type = type || 'tv';
+
+      if (Object.keys(updateData).length > 0) {
+        if (poster) item.image_url = poster;
+        if (foundExternalId) item.external_id = foundExternalId;
+        if (updateData.media_type) item.media_type = updateData.media_type;
+        await supabaseAdmin.from('list_items').update(updateData).eq('id', item.id);
       }
     } catch (_e) { }
   }));
@@ -150,7 +159,7 @@ serve(async (req) => {
         .select('id, display_name, user_name, avatar')
         .in('id', ownerIds);
 
-      await fetchMissingPosters(items, supabaseAdmin);
+      await fixMissingData(items, supabaseAdmin);
 
       const usersMap = new Map((users || []).map((u: any) => [u.id, u]));
       const result = items.map((item: any) => {
@@ -196,7 +205,7 @@ serve(async (req) => {
       });
     }
 
-    await fetchMissingPosters(items, supabaseAdmin);
+    await fixMissingData(items, supabaseAdmin);
 
     const ownerIds = [...new Set(items.map((i: any) => userMap.get(i.list_id)).filter(Boolean))];
     const { data: users } = await supabaseAdmin
