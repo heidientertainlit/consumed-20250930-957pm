@@ -441,12 +441,12 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
               
               {/* Review snippet */}
               {item.review && (
-                <div>
+                <div onClick={(e) => { e.stopPropagation(); setExpandedReview(isExpanded ? null : item.id); }} className="cursor-pointer">
                   <p className={`text-xs text-gray-600 ${isExpanded ? '' : 'line-clamp-2'}`}>
                     "{item.review}"
                   </p>
-                  {item.review.length > 80 && !isExpanded && (
-                    <span className="text-[10px] text-purple-500 font-medium">Tap to see more</span>
+                  {item.review.length > 80 && (
+                    <span className="text-[10px] text-purple-500 font-medium">{isExpanded ? 'Show less' : 'Tap to see more'}</span>
                   )}
                 </div>
               )}
