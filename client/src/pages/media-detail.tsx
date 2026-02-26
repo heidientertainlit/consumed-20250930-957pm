@@ -10,7 +10,6 @@ import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 import CreateListDialog from "@/components/create-list-dialog";
 import { QuickAddModal } from "@/components/quick-add-modal";
-import { QuickActionSheet } from "@/components/quick-action-sheet";
 
 import { supabase } from "@/lib/supabase";
 import { apiRequest } from "@/lib/queryClient";
@@ -44,7 +43,6 @@ export default function MediaDetail() {
   const [replyContent, setReplyContent] = useState("");
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
-  const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [expandedComments, setExpandedComments] = useState<Record<string, any[]>>({});
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
   const [composeType, setComposeType] = useState<'review' | 'prediction' | 'thought'>('review');
@@ -994,7 +992,16 @@ export default function MediaDetail() {
             <div className="flex gap-2 mt-4">
               <Button 
                 size="sm"
-                onClick={() => setIsActionSheetOpen(true)}
+                onClick={() => {
+                  setQuickAddMedia({
+                    title: mediaItem?.title || mediaData.title,
+                    mediaType: mediaItem?.type || mediaData.type,
+                    imageUrl: resolvedImageUrl || mediaData.artwork,
+                    externalId: params?.id,
+                    externalSource: params?.source,
+                  });
+                  setIsQuickAddOpen(true);
+                }}
                 className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
                 data-testid="button-quick-add"
               >
@@ -1639,18 +1646,6 @@ export default function MediaDetail() {
         preSelectedMedia={quickAddMedia}
       />
       
-      <QuickActionSheet
-        isOpen={isActionSheetOpen}
-        onClose={() => setIsActionSheetOpen(false)}
-        preselectedMedia={{
-          title: mediaItem?.title || mediaData.title,
-          mediaType: mediaItem?.type || mediaData.type,
-          imageUrl: resolvedImageUrl || mediaData.artwork,
-          externalId: params?.id,
-          externalSource: params?.source,
-          creator: mediaItem?.creator || mediaData.creator,
-        }}
-      />
     </div>
   );
 }
