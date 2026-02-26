@@ -477,7 +477,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
           visibility: "public",
           contains_spoilers: containsSpoilers,
           media_title: selectedMedia?.title,
-          media_type: selectedMedia?.type,
+          media_type: selectedMedia?.type || selectedMedia?.mediaType,
           media_creator: selectedMedia?.creator || selectedMedia?.author || selectedMedia?.artist,
           media_image_url: selectedMedia?.poster_url || selectedMedia?.image_url || selectedMedia?.imageUrl || selectedMedia?.image || selectedMedia?.thumbnail,
           media_external_id: selectedMedia?.external_id || selectedMedia?.id,
@@ -504,7 +504,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
           contains_spoilers: containsSpoilers,
           rating: ratingValue > 0 ? ratingValue : undefined,
           media_title: selectedMedia.title,
-          media_type: selectedMedia.type,
+          media_type: selectedMedia.type || selectedMedia.mediaType,
           media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
           media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.imageUrl || selectedMedia.image || selectedMedia.thumbnail,
           media_external_id: selectedMedia.external_id || selectedMedia.id,
@@ -547,7 +547,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
             media_external_id: selectedMedia?.external_id || selectedMedia?.id || null,
             media_external_source: selectedMedia?.external_source || selectedMedia?.source || null,
             media_title: selectedMedia?.title || null,
-            media_type: selectedMedia?.type || null,
+            media_type: selectedMedia?.type || selectedMedia?.mediaType || null,
             media_image_url: selectedMedia?.poster_url || selectedMedia?.image_url || selectedMedia?.imageUrl || selectedMedia?.image || selectedMedia?.thumbnail || null,
           }),
         });
@@ -578,7 +578,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
           // Media is optional for hot takes
           ...(selectedMedia && {
             media_title: selectedMedia.title,
-            media_type: selectedMedia.type,
+            media_type: selectedMedia.type || selectedMedia.mediaType,
             media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
             media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.imageUrl || selectedMedia.image || selectedMedia.thumbnail,
             media_external_id: selectedMedia.external_id || selectedMedia.id,

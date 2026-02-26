@@ -273,9 +273,11 @@ serve(async (req) => {
           const tryTv = !mediaType || mediaType === 'tv';
           
           // Try by external ID first if we have one
+          // Try TV before movie when type is ambiguous — TV show IDs are more common on this platform
+          // and TMDB movie/TV namespaces share IDs, so movie-first causes wrong posters (e.g. ID 1562 = "28 Weeks Later" movie but also "The Bachelorette" TV show)
           if (externalId) {
-            if (tryMovie) {
-              const response = await fetch(`https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbApiKey}`);
+            if (tryTv) {
+              const response = await fetch(`https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbApiKey}`);
               if (response.ok) {
                 const data = await response.json();
                 if (data.poster_path) {
@@ -283,9 +285,9 @@ serve(async (req) => {
                 }
               }
             }
-            
-            if (tryTv) {
-              const response = await fetch(`https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbApiKey}`);
+
+            if (tryMovie) {
+              const response = await fetch(`https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbApiKey}`);
               if (response.ok) {
                 const data = await response.json();
                 if (data.poster_path) {
