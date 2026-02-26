@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 type IntentType = "capture" | "say" | "play" | null;
-type ActionType = "track" | "post" | "hot_take" | "prediction" | "rank" | "challenge" | null;
+type ActionType = "track" | "post" | "prediction" | "rank" | "challenge" | null;
 
 interface QuickActionSheetProps {
   isOpen: boolean;
@@ -40,7 +40,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   
   const [selectedIntent, setSelectedIntent] = useState<IntentType>(null);
   const [selectedAction, setSelectedAction] = useState<ActionType>(null);
-  const [sayMode, setSayMode] = useState<"thought" | "hot_take" | "ask">("thought");
+  const [sayMode, setSayMode] = useState<"thought" | "ask">("thought");
   const [isPosting, setIsPosting] = useState(false);
   
   const [contentText, setContentText] = useState("");
@@ -333,25 +333,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           has_rating: ratingValue > 0
         });
         
-        if (trackPostType === 'hot_take' && contentText.trim()) {
-          const { data: { user: trackUser } } = await supabase.auth.getUser();
-          if (trackUser) {
-            await supabase.from('social_posts').insert({
-              user_id: trackUser.id,
-              content: contentText,
-              post_type: 'hot_take',
-              visibility: 'public',
-              media_title: selectedMedia.title,
-              media_type: selectedMedia.type?.toLowerCase(),
-              media_external_id: selectedMedia.external_id,
-              media_external_source: selectedMedia.external_source || 'tmdb',
-              image_url: selectedMedia.image || selectedMedia.image_url || '',
-              contains_spoiler: containsSpoilers,
-              fire_votes: 0,
-              ice_votes: 0,
-            });
-          }
-          } else if (trackPostType === 'prediction' && contentText.trim()) {
+        if (trackPostType === 'prediction' && contentText.trim()) {
           const validPredOptions = pollOptions.filter(o => o.trim());
           if (validPredOptions.length >= 2) {
             await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
@@ -377,7 +359,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
         queryClient.invalidateQueries({ queryKey: ['feed'] });
         
-      } else if (selectedAction === "post" || selectedAction === "hot_take") {
+      } else if (selectedAction === "post") {
         if (!contentText.trim()) {
           toast({ title: "Please add some text", variant: "destructive" });
           return;
@@ -386,7 +368,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser) throw new Error('Not authenticated');
         
-        const postType = selectedAction === "hot_take" ? "hot_take" : sayMode || "thought";
+        const postType = sayMode || "thought";
         const { error } = await supabase.from('social_posts').insert({
           user_id: authUser.id,
           content: contentText,
@@ -404,7 +386,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
         
         if (error) throw error;
         
-        toast({ title: selectedAction === "hot_take" ? "Hot Take posted! 🔥" : "Post created!" });
+        toast({ title: "Post created!" });
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
         queryClient.invalidateQueries({ queryKey: ['feed'] });
         
@@ -521,13 +503,12 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   const actions = [
     { id: "track" as ActionType, label: "Track & Rate", icon: Star, iconColor: "text-yellow-500", bgColor: "bg-yellow-50", desc: "Log something you finished" },
     { id: "post" as ActionType, label: "Post", icon: MessageSquare, iconColor: "text-blue-500", bgColor: "bg-blue-50", desc: "Share a thought" },
-    { id: "hot_take" as ActionType, label: "Hot Take", icon: Flame, iconColor: "text-orange-500", bgColor: "bg-orange-50", desc: "Drop a spicy opinion" },
     { id: "prediction" as ActionType, label: "Prediction", icon: Vote, iconColor: "text-purple-500", bgColor: "bg-purple-50", desc: "Predict what happens next" },
     { id: "challenge" as ActionType, label: "Challenge", icon: Swords, iconColor: "text-pink-500", bgColor: "bg-pink-50", desc: "Challenge a friend" },
   ];
 
   // Post type state for the inline toggle in track form
-  const [trackPostType, setTrackPostType] = useState<"thought" | "review" | "hot_take" | "prediction">("thought");
+  const [trackPostType, setTrackPostType] = useState<"thought" | "review" | "prediction">("thought");
 
   const renderActionContent = () => {
     if (selectedAction === "track") {
@@ -636,7 +617,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 {([
                   { key: 'thought' as const, label: 'Thought' },
                   { key: 'review' as const, label: 'Review' },
-                  { key: 'hot_take' as const, label: 'Hot Take' },
                   { key: 'prediction' as const, label: 'Prediction' },
                 ] as const).map(({ key, label }) => (
                   <button
@@ -659,7 +639,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 placeholder={
                   trackPostType === 'thought' ? "What's on your mind?" :
                   trackPostType === 'review' ? "Write your review..." :
-                  trackPostType === 'hot_take' ? "Drop your hot take..." :
                   "What do you predict?"
                 }
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none text-sm"
@@ -847,8 +826,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
       );
     }
     
-    if (selectedAction === "post" || selectedAction === "hot_take") {
-      const isHotTake = selectedAction === "hot_take";
+    if (selectedAction === "post") {
       return (
         <div className="space-y-4">
           <div className="relative">
@@ -901,7 +879,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           <textarea
             value={contentText}
             onChange={(e) => setContentText(e.target.value)}
-            placeholder={isHotTake ? "Drop your hottest take... 🔥" : "What's on your mind?"}
+            placeholder="What's on your mind?"
             className="w-full px-3 py-3 border rounded-lg resize-none"
             rows={4}
             data-testid="post-content-input"
@@ -1130,7 +1108,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   const canPost = () => {
     if (selectedAction === "track") return !!selectedMedia;
     // Allow posting with just a rating OR just content (text is optional if rating is set)
-    if (selectedAction === "post" || selectedAction === "hot_take") return !!contentText.trim() || ratingValue > 0;
+    if (selectedAction === "post") return !!contentText.trim() || ratingValue > 0;
     if (selectedAction === "prediction") return !!contentText.trim() && pollOptions.filter(o => o.trim()).length >= 2;
     if (selectedAction === "rank") return !!selectedMedia && !!selectedRankId;
     if (selectedAction === "challenge") return false;
@@ -1192,17 +1170,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           >
             Thought
           </button>
-          <button
-            onClick={() => { setSayMode("hot_take"); setSelectedAction("hot_take"); }}
-            className={`flex-1 py-2.5 px-4 rounded-full text-sm font-medium transition-all ${
-              sayMode === "hot_take" 
-                ? "bg-gray-100 text-gray-900 border border-gray-200" 
-                : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
-            }`}
-            data-testid="say-mode-hot-take"
-          >
-            Hot Take
-          </button>
         </div>
         
         <MentionTextarea
@@ -1210,7 +1177,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           onChange={setContentText}
           session={session}
           placeholder={
-            sayMode === "hot_take" ? "Drop your spicy take..." :
             "What's on your mind?"
           }
           className="min-h-[100px] bg-white text-gray-900 border border-gray-200 rounded-xl"
@@ -1240,7 +1206,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
         )}
 
         {/* Tag Media Section */}
-        {(sayMode === "thought" || sayMode === "hot_take") && (
+        {sayMode === "thought" && (
           <div className="space-y-2">
             {!selectedMedia ? (
               <div className="relative">
@@ -1381,7 +1347,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                   ) : (
                     selectedAction === "track" ? "Add Media" : 
                     selectedAction === "rank" ? "Add to Rank" : 
-                    sayMode === "hot_take" ? "Drop It 🔥" :
                     sayMode === "ask" ? "Ask" :
                     "Share"
                   )}
