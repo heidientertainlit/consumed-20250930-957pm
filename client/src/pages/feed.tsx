@@ -1826,7 +1826,7 @@ export default function Feed() {
         if (p.type === 'cast_approved') return true;
         if (p.type === 'hot_take' || p.post_type === 'hot_take') return true;
         if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
-        if ((p.type === 'poll' || p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) return true;
+        if (p.type === 'poll' && ((p as any).question || (p as any).options)) return true;
         if (p.type === 'rank' || p.type === 'shared_rank') return true;
         if (p.type === 'review' || p.post_type === 'review') return true;
         if (p.type === 'thought' || p.post_type === 'thought') return true;
@@ -1841,7 +1841,6 @@ export default function Feed() {
         const content = (p.content || '').trim();
         if (p.type === 'hot_take' || p.post_type === 'hot_take') postType = 'hot_take';
         else if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') postType = 'ask_for_rec';
-        else if ((p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) postType = 'predict';
         else if (p.type === 'poll' && ((p as any).question || (p as any).options)) postType = 'poll';
         else if (p.type === 'cast_approved') postType = 'cast_approved';
         else if (p.type === 'rank' || p.type === 'shared_rank') postType = 'rank';
@@ -1888,7 +1887,7 @@ export default function Feed() {
 
   const standaloneUGCPosts: any[] = (() => {
     const allUGC = ugcSlots.flat().filter(p => {
-      return p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved';
+      return p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved';
     });
 
     // Step 1: Deduplicate — same user + same media keeps only the best post
@@ -4663,7 +4662,7 @@ export default function Feed() {
 
               {/* Social Posts */}
               {(() => {
-                const feedData = (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') ? filteredPosts.filter((item: any) => {
+                const feedData = (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games' || selectedFilter === 'predictions') ? filteredPosts.filter((item: any) => {
                 if ('originalPostIds' in item) return true;
                 if ((item as any).type === 'friend_activity_block') return true;
                 if ((item as any).type === 'consumption_carousel') return false;
