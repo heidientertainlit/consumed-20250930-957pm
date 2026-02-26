@@ -995,7 +995,12 @@ export default function MediaDetail() {
                 onClick={() => {
                   setQuickAddMedia({
                     title: mediaItem?.title || mediaData.title,
-                    mediaType: mediaItem?.type || mediaData.type,
+                    mediaType: (() => {
+                      const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
+                      if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
+                      if (raw === 'movie') return 'movie';
+                      return raw;
+                    })(),
                     imageUrl: resolvedImageUrl || mediaData.artwork,
                     externalId: params?.id,
                     externalSource: params?.source,
