@@ -742,11 +742,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   return (
     <div className="snap-start flex-shrink-0 w-[78vw] max-w-[300px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="p-4">
-        {mediaTypeLabel && (
-          <div className="flex justify-end mb-2">
+        <div className="flex justify-end items-center gap-2 mb-2">
+          {mediaTypeLabel && (
             <span className="text-[11px] font-medium text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full capitalize">{mediaTypeLabel}</span>
-          </div>
-        )}
+          )}
+          {currentUserId && post.user?.id === currentUserId && onDeletePost && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }}
+              className="text-gray-300 hover:text-red-500 transition-colors"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
         {post.mediaTitle ? (
           <div className="flex gap-3">
             {post.mediaImage && post.mediaImage.startsWith('http') ? (
@@ -815,14 +823,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           <div className="ml-auto flex items-center gap-1.5">
             <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
             <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
-            {currentUserId && post.user?.id === currentUserId && onDeletePost && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }}
-                className="text-gray-300 hover:text-red-500 p-1 transition-colors"
-              >
-                <Trash2 size={14} />
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -2018,7 +2018,7 @@ export default function Feed() {
                 isLiked={likedPosts.has(p.id)}
                 session={session}
                 fetchComments={fetchComments}
-                currentUserId={currentUserId}
+                currentUserId={currentAppUserId || undefined}
                 onDeletePost={handleDeletePost}
               />
             ))}
