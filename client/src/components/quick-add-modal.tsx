@@ -1227,7 +1227,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                   </div>
 
                   {/* TV season/episode picker */}
-                  {(() => { const t = (selectedMedia?.type || selectedMedia?.media_type || '').toLowerCase(); return t === 'tv' || t.includes('show') || t === 'tv_show'; })() && (
+                  {(() => { const t = (selectedMedia?.type || selectedMedia?.media_type || '').toLowerCase(); return t === 'tv' || t.includes('show') || t === 'tv_show' || t.includes('podcast'); })() && (
                     <div className="space-y-2">
                       <p className="text-xs font-medium text-gray-500 uppercase">Season & Episode</p>
                       <div className="flex gap-2">

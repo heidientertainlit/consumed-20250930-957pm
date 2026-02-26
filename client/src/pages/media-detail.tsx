@@ -998,6 +998,7 @@ export default function MediaDetail() {
                     mediaType: (() => {
                       const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
                       if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
+                      if (raw.includes('podcast')) return 'podcast';
                       if (raw === 'movie') return 'movie';
                       return raw;
                     })(),
