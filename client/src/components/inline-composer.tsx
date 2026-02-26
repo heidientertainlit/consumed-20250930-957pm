@@ -554,11 +554,13 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
 
         if (!predResponse.ok) throw new Error("Failed to create prediction");
 
-        queryClient.invalidateQueries({ queryKey: ['social-feed'] });
-        queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
         resetComposer();
         setIsPosting(false);
         toast({ title: "Prediction posted!" });
+        setTimeout(() => {
+          queryClient.refetchQueries({ queryKey: ['social-feed'] });
+          queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+        }, 800);
         return;
       } else if (postType === "hot_take") {
         if (!contentText.trim()) {
@@ -680,10 +682,12 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
         await handleAddToRank(selectedMedia, selectedRankId);
       }
 
-      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
-      queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       resetComposer();
       onPostSuccess?.();
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ['social-feed'] });
+        queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      }, 800);
     } catch (error) {
       console.error("Post error:", error);
       toast({

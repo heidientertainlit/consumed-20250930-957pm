@@ -1,7 +1,7 @@
 # Consumed - Where Fans Come to Play
 
 ## Overview
-Consumed is a mobile-first platform designed to transform entertainment consumption into an interactive, game-like experience. Its primary purpose is to allow users to "play" with entertainment through ranking, voting, predicting, and testing knowledge, fostering engagement, reaction, and social comparison. The platform aims to shift from passive consumption to active participation, making users feel a part of the entertainment they love. The core experience is "Play → React → Compare," with background tracking fueling personalization.
+Consumed is a mobile-first platform transforming entertainment consumption into an interactive, game-like experience. It enables users to "play" with entertainment through ranking, voting, predicting, and testing knowledge, fostering engagement and social comparison. The platform aims to shift users from passive consumption to active participation, making them feel part of the entertainment they love, with personalization driven by background tracking.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -11,19 +11,6 @@ Preferred communication style: Simple, everyday language.
 - **NEVER PUBLISH / DEPLOY the app.** User handles deployment themselves. Do not suggest or trigger publishing under any circumstances.
 - **NEVER add, seed, or modify data in Supabase without explicit user approval first.** Always double-check with the user before inserting, updating, or seeding any content (trivia, polls, predictions, etc.) to the production database.
 - All content data comes from user's spreadsheets - do not create fake/placeholder content.
-
-### Design Preferences
-- **CRITICAL - Game Components Distinction**:
-  - **The Daily Call** (`DailyChallengeCard`) - Purple card at top of feed. Single featured daily game that expands when tapped. Uses command language ("PLAY NOW"), has urgency signal ("LIVE" badge). Whole card is tap target. Renamed from "Daily Challenge" to emphasize the prediction/opinion nature.
-  - **Quick Trivia** (`TriviaCarousel`) - Dark purple carousel below. Contains 62+ trivia questions users can swipe through. Different from The Daily Call - this is a carousel of many questions, not a single featured game.
-  - These are SEPARATE components and must remain distinct.
-- **Track Page Design**: User loves the Track page design with blue gradient "Track Media" and purple gradient "Import History" buttons, stats cards showing Items Logged and Points Earned. This page is kept as a backpage (accessible via direct URL `/track`) but removed from bottom navigation. Features can be integrated into other areas of the app.
-- **Hot Takes Feature**: Replaced "Conversations" with "Hot Takes" - a gamified opinion-sharing feature where users post bold entertainment takes, vote on the spiciest opinions, and compete for "Hottest Take" recognition. Uses upvoting system and special 🔥 branding.
-- **Add Nav Icon - Previous Design (library stack)**: Diagonal line on top + two horizontal bars + plus above (SVG code preserved): `<svg width="24" height="22" viewBox="0 0 24 22" fill="none"><line x1="2" y1="7" x2="22" y2="2" stroke="white" strokeWidth="2.5" strokeLinecap="round" /><line x1="1" y1="13" x2="23" y2="13" stroke="white" strokeWidth="2.5" strokeLinecap="round" /><line x1="1" y1="19" x2="23" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round" /></svg>` with `<Plus size={14} strokeWidth={2.5} />` above it.
-- **Navigation**: Bottom navigation includes 4 items: Activity, DNA, Library, and Leaders. The floating Plus button in the center ALWAYS links to `/add` — never `/` or `/activity`. Changing this link will silently redirect users to the wrong page. Play page combines game tiles (Predictions, Polls, Trivia, Leaderboard) with embedded leaderboard content below. Collections page at `/collections` has 3 tabs: Lists, Ranks, and History (media history moved from profile). Leaderboard exists as backpage at `/leaderboard`. Discover and Track pages also exist as backpages (accessible at `/discover`, `/track`). Creator profile at `/creator-profile` shows Follow/Inner Circle buttons and external links.
-- **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Friends, Collections, History) for easy jumping between sections. Features: Your Stats (media consumption stats), My Entertainment DNA (profile/survey/recommendations), Friends (friend management - only visible on own profile), Collections (Lists + Ranks), and History (media history with imports). Section pills highlight active section and enable tab-based navigation.
-- **Collections System**: Collections tab contains sub-navigation for Lists (existing media tracking lists) and Ranks (ranked lists like "Top 10 90s Movies"). Ranks feature supports drag-and-drop ordering, position-based ranking, and collaboration.
-- **Search Page**: AI-powered search at `/search` with unified results showing Conversations (posts/predictions/polls/reviews), AI Recommendations, and Media Results. Uses custom AI icon in navigation.
 
 ## System Architecture
 
@@ -35,6 +22,17 @@ Preferred communication style: Simple, everyday language.
 - Component Library: shadcn/ui (Radix UI, Tailwind CSS).
 - Button Theme: Default purple (`bg-purple-600`) with white text; outline buttons have purple border and white background. No black buttons.
 - Composer: Simplified inline with quick action buttons and dynamic forms.
+- **Game Components Distinction**:
+  - **The Daily Call** (`DailyChallengeCard`): Purple card at top of feed. Single featured daily game that expands when tapped. Uses command language ("PLAY NOW"), has urgency signal ("LIVE" badge). Whole card is tap target.
+  - **Quick Trivia** (`TriviaCarousel`): Dark purple carousel below. Contains 62+ trivia questions users can swipe through.
+  - These are SEPARATE components and must remain distinct.
+- **Track Page Design**: User loves the Track page design with blue gradient "Track Media" and purple gradient "Import History" buttons, stats cards showing Items Logged and Points Earned. This page is kept as a backpage (accessible via direct URL `/track`) but removed from bottom navigation. Features can be integrated into other areas of the app.
+- **Hot Takes Feature**: Replaced "Conversations" with "Hot Takes" - a gamified opinion-sharing feature using an upvoting system and special 🔥 branding.
+- **Add Nav Icon - Previous Design (library stack)**: Custom SVG icon code: `<svg width="24" height="22" viewBox="0 0 24 22" fill="none"><line x1="2" y1="7" x2="22" y2="2" stroke="white" strokeWidth="2.5" strokeLinecap="round" /><line x1="1" y1="13" x2="23" y2="13" stroke="white" strokeWidth="2.5" strokeLinecap="round" /><line x1="1" y1="19" x2="23" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round" /></svg>` with `<Plus size={14} strokeWidth={2.5} />` above it.
+- **Navigation**: Bottom navigation includes 4 items: Activity, DNA, Library, and Leaders. The floating Plus button in the center ALWAYS links to `/add`. Play page combines game tiles (Predictions, Polls, Trivia, Leaderboard) with embedded leaderboard content. Collections page at `/collections` has 3 tabs: Lists, Ranks, and History. Leaderboard, Discover, and Track pages exist as backpages. Creator profile at `/creator-profile` shows Follow/Inner Circle buttons and external links.
+- **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Friends, Collections, History).
+- **Collections System**: Collections tab contains sub-navigation for Lists and Ranks. Ranks feature supports drag-and-drop ordering, position-based ranking, and collaboration.
+- **Search Page**: AI-powered search at `/search` with unified results showing Conversations, AI Recommendations, and Media Results. Uses custom AI icon in navigation.
 
 ### Technical Implementations
 - Frontend: React 18, TypeScript, Wouter, TanStack Query, Vite.
@@ -85,79 +83,21 @@ Preferred communication style: Simple, everyday language.
 - Discover Page: AI-powered recommendations and trending content.
 - Analytics Dashboard: Admin dashboard (`/admin`) for engagement, retention, activation, partnership, and behavioral analytics.
 
-### Key Supabase Tables (Production Schema)
-**CRITICAL: Always use these exact table/column names - don't invent new tables!**
-
-- **users**: `id`, `display_name`, `user_name`, `avatar`, `points`, `email`
-- **prediction_pools**: `id`, `title`, `type`, `options`, `correct_answer`, `featured_date`, `status`, `points_reward`
-- **user_predictions**: `id`, `user_id`, `pool_id`, `prediction`, `points_earned`, `is_winner`, `created_at`
-- **login_streaks**: `user_id`, `last_login`, `current_streak`, `longest_streak`
-- **dna_profiles**: User entertainment DNA survey data
-- **dna_moments**: Quick binary DNA questions
-- **dna_moment_responses**: User answers to DNA moments
-
 ### System Design Choices
 - Database Schema: Strict naming conventions, synced dev/prod.
 - Row Level Security (RLS): Strict RLS for data privacy.
 - Edge Functions: Adhere to schema, handle user auto-creation, accept `user_id`.
 - Privacy Toggle System: Controls list visibility.
-
-### CRITICAL: Media Data Requirements (DO NOT BREAK)
-When adding media to lists, ranks, or social posts, the following fields are REQUIRED:
-- `image_url` - Full HTTPS URL to the poster image
-- `external_id` - The source's unique ID
-- `external_source` - The data source
-- `title` - The media title
-
-**Why this matters**: Empty `image_url` causes the activity feed to show random stock photos.
-
-**Edge functions that add media MUST:**
-1. Capture `image_url` from the API response at insert time.
-2. Convert relative TMDB paths to full URLs.
-3. Never insert media without at minimum: `title`, `external_id`, `external_source`, and `image_url`.
-
-### CRITICAL: Media Search Display Requirements (DO NOT BREAK)
-The `media-search` edge function MUST return these fields for search results to display properly:
-- `poster_url`
-- `image` (alias of `poster_url`)
-- `creator`
-- `title`
-- `type`
-- `year`
-- `external_id`
-- `external_source`
-
-**If search results show placeholder icons instead of posters**: The deployed Supabase edge function is likely outdated. Re-deploy the `media-search` function.
-
-### Supabase Edge Function Deployment
-Edge functions in `supabase/functions/` are NOT automatically deployed. Changes require manual deployment:
-```bash
-supabase functions deploy <function-name>
-# or
-supabase functions deploy
-```
-
-### Social Feed Architecture — CRITICAL Rules
-
-**Feed fetch limit (`client/src/pages/feed.tsx`, `fetchSocialFeed` function)**
-- `const limit = 50;` — NEVER lower this below 50.
-- **Why it matters**: The social-feed API returns posts ordered by `created_at` DESC. If the limit is too low (e.g., 15), the first page only returns posts from the most recently active users. Active users like "Elias" with 7 posts dominate the first page, meaning less-active friends (Heidi, Sam, Peter, etc.) are invisible until the user scrolls. Setting it to 50 ensures the first fetch is diverse enough to show posts from many different friends.
-- **Symptom of a too-low limit**: Only 2–4 users' posts visible in the feed despite having 20+ friends with posts. Fix: raise `limit` in `fetchSocialFeed`.
-
-**Infinite scroll (unlimited feed)**
-- Implemented via `IntersectionObserver` on `loadMoreRef` div at the bottom of the feed.
-- When the sentinel div enters the viewport, `fetchNextPage()` is called automatically.
-- `getNextPageParam` returns `undefined` only when a page returns 0 posts — so the feed truly never ends until all posts are exhausted.
-- Each scroll page fetches the next 50 posts (`offset = pageParam * limit`).
-- **Do NOT add a hard cap on total posts or pages loaded.**
-
-**UGC post rendering pipeline (feed.tsx)**
-- `socialPosts` = all posts fetched so far (flattened from all infinite-scroll pages)
-- `ugcSlots` IIFE = quality-filters `socialPosts` into a pool of user posts worth showing
-- `standaloneUGCPosts` IIFE = deduplicates + groups same-user posts within 12h windows → users with 2+ posts get a swipeable group carousel; solo posters get a `StandalonePost` card
-- `slotAssignments` useMemo = maps each item to a sequential feed slot (item 0 → slot 0, item 1 → slot 1, …)
-- `renderPostBatchByIndex(N)` = renders the item at slot N, interleaved between trivia/polls/DNA cards in the JSX
-- **Do NOT filter out `consumption_carousel` or `swipeable_ratings` from the main feed** — those blocks previously carried friend activity and removing them silently hides user content.
+- **Media Data Requirements**: `image_url` (full HTTPS URL), `external_id`, `external_source`, `title` are REQUIRED for all media. Edge functions must capture `image_url` and convert relative TMDB paths.
+- **Media Search Display Requirements**: `media-search` edge function MUST return `poster_url`, `image`, `creator`, `title`, `type`, `year`, `external_id`, `external_source`.
+- **Social Feed Architecture**:
+    - Feed fetch limit: `limit = 50;` in `fetchSocialFeed` function (`client/src/pages/feed.tsx`). Never lower this.
+    - Infinite scroll: Implemented via `IntersectionObserver` on `loadMoreRef` div. No hard cap on total posts.
+    - UGC post rendering pipeline: Filters `socialPosts` into `ugcSlots`, deduplicates/groups into `standaloneUGCPosts`, assigns to `slotAssignments`. `renderPostBatchByIndex(N)` renders items interleaved with other cards.
+    - Two rendering paths in `feed.tsx`: `renderPostBatchByIndex` (top of feed, interleaved) and `feedData.map()` (bottom of feed, social posts section). These must remain separated.
+    - `_rawPost` pattern: `ugcSlots` attaches the full original `SocialPost` as `_rawPost` for `renderFeedItem`.
+    - `feedData.map()` MUST skip `cast_approved` and `prediction`/`predict` when `selectedFilter !== 'predictions'`.
+    - Feed refresh: Use `setTimeout(() => queryClient.refetchQueries({ queryKey: ['social-feed'] }), 800)` after posting.
 
 ## External Dependencies
 
