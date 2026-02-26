@@ -878,6 +878,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
   const [localLikedComments, setLocalLikedComments] = useState<Set<string>>(new Set());
   const [replyingTo, setReplyingTo] = useState<{ id: string; name: string } | null>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
+  const [contentExpanded, setContentExpanded] = useState(false);
 
   const handleCommentLike = (commentId: string, commentLikesCount: number) => {
     const wasLiked = localLikedComments.has(commentId);
@@ -1043,7 +1044,12 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
                 </div>
               )}
               {post.content && (
-                <p className="text-gray-700 text-sm leading-relaxed mt-1.5 line-clamp-3">{post.content}</p>
+                <div onClick={() => setContentExpanded(e => !e)} className="cursor-pointer">
+                  <p className={`text-gray-700 text-sm leading-relaxed mt-1.5 ${contentExpanded ? '' : 'line-clamp-3'}`}>{post.content}</p>
+                  {!contentExpanded && post.content.length > 120 && (
+                    <span className="text-purple-500 text-xs font-medium">Read more</span>
+                  )}
+                </div>
               )}
             </div>
           </div>
