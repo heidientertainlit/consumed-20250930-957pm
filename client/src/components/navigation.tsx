@@ -351,7 +351,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
     <>
       {/* Top bar with logo and points */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] sticky top-0 z-50" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}>
-        <div className="flex justify-between items-center h-16 px-4">
+        <div className="flex justify-between items-center h-11 px-4">
           <Link href="/" className="flex items-center space-x-2">
             <img
               src="/consumed-logo-new.png"
