@@ -893,6 +893,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
   onDeletePost?: (postId: string) => void;
   onLikeComment?: (commentId: string) => void;
 }) {
+  const [isSpoilerRevealed, setIsSpoilerRevealed] = useState(false);
   const displayName = post.user?.displayName || post.user?.username || 'Someone';
   const rawUsername = post.user?.username || '';
   const avatarLetter = (displayName || rawUsername)[0]?.toUpperCase() || '?';
@@ -1072,18 +1073,48 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
                 </div>
               )}
               {post.content && (
-                <div onClick={() => setContentExpanded(e => !e)} className="cursor-pointer">
-                  <p className={`text-gray-700 text-sm leading-relaxed mt-1.5 ${contentExpanded ? '' : 'line-clamp-3'}`}>{post.content}</p>
-                  {!contentExpanded && post.content.length > 120 && (
-                    <span className="text-purple-500 text-xs font-medium">Read more</span>
-                  )}
-                </div>
+                post.containsSpoilers && !isSpoilerRevealed ? (
+                  <div className="relative mt-1.5">
+                    <p className="text-gray-700 text-sm leading-relaxed blur-md select-none line-clamp-3">{post.content}</p>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setIsSpoilerRevealed(true); }}
+                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg transition-all flex items-center gap-1"
+                      >
+                        <Eye size={12} />
+                        <span>Show Spoiler</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div onClick={() => setContentExpanded(e => !e)} className="cursor-pointer">
+                    <p className={`text-gray-700 text-sm leading-relaxed mt-1.5 ${contentExpanded ? '' : 'line-clamp-3'}`}>{post.content}</p>
+                    {!contentExpanded && post.content.length > 120 && (
+                      <span className="text-purple-500 text-xs font-medium">Read more</span>
+                    )}
+                  </div>
+                )
               )}
             </div>
           </div>
         )}
         {post.mediaTitle && !(post.mediaImage && post.mediaImage.startsWith('http')) && post.content && (
-          <p className="text-gray-800 text-sm leading-relaxed mt-2">{post.content}</p>
+          post.containsSpoilers && !isSpoilerRevealed ? (
+            <div className="relative mt-2">
+              <p className="text-gray-800 text-sm leading-relaxed blur-md select-none">{post.content}</p>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIsSpoilerRevealed(true); }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg transition-all flex items-center gap-1"
+                >
+                  <Eye size={12} />
+                  <span>Show Spoiler</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-800 text-sm leading-relaxed mt-2">{post.content}</p>
+          )
         )}
 
         <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
@@ -1865,7 +1896,7 @@ export default function Feed() {
           user: { id: userObj?.id || '', username: userObj?.username || '', displayName: userObj?.displayName || userObj?.display_name || '', avatar: userObj?.avatar_url || userObj?.avatarUrl || userObj?.avatar || '' },
           content: (postType === 'poll' || postType === 'predict') ? ((p as any).question || content) : content,
           mediaTitle: media?.title || (p as any).mediaTitle, mediaType: media?.mediaType || media?.type, mediaImage: mediaImg, externalId: eid, externalSource: src,
-          rating: p.rating, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
+          rating: p.rating, containsSpoilers: p.containsSpoilers || false, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
           fire_votes: p.fire_votes || 0, ice_votes: p.ice_votes || 0,
           options: (p as any).options || [], optionVotes: (p as any).optionVotes || [], timestamp: p.createdAt || p.created_at || p.timestamp, pollId: (p as any).poolId || p.id,
           userHasVoted: (p as any).userHasAnswered || false,

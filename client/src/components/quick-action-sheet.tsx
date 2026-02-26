@@ -760,6 +760,42 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
               {/* Collapsible advanced options */}
               {showMoreOptions && (
                 <div className="space-y-3 pt-2 border-t border-gray-100">
+                  {/* Repeat consumption */}
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      checked={rewatchCount > 1} 
+                      onCheckedChange={(c) => setRewatchCount(c ? 2 : 1)} 
+                      data-testid="rewatch-toggle"
+                    />
+                    <span className="text-sm text-gray-600">Repeat?</span>
+                    {rewatchCount > 1 && (
+                      <input
+                        type="number"
+                        min="2"
+                        max="99"
+                        value={rewatchCount}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!isNaN(val) && val >= 2) setRewatchCount(Math.min(99, val));
+                        }}
+                        className="w-12 px-2 py-1 text-sm border border-gray-200 rounded text-center"
+                        data-testid="rewatch-count-input"
+                      />
+                    )}
+                  </div>
+                  
+                  {/* Privacy options - combined row */}
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <label className="flex items-center gap-1.5">
+                      <Checkbox checked={containsSpoilers} onCheckedChange={(c) => setContainsSpoilers(!!c)} />
+                      Spoilers
+                    </label>
+                    <label className="flex items-center gap-1.5">
+                      <Checkbox checked={privateMode} onCheckedChange={(c) => setPrivateMode(!!c)} />
+                      Don't post to feed
+                    </label>
+                  </div>
+
                   {/* TV episode picker */}
                   {selectedMedia.type === 'tv' && (
                     <div className="space-y-2">
@@ -803,41 +839,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                     </div>
                   )}
                   
-                  {/* Repeat consumption */}
-                  <div className="flex items-center gap-2">
-                    <Checkbox 
-                      checked={rewatchCount > 1} 
-                      onCheckedChange={(c) => setRewatchCount(c ? 2 : 1)} 
-                      data-testid="rewatch-toggle"
-                    />
-                    <span className="text-sm text-gray-600">Repeat?</span>
-                    {rewatchCount > 1 && (
-                      <input
-                        type="number"
-                        min="2"
-                        max="99"
-                        value={rewatchCount}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value);
-                          if (!isNaN(val) && val >= 2) setRewatchCount(Math.min(99, val));
-                        }}
-                        className="w-12 px-2 py-1 text-sm border border-gray-200 rounded text-center"
-                        data-testid="rewatch-count-input"
-                      />
-                    )}
-                  </div>
-                  
-                  {/* Privacy options - combined row */}
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <label className="flex items-center gap-1.5">
-                      <Checkbox checked={containsSpoilers} onCheckedChange={(c) => setContainsSpoilers(!!c)} />
-                      Spoilers
-                    </label>
-                    <label className="flex items-center gap-1.5">
-                      <Checkbox checked={privateMode} onCheckedChange={(c) => setPrivateMode(!!c)} />
-                      Don't post to feed
-                    </label>
-                  </div>
                 </div>
               )}
             </div>

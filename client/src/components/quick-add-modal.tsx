@@ -1203,6 +1203,45 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               {/* Collapsible advanced options */}
               {showMoreOptions && (
                 <div className="space-y-3 pt-2 border-t border-gray-100">
+                  {/* Checkboxes row - above season/episode so dropdown doesn't overlap */}
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="repeat-checkbox"
+                        checked={rewatchCount > 1}
+                        onCheckedChange={(checked) => setRewatchCount(checked ? 2 : 1)}
+                        data-testid="checkbox-repeat"
+                      />
+                      <label htmlFor="repeat-checkbox" className="text-sm text-gray-600">
+                        Repeat?
+                      </label>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="spoilers-checkbox"
+                        checked={containsSpoilers}
+                        onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
+                        data-testid="checkbox-spoilers"
+                      />
+                      <label htmlFor="spoilers-checkbox" className="text-sm text-gray-600">
+                        Spoilers
+                      </label>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="private-mode"
+                        checked={privateMode}
+                        onCheckedChange={(checked) => setPrivateMode(checked as boolean)}
+                        data-testid="checkbox-private-mode"
+                      />
+                      <label htmlFor="private-mode" className="text-sm text-gray-600">
+                        Don't post to feed
+                      </label>
+                    </div>
+                  </div>
+
                   {/* TV season/episode picker */}
                   {(selectedMedia?.type === 'tv' || selectedMedia?.media_type === 'tv') && (
                     <div className="space-y-2">
@@ -1241,7 +1280,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Music format picker */}
                   {(selectedMedia?.type === 'music' || selectedMedia?.media_type === 'music') && (
                     <div className="space-y-2">
@@ -1268,45 +1307,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                       </div>
                     </div>
                   )}
-                  
-                  {/* Checkboxes row */}
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="repeat-checkbox"
-                        checked={rewatchCount > 1}
-                        onCheckedChange={(checked) => setRewatchCount(checked ? 2 : 1)}
-                        data-testid="checkbox-repeat"
-                      />
-                      <label htmlFor="repeat-checkbox" className="text-sm text-gray-600">
-                        Repeat?
-                      </label>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="spoilers-checkbox"
-                        checked={containsSpoilers}
-                        onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
-                        data-testid="checkbox-spoilers"
-                      />
-                      <label htmlFor="spoilers-checkbox" className="text-sm text-gray-600">
-                        Spoilers
-                      </label>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="private-mode"
-                        checked={privateMode}
-                        onCheckedChange={(checked) => setPrivateMode(checked as boolean)}
-                        data-testid="checkbox-private-mode"
-                      />
-                      <label htmlFor="private-mode" className="text-sm text-gray-600">
-                        Don't post to feed
-                      </label>
-                    </div>
-                  </div>
                 </div>
               )}
                 </>
