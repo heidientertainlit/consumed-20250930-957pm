@@ -694,39 +694,42 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
 
   const renderStars = () => {
     return (
-      <div className="relative flex items-center gap-1">
-        {/* Star display */}
-        <div className="flex gap-0.5">
+      <div className="flex items-center gap-1" data-testid="rating-slider">
+        <div className="flex gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
-            <div 
-              key={star} 
+            <div
+              key={star}
               className="relative"
-              style={{ width: 28, height: 28 }}
+              style={{ width: 44, height: 44 }}
             >
-              <Star size={28} className="absolute inset-0 text-gray-300" />
-              <div 
+              {/* Empty star */}
+              <Star size={44} className="absolute inset-0 text-gray-300" />
+              {/* Filled overlay */}
+              <div
                 className="absolute inset-0 overflow-hidden pointer-events-none"
-                style={{ 
+                style={{
                   width: rating >= star ? '100%' : rating >= star - 0.5 ? '50%' : '0%'
                 }}
               >
-                <Star size={28} className="fill-yellow-400 text-yellow-400" />
+                <Star size={44} className="fill-yellow-400 text-yellow-400" />
               </div>
+              {/* Left 30% = half-star tap zone */}
+              <button
+                className="absolute top-0 left-0 h-full z-10"
+                style={{ width: '30%' }}
+                onClick={() => setRating(star - 0.5)}
+                aria-label={`Rate ${star - 0.5} stars`}
+              />
+              {/* Right 70% = whole star tap zone */}
+              <button
+                className="absolute top-0 right-0 h-full z-10"
+                style={{ width: '70%' }}
+                onClick={() => setRating(star)}
+                aria-label={`Rate ${star} stars`}
+              />
             </div>
           ))}
         </div>
-        {/* Invisible slider overlay for half-star ratings */}
-        <input
-          type="range"
-          min="0"
-          max="5"
-          step="0.5"
-          value={rating}
-          onChange={(e) => setRating(parseFloat(e.target.value))}
-          className="absolute left-0 w-[140px] h-7 opacity-0 cursor-pointer z-10"
-          style={{ margin: 0 }}
-          data-testid="rating-slider"
-        />
         {rating > 0 && (
           <span className="ml-2 text-sm text-gray-600">{rating}/5</span>
         )}
