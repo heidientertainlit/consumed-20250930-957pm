@@ -18,7 +18,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus, Trash2 } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus, Trash2, Dna, Send, Check } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { 
@@ -49,7 +49,10 @@ import { FriendDNAComparison } from "@/components/friend-dna-comparison";
 import { FriendDNACompareButton } from "@/components/friend-dna-comparison";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
 import { QuickAddModal } from "@/components/quick-add-modal";
+import { ShareImageSheet } from "@/components/share-image-sheet";
+import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { supabase } from "@/lib/supabase";
+import html2canvas from "html2canvas";
 
 export default function UserProfile() {
   const { user, session, loading, signOut } = useAuth();
@@ -115,6 +118,17 @@ export default function UserProfile() {
   const [dnaLevel, setDnaLevel] = useState<0 | 1 | 2>(0);
   const [dnaItemCount, setDnaItemCount] = useState(0);
   const [isLoadingDnaLevel, setIsLoadingDnaLevel] = useState(false);
+
+  // DNA tab (own profile) sub-tab and comparison state
+  const [dnaActiveTab, setDnaActiveTab] = useState<'dna' | 'compare'>('dna');
+  const [dnaSelectedFriendId, setDnaSelectedFriendId] = useState<string | null>(null);
+  const [dnaIsComparing, setDnaIsComparing] = useState(false);
+  const [dnaComparisonResult, setDnaComparisonResult] = useState<any>(null);
+  const [dnaCompareError, setDnaCompareError] = useState<string | null>(null);
+  const [dnaIsDownloading, setDnaIsDownloading] = useState(false);
+  const [dnaShareSheetOpen, setDnaShareSheetOpen] = useState(false);
+  const [dnaShareImageUrl, setDnaShareImageUrl] = useState<string | null>(null);
+  const [dnaShareSheetTitle, setDnaShareSheetTitle] = useState("Your Entertainment DNA");
   
   // Tracked genre analysis states
   const [trackedGenres, setTrackedGenres] = useState<Record<string, number>>({});
@@ -199,6 +213,8 @@ export default function UserProfile() {
   // Section navigation refs and state
   const statsRef = useRef<HTMLDivElement>(null);
   const dnaRef = useRef<HTMLDivElement>(null);
+  const dnaSummaryCardRef = useRef<HTMLDivElement>(null);
+  const dnaComparisonCardRef = useRef<HTMLDivElement>(null);
   const friendsRef = useRef<HTMLDivElement>(null);
   const listsRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
@@ -566,6 +582,148 @@ export default function UserProfile() {
     } finally {
       setIsDnaRecsLoading(false);
     }
+  };
+
+  // DNA comparison friends query (for own profile DNA tab)
+  const { data: dnaCompareFriends = [], isLoading: isLoadingDnaFriends } = useQuery({
+    queryKey: ['dna-compare-friends', user?.id],
+    queryFn: async () => {
+      if (!session?.access_token || !user?.id) return [];
+      const { data: friendships } = await supabase
+        .from('friendships')
+        .select('user_id, friend_id')
+        .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
+        .eq('status', 'accepted');
+      if (!friendships?.length) return [];
+      const friendIds = [...new Set(friendships.map((f: any) =>
+        f.user_id === user.id ? f.friend_id : f.user_id
+      ).filter((id: string) => id !== user.id))];
+      if (!friendIds.length) return [];
+      const { data: usersData } = await supabase.from('users').select('id, user_name, avatar').in('id', friendIds);
+      const { data: dnaData } = await supabase.from('dna_profiles').select('user_id').in('user_id', friendIds);
+      const hasSurveyMap: Record<string, boolean> = {};
+      dnaData?.forEach((d: any) => { hasSurveyMap[d.user_id] = true; });
+      const { data: listsData } = await supabase.from('lists').select('id, user_id').in('user_id', friendIds);
+      const statsMap: Record<string, number> = {};
+      if (listsData?.length) {
+        const listIds = listsData.map((l: any) => l.id);
+        const listToUserMap: Record<string, string> = {};
+        listsData.forEach((l: any) => { listToUserMap[l.id] = l.user_id; });
+        const { data: itemsData } = await supabase.from('list_items').select('list_id').in('list_id', listIds);
+        itemsData?.forEach((item: any) => {
+          const uid = listToUserMap[item.list_id];
+          if (uid) statsMap[uid] = (statsMap[uid] || 0) + 1;
+        });
+      }
+      return (usersData || []).map((u: any) => ({
+        id: u.id,
+        user_name: u.user_name || 'Unknown',
+        avatar_url: u.avatar,
+        itemCount: statsMap[u.id] || 0,
+        hasSurvey: hasSurveyMap[u.id] || false,
+        isEligible: (statsMap[u.id] || 0) >= 30 && (hasSurveyMap[u.id] || false),
+      }));
+    },
+    enabled: !!session?.access_token && !!user?.id && isOwnProfile && dnaLevel >= 2,
+    staleTime: 60000,
+  });
+
+  const dnaEligibleFriends = dnaCompareFriends.filter((f: any) => f.isEligible);
+  const dnaAlmostEligibleFriends = dnaCompareFriends.filter((f: any) => !f.isEligible && f.itemCount > 0);
+  const dnaSelectedFriend = dnaCompareFriends.find((f: any) => f.id === dnaSelectedFriendId);
+  const dnaCanCompare = dnaProfileStatus === 'has_profile' && dnaLevel >= 2;
+
+  const handleDnaSelectFriend = async (friendId: string) => {
+    if (!session?.access_token || !dnaCanCompare) return;
+    if (dnaSelectedFriendId === friendId) {
+      setDnaSelectedFriendId(null);
+      setDnaComparisonResult(null);
+      setDnaCompareError(null);
+      return;
+    }
+    setDnaSelectedFriendId(friendId);
+    setDnaIsComparing(true);
+    setDnaCompareError(null);
+    setDnaComparisonResult(null);
+    try {
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/compare-dna-friend', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ friend_id: friendId }),
+      });
+      if (response.ok) {
+        setDnaComparisonResult(await response.json());
+      } else {
+        const err = await response.json();
+        setDnaCompareError(err.error || 'Failed to compare DNA');
+      }
+    } catch {
+      setDnaCompareError('Failed to compare DNA');
+    } finally {
+      setDnaIsComparing(false);
+    }
+  };
+
+  const handleDnaDownloadSummary = async () => {
+    if (!dnaSummaryCardRef.current) return;
+    setDnaIsDownloading(true);
+    try {
+      const canvas = await html2canvas(dnaSummaryCardRef.current, { scale: 3, useCORS: true, backgroundColor: null });
+      setDnaShareImageUrl(canvas.toDataURL('image/png'));
+      setDnaShareSheetTitle("Your Entertainment DNA");
+      setDnaShareSheetOpen(true);
+    } catch {
+      toast({ title: "Error", description: "Could not generate image", variant: "destructive" });
+    } finally {
+      setDnaIsDownloading(false);
+    }
+  };
+
+  const handleDnaShareSummary = async () => {
+    if (navigator.share && dnaProfile) {
+      try {
+        await navigator.share({ title: 'My Entertainment DNA', text: `I'm a "${dnaProfile.label}" - ${dnaProfile.tagline}. Check out my entertainment DNA on Consumed!`, url: window.location.origin });
+      } catch {
+        navigator.clipboard.writeText(`I'm a "${dnaProfile?.label}" - ${dnaProfile?.tagline}. Check out my entertainment DNA on Consumed!`);
+        toast({ title: "Copied!", description: "Share text copied to clipboard" });
+      }
+    } else {
+      navigator.clipboard.writeText(`I'm a "${dnaProfile?.label}" - ${dnaProfile?.tagline}. Check out my entertainment DNA on Consumed!`);
+      toast({ title: "Copied!", description: "Share text copied to clipboard" });
+    }
+  };
+
+  const handleDnaDownloadComparison = async () => {
+    if (!dnaComparisonCardRef.current) return;
+    try {
+      const canvas = await html2canvas(dnaComparisonCardRef.current, { scale: 3, backgroundColor: '#ffffff' });
+      setDnaShareImageUrl(canvas.toDataURL('image/png'));
+      setDnaShareSheetTitle("DNA Match");
+      setDnaShareSheetOpen(true);
+    } catch {
+      toast({ title: "Error", description: "Could not generate image", variant: "destructive" });
+    }
+  };
+
+  const handleDnaNudgeFriend = async (friend: any) => {
+    const itemsNeeded = Math.max(0, 30 - friend.itemCount);
+    const appUrl = window.location.origin;
+    const message = friend.hasSurvey
+      ? `Hey ${friend.user_name}! I want to compare our Entertainment DNA on Consumed, but you need to log ${itemsNeeded} more items first. ${appUrl}`
+      : `Hey ${friend.user_name}! I want to compare our Entertainment DNA on Consumed! Complete the DNA survey and log 30 items so we can see how compatible our taste is! ${appUrl}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Compare our Entertainment DNA!', text: message }); }
+      catch { await navigator.clipboard.writeText(message); toast({ title: "Copied!", description: "Share message copied to clipboard" }); }
+    } else {
+      await navigator.clipboard.writeText(message);
+      toast({ title: "Copied!", description: "Share message copied to clipboard" });
+    }
+  };
+
+  const getDnaMatchColor = (score: number) => {
+    if (score >= 80) return 'text-green-600';
+    if (score >= 60) return 'text-amber-600';
+    return 'text-purple-600';
   };
 
   // Add to list mutation
@@ -2918,7 +3076,6 @@ export default function UserProfile() {
         {isOwnProfile && (
         <div className="sticky top-16 z-20 bg-gray-50 border-b border-gray-200 px-4 py-3 -mx-0">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-            {/* Badges tab hidden - keep functionality for reimplementation */}
             <button
               onClick={() => setActiveSection('friends')}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
@@ -2929,6 +3086,17 @@ export default function UserProfile() {
               data-testid="nav-friends"
             >
               Friends
+            </button>
+            <button
+              onClick={() => setActiveSection('dna')}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                activeSection === 'dna'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+              data-testid="nav-dna-profile"
+            >
+              DNA
             </button>
             <button
               onClick={() => setActiveSection('collections')}
@@ -3109,6 +3277,336 @@ export default function UserProfile() {
                 userDnaLevel={dnaLevel}
                 userItemCount={dnaItemCount}
               />
+            )}
+          </div>
+        )}
+
+        {/* Full DNA Section for Own Profile */}
+        {isOwnProfile && activeSection === 'dna' && (
+          <div className="px-4 py-4 space-y-4">
+            {/* Sub-tabs */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDnaActiveTab('dna')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  dnaActiveTab === 'dna'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                <Dna size={14} />
+                My DNA
+              </button>
+              <button
+                onClick={() => setDnaActiveTab('compare')}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  dnaActiveTab === 'compare'
+                    ? 'bg-purple-600 text-white shadow-md'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                <Users size={14} />
+                Compare
+              </button>
+            </div>
+
+            {/* My DNA sub-tab */}
+            {dnaActiveTab === 'dna' && (
+              <div className="space-y-4">
+                {/* Quiz CTA */}
+                {dnaProfileStatus === 'has_profile' ? (
+                  <div className="bg-gradient-to-r from-purple-500 via-blue-500 to-teal-400 rounded-xl p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Check className="text-white" size={20} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-sm text-white">DNA Quiz Complete</h3>
+                        <p className="text-white/80 text-xs">Share your results or retake to update your profile</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleDnaShareSummary} size="sm" className="flex-1 bg-white text-purple-600 hover:bg-white/90 text-xs font-semibold">
+                        <Share2 size={12} className="mr-1" />
+                        Share Results
+                      </Button>
+                      <Button onClick={() => setLocation('/entertainment-dna')} size="sm" className="flex-1 bg-white/20 text-white hover:bg-white/30 text-xs font-semibold">
+                        <RefreshCw size={12} className="mr-1" />
+                        Retake Quiz
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gradient-to-r from-purple-500 via-blue-500 to-teal-400 rounded-xl p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Dna className="text-white" size={20} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-sm text-white">Complete Your DNA</h3>
+                        <p className="text-white/80 text-xs">Answer a few questions to unlock personalized insights</p>
+                      </div>
+                      <Button onClick={() => setLocation('/entertainment-dna')} size="sm" className="bg-white text-purple-600 hover:bg-white/90 text-xs font-semibold">
+                        Take Quiz
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Stats */}
+                <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                  <h2 className="text-base font-semibold text-gray-900 mb-3">Your Stats</h2>
+                  {userStats ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div><p className="text-lg font-bold text-purple-600">{userStats.moviesWatched || 0}</p><p className="text-xs text-gray-500">Movies</p></div>
+                        <div><p className="text-lg font-bold text-blue-600">{userStats.tvShowsWatched || 0}</p><p className="text-xs text-gray-500">TV Shows</p></div>
+                        <div><p className="text-lg font-bold text-green-600">{userStats.booksRead || 0}</p><p className="text-xs text-gray-500">Books</p></div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div><p className="text-lg font-bold text-pink-600">{userStats.musicHours || 0}h</p><p className="text-xs text-gray-500">Music</p></div>
+                        <div><p className="text-lg font-bold text-orange-600">{userStats.podcastHours || 0}h</p><p className="text-xs text-gray-500">Podcasts</p></div>
+                        <div><p className="text-lg font-bold text-red-600">{userStats.gamesPlayed || 0}</p><p className="text-xs text-gray-500">Games</p></div>
+                      </div>
+                      <div className="border-t pt-3 grid grid-cols-3 gap-2 text-center">
+                        <div><p className="text-base font-bold text-gray-900">{userStats.totalHours || 0}h</p><p className="text-xs text-gray-500">Total Hours</p></div>
+                        <div><p className="text-base font-bold text-gray-900">{userStats.averageRating || '-'}</p><p className="text-xs text-gray-500">Avg Rating</p></div>
+                        <div><p className="text-base font-bold text-gray-900">{userStats.dayStreak || 0}</p><p className="text-xs text-gray-500">Day Streak</p></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      <BarChart3 className="mx-auto mb-2 text-gray-300" size={32} />
+                      <p className="text-sm">Start tracking to see your stats</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* DNA Profile Card */}
+                {dnaProfile && (
+                  <>
+                    <div ref={dnaSummaryCardRef} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                      <div className="p-4">
+                        <div className="text-center mb-3">
+                          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <Dna className="text-white" size={20} />
+                          </div>
+                          <h2 className="text-base font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{dnaProfile.label}</h2>
+                          {userProfileData?.user_name && <p className="text-gray-500 text-xs mt-0.5">@{userProfileData.user_name}</p>}
+                          <p className="text-gray-600 text-xs mt-0.5">{dnaProfile.tagline}</p>
+                        </div>
+                        {dnaProfile.profile_text && (
+                          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 mb-3">
+                            <p className="text-gray-700 text-xs leading-relaxed">{dnaProfile.profile_text}</p>
+                          </div>
+                        )}
+                        {dnaProfile.favorite_genres?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 justify-center mb-3">
+                            {dnaProfile.favorite_genres.slice(0, 5).map((genre: string, i: number) => (
+                              <span key={i} className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">{genre}</span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="text-center pt-2 border-t border-gray-100">
+                          <p className="text-purple-600 text-xs font-medium">@consumedapp</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 justify-center">
+                      <Button onClick={handleDnaDownloadSummary} disabled={dnaIsDownloading} variant="outline" size="sm" className="flex items-center gap-1.5 text-xs">
+                        <Share2 size={14} />
+                        {dnaIsDownloading ? 'Generating...' : 'Share Your DNA'}
+                      </Button>
+                    </div>
+                  </>
+                )}
+
+                <RecommendationsGlimpse />
+              </div>
+            )}
+
+            {/* Compare sub-tab */}
+            {dnaActiveTab === 'compare' && (
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                <h2 className="text-base font-semibold text-gray-900 mb-3">Compare DNA</h2>
+                {!dnaCanCompare ? (
+                  <div className="text-center py-6">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Lock size={20} className="text-gray-400" />
+                    </div>
+                    <h3 className="font-semibold text-gray-900 text-sm mb-1">Comparison Locked</h3>
+                    <p className="text-gray-500 text-xs mb-3">
+                      {dnaProfileStatus !== 'has_profile'
+                        ? "Complete the DNA survey to unlock comparisons"
+                        : `Log ${Math.max(0, 30 - dnaItemCount)} more items to unlock`}
+                    </p>
+                    {dnaProfileStatus !== 'has_profile' && (
+                      <Button onClick={() => setLocation('/entertainment-dna')} size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs">
+                        Take DNA Survey
+                      </Button>
+                    )}
+                  </div>
+                ) : isLoadingDnaFriends ? (
+                  <div className="flex justify-center py-6"><Loader2 className="animate-spin text-purple-600" size={24} /></div>
+                ) : dnaCompareFriends.length === 0 ? (
+                  <div className="text-center py-6">
+                    <Users size={28} className="mx-auto text-gray-300 mb-2" />
+                    <p className="text-sm text-gray-600 mb-1">No friends yet</p>
+                    <p className="text-xs text-gray-500 mb-3">Add friends to compare your entertainment DNA</p>
+                    <Button variant="outline" size="sm" onClick={() => setActiveSection('friends')} className="border-purple-200 hover:border-purple-300 text-xs">
+                      <Users size={14} className="mr-1.5" />
+                      Find Friends
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {dnaEligibleFriends.length > 0 && (
+                      <div>
+                        <p className="text-xs text-gray-600 mb-2">Select a friend to compare:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {dnaEligibleFriends.map((friend: any) => (
+                            <button
+                              key={friend.id}
+                              onClick={() => handleDnaSelectFriend(friend.id)}
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs transition-all ${
+                                dnaSelectedFriendId === friend.id
+                                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            >
+                              <div className="w-5 h-5 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 text-xs font-medium overflow-hidden">
+                                {friend.avatar_url ? <img src={friend.avatar_url} alt={friend.user_name} className="w-5 h-5 rounded-full object-cover" /> : friend.user_name.charAt(0).toUpperCase()}
+                              </div>
+                              <span>{friend.user_name}</span>
+                              {dnaSelectedFriendId === friend.id && <X size={12} />}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {dnaSelectedFriendId && (
+                      <div className="pt-3 border-t border-gray-100">
+                        {dnaIsComparing && (
+                          <div className="flex flex-col items-center py-6">
+                            <Loader2 className="animate-spin text-purple-600 mb-2" size={28} />
+                            <p className="text-xs text-gray-600">Comparing with {dnaSelectedFriend?.user_name}...</p>
+                          </div>
+                        )}
+                        {dnaCompareError && (
+                          <div className="text-center py-4">
+                            <p className="text-xs text-red-600 mb-2">{dnaCompareError}</p>
+                            <Button variant="outline" size="sm" onClick={() => handleDnaSelectFriend(dnaSelectedFriendId)} className="text-xs">Try Again</Button>
+                          </div>
+                        )}
+                        {!dnaIsComparing && !dnaCompareError && dnaComparisonResult && (
+                          <div className="space-y-3">
+                            <div ref={dnaComparisonCardRef} className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4">
+                              <div className="text-center mb-4">
+                                <div className={`text-4xl font-bold ${getDnaMatchColor(dnaComparisonResult.match_score)}`}>{dnaComparisonResult.match_score}%</div>
+                                <p className="text-gray-600 text-xs mt-1">Entertainment DNA Match</p>
+                              </div>
+                              <div className="flex items-center justify-center gap-4 mb-4">
+                                <div className="text-center">
+                                  <div className="w-10 h-10 rounded-full bg-purple-200 mx-auto mb-1 flex items-center justify-center text-purple-700 font-semibold text-sm overflow-hidden ring-2 ring-purple-300">
+                                    {user?.user_metadata?.avatar_url ? <img src={user.user_metadata.avatar_url} alt="You" className="w-10 h-10 rounded-full object-cover" /> : user?.email?.charAt(0).toUpperCase() || 'Y'}
+                                  </div>
+                                  <p className="text-xs text-gray-600">You</p>
+                                </div>
+                                <div className="text-purple-400 text-sm">×</div>
+                                <div className="text-center">
+                                  <div className="w-10 h-10 rounded-full bg-indigo-200 mx-auto mb-1 flex items-center justify-center text-indigo-700 font-semibold text-sm overflow-hidden ring-2 ring-indigo-300">
+                                    {dnaSelectedFriend?.avatar_url ? <img src={dnaSelectedFriend.avatar_url} alt={dnaSelectedFriend.user_name} className="w-10 h-10 rounded-full object-cover" /> : dnaSelectedFriend?.user_name.charAt(0).toUpperCase()}
+                                  </div>
+                                  <p className="text-xs text-gray-600">{dnaSelectedFriend?.user_name}</p>
+                                </div>
+                              </div>
+                              {dnaComparisonResult.insights?.compatibilityLine && (
+                                <p className="text-xs text-purple-700 text-center italic mb-3">"{dnaComparisonResult.insights.compatibilityLine}"</p>
+                              )}
+                              {dnaComparisonResult.shared_titles?.length > 0 && (
+                                <div className="mb-3">
+                                  <p className="text-xs text-gray-500 mb-1.5 flex items-center gap-1"><Heart size={10} className="text-red-400" /> You both love</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {dnaComparisonResult.shared_titles.slice(0, 4).map((item: any, idx: number) => (
+                                      <span key={idx} className="text-xs text-gray-700 bg-white/70 px-2 py-0.5 rounded-full">{item.title}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {dnaComparisonResult.shared_genres?.length > 0 && (
+                                <div className="mb-3">
+                                  <p className="text-xs text-gray-500 mb-1.5">Shared genres</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {dnaComparisonResult.shared_genres.slice(0, 5).map((genre: string, idx: number) => (
+                                      <span key={idx} className="text-xs text-purple-600 bg-purple-100/60 px-2 py-0.5 rounded-full">{genre}</span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {dnaComparisonResult.insights?.consumeTogether && (
+                                <div className="pt-2 border-t border-purple-100">
+                                  <p className="text-xs text-gray-500 mb-1.5 flex items-center gap-1"><Sparkles size={10} className="text-amber-500" /> Watch together</p>
+                                  <div className="space-y-1">
+                                    {dnaComparisonResult.insights.consumeTogether.movies?.slice(0, 2).map((item: string, idx: number) => (
+                                      <p key={idx} className="text-xs text-gray-700 flex items-center gap-1"><Film size={10} className="text-gray-400" /> {item}</p>
+                                    ))}
+                                    {dnaComparisonResult.insights.consumeTogether.tv?.slice(0, 2).map((item: string, idx: number) => (
+                                      <p key={idx} className="text-xs text-gray-700 flex items-center gap-1"><Tv size={10} className="text-gray-400" /> {item}</p>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              <div className="pt-2 mt-2 border-t border-purple-100 text-center">
+                                <p className="text-xs text-gray-400">consumed.app</p>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 justify-center">
+                              <Button variant="outline" size="sm" onClick={handleDnaDownloadComparison} className="border-purple-200 text-purple-600 text-xs">
+                                <Share2 size={12} className="mr-1" />
+                                Share Match
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {dnaEligibleFriends.length === 0 && dnaAlmostEligibleFriends.length > 0 && (
+                      <div className="text-center py-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-600">None of your friends are ready for comparison yet.</p>
+                      </div>
+                    )}
+                    {dnaAlmostEligibleFriends.length > 0 && (
+                      <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-200">
+                        <p className="text-xs font-medium text-amber-800 mb-2">Almost ready to compare:</p>
+                        <div className="space-y-2">
+                          {dnaAlmostEligibleFriends.slice(0, 3).map((friend: any) => {
+                            const itemsNeeded = Math.max(0, 30 - friend.itemCount);
+                            return (
+                              <div key={friend.id} className="flex items-center justify-between bg-white/80 rounded-lg p-2">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-7 h-7 rounded-full bg-amber-200 flex items-center justify-center text-amber-700 text-xs font-medium overflow-hidden">
+                                    {friend.avatar_url ? <img src={friend.avatar_url} alt={friend.user_name} className="w-7 h-7 rounded-full object-cover" /> : friend.user_name.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-medium text-gray-800">{friend.user_name}</p>
+                                    <p className="text-xs text-amber-600">{!friend.hasSurvey ? 'Needs survey' : `${itemsNeeded} more items`}</p>
+                                  </div>
+                                </div>
+                                <Button variant="outline" size="sm" onClick={() => handleDnaNudgeFriend(friend)} className="border-amber-300 hover:bg-amber-100 text-amber-700 text-xs h-7 px-2">
+                                  <Send size={10} className="mr-1" />
+                                  Nudge
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -4573,6 +5071,16 @@ export default function UserProfile() {
       <FeedbackDialog
         isOpen={isFeedbackOpen}
         onClose={() => setIsFeedbackOpen(false)}
+      />
+
+      {/* DNA Share Sheet */}
+      <ShareImageSheet
+        open={dnaShareSheetOpen}
+        onOpenChange={setDnaShareSheetOpen}
+        imageDataUrl={dnaShareImageUrl}
+        fileName="my-entertainment-dna.png"
+        title={dnaShareSheetTitle}
+        shareText={dnaProfile ? `I'm a "${dnaProfile.label}" - ${dnaProfile.tagline}. Check out my entertainment DNA on Consumed!` : undefined}
       />
     </>
   );

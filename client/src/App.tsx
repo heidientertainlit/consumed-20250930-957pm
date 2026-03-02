@@ -50,7 +50,6 @@ import EntertainmentDNAPage from "./pages/entertainment-dna";
 import NotFoundPage from "./pages/not-found";
 
 import MyLibrary from "@/pages/my-library";
-import DnaPage from "@/pages/dna";
 import About from "@/pages/about";
 import PointsBreakdown from "@/pages/points-breakdown";
 
@@ -271,9 +270,7 @@ function Router() {
           </Route>
 
           <Route path="/dna">
-            <ProtectedRoute>
-              <DnaPage />
-            </ProtectedRoute>
+            <RedirectTo to="/me" />
           </Route>
 
           <Route path="/collections">

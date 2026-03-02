@@ -550,15 +550,15 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-white text-[10px] mt-0.5">Activity</span>
           </Link>
 
-          {/* DNA */}
+          {/* Me / Profile */}
           <Link
-            href="/dna"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/dna" ? "bg-white/15" : ""}`}
+            href="/me"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/me" ? "bg-white/15" : ""}`}
             style={{ marginRight: -6 }}
-            data-testid="nav-dna"
+            data-testid="nav-me"
           >
-            <Dna className="text-white" size={22} />
-            <span className="text-white text-[10px] mt-0.5">DNA</span>
+            <User className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">Me</span>
           </Link>
 
           {/* Spacer for center button */}

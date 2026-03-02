@@ -16,9 +16,9 @@ Preferred communication style: Simple, everyday language.
 
 ### UI/UX Decisions
 - Mobile-first design with a dark gradient theme.
-- Bottom Navigation: Activity, Play, Collections, Me.
+- Bottom Navigation: Activity, Me, Library, Leaders (+ floating center Plus button → /add). DNA removed from nav; replaced with "Me" (profile link).
 - Top Navigation: Search (🔍), Notifications, Profile.
-- Profile Section Navigation: Sticky pills for Stats, DNA, Friends, Collections, History.
+- Profile Section Navigation: Sticky pills for Friends, DNA, Media History (own profile); Overview, DNA (friend profiles). DNA tab on own profile has "My DNA" and "Compare" sub-tabs.
 - Component Library: shadcn/ui (Radix UI, Tailwind CSS).
 - Button Theme: Default purple (`bg-purple-600`) with white text; outline buttons have purple border and white background. No black buttons.
 - Composer: Simplified inline with quick action buttons and dynamic forms.
