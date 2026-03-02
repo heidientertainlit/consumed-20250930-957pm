@@ -550,15 +550,15 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-white text-[10px] mt-0.5">Activity</span>
           </Link>
 
-          {/* Me / Profile */}
+          {/* Play */}
           <Link
-            href="/me"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/me" ? "bg-white/15" : ""}`}
+            href="/play/predictions"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location.startsWith("/play") ? "bg-white/15" : ""}`}
             style={{ marginRight: -6 }}
-            data-testid="nav-me"
+            data-testid="nav-play"
           >
-            <User className="text-white" size={22} />
-            <span className="text-white text-[10px] mt-0.5">Me</span>
+            <Gamepad2 className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">Play</span>
           </Link>
 
           {/* Spacer for center button */}

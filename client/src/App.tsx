@@ -260,7 +260,7 @@ function Router() {
           </Route>
 
           <Route path="/play">
-            <RedirectTo to="/activity" />
+            <RedirectTo to="/play/predictions" />
           </Route>
 
           <Route path="/my-library">

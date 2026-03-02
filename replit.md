@@ -16,7 +16,7 @@ Preferred communication style: Simple, everyday language.
 
 ### UI/UX Decisions
 - Mobile-first design with a dark gradient theme.
-- Bottom Navigation: Activity, Me, Library, Leaders (+ floating center Plus button → /add). DNA removed from nav; replaced with "Me" (profile link).
+- Bottom Navigation: Activity, Play, Library, Leaders (+ floating center Plus button → /add). DNA removed from nav; replaced with "Play" linking to /play/predictions.
 - Top Navigation: Search (🔍), Notifications, Profile.
 - Profile Section Navigation: Sticky pills for Friends, DNA, Media History (own profile); Overview, DNA (friend profiles). DNA tab on own profile has "My DNA" and "Compare" sub-tabs.
 - Component Library: shadcn/ui (Radix UI, Tailwind CSS).
