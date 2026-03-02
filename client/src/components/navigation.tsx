@@ -552,7 +552,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
 
           {/* Play */}
           <Link
-            href="/play/predictions"
+            href="/play"
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location.startsWith("/play") ? "bg-white/15" : ""}`}
             style={{ marginRight: -6 }}
             data-testid="nav-play"

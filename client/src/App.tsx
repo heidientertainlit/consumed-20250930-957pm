@@ -21,6 +21,7 @@ import Add from "@/pages/add";
 import Conversations from "@/pages/conversations";
 import Leaderboard from "@/pages/leaderboard";
 
+import PlayPage from "@/pages/play";
 import PlayTrivia from "@/pages/play-trivia";
 import PlayPolls from "@/pages/play-polls";
 import PlayPredictions from "@/pages/play-predictions";
@@ -260,7 +261,9 @@ function Router() {
           </Route>
 
           <Route path="/play">
-            <RedirectTo to="/play/predictions" />
+            <ProtectedRoute>
+              <PlayPage />
+            </ProtectedRoute>
           </Route>
 
           <Route path="/my-library">
