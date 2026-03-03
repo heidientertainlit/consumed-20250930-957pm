@@ -22,6 +22,7 @@ import { QuickAddListSheet } from "./quick-add-list-sheet";
 
 interface NavigationProps {
   onTrackConsumption?: () => void;
+  hideTopBar?: boolean;
 }
 
 interface MediaResult {
@@ -42,7 +43,7 @@ interface UserResult {
   email?: string;
 }
 
-export default function Navigation({ onTrackConsumption }: NavigationProps) {
+export default function Navigation({ onTrackConsumption, hideTopBar }: NavigationProps) {
   const [location, setLocation] = useLocation();
   const { user, session } = useAuth();
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -350,7 +351,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
   return (
     <>
       {/* Top bar with logo and points */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] sticky top-0 z-50" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)' }}>
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] sticky top-0 z-50" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)', display: hideTopBar ? 'none' : undefined }}>
         <div className="flex justify-between items-center h-11 px-4">
           <Link href="/" className="flex items-center space-x-2">
             <img

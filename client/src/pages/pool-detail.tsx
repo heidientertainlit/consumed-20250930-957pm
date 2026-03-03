@@ -34,22 +34,23 @@ function AddRoundSheet({ poolId, token, onClose, onCreated }: { poolId: string; 
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end" onClick={onClose}>
-      <div className="w-full bg-[#1a1a2e] rounded-t-2xl p-6 space-y-4" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-2">
+    <div className="fixed inset-0 z-50 flex items-end bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full bg-[#12121f] rounded-t-3xl p-6 space-y-4 pb-10" onClick={e => e.stopPropagation()}>
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-4" />
+        <div className="flex items-center justify-between">
           <h2 className="text-white font-semibold text-lg">New Round</h2>
-          <button onClick={onClose}><X size={20} className="text-white/50" /></button>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><X size={16} className="text-white/60" /></button>
         </div>
         <div>
-          <label className="text-white/60 text-xs uppercase tracking-wide mb-1 block">Round Title</label>
-          <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Episode 3, Week 2..." className="bg-white/10 border-white/20 text-white placeholder:text-white/30" autoFocus />
+          <label className="text-white/50 text-xs uppercase tracking-widest mb-2 block">Round Title</label>
+          <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Episode 3, Week 2..." className="bg-white/8 border-white/15 text-white placeholder:text-white/30 rounded-2xl h-12" autoFocus />
         </div>
         <div>
-          <label className="text-white/60 text-xs uppercase tracking-wide mb-1 block">Lock Time (optional)</label>
-          <Input type="datetime-local" value={lockTime} onChange={e => setLockTime(e.target.value)} className="bg-white/10 border-white/20 text-white [color-scheme:dark]" />
-          <p className="text-white/30 text-xs mt-1">Members cannot answer after this time</p>
+          <label className="text-white/50 text-xs uppercase tracking-widest mb-2 block">Lock Time (optional)</label>
+          <Input type="datetime-local" value={lockTime} onChange={e => setLockTime(e.target.value)} className="bg-white/8 border-white/15 text-white [color-scheme:dark] rounded-2xl h-12" />
+          <p className="text-white/30 text-xs mt-1.5">Members cannot answer after this time</p>
         </div>
-        <Button onClick={() => mutation.mutate()} disabled={!title.trim() || mutation.isPending} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+        <Button onClick={() => mutation.mutate()} disabled={!title.trim() || mutation.isPending} className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-2xl h-12 text-base font-semibold">
           {mutation.isPending ? 'Creating...' : 'Create Round'}
         </Button>
       </div>
@@ -72,22 +73,23 @@ function AddPromptSheet({ roundId, token, onClose, onCreated }: { roundId: strin
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end" onClick={onClose}>
-      <div className="w-full bg-[#1a1a2e] rounded-t-2xl p-6 space-y-4 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-2">
+    <div className="fixed inset-0 z-50 flex items-end bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <div className="w-full bg-[#12121f] rounded-t-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto pb-10" onClick={e => e.stopPropagation()}>
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-4" />
+        <div className="flex items-center justify-between">
           <h2 className="text-white font-semibold text-lg">Add Question</h2>
-          <button onClick={onClose}><X size={20} className="text-white/50" /></button>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><X size={16} className="text-white/60" /></button>
         </div>
         <div>
-          <label className="text-white/60 text-xs uppercase tracking-wide mb-1 block">Question</label>
-          <Input value={question} onChange={e => setQuestion(e.target.value)} placeholder="Who gets eliminated this week?" className="bg-white/10 border-white/20 text-white placeholder:text-white/30" autoFocus />
+          <label className="text-white/50 text-xs uppercase tracking-widest mb-2 block">Question</label>
+          <Input value={question} onChange={e => setQuestion(e.target.value)} placeholder="Who gets eliminated this week?" className="bg-white/8 border-white/15 text-white placeholder:text-white/30 rounded-2xl h-12" autoFocus />
         </div>
         <div>
-          <label className="text-white/60 text-xs uppercase tracking-wide mb-1 block">Answer Options</label>
+          <label className="text-white/50 text-xs uppercase tracking-widest mb-2 block">Answer Options</label>
           <div className="space-y-2">
             {options.map((opt, i) => (
               <div key={i} className="flex gap-2">
-                <Input value={opt} onChange={e => { const next = [...options]; next[i] = e.target.value; setOptions(next); }} placeholder={`Option ${i + 1}`} className="bg-white/10 border-white/20 text-white placeholder:text-white/30" />
+                <Input value={opt} onChange={e => { const next = [...options]; next[i] = e.target.value; setOptions(next); }} placeholder={`Option ${i + 1}`} className="bg-white/8 border-white/15 text-white placeholder:text-white/30 rounded-2xl h-11" />
                 {options.length > 2 && (
                   <button onClick={() => setOptions(options.filter((_, j) => j !== i))} className="text-white/40 hover:text-white/70"><X size={16} /></button>
                 )}
@@ -95,12 +97,12 @@ function AddPromptSheet({ roundId, token, onClose, onCreated }: { roundId: strin
             ))}
           </div>
           {options.length < 4 && (
-            <button onClick={() => setOptions([...options, ''])} className="mt-2 text-purple-400 text-sm hover:text-purple-300 flex items-center gap-1">
+            <button onClick={() => setOptions([...options, ''])} className="mt-2.5 text-purple-400 text-sm hover:text-purple-300 flex items-center gap-1">
               <Plus size={14} /> Add option
             </button>
           )}
         </div>
-        <Button onClick={() => mutation.mutate()} disabled={!question.trim() || options.filter(o => o.trim()).length < 2 || mutation.isPending} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+        <Button onClick={() => mutation.mutate()} disabled={!question.trim() || options.filter(o => o.trim()).length < 2 || mutation.isPending} className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-2xl h-12 text-base font-semibold">
           {mutation.isPending ? 'Adding...' : 'Add Question'}
         </Button>
       </div>
@@ -135,14 +137,14 @@ function PromptCard({ prompt, isHost, token, onResolved }: { prompt: any; isHost
   const options: string[] = prompt.options || [];
 
   return (
-    <div className="bg-white/5 rounded-lg p-3 space-y-2">
+    <div className="bg-gray-50 rounded-xl p-3 space-y-2 border border-gray-100">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-white/90 text-sm font-medium leading-snug">{prompt.prompt_text}</p>
-        {isResolved && <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full shrink-0">Resolved</span>}
+        <p className="text-gray-800 text-sm font-medium leading-snug">{prompt.prompt_text}</p>
+        {isResolved && <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full shrink-0">Resolved</span>}
       </div>
 
       {isResolved && prompt.correct_answer && (
-        <p className="text-xs text-green-400">Answer: {prompt.correct_answer}</p>
+        <p className="text-xs text-green-600">Answer: {prompt.correct_answer}</p>
       )}
 
       {!isResolved && !resolving && (
@@ -154,10 +156,10 @@ function PromptCard({ prompt, isHost, token, onResolved }: { prompt: any; isHost
                 key={opt}
                 onClick={() => !userAnswer && submitAnswer(opt)}
                 disabled={submitting || !!userAnswer}
-                className={`w-full text-left text-sm px-3 py-2 rounded-lg border transition-colors ${
+                className={`w-full text-left text-sm px-3 py-2 rounded-xl border transition-colors ${
                   selected
-                    ? 'bg-purple-600/30 border-purple-500 text-purple-200'
-                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-50'
+                    ? 'bg-purple-100 border-purple-400 text-purple-700 font-medium'
+                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50'
                 }`}
               >
                 {opt}
@@ -168,24 +170,24 @@ function PromptCard({ prompt, isHost, token, onResolved }: { prompt: any; isHost
       )}
 
       {isResolved && userAnswer && (
-        <div className={`text-xs px-2 py-1 rounded ${isCorrect ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+        <div className={`text-xs px-2 py-1 rounded-lg ${isCorrect ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
           Your pick: {userAnswer} {isCorrect ? '— Correct!' : '— Incorrect'}
         </div>
       )}
 
       {isHost && !isResolved && (
         resolving ? (
-          <div className="space-y-1.5 pt-1 border-t border-white/10">
-            <p className="text-white/40 text-xs">Tap the correct answer:</p>
+          <div className="space-y-1.5 pt-1 border-t border-gray-100">
+            <p className="text-gray-400 text-xs">Tap the correct answer:</p>
             {options.map((opt) => (
-              <button key={opt} onClick={() => resolvePrompt(opt)} className="w-full text-left text-sm px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-300 hover:bg-green-500/20">
+              <button key={opt} onClick={() => resolvePrompt(opt)} className="w-full text-left text-sm px-3 py-2 rounded-xl bg-green-50 border border-green-200 text-green-700 hover:bg-green-100">
                 {opt}
               </button>
             ))}
-            <button onClick={() => setResolving(false)} className="text-white/30 text-xs hover:text-white/50">Cancel</button>
+            <button onClick={() => setResolving(false)} className="text-gray-400 text-xs hover:text-gray-600">Cancel</button>
           </div>
         ) : (
-          <button onClick={() => setResolving(true)} className="text-xs text-white/30 hover:text-purple-400 transition-colors">
+          <button onClick={() => setResolving(true)} className="text-xs text-gray-400 hover:text-purple-500 transition-colors">
             Mark answer
           </button>
         )
@@ -203,33 +205,33 @@ function RoundCard({ round, isHost, token, onRefresh }: { round: any; isHost: bo
 
   return (
     <>
-      <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center justify-between p-4">
           <div className="flex items-center gap-2">
-            <h3 className="text-white font-semibold text-sm">{round.title}</h3>
-            {isLocked && <Lock size={12} className="text-white/30" />}
+            <h3 className="text-gray-900 font-semibold text-sm">{round.title}</h3>
+            {isLocked && <Lock size={12} className="text-gray-300" />}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-white/40 text-xs">{prompts.length} questions</span>
-            {expanded ? <ChevronDown size={16} className="text-white/40" /> : <ChevronRight size={16} className="text-white/40" />}
+            <span className="text-gray-400 text-xs">{prompts.length} questions</span>
+            {expanded ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
           </div>
         </button>
 
         {expanded && (
           <div className="px-4 pb-4 space-y-2">
             {prompts.length === 0 && (
-              <p className="text-white/30 text-sm text-center py-4">No questions yet</p>
+              <p className="text-gray-400 text-sm text-center py-4">No questions yet</p>
             )}
             {prompts.map((prompt: any) => (
               <PromptCard key={prompt.id} prompt={prompt} isHost={isHost} token={token} onResolved={onRefresh} />
             ))}
             {isHost && !isLocked && (
-              <button onClick={() => setShowAddPrompt(true)} className="w-full flex items-center justify-center gap-1.5 text-purple-400 text-sm py-2 hover:text-purple-300 border border-dashed border-purple-500/30 rounded-lg">
+              <button onClick={() => setShowAddPrompt(true)} className="w-full flex items-center justify-center gap-1.5 text-purple-500 text-sm py-2.5 hover:text-purple-600 border border-dashed border-purple-300 rounded-xl">
                 <Plus size={14} /> Add question
               </button>
             )}
             {round.lock_time && (
-              <p className="text-white/25 text-xs text-center">Locks {new Date(round.lock_time).toLocaleString()}</p>
+              <p className="text-gray-400 text-xs text-center">Locks {new Date(round.lock_time).toLocaleString()}</p>
             )}
           </div>
         )}
@@ -280,7 +282,7 @@ export default function PoolDetailPage() {
   const isHost = data?.is_host || false;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] pb-24">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
@@ -321,7 +323,7 @@ export default function PoolDetailPage() {
       <div className="px-4 pt-4">
         {isLoading && (
           <div className="space-y-3">
-            {[1, 2].map(i => <div key={i} className="h-20 rounded-xl bg-white/5 animate-pulse" />)}
+            {[1, 2].map(i => <div key={i} className="h-20 rounded-2xl bg-gray-200 animate-pulse" />)}
           </div>
         )}
 
@@ -329,7 +331,7 @@ export default function PoolDetailPage() {
           <div className="space-y-3">
             {rounds.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-white/40 text-sm">{isHost ? 'Create the first round to get started.' : 'No rounds yet. The host will create one soon.'}</p>
+                <p className="text-gray-400 text-sm">{isHost ? 'Create the first round to get started.' : 'No rounds yet. The host will create one soon.'}</p>
                 {isHost && (
                   <Button onClick={() => setShowAddRound(true)} className="mt-4 bg-purple-600 hover:bg-purple-700 text-white">
                     <Plus size={14} className="mr-1" /> Create First Round
@@ -345,16 +347,16 @@ export default function PoolDetailPage() {
 
         {!isLoading && tab === 'leaderboard' && (
           <div className="space-y-2">
-            {members.length === 0 && <p className="text-white/40 text-sm text-center py-12">No scores yet</p>}
+            {members.length === 0 && <p className="text-gray-400 text-sm text-center py-12">No scores yet</p>}
             {[...members].sort((a, b) => (b.total_points || 0) - (a.total_points || 0)).map((m: any, i) => (
-              <div key={m.user_id} className="flex items-center gap-3 bg-white/5 rounded-xl p-3 border border-white/10">
-                <span className={`text-sm font-bold w-6 text-center ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-600' : 'text-white/40'}`}>{i + 1}</span>
+              <div key={m.user_id} className="flex items-center gap-3 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm">
+                <span className={`text-sm font-bold w-6 text-center ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-600' : 'text-gray-300'}`}>{i + 1}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium truncate">{(m.users as any)?.display_name || (m.users as any)?.user_name || 'Member'}</p>
+                  <p className="text-gray-900 text-sm font-medium truncate">{(m.users as any)?.display_name || (m.users as any)?.user_name || 'Member'}</p>
                 </div>
                 <div className="flex items-center gap-1">
-                  {m.role === 'host' && <Crown size={12} className="text-yellow-400" />}
-                  <span className="text-purple-400 font-semibold text-sm">{m.total_points || 0} pts</span>
+                  {m.role === 'host' && <Crown size={12} className="text-yellow-500" />}
+                  <span className="text-purple-600 font-semibold text-sm">{m.total_points || 0} pts</span>
                 </div>
               </div>
             ))}
@@ -364,19 +366,19 @@ export default function PoolDetailPage() {
         {!isLoading && tab === 'members' && (
           <div className="space-y-2">
             {members.map((m: any) => (
-              <div key={m.user_id} className="flex items-center gap-3 bg-white/5 rounded-xl p-3 border border-white/10">
-                <div className="w-8 h-8 rounded-full bg-purple-600/30 flex items-center justify-center text-purple-300 text-xs font-semibold">
+              <div key={m.user_id} className="flex items-center gap-3 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 text-xs font-semibold">
                   {((m.users as any)?.display_name || (m.users as any)?.user_name || '?')[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium truncate">{(m.users as any)?.display_name || (m.users as any)?.user_name || 'Member'}</p>
-                  {m.role === 'host' && <p className="text-yellow-400 text-xs">Host</p>}
+                  <p className="text-gray-900 text-sm font-medium truncate">{(m.users as any)?.display_name || (m.users as any)?.user_name || 'Member'}</p>
+                  {m.role === 'host' && <p className="text-yellow-600 text-xs">Host</p>}
                 </div>
-                <span className="text-white/40 text-sm">{m.total_points || 0} pts</span>
+                <span className="text-gray-400 text-sm">{m.total_points || 0} pts</span>
               </div>
             ))}
             <div className="pt-2">
-              <Button onClick={handleCopyLink} variant="outline" className="w-full border-white/20 text-white/70 bg-transparent hover:bg-white/10">
+              <Button onClick={handleCopyLink} variant="outline" className="w-full border-gray-200 text-gray-600 bg-white hover:bg-gray-50">
                 <Copy size={14} className="mr-2" /> Copy invite link
               </Button>
             </div>
@@ -388,7 +390,7 @@ export default function PoolDetailPage() {
         <AddRoundSheet poolId={params.id} token={session?.access_token || ''} onClose={() => setShowAddRound(false)} onCreated={refresh} />
       )}
 
-      <Navigation />
+      <Navigation hideTopBar />
     </div>
   );
 }

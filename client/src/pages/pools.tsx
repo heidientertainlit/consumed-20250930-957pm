@@ -62,7 +62,7 @@ export default function PoolsPage() {
   const pools: any[] = data?.pools || [];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] pb-24">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
@@ -102,40 +102,40 @@ export default function PoolsPage() {
       <div className="px-4 pt-4 space-y-3">
         {isLoading && (
           <div className="space-y-3">
-            {[1, 2].map(i => <div key={i} className="h-24 rounded-xl bg-white/5 animate-pulse" />)}
+            {[1, 2].map(i => <div key={i} className="h-24 rounded-2xl bg-gray-200 animate-pulse" />)}
           </div>
         )}
 
         {!isLoading && pools.length === 0 && (
           <div className="text-center py-16">
-            <Trophy size={40} className="text-white/20 mx-auto mb-3" />
-            <p className="text-white/40 text-sm">No pools yet. Create one to get started.</p>
+            <Trophy size={40} className="text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-400 text-sm">No pools yet. Create one to get started.</p>
           </div>
         )}
 
         {pools.map((pool) => (
-          <div key={pool.id} className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+          <div key={pool.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <button onClick={() => setLocation(`/pool/${pool.id}`)} className="w-full text-left p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-white font-semibold text-base truncate">{pool.name}</h3>
-                    {pool.is_host && <Crown size={12} className="text-yellow-400 shrink-0" />}
+                    <h3 className="text-gray-900 font-semibold text-base truncate">{pool.name}</h3>
+                    {pool.is_host && <Crown size={12} className="text-yellow-500 shrink-0" />}
                   </div>
-                  <div className="flex items-center gap-3 text-white/50 text-xs">
+                  <div className="flex items-center gap-3 text-gray-400 text-xs">
                     <span className="flex items-center gap-1"><Users size={12} />{pool.member_count} members</span>
                     <span>{pool.round_count} rounds</span>
-                    {!pool.is_host && <span className="text-purple-400">{pool.user_points} pts</span>}
+                    {!pool.is_host && <span className="text-purple-500">{pool.user_points} pts</span>}
                   </div>
                 </div>
               </div>
             </button>
-            <div className="border-t border-white/5 px-4 py-2">
+            <div className="border-t border-gray-50 px-4 py-2">
               <button
                 onClick={() => handleCopyLink(pool)}
-                className="flex items-center gap-1.5 text-white/40 hover:text-white/70 text-xs transition-colors"
+                className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-xs transition-colors"
               >
-                {copiedId === pool.id ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+                {copiedId === pool.id ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
                 {copiedId === pool.id ? 'Copied!' : 'Copy invite link'}
               </button>
             </div>
@@ -143,7 +143,7 @@ export default function PoolsPage() {
         ))}
       </div>
 
-      <Navigation />
+      <Navigation hideTopBar />
     </div>
   );
 }

@@ -54,8 +54,8 @@ const gameModes = [
   },
   {
     id: "nightin",
-    label: "Night In",
-    description: "Set up a group game night",
+    label: "Pools",
+    description: "Host a group prediction game",
     icon: Moon,
     color: "bg-fuchsia-50 border-fuchsia-100",
     iconColor: "text-fuchsia-500",
