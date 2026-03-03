@@ -35,20 +35,20 @@ function AddRoundSheet({ poolId, token, onClose, onCreated }: { poolId: string; 
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/40 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full bg-[#12121f] rounded-t-3xl p-6 space-y-4 pb-10" onClick={e => e.stopPropagation()}>
-        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-4" />
+      <div className="w-full bg-white rounded-t-3xl p-6 space-y-4 pb-28" onClick={e => e.stopPropagation()}>
+        <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-4" />
         <div className="flex items-center justify-between">
-          <h2 className="text-white font-semibold text-lg">New Round</h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><X size={16} className="text-white/60" /></button>
+          <h2 className="text-gray-900 font-semibold text-lg">New Round</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><X size={16} className="text-gray-500" /></button>
         </div>
         <div>
-          <label className="text-white/50 text-xs uppercase tracking-widest mb-2 block">Round Title</label>
-          <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Episode 3, Week 2..." className="bg-white/8 border-white/15 text-white placeholder:text-white/30 rounded-2xl h-12" autoFocus />
+          <label className="text-gray-500 text-xs uppercase tracking-widest mb-2 block">Round Title</label>
+          <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Episode 3, Week 2..." className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-2xl h-12" autoFocus />
         </div>
         <div>
-          <label className="text-white/50 text-xs uppercase tracking-widest mb-2 block">Lock Time (optional)</label>
-          <Input type="datetime-local" value={lockTime} onChange={e => setLockTime(e.target.value)} className="bg-white/8 border-white/15 text-white [color-scheme:dark] rounded-2xl h-12" />
-          <p className="text-white/30 text-xs mt-1.5">Members cannot answer after this time</p>
+          <label className="text-gray-500 text-xs uppercase tracking-widest mb-2 block">Lock Time (optional)</label>
+          <Input type="datetime-local" value={lockTime} onChange={e => setLockTime(e.target.value)} className="bg-gray-50 border-gray-200 text-gray-900 [color-scheme:light] rounded-2xl h-12" />
+          <p className="text-gray-400 text-xs mt-1.5">Members cannot answer after this time</p>
         </div>
         <Button onClick={() => mutation.mutate()} disabled={!title.trim() || mutation.isPending} className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-2xl h-12 text-base font-semibold">
           {mutation.isPending ? 'Creating...' : 'Create Round'}
@@ -74,30 +74,30 @@ function AddPromptSheet({ roundId, token, onClose, onCreated }: { roundId: strin
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/40 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full bg-[#12121f] rounded-t-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto pb-10" onClick={e => e.stopPropagation()}>
-        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-4" />
+      <div className="w-full bg-white rounded-t-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto pb-28" onClick={e => e.stopPropagation()}>
+        <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-4" />
         <div className="flex items-center justify-between">
-          <h2 className="text-white font-semibold text-lg">Add Question</h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><X size={16} className="text-white/60" /></button>
+          <h2 className="text-gray-900 font-semibold text-lg">Add Question</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><X size={16} className="text-gray-500" /></button>
         </div>
         <div>
-          <label className="text-white/50 text-xs uppercase tracking-widest mb-2 block">Question</label>
-          <Input value={question} onChange={e => setQuestion(e.target.value)} placeholder="Who gets eliminated this week?" className="bg-white/8 border-white/15 text-white placeholder:text-white/30 rounded-2xl h-12" autoFocus />
+          <label className="text-gray-500 text-xs uppercase tracking-widest mb-2 block">Question</label>
+          <Input value={question} onChange={e => setQuestion(e.target.value)} placeholder="Who gets eliminated this week?" className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-2xl h-12" autoFocus />
         </div>
         <div>
-          <label className="text-white/50 text-xs uppercase tracking-widest mb-2 block">Answer Options</label>
+          <label className="text-gray-500 text-xs uppercase tracking-widest mb-2 block">Answer Options</label>
           <div className="space-y-2">
             {options.map((opt, i) => (
               <div key={i} className="flex gap-2">
-                <Input value={opt} onChange={e => { const next = [...options]; next[i] = e.target.value; setOptions(next); }} placeholder={`Option ${i + 1}`} className="bg-white/8 border-white/15 text-white placeholder:text-white/30 rounded-2xl h-11" />
+                <Input value={opt} onChange={e => { const next = [...options]; next[i] = e.target.value; setOptions(next); }} placeholder={`Option ${i + 1}`} className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-2xl h-11" />
                 {options.length > 2 && (
-                  <button onClick={() => setOptions(options.filter((_, j) => j !== i))} className="text-white/40 hover:text-white/70"><X size={16} /></button>
+                  <button onClick={() => setOptions(options.filter((_, j) => j !== i))} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
                 )}
               </div>
             ))}
           </div>
           {options.length < 4 && (
-            <button onClick={() => setOptions([...options, ''])} className="mt-2.5 text-purple-400 text-sm hover:text-purple-300 flex items-center gap-1">
+            <button onClick={() => setOptions([...options, ''])} className="mt-2.5 text-purple-600 text-sm hover:text-purple-700 flex items-center gap-1">
               <Plus size={14} /> Add option
             </button>
           )}
