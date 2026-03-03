@@ -55,7 +55,7 @@ export default function PlayPredictionsPage() {
       // Return all predictions, mark which are consumed vs community
       return (pools || []).map((p: any) => ({
         ...p,
-        isConsumed: p.id?.startsWith('consumed-prediction-') || p.id?.startsWith('consumed-'),
+        isConsumed: p.origin_type === 'consumed' || p.id?.startsWith('consumed-'),
       }));
     },
   });
