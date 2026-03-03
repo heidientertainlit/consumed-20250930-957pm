@@ -63,7 +63,7 @@ export default function PoolsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
         <div className="px-4 pt-4 pb-8">
           <button onClick={() => setLocation('/play')} className="text-white/70 hover:text-white transition-colors mb-3 block">
             <ChevronLeft size={24} />
@@ -141,7 +141,7 @@ export default function PoolsPage() {
         ))}
       </div>
 
-      <Navigation hideTopBar />
+      <Navigation />
     </div>
   );
 }
