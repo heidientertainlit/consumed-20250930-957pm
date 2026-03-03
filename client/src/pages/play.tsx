@@ -94,11 +94,14 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
             Play
           </h1>
           {totalPoints !== null && (
-            <div className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5">
+            <button
+              onClick={() => setLocation("/points")}
+              className="flex items-center gap-1.5 bg-white/10 active:bg-white/20 rounded-full px-3 py-1.5 transition-colors"
+            >
               <Star size={13} className="text-amber-400" fill="currentColor" />
               <span className="text-white text-sm font-semibold">{totalPoints.toLocaleString()}</span>
               <span className="text-white/60 text-xs">pts</span>
-            </div>
+            </button>
           )}
         </div>
         <DailyChallengeCard />
