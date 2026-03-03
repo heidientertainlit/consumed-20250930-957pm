@@ -62,7 +62,7 @@ export default function PoolsPage() {
   const pools: any[] = data?.pools || [];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen pb-24" style={{ backgroundColor: '#0a0a0f' }}>
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
         <div className="px-4 pt-4 pb-8">
           <button onClick={() => setLocation('/play')} className="text-white/70 hover:text-white transition-colors mb-3 block">
@@ -97,7 +97,7 @@ export default function PoolsPage() {
         </div>
       </div>
 
-      <div className="px-4 pt-4 space-y-3">
+      <div className="bg-gray-50 px-4 pt-4 space-y-3 min-h-screen">
         {isLoading && (
           <div className="space-y-3">
             {[1, 2].map(i => <div key={i} className="h-24 rounded-2xl bg-gray-200 animate-pulse" />)}

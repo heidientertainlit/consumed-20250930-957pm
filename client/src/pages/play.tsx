@@ -81,7 +81,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
   }, [user?.id, session?.access_token]);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen pb-24" style={{ backgroundColor: '#0a0a0f' }}>
       <Navigation />
 
       {/* Purple hero — heading + points + Daily Call */}
@@ -108,7 +108,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
       </div>
 
       {/* Light section — game modes + leaderboard */}
-      <div className="px-4 pt-5 pb-4 space-y-5">
+      <div className="bg-gray-50 px-4 pt-5 pb-4 space-y-5">
         {/* Game Modes */}
         <div>
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
