@@ -551,9 +551,15 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             style={{ marginRight: -6 }}
             data-testid="nav-play"
           >
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="white" strokeWidth="1.5">
-              <circle cx="11" cy="11" r="8.5" />
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <circle cx="11" cy="11" r="4" />
               <circle cx="11" cy="11" r="1.5" fill="white" stroke="none" />
+              <line x1="17" y1="5" x2="12.5" y2="9.5" />
+              <line x1="12.5" y1="9.5" x2="14.5" y2="9.5" />
+              <line x1="12.5" y1="9.5" x2="12.5" y2="7.5" />
+              <line x1="17" y1="5" x2="18.5" y2="6.5" />
+              <line x1="17" y1="5" x2="15.5" y2="3.5" />
             </svg>
             <span className="text-white text-[10px] mt-0.5">Play</span>
           </Link>
