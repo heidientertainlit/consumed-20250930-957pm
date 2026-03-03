@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home, Star, Dice5 } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home, Star, Dices } from "lucide-react";
 import { FeedbackDialog } from "./feedback-dialog";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
@@ -557,7 +557,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             style={{ marginRight: -6 }}
             data-testid="nav-play"
           >
-            <Dice5 className="text-white" size={22} />
+            <Dices className="text-white" size={22} />
             <span className="text-white text-[10px] mt-0.5">Play</span>
           </Link>
 
