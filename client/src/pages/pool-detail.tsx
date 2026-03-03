@@ -470,6 +470,7 @@ export default function PoolDetailPage() {
           <button onClick={() => setLocation('/rooms')} className="text-white/70 hover:text-white transition-colors mb-3 block">
             <ChevronLeft size={24} />
           </button>
+          <p className="text-xs font-medium text-white/40 uppercase tracking-widest mb-1">Room</p>
           <h1 className="text-2xl font-semibold text-white mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>
             {isLoading ? 'Loading...' : (pool?.name || 'Room')}
           </h1>
