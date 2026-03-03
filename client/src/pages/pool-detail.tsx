@@ -327,14 +327,21 @@ export default function PoolDetailPage() {
           </h1>
           <div className="flex gap-2">
             {isHost && (
-              <Button onClick={() => setShowAddRound(true)} className="bg-purple-600 hover:bg-purple-700 text-white text-sm h-9">
-                <Plus size={14} className="mr-1" /> New Round
-              </Button>
+              <button
+                onClick={() => setShowAddRound(true)}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white text-xs font-semibold"
+                style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
+              >
+                <Plus size={12} /> New Round
+              </button>
             )}
-            <Button onClick={handleCopyLink} variant="outline" className="border-white/20 text-white bg-transparent hover:bg-white/10 text-sm h-9">
-              {copied ? <Check size={14} className="mr-1 text-green-400" /> : <Copy size={14} className="mr-1" />}
+            <button
+              onClick={handleCopyLink}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-white/80 text-xs font-medium border border-white/20 hover:bg-white/10 transition-colors"
+            >
+              {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
               {copied ? 'Copied!' : 'Invite'}
-            </Button>
+            </button>
           </div>
         </div>
       </div>

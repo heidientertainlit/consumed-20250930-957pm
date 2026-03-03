@@ -71,9 +71,13 @@ export default function PoolsPage() {
           <h1 className="text-2xl font-semibold text-white mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>Rooms</h1>
 
           {!showCreate ? (
-            <Button onClick={() => setShowCreate(true)} className="w-full bg-purple-600 hover:bg-purple-700 text-white mb-2">
-              <Plus size={16} className="mr-2" /> New Room
-            </Button>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-white text-sm font-semibold mb-2"
+              style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
+            >
+              <Plus size={15} /> New Room
+            </button>
           ) : (
             <div className="flex gap-2 mb-2">
               <Input
