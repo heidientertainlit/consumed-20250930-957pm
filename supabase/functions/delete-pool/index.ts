@@ -104,6 +104,12 @@ serve(async (req) => {
       .delete()
       .eq('pool_id', pool_id);
 
+    // Delete rounds
+    await serviceSupabase
+      .from('pool_rounds')
+      .delete()
+      .eq('pool_id', pool_id);
+
     // Delete members
     await serviceSupabase
       .from('pool_members')

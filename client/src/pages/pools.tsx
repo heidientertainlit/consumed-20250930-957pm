@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Plus, Users, Trophy, Crown, Copy, Check } from "lucide-react";
+import { ChevronLeft, Plus, Users, Trophy, Crown, Copy, Check, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ export default function PoolsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [newPoolName, setNewPoolName] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['user-pools'],
@@ -47,6 +48,16 @@ export default function PoolsPage() {
       setShowCreate(false);
       setNewPoolName('');
       setLocation(`/room/${data.pool.id}`);
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (poolId: string) => callFn('delete-pool', { pool_id: poolId }, session?.access_token || ''),
+    onSuccess: (data, poolId) => {
+      if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
+      queryClient.invalidateQueries({ queryKey: ['user-pools'] });
+      setConfirmDeleteId(null);
+      toast({ title: 'Room deleted' });
     }
   });
 
@@ -132,7 +143,7 @@ export default function PoolsPage() {
                 </div>
               </div>
             </button>
-            <div className="border-t border-gray-50 px-4 py-2">
+            <div className="border-t border-gray-50 px-4 py-2 flex items-center justify-between">
               <button
                 onClick={() => handleCopyLink(pool)}
                 className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-xs transition-colors"
@@ -140,6 +151,34 @@ export default function PoolsPage() {
                 {copiedId === pool.id ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
                 {copiedId === pool.id ? 'Copied!' : 'Copy invite link'}
               </button>
+
+              {pool.is_host && (
+                confirmDeleteId === pool.id ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Delete room?</span>
+                    <button
+                      onClick={() => deleteMutation.mutate(pool.id)}
+                      disabled={deleteMutation.isPending}
+                      className="text-xs text-red-500 font-semibold hover:text-red-600 disabled:opacity-50"
+                    >
+                      {deleteMutation.isPending ? 'Deleting...' : 'Yes, delete'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteId(null)}
+                      className="text-xs text-gray-400 hover:text-gray-600"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(pool.id); }}
+                    className="text-gray-300 hover:text-red-400 transition-colors p-1"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )
+              )}
             </div>
           </div>
         ))}
