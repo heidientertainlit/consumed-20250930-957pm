@@ -50,7 +50,7 @@ const gameModes = [
     icon: UserPlus,
     color: "bg-teal-50 border-teal-100",
     iconColor: "text-teal-500",
-    href: "/activity",
+    href: "/play/cast",
   },
   {
     id: "nightin",

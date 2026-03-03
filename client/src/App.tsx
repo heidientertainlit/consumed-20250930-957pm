@@ -29,6 +29,7 @@ import PlayHotTakes from "@/pages/play-hot-takes";
 import PlayAskRecs from "@/pages/play-ask-recs";
 import PlayHighStakes from "@/pages/play-high-stakes";
 import PlayRanks from "@/pages/play-ranks";
+import PlayCast from "@/pages/play-cast";
 
 import Friends from "@/pages/friends";
 import CreatorProfile from "@/pages/creator-profile";
@@ -355,6 +356,12 @@ function Router() {
           <Route path="/play/ask-recs">
             <ProtectedRoute>
               <PlayAskRecs />
+            </ProtectedRoute>
+          </Route>
+
+          <Route path="/play/cast">
+            <ProtectedRoute>
+              <PlayCast />
             </ProtectedRoute>
           </Route>
 

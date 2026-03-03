@@ -5,7 +5,6 @@ import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
 import ListShareModal from "@/components/list-share-modal";
 import FriendsManager from "@/components/friends-manager";
-import CastFriendsGame from "@/components/cast-friends-game";
 import CreateRankDialog from "@/components/create-rank-dialog";
 import CreateListDialog from "@/components/create-list-dialog";
 import { Button } from "@/components/ui/button";
@@ -3757,10 +3756,6 @@ export default function UserProfile() {
         {activeSection === 'friends' && isOwnProfile && user?.id && (
           <div ref={friendsRef} className="px-4 mb-8 space-y-4">
             <FriendsManager userId={user.id} />
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>Do Together</h3>
-              <CastFriendsGame />
-            </div>
           </div>
         )}
 
