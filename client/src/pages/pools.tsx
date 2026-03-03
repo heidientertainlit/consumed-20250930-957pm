@@ -46,13 +46,13 @@ export default function PoolsPage() {
       queryClient.invalidateQueries({ queryKey: ['user-pools'] });
       setShowCreate(false);
       setNewPoolName('');
-      setLocation(`/pool/${data.pool.id}`);
+      setLocation(`/room/${data.pool.id}`);
     }
   });
 
   const handleCopyLink = (pool: any) => {
     const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-    const link = `${appUrl}/pool/join/${pool.invite_code}`;
+    const link = `${appUrl}/room/join/${pool.invite_code}`;
     navigator.clipboard.writeText(link);
     setCopiedId(pool.id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -79,7 +79,7 @@ export default function PoolsPage() {
               <Input
                 value={newPoolName}
                 onChange={(e) => setNewPoolName(e.target.value)}
-                placeholder="Pool name..."
+                placeholder="Room name..."
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                 autoFocus
                 onKeyDown={(e) => { if (e.key === 'Enter' && newPoolName.trim()) createMutation.mutate(newPoolName); if (e.key === 'Escape') { setShowCreate(false); setNewPoolName(''); } }}
@@ -107,13 +107,13 @@ export default function PoolsPage() {
         {!isLoading && pools.length === 0 && (
           <div className="text-center py-16">
             <Trophy size={40} className="text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm">No pools yet. Create one to get started.</p>
+            <p className="text-gray-400 text-sm">No rooms yet. Create one to get started.</p>
           </div>
         )}
 
         {pools.map((pool) => (
           <div key={pool.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <button onClick={() => setLocation(`/pool/${pool.id}`)} className="w-full text-left p-4">
+            <button onClick={() => setLocation(`/room/${pool.id}`)} className="w-full text-left p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
