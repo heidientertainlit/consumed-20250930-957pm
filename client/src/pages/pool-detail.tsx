@@ -284,16 +284,13 @@ export default function PoolDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        <div className="px-4 py-4">
-          <div className="flex items-center gap-3 mb-4">
-            <button onClick={() => setLocation('/pools')} className="text-white/70 hover:text-white transition-colors">
-              <ChevronLeft size={24} />
-            </button>
-            <h1 className="text-2xl font-semibold text-white truncate" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              {isLoading ? 'Loading...' : (pool?.name || 'Pool')}
-            </h1>
-          </div>
-
+        <div className="px-4 pt-4 pb-8">
+          <button onClick={() => setLocation('/pools')} className="text-white/70 hover:text-white transition-colors mb-3 block">
+            <ChevronLeft size={24} />
+          </button>
+          <h1 className="text-2xl font-semibold text-white mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            {isLoading ? 'Loading...' : (pool?.name || 'Pool')}
+          </h1>
           <div className="flex gap-2">
             {isHost && (
               <Button onClick={() => setShowAddRound(true)} className="bg-purple-600 hover:bg-purple-700 text-white text-sm h-9">
@@ -306,13 +303,15 @@ export default function PoolDetailPage() {
             </Button>
           </div>
         </div>
+      </div>
 
-        <div className="flex px-4 gap-1 pb-1">
+      <div className="px-4 pt-4 pb-2">
+        <div className="flex gap-1.5 mb-4">
           {(['rounds', 'leaderboard', 'members'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors capitalize ${tab === t ? 'bg-white/15 text-white' : 'text-white/50 hover:text-white/80'}`}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors capitalize ${tab === t ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:text-gray-700'}`}
             >
               {t}
             </button>
@@ -320,7 +319,7 @@ export default function PoolDetailPage() {
         </div>
       </div>
 
-      <div className="px-4 pt-4">
+      <div className="px-4 pt-0">
         {isLoading && (
           <div className="space-y-3">
             {[1, 2].map(i => <div key={i} className="h-20 rounded-2xl bg-gray-200 animate-pulse" />)}
