@@ -36,7 +36,7 @@ serve(async (req) => {
     if (!round) return json({ error: 'Round not found' }, 404);
     if (round.status === 'locked' || round.status === 'resolved') return json({ error: 'Round is locked' }, 400);
 
-    const { data: pool } = await svc.from('pools').select('host_id').eq('id', round.pool_id).single();
+    const { data: pool } = await svc.from('pools').select('id, name, host_id').eq('id', round.pool_id).single();
     if (!pool || pool.host_id !== appUser.id) return json({ error: 'Only the host can add prompts' }, 403);
 
     const filteredOptions = isPick ? options.map((o: string) => o.trim()).filter((o: string) => o.length > 0) : [];
@@ -53,6 +53,31 @@ serve(async (req) => {
     }).select().single();
 
     if (error) return json({ error: error.message }, 500);
+
+    // Notify all members (except the host) that a new question is live
+    const { data: members } = await svc
+      .from('pool_members')
+      .select('user_id')
+      .eq('pool_id', pool.id)
+      .neq('user_id', appUser.id);
+
+    if (members && members.length > 0) {
+      const questionPreview = question.trim().length > 60
+        ? question.trim().slice(0, 57) + '...'
+        : question.trim();
+
+      const notifications = members.map((m: any) => ({
+        user_id: m.user_id,
+        type: 'room_new_question',
+        triggered_by_user_id: appUser.id,
+        message: `New question in "${pool.name}": ${questionPreview}`,
+        list_id: pool.id,
+        read: false,
+      }));
+
+      await svc.from('notifications').insert(notifications);
+    }
+
     return json({ success: true, prompt });
   } catch (e) {
     return json({ error: e.message }, 500);
