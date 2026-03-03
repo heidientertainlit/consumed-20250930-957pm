@@ -21,18 +21,28 @@ serve(async (req) => {
 
     const { prompt_id, correct_answer } = await req.json();
     if (!prompt_id) return json({ error: 'Prompt ID is required' }, 400);
-    if (!correct_answer?.trim()) return json({ error: 'Correct answer is required' }, 400);
 
     const svc = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
     const { data: appUser } = await svc.from('users').select('id').eq('email', user.email).single();
     if (!appUser) return json({ error: 'User not found' }, 404);
 
-    const { data: prompt } = await svc.from('pool_prompts').select('id, pool_id, points_value, status').eq('id', prompt_id).single();
+    const { data: prompt } = await svc.from('pool_prompts').select('id, pool_id, prompt_type, points_value, status').eq('id', prompt_id).single();
     if (!prompt) return json({ error: 'Prompt not found' }, 404);
     if (prompt.status === 'resolved') return json({ error: 'Already resolved' }, 400);
 
     const { data: pool } = await svc.from('pools').select('host_id').eq('id', prompt.pool_id).single();
     if (!pool || pool.host_id !== appUser.id) return json({ error: 'Only the host can resolve prompts' }, 403);
+
+    // Call It prompts: answers were already scored individually via mark-pool-answer.
+    // Just close the prompt without re-scoring.
+    if (prompt.prompt_type === 'call_it') {
+      await svc.from('pool_prompts').update({ status: 'resolved', resolved_at: new Date().toISOString() }).eq('id', prompt_id);
+      const { data: answers } = await svc.from('pool_answers').select('id').eq('prompt_id', prompt_id).eq('is_correct', true);
+      return json({ success: true, type: 'call_it', winners_count: answers?.length || 0 });
+    }
+
+    // Pick prompts: match correct answer text and score all at once.
+    if (!correct_answer?.trim()) return json({ error: 'Correct answer is required' }, 400);
 
     await svc.from('pool_prompts').update({ correct_answer: correct_answer.trim(), status: 'resolved', resolved_at: new Date().toISOString() }).eq('id', prompt_id);
 
@@ -50,7 +60,7 @@ serve(async (req) => {
       }
     }
 
-    return json({ success: true, correct_answer: correct_answer.trim(), total_answers: answers?.length || 0, winners_count: winnersCount });
+    return json({ success: true, type: 'pick', correct_answer: correct_answer.trim(), total_answers: answers?.length || 0, winners_count: winnersCount });
   } catch (e) {
     return json({ error: e.message }, 500);
   }

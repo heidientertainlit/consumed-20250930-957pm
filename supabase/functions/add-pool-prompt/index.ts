@@ -19,10 +19,14 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return json({ error: 'Unauthorized' }, 401);
 
-    const { round_id, question, options } = await req.json();
+    const { round_id, question, options, question_type = 'pick' } = await req.json();
     if (!round_id) return json({ error: 'Round ID is required' }, 400);
     if (!question?.trim()) return json({ error: 'Question is required' }, 400);
-    if (!options || !Array.isArray(options) || options.length < 2) return json({ error: 'At least 2 options required' }, 400);
+
+    const isPick = question_type !== 'call_it';
+    if (isPick && (!options || !Array.isArray(options) || options.filter((o: string) => o.trim()).length < 2)) {
+      return json({ error: 'At least 2 options required for Pick questions' }, 400);
+    }
 
     const svc = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
     const { data: appUser } = await svc.from('users').select('id').eq('email', user.email).single();
@@ -35,14 +39,13 @@ serve(async (req) => {
     const { data: pool } = await svc.from('pools').select('host_id').eq('id', round.pool_id).single();
     if (!pool || pool.host_id !== appUser.id) return json({ error: 'Only the host can add prompts' }, 403);
 
-    const filteredOptions = options.map((o: string) => o.trim()).filter((o: string) => o.length > 0);
-    if (filteredOptions.length < 2) return json({ error: 'At least 2 non-empty options required' }, 400);
+    const filteredOptions = isPick ? options.map((o: string) => o.trim()).filter((o: string) => o.length > 0) : [];
 
     const { data: prompt, error } = await svc.from('pool_prompts').insert({
       round_id,
       pool_id: round.pool_id,
       prompt_text: question.trim(),
-      prompt_type: 'multiple_choice',
+      prompt_type: question_type === 'call_it' ? 'call_it' : 'pick',
       options: filteredOptions,
       points_value: 1,
       status: 'open',

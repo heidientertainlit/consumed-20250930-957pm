@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Plus, Copy, Check, Crown, Users, Lock, ChevronDown, ChevronRight, X, Search, UserPlus } from "lucide-react";
+import { ChevronLeft, Plus, Copy, Check, Crown, Users, Lock, ChevronDown, ChevronRight, X, Search, UserPlus, Send, CheckCircle2, Circle } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,11 +61,19 @@ function AddRoundSheet({ poolId, token, onClose, onCreated }: { poolId: string; 
 
 function AddPromptSheet({ roundId, token, onClose, onCreated }: { roundId: string; token: string; onClose: () => void; onCreated: () => void }) {
   const [question, setQuestion] = useState('');
+  const [questionType, setQuestionType] = useState<'pick' | 'call_it'>('pick');
   const [options, setOptions] = useState(['', '']);
   const { toast } = useToast();
 
+  const canSubmit = question.trim() && (questionType === 'call_it' || options.filter(o => o.trim()).length >= 2);
+
   const mutation = useMutation({
-    mutationFn: () => callFn('add-pool-prompt', { round_id: roundId, question, options: options.filter(o => o.trim()) }, token),
+    mutationFn: () => callFn('add-pool-prompt', {
+      round_id: roundId,
+      question,
+      question_type: questionType,
+      options: questionType === 'pick' ? options.filter(o => o.trim()) : []
+    }, token),
     onSuccess: (data) => {
       if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
       onCreated();
@@ -81,29 +89,61 @@ function AddPromptSheet({ roundId, token, onClose, onCreated }: { roundId: strin
           <h2 className="text-gray-900 font-semibold text-lg">Add Question</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"><X size={16} className="text-gray-500" /></button>
         </div>
+
+        {/* Question type selector */}
+        <div className="flex gap-2 p-1 bg-gray-100 rounded-2xl">
+          <button
+            onClick={() => setQuestionType('pick')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${questionType === 'pick' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
+          >
+            Pick
+          </button>
+          <button
+            onClick={() => setQuestionType('call_it')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${questionType === 'call_it' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
+          >
+            Call It
+          </button>
+        </div>
+        <p className="text-gray-400 text-xs -mt-2">
+          {questionType === 'pick'
+            ? 'You set the answer options. Members pick one, you mark the correct answer after.'
+            : "Members type any answer freely. You review and mark correct ones after it plays out."}
+        </p>
+
         <div>
           <label className="text-gray-500 text-xs uppercase tracking-widest mb-2 block">Question</label>
-          <Input value={question} onChange={e => setQuestion(e.target.value)} placeholder="Who gets eliminated this week?" className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-2xl h-12" autoFocus />
+          <Input
+            value={question}
+            onChange={e => setQuestion(e.target.value)}
+            placeholder={questionType === 'pick' ? 'Who gets eliminated this week?' : 'How many guys dress up weird?'}
+            className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-2xl h-12"
+            autoFocus
+          />
         </div>
-        <div>
-          <label className="text-gray-500 text-xs uppercase tracking-widest mb-2 block">Answer Options</label>
-          <div className="space-y-2">
-            {options.map((opt, i) => (
-              <div key={i} className="flex gap-2">
-                <Input value={opt} onChange={e => { const next = [...options]; next[i] = e.target.value; setOptions(next); }} placeholder={`Option ${i + 1}`} className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-2xl h-11" />
-                {options.length > 2 && (
-                  <button onClick={() => setOptions(options.filter((_, j) => j !== i))} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
-                )}
-              </div>
-            ))}
+
+        {questionType === 'pick' && (
+          <div>
+            <label className="text-gray-500 text-xs uppercase tracking-widest mb-2 block">Answer Options</label>
+            <div className="space-y-2">
+              {options.map((opt, i) => (
+                <div key={i} className="flex gap-2">
+                  <Input value={opt} onChange={e => { const next = [...options]; next[i] = e.target.value; setOptions(next); }} placeholder={`Option ${i + 1}`} className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-2xl h-11" />
+                  {options.length > 2 && (
+                    <button onClick={() => setOptions(options.filter((_, j) => j !== i))} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {options.length < 6 && (
+              <button onClick={() => setOptions([...options, ''])} className="mt-2.5 text-purple-600 text-sm hover:text-purple-700 flex items-center gap-1">
+                <Plus size={14} /> Add option
+              </button>
+            )}
           </div>
-          {options.length < 4 && (
-            <button onClick={() => setOptions([...options, ''])} className="mt-2.5 text-purple-600 text-sm hover:text-purple-700 flex items-center gap-1">
-              <Plus size={14} /> Add option
-            </button>
-          )}
-        </div>
-        <Button onClick={() => mutation.mutate()} disabled={!question.trim() || options.filter(o => o.trim()).length < 2 || mutation.isPending} className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-2xl h-12 text-base font-semibold">
+        )}
+
+        <Button onClick={() => mutation.mutate()} disabled={!canSubmit || mutation.isPending} className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-2xl h-12 text-base font-semibold">
           {mutation.isPending ? 'Adding...' : 'Add Question'}
         </Button>
       </div>
@@ -115,83 +155,191 @@ function PromptCard({ prompt, isHost, token, onResolved }: { prompt: any; isHost
   const { toast } = useToast();
   const [resolving, setResolving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [callItText, setCallItText] = useState('');
+  const [markingId, setMarkingId] = useState<string | null>(null);
+  const [localAnswers, setLocalAnswers] = useState<any[]>(prompt.all_answers || []);
 
-  const submitAnswer = async (answer: string) => {
-    setSubmitting(true);
-    const data = await callFn('submit-pool-answer', { prompt_id: prompt.id, answer }, token);
-    setSubmitting(false);
-    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
-    onResolved();
-  };
+  useEffect(() => { setLocalAnswers(prompt.all_answers || []); }, [prompt.all_answers]);
 
-  const resolvePrompt = async (answer: string) => {
-    const data = await callFn('resolve-pool-prompt', { prompt_id: prompt.id, correct_answer: answer }, token);
-    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
-    setResolving(false);
-    onResolved();
-    toast({ title: `Resolved! ${data.winners_count} correct` });
-  };
-
+  const isCallIt = prompt.prompt_type === 'call_it';
   const isResolved = prompt.status === 'resolved';
   const userAnswer = prompt.user_answer?.answer;
   const isCorrect = prompt.user_answer?.is_correct;
   const options: string[] = prompt.options || [];
 
+  const submitAnswer = async (answer: string) => {
+    if (!answer.trim()) return;
+    setSubmitting(true);
+    const data = await callFn('submit-pool-answer', { prompt_id: prompt.id, answer: answer.trim() }, token);
+    setSubmitting(false);
+    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
+    setCallItText('');
+    onResolved();
+  };
+
+  const resolvePickPrompt = async (answer: string) => {
+    const data = await callFn('resolve-pool-prompt', { prompt_id: prompt.id, correct_answer: answer }, token);
+    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
+    setResolving(false);
+    onResolved();
+    toast({ title: `Done! ${data.winners_count} correct` });
+  };
+
+  const closeCallItPrompt = async () => {
+    const data = await callFn('resolve-pool-prompt', { prompt_id: prompt.id }, token);
+    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
+    onResolved();
+    toast({ title: `Closed — ${data.winners_count} correct` });
+  };
+
+  const markAnswer = async (answerId: string, nowCorrect: boolean) => {
+    setMarkingId(answerId);
+    // Optimistic update
+    setLocalAnswers(prev => prev.map(a => a.id === answerId ? { ...a, is_correct: nowCorrect } : a));
+    const data = await callFn('mark-pool-answer', { answer_id: answerId, is_correct: nowCorrect }, token);
+    setMarkingId(null);
+    if (data.error) {
+      // Revert
+      setLocalAnswers(prev => prev.map(a => a.id === answerId ? { ...a, is_correct: !nowCorrect } : a));
+      toast({ title: data.error, variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="bg-gray-50 rounded-xl p-3 space-y-2 border border-gray-100">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-gray-800 text-sm font-medium leading-snug">{prompt.prompt_text}</p>
-        {isResolved && <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full shrink-0">Resolved</span>}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className={`text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ${isCallIt ? 'bg-blue-100 text-blue-500' : 'bg-purple-100 text-purple-500'}`}>
+              {isCallIt ? 'Call It' : 'Pick'}
+            </span>
+          </div>
+          <p className="text-gray-800 text-sm font-medium leading-snug">{prompt.prompt_text}</p>
+        </div>
+        {isResolved && <span className="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full shrink-0">Closed</span>}
       </div>
 
-      {isResolved && prompt.correct_answer && (
-        <p className="text-xs text-green-600">Answer: {prompt.correct_answer}</p>
+      {/* ── PICK mode ── */}
+      {!isCallIt && (
+        <>
+          {isResolved && prompt.correct_answer && (
+            <p className="text-xs text-green-600 font-medium">Answer: {prompt.correct_answer}</p>
+          )}
+          {!isResolved && !resolving && !isHost && (
+            <div className="space-y-1.5">
+              {options.map((opt) => {
+                const selected = userAnswer === opt;
+                return (
+                  <button
+                    key={opt}
+                    onClick={() => !userAnswer && submitAnswer(opt)}
+                    disabled={submitting || !!userAnswer}
+                    className={`w-full text-left text-sm px-3 py-2 rounded-xl border transition-colors ${
+                      selected ? 'bg-purple-100 border-purple-400 text-purple-700 font-medium' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {isResolved && userAnswer && (
+            <div className={`text-xs px-2 py-1 rounded-lg ${isCorrect ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+              Your pick: {userAnswer} {isCorrect ? '— Correct!' : '— Incorrect'}
+            </div>
+          )}
+          {isHost && !isResolved && (
+            resolving ? (
+              <div className="space-y-1.5 pt-1 border-t border-gray-100">
+                <p className="text-gray-400 text-xs">Tap the correct answer:</p>
+                {options.map((opt) => (
+                  <button key={opt} onClick={() => resolvePickPrompt(opt)} className="w-full text-left text-sm px-3 py-2 rounded-xl bg-green-50 border border-green-200 text-green-700 hover:bg-green-100">
+                    {opt}
+                  </button>
+                ))}
+                <button onClick={() => setResolving(false)} className="text-gray-400 text-xs hover:text-gray-600">Cancel</button>
+              </div>
+            ) : (
+              <button onClick={() => setResolving(true)} className="text-xs text-gray-400 hover:text-purple-500 transition-colors">
+                Mark answer
+              </button>
+            )
+          )}
+        </>
       )}
 
-      {!isResolved && !resolving && (
-        <div className="space-y-1.5">
-          {options.map((opt) => {
-            const selected = userAnswer === opt;
-            return (
+      {/* ── CALL IT mode ── */}
+      {isCallIt && (
+        <>
+          {/* Member: submit free text */}
+          {!isHost && !isResolved && !userAnswer && (
+            <div className="flex gap-2">
+              <Input
+                value={callItText}
+                onChange={e => setCallItText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') submitAnswer(callItText); }}
+                placeholder="Type your answer..."
+                className="bg-white border-gray-200 text-gray-800 placeholder:text-gray-400 rounded-xl h-10 text-sm"
+              />
               <button
-                key={opt}
-                onClick={() => !userAnswer && submitAnswer(opt)}
-                disabled={submitting || !!userAnswer}
-                className={`w-full text-left text-sm px-3 py-2 rounded-xl border transition-colors ${
-                  selected
-                    ? 'bg-purple-100 border-purple-400 text-purple-700 font-medium'
-                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50'
-                }`}
+                onClick={() => submitAnswer(callItText)}
+                disabled={!callItText.trim() || submitting}
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 disabled:opacity-40 transition-opacity"
+                style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
               >
-                {opt}
+                <Send size={15} className="text-white" />
               </button>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          )}
 
-      {isResolved && userAnswer && (
-        <div className={`text-xs px-2 py-1 rounded-lg ${isCorrect ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
-          Your pick: {userAnswer} {isCorrect ? '— Correct!' : '— Incorrect'}
-        </div>
-      )}
+          {/* Member: already answered */}
+          {!isHost && userAnswer && (
+            <div className={`text-xs px-2.5 py-1.5 rounded-lg ${
+              isResolved
+                ? isCorrect ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'
+                : 'bg-gray-100 text-gray-500'
+            }`}>
+              Your answer: <span className="font-medium">{userAnswer}</span>
+              {isResolved && (isCorrect ? ' — Correct!' : ' — Incorrect')}
+              {!isResolved && ' — Waiting for results'}
+            </div>
+          )}
 
-      {isHost && !isResolved && (
-        resolving ? (
-          <div className="space-y-1.5 pt-1 border-t border-gray-100">
-            <p className="text-gray-400 text-xs">Tap the correct answer:</p>
-            {options.map((opt) => (
-              <button key={opt} onClick={() => resolvePrompt(opt)} className="w-full text-left text-sm px-3 py-2 rounded-xl bg-green-50 border border-green-200 text-green-700 hover:bg-green-100">
-                {opt}
-              </button>
-            ))}
-            <button onClick={() => setResolving(false)} className="text-gray-400 text-xs hover:text-gray-600">Cancel</button>
-          </div>
-        ) : (
-          <button onClick={() => setResolving(true)} className="text-xs text-gray-400 hover:text-purple-500 transition-colors">
-            Mark answer
-          </button>
-        )
+          {/* Host: see all submissions and mark correct ones */}
+          {isHost && (
+            <div className="space-y-1 pt-1 border-t border-gray-100">
+              {localAnswers.length === 0 ? (
+                <p className="text-gray-400 text-xs py-1">No answers yet</p>
+              ) : (
+                localAnswers.map((ans: any) => (
+                  <div key={ans.id} className="flex items-center gap-2">
+                    <button
+                      onClick={() => markAnswer(ans.id, !ans.is_correct)}
+                      disabled={markingId === ans.id || isResolved}
+                      className="shrink-0 transition-opacity disabled:opacity-40"
+                    >
+                      {ans.is_correct
+                        ? <CheckCircle2 size={18} className="text-green-500" />
+                        : <Circle size={18} className="text-gray-300" />
+                      }
+                    </button>
+                    <span className="flex-1 text-gray-800 text-sm">{ans.answer}</span>
+                    <span className="text-gray-400 text-xs shrink-0">{(ans.users as any)?.display_name || (ans.users as any)?.user_name || ''}</span>
+                  </div>
+                ))
+              )}
+              {!isResolved && (
+                <button
+                  onClick={closeCallItPrompt}
+                  className="mt-2 text-xs text-gray-400 hover:text-red-400 transition-colors"
+                >
+                  Close question
+                </button>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

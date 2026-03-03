@@ -49,14 +49,40 @@ serve(async (req) => {
       const { data: prompts } = await svc.from('pool_prompts').select('*').eq('round_id', round.id).order('created_at', { ascending: true });
 
       let userAnswers: Record<string, any> = {};
+      let allAnswersMap: Record<string, any[]> = {};
+
       if (prompts && prompts.length > 0) {
-        const { data: answers } = await svc.from('pool_answers').select('prompt_id, answer, is_correct, points_earned').eq('user_id', appUser.id).in('prompt_id', prompts.map(p => p.id));
-        if (answers) userAnswers = Object.fromEntries(answers.map(a => [a.prompt_id, a]));
+        const promptIds = prompts.map((p: any) => p.id);
+
+        const { data: myAnswers } = await svc.from('pool_answers')
+          .select('prompt_id, answer, is_correct, points_earned')
+          .eq('user_id', appUser.id)
+          .in('prompt_id', promptIds);
+        if (myAnswers) userAnswers = Object.fromEntries(myAnswers.map((a: any) => [a.prompt_id, a]));
+
+        // For call_it prompts, fetch all member submissions so host can mark correct ones
+        const callItIds = prompts.filter((p: any) => p.prompt_type === 'call_it').map((p: any) => p.id);
+        if (callItIds.length > 0) {
+          const { data: allAnswers } = await svc.from('pool_answers')
+            .select('id, prompt_id, answer, is_correct, points_earned, user_id, users:user_id(display_name, user_name)')
+            .in('prompt_id', callItIds)
+            .order('submitted_at', { ascending: true });
+          if (allAnswers) {
+            for (const ans of allAnswers) {
+              if (!allAnswersMap[ans.prompt_id]) allAnswersMap[ans.prompt_id] = [];
+              allAnswersMap[ans.prompt_id].push(ans);
+            }
+          }
+        }
       }
 
       return {
         ...round,
-        prompts: (prompts || []).map(p => ({ ...p, user_answer: userAnswers[p.id] || null }))
+        prompts: (prompts || []).map((p: any) => ({
+          ...p,
+          user_answer: userAnswers[p.id] || null,
+          all_answers: p.prompt_type === 'call_it' ? (allAnswersMap[p.id] || []) : undefined
+        }))
       };
     }));
 
