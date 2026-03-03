@@ -370,13 +370,6 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
               {isSearchExpanded ? <X className="text-white" size={20} /> : <Search className="text-white" size={20} />}
             </button>
             <NotificationBell />
-            <Link
-              href={user?.id ? `/user/${user.id}` : "/login"}
-              className="hover:opacity-70 transition-opacity"
-              data-testid="nav-profile-top"
-            >
-              <User className="text-white" size={20} />
-            </Link>
           </div>
         </div>
 
@@ -591,7 +584,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
               <User className="text-white" size={22} />
               <Dna className="text-white absolute -bottom-1 -right-1.5" size={11} />
             </div>
-            <span className="text-white text-[10px] mt-0.5">My DNA</span>
+            <span className="text-white text-[10px] mt-0.5">Me</span>
           </Link>
         </div>
       </nav>
