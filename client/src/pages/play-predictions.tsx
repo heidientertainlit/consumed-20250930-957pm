@@ -200,10 +200,9 @@ export default function PlayPredictionsPage() {
     };
   });
 
-  // Filter for prediction games with search and category (only consumed predictions)
+  // Filter for prediction games with search and category (consumed + community)
   const predictionGames = React.useMemo(() => {
-    // Only show consumed predictions
-    let filtered = processedGames.filter((game: any) => game.type === 'predict' && game.isConsumed);
+    let filtered = processedGames.filter((game: any) => game.type === 'predict');
     
     // Apply search filter
     if (searchQuery.trim()) {
@@ -358,12 +357,14 @@ export default function PlayPredictionsPage() {
                     </div>
                     <div className="mb-2">
                       {game.isConsumed ? (
-                        <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs font-medium">
-                          🏆 Consumed
+                        <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs font-medium flex items-center gap-1 w-fit">
+                          <Trophy size={11} />
+                          Consumed
                         </Badge>
                       ) : (
-                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium">
-                          👥 Community
+                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium flex items-center gap-1 w-fit">
+                          <Users size={11} />
+                          Community
                         </Badge>
                       )}
                     </div>
@@ -487,12 +488,14 @@ export default function PlayPredictionsPage() {
                     </div>
                     <div className="mb-2">
                       {game.isConsumed ? (
-                        <Badge className="bg-amber-200 text-amber-800 hover:bg-amber-200 text-xs font-medium">
-                          🏆 Consumed
+                        <Badge className="bg-amber-200 text-amber-800 hover:bg-amber-200 text-xs font-medium flex items-center gap-1 w-fit">
+                          <Trophy size={11} />
+                          Consumed
                         </Badge>
                       ) : (
-                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium">
-                          👥 Community
+                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium flex items-center gap-1 w-fit">
+                          <Users size={11} />
+                          Community
                         </Badge>
                       )}
                     </div>
