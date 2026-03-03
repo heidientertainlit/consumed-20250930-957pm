@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Plus, Copy, Check, Crown, Users, Lock, ChevronDown, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, Plus, Copy, Check, Crown, Users, Lock, ChevronDown, ChevronRight, X, Search, UserPlus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
+import { supabase } from "@/lib/supabase";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
@@ -253,6 +254,11 @@ export default function PoolDetailPage() {
   const [tab, setTab] = useState<'rounds' | 'leaderboard' | 'members'>('rounds');
   const [showAddRound, setShowAddRound] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [addingId, setAddingId] = useState<string | null>(null);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['pool-detail', params.id],
@@ -274,6 +280,34 @@ export default function PoolDetailPage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast({ title: 'Invite link copied!' });
+  };
+
+  useEffect(() => {
+    if (!memberSearch.trim()) { setSearchResults([]); return; }
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(async () => {
+      setIsSearching(true);
+      const q = memberSearch.toLowerCase().trim();
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, display_name, user_name')
+        .or(`user_name.ilike.%${q}%,display_name.ilike.%${q}%`)
+        .limit(6);
+      setSearchResults(users || []);
+      setIsSearching(false);
+    }, 300);
+  }, [memberSearch]);
+
+  const handleAddMember = async (targetUserId: string) => {
+    setAddingId(targetUserId);
+    const result = await callFn('add-pool-member', { pool_id: params.id, target_user_id: targetUserId }, session?.access_token || '');
+    setAddingId(null);
+    if (result.error) { toast({ title: result.error, variant: 'destructive' }); return; }
+    if (result.already_member) { toast({ title: 'Already a member' }); return; }
+    toast({ title: `${result.user?.display_name || result.user?.user_name} added!` });
+    setMemberSearch('');
+    setSearchResults([]);
+    refresh();
   };
 
   const pool = data?.pool;
@@ -363,7 +397,65 @@ export default function PoolDetailPage() {
         )}
 
         {!isLoading && tab === 'members' && (
-          <div className="space-y-2">
+          <div className="space-y-3">
+            {isHost && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-3 border-b border-gray-50">
+                  <Search size={15} className="text-gray-400 shrink-0" />
+                  <input
+                    value={memberSearch}
+                    onChange={e => setMemberSearch(e.target.value)}
+                    placeholder="Search by name or username..."
+                    className="flex-1 text-sm text-gray-800 placeholder:text-gray-400 outline-none bg-transparent"
+                  />
+                  {memberSearch && (
+                    <button onClick={() => { setMemberSearch(''); setSearchResults([]); }} className="text-gray-400 hover:text-gray-600">
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                {isSearching && (
+                  <div className="px-3 py-2 text-xs text-gray-400">Searching...</div>
+                )}
+                {searchResults.length > 0 && (
+                  <div>
+                    {searchResults.map((u: any) => {
+                      const alreadyIn = members.some(m => m.user_id === u.id);
+                      return (
+                        <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 border-b border-gray-50 last:border-0">
+                          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 text-xs font-semibold shrink-0">
+                            {(u.display_name || u.user_name || '?')[0]?.toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-gray-900 text-sm font-medium truncate">{u.display_name || u.user_name}</p>
+                            {u.display_name && <p className="text-gray-400 text-xs">@{u.user_name}</p>}
+                          </div>
+                          {alreadyIn ? (
+                            <span className="text-gray-400 text-xs">Added</span>
+                          ) : (
+                            <button
+                              onClick={() => handleAddMember(u.id)}
+                              disabled={addingId === u.id}
+                              className="flex items-center gap-1 text-purple-600 text-xs font-medium hover:text-purple-700 disabled:opacity-50"
+                            >
+                              <UserPlus size={14} />
+                              {addingId === u.id ? 'Adding...' : 'Add'}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {memberSearch.trim() && !isSearching && searchResults.length === 0 && (
+                  <div className="px-3 py-2 text-xs text-gray-400">No users found</div>
+                )}
+              </div>
+            )}
+
+            {members.length === 0 && !memberSearch && (
+              <p className="text-gray-400 text-sm text-center py-6">No members yet</p>
+            )}
             {members.map((m: any) => (
               <div key={m.user_id} className="flex items-center gap-3 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm">
                 <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 text-xs font-semibold">
@@ -376,11 +468,9 @@ export default function PoolDetailPage() {
                 <span className="text-gray-400 text-sm">{m.total_points || 0} pts</span>
               </div>
             ))}
-            <div className="pt-2">
-              <Button onClick={handleCopyLink} variant="outline" className="w-full border-gray-200 text-gray-600 bg-white hover:bg-gray-50">
-                <Copy size={14} className="mr-2" /> Copy invite link
-              </Button>
-            </div>
+            <Button onClick={handleCopyLink} variant="outline" className="w-full border-gray-200 text-gray-600 bg-white hover:bg-gray-50">
+              <Copy size={14} className="mr-2" /> Copy invite link
+            </Button>
           </div>
         )}
       </div>
