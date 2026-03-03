@@ -2,19 +2,19 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
-import { Target, HelpCircle, Vote, BarChart2, UserPlus, Moon, Trophy, ChevronRight, Star } from "lucide-react";
+import { Target, HelpCircle, Vote, BarChart2, UserPlus, Users, Trophy, ChevronRight, Star } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 
 const gameModes = [
   {
-    id: "predictions",
-    label: "Predictions",
-    description: "Predict what happens next",
-    icon: Target,
-    color: "bg-rose-50 border-rose-100",
-    iconColor: "text-rose-500",
-    href: "/play/predictions",
+    id: "nightin",
+    label: "Rooms",
+    description: "Host a group experience",
+    icon: Users,
+    color: "bg-fuchsia-50 border-fuchsia-100",
+    iconColor: "text-fuchsia-500",
+    href: "/rooms",
   },
   {
     id: "trivia",
@@ -53,13 +53,13 @@ const gameModes = [
     href: "/play/cast",
   },
   {
-    id: "nightin",
-    label: "Rooms",
-    description: "Host a group experience",
-    icon: Moon,
-    color: "bg-fuchsia-50 border-fuchsia-100",
-    iconColor: "text-fuchsia-500",
-    href: "/rooms",
+    id: "predictions",
+    label: "Predictions",
+    description: "Predict what happens next",
+    icon: Target,
+    color: "bg-rose-50 border-rose-100",
+    iconColor: "text-rose-500",
+    href: "/play/predictions",
   },
 ];
 
