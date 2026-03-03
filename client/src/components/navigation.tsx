@@ -577,14 +577,14 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             <span className="text-white text-[10px] mt-0.5">Library</span>
           </Link>
 
-          {/* Leaderboard */}
+          {/* My DNA */}
           <Link
-            href="/leaderboard"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/leaderboard" ? "bg-white/15" : ""}`}
-            data-testid="nav-leaderboard"
+            href="/me?tab=dna"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/me" ? "bg-white/15" : ""}`}
+            data-testid="nav-dna"
           >
-            <Trophy className="text-white" size={22} />
-            <span className="text-white text-[10px] mt-0.5">Leaders</span>
+            <Dna className="text-white" size={22} />
+            <span className="text-white text-[10px] mt-0.5">My DNA</span>
           </Link>
         </div>
       </nav>

@@ -1488,7 +1488,7 @@ export default function UserProfile() {
     
     if (tab) {
       // Map 'lists' to 'collections' for backward compatibility
-      const validTabs = ['stats', 'friends', 'collections', 'activity'];
+      const validTabs = ['stats', 'friends', 'collections', 'activity', 'dna'];
       const normalizedTab = tab === 'lists' ? 'collections' : tab;
       if (validTabs.includes(normalizedTab)) {
         setActiveSection(normalizedTab);
