@@ -1,146 +1,54 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const corsHeaders = {
+const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'OPTIONS, GET, POST'
 };
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'No authorization header' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    if (!authHeader) return json({ error: 'No authorization header' }, 401);
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_ANON_KEY') ?? '', { global: { headers: { Authorization: authHeader } } });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return json({ error: 'Unauthorized' }, 401);
 
     const url = new URL(req.url);
     let poolId = url.searchParams.get('pool_id');
+    if (!poolId && req.method === 'POST') { const body = await req.json(); poolId = body.pool_id; }
+    if (!poolId) return json({ error: 'Pool ID is required' }, 400);
 
-    if (!poolId && req.method === 'POST') {
-      const body = await req.json();
-      poolId = body.pool_id;
-    }
+    const svc = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+    const { data: appUser } = await svc.from('users').select('id').eq('email', user.email).single();
+    if (!appUser) return json({ error: 'User not found' }, 404);
 
-    if (!poolId) {
-      return new Response(JSON.stringify({ error: 'Pool ID is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    const { data: membership } = await svc.from('pool_members').select('id').eq('pool_id', poolId).eq('user_id', appUser.id).single();
+    if (!membership) return json({ error: 'Not a member' }, 403);
 
-    const serviceSupabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    const { data: appUser } = await serviceSupabase
-      .from('users')
-      .select('id')
-      .eq('email', user.email)
-      .single();
-
-    if (!appUser) {
-      return new Response(JSON.stringify({ error: 'User not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const { data: pool } = await serviceSupabase
-      .from('pools')
-      .select('id, name, is_public')
-      .eq('id', poolId)
-      .single();
-
-    if (!pool) {
-      return new Response(JSON.stringify({ error: 'Pool not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const { data: membership } = await serviceSupabase
+    const { data: members } = await svc
       .from('pool_members')
-      .select('id')
-      .eq('pool_id', poolId)
-      .eq('user_id', appUser.id)
-      .single();
-
-    if (!pool.is_public && !membership) {
-      return new Response(JSON.stringify({ error: 'You do not have access to this pool' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const { data: leaderboard } = await serviceSupabase
-      .from('pool_members')
-      .select(`
-        user_id,
-        total_points,
-        role,
-        joined_at,
-        users:user_id (
-          id,
-          user_name,
-          display_name,
-          avatar_url
-        )
-      `)
+      .select('user_id, total_points, role, users:user_id(id, user_name, display_name, avatar_url)')
       .eq('pool_id', poolId)
       .order('total_points', { ascending: false });
 
-    const rankedLeaderboard = leaderboard?.map((entry, index) => ({
-      rank: index + 1,
-      user_id: entry.user_id,
-      username: entry.users?.user_name || 'Unknown',
-      display_name: entry.users?.display_name || entry.users?.user_name || 'Unknown',
-      avatar_url: entry.users?.avatar_url,
-      total_points: entry.total_points,
-      role: entry.role,
-      is_current_user: entry.user_id === appUser.id
-    })) || [];
+    const leaderboard = (members || []).map((m, i) => ({
+      rank: i + 1,
+      user_id: m.user_id,
+      display_name: (m.users as any)?.display_name || (m.users as any)?.user_name || 'Unknown',
+      username: (m.users as any)?.user_name,
+      avatar_url: (m.users as any)?.avatar_url,
+      total_points: m.total_points || 0,
+      is_current_user: m.user_id === appUser.id
+    }));
 
-    const currentUserRank = rankedLeaderboard.find(e => e.is_current_user);
-
-    return new Response(JSON.stringify({
-      pool_id: poolId,
-      pool_name: pool.name,
-      leaderboard: rankedLeaderboard,
-      current_user_rank: currentUserRank?.rank || null,
-      current_user_points: currentUserRank?.total_points || 0,
-      total_participants: rankedLeaderboard.length
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-
-  } catch (error) {
-    console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error.message || 'Unknown error' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return json({ leaderboard });
+  } catch (e) {
+    return json({ error: e.message }, 500);
   }
 });

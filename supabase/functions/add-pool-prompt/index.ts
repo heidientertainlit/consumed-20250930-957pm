@@ -1,147 +1,57 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const corsHeaders = {
+const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'OPTIONS, POST'
 };
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
-  }
-
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: 'No authorization header' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    if (!authHeader) return json({ error: 'No authorization header' }, 401);
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_ANON_KEY') ?? '', { global: { headers: { Authorization: authHeader } } });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return json({ error: 'Unauthorized' }, 401);
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    const { round_id, question, options } = await req.json();
+    if (!round_id) return json({ error: 'Round ID is required' }, 400);
+    if (!question?.trim()) return json({ error: 'Question is required' }, 400);
+    if (!options || !Array.isArray(options) || options.length < 2) return json({ error: 'At least 2 options required' }, 400);
 
-    const body = await req.json();
-    const { pool_id, prompt_text, prompt_type, options, points_value, deadline } = body;
+    const svc = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
+    const { data: appUser } = await svc.from('users').select('id').eq('email', user.email).single();
+    if (!appUser) return json({ error: 'User not found' }, 404);
 
-    if (!pool_id) {
-      return new Response(JSON.stringify({ error: 'Pool ID is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    const { data: round } = await svc.from('pool_rounds').select('id, pool_id, status').eq('id', round_id).single();
+    if (!round) return json({ error: 'Round not found' }, 404);
+    if (round.status === 'locked' || round.status === 'resolved') return json({ error: 'Round is locked' }, 400);
 
-    if (!prompt_text || prompt_text.trim().length === 0) {
-      return new Response(JSON.stringify({ error: 'Prompt text is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    const { data: pool } = await svc.from('pools').select('host_id').eq('id', round.pool_id).single();
+    if (!pool || pool.host_id !== appUser.id) return json({ error: 'Only the host can add prompts' }, 403);
 
-    const serviceSupabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const filteredOptions = options.map((o: string) => o.trim()).filter((o: string) => o.length > 0);
+    if (filteredOptions.length < 2) return json({ error: 'At least 2 non-empty options required' }, 400);
 
-    const { data: appUser } = await serviceSupabase
-      .from('users')
-      .select('id')
-      .eq('email', user.email)
-      .single();
+    const { data: prompt, error } = await svc.from('pool_prompts').insert({
+      round_id,
+      pool_id: round.pool_id,
+      prompt_text: question.trim(),
+      prompt_type: 'multiple_choice',
+      options: filteredOptions,
+      points_value: 1,
+      status: 'open',
+      created_by: appUser.id
+    }).select().single();
 
-    if (!appUser) {
-      return new Response(JSON.stringify({ error: 'User not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const { data: pool, error: poolError } = await serviceSupabase
-      .from('pools')
-      .select('id, host_id, status')
-      .eq('id', pool_id)
-      .single();
-
-    if (poolError || !pool) {
-      return new Response(JSON.stringify({ error: 'Pool not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (pool.host_id !== appUser.id) {
-      return new Response(JSON.stringify({ error: 'Only the pool host can add prompts' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (pool.status === 'completed') {
-      return new Response(JSON.stringify({ error: 'Cannot add prompts to a completed pool' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const { data: prompt, error: promptError } = await serviceSupabase
-      .from('pool_prompts')
-      .insert({
-        pool_id,
-        prompt_text: prompt_text.trim(),
-        prompt_type: prompt_type || 'prediction',
-        options: options || null,
-        points_value: points_value || 10,
-        deadline: deadline || null,
-        created_by: appUser.id,
-        status: 'open'
-      })
-      .select()
-      .single();
-
-    if (promptError) {
-      console.error('Prompt creation error:', promptError);
-      return new Response(JSON.stringify({ error: promptError.message }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    return new Response(JSON.stringify({
-      success: true,
-      prompt: {
-        id: prompt.id,
-        pool_id: prompt.pool_id,
-        prompt_text: prompt.prompt_text,
-        prompt_type: prompt.prompt_type,
-        options: prompt.options,
-        points_value: prompt.points_value,
-        deadline: prompt.deadline,
-        status: prompt.status,
-        created_at: prompt.created_at
-      }
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-
-  } catch (error) {
-    console.error('Error:', error);
-    return new Response(JSON.stringify({ error: error.message || 'Unknown error' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    if (error) return json({ error: error.message }, 500);
+    return json({ success: true, prompt });
+  } catch (e) {
+    return json({ error: e.message }, 500);
   }
 });

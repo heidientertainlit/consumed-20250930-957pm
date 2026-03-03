@@ -9,13 +9,6 @@ const cors = {
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
-function generateInviteCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-  return code;
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
@@ -26,33 +19,27 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return json({ error: 'Unauthorized' }, 401);
 
-    const { name } = await req.json();
-    if (!name?.trim()) return json({ error: 'Pool name is required' }, 400);
+    const { pool_id, title, lock_time } = await req.json();
+    if (!pool_id) return json({ error: 'Pool ID is required' }, 400);
+    if (!title?.trim()) return json({ error: 'Round title is required' }, 400);
 
     const svc = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
     const { data: appUser } = await svc.from('users').select('id').eq('email', user.email).single();
     if (!appUser) return json({ error: 'User not found' }, 404);
 
-    let pool = null;
-    for (let i = 0; i < 5; i++) {
-      const { data, error } = await svc.from('pools').insert({
-        name: name.trim(),
-        host_id: appUser.id,
-        invite_code: generateInviteCode(),
-        status: 'open',
-        is_public: false,
-        points_per_correct: 1
-      }).select().single();
-      if (error?.code === '23505') continue;
-      if (error) return json({ error: error.message }, 500);
-      pool = data;
-      break;
-    }
-    if (!pool) return json({ error: 'Failed to create pool' }, 500);
+    const { data: pool } = await svc.from('pools').select('host_id').eq('id', pool_id).single();
+    if (!pool) return json({ error: 'Pool not found' }, 404);
+    if (pool.host_id !== appUser.id) return json({ error: 'Only the host can create rounds' }, 403);
 
-    await svc.from('pool_members').insert({ pool_id: pool.id, user_id: appUser.id, role: 'host', total_points: 0 });
+    const { data: round, error } = await svc.from('pool_rounds').insert({
+      pool_id,
+      title: title.trim(),
+      lock_time: lock_time || null,
+      status: 'open'
+    }).select().single();
 
-    return json({ success: true, pool: { id: pool.id, name: pool.name, invite_code: pool.invite_code, created_at: pool.created_at } });
+    if (error) return json({ error: error.message }, 500);
+    return json({ success: true, round });
   } catch (e) {
     return json({ error: e.message }, 500);
   }

@@ -1,593 +1,394 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, useLocation } from 'wouter';
-import { ArrowLeft, Users, Trophy, Clock, Copy, Check, Loader2, Trash2, Share2, ChevronRight, Star, MessageCircle, Send, Heart, Reply } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { useAuth } from '@/lib/auth';
-import { useToast } from '@/hooks/use-toast';
-import Navigation from '@/components/navigation';
+import { useState } from "react";
+import { useLocation, useParams } from "wouter";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, Plus, Copy, Check, Crown, Users, Lock, ChevronDown, ChevronRight, X } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import Navigation from "@/components/navigation";
 
-interface Contestant {
-  id: string;
-  name: string;
-  eliminated: boolean;
-  eliminated_week?: number;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+
+async function callFn(name: string, body: unknown, token: string) {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
 }
 
-interface Member {
-  user_id: string;
-  role: string;
-  total_points: number;
-  joined_at: string;
-  users: {
-    id: string;
-    user_name: string;
-    display_name: string | null;
-    avatar_url: string | null;
-  };
+function AddRoundSheet({ poolId, token, onClose, onCreated }: { poolId: string; token: string; onClose: () => void; onCreated: () => void }) {
+  const [title, setTitle] = useState('');
+  const [lockTime, setLockTime] = useState('');
+  const { toast } = useToast();
+
+  const mutation = useMutation({
+    mutationFn: () => callFn('create-pool-round', { pool_id: poolId, title, lock_time: lockTime || undefined }, token),
+    onSuccess: (data) => {
+      if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
+      onCreated();
+      onClose();
+    }
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end" onClick={onClose}>
+      <div className="w-full bg-[#1a1a2e] rounded-t-2xl p-6 space-y-4" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-white font-semibold text-lg">New Round</h2>
+          <button onClick={onClose}><X size={20} className="text-white/50" /></button>
+        </div>
+        <div>
+          <label className="text-white/60 text-xs uppercase tracking-wide mb-1 block">Round Title</label>
+          <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Episode 3, Week 2..." className="bg-white/10 border-white/20 text-white placeholder:text-white/30" autoFocus />
+        </div>
+        <div>
+          <label className="text-white/60 text-xs uppercase tracking-wide mb-1 block">Lock Time (optional)</label>
+          <Input type="datetime-local" value={lockTime} onChange={e => setLockTime(e.target.value)} className="bg-white/10 border-white/20 text-white [color-scheme:dark]" />
+          <p className="text-white/30 text-xs mt-1">Members cannot answer after this time</p>
+        </div>
+        <Button onClick={() => mutation.mutate()} disabled={!title.trim() || mutation.isPending} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+          {mutation.isPending ? 'Creating...' : 'Create Round'}
+        </Button>
+      </div>
+    </div>
+  );
 }
 
-interface PoolDetail {
-  pool: {
-    id: string;
-    name: string;
-    description: string | null;
-    invite_code: string;
-    status: string;
-    category: string | null;
-    deadline: string | null;
-    is_public: boolean;
-    created_at: string;
-    pool_type: string | null;
-    media_title: string | null;
-    host: {
-      id: string;
-      user_name: string;
-      display_name: string | null;
-      avatar_url: string | null;
-    };
+function AddPromptSheet({ roundId, token, onClose, onCreated }: { roundId: string; token: string; onClose: () => void; onCreated: () => void }) {
+  const [question, setQuestion] = useState('');
+  const [options, setOptions] = useState(['', '']);
+  const { toast } = useToast();
+
+  const mutation = useMutation({
+    mutationFn: () => callFn('add-pool-prompt', { round_id: roundId, question, options: options.filter(o => o.trim()) }, token),
+    onSuccess: (data) => {
+      if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
+      onCreated();
+      onClose();
+    }
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end" onClick={onClose}>
+      <div className="w-full bg-[#1a1a2e] rounded-t-2xl p-6 space-y-4 max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-white font-semibold text-lg">Add Question</h2>
+          <button onClick={onClose}><X size={20} className="text-white/50" /></button>
+        </div>
+        <div>
+          <label className="text-white/60 text-xs uppercase tracking-wide mb-1 block">Question</label>
+          <Input value={question} onChange={e => setQuestion(e.target.value)} placeholder="Who gets eliminated this week?" className="bg-white/10 border-white/20 text-white placeholder:text-white/30" autoFocus />
+        </div>
+        <div>
+          <label className="text-white/60 text-xs uppercase tracking-wide mb-1 block">Answer Options</label>
+          <div className="space-y-2">
+            {options.map((opt, i) => (
+              <div key={i} className="flex gap-2">
+                <Input value={opt} onChange={e => { const next = [...options]; next[i] = e.target.value; setOptions(next); }} placeholder={`Option ${i + 1}`} className="bg-white/10 border-white/20 text-white placeholder:text-white/30" />
+                {options.length > 2 && (
+                  <button onClick={() => setOptions(options.filter((_, j) => j !== i))} className="text-white/40 hover:text-white/70"><X size={16} /></button>
+                )}
+              </div>
+            ))}
+          </div>
+          {options.length < 4 && (
+            <button onClick={() => setOptions([...options, ''])} className="mt-2 text-purple-400 text-sm hover:text-purple-300 flex items-center gap-1">
+              <Plus size={14} /> Add option
+            </button>
+          )}
+        </div>
+        <Button onClick={() => mutation.mutate()} disabled={!question.trim() || options.filter(o => o.trim()).length < 2 || mutation.isPending} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+          {mutation.isPending ? 'Adding...' : 'Add Question'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function PromptCard({ prompt, isHost, token, onResolved }: { prompt: any; isHost: boolean; token: string; onResolved: () => void }) {
+  const { toast } = useToast();
+  const [resolving, setResolving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submitAnswer = async (answer: string) => {
+    setSubmitting(true);
+    const data = await callFn('submit-pool-answer', { prompt_id: prompt.id, answer }, token);
+    setSubmitting(false);
+    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
+    onResolved();
   };
-  prompts: any[];
-  members: Member[];
-  is_host: boolean;
-  is_member: boolean;
-  user_role: string | null;
+
+  const resolvePrompt = async (answer: string) => {
+    const data = await callFn('resolve-pool-prompt', { prompt_id: prompt.id, correct_answer: answer }, token);
+    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
+    setResolving(false);
+    onResolved();
+    toast({ title: `Resolved! ${data.winners_count} correct` });
+  };
+
+  const isResolved = prompt.status === 'resolved';
+  const userAnswer = prompt.user_answer?.answer;
+  const isCorrect = prompt.user_answer?.is_correct;
+  const options: string[] = prompt.options || [];
+
+  return (
+    <div className="bg-white/5 rounded-lg p-3 space-y-2">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-white/90 text-sm font-medium leading-snug">{prompt.prompt_text}</p>
+        {isResolved && <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full shrink-0">Resolved</span>}
+      </div>
+
+      {isResolved && prompt.correct_answer && (
+        <p className="text-xs text-green-400">Answer: {prompt.correct_answer}</p>
+      )}
+
+      {!isResolved && !resolving && (
+        <div className="space-y-1.5">
+          {options.map((opt) => {
+            const selected = userAnswer === opt;
+            return (
+              <button
+                key={opt}
+                onClick={() => !userAnswer && submitAnswer(opt)}
+                disabled={submitting || !!userAnswer}
+                className={`w-full text-left text-sm px-3 py-2 rounded-lg border transition-colors ${
+                  selected
+                    ? 'bg-purple-600/30 border-purple-500 text-purple-200'
+                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white disabled:opacity-50'
+                }`}
+              >
+                {opt}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {isResolved && userAnswer && (
+        <div className={`text-xs px-2 py-1 rounded ${isCorrect ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+          Your pick: {userAnswer} {isCorrect ? '— Correct!' : '— Incorrect'}
+        </div>
+      )}
+
+      {isHost && !isResolved && (
+        resolving ? (
+          <div className="space-y-1.5 pt-1 border-t border-white/10">
+            <p className="text-white/40 text-xs">Tap the correct answer:</p>
+            {options.map((opt) => (
+              <button key={opt} onClick={() => resolvePrompt(opt)} className="w-full text-left text-sm px-3 py-2 rounded-lg bg-green-500/10 border border-green-500/30 text-green-300 hover:bg-green-500/20">
+                {opt}
+              </button>
+            ))}
+            <button onClick={() => setResolving(false)} className="text-white/30 text-xs hover:text-white/50">Cancel</button>
+          </div>
+        ) : (
+          <button onClick={() => setResolving(true)} className="text-xs text-white/30 hover:text-purple-400 transition-colors">
+            Mark answer
+          </button>
+        )
+      )}
+    </div>
+  );
+}
+
+function RoundCard({ round, isHost, token, onRefresh }: { round: any; isHost: boolean; token: string; onRefresh: () => void }) {
+  const [expanded, setExpanded] = useState(true);
+  const [showAddPrompt, setShowAddPrompt] = useState(false);
+
+  const prompts: any[] = round.prompts || [];
+  const isLocked = round.status === 'locked' || round.status === 'resolved';
+
+  return (
+    <>
+      <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
+        <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center justify-between p-4">
+          <div className="flex items-center gap-2">
+            <h3 className="text-white font-semibold text-sm">{round.title}</h3>
+            {isLocked && <Lock size={12} className="text-white/30" />}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-white/40 text-xs">{prompts.length} questions</span>
+            {expanded ? <ChevronDown size={16} className="text-white/40" /> : <ChevronRight size={16} className="text-white/40" />}
+          </div>
+        </button>
+
+        {expanded && (
+          <div className="px-4 pb-4 space-y-2">
+            {prompts.length === 0 && (
+              <p className="text-white/30 text-sm text-center py-4">No questions yet</p>
+            )}
+            {prompts.map((prompt: any) => (
+              <PromptCard key={prompt.id} prompt={prompt} isHost={isHost} token={token} onResolved={onRefresh} />
+            ))}
+            {isHost && !isLocked && (
+              <button onClick={() => setShowAddPrompt(true)} className="w-full flex items-center justify-center gap-1.5 text-purple-400 text-sm py-2 hover:text-purple-300 border border-dashed border-purple-500/30 rounded-lg">
+                <Plus size={14} /> Add question
+              </button>
+            )}
+            {round.lock_time && (
+              <p className="text-white/25 text-xs text-center">Locks {new Date(round.lock_time).toLocaleString()}</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {showAddPrompt && (
+        <AddPromptSheet roundId={round.id} token={token} onClose={() => setShowAddPrompt(false)} onCreated={onRefresh} />
+      )}
+    </>
+  );
 }
 
 export default function PoolDetailPage() {
   const params = useParams<{ id: string }>();
+  const [, setLocation] = useLocation();
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [, setLocation] = useLocation();
-  const [copiedCode, setCopiedCode] = useState(false);
-  const [selectedContestant, setSelectedContestant] = useState<string | null>(null);
-  const [showPickView, setShowPickView] = useState(false);
-  const [hasLocked, setHasLocked] = useState(false);
-  const [newTake, setNewTake] = useState('');
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState('');
-  const [takes, setTakes] = useState([
-    { id: '1', user: 'Sarah M.', avatar: null, text: "No way Tyler survives next week! He's been playing too safe", time: '2h ago', likes: 5, liked: false, replies: [
-      { id: '1a', user: 'Mike R.', text: "Facts! He's coasting", time: '1h ago', likes: 2, liked: false }
-    ]},
-    { id: '2', user: 'Mike R.', avatar: null, text: "Called it - Emma was way too nice to last", time: '5h ago', likes: 12, liked: true, replies: [] },
-    { id: '3', user: 'Jess K.', avatar: null, text: "Alex is the dark horse. Mark my words 🐴", time: '1d ago', likes: 3, liked: false, replies: [] },
-  ]);
+  const [tab, setTab] = useState<'rounds' | 'leaderboard' | 'members'>('rounds');
+  const [showAddRound, setShowAddRound] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const toggleLike = (takeId: string) => {
-    setTakes(takes.map(take => 
-      take.id === takeId 
-        ? { ...take, liked: !take.liked, likes: take.liked ? take.likes - 1 : take.likes + 1 }
-        : take
-    ));
-  };
-
-  const addReply = (takeId: string) => {
-    if (!replyText.trim()) return;
-    setTakes(takes.map(take => 
-      take.id === takeId 
-        ? { ...take, replies: [...take.replies, { id: Date.now().toString(), user: 'You', text: replyText, time: 'Just now', likes: 0, liked: false }] }
-        : take
-    ));
-    setReplyText('');
-    setReplyingTo(null);
-    toast({ title: 'Reply posted!' });
-  };
-
-  // Mock contestants for demo
-  const contestants: Contestant[] = [
-    { id: '1', name: 'Alex', eliminated: false },
-    { id: '2', name: 'Sam', eliminated: false },
-    { id: '3', name: 'Jordan', eliminated: false },
-    { id: '4', name: 'Chris', eliminated: false },
-    { id: '5', name: 'Emma', eliminated: true, eliminated_week: 2 },
-    { id: '6', name: 'Taylor', eliminated: false },
-  ];
-
-  const activeContestants = contestants.filter(c => !c.eliminated);
-
-  const { data: poolData, isLoading, error } = useQuery<PoolDetail>({
+  const { data, isLoading } = useQuery({
     queryKey: ['pool-detail', params.id],
     queryFn: async () => {
-      if (!session?.access_token) throw new Error('Not authenticated');
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-pool-details`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ pool_id: params.id }),
-        }
-      );
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to fetch pool');
-      }
-      return response.json();
-    },
-    enabled: !!session?.access_token && !!params.id,
-  });
-
-  const deletePoolMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/api/pools/delete', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ pool_id: params.id }),
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/get-pool-details?pool_id=${params.id}`, {
+        headers: { Authorization: `Bearer ${session?.access_token}` }
       });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete pool');
-      }
-      return response.json();
+      return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-pools'] });
-      toast({ title: 'Pool deleted' });
-      setLocation('/pools');
-    },
-    onError: (error: Error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    },
+    enabled: !!session?.access_token && !!params.id
   });
 
-  const copyInviteCode = (code: string) => {
-    const joinLink = `${window.location.origin}/pool/join/${code}`;
-    navigator.clipboard.writeText(joinLink);
-    setCopiedCode(true);
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['pool-detail', params.id] });
+
+  const handleCopyLink = () => {
+    const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+    const link = `${appUrl}/pool/join/${data?.pool?.invite_code}`;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
     toast({ title: 'Invite link copied!' });
-    setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  const handleSelectContestant = (id: string) => {
-    setSelectedContestant(id);
-  };
+  const pool = data?.pool;
+  const rounds: any[] = data?.rounds || [];
+  const members: any[] = data?.members || [];
+  const isHost = data?.is_host || false;
 
-  const handleLockIn = () => {
-    if (!selectedContestant) return;
-    setHasLocked(true);
-    setShowPickView(false);
-    toast({ 
-      title: 'Pick locked in!',
-      description: `You picked ${contestants.find(c => c.id === selectedContestant)?.name}`,
-    });
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="flex justify-center py-20">
-          <Loader2 className="animate-spin text-purple-600" size={32} />
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !poolData) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="flex flex-col items-center justify-center h-[70vh] px-4 text-center">
-          <p className="text-gray-500 mb-4">{(error as Error)?.message || 'Pool not found'}</p>
-          <Button onClick={() => setLocation('/pools')} variant="outline">
-            Back to Pools
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const { pool, members, is_host } = poolData;
-
-  // Mock user rank
-  const userRank: number = 3;
-  const lastEliminated = contestants.find(c => c.eliminated)?.name || 'No one yet';
-
-  // Pick View - Full screen selection
-  if (showPickView) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 pb-24">
-        <div className="max-w-lg mx-auto px-4 pt-4">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <button 
-              onClick={() => setShowPickView(false)} 
-              className="flex items-center gap-1 text-white/70 hover:text-white text-sm"
-            >
-              <ArrowLeft size={16} />
-              <span>Back</span>
-            </button>
-          </div>
-
-          {/* Question */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-white mb-2">Who goes home this week?</h1>
-            <p className="text-white/60 text-sm">Tap to select your pick</p>
-          </div>
-
-          {/* Contestant Buttons */}
-          <div className="space-y-3 mb-8">
-            {activeContestants.map((contestant, index) => {
-              const gradients = [
-                'from-purple-400 to-purple-600',
-                'from-indigo-400 to-purple-500',
-                'from-purple-500 to-pink-500',
-                'from-pink-400 to-rose-500',
-                'from-rose-400 to-orange-400',
-                'from-orange-400 to-amber-400',
-              ];
-              const gradient = gradients[index % gradients.length];
-              const isSelected = selectedContestant === contestant.id;
-
-              return (
-                <button
-                  key={contestant.id}
-                  onClick={() => handleSelectContestant(contestant.id)}
-                  className={`w-full py-4 px-6 rounded-xl text-white font-semibold text-lg transition-all duration-200 bg-gradient-to-r ${gradient} ${
-                    isSelected 
-                      ? 'ring-4 ring-white shadow-lg scale-[1.02]' 
-                      : 'hover:scale-[1.01] hover:shadow-md'
-                  }`}
-                >
-                  {contestant.name}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Lock In Button */}
-          {selectedContestant && (
-            <div className="text-center">
-              <Button
-                onClick={handleLockIn}
-                className="w-full py-6 text-lg font-bold bg-green-500 hover:bg-green-600 text-white rounded-xl"
-              >
-                Lock In Pick
-              </Button>
-              <p className="text-white/50 text-sm mt-3">How sure are you? 🤔😎</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Main Pool View
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      <Navigation />
-
-      <div className="max-w-lg mx-auto px-4 pt-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <button onClick={() => setLocation('/pools')} className="text-gray-500 hover:text-gray-700">
-            <ArrowLeft size={20} />
-          </button>
-          <div className="flex items-center gap-1">
-            <Button
-              onClick={() => copyInviteCode(pool.invite_code)}
-              size="sm"
-              variant="ghost"
-              className="text-gray-500 hover:bg-transparent hover:text-gray-500 active:text-purple-600"
-              title="Invite Friends"
-            >
-              <Users size={18} />
-            </Button>
-            <Button
-              onClick={() => copyInviteCode(pool.invite_code)}
-              size="sm"
-              variant="ghost"
-              className="text-gray-500 hover:bg-transparent hover:text-gray-500 active:text-purple-600"
-              title="Share"
-            >
-              {copiedCode ? <Check size={18} className="text-purple-600" /> : <Share2 size={18} />}
-            </Button>
-            {is_host && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-gray-400 hover:text-red-500">
-                    <Trash2 size={18} />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete this pool?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently delete the pool and all picks.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => deletePoolMutation.mutate()}
-                      className="bg-red-600 hover:bg-red-700 text-white"
-                    >
-                      {deletePoolMutation.isPending ? 'Deleting...' : 'Delete'}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
-        </div>
-
-        {/* Pool Header with Poster */}
-        <div className="flex items-start gap-4 mb-6">
-          {/* Media Poster */}
-          <img 
-            src="https://image.tmdb.org/t/p/w200/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg"
-            alt={pool.name}
-            className="w-20 h-28 rounded-xl shadow-lg object-cover flex-shrink-0"
-          />
-          
-          {/* Pool Info */}
-          <div className="flex-1 min-w-0 pt-1">
-            <h1 className="text-lg font-semibold text-gray-900 mb-1">
-              {pool.name}
+    <div className="min-h-screen bg-[#0a0a0f] pb-24">
+      <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        <div className="px-4 py-4">
+          <div className="flex items-center gap-3 mb-4">
+            <button onClick={() => setLocation('/pools')} className="text-white/70 hover:text-white transition-colors">
+              <ChevronLeft size={24} />
+            </button>
+            <h1 className="text-2xl font-semibold text-white truncate" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              {isLoading ? 'Loading...' : (pool?.name || 'Pool')}
             </h1>
-            <p className="text-gray-500 text-sm mb-3">
-              {members.length} players · {userRank === 1 ? '1st' : userRank === 2 ? '2nd' : userRank === 3 ? '3rd' : `${userRank}th`} place
-            </p>
-            
-            {hasLocked && selectedContestant && (
-              <p className="text-gray-500 text-sm mt-1">
-                Your pick: <span className="font-semibold text-purple-600">{contestants.find(c => c.id === selectedContestant)?.name}</span>
-              </p>
-            )}
           </div>
-        </div>
 
-        {/* Make Your Pick Button - Main CTA */}
-        <Button
-          onClick={() => setShowPickView(true)}
-          className="w-full py-6 text-lg font-bold bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-2xl shadow-lg mb-2"
-        >
-          {hasLocked ? 'Change Your Pick' : 'Make Your Pick'}
-        </Button>
-        <p className="text-gray-400 text-xs text-center mb-6">
-          <Clock size={12} className="inline mr-1" />
-          Picks close in 2 days
-        </p>
-
-        {/* Stats Row */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <Card className="bg-gradient-to-br from-purple-900 via-purple-950 to-slate-950 border border-purple-800/30 rounded-2xl p-5 text-center shadow-xl">
-            <div className="text-3xl font-bold text-white mb-1 tracking-tight">
-              {userRank === 1 ? '1st' : userRank === 2 ? '2nd' : userRank === 3 ? '3rd' : `${userRank}th`}
-            </div>
-            <p className="text-purple-300/70 text-sm font-medium flex items-center justify-center gap-1">
-              <Trophy size={14} />
-              Your Rank
-            </p>
-          </Card>
-          <Card className="bg-gradient-to-br from-purple-900 via-purple-950 to-slate-950 border border-purple-800/30 rounded-2xl p-5 text-center shadow-xl">
-            <div className="text-3xl font-bold text-emerald-400 mb-1 tracking-tight">+37</div>
-            <p className="text-purple-300/70 text-sm font-medium flex items-center justify-center gap-1">
-              <Star size={14} />
-              Points
-            </p>
-          </Card>
-        </div>
-
-        {/* Quick Takes */}
-        <Card className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm mb-4">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="text-gray-900 font-semibold flex items-center gap-2">
-              <MessageCircle size={16} className="text-purple-500" />
-              Quick Takes
-            </h3>
-            <span className="text-gray-400 text-sm">{takes.length} takes</span>
-          </div>
-          
-          {/* Add Take Input */}
-          <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={newTake}
-                onChange={(e) => setNewTake(e.target.value)}
-                placeholder="Drop your take..."
-                className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-purple-400"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && newTake.trim()) {
-                    setTakes([{ id: Date.now().toString(), user: 'You', avatar: null, text: newTake, time: 'Just now', likes: 0, liked: false, replies: [] }, ...takes]);
-                    setNewTake('');
-                    toast({ title: 'Take posted!' });
-                  }
-                }}
-              />
-              <Button
-                size="sm"
-                onClick={() => {
-                  if (newTake.trim()) {
-                    setTakes([{ id: Date.now().toString(), user: 'You', avatar: null, text: newTake, time: 'Just now', likes: 0, liked: false, replies: [] }, ...takes]);
-                    setNewTake('');
-                    toast({ title: 'Take posted!' });
-                  }
-                }}
-                className="bg-purple-600 hover:bg-purple-700 rounded-full px-3"
-              >
-                <Send size={16} />
+          <div className="flex gap-2">
+            {isHost && (
+              <Button onClick={() => setShowAddRound(true)} className="bg-purple-600 hover:bg-purple-700 text-white text-sm h-9">
+                <Plus size={14} className="mr-1" /> New Round
               </Button>
-            </div>
+            )}
+            <Button onClick={handleCopyLink} variant="outline" className="border-white/20 text-white bg-transparent hover:bg-white/10 text-sm h-9">
+              {copied ? <Check size={14} className="mr-1 text-green-400" /> : <Copy size={14} className="mr-1" />}
+              {copied ? 'Copied!' : 'Invite'}
+            </Button>
           </div>
-          
-          {/* Takes List */}
-          <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
-            {takes.map((take) => (
-              <div key={take.id} className="px-4 py-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                    {take.user.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-gray-900 font-medium text-sm">{take.user}</span>
-                      <span className="text-gray-400 text-xs">{take.time}</span>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-2">{take.text}</p>
-                    
-                    {/* Like & Reply Actions */}
-                    <div className="flex items-center gap-4">
-                      <button 
-                        onClick={() => toggleLike(take.id)}
-                        className={`flex items-center gap-1 text-xs ${take.liked ? 'text-red-500' : 'text-gray-400'}`}
-                      >
-                        <Heart size={14} className={take.liked ? 'fill-current' : ''} />
-                        {take.likes}
-                      </button>
-                      <button 
-                        onClick={() => setReplyingTo(replyingTo === take.id ? null : take.id)}
-                        className="flex items-center gap-1 text-xs text-gray-400"
-                      >
-                        <Reply size={14} />
-                        {take.replies.length > 0 ? take.replies.length : 'Reply'}
-                      </button>
-                    </div>
-                    
-                    {/* Replies */}
-                    {take.replies.length > 0 && (
-                      <div className="mt-3 pl-4 border-l-2 border-gray-100 space-y-2">
-                        {take.replies.map((reply) => (
-                          <div key={reply.id} className="flex items-start gap-2">
-                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-                              {reply.user.charAt(0)}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-gray-800 font-medium text-xs">{reply.user}</span>
-                                <span className="text-gray-400 text-[10px]">{reply.time}</span>
-                              </div>
-                              <p className="text-gray-600 text-xs">{reply.text}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* Reply Input */}
-                    {replyingTo === take.id && (
-                      <div className="mt-2 flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={replyText}
-                          onChange={(e) => setReplyText(e.target.value)}
-                          placeholder="Write a reply..."
-                          className="flex-1 bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 text-xs focus:outline-none focus:border-purple-400"
-                          onKeyPress={(e) => e.key === 'Enter' && addReply(take.id)}
-                          autoFocus
-                        />
-                        <Button
-                          size="sm"
-                          onClick={() => addReply(take.id)}
-                          className="bg-purple-600 hover:bg-purple-700 rounded-full h-7 px-2"
-                        >
-                          <Send size={12} />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
+        </div>
+
+        <div className="flex px-4 gap-1 pb-1">
+          {(['rounds', 'leaderboard', 'members'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors capitalize ${tab === t ? 'bg-white/15 text-white' : 'text-white/50 hover:text-white/80'}`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="px-4 pt-4">
+        {isLoading && (
+          <div className="space-y-3">
+            {[1, 2].map(i => <div key={i} className="h-20 rounded-xl bg-white/5 animate-pulse" />)}
+          </div>
+        )}
+
+        {!isLoading && tab === 'rounds' && (
+          <div className="space-y-3">
+            {rounds.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-white/40 text-sm">{isHost ? 'Create the first round to get started.' : 'No rounds yet. The host will create one soon.'}</p>
+                {isHost && (
+                  <Button onClick={() => setShowAddRound(true)} className="mt-4 bg-purple-600 hover:bg-purple-700 text-white">
+                    <Plus size={14} className="mr-1" /> Create First Round
+                  </Button>
+                )}
+              </div>
+            )}
+            {rounds.map(round => (
+              <RoundCard key={round.id} round={round} isHost={isHost} token={session?.access_token || ''} onRefresh={refresh} />
+            ))}
+          </div>
+        )}
+
+        {!isLoading && tab === 'leaderboard' && (
+          <div className="space-y-2">
+            {members.length === 0 && <p className="text-white/40 text-sm text-center py-12">No scores yet</p>}
+            {[...members].sort((a, b) => (b.total_points || 0) - (a.total_points || 0)).map((m: any, i) => (
+              <div key={m.user_id} className="flex items-center gap-3 bg-white/5 rounded-xl p-3 border border-white/10">
+                <span className={`text-sm font-bold w-6 text-center ${i === 0 ? 'text-yellow-400' : i === 1 ? 'text-gray-300' : i === 2 ? 'text-amber-600' : 'text-white/40'}`}>{i + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">{(m.users as any)?.display_name || (m.users as any)?.user_name || 'Member'}</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  {m.role === 'host' && <Crown size={12} className="text-yellow-400" />}
+                  <span className="text-purple-400 font-semibold text-sm">{m.total_points || 0} pts</span>
                 </div>
               </div>
             ))}
           </div>
-        </Card>
+        )}
 
-        {/* Leaderboard */}
-        <Card className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="text-gray-900 font-semibold flex items-center gap-2">
-              <Trophy size={16} className="text-purple-500" />
-              Leaderboard
-            </h3>
-            <span className="text-gray-400 text-sm">{members.length} players</span>
-          </div>
-          
-          <div className="divide-y divide-gray-50">
-            {members.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-400">
-                No members yet. Share the invite code!
+        {!isLoading && tab === 'members' && (
+          <div className="space-y-2">
+            {members.map((m: any) => (
+              <div key={m.user_id} className="flex items-center gap-3 bg-white/5 rounded-xl p-3 border border-white/10">
+                <div className="w-8 h-8 rounded-full bg-purple-600/30 flex items-center justify-center text-purple-300 text-xs font-semibold">
+                  {((m.users as any)?.display_name || (m.users as any)?.user_name || '?')[0]?.toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">{(m.users as any)?.display_name || (m.users as any)?.user_name || 'Member'}</p>
+                  {m.role === 'host' && <p className="text-yellow-400 text-xs">Host</p>}
+                </div>
+                <span className="text-white/40 text-sm">{m.total_points || 0} pts</span>
               </div>
-            ) : (
-              members
-                .sort((a, b) => b.total_points - a.total_points)
-                .map((member, index) => {
-                  const pointsChange = Math.floor(Math.random() * 20) + 5;
-
-                  return (
-                    <div
-                      key={member.user_id}
-                      className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                          index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                          index === 1 ? 'bg-gray-200 text-gray-600' :
-                          index === 2 ? 'bg-orange-100 text-orange-600' :
-                          'bg-gray-100 text-gray-500'
-                        }`}>
-                          {member.users.avatar_url ? (
-                            <img src={member.users.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
-                          ) : (
-                            index < 3 ? ['🥇', '🥈', '🥉'][index] : (member.users.display_name || member.users.user_name).charAt(0).toUpperCase()
-                          )}
-                        </div>
-                        <span className="text-gray-900 font-medium">
-                          {member.users.display_name || member.users.user_name}
-                        </span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-600 font-semibold">{member.total_points} pts</span>
-                        <span className="text-green-500 text-sm font-medium bg-green-50 px-2 py-0.5 rounded-full">+{pointsChange}</span>
-                      </div>
-                    </div>
-                  );
-                })
-            )}
+            ))}
+            <div className="pt-2">
+              <Button onClick={handleCopyLink} variant="outline" className="w-full border-white/20 text-white/70 bg-transparent hover:bg-white/10">
+                <Copy size={14} className="mr-2" /> Copy invite link
+              </Button>
+            </div>
           </div>
-        </Card>
-
-        {/* Invite Code */}
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => copyInviteCode(pool.invite_code)}
-            className="inline-flex items-center gap-2 bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors px-4 py-2 rounded-full text-sm font-medium"
-          >
-            {copiedCode ? <Check size={14} /> : <Copy size={14} />}
-            <span>Invite Code: <span className="font-mono font-bold">{pool.invite_code}</span></span>
-          </button>
-        </div>
+        )}
       </div>
+
+      {showAddRound && (
+        <AddRoundSheet poolId={params.id} token={session?.access_token || ''} onClose={() => setShowAddRound(false)} onCreated={refresh} />
+      )}
+
+      <Navigation />
     </div>
   );
 }
