@@ -245,17 +245,17 @@ function Router() {
             </ProtectedRoute>
           </Route>
 
-          <Route path="/pools">
+          <Route path="/rooms">
             <ProtectedRoute>
               <PoolsPage />
             </ProtectedRoute>
           </Route>
 
-          <Route path="/pool/join/:code">
+          <Route path="/room/join/:code">
             <PoolJoinPage />
           </Route>
 
-          <Route path="/pool/:id">
+          <Route path="/room/:id">
             <ProtectedRoute>
               <PoolDetailPage />
             </ProtectedRoute>

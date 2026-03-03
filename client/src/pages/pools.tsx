@@ -68,11 +68,11 @@ export default function PoolsPage() {
           <button onClick={() => setLocation('/play')} className="text-white/70 hover:text-white transition-colors mb-3 block">
             <ChevronLeft size={24} />
           </button>
-          <h1 className="text-2xl font-semibold text-white mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>Pools</h1>
+          <h1 className="text-2xl font-semibold text-white mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>Rooms</h1>
 
           {!showCreate ? (
             <Button onClick={() => setShowCreate(true)} className="w-full bg-purple-600 hover:bg-purple-700 text-white mb-2">
-              <Plus size={16} className="mr-2" /> New Pool
+              <Plus size={16} className="mr-2" /> New Room
             </Button>
           ) : (
             <div className="flex gap-2 mb-2">

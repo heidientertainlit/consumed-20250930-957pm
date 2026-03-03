@@ -54,12 +54,12 @@ const gameModes = [
   },
   {
     id: "nightin",
-    label: "Pools",
-    description: "Host a group prediction game",
+    label: "Rooms",
+    description: "Host a group experience",
     icon: Moon,
     color: "bg-fuchsia-50 border-fuchsia-100",
     iconColor: "text-fuchsia-500",
-    href: "/pools",
+    href: "/rooms",
   },
 ];
 

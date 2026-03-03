@@ -275,7 +275,7 @@ export default function PoolDetailPage() {
 
   const handleCopyLink = () => {
     const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-    const link = `${appUrl}/pool/join/${data?.pool?.invite_code}`;
+    const link = `${appUrl}/room/join/${data?.pool?.invite_code}`;
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -319,11 +319,11 @@ export default function PoolDetailPage() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="px-4 pt-4 pb-8">
-          <button onClick={() => setLocation('/pools')} className="text-white/70 hover:text-white transition-colors mb-3 block">
+          <button onClick={() => setLocation('/rooms')} className="text-white/70 hover:text-white transition-colors mb-3 block">
             <ChevronLeft size={24} />
           </button>
           <h1 className="text-2xl font-semibold text-white mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            {isLoading ? 'Loading...' : (pool?.name || 'Pool')}
+            {isLoading ? 'Loading...' : (pool?.name || 'Room')}
           </h1>
           <div className="flex gap-2">
             {isHost && (

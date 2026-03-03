@@ -27,9 +27,9 @@ export default function PoolJoinPage() {
         });
         const data = await res.json();
         if (data.error) { setState('error'); setErrorMsg(data.error); return; }
-        setPoolName(data.pool_name || 'the pool');
+        setPoolName(data.pool_name || 'the room');
         setState('success');
-        setTimeout(() => setLocation(`/pool/${data.pool_id}`), 1500);
+        setTimeout(() => setLocation(`/room/${data.pool_id}`), 1500);
       } catch {
         setState('error');
         setErrorMsg('Something went wrong. Please try again.');
@@ -47,7 +47,7 @@ export default function PoolJoinPage() {
 
       {state === 'joining' && (
         <>
-          <h1 className="text-white text-2xl font-semibold mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>Joining pool...</h1>
+          <h1 className="text-white text-2xl font-semibold mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>Joining room...</h1>
           <p className="text-white/50 text-sm">Just a moment</p>
         </>
       )}
@@ -64,8 +64,8 @@ export default function PoolJoinPage() {
         <>
           <h1 className="text-white text-2xl font-semibold mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>Invalid link</h1>
           <p className="text-white/50 text-sm mb-6">{errorMsg || 'This invite link is not valid.'}</p>
-          <Button onClick={() => setLocation('/pools')} className="bg-purple-600 hover:bg-purple-700 text-white">
-            Go to Pools
+          <Button onClick={() => setLocation('/rooms')} className="bg-purple-600 hover:bg-purple-700 text-white">
+            Go to Rooms
           </Button>
         </>
       )}
@@ -73,7 +73,7 @@ export default function PoolJoinPage() {
       {state === 'auth' && (
         <>
           <h1 className="text-white text-2xl font-semibold mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>Sign in to join</h1>
-          <p className="text-white/50 text-sm mb-6">You need an account to join this pool</p>
+          <p className="text-white/50 text-sm mb-6">You need an account to join this room</p>
           <Button onClick={() => setLocation('/login')} className="bg-purple-600 hover:bg-purple-700 text-white">
             Sign In
           </Button>
