@@ -583,7 +583,10 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/me" ? "bg-white/15" : ""}`}
             data-testid="nav-dna"
           >
-            <Dna className="text-white" size={22} />
+            <div className="relative">
+              <User className="text-white" size={22} />
+              <Dna className="text-white absolute -bottom-1 -right-1.5" size={11} />
+            </div>
             <span className="text-white text-[10px] mt-0.5">My DNA</span>
           </Link>
         </div>
