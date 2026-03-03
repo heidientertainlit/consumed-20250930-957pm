@@ -41,7 +41,8 @@ serve(async (req) => {
         invite_code: generateInviteCode(),
         status: 'open',
         is_public: false,
-        points_per_correct: 1
+        points_per_correct: 1,
+        pool_type: 'room'
       }).select().single();
       if (error?.code === '23505') continue;
       if (error) return json({ error: error.message }, 500);

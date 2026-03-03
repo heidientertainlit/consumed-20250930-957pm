@@ -25,13 +25,15 @@ serve(async (req) => {
 
     const { data: memberships } = await svc
       .from('pool_members')
-      .select('pool_id, role, total_points, joined_at, pools:pool_id(id, name, host_id, invite_code, status, created_at)')
+      .select('pool_id, role, total_points, joined_at, pools:pool_id(id, name, host_id, invite_code, status, created_at, pool_type)')
       .eq('user_id', appUser.id)
       .order('joined_at', { ascending: false });
 
     const pools = await Promise.all((memberships || []).map(async (m) => {
       const pool = m.pools as any;
       if (!pool) return null;
+      // Only show entries explicitly tagged as rooms (hides legacy pool entries)
+      if (pool.pool_type !== 'room') return null;
 
       const [{ count: memberCount }, { count: roundCount }, { data: host }] = await Promise.all([
         svc.from('pool_members').select('*', { count: 'exact', head: true }).eq('pool_id', pool.id),

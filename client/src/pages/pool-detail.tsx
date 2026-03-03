@@ -227,21 +227,49 @@ function PromptCard({ prompt, isHost, token, onResolved }: { prompt: any; isHost
           )}
           {!isResolved && !resolving && !isHost && (
             <div className="space-y-1.5">
-              {options.map((opt) => {
-                const selected = userAnswer === opt;
-                return (
-                  <button
-                    key={opt}
-                    onClick={() => !userAnswer && submitAnswer(opt)}
-                    disabled={submitting || !!userAnswer}
-                    className={`w-full text-left text-sm px-3 py-2 rounded-xl border transition-colors ${
-                      selected ? 'bg-purple-100 border-purple-400 text-purple-700 font-medium' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50'
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                );
-              })}
+              {userAnswer && prompt.vote_counts ? (
+                // Show vote breakdown after voting
+                (() => {
+                  const totalVotes = Object.values(prompt.vote_counts as Record<string, number>).reduce((s: number, n: number) => s + n, 0);
+                  return options.map((opt) => {
+                    const count = (prompt.vote_counts as Record<string, number>)[opt] || 0;
+                    const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                    const isSelected = userAnswer === opt;
+                    return (
+                      <div key={opt} className="space-y-0.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className={`font-medium ${isSelected ? 'text-purple-700' : 'text-gray-600'}`}>{opt}{isSelected && ' — your pick'}</span>
+                          <span className="text-gray-500">{pct}%</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${isSelected ? 'bg-purple-500' : 'bg-gray-300'}`}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <p className="text-[10px] text-gray-400">{count} {count === 1 ? 'vote' : 'votes'}</p>
+                      </div>
+                    );
+                  });
+                })()
+              ) : (
+                // Show clickable options before voting
+                options.map((opt) => {
+                  const selected = userAnswer === opt;
+                  return (
+                    <button
+                      key={opt}
+                      onClick={() => !userAnswer && submitAnswer(opt)}
+                      disabled={submitting || !!userAnswer}
+                      className={`w-full text-left text-sm px-3 py-2 rounded-xl border transition-colors ${
+                        selected ? 'bg-purple-100 border-purple-400 text-purple-700 font-medium' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  );
+                })
+              )}
             </div>
           )}
           {isResolved && userAnswer && (

@@ -50,6 +50,7 @@ serve(async (req) => {
 
       let userAnswers: Record<string, any> = {};
       let allAnswersMap: Record<string, any[]> = {};
+      let voteCountsMap: Record<string, Record<string, number>> = {};
 
       if (prompts && prompts.length > 0) {
         const promptIds = prompts.map((p: any) => p.id);
@@ -60,7 +61,7 @@ serve(async (req) => {
           .in('prompt_id', promptIds);
         if (myAnswers) userAnswers = Object.fromEntries(myAnswers.map((a: any) => [a.prompt_id, a]));
 
-        // For call_it prompts, fetch all member submissions so host can mark correct ones
+        // For call_it prompts: fetch all member submissions so host can mark correct ones
         const callItIds = prompts.filter((p: any) => p.prompt_type === 'call_it').map((p: any) => p.id);
         if (callItIds.length > 0) {
           const { data: allAnswers } = await svc.from('pool_answers')
@@ -74,6 +75,23 @@ serve(async (req) => {
             }
           }
         }
+
+        // For pick prompts where the current user has voted: fetch vote counts per option
+        const pickIds = prompts
+          .filter((p: any) => p.prompt_type === 'pick' && userAnswers[p.id])
+          .map((p: any) => p.id);
+        if (pickIds.length > 0) {
+          const { data: pickAnswers } = await svc.from('pool_answers')
+            .select('prompt_id, answer')
+            .in('prompt_id', pickIds);
+          if (pickAnswers) {
+            for (const ans of pickAnswers) {
+              if (!voteCountsMap[ans.prompt_id]) voteCountsMap[ans.prompt_id] = {};
+              const key = ans.answer;
+              voteCountsMap[ans.prompt_id][key] = (voteCountsMap[ans.prompt_id][key] || 0) + 1;
+            }
+          }
+        }
       }
 
       return {
@@ -81,7 +99,8 @@ serve(async (req) => {
         prompts: (prompts || []).map((p: any) => ({
           ...p,
           user_answer: userAnswers[p.id] || null,
-          all_answers: p.prompt_type === 'call_it' ? (allAnswersMap[p.id] || []) : undefined
+          all_answers: p.prompt_type === 'call_it' ? (allAnswersMap[p.id] || []) : undefined,
+          vote_counts: p.prompt_type === 'pick' && userAnswers[p.id] ? (voteCountsMap[p.id] || {}) : undefined
         }))
       };
     }));
