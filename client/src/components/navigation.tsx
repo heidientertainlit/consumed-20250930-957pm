@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home, Star, Target } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home, Star } from "lucide-react";
 import { FeedbackDialog } from "./feedback-dialog";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
@@ -557,7 +557,11 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             style={{ marginRight: -6 }}
             data-testid="nav-play"
           >
-            <Target className="text-white" size={22} />
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round">
+              <circle cx="11" cy="11" r="9" />
+              <circle cx="11" cy="11" r="4.5" />
+              <circle cx="11" cy="11" r="1.25" fill="white" stroke="none" />
+            </svg>
             <span className="text-white text-[10px] mt-0.5">Play</span>
           </Link>
 
