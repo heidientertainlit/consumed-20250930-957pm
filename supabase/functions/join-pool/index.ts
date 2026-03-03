@@ -23,7 +23,7 @@ serve(async (req) => {
     if (!invite_code?.trim()) return json({ error: 'Invite code is required' }, 400);
 
     const svc = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
-    const { data: appUser } = await svc.from('users').select('id').eq('email', user.email).single();
+    const { data: appUser } = await svc.from('users').select('id, user_name, display_name').eq('email', user.email).single();
     if (!appUser) return json({ error: 'User not found' }, 404);
 
     const { data: pool } = await svc.from('pools').select('id, name, host_id, status').eq('invite_code', invite_code.toUpperCase().trim()).single();
@@ -35,6 +35,19 @@ serve(async (req) => {
 
     const { error } = await svc.from('pool_members').insert({ pool_id: pool.id, user_id: appUser.id, role: 'member', total_points: 0 });
     if (error) return json({ error: error.message }, 500);
+
+    // Notify the host (unless the host is joining their own room)
+    if (pool.host_id && pool.host_id !== appUser.id) {
+      const displayName = appUser.display_name || appUser.user_name || 'Someone';
+      await svc.from('notifications').insert({
+        user_id: pool.host_id,
+        type: 'room_joined',
+        triggered_by_user_id: appUser.id,
+        message: `${displayName} joined your Room "${pool.name}"`,
+        list_id: pool.id,
+        read: false,
+      });
+    }
 
     return json({ success: true, pool_id: pool.id, pool_name: pool.name });
   } catch (e) {
