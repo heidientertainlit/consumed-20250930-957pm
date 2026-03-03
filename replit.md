@@ -60,9 +60,14 @@ Preferred communication style: Simple, everyday language.
   - **Edge Function**: `daily-challenge` with actions: `getToday`, `checkResponse`, `submit`.
   - **Client sends `localDate`**: Format `new Date().toLocaleDateString('en-CA')` for timezone.
   - **DO NOT use or create `daily_runs` table**.
-- **Pools System**: Group prediction/trivia competitions.
-  - Tables: `pools`, `pool_members`, `pool_prompts`, `pool_answers`.
-  - Edge functions: `create-pool`, `join-pool`, `add-pool-prompt`, `submit-pool-answer`, `resolve-pool-prompt`, `get-pool-details`, `get-pool-leaderboard`, `get-user-pools`.
+- **Pools System**: Structured, round-based group competition engine for any entertainment event.
+  - Architecture: Pool → Rounds → Prompts → Answers → Leaderboard
+  - Pool is host-controlled: host creates rounds, adds MC prompts, marks correct answers after the fact.
+  - Invite-only always (no public/private toggle). Members join via shared link (no code typing).
+  - Share link format: `{APP_URL}/pool/join/{invite_code}`
+  - Scoring: 1 point per correct answer, cumulative across rounds.
+  - Tables: `pools`, `pool_members`, `pool_rounds` (NEW), `pool_prompts` (has `round_id` column), `pool_answers`.
+  - Edge functions: `create-pool`, `create-pool-round` (NEW), `join-pool`, `add-pool-prompt`, `submit-pool-answer`, `resolve-pool-prompt`, `get-pool-details`, `get-pool-leaderboard`, `get-user-pools`.
   - Routes: `/pools`, `/pool/:id`, `/pool/join/:code`.
 
 ### Feature Specifications
