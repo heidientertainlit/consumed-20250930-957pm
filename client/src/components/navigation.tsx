@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home, Star, Dices } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home, Star } from "lucide-react";
 import { FeedbackDialog } from "./feedback-dialog";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
@@ -557,7 +557,23 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             style={{ marginRight: -6 }}
             data-testid="nav-play"
           >
-            <Dices className="text-white" size={22} />
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 3L22 8.5L12 14L2 8.5L12 3Z" stroke="white" strokeWidth="1.6" strokeLinejoin="round"/>
+              <path d="M2 8.5L2 17.5L12 22.5L12 14L2 8.5Z" stroke="white" strokeWidth="1.6" strokeLinejoin="round"/>
+              <path d="M22 8.5L22 17.5L12 22.5L12 14L22 8.5Z" stroke="white" strokeWidth="1.6" strokeLinejoin="round"/>
+              <circle cx="12" cy="8.8" r="1" fill="white"/>
+              <circle cx="5.5" cy="12" r="0.85" fill="white"/>
+              <circle cx="5.5" cy="15" r="0.85" fill="white"/>
+              <circle cx="7.5" cy="13.5" r="0.85" fill="white"/>
+              <circle cx="9.5" cy="12" r="0.85" fill="white"/>
+              <circle cx="9.5" cy="15" r="0.85" fill="white"/>
+              <circle cx="14.5" cy="11.5" r="0.85" fill="white"/>
+              <circle cx="14.5" cy="14" r="0.85" fill="white"/>
+              <circle cx="14.5" cy="16.5" r="0.85" fill="white"/>
+              <circle cx="18" cy="11.5" r="0.85" fill="white"/>
+              <circle cx="18" cy="14" r="0.85" fill="white"/>
+              <circle cx="18" cy="16.5" r="0.85" fill="white"/>
+            </svg>
             <span className="text-white text-[10px] mt-0.5">Play</span>
           </Link>
 
