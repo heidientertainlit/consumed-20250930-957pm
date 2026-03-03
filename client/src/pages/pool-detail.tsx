@@ -83,7 +83,7 @@ function AddPromptSheet({ roundId, token, onClose, onCreated }: { roundId: strin
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-black/40 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full bg-white rounded-t-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto pb-28" onClick={e => e.stopPropagation()}>
+      <div className="w-full bg-white rounded-t-3xl p-6 space-y-4 max-h-[92vh] min-h-[70vh] overflow-y-auto pb-20" onClick={e => e.stopPropagation()}>
         <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-4" />
         <div className="flex items-center justify-between">
           <h2 className="text-gray-900 font-semibold text-lg">Add Question</h2>
