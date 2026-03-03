@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home, Star } from "lucide-react";
+import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home, Star, Target } from "lucide-react";
 import { FeedbackDialog } from "./feedback-dialog";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
@@ -557,27 +557,7 @@ export default function Navigation({ onTrackConsumption }: NavigationProps) {
             style={{ marginRight: -6 }}
             data-testid="nav-play"
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* Top face */}
-              <path d="M12 2L22 7.5L12 13L2 7.5Z" fill="rgba(255,255,255,0.22)" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/>
-              {/* Left face */}
-              <path d="M2 7.5L2 17.5L12 22L12 13Z" fill="rgba(255,255,255,0.06)" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/>
-              {/* Right face */}
-              <path d="M22 7.5L22 17.5L12 22L12 13Z" fill="rgba(255,255,255,0.13)" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/>
-              {/* Top face — 1 dot */}
-              <circle cx="12" cy="7.7" r="1.1" fill="white"/>
-              {/* Left face — 3 dots */}
-              <circle cx="5.2" cy="12" r="0.9" fill="white"/>
-              <circle cx="7.2" cy="15" r="0.9" fill="white"/>
-              <circle cx="9.2" cy="18" r="0.9" fill="white"/>
-              {/* Right face — 6 dots (2 columns of 3) */}
-              <circle cx="14.8" cy="12" r="0.85" fill="white"/>
-              <circle cx="14.8" cy="14.8" r="0.85" fill="white"/>
-              <circle cx="14.8" cy="17.6" r="0.85" fill="white"/>
-              <circle cx="18.2" cy="12" r="0.85" fill="white"/>
-              <circle cx="18.2" cy="14.8" r="0.85" fill="white"/>
-              <circle cx="18.2" cy="17.6" r="0.85" fill="white"/>
-            </svg>
+            <Target className="text-white" size={22} />
             <span className="text-white text-[10px] mt-0.5">Play</span>
           </Link>
 

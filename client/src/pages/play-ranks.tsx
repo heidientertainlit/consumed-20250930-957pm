@@ -396,51 +396,6 @@ export default function PlayRanks() {
                 </div>
               </div>
 
-              {/* Create Rank Button */}
-              <Dialog open={isCreateRankOpen} onOpenChange={setIsCreateRankOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    size="sm"
-                    className="bg-orange-600 hover:bg-orange-700 text-white"
-                    data-testid="button-create-rank"
-                  >
-                    <Plus size={16} className="mr-1" />
-                    Create Rank
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-white">
-                  <DialogHeader>
-                    <DialogTitle className="text-gray-900">Create Rank</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-4">
-                    <Input
-                      placeholder="e.g., Top 10 90s Movies"
-                      value={newRankName}
-                      onChange={(e) => setNewRankName(e.target.value)}
-                      className="bg-white text-gray-900 border-gray-300"
-                      data-testid="input-rank-name"
-                    />
-                    <Select value={newRankVisibility} onValueChange={setNewRankVisibility}>
-                      <SelectTrigger className="bg-white text-gray-900 border-gray-300">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border border-gray-200">
-                        <SelectItem value="public" className="text-gray-900">Public</SelectItem>
-                        <SelectItem value="private" className="text-gray-900">Private</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button 
-                      className="w-full bg-orange-600 hover:bg-orange-700"
-                      onClick={() => createRankMutation.mutate()}
-                      disabled={!newRankName.trim() || createRankMutation.isPending}
-                      data-testid="button-submit-rank"
-                    >
-                      {createRankMutation.isPending ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
-                      Create & Start Ranking
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
             </div>
           </div>
         </div>
