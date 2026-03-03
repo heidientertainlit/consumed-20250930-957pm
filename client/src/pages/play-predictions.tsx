@@ -269,10 +269,6 @@ export default function PlayPredictionsPage() {
             <Trophy className="text-green-600" size={32} />
             <h1 className="text-3xl font-semibold text-black" data-testid="predictions-title">Predictions</h1>
           </div>
-          <p className="text-gray-600 text-center mb-6">
-            Make predictions about upcoming releases and entertainment events
-          </p>
-
           {/* Search and Filter Row */}
           <div className="flex gap-2 mb-4">
             <div className="relative flex-1">

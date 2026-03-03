@@ -334,25 +334,9 @@ export default function PlayPollsPage() {
       {/* Header Section with Gradient */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
-          <div className="mb-2">
+          <div className="mb-4">
             <h1 className="text-3xl font-semibold text-white" data-testid="polls-title">Polls</h1>
           </div>
-          <p className="text-gray-400 text-left mb-6">
-            Vote on trending topics and see how your opinions compare to others
-          </p>
-
-            {/* Search Row */}
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                type="text"
-                placeholder="Search polls..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-gray-400"
-                data-testid="polls-search-input"
-              />
-            </div>
 
             {/* Filter Dropdowns Row */}
             <div className="flex flex-wrap gap-3">
