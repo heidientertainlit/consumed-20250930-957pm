@@ -327,38 +327,18 @@ export default function PlayRanks() {
       {/* Header Section with Gradient */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
-          {/* Back Button */}
-          <button
-            onClick={() => window.history.back()}
-            className="flex items-center text-gray-300 hover:text-white mb-4"
-            data-testid="back-button"
-          >
-            <ChevronLeft size={20} />
-            <span className="ml-1">Back</span>
-          </button>
+          <div className="flex items-center gap-3 mb-4">
+            <button
+              onClick={() => window.history.back()}
+              className="flex items-center text-gray-400 hover:text-white transition-colors"
+              data-testid="back-button"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <h1 className="text-2xl font-semibold text-white" data-testid="ranks-title">Ranks</h1>
+          </div>
 
           <div className="mb-4">
-            <div className="flex items-center justify-center space-x-2 mb-3">
-              <Trophy className="text-orange-400" size={32} />
-              <h1 className="text-3xl font-semibold text-white" data-testid="ranks-title">Ranks</h1>
-            </div>
-            <p className="text-gray-400 text-center mb-6">
-              Vote on community rankings and create your own
-            </p>
-
-            {/* Search Row */}
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                type="text"
-                placeholder="Search ranks..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-gray-400"
-                data-testid="ranks-search-input"
-              />
-            </div>
-
             {/* Filter Row */}
             <div className="flex flex-wrap gap-2 items-center justify-between">
               <div className="flex gap-2">

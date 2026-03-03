@@ -384,7 +384,7 @@ export default function PlayTriviaPage() {
             >
               <ChevronLeft size={20} />
             </button>
-            <h1 className="text-3xl font-semibold text-white" data-testid="trivia-title">Trivia</h1>
+            <h1 className="text-2xl font-semibold text-white" data-testid="trivia-title">Trivia</h1>
           </div>
 
             {/* Search Row */}
