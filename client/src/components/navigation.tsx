@@ -558,8 +558,8 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               <line x1="17" y1="5" x2="12.5" y2="9.5" />
               <line x1="12.5" y1="9.5" x2="14.5" y2="9.5" />
               <line x1="12.5" y1="9.5" x2="12.5" y2="7.5" />
-              <line x1="17" y1="5" x2="18.5" y2="6.5" />
-              <line x1="17" y1="5" x2="15.5" y2="3.5" />
+              <line x1="17" y1="5" x2="20" y2="8" />
+              <line x1="17" y1="5" x2="14" y2="2" />
             </svg>
             <span className="text-white text-[10px] mt-0.5">Play</span>
           </Link>
