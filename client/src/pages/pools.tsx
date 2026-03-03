@@ -64,13 +64,11 @@ export default function PoolsPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        <div className="px-4 py-4">
-          <div className="flex items-center gap-3 mb-4">
-            <button onClick={() => setLocation('/play')} className="text-white/70 hover:text-white transition-colors">
-              <ChevronLeft size={24} />
-            </button>
-            <h1 className="text-2xl font-semibold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>Pools</h1>
-          </div>
+        <div className="px-4 pt-4 pb-8">
+          <button onClick={() => setLocation('/play')} className="text-white/70 hover:text-white transition-colors mb-3 block">
+            <ChevronLeft size={24} />
+          </button>
+          <h1 className="text-2xl font-semibold text-white mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>Pools</h1>
 
           {!showCreate ? (
             <Button onClick={() => setShowCreate(true)} className="w-full bg-purple-600 hover:bg-purple-700 text-white mb-2">
