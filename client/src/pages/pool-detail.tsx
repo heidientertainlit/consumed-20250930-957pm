@@ -143,7 +143,7 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
                     value={callItText}
                     onChange={e => setCallItText(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') submitAnswer(callItText); }}
-                    placeholder="Type your prediction..."
+                    placeholder="Type your response or prediction..."
                     className="flex-1 text-sm bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder:text-white/40 outline-none"
                   />
                   <button
