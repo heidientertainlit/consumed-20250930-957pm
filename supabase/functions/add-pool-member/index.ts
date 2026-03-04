@@ -49,23 +49,27 @@ serve(async (req) => {
     // Send notification via the established send-notification function (handles RLS, logging, error reporting)
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    await fetch(`${supabaseUrl}/functions/v1/send-notification`, {
+    const notifPayload = {
+      userId: target_user_id,
+      type: 'room_added',
+      triggeredByUserId: requester.id,
+      message: `${hostName} added you to the Room "${roomName}"`,
+      listId: pool_id,
+    };
+    console.log('[add-pool-member] sending notification payload:', JSON.stringify(notifPayload));
+    const notifRes = await fetch(`${supabaseUrl}/functions/v1/send-notification`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${serviceRoleKey}`,
         'apikey': serviceRoleKey,
       },
-      body: JSON.stringify({
-        userId: target_user_id,
-        type: 'room_added',
-        triggeredByUserId: requester.id,
-        message: `${hostName} added you to the Room "${roomName}"`,
-        listId: pool_id,
-      }),
+      body: JSON.stringify(notifPayload),
     });
+    const notifResult = await notifRes.json();
+    console.log('[add-pool-member] send-notification response:', JSON.stringify(notifResult));
 
-    return json({ success: true, user: target });
+    return json({ success: true, user: target, _notif: notifResult });
   } catch (e) {
     return json({ error: e.message }, 500);
   }

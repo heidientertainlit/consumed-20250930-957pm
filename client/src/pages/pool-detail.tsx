@@ -665,7 +665,7 @@ export default function PoolDetailPage() {
     const result = await callFn('add-pool-member', { pool_id: params.id, target_user_id: targetUserId }, session?.access_token || '');
     setAddingId(null);
     if (result.error) { toast({ title: result.error, variant: 'destructive' }); return; }
-    if (result._notif_error) { console.error('[add-pool-member] notification error:', result._notif_error); }
+    console.log('[add-pool-member] result:', JSON.stringify(result._notif || result._notif_error || 'no notif data'));
     setMemberSearch(''); setSearchResults([]);
     refresh();
   };
