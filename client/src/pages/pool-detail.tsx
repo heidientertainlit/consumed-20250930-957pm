@@ -616,8 +616,8 @@ export default function PoolDetailPage() {
   const picks = posts.filter(p => p.prompt_type === 'pick' || p.prompt_type === 'call_it');
   const comments = posts.filter(p => p.prompt_type === 'commentary');
 
-  // Featured pick = latest OPEN pick only (resolved picks go to Picks tab only)
-  const featuredPick = picks.find(p => p.status !== 'resolved') || null;
+  // Featured pick = latest OPEN pick WITH voting options only (open-ended picks go to Picks tab)
+  const featuredPick = picks.find(p => p.status !== 'resolved' && Array.isArray(p.options) && p.options.length > 0) || null;
 
   const myName = (data?.members?.find((m: any) => m.user_id === session?.user?.id)?.users as any)?.display_name
     || (data?.members?.find((m: any) => m.user_id === session?.user?.id)?.users as any)?.user_name
