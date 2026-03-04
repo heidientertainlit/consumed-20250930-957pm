@@ -65,7 +65,7 @@ serve(async (req) => {
     };
     if (resolvedRoundId) insertData.round_id = resolvedRoundId;
 
-    const { data: prompt, error } = await svc.from('pool_prompts').insert(insertData).select('*, creator:created_by(id, user_name, display_name, avatar_url)').single();
+    const { data: prompt, error } = await svc.from('pool_prompts').insert(insertData).select('*, creator:created_by(id, user_name, display_name)').single();
     if (error) return json({ error: error.message }, 500);
 
     // Notify all members (except the host) — skip for commentary if desired

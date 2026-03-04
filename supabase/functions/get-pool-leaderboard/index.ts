@@ -33,7 +33,7 @@ serve(async (req) => {
 
     const { data: members } = await svc
       .from('pool_members')
-      .select('user_id, total_points, role, users:user_id(id, user_name, display_name, avatar_url)')
+      .select('user_id, total_points, role, users:user_id(id, user_name, display_name)')
       .eq('pool_id', poolId)
       .order('total_points', { ascending: false });
 
@@ -42,7 +42,6 @@ serve(async (req) => {
       user_id: m.user_id,
       display_name: (m.users as any)?.display_name || (m.users as any)?.user_name || 'Unknown',
       username: (m.users as any)?.user_name,
-      avatar_url: (m.users as any)?.avatar_url,
       total_points: m.total_points || 0,
       is_current_user: m.user_id === appUser.id
     }));
