@@ -19,16 +19,30 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return json({ error: 'Unauthorized' }, 401);
 
-    const { invite_code } = await req.json();
-    if (!invite_code?.trim()) return json({ error: 'Invite code is required' }, 400);
+    const { invite_code, pool_id } = await req.json();
 
     const svc = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
     const { data: appUser } = await svc.from('users').select('id, user_name, display_name').eq('email', user.email).single();
     if (!appUser) return json({ error: 'User not found' }, 404);
 
-    const { data: pool } = await svc.from('pools').select('id, name, host_id, status').eq('invite_code', invite_code.toUpperCase().trim()).single();
-    if (!pool) return json({ error: 'Invalid invite link' }, 404);
-    if (pool.status === 'completed') return json({ error: 'This pool has ended' }, 400);
+    let pool: any = null;
+
+    if (pool_id) {
+      // Joining a public room by pool_id (no invite code required)
+      const { data } = await svc.from('pools').select('id, name, host_id, status, is_public').eq('id', pool_id).single();
+      if (!data) return json({ error: 'Room not found' }, 404);
+      if (!data.is_public) return json({ error: 'This room is private. You need an invite link.' }, 403);
+      pool = data;
+    } else if (invite_code?.trim()) {
+      // Joining by invite code (works for both public and private)
+      const { data } = await svc.from('pools').select('id, name, host_id, status, is_public').eq('invite_code', invite_code.toUpperCase().trim()).single();
+      if (!data) return json({ error: 'Invalid invite link' }, 404);
+      pool = data;
+    } else {
+      return json({ error: 'Invite code or room ID is required' }, 400);
+    }
+
+    if (pool.status === 'completed') return json({ error: 'This room has ended' }, 400);
 
     const { data: existing } = await svc.from('pool_members').select('id').eq('pool_id', pool.id).eq('user_id', appUser.id).single();
     if (existing) return json({ success: true, already_member: true, pool_id: pool.id, pool_name: pool.name });
@@ -36,7 +50,7 @@ serve(async (req) => {
     const { error } = await svc.from('pool_members').insert({ pool_id: pool.id, user_id: appUser.id, role: 'member', total_points: 0 });
     if (error) return json({ error: error.message }, 500);
 
-    // Notify the host (unless the host is joining their own room)
+    // Notify the host
     if (pool.host_id && pool.host_id !== appUser.id) {
       const displayName = appUser.display_name || appUser.user_name || 'Someone';
       await svc.from('notifications').insert({

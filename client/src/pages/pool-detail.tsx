@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -428,6 +428,8 @@ export default function PoolDetailPage() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
+  const [joiningRoom, setJoiningRoom] = useState(false);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -449,6 +451,25 @@ export default function PoolDetailPage() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast({ title: 'Invite link copied!' });
+  };
+
+  const handleToggleVisibility = async (newValue: boolean) => {
+    setTogglingVisibility(true);
+    const result = await callFn('toggle-room-visibility', { pool_id: params.id, is_public: newValue }, token);
+    setTogglingVisibility(false);
+    if (result.error) { toast({ title: result.error, variant: 'destructive' }); return; }
+    refresh();
+    toast({ title: newValue ? 'Room is now public' : 'Room is now private' });
+  };
+
+  const handleJoinRoom = async () => {
+    setJoiningRoom(true);
+    const result = await callFn('join-pool', { pool_id: params.id }, token);
+    setJoiningRoom(false);
+    if (result.error) { toast({ title: result.error, variant: 'destructive' }); return; }
+    refresh();
+    queryClient.invalidateQueries({ queryKey: ['user-pools'] });
+    toast({ title: `Joined ${pool?.name || 'room'}!` });
   };
 
   useEffect(() => {
@@ -478,6 +499,8 @@ export default function PoolDetailPage() {
   const posts: any[] = data?.posts || [];
   const members: any[] = data?.members || [];
   const isHost = data?.is_host || false;
+  const isMember = data?.is_member ?? true;
+  const isPublic = pool?.is_public ?? false;
   const token = session?.access_token || '';
 
   // Separate picks and comments
@@ -519,10 +542,12 @@ export default function PoolDetailPage() {
           <button onClick={() => setLocation('/rooms')} className="text-white/60 hover:text-white transition-colors">
             <ChevronLeft size={24} />
           </button>
-          <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/70 text-xs font-medium border border-white/20 hover:bg-white/10 transition-colors">
-            {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-            {copied ? 'Copied!' : 'Invite'}
-          </button>
+          {isMember && (
+            <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/70 text-xs font-medium border border-white/20 hover:bg-white/10 transition-colors">
+              {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+              {copied ? 'Copied!' : 'Invite'}
+            </button>
+          )}
         </div>
 
         {/* Room name */}
@@ -536,6 +561,42 @@ export default function PoolDetailPage() {
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3.5 mb-0">
             <AboutSection pool={pool} members={members} isLoading={isLoading} />
           </div>
+
+          {/* Visibility toggle — host only */}
+          {!isLoading && isHost && (
+            <div className="flex items-center justify-between mt-3 px-1">
+              <div className="flex items-center gap-1.5">
+                {isPublic
+                  ? <Globe size={13} className="text-emerald-300" />
+                  : <Lock size={13} className="text-white/40" />
+                }
+                <span className="text-white/50 text-xs font-medium">
+                  {isPublic ? 'Public — anyone can join' : 'Private — invite only'}
+                </span>
+              </div>
+              <button
+                onClick={() => handleToggleVisibility(!isPublic)}
+                disabled={togglingVisibility}
+                className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-50 ${isPublic ? 'bg-emerald-500' : 'bg-white/20'}`}
+              >
+                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${isPublic ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+          )}
+
+          {/* Non-member join banner — public rooms */}
+          {!isLoading && !isMember && isPublic && (
+            <div className="mt-3 px-1">
+              <button
+                onClick={handleJoinRoom}
+                disabled={joiningRoom}
+                className="w-full py-2.5 rounded-2xl text-white text-sm font-semibold disabled:opacity-50"
+                style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
+              >
+                {joiningRoom ? 'Joining...' : 'Join this Room'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Overlapping member bubbles — between About and tabs */}
@@ -608,8 +669,13 @@ export default function PoolDetailPage() {
               <FeaturedPickBanner key={featuredPick.id} post={featuredPick} isHost={isHost} token={token} onRefresh={refresh} />
             )}
 
-            {/* Composer */}
-            <PostComposer poolId={params.id} token={token} isHost={isHost} currentUserName={myName} onPosted={refresh} />
+            {/* Composer — members only */}
+            {isMember && <PostComposer poolId={params.id} token={token} isHost={isHost} currentUserName={myName} onPosted={refresh} />}
+            {!isMember && (
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-4 px-4 text-center">
+                <p className="text-gray-400 text-sm">Join this room to participate</p>
+              </div>
+            )}
 
             {/* Comments */}
             <div className="space-y-3">
@@ -791,10 +857,12 @@ export default function PoolDetailPage() {
               );
             })}
 
-            <button onClick={handleCopyLink} className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-gray-300 text-gray-500 text-sm bg-white hover:bg-gray-50 transition-colors">
-              {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-              {copied ? 'Copied!' : 'Copy invite link'}
-            </button>
+            {isMember && (
+              <button onClick={handleCopyLink} className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-gray-300 text-gray-500 text-sm bg-white hover:bg-gray-50 transition-colors">
+                {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                {copied ? 'Copied!' : 'Copy invite link'}
+              </button>
+            )}
           </div>
         )}
       </div>

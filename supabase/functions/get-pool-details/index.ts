@@ -38,7 +38,8 @@ serve(async (req) => {
     const { data: membership } = await svc.from('pool_members').select('role').eq('pool_id', poolId).eq('user_id', appUser.id).single();
     const isHost = pool.host_id === appUser.id;
     const isMember = !!membership || isHost;
-    if (!isMember) return json({ error: 'You are not a member of this pool' }, 403);
+    // Public rooms are viewable by anyone; private rooms require membership
+    if (!isMember && !pool.is_public) return json({ error: 'You are not a member of this room' }, 403);
 
     // Auto-add host to pool_members if missing
     if (isHost && !membership) {

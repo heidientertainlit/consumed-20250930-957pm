@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Plus, Trophy, Crown, Trash2, Users } from "lucide-react";
+import { ChevronLeft, Plus, Trophy, Crown, Trash2, Users, Globe, Lock } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,12 @@ async function callFn(name: string, body: unknown, token: string) {
   return res.json();
 }
 
+function VisibilityBadge({ isPublic }: { isPublic: boolean }) {
+  return isPublic
+    ? <span className="flex items-center gap-0.5 text-[10px] text-emerald-600 font-medium bg-emerald-50 rounded-full px-2 py-0.5"><Globe size={9} /> Public</span>
+    : <span className="flex items-center gap-0.5 text-[10px] text-gray-400 font-medium bg-gray-100 rounded-full px-2 py-0.5"><Lock size={9} /> Private</span>;
+}
+
 export default function PoolsPage() {
   const [, setLocation] = useLocation();
   const { session } = useAuth();
@@ -26,7 +32,9 @@ export default function PoolsPage() {
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [newPoolName, setNewPoolName] = useState('');
+  const [isPublicNew, setIsPublicNew] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [joiningId, setJoiningId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['user-pools'],
@@ -40,19 +48,21 @@ export default function PoolsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (name: string) => callFn('create-pool', { name }, session?.access_token || ''),
+    mutationFn: (payload: { name: string; is_public: boolean }) =>
+      callFn('create-pool', payload, session?.access_token || ''),
     onSuccess: (data) => {
       if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
       queryClient.invalidateQueries({ queryKey: ['user-pools'] });
       setShowCreate(false);
       setNewPoolName('');
+      setIsPublicNew(false);
       setLocation(`/room/${data.pool.id}`);
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (poolId: string) => callFn('delete-pool', { pool_id: poolId }, session?.access_token || ''),
-    onSuccess: (data, poolId) => {
+    onSuccess: (data) => {
       if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
       queryClient.invalidateQueries({ queryKey: ['user-pools'] });
       setConfirmDeleteId(null);
@@ -60,7 +70,17 @@ export default function PoolsPage() {
     }
   });
 
-  const pools: any[] = data?.pools || [];
+  const handleJoin = async (poolId: string) => {
+    setJoiningId(poolId);
+    const result = await callFn('join-pool', { pool_id: poolId }, session?.access_token || '');
+    setJoiningId(null);
+    if (result.error) { toast({ title: result.error, variant: 'destructive' }); return; }
+    queryClient.invalidateQueries({ queryKey: ['user-pools'] });
+    setLocation(`/room/${poolId}`);
+  };
+
+  const myRooms: any[] = data?.myRooms || data?.pools || [];
+  const publicRooms: any[] = data?.publicRooms || [];
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: '#0a0a0f' }}>
@@ -80,23 +100,46 @@ export default function PoolsPage() {
               <Plus size={14} /> New Room
             </button>
           ) : (
-            <div className="flex gap-2 mb-2">
-              <Input
-                value={newPoolName}
-                onChange={(e) => setNewPoolName(e.target.value)}
-                placeholder="Room name..."
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
-                autoFocus
-                onKeyDown={(e) => { if (e.key === 'Enter' && newPoolName.trim()) createMutation.mutate(newPoolName); if (e.key === 'Escape') { setShowCreate(false); setNewPoolName(''); } }}
-              />
-              <Button
-                onClick={() => createMutation.mutate(newPoolName)}
-                disabled={!newPoolName.trim() || createMutation.isPending}
-                className="bg-purple-600 hover:bg-purple-700 text-white shrink-0"
-              >
-                {createMutation.isPending ? '...' : 'Create'}
-              </Button>
-              <Button variant="ghost" onClick={() => { setShowCreate(false); setNewPoolName(''); }} className="text-white/60 shrink-0">Cancel</Button>
+            <div className="space-y-2 mb-2">
+              <div className="flex gap-2">
+                <Input
+                  value={newPoolName}
+                  onChange={(e) => setNewPoolName(e.target.value)}
+                  placeholder="Room name..."
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newPoolName.trim()) createMutation.mutate({ name: newPoolName, is_public: isPublicNew });
+                    if (e.key === 'Escape') { setShowCreate(false); setNewPoolName(''); setIsPublicNew(false); }
+                  }}
+                />
+                <Button
+                  onClick={() => createMutation.mutate({ name: newPoolName, is_public: isPublicNew })}
+                  disabled={!newPoolName.trim() || createMutation.isPending}
+                  className="bg-purple-600 hover:bg-purple-700 text-white shrink-0"
+                >
+                  {createMutation.isPending ? '...' : 'Create'}
+                </Button>
+                <Button variant="ghost" onClick={() => { setShowCreate(false); setNewPoolName(''); setIsPublicNew(false); }} className="text-white/60 shrink-0">Cancel</Button>
+              </div>
+              {/* Public / Private toggle */}
+              <div className="flex items-center gap-3 pl-1">
+                <button
+                  onClick={() => setIsPublicNew(false)}
+                  className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${!isPublicNew ? 'border-white/40 text-white bg-white/15' : 'border-white/15 text-white/40'}`}
+                >
+                  <Lock size={11} /> Private
+                </button>
+                <button
+                  onClick={() => setIsPublicNew(true)}
+                  className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${isPublicNew ? 'border-emerald-400/60 text-emerald-300 bg-emerald-400/10' : 'border-white/15 text-white/40'}`}
+                >
+                  <Globe size={11} /> Public
+                </button>
+                <span className="text-white/30 text-xs">
+                  {isPublicNew ? 'Anyone can find and join' : 'Invite-only'}
+                </span>
+              </div>
             </div>
           )}
         </div>
@@ -109,33 +152,36 @@ export default function PoolsPage() {
           </div>
         )}
 
-        {!isLoading && pools.length === 0 && (
+        {/* ── My Rooms ── */}
+        {!isLoading && myRooms.length > 0 && (
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider pt-1">My Rooms</p>
+        )}
+
+        {!isLoading && myRooms.length === 0 && publicRooms.length === 0 && (
           <div className="text-center py-16">
             <Trophy size={40} className="text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm">No rooms yet. Create one to get started.</p>
+            <p className="text-gray-400 text-sm">No rooms yet. Create one or browse public rooms below.</p>
           </div>
         )}
 
-        {pools.map((pool) => (
+        {myRooms.map((pool) => (
           <div key={pool.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3 p-4">
-              {/* Room icon — matches play hub */}
               <div className="w-10 h-10 rounded-full bg-fuchsia-50 flex items-center justify-center shrink-0">
                 <Users size={18} className="text-fuchsia-500" />
               </div>
 
-              {/* Name + stats */}
               <button onClick={() => setLocation(`/room/${pool.id}`)} className="flex-1 min-w-0 text-left">
-                <div className="flex items-center gap-1.5 mb-0.5">
+                <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                   <h3 className="text-gray-900 font-semibold text-base truncate">{pool.name}</h3>
                   {pool.is_host && <Crown size={11} className="text-yellow-500 shrink-0" />}
+                  <VisibilityBadge isPublic={pool.is_public} />
                 </div>
                 <p className="text-gray-400 text-xs">
                   {pool.member_count} {pool.member_count === 1 ? 'member' : 'members'} &bull; {pool.round_count} {pool.round_count === 1 ? 'round' : 'rounds'}
                 </p>
               </button>
 
-              {/* Delete (host only) */}
               {pool.is_host && (
                 confirmDeleteId === pool.id ? (
                   <div className="flex items-center gap-2 shrink-0">
@@ -146,9 +192,7 @@ export default function PoolsPage() {
                     >
                       {deleteMutation.isPending ? '...' : 'Delete'}
                     </button>
-                    <button onClick={() => setConfirmDeleteId(null)} className="text-xs text-gray-400">
-                      Cancel
-                    </button>
+                    <button onClick={() => setConfirmDeleteId(null)} className="text-xs text-gray-400">Cancel</button>
                   </div>
                 ) : (
                   <button
@@ -162,6 +206,49 @@ export default function PoolsPage() {
             </div>
           </div>
         ))}
+
+        {/* ── Discover Public Rooms ── */}
+        {!isLoading && publicRooms.length > 0 && (
+          <>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider pt-3">Discover</p>
+            {publicRooms.map((pool) => (
+              <div key={pool.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-3 p-4">
+                  <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
+                    <Globe size={18} className="text-emerald-500" />
+                  </div>
+
+                  <button onClick={() => setLocation(`/room/${pool.id}`)} className="flex-1 min-w-0 text-left">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <h3 className="text-gray-900 font-semibold text-base truncate">{pool.name}</h3>
+                      <span className="text-[10px] text-emerald-600 font-medium bg-emerald-50 rounded-full px-2 py-0.5 shrink-0">Public</span>
+                    </div>
+                    <p className="text-gray-400 text-xs">
+                      {pool.member_count} {pool.member_count === 1 ? 'member' : 'members'}
+                      {pool.host?.display_name ? ` · by ${pool.host.display_name}` : pool.host?.user_name ? ` · by ${pool.host.user_name}` : ''}
+                    </p>
+                  </button>
+
+                  <button
+                    onClick={() => handleJoin(pool.id)}
+                    disabled={joiningId === pool.id}
+                    className="shrink-0 text-xs font-semibold px-4 py-1.5 rounded-full text-white disabled:opacity-50"
+                    style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
+                  >
+                    {joiningId === pool.id ? '...' : 'Join'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+
+        {!isLoading && myRooms.length === 0 && publicRooms.length === 0 && (
+          <div className="text-center pt-8">
+            <Globe size={32} className="text-gray-300 mx-auto mb-2" />
+            <p className="text-gray-400 text-sm">No public rooms available yet.</p>
+          </div>
+        )}
       </div>
 
       <Navigation />
