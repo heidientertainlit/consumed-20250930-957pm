@@ -61,6 +61,7 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
   const [expanded, setExpanded] = useState(false);
   const [resolving, setResolving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [callItText, setCallItText] = useState('');
   const [localVoteCounts, setLocalVoteCounts] = useState<Record<string, number>>(post.vote_counts || {});
   const [localUserAnswer, setLocalUserAnswer] = useState<string | null>(post.user_answer?.answer || null);
 
@@ -70,15 +71,18 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
   }, [post.vote_counts, post.user_answer]);
 
   const isResolved = post.status === 'resolved';
+  const isCallIt = post.prompt_type === 'call_it' || (post.options || []).length === 0;
   const options: string[] = post.options || [];
+  const allAnswers: any[] = post.all_answers || [];
   const totalVotes = Object.values(localVoteCounts).reduce((s, n) => s + n, 0);
   const hasVoted = !!localUserAnswer;
+  const label = isCallIt ? 'Call It' : 'The Pick';
 
   const submitAnswer = async (answer: string) => {
-    if (submitting || hasVoted) return;
+    if (submitting || hasVoted || !answer.trim()) return;
     setSubmitting(true);
     setLocalUserAnswer(answer);
-    setLocalVoteCounts(prev => ({ ...prev, [answer]: (prev[answer] || 0) + 1 }));
+    if (!isCallIt) setLocalVoteCounts(prev => ({ ...prev, [answer]: (prev[answer] || 0) + 1 }));
     const data = await callFn('submit-pool-answer', { prompt_id: post.id, answer }, token);
     setSubmitting(false);
     if (data.error) { setLocalUserAnswer(null); toast({ title: data.error, variant: 'destructive' }); }
@@ -94,20 +98,17 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
 
   return (
     <div className="rounded-2xl overflow-hidden mb-4" style={{ background: 'linear-gradient(135deg, #12102b 0%, #1e1654 55%, #2d1f6e 100%)' }}>
-      {/* Collapsed header row — always visible, tappable */}
+      {/* Collapsed header row */}
       <button
         onClick={() => setExpanded(e => !e)}
         className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
       >
-        {/* Play icon in circle */}
         <div className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center shrink-0">
           <Play size={14} className="text-white fill-white ml-0.5" />
         </div>
-
-        {/* Label + question */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-white text-sm font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>The Pick</span>
+            <span className="text-white text-sm font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>{label}</span>
             {!isResolved
               ? <span className="text-[10px] font-bold text-emerald-400 tracking-widest">LIVE</span>
               : <span className="text-[10px] font-medium text-white/40 tracking-wide">CLOSED</span>
@@ -115,8 +116,6 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
           </div>
           <p className="text-white/60 text-xs leading-snug truncate">{post.prompt_text}</p>
         </div>
-
-        {/* Chevron */}
         <div className="shrink-0 text-white/40">
           {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </div>
@@ -125,7 +124,6 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
       {/* Expanded body */}
       {expanded && (
         <div className="px-4 pb-4 pt-1 space-y-3">
-          {/* Full question */}
           <p className="text-white font-medium text-sm leading-snug">{post.prompt_text}</p>
 
           {isResolved && post.correct_answer && (
@@ -135,8 +133,67 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
             </div>
           )}
 
-          {/* Options — member vote */}
-          {!isHost && (
+          {/* ── CALL IT: open-ended text input ── */}
+          {isCallIt && !isHost && (
+            <div className="space-y-2">
+              {!hasVoted && !isResolved && (
+                <div className="flex gap-2">
+                  <input
+                    value={callItText}
+                    onChange={e => setCallItText(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') submitAnswer(callItText); }}
+                    placeholder="Type your prediction..."
+                    className="flex-1 text-sm bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder:text-white/40 outline-none"
+                  />
+                  <button
+                    onClick={() => submitAnswer(callItText)}
+                    disabled={!callItText.trim() || submitting}
+                    className="px-3 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                    style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
+                  >
+                    <Send size={14} />
+                  </button>
+                </div>
+              )}
+              {hasVoted && (
+                <div className="bg-white/10 rounded-xl px-3 py-2 text-sm text-white/80">
+                  Your call: <span className="font-semibold text-white">{localUserAnswer}</span>
+                </div>
+              )}
+              {allAnswers.length > 0 && (
+                <div className="space-y-1.5 mt-1">
+                  <p className="text-white/30 text-[11px] uppercase tracking-wide font-semibold">All calls</p>
+                  {allAnswers.map((a: any, i: number) => (
+                    <div key={i} className="bg-white/7 rounded-xl px-3 py-2 text-sm text-white/70">
+                      {a.answer}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── CALL IT: host view ── */}
+          {isCallIt && isHost && (
+            <div className="space-y-2">
+              {allAnswers.length === 0 && (
+                <p className="text-white/30 text-xs">No predictions submitted yet.</p>
+              )}
+              {allAnswers.map((a: any, i: number) => (
+                <div key={i} className="flex items-center justify-between bg-white/7 rounded-xl px-3 py-2">
+                  <span className="text-sm text-white/80">{a.answer}</span>
+                  {!isResolved && (
+                    <button onClick={() => resolvePickPrompt(a.answer)} className="text-emerald-400 text-[11px] font-semibold hover:text-emerald-300 transition-colors">
+                      Mark correct
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── PICK: member vote (options) ── */}
+          {!isCallIt && !isHost && (
             <div className="space-y-2">
               {options.map((opt) => {
                 const count = localVoteCounts[opt] || 0;
@@ -153,10 +210,8 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
                   >
                     <div className="relative px-3 py-2.5">
                       {showBars && (
-                        <div
-                          className="absolute inset-y-0 left-0 rounded-xl transition-all duration-500"
-                          style={{ width: `${pct}%`, background: isSelected ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.06)' }}
-                        />
+                        <div className="absolute inset-y-0 left-0 rounded-xl transition-all duration-500"
+                          style={{ width: `${pct}%`, background: isSelected ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.06)' }} />
                       )}
                       <div className="relative flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
@@ -175,8 +230,8 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
             </div>
           )}
 
-          {/* Options — host view */}
-          {isHost && !isResolved && (
+          {/* ── PICK: host view (options) ── */}
+          {!isCallIt && isHost && !isResolved && (
             resolving ? (
               <div className="space-y-2">
                 <p className="text-white/50 text-xs">Select the correct answer:</p>
@@ -449,7 +504,7 @@ function PickComposer({ poolId, token, onPosted }: {
         className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-white text-sm font-semibold mb-3 transition-opacity hover:opacity-90"
         style={{ background: 'linear-gradient(135deg, #12102b 0%, #1e1654 55%, #2d1f6e 100%)' }}
       >
-        <Plus size={15} /> New Pick
+        <Plus size={15} /> Create Pick
       </button>
     );
   }
@@ -630,6 +685,9 @@ export default function PoolDetailPage() {
   const picks = posts.filter(p => p.prompt_type === 'pick' || p.prompt_type === 'call_it');
   const comments = posts.filter(p => p.prompt_type === 'commentary');
 
+  // Featured pick = latest OPEN pick shown at top of Discussion (both poll-style and call-it)
+  const featuredPick = picks.find(p => p.status !== 'resolved') || null;
+
 
   const myName = (data?.members?.find((m: any) => m.user_id === session?.user?.id)?.users as any)?.display_name
     || (data?.members?.find((m: any) => m.user_id === session?.user?.id)?.users as any)?.user_name
@@ -785,6 +843,11 @@ export default function PoolDetailPage() {
         {/* ── DISCUSSION ── */}
         {!isLoading && tab === 'discussion' && (
           <div className="space-y-3">
+            {/* Featured pick banner — any open pick (poll or call it) */}
+            {featuredPick && (
+              <FeaturedPickBanner key={featuredPick.id} post={featuredPick} isHost={isHost} token={token} onRefresh={refresh} />
+            )}
+
             {/* Composer — members only */}
             {isMember && <PostComposer poolId={params.id} token={token} currentUserName={myName} onPosted={refresh} />}
             {!isMember && (
