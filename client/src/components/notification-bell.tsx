@@ -44,6 +44,7 @@ export function NotificationBell() {
   const { data: notifications = [], refetch } = useQuery<Notification[]>({
     queryKey: ['/api/notifications', userId],
     enabled: !!userId,
+    refetchInterval: 30000,
     queryFn: async () => {
       if (!userId) return [];
       
@@ -54,7 +55,11 @@ export function NotificationBell() {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[notifications] query error:', error.message, error.code);
+        throw error;
+      }
+      console.log('[notifications] loaded:', data?.length || 0, 'for user', userId, data?.map((n: any) => ({ type: n.type, message: n.message })));
       return data || [];
     },
   });

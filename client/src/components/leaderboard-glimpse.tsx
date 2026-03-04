@@ -8,28 +8,41 @@ import { Trophy, Crown, TrendingUp, ChevronRight } from 'lucide-react';
 export function LeaderboardGlimpse() {
   const { session } = useAuth();
 
-  const { data: topUsers, isLoading } = useQuery({
+  const { data: topUsers } = useQuery({
     queryKey: ['leaderboard-glimpse'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, display_name, avatar_url, points')
-        .order('points', { ascending: false })
+      const { data: pointsData, error } = await supabase
+        .from('user_points')
+        .select('user_id, all_time')
+        .order('all_time', { ascending: false })
         .limit(5);
-      
-      if (error) throw error;
-      return data || [];
+
+      if (error || !pointsData || pointsData.length === 0) return [];
+
+      const userIds = pointsData.map((p: any) => p.user_id);
+      const { data: usersData } = await supabase
+        .from('users')
+        .select('id, user_name, display_name')
+        .in('id', userIds);
+
+      return pointsData.map((p: any) => {
+        const u = (usersData || []).find((u: any) => u.id === p.user_id);
+        return {
+          id: p.user_id,
+          display_name: u?.display_name || u?.user_name || 'Anonymous',
+          points: p.all_time || 0,
+        };
+      });
     },
     enabled: !!session?.access_token
   });
 
   if (!session) return null;
-  
-  // Show loading state or placeholder when no data
+
   const displayUsers = topUsers && topUsers.length > 0 ? topUsers : [
-    { id: '1', username: 'Player1', display_name: 'Top Player', avatar_url: null, points: 1250 },
-    { id: '2', username: 'Player2', display_name: 'Rising Star', avatar_url: null, points: 980 },
-    { id: '3', username: 'Player3', display_name: 'Game Fan', avatar_url: null, points: 750 }
+    { id: '1', display_name: 'Top Player', points: 1250 },
+    { id: '2', display_name: 'Rising Star', points: 980 },
+    { id: '3', display_name: 'Game Fan', points: 750 }
   ];
 
   const getMedalColor = (index: number) => {
@@ -60,8 +73,8 @@ export function LeaderboardGlimpse() {
       </div>
 
       <div className="space-y-2">
-        {displayUsers.slice(0, 3).map((user, index) => (
-          <div 
+        {displayUsers.slice(0, 3).map((user: any, index: number) => (
+          <div
             key={user.id}
             className="flex items-center gap-3 bg-white/10 rounded-xl px-3 py-2"
           >
@@ -73,17 +86,13 @@ export function LeaderboardGlimpse() {
               )}
             </div>
             <div className="w-8 h-8 rounded-full bg-purple-300 flex items-center justify-center overflow-hidden">
-              {user.avatar_url ? (
-                <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-purple-700 font-bold text-sm">
-                  {(user.display_name || user.username || '?')[0].toUpperCase()}
-                </span>
-              )}
+              <span className="text-purple-700 font-bold text-sm">
+                {(user.display_name || '?')[0].toUpperCase()}
+              </span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">
-                {user.display_name || user.username || 'Anonymous'}
+                {user.display_name}
               </p>
             </div>
             <div className="flex items-center gap-1">
