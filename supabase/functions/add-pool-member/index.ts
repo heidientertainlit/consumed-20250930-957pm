@@ -46,18 +46,16 @@ serve(async (req) => {
     const hostName = host?.display_name || host?.user_name || 'Someone';
     const roomName = pool.name || 'a room';
 
-    try {
-      await svc.from('notifications').insert({
-        user_id: target_user_id,
-        type: 'room_added',
-        triggered_by_user_id: requester.id,
-        message: `${hostName} added you to the Room "${roomName}"`,
-        list_id: pool_id,
-        read: false,
-      });
-    } catch (_e) {} // Non-blocking — member is added regardless
+    const { error: notifError } = await svc.from('notifications').insert({
+      user_id: target_user_id,
+      type: 'room_added',
+      triggered_by_user_id: requester.id,
+      message: `${hostName} added you to the Room "${roomName}"`,
+      list_id: pool_id,
+      read: false,
+    });
 
-    return json({ success: true, user: target });
+    return json({ success: true, user: target, _notif_error: notifError?.message || null });
   } catch (e) {
     return json({ error: e.message }, 500);
   }

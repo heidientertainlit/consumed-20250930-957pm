@@ -665,7 +665,7 @@ export default function PoolDetailPage() {
     const result = await callFn('add-pool-member', { pool_id: params.id, target_user_id: targetUserId }, session?.access_token || '');
     setAddingId(null);
     if (result.error) { toast({ title: result.error, variant: 'destructive' }); return; }
-    toast({ title: `${result.user?.display_name || result.user?.user_name || 'Member'} added!` });
+    if (result._notif_error) { console.error('[add-pool-member] notification error:', result._notif_error); }
     setMemberSearch(''); setSearchResults([]);
     refresh();
   };
@@ -705,7 +705,6 @@ export default function PoolDetailPage() {
     setManagingId(null);
     if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
     refresh();
-    toast({ title: action === 'delete' ? 'Pick deleted' : 'Pick closed' });
   };
 
   return (
