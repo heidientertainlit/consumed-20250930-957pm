@@ -142,7 +142,11 @@ serve(async (req) => {
 
     const posts = prompts.map((p: any) => ({
       ...p,
-      parent_id: parentIdMap[p.id] ?? null,
+      // For commentary: use parent_id column (if in schema cache) OR correct_answer (our proxy fallback)
+      // For picks/call_it: parent_id is always null
+      parent_id: p.prompt_type === 'commentary'
+        ? (parentIdMap[p.id] ?? p.correct_answer ?? null)
+        : null,
       creator: userMap[p.created_by] || null,
       user_answer: userAnswers[p.id] || null,
       // all_answers for both pick and call_it (powers Picks tab vote breakdown)

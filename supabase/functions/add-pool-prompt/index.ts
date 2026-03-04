@@ -74,8 +74,14 @@ serve(async (req) => {
     if (resolvedRoundId) insertData.round_id = resolvedRoundId;
     if (parent_id) insertData.parent_id = parent_id;
 
-    // Always insert WITHOUT parent_id via PostgREST (avoids schema cache dependency)
+    // For commentary replies, store parent_id in correct_answer column (already in schema cache).
+    // correct_answer is only meaningful for pick/call_it; for commentary it's always null otherwise.
+    // This avoids the PostgREST schema cache issue with the parent_id column entirely.
     const { parent_id: _skip, ...insertWithoutParent } = insertData;
+    if (parent_id && isCommentary) {
+      insertWithoutParent.correct_answer = parent_id;
+    }
+
     const { data: prompt, error: insertErr } = await svc
       .from('pool_prompts')
       .insert(insertWithoutParent)
@@ -83,36 +89,9 @@ serve(async (req) => {
       .single();
     if (insertErr) return json({ error: insertErr.message }, 500);
 
-    // If this is a reply, set parent_id via the Supabase REST API directly
-    // This bypasses the PostgREST schema cache by using a raw PATCH
-    if (parent_id && prompt?.id) {
-      try {
-        const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-        const patchRes = await fetch(
-          `${supabaseUrl}/rest/v1/pool_prompts?id=eq.${encodeURIComponent(prompt.id)}`,
-          {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': serviceKey,
-              'Authorization': `Bearer ${serviceKey}`,
-              'Prefer': 'return=minimal',
-            },
-            body: JSON.stringify({ parent_id }),
-          }
-        );
-        if (patchRes.ok) {
-          prompt.parent_id = parent_id;
-        } else {
-          // Schema cache stale — send reload signal so next request works
-          await fetch(`${supabaseUrl}/rest/v1/rpc/pg_notify`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}` },
-            body: JSON.stringify({ channel: 'pgrst', payload: 'reload schema' }),
-          }).catch(() => {});
-        }
-      } catch { /* post is saved — threading is best-effort */ }
+    // Surface parent_id in response so client can handle threading
+    if (parent_id && isCommentary && prompt) {
+      prompt.parent_id = parent_id;
     }
 
     // Notify all members (except the host) — skip for commentary if desired
