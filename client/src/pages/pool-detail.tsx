@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock } from "lucide-react";
+import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -215,14 +215,26 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
 }
 
 /* ─── Thread Card (top-level post + nested replies) ─────────────────── */
-function ThreadCard({ post, replies, isMember, token, onRefresh, currentUserName }: {
-  post: any; replies: any[]; isMember: boolean; token: string; onRefresh: () => void; currentUserName: string;
+function ThreadCard({ post, replies, isMember, token, onRefresh, currentUserName, isHost, currentUserId }: {
+  post: any; replies: any[]; isMember: boolean; token: string; onRefresh: () => void;
+  currentUserName: string; isHost: boolean; currentUserId: string;
 }) {
   const { toast } = useToast();
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showReplies, setShowReplies] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const canDelete = (createdBy: string) => isHost || currentUserId === createdBy;
+
+  const deletePost = async (promptId: string) => {
+    setDeleting(promptId);
+    const data = await callFn('manage-pool-prompt', { prompt_id: promptId, action: 'delete' }, token);
+    setDeleting(null);
+    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
+    onRefresh();
+  };
 
   const creator = post.creator;
   const name = creator?.display_name || creator?.user_name || 'Member';
@@ -277,6 +289,15 @@ function ThreadCard({ post, replies, isMember, token, onRefresh, currentUserName
               {showReplies ? 'Hide' : `${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`}
             </button>
           )}
+          {canDelete(post.created_by) && (
+            <button
+              onClick={() => deletePost(post.id)}
+              disabled={deleting === post.id}
+              className="text-gray-300 text-xs hover:text-red-400 flex items-center gap-1 transition-colors ml-auto disabled:opacity-40"
+            >
+              <Trash2 size={11} /> {deleting === post.id ? 'Deleting…' : 'Delete'}
+            </button>
+          )}
         </div>
 
         {/* Inline reply box */}
@@ -323,6 +344,15 @@ function ThreadCard({ post, replies, isMember, token, onRefresh, currentUserName
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-gray-900 text-sm font-semibold">{rName}</span>
                     <span className="text-gray-400 text-[11px]">{timeAgo(reply.created_at)}</span>
+                    {canDelete(reply.created_by) && (
+                      <button
+                        onClick={() => deletePost(reply.id)}
+                        disabled={deleting === reply.id}
+                        className="ml-auto text-gray-300 hover:text-red-400 transition-colors disabled:opacity-40"
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    )}
                   </div>
                   <p className="text-gray-700 text-sm leading-relaxed mt-0.5">{reply.prompt_text}</p>
                 </div>
@@ -776,6 +806,8 @@ export default function PoolDetailPage() {
                     token={token}
                     onRefresh={refresh}
                     currentUserName={myName}
+                    isHost={isHost}
+                    currentUserId={session?.user?.id || ''}
                   />
                 ))
               }
