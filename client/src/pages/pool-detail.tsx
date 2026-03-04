@@ -390,11 +390,11 @@ function AboutSection({ pool, members, isLoading }: { pool: any; members: any[];
 
   return (
     <div>
-      <p className="text-gray-900 text-sm font-semibold mb-1">About this Room</p>
-      <p className="text-gray-500 text-sm leading-relaxed">
+      <p className="text-white/50 text-[10px] font-semibold uppercase tracking-widest mb-1">About this Room</p>
+      <p className="text-white/80 text-sm leading-relaxed">
         {expanded ? fullDescription : shortDescription}
         {hasMore && (
-          <button onClick={() => setExpanded(!expanded)} className="text-purple-600 font-medium ml-1 hover:text-purple-700">
+          <button onClick={() => setExpanded(!expanded)} className="text-purple-300 font-medium ml-1 hover:text-white">
             {expanded ? 'read less' : 'read more'}
           </button>
         )}
@@ -488,56 +488,59 @@ export default function PoolDetailPage() {
   return (
     <div className="min-h-screen pb-28" style={{ backgroundColor: '#f4f4f8' }}>
 
-      {/* ── White header: back + invite ── */}
-      <div className="bg-white" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        <div className="flex items-center justify-between px-4 pt-4 pb-2">
-          <button onClick={() => setLocation('/rooms')} className="text-gray-500 hover:text-gray-900 transition-colors">
+      {/* ── Purple gradient hero — top to tabs ── */}
+      <div style={{ background: 'linear-gradient(160deg, #0a0a0f 0%, #12121f 45%, #2d1f4e 100%)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        {/* Back + invite */}
+        <div className="flex items-center justify-between px-4 pt-4 pb-3">
+          <button onClick={() => setLocation('/rooms')} className="text-white/60 hover:text-white transition-colors">
             <ChevronLeft size={24} />
           </button>
-          <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-gray-600 text-xs font-medium border border-gray-200 hover:bg-gray-50 transition-colors">
-            {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+          <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/70 text-xs font-medium border border-white/20 hover:bg-white/10 transition-colors">
+            {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
             {copied ? 'Copied!' : 'Invite'}
           </button>
         </div>
 
-        {/* Room name + About */}
-        <div className="px-4 pb-2">
-          <p className="text-gray-400 text-[10px] font-medium uppercase tracking-widest mb-0.5">Room</p>
-          <h1 className="text-gray-900 text-2xl font-semibold leading-tight mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        {/* Room name */}
+        <div className="px-4 pb-4">
+          <p className="text-white/40 text-[10px] font-medium uppercase tracking-widest mb-1">Room</p>
+          <h1 className="text-white text-2xl font-semibold leading-tight mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
             {isLoading ? '...' : pool?.name || 'Room'}
           </h1>
-          <AboutSection pool={pool} members={members} isLoading={isLoading} />
+
+          {/* About — white-tinted card on gradient */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3.5 mb-4">
+            <AboutSection pool={pool} members={members} isLoading={isLoading} />
+          </div>
+
+          {/* Participant bubbles */}
+          {!isLoading && members.length > 0 && (
+            <div className="flex gap-3 overflow-x-auto scrollbar-none -mx-4 px-4 pb-5">
+              {members.map((m: any) => {
+                const name = (m.users as any)?.display_name || (m.users as any)?.user_name || '?';
+                return (
+                  <div key={m.user_id} className="flex flex-col items-center gap-1.5 shrink-0">
+                    <div className="relative">
+                      <div className={`w-11 h-11 rounded-full ${avatarColor(name)} flex items-center justify-center text-sm font-bold text-white ring-2 ring-white/30`}>
+                        {name[0].toUpperCase()}
+                      </div>
+                      {m.role === 'host' && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                          <Crown size={8} className="text-yellow-900" />
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-white/60 text-[10px] font-medium max-w-[44px] text-center truncate">
+                      {name.split(' ')[0]}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Participant bubbles row */}
-        {!isLoading && members.length > 0 && (
-          <div className="flex gap-3 overflow-x-auto px-4 pb-4 scrollbar-none">
-            {members.map((m: any) => {
-              const name = (m.users as any)?.display_name || (m.users as any)?.user_name || '?';
-              return (
-                <div key={m.user_id} className="flex flex-col items-center gap-1.5 shrink-0">
-                  <div className="relative">
-                    <div className={`w-11 h-11 rounded-full ${avatarColor(name)} flex items-center justify-center text-sm font-bold text-white ring-2 ring-white`}>
-                      {name[0].toUpperCase()}
-                    </div>
-                    {m.role === 'host' && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
-                        <Crown size={8} className="text-yellow-900" />
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-gray-500 text-[10px] font-medium max-w-[44px] text-center truncate">
-                    {name.split(' ')[0]}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ── Purple gradient hero + tabs ── */}
-      <div style={{ background: 'linear-gradient(135deg, #0a0a0f 0%, #12121f 50%, #2d1f4e 100%)' }}>
+        {/* Tabs at bottom of gradient */}
         <div className="flex px-4 border-b border-white/10">
           {TABS.map(t => (
             <button
