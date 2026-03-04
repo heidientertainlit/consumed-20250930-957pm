@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Plus, Trophy, Crown, Trash2, Globe2 } from "lucide-react";
+import { ChevronLeft, Plus, Trophy, Crown, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -119,9 +119,23 @@ export default function PoolsPage() {
         {pools.map((pool) => (
           <div key={pool.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3 p-4">
-              {/* Room icon */}
+              {/* Room icon — three people connected in a circle */}
               <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
-                <Globe2 size={18} className="text-purple-500" />
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Top person */}
+                  <circle cx="11" cy="3.5" r="2" stroke="#7c3aed" strokeWidth="1.4"/>
+                  <circle cx="11" cy="3.5" r="0.7" fill="#7c3aed"/>
+                  {/* Bottom-left person */}
+                  <circle cx="4" cy="16" r="2" stroke="#7c3aed" strokeWidth="1.4"/>
+                  <circle cx="4" cy="16" r="0.7" fill="#7c3aed"/>
+                  {/* Bottom-right person */}
+                  <circle cx="18" cy="16" r="2" stroke="#7c3aed" strokeWidth="1.4"/>
+                  <circle cx="18" cy="16" r="0.7" fill="#7c3aed"/>
+                  {/* Connecting arcs */}
+                  <path d="M9.2 5.2 C7 7 5.2 9.5 5.2 14.2" stroke="#7c3aed" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
+                  <path d="M12.8 5.2 C15 7 16.8 9.5 16.8 14.2" stroke="#7c3aed" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
+                  <path d="M6 17.5 C8 19.2 14 19.2 16 17.5" stroke="#7c3aed" strokeWidth="1.3" strokeLinecap="round" fill="none"/>
+                </svg>
               </div>
 
               {/* Name + stats */}
