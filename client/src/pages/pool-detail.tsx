@@ -203,55 +203,123 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
   );
 }
 
-/* ─── Comment Card ──────────────────────────────────────────────────── */
-function CommentCard({ post, isHost, token, onRefresh }: { post: any; isHost: boolean; token: string; onRefresh: () => void }) {
+/* ─── Thread Card (top-level post + nested replies) ─────────────────── */
+function ThreadCard({ post, replies, isMember, token, onRefresh, currentUserName }: {
+  post: any; replies: any[]; isMember: boolean; token: string; onRefresh: () => void; currentUserName: string;
+}) {
   const { toast } = useToast();
-  const [showReply, setShowReply] = useState(false);
+  const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showReplies, setShowReplies] = useState(true);
+
   const creator = post.creator;
   const name = creator?.display_name || creator?.user_name || 'Member';
 
   const submitReply = async () => {
-    if (!replyText.trim()) return;
+    if (!replyText.trim() || submitting) return;
     setSubmitting(true);
-    await callFn('add-pool-prompt', { pool_id: post.pool_id, question: replyText.trim(), question_type: 'commentary' }, token);
-    setReplyText(''); setShowReply(false); setSubmitting(false);
+    const data = await callFn('add-pool-prompt', {
+      pool_id: post.pool_id,
+      question: replyText.trim(),
+      question_type: 'commentary',
+      parent_id: post.id
+    }, token);
+    setSubmitting(false);
+    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
+    setReplyText('');
+    setShowReplyBox(false);
+    setShowReplies(true);
     onRefresh();
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 space-y-2">
-      <div className="flex items-start gap-2.5">
-        <AvatarCircle name={name} size="sm" />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-gray-900 text-sm font-semibold">{name}</span>
-            <span className="text-gray-400 text-[11px]">{timeAgo(post.created_at)}</span>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      {/* ── Root post ── */}
+      <div className="p-3.5">
+        <div className="flex items-start gap-2.5">
+          <AvatarCircle name={name} size="sm" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-gray-900 text-sm font-semibold">{name}</span>
+              <span className="text-gray-400 text-[11px]">{timeAgo(post.created_at)}</span>
+            </div>
+            <p className="text-gray-700 text-sm leading-relaxed mt-0.5">{post.prompt_text}</p>
           </div>
-          <p className="text-gray-700 text-sm leading-relaxed mt-0.5">{post.prompt_text}</p>
         </div>
-      </div>
-      <div className="pl-9">
-        <button onClick={() => setShowReply(!showReply)} className="text-gray-400 text-xs hover:text-gray-600 flex items-center gap-1 transition-colors">
-          <MessageSquare size={12} /> Reply
-        </button>
-        {showReply && (
-          <div className="mt-2 flex gap-2">
-            <input
-              value={replyText}
-              onChange={e => setReplyText(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') submitReply(); }}
-              placeholder="Write a reply..."
-              autoFocus
-              className="flex-1 text-sm bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 outline-none text-gray-800 placeholder:text-gray-400"
-            />
-            <button onClick={submitReply} disabled={!replyText.trim() || submitting} className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 disabled:opacity-40 transition-opacity" style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}>
-              <Send size={13} className="text-white" />
+
+        {/* Reply bar */}
+        <div className="flex items-center gap-3 mt-2.5 pl-9">
+          {isMember && (
+            <button
+              onClick={() => { setShowReplyBox(r => !r); }}
+              className="text-gray-400 text-xs hover:text-purple-600 flex items-center gap-1 transition-colors font-medium"
+            >
+              <MessageSquare size={11} /> Reply
             </button>
+          )}
+          {replies.length > 0 && (
+            <button
+              onClick={() => setShowReplies(r => !r)}
+              className="text-gray-400 text-xs hover:text-gray-600 transition-colors"
+            >
+              {showReplies ? 'Hide' : `${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`}
+            </button>
+          )}
+        </div>
+
+        {/* Inline reply box */}
+        {showReplyBox && (
+          <div className="mt-2.5 pl-9 flex gap-2">
+            <AvatarCircle name={currentUserName} size="sm" />
+            <div className="flex-1 flex gap-2">
+              <input
+                value={replyText}
+                onChange={e => setReplyText(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') submitReply(); if (e.key === 'Escape') setShowReplyBox(false); }}
+                placeholder="Write a reply..."
+                autoFocus
+                className="flex-1 text-sm bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 outline-none text-gray-800 placeholder:text-gray-400"
+              />
+              <button
+                onClick={submitReply}
+                disabled={!replyText.trim() || submitting}
+                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 disabled:opacity-40"
+                style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
+              >
+                <Send size={13} className="text-white" />
+              </button>
+            </div>
           </div>
         )}
       </div>
+
+      {/* ── Replies ── */}
+      {showReplies && replies.length > 0 && (
+        <div className="border-t border-gray-50">
+          {replies.map((reply, i) => {
+            const rCreator = reply.creator;
+            const rName = rCreator?.display_name || rCreator?.user_name || 'Member';
+            return (
+              <div
+                key={reply.id}
+                className={`flex items-start gap-2.5 px-3.5 py-3 ${i < replies.length - 1 ? 'border-b border-gray-50' : ''}`}
+              >
+                {/* Left accent line */}
+                <div className="w-0.5 self-stretch rounded-full bg-gray-200 shrink-0 ml-3" />
+                <AvatarCircle name={rName} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-gray-900 text-sm font-semibold">{rName}</span>
+                    <span className="text-gray-400 text-[11px]">{timeAgo(reply.created_at)}</span>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed mt-0.5">{reply.prompt_text}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -677,16 +745,29 @@ export default function PoolDetailPage() {
               </div>
             )}
 
-            {/* Comments */}
+            {/* Threaded discussion */}
             <div className="space-y-3">
               {comments.length === 0 && (
                 <div className="text-center py-6">
-                  <p className="text-gray-400 text-sm">No comments yet. Start the conversation.</p>
+                  <p className="text-gray-400 text-sm">No posts yet. Start the conversation.</p>
                 </div>
               )}
-              {[...comments].reverse().map(c => (
-                <CommentCard key={c.id} post={c} isHost={isHost} token={token} onRefresh={refresh} />
-              ))}
+              {/* Top-level threads only (no parent_id), newest first */}
+              {[...comments]
+                .filter(c => !c.parent_id)
+                .reverse()
+                .map(thread => (
+                  <ThreadCard
+                    key={thread.id}
+                    post={thread}
+                    replies={comments.filter(c => c.parent_id === thread.id)}
+                    isMember={isMember}
+                    token={token}
+                    onRefresh={refresh}
+                    currentUserName={myName}
+                  />
+                ))
+              }
             </div>
           </div>
         )}

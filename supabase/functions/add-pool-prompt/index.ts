@@ -20,7 +20,7 @@ serve(async (req) => {
     if (!user) return json({ error: 'Unauthorized' }, 401);
 
     const body = await req.json();
-    const { pool_id, round_id, question, options, question_type = 'pick' } = body;
+    const { pool_id, round_id, question, options, question_type = 'pick', parent_id = null } = body;
 
     if (!question?.trim()) return json({ error: 'Question is required' }, 400);
 
@@ -49,7 +49,15 @@ serve(async (req) => {
     if (!resolvedPoolId) return json({ error: 'Pool ID is required' }, 400);
 
     const { data: pool } = await svc.from('pools').select('id, name, host_id').eq('id', resolvedPoolId).single();
-    if (!pool || pool.host_id !== appUser.id) return json({ error: 'Only the host can post questions' }, 403);
+    if (!pool) return json({ error: 'Pool not found' }, 404);
+
+    // Check membership — any member can post commentary, only host can post picks/call_it
+    const { data: membership } = await svc.from('pool_members').select('id').eq('pool_id', resolvedPoolId).eq('user_id', appUser.id).single();
+    const isHost = pool.host_id === appUser.id;
+    const isMember = !!membership || isHost;
+
+    if (!isMember) return json({ error: 'You must be a member to post' }, 403);
+    if (!isCommentary && !isHost) return json({ error: 'Only the host can post picks' }, 403);
 
     const filteredOptions = isPick ? options.map((o: string) => o.trim()).filter((o: string) => o.length > 0) : [];
     const promptType = isCommentary ? 'commentary' : question_type === 'call_it' ? 'call_it' : 'pick';
@@ -64,6 +72,7 @@ serve(async (req) => {
       created_by: appUser.id
     };
     if (resolvedRoundId) insertData.round_id = resolvedRoundId;
+    if (parent_id) insertData.parent_id = parent_id;
 
     const { data: prompt, error } = await svc.from('pool_prompts').insert(insertData).select('*, creator:created_by(id, user_name, display_name)').single();
     if (error) return json({ error: error.message }, 500);

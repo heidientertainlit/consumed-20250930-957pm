@@ -54,7 +54,7 @@ serve(async (req) => {
 
     // Fetch pool_prompts (without FK join for creator)
     const { data: rawPrompts } = await svc.from('pool_prompts')
-      .select('id, pool_id, prompt_text, prompt_type, options, status, correct_answer, points_value, created_at, created_by')
+      .select('id, pool_id, prompt_text, prompt_type, options, status, correct_answer, points_value, created_at, created_by, parent_id')
       .eq('pool_id', poolId)
       .order('created_at', { ascending: true });
 
