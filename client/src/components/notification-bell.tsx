@@ -165,6 +165,7 @@ export function NotificationBell() {
         break;
 
       case 'room_joined':
+      case 'room_added':
       case 'room_new_question':
         if (notification.list_id) {
           setLocation(`/room/${notification.list_id}`);
@@ -235,6 +236,7 @@ export function NotificationBell() {
       case 'collaborator_added':
         return <FileEdit className={`${iconClass} text-orange-400`} />;
       case 'room_joined':
+      case 'room_added':
         return <Users className={`${iconClass} text-violet-400`} />;
       case 'room_new_question':
         return <Bell className={`${iconClass} text-violet-400`} />;

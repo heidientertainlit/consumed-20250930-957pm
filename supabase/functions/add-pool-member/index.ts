@@ -27,7 +27,7 @@ serve(async (req) => {
     const { data: requester } = await svc.from('users').select('id').eq('email', user.email).single();
     if (!requester) return json({ error: 'User not found' }, 404);
 
-    const { data: pool } = await svc.from('pools').select('id, host_id, status').eq('id', pool_id).single();
+    const { data: pool } = await svc.from('pools').select('id, host_id, status, name').eq('id', pool_id).single();
     if (!pool) return json({ error: 'Pool not found' }, 404);
     if (pool.host_id !== requester.id) return json({ error: 'Only the host can add members' }, 403);
     if (pool.status === 'completed') return json({ error: 'This pool has ended' }, 400);
@@ -40,6 +40,20 @@ serve(async (req) => {
 
     const { error } = await svc.from('pool_members').insert({ pool_id, user_id: target_user_id, role: 'member', total_points: 0 });
     if (error) return json({ error: error.message }, 500);
+
+    // Look up host's name for the notification message
+    const { data: host } = await svc.from('users').select('display_name, user_name').eq('id', requester.id).single();
+    const hostName = host?.display_name || host?.user_name || 'Someone';
+    const roomName = pool.name || 'a room';
+
+    await svc.from('notifications').insert({
+      user_id: target_user_id,
+      type: 'room_added',
+      triggered_by_user_id: requester.id,
+      message: `${hostName} added you to the Room "${roomName}"`,
+      list_id: pool_id,
+      read: false,
+    }).catch(() => {}); // Non-blocking — member is added regardless
 
     return json({ success: true, user: target });
   } catch (e) {
