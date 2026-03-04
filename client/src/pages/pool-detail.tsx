@@ -348,14 +348,11 @@ function PostComposer({ poolId, token, isHost, currentUserName, onPosted }: {
   const canPost = text.trim() && (mode !== 'pick' || questionType === 'call_it' || options.filter(o => o.trim()).length >= 2);
 
   const submit = async () => {
-    console.log('[submit] canPost:', canPost, 'mode:', mode, 'text:', text, 'token:', token ? 'set' : 'MISSING');
     if (!canPost) return;
     const payload = mode === 'comment'
       ? { pool_id: poolId, question: text.trim(), question_type: 'commentary' }
       : { pool_id: poolId, question: text.trim(), question_type: questionType, options: questionType === 'pick' ? options.filter(o => o.trim()) : [] };
-    console.log('[submit] calling add-pool-prompt with:', payload);
     const data = await callFn('add-pool-prompt', payload, token);
-    console.log('[submit] response:', data);
     if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
     setText(''); setOptions(['', '']); setMode(null); setQuestionType('pick');
     onPosted();

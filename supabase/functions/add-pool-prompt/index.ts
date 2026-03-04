@@ -74,8 +74,26 @@ serve(async (req) => {
     if (resolvedRoundId) insertData.round_id = resolvedRoundId;
     if (parent_id) insertData.parent_id = parent_id;
 
-    const { data: prompt, error } = await svc.from('pool_prompts').insert(insertData).select('*, creator:created_by(id, user_name, display_name)').single();
-    if (error) return json({ error: error.message }, 500);
+    let prompt: any = null;
+    const { data: p1, error: e1 } = await svc.from('pool_prompts').insert(insertData).select('*, creator:created_by(id, user_name, display_name)').single();
+
+    if (e1) {
+      // If error is about parent_id schema cache, fall back to inserting without it
+      // and notify PostgREST to reload its schema cache
+      const isParentCacheErr = e1.message?.includes('parent_id') && parent_id;
+      if (!isParentCacheErr) return json({ error: e1.message }, 500);
+
+      // Reload PostgREST schema cache so future requests work
+      await svc.rpc('pg_notify', { channel: 'pgrst', payload: 'reload schema' }).catch(() => {});
+
+      // Insert without parent_id so the post still gets created
+      const { parent_id: _dropped, ...fallbackData } = insertData;
+      const { data: p2, error: e2 } = await svc.from('pool_prompts').insert(fallbackData).select('*, creator:created_by(id, user_name, display_name)').single();
+      if (e2) return json({ error: e2.message }, 500);
+      prompt = p2;
+    } else {
+      prompt = p1;
+    }
 
     // Notify all members (except the host) — skip for commentary if desired
     if (!isCommentary) {
