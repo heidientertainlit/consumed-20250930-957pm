@@ -67,6 +67,12 @@ export function NotificationBell() {
   // Count unread notifications
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  // Refetch immediately when bell is opened
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    if (newOpen) refetch();
+  };
+
   // Mark notification as read
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
@@ -266,7 +272,7 @@ export function NotificationBell() {
   };
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
+    <DropdownMenu open={open} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <button 
           className="relative p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
