@@ -368,6 +368,69 @@ function PostComposer({ poolId, token, isHost, currentUserName, onPosted }: {
   );
 }
 
+/* ─── About Section ─────────────────────────────────────────────────── */
+function AboutSection({ pool, members, isLoading }: { pool: any; members: any[]; isLoading: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="px-4 pt-4 pb-3 space-y-3">
+        <div className="h-4 w-24 bg-gray-100 rounded animate-pulse" />
+        <div className="h-3 w-full bg-gray-100 rounded animate-pulse" />
+        <div className="h-3 w-3/4 bg-gray-100 rounded animate-pulse" />
+      </div>
+    );
+  }
+
+  const hostName = (pool?.host as any)?.display_name || (pool?.host as any)?.user_name || 'the host';
+  const fullDescription = pool?.description
+    || `A private prediction room hosted by ${hostName}. Members vote on weekly picks and compete on the leaderboard.`;
+  const shortDescription = fullDescription.length > 90 ? fullDescription.slice(0, 90).trim() + '…' : fullDescription;
+  const hasMore = fullDescription.length > 90;
+
+  const visibleAvatars = members.slice(0, 4);
+  const overflow = members.length > 4 ? members.length - 4 : 0;
+
+  return (
+    <div className="px-4 pt-4 pb-3">
+      <p className="text-gray-900 text-sm font-semibold mb-1.5">About this Room</p>
+      <p className="text-gray-500 text-sm leading-relaxed">
+        {expanded ? fullDescription : shortDescription}
+        {hasMore && (
+          <button onClick={() => setExpanded(!expanded)} className="text-purple-600 font-medium ml-1 hover:text-purple-700">
+            {expanded ? 'read less' : 'read more'}
+          </button>
+        )}
+      </p>
+
+      {/* Members stack */}
+      {members.length > 0 && (
+        <div className="flex items-center gap-3 mt-3">
+          <div className="flex -space-x-2.5">
+            {visibleAvatars.map((m: any) => {
+              const name = (m.users as any)?.display_name || (m.users as any)?.user_name || '?';
+              return (
+                <div key={m.user_id} className={`w-8 h-8 rounded-full ${avatarColor(name)} flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-white shrink-0`}>
+                  {name[0].toUpperCase()}
+                </div>
+              );
+            })}
+            {overflow > 0 && (
+              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500 ring-2 ring-white shrink-0">
+                +{overflow}
+              </div>
+            )}
+          </div>
+          <div>
+            <p className="text-gray-800 text-xs font-semibold">{members.length} {members.length === 1 ? 'Member' : 'Members'}</p>
+            <p className="text-gray-400 text-[11px]">Private room</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Main Page ─────────────────────────────────────────────────────── */
 export default function PoolDetailPage() {
   const params = useParams<{ id: string }>();
@@ -476,39 +539,23 @@ export default function PoolDetailPage() {
             Private · {members.length} {members.length === 1 ? 'member' : 'members'}
           </p>
 
-          {/* Member avatar scroll row */}
-          {members.length > 0 && (
-            <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-none -mx-4 px-4">
-              {members.map((m: any) => {
-                const name = (m.users as any)?.display_name || (m.users as any)?.user_name || '?';
-                return (
-                  <div key={m.user_id} className="flex flex-col items-center gap-1.5 shrink-0">
-                    <div className="relative">
-                      <AvatarCircle name={name} size="lg" ring />
-                      {m.role === 'host' && (
-                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
-                          <Crown size={8} className="text-yellow-900" />
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-white/60 text-[10px] font-medium max-w-[44px] text-center truncate leading-tight">
-                      {name.split(' ')[0]}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
+      </div>
+
+      {/* ── About section (white card, between header and tabs) ── */}
+      <div className="bg-white border-b border-gray-100">
+        <AboutSection pool={pool} members={members} isLoading={isLoading} />
 
         {/* Underline tabs */}
-        <div className="flex px-4 border-b border-white/10">
+        <div className="flex px-4 border-b border-gray-100">
           {TABS.map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px ${
-                tab === t.key ? 'text-white border-white' : 'text-white/40 border-transparent hover:text-white/70'
+                tab === t.key
+                  ? 'text-gray-900 border-gray-900'
+                  : 'text-gray-400 border-transparent hover:text-gray-600'
               }`}
             >
               {t.label}
