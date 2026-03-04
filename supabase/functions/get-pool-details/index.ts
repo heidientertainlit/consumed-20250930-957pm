@@ -92,16 +92,17 @@ serve(async (req) => {
       if (myAnswers) userAnswers = Object.fromEntries(myAnswers.map((a: any) => [a.prompt_id, a]));
     }
 
-    // Fetch all answers for call_it prompts
+    // Fetch ALL answers for all pick/call_it prompts (needed for vote counts in Picks tab)
     let allAnswersMap: Record<string, any[]> = {};
-    const callItIds = prompts.filter((p: any) => p.prompt_type === 'call_it').map((p: any) => p.id);
-    if (callItIds.length > 0) {
+    const pickAndCallItIds = prompts
+      .filter((p: any) => p.prompt_type === 'pick' || p.prompt_type === 'call_it')
+      .map((p: any) => p.id);
+    if (pickAndCallItIds.length > 0) {
       const { data: allAnswers } = await svc.from('pool_answers')
         .select('id, prompt_id, answer, is_correct, points_earned, user_id')
-        .in('prompt_id', callItIds)
+        .in('prompt_id', pickAndCallItIds)
         .order('submitted_at', { ascending: true });
       if (allAnswers) {
-        // Attach user info
         const answerUserIds = [...new Set((allAnswers || []).map((a: any) => a.user_id))];
         let answerUserMap: Record<string, any> = {};
         if (answerUserIds.length > 0) {
@@ -115,13 +116,10 @@ serve(async (req) => {
       }
     }
 
-    // Fetch vote counts for pick prompts where user has voted
+    // Build vote counts from allAnswersMap (replaces the separate votedPickIds fetch)
     let voteCountsMap: Record<string, Record<string, number>> = {};
-    const votedPickIds = prompts
-      .filter((p: any) => p.prompt_type === 'pick' && userAnswers[p.id])
-      .map((p: any) => p.id);
-    if (votedPickIds.length > 0) {
-      const { data: pickAnswers } = await svc.from('pool_answers').select('prompt_id, answer').in('prompt_id', votedPickIds);
+    if (pickAndCallItIds.length > 0) {
+      const { data: pickAnswers } = await svc.from('pool_answers').select('prompt_id, answer').in('prompt_id', pickAndCallItIds);
       if (pickAnswers) {
         for (const ans of pickAnswers) {
           if (!voteCountsMap[ans.prompt_id]) voteCountsMap[ans.prompt_id] = {};
@@ -134,8 +132,10 @@ serve(async (req) => {
       ...p,
       creator: userMap[p.created_by] || null,
       user_answer: userAnswers[p.id] || null,
-      all_answers: p.prompt_type === 'call_it' ? (allAnswersMap[p.id] || []) : undefined,
-      vote_counts: p.prompt_type === 'pick' && userAnswers[p.id] ? (voteCountsMap[p.id] || {}) : undefined,
+      // all_answers for both pick and call_it (powers Picks tab vote breakdown)
+      all_answers: (p.prompt_type === 'pick' || p.prompt_type === 'call_it') ? (allAnswersMap[p.id] || []) : undefined,
+      // vote_counts always included for picks (not gated on user having voted)
+      vote_counts: (p.prompt_type === 'pick' || p.prompt_type === 'call_it') ? (voteCountsMap[p.id] || {}) : undefined,
     }));
 
     return json({

@@ -421,7 +421,8 @@ export default function PoolDetailPage() {
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<'discussion' | 'leaderboard' | 'members'>('discussion');
+  const [tab, setTab] = useState<'discussion' | 'picks' | 'leaderboard' | 'members'>('discussion');
+  const [managingId, setManagingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -483,8 +484,8 @@ export default function PoolDetailPage() {
   const picks = posts.filter(p => p.prompt_type === 'pick' || p.prompt_type === 'call_it');
   const comments = posts.filter(p => p.prompt_type === 'commentary');
 
-  // Featured pick = most recently created open pick, or most recent if all closed
-  const featuredPick = picks.find(p => p.status !== 'resolved') || picks[picks.length - 1] || null;
+  // Featured pick = latest OPEN pick only (resolved picks go to Picks tab only)
+  const featuredPick = picks.find(p => p.status !== 'resolved') || null;
 
   const myName = (data?.members?.find((m: any) => m.user_id === session?.user?.id)?.users as any)?.display_name
     || (data?.members?.find((m: any) => m.user_id === session?.user?.id)?.users as any)?.user_name
@@ -492,9 +493,21 @@ export default function PoolDetailPage() {
 
   const TABS = [
     { key: 'discussion', label: 'Discussion' },
-    { key: 'leaderboard', label: 'Leaderboard' },
+    { key: 'picks', label: 'Picks' },
+    { key: 'leaderboard', label: 'Scores' },
     { key: 'members', label: 'Members' },
   ] as const;
+
+  const handleManagePrompt = async (promptId: string, action: 'close' | 'delete') => {
+    if (managingId) return;
+    if (action === 'delete' && !confirm('Delete this pick permanently?')) return;
+    setManagingId(promptId);
+    const data = await callFn('manage-pool-prompt', { prompt_id: promptId, action }, token);
+    setManagingId(null);
+    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
+    refresh();
+    toast({ title: action === 'delete' ? 'Pick deleted' : 'Pick closed' });
+  };
 
   return (
     <div className="min-h-screen pb-28" style={{ backgroundColor: '#f4f4f8' }}>
@@ -609,6 +622,95 @@ export default function PoolDetailPage() {
                 <CommentCard key={c.id} post={c} isHost={isHost} token={token} onRefresh={refresh} />
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── PICKS ── */}
+        {!isLoading && tab === 'picks' && (
+          <div className="space-y-3">
+            {picks.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-400 text-sm">No picks yet.</p>
+                {isHost && <p className="text-gray-300 text-xs mt-1">Post a pick from the Discussion tab.</p>}
+              </div>
+            )}
+            {[...picks].reverse().map((p: any) => {
+              const isOpen = p.status !== 'resolved';
+              const opts: string[] = p.options || [];
+              const allAnswers: any[] = p.all_answers || [];
+              const voteCounts: Record<string, number> = {};
+              allAnswers.forEach((a: any) => { voteCounts[a.answer] = (voteCounts[a.answer] || 0) + 1; });
+              const totalVotes = Object.values(voteCounts).reduce((s, n) => s + n, 0);
+              const isBusy = managingId === p.id;
+
+              return (
+                <div key={p.id} className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #12102b 0%, #1e1654 55%, #2d1f6e 100%)' }}>
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
+                    <div className="flex items-center gap-2">
+                      <BarChart2 size={13} className="text-white/60" />
+                      <span className="text-white text-xs font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>The Pick</span>
+                      {isOpen
+                        ? <span className="text-[10px] font-bold text-emerald-400 tracking-widest">LIVE</span>
+                        : <span className="text-[10px] font-medium text-white/35 tracking-wide">CLOSED</span>
+                      }
+                    </div>
+                    {/* Host controls */}
+                    {isHost && (
+                      <div className="flex items-center gap-3">
+                        {isOpen && (
+                          <button
+                            onClick={() => handleManagePrompt(p.id, 'close')}
+                            disabled={isBusy}
+                            className="text-white/50 text-[11px] font-medium hover:text-white/80 transition-colors disabled:opacity-40"
+                          >
+                            {isBusy ? '...' : 'Close'}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleManagePrompt(p.id, 'delete')}
+                          disabled={isBusy}
+                          className="text-rose-400/60 text-[11px] font-medium hover:text-rose-300 transition-colors disabled:opacity-40"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Question */}
+                  <div className="px-4 pb-2">
+                    <p className="text-white/90 text-sm font-medium leading-snug">{p.prompt_text}</p>
+                  </div>
+
+                  {/* Vote bars */}
+                  {opts.length > 0 && (
+                    <div className="px-4 pb-4 space-y-1.5">
+                      {opts.map((opt: string) => {
+                        const count = voteCounts[opt] || 0;
+                        const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                        const isWinner = p.correct_answer && opt.toLowerCase() === p.correct_answer.toLowerCase();
+                        return (
+                          <div key={opt} className="rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                            <div className="relative px-3 py-2">
+                              <div
+                                className="absolute inset-y-0 left-0 rounded-lg transition-all duration-500"
+                                style={{ width: `${pct}%`, background: isWinner ? 'rgba(52,211,153,0.25)' : 'rgba(139,92,246,0.2)' }}
+                              />
+                              <div className="relative flex items-center justify-between">
+                                <span className={`text-xs ${isWinner ? 'text-emerald-300 font-semibold' : 'text-white/75'}`}>{opt}</span>
+                                <span className={`text-[11px] font-medium ${isWinner ? 'text-emerald-400' : 'text-white/40'}`}>{pct}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {totalVotes > 0 && <p className="text-white/30 text-[10px] pl-1 pt-0.5">{totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}</p>}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
