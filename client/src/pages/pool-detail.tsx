@@ -508,41 +508,49 @@ export default function PoolDetailPage() {
             {isLoading ? '...' : pool?.name || 'Room'}
           </h1>
 
-          {/* Participant bubbles — ABOVE about card */}
-          {!isLoading && members.length > 0 && (
-            <div className="flex gap-2.5 overflow-x-auto scrollbar-none -mx-4 px-4 pb-4">
-              {members.map((m: any) => {
+          {/* About — white-tinted card on gradient */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3.5 mb-0">
+            <AboutSection pool={pool} members={members} isLoading={isLoading} />
+          </div>
+        </div>
+
+        {/* Overlapping member bubbles — between About and tabs */}
+        {!isLoading && members.length > 0 && (
+          <div className="overflow-x-auto scrollbar-none px-4 pt-4 pb-4">
+            <div className="flex" style={{ marginLeft: '0' }}>
+              {members.map((m: any, i: number) => {
                 const name = (m.users as any)?.display_name || (m.users as any)?.user_name || '?';
                 const words = name.trim().split(/\s+/);
                 const initials = words.length >= 2
                   ? (words[0][0] + words[1][0]).toUpperCase()
                   : name.slice(0, 2).toUpperCase();
                 return (
-                  <div key={m.user_id} className="flex flex-col items-center gap-1.5 shrink-0">
-                    <div className="relative">
-                      <div className={`w-12 h-12 rounded-full ${avatarColor(name)} flex items-center justify-center text-xs font-bold text-white`}>
-                        {initials}
-                      </div>
-                      {m.role === 'host' && (
-                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
-                          <Crown size={8} className="text-yellow-900" />
-                        </div>
-                      )}
+                  <div
+                    key={m.user_id}
+                    className="relative shrink-0"
+                    style={{ marginLeft: i === 0 ? 0 : '-10px', zIndex: members.length - i }}
+                  >
+                    <div className={`w-12 h-12 rounded-full ${avatarColor(name)} flex items-center justify-center text-xs font-bold text-white ring-2 ring-[#1a1035]`}>
+                      {initials}
                     </div>
-                    <span className="text-white/60 text-[10px] font-medium max-w-[48px] text-center truncate">
-                      {words[0]}
-                    </span>
+                    {m.role === 'host' && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center ring-1 ring-[#1a1035]">
+                        <Crown size={7} className="text-yellow-900" />
+                      </div>
+                    )}
                   </div>
                 );
               })}
+              {members.length > 0 && (
+                <div className="shrink-0 flex items-center pl-4">
+                  <span className="text-white/50 text-xs font-medium">
+                    {members.length} {members.length === 1 ? 'member' : 'members'}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
-
-          {/* About — white-tinted card on gradient */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3.5 mb-4">
-            <AboutSection pool={pool} members={members} isLoading={isLoading} />
           </div>
-        </div>
+        )}
 
         {/* Tabs at bottom of gradient */}
         <div className="flex px-4 border-b border-white/10">
