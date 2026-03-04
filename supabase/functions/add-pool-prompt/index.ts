@@ -74,25 +74,45 @@ serve(async (req) => {
     if (resolvedRoundId) insertData.round_id = resolvedRoundId;
     if (parent_id) insertData.parent_id = parent_id;
 
-    let prompt: any = null;
-    const { data: p1, error: e1 } = await svc.from('pool_prompts').insert(insertData).select('*, creator:created_by(id, user_name, display_name)').single();
+    // Always insert WITHOUT parent_id via PostgREST (avoids schema cache dependency)
+    const { parent_id: _skip, ...insertWithoutParent } = insertData;
+    const { data: prompt, error: insertErr } = await svc
+      .from('pool_prompts')
+      .insert(insertWithoutParent)
+      .select('*, creator:created_by(id, user_name, display_name)')
+      .single();
+    if (insertErr) return json({ error: insertErr.message }, 500);
 
-    if (e1) {
-      // If error is about parent_id schema cache, fall back to inserting without it
-      // and notify PostgREST to reload its schema cache
-      const isParentCacheErr = e1.message?.includes('parent_id') && parent_id;
-      if (!isParentCacheErr) return json({ error: e1.message }, 500);
-
-      // Reload PostgREST schema cache so future requests work
-      await svc.rpc('pg_notify', { channel: 'pgrst', payload: 'reload schema' }).catch(() => {});
-
-      // Insert without parent_id so the post still gets created
-      const { parent_id: _dropped, ...fallbackData } = insertData;
-      const { data: p2, error: e2 } = await svc.from('pool_prompts').insert(fallbackData).select('*, creator:created_by(id, user_name, display_name)').single();
-      if (e2) return json({ error: e2.message }, 500);
-      prompt = p2;
-    } else {
-      prompt = p1;
+    // If this is a reply, set parent_id via the Supabase REST API directly
+    // This bypasses the PostgREST schema cache by using a raw PATCH
+    if (parent_id && prompt?.id) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+        const patchRes = await fetch(
+          `${supabaseUrl}/rest/v1/pool_prompts?id=eq.${encodeURIComponent(prompt.id)}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': serviceKey,
+              'Authorization': `Bearer ${serviceKey}`,
+              'Prefer': 'return=minimal',
+            },
+            body: JSON.stringify({ parent_id }),
+          }
+        );
+        if (patchRes.ok) {
+          prompt.parent_id = parent_id;
+        } else {
+          // Schema cache stale — send reload signal so next request works
+          await fetch(`${supabaseUrl}/rest/v1/rpc/pg_notify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': serviceKey, 'Authorization': `Bearer ${serviceKey}` },
+            body: JSON.stringify({ channel: 'pgrst', payload: 'reload schema' }),
+          }).catch(() => {});
+        }
+      } catch { /* post is saved — threading is best-effort */ }
     }
 
     // Notify all members (except the host) — skip for commentary if desired
