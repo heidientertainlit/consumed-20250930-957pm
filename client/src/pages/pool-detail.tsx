@@ -508,21 +508,20 @@ export default function PoolDetailPage() {
             {isLoading ? '...' : pool?.name || 'Room'}
           </h1>
 
-          {/* About — white-tinted card on gradient */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3.5 mb-4">
-            <AboutSection pool={pool} members={members} isLoading={isLoading} />
-          </div>
-
-          {/* Participant bubbles */}
+          {/* Participant bubbles — ABOVE about card */}
           {!isLoading && members.length > 0 && (
-            <div className="flex gap-3 overflow-x-auto scrollbar-none -mx-4 px-4 pb-5">
+            <div className="flex gap-2.5 overflow-x-auto scrollbar-none -mx-4 px-4 pb-4">
               {members.map((m: any) => {
                 const name = (m.users as any)?.display_name || (m.users as any)?.user_name || '?';
+                const words = name.trim().split(/\s+/);
+                const initials = words.length >= 2
+                  ? (words[0][0] + words[1][0]).toUpperCase()
+                  : name.slice(0, 2).toUpperCase();
                 return (
                   <div key={m.user_id} className="flex flex-col items-center gap-1.5 shrink-0">
                     <div className="relative">
-                      <div className={`w-11 h-11 rounded-full ${avatarColor(name)} flex items-center justify-center text-sm font-bold text-white ring-2 ring-white/30`}>
-                        {name[0].toUpperCase()}
+                      <div className={`w-12 h-12 rounded-full ${avatarColor(name)} flex items-center justify-center text-xs font-bold text-white`}>
+                        {initials}
                       </div>
                       {m.role === 'host' && (
                         <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
@@ -530,14 +529,19 @@ export default function PoolDetailPage() {
                         </div>
                       )}
                     </div>
-                    <span className="text-white/60 text-[10px] font-medium max-w-[44px] text-center truncate">
-                      {name.split(' ')[0]}
+                    <span className="text-white/60 text-[10px] font-medium max-w-[48px] text-center truncate">
+                      {words[0]}
                     </span>
                   </div>
                 );
               })}
             </div>
           )}
+
+          {/* About — white-tinted card on gradient */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3.5 mb-4">
+            <AboutSection pool={pool} members={members} isLoading={isLoading} />
+          </div>
         </div>
 
         {/* Tabs at bottom of gradient */}

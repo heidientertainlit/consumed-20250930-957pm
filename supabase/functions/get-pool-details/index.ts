@@ -34,21 +34,50 @@ serve(async (req) => {
     const { data: pool } = await svc.from('pools').select('*').eq('id', poolId).single();
     if (!pool) return json({ error: 'Pool not found' }, 404);
 
+    // Check membership
     const { data: membership } = await svc.from('pool_members').select('role').eq('pool_id', poolId).eq('user_id', appUser.id).single();
     const isHost = pool.host_id === appUser.id;
-    const isMember = !!membership;
+    const isMember = !!membership || isHost;
     if (!isMember) return json({ error: 'You are not a member of this pool' }, 403);
 
-    const [{ data: members }, { data: host }, { data: rawPrompts }] = await Promise.all([
-      svc.from('pool_members').select('user_id, role, total_points, joined_at, users:user_id(id, user_name, display_name, avatar_url)').eq('pool_id', poolId).order('total_points', { ascending: false }),
-      svc.from('users').select('id, user_name, display_name, avatar_url').eq('id', pool.host_id).single(),
-      svc.from('pool_prompts').select('*, creator:created_by(id, user_name, display_name, avatar_url)').eq('pool_id', poolId).order('created_at', { ascending: true }),
-    ]);
+    // Fetch pool_members (without FK join)
+    const { data: rawMembers } = await svc.from('pool_members')
+      .select('user_id, role, total_points, joined_at')
+      .eq('pool_id', poolId)
+      .order('total_points', { ascending: false });
+
+    // Fetch pool_prompts (without FK join for creator)
+    const { data: rawPrompts } = await svc.from('pool_prompts')
+      .select('id, pool_id, prompt_text, prompt_type, options, status, correct_answer, points_value, created_at, created_by')
+      .eq('pool_id', poolId)
+      .order('created_at', { ascending: true });
+
+    // Collect all user IDs we need to look up
+    const memberUserIds: string[] = (rawMembers || []).map((m: any) => m.user_id);
+    const creatorIds: string[] = [...new Set((rawPrompts || []).map((p: any) => p.created_by).filter(Boolean))];
+    const allUserIds = [...new Set([...memberUserIds, ...creatorIds, pool.host_id])];
+
+    // Single bulk user lookup
+    const { data: allUsers } = await svc.from('users')
+      .select('id, user_name, display_name, avatar_url')
+      .in('id', allUserIds);
+
+    const userMap: Record<string, any> = {};
+    for (const u of (allUsers || [])) userMap[u.id] = u;
+
+    // Build members array with user info attached
+    const members = (rawMembers || []).map((m: any) => ({
+      ...m,
+      users: userMap[m.user_id] || null,
+    }));
+
+    // Build host info
+    const host = userMap[pool.host_id] || null;
 
     const prompts = rawPrompts || [];
     const promptIds = prompts.map((p: any) => p.id);
 
-    // Fetch current user's answers for all prompts
+    // Fetch current user's answers
     let userAnswers: Record<string, any> = {};
     if (promptIds.length > 0) {
       const { data: myAnswers } = await svc.from('pool_answers')
@@ -63,13 +92,20 @@ serve(async (req) => {
     const callItIds = prompts.filter((p: any) => p.prompt_type === 'call_it').map((p: any) => p.id);
     if (callItIds.length > 0) {
       const { data: allAnswers } = await svc.from('pool_answers')
-        .select('id, prompt_id, answer, is_correct, points_earned, user_id, users:user_id(display_name, user_name)')
+        .select('id, prompt_id, answer, is_correct, points_earned, user_id')
         .in('prompt_id', callItIds)
         .order('submitted_at', { ascending: true });
       if (allAnswers) {
+        // Attach user info
+        const answerUserIds = [...new Set((allAnswers || []).map((a: any) => a.user_id))];
+        let answerUserMap: Record<string, any> = {};
+        if (answerUserIds.length > 0) {
+          const { data: answerUsers } = await svc.from('users').select('id, display_name, user_name').in('id', answerUserIds);
+          for (const u of (answerUsers || [])) answerUserMap[u.id] = u;
+        }
         for (const ans of allAnswers) {
           if (!allAnswersMap[ans.prompt_id]) allAnswersMap[ans.prompt_id] = [];
-          allAnswersMap[ans.prompt_id].push(ans);
+          allAnswersMap[ans.prompt_id].push({ ...ans, users: answerUserMap[ans.user_id] || null });
         }
       }
     }
@@ -91,6 +127,7 @@ serve(async (req) => {
 
     const posts = prompts.map((p: any) => ({
       ...p,
+      creator: userMap[p.created_by] || null,
       user_answer: userAnswers[p.id] || null,
       all_answers: p.prompt_type === 'call_it' ? (allAnswersMap[p.id] || []) : undefined,
       vote_counts: p.prompt_type === 'pick' && userAnswers[p.id] ? (voteCountsMap[p.id] || {}) : undefined,
@@ -99,7 +136,7 @@ serve(async (req) => {
     return json({
       pool: { ...pool, host },
       posts,
-      members: members || [],
+      members,
       is_host: isHost,
       is_member: isMember
     });
