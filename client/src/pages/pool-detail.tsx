@@ -365,92 +365,103 @@ function ThreadCard({ post, replies, isMember, token, onRefresh, currentUserName
   );
 }
 
-/* ─── Post Composer ─────────────────────────────────────────────────── */
-function PostComposer({ poolId, token, isHost, currentUserName, onPosted }: {
-  poolId: string; token: string; isHost: boolean; currentUserName: string; onPosted: () => void;
+/* ─── Comment Composer (Discussion tab only) ────────────────────────── */
+function PostComposer({ poolId, token, currentUserName, onPosted }: {
+  poolId: string; token: string; currentUserName: string; onPosted: () => void;
 }) {
-  const [mode, setMode] = useState<null | 'comment' | 'pick'>(null);
+  const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
-  const [questionType, setQuestionType] = useState<'pick' | 'call_it'>('pick');
-  const [options, setOptions] = useState(['', '']);
   const { toast } = useToast();
 
-  const canPost = text.trim() && (mode !== 'pick' || questionType === 'call_it' || options.filter(o => o.trim()).length >= 2);
-
   const submit = async () => {
-    if (!canPost) return;
-    const payload = mode === 'comment'
-      ? { pool_id: poolId, question: text.trim(), question_type: 'commentary' }
-      : { pool_id: poolId, question: text.trim(), question_type: questionType, options: questionType === 'pick' ? options.filter(o => o.trim()) : [] };
-    const data = await callFn('add-pool-prompt', payload, token);
+    if (!text.trim()) return;
+    const data = await callFn('add-pool-prompt', { pool_id: poolId, question: text.trim(), question_type: 'commentary' }, token);
     if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
-    setText(''); setOptions(['', '']); setMode(null); setQuestionType('pick');
+    setText(''); setOpen(false);
     onPosted();
   };
 
-  if (!mode) {
+  if (!open) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 mb-3">
-        {/* Tap target row */}
-        <div className="flex items-center gap-2.5 mb-2.5">
-          <AvatarCircle name={currentUserName} size="md" />
-          <button
-            onClick={() => setMode('comment')}
-            className="flex-1 text-left text-sm text-gray-400 bg-gray-100 rounded-full px-4 py-2.5 hover:bg-gray-200 transition-colors"
-          >
-            Write something...
-          </button>
-        </div>
-        {/* Action buttons */}
-        <div className="flex gap-0 border-t border-gray-100 pt-2">
-          <button
-            onClick={() => setMode('comment')}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-gray-500 text-xs font-medium hover:bg-gray-50 transition-colors"
-          >
-            <MessageSquare size={15} className="text-blue-500" /> Comment
-          </button>
-          {isHost && (
-            <button
-              onClick={() => setMode('pick')}
-              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-gray-500 text-xs font-medium hover:bg-gray-50 transition-colors"
-            >
-              <BarChart2 size={15} className="text-purple-500" /> The Pick
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (mode === 'comment') {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-3 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <AvatarCircle name={currentUserName} size="md" />
-            <span className="text-gray-800 text-sm font-medium">{currentUserName}</span>
-          </div>
-          <button onClick={() => { setMode(null); setText(''); }}><X size={16} className="text-gray-400" /></button>
-        </div>
-        <textarea
-          value={text} onChange={e => setText(e.target.value)}
-          placeholder="What's on your mind?" autoFocus rows={3}
-          className="w-full text-sm text-gray-800 placeholder:text-gray-400 bg-transparent outline-none resize-none"
-        />
-        <button onClick={submit} disabled={!text.trim()} className="w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 transition-opacity" style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}>
-          Post
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 mb-3 flex items-center gap-2.5">
+        <AvatarCircle name={currentUserName} size="md" />
+        <button
+          onClick={() => setOpen(true)}
+          className="flex-1 text-left text-sm text-gray-400 bg-gray-100 rounded-full px-4 py-2.5 hover:bg-gray-200 transition-colors"
+        >
+          Write something...
         </button>
       </div>
     );
   }
 
-  // Pick mode (host only)
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-3 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <AvatarCircle name={currentUserName} size="md" />
+          <span className="text-gray-800 text-sm font-medium">{currentUserName}</span>
+        </div>
+        <button onClick={() => { setOpen(false); setText(''); }}><X size={16} className="text-gray-400" /></button>
+      </div>
+      <textarea
+        value={text} onChange={e => setText(e.target.value)}
+        placeholder="What's on your mind?" autoFocus rows={3}
+        className="w-full text-sm text-gray-800 placeholder:text-gray-400 bg-transparent outline-none resize-none"
+      />
+      <button onClick={submit} disabled={!text.trim()} className="w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 transition-opacity" style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}>
+        Post
+      </button>
+    </div>
+  );
+}
+
+/* ─── Pick Composer (Picks tab, host only) ───────────────────────────── */
+function PickComposer({ poolId, token, onPosted }: {
+  poolId: string; token: string; onPosted: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState('');
+  const [questionType, setQuestionType] = useState<'pick' | 'call_it'>('pick');
+  const [options, setOptions] = useState(['', '']);
+  const { toast } = useToast();
+
+  const canPost = text.trim() && (questionType === 'call_it' || options.filter(o => o.trim()).length >= 2);
+
+  const submit = async () => {
+    if (!canPost) return;
+    const payload = {
+      pool_id: poolId,
+      question: text.trim(),
+      question_type: questionType,
+      options: questionType === 'pick' ? options.filter(o => o.trim()) : [],
+    };
+    const data = await callFn('add-pool-prompt', payload, token);
+    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
+    setText(''); setOptions(['', '']); setQuestionType('pick'); setOpen(false);
+    onPosted();
+  };
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-white text-sm font-semibold mb-3 transition-opacity hover:opacity-90"
+        style={{ background: 'linear-gradient(135deg, #12102b 0%, #1e1654 55%, #2d1f6e 100%)' }}
+      >
+        <Plus size={15} /> New Pick
+      </button>
+    );
+  }
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-3 space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-gray-800">New Pick</p>
-        <button onClick={() => { setMode(null); setText(''); setOptions(['', '']); }}><X size={16} className="text-gray-400" /></button>
+        <button onClick={() => { setOpen(false); setText(''); setOptions(['', '']); }}><X size={16} className="text-gray-400" /></button>
       </div>
+
+      {/* Pick / Call It toggle */}
       <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
         {(['pick', 'call_it'] as const).map(t => (
           <button key={t} onClick={() => setQuestionType(t)}
@@ -460,11 +471,13 @@ function PostComposer({ poolId, token, isHost, currentUserName, onPosted }: {
         ))}
       </div>
       <p className="text-gray-400 text-xs">
-        {questionType === 'pick' ? 'Set the options. You mark the correct answer after it airs.' : "Members type a free answer. You mark correct ones after."}
+        {questionType === 'pick' ? 'Members vote on options. You mark the correct answer after.' : 'Open-ended — members type their own prediction.'}
       </p>
+
       <Input value={text} onChange={e => setText(e.target.value)}
-        placeholder={questionType === 'pick' ? 'Who goes home tonight?' : 'How many roses given this episode?'}
+        placeholder={questionType === 'pick' ? 'Who goes home tonight?' : 'What will happen this episode?'}
         className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl h-11" autoFocus />
+
       {questionType === 'pick' && (
         <div className="space-y-2">
           {options.map((opt, i) => (
@@ -481,6 +494,7 @@ function PostComposer({ poolId, token, isHost, currentUserName, onPosted }: {
           )}
         </div>
       )}
+
       <button onClick={submit} disabled={!canPost} className="w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 transition-opacity" style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}>
         Post Pick
       </button>
@@ -616,8 +630,6 @@ export default function PoolDetailPage() {
   const picks = posts.filter(p => p.prompt_type === 'pick' || p.prompt_type === 'call_it');
   const comments = posts.filter(p => p.prompt_type === 'commentary');
 
-  // Featured pick = latest OPEN pick WITH voting options only (open-ended picks go to Picks tab)
-  const featuredPick = picks.find(p => p.status !== 'resolved' && Array.isArray(p.options) && p.options.length > 0) || null;
 
   const myName = (data?.members?.find((m: any) => m.user_id === session?.user?.id)?.users as any)?.display_name
     || (data?.members?.find((m: any) => m.user_id === session?.user?.id)?.users as any)?.user_name
@@ -773,13 +785,8 @@ export default function PoolDetailPage() {
         {/* ── DISCUSSION ── */}
         {!isLoading && tab === 'discussion' && (
           <div className="space-y-3">
-            {/* Featured Pick — Daily Call style banner */}
-            {featuredPick && (
-              <FeaturedPickBanner key={featuredPick.id} post={featuredPick} isHost={isHost} token={token} onRefresh={refresh} />
-            )}
-
             {/* Composer — members only */}
-            {isMember && <PostComposer poolId={params.id} token={token} isHost={isHost} currentUserName={myName} onPosted={refresh} />}
+            {isMember && <PostComposer poolId={params.id} token={token} currentUserName={myName} onPosted={refresh} />}
             {!isMember && (
               <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-4 px-4 text-center">
                 <p className="text-gray-400 text-sm">Join this room to participate</p>
@@ -818,10 +825,13 @@ export default function PoolDetailPage() {
         {/* ── PICKS ── */}
         {!isLoading && tab === 'picks' && (
           <div className="space-y-3">
+            {/* Pick composer — host only */}
+            {isHost && <PickComposer poolId={params.id} token={token} onPosted={refresh} />}
+
             {picks.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-400 text-sm">No picks yet.</p>
-                {isHost && <p className="text-gray-300 text-xs mt-1">Post a pick from the Discussion tab.</p>}
+                {isHost && <p className="text-gray-300 text-xs mt-1">Create the first pick above.</p>}
               </div>
             )}
             {[...picks].reverse().map((p: any) => {
