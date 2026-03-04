@@ -19,11 +19,13 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return json({ error: 'Unauthorized' }, 401);
 
-    const { round_id, question, options, question_type = 'pick' } = await req.json();
-    if (!round_id) return json({ error: 'Round ID is required' }, 400);
+    const body = await req.json();
+    const { pool_id, round_id, question, options, question_type = 'pick' } = body;
+
     if (!question?.trim()) return json({ error: 'Question is required' }, 400);
 
-    const isPick = question_type !== 'call_it';
+    const isPick = question_type === 'pick';
+    const isCommentary = question_type === 'commentary';
     if (isPick && (!options || !Array.isArray(options) || options.filter((o: string) => o.trim()).length < 2)) {
       return json({ error: 'At least 2 options required for Pick questions' }, 400);
     }
@@ -32,50 +34,55 @@ serve(async (req) => {
     const { data: appUser } = await svc.from('users').select('id').eq('email', user.email).single();
     if (!appUser) return json({ error: 'User not found' }, 404);
 
-    const { data: round } = await svc.from('pool_rounds').select('id, pool_id, status').eq('id', round_id).single();
-    if (!round) return json({ error: 'Round not found' }, 404);
-    if (round.status === 'locked' || round.status === 'resolved') return json({ error: 'Round is locked' }, 400);
+    // Resolve pool_id — either passed directly or looked up from round
+    let resolvedPoolId = pool_id;
+    let resolvedRoundId = round_id || null;
 
-    const { data: pool } = await svc.from('pools').select('id, name, host_id').eq('id', round.pool_id).single();
-    if (!pool || pool.host_id !== appUser.id) return json({ error: 'Only the host can add prompts' }, 403);
+    if (!resolvedPoolId && round_id) {
+      const { data: round } = await svc.from('pool_rounds').select('id, pool_id, status').eq('id', round_id).single();
+      if (!round) return json({ error: 'Round not found' }, 404);
+      if (round.status === 'locked' || round.status === 'resolved') return json({ error: 'Round is locked' }, 400);
+      resolvedPoolId = round.pool_id;
+      resolvedRoundId = round.id;
+    }
+
+    if (!resolvedPoolId) return json({ error: 'Pool ID is required' }, 400);
+
+    const { data: pool } = await svc.from('pools').select('id, name, host_id').eq('id', resolvedPoolId).single();
+    if (!pool || pool.host_id !== appUser.id) return json({ error: 'Only the host can post questions' }, 403);
 
     const filteredOptions = isPick ? options.map((o: string) => o.trim()).filter((o: string) => o.length > 0) : [];
+    const promptType = isCommentary ? 'commentary' : question_type === 'call_it' ? 'call_it' : 'pick';
 
-    const { data: prompt, error } = await svc.from('pool_prompts').insert({
-      round_id,
-      pool_id: round.pool_id,
+    const insertData: any = {
+      pool_id: resolvedPoolId,
       prompt_text: question.trim(),
-      prompt_type: question_type === 'call_it' ? 'call_it' : 'pick',
+      prompt_type: promptType,
       options: filteredOptions,
-      points_value: 1,
+      points_value: isCommentary ? 0 : 1,
       status: 'open',
       created_by: appUser.id
-    }).select().single();
+    };
+    if (resolvedRoundId) insertData.round_id = resolvedRoundId;
 
+    const { data: prompt, error } = await svc.from('pool_prompts').insert(insertData).select('*, creator:created_by(id, user_name, display_name, avatar_url)').single();
     if (error) return json({ error: error.message }, 500);
 
-    // Notify all members (except the host) that a new question is live
-    const { data: members } = await svc
-      .from('pool_members')
-      .select('user_id')
-      .eq('pool_id', pool.id)
-      .neq('user_id', appUser.id);
-
-    if (members && members.length > 0) {
-      const questionPreview = question.trim().length > 60
-        ? question.trim().slice(0, 57) + '...'
-        : question.trim();
-
-      const notifications = members.map((m: any) => ({
-        user_id: m.user_id,
-        type: 'room_new_question',
-        triggered_by_user_id: appUser.id,
-        message: `New question in "${pool.name}": ${questionPreview}`,
-        list_id: pool.id,
-        read: false,
-      }));
-
-      await svc.from('notifications').insert(notifications);
+    // Notify all members (except the host) — skip for commentary if desired
+    if (!isCommentary) {
+      const { data: members } = await svc.from('pool_members').select('user_id').eq('pool_id', pool.id).neq('user_id', appUser.id);
+      if (members && members.length > 0) {
+        const questionPreview = question.trim().length > 60 ? question.trim().slice(0, 57) + '...' : question.trim();
+        const notifications = members.map((m: any) => ({
+          user_id: m.user_id,
+          type: 'room_new_question',
+          triggered_by_user_id: appUser.id,
+          message: `New question in "${pool.name}": ${questionPreview}`,
+          list_id: pool.id,
+          read: false,
+        }));
+        await svc.from('notifications').insert(notifications);
+      }
     }
 
     return json({ success: true, prompt });

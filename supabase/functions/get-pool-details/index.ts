@@ -39,75 +39,66 @@ serve(async (req) => {
     const isMember = !!membership;
     if (!isMember) return json({ error: 'You are not a member of this pool' }, 403);
 
-    const [{ data: members }, { data: rounds }, { data: host }] = await Promise.all([
+    const [{ data: members }, { data: host }, { data: rawPrompts }] = await Promise.all([
       svc.from('pool_members').select('user_id, role, total_points, joined_at, users:user_id(id, user_name, display_name, avatar_url)').eq('pool_id', poolId).order('total_points', { ascending: false }),
-      svc.from('pool_rounds').select('*').eq('pool_id', poolId).order('created_at', { ascending: true }),
-      svc.from('users').select('id, user_name, display_name, avatar_url').eq('id', pool.host_id).single()
+      svc.from('users').select('id, user_name, display_name, avatar_url').eq('id', pool.host_id).single(),
+      svc.from('pool_prompts').select('*, creator:created_by(id, user_name, display_name, avatar_url)').eq('pool_id', poolId).order('created_at', { ascending: true }),
     ]);
 
-    const roundsWithPrompts = await Promise.all((rounds || []).map(async (round) => {
-      const { data: prompts } = await svc.from('pool_prompts').select('*').eq('round_id', round.id).order('created_at', { ascending: true });
+    const prompts = rawPrompts || [];
+    const promptIds = prompts.map((p: any) => p.id);
 
-      let userAnswers: Record<string, any> = {};
-      let allAnswersMap: Record<string, any[]> = {};
-      let voteCountsMap: Record<string, Record<string, number>> = {};
+    // Fetch current user's answers for all prompts
+    let userAnswers: Record<string, any> = {};
+    if (promptIds.length > 0) {
+      const { data: myAnswers } = await svc.from('pool_answers')
+        .select('prompt_id, answer, is_correct, points_earned')
+        .eq('user_id', appUser.id)
+        .in('prompt_id', promptIds);
+      if (myAnswers) userAnswers = Object.fromEntries(myAnswers.map((a: any) => [a.prompt_id, a]));
+    }
 
-      if (prompts && prompts.length > 0) {
-        const promptIds = prompts.map((p: any) => p.id);
-
-        const { data: myAnswers } = await svc.from('pool_answers')
-          .select('prompt_id, answer, is_correct, points_earned')
-          .eq('user_id', appUser.id)
-          .in('prompt_id', promptIds);
-        if (myAnswers) userAnswers = Object.fromEntries(myAnswers.map((a: any) => [a.prompt_id, a]));
-
-        // For call_it prompts: fetch all member submissions so host can mark correct ones
-        const callItIds = prompts.filter((p: any) => p.prompt_type === 'call_it').map((p: any) => p.id);
-        if (callItIds.length > 0) {
-          const { data: allAnswers } = await svc.from('pool_answers')
-            .select('id, prompt_id, answer, is_correct, points_earned, user_id, users:user_id(display_name, user_name)')
-            .in('prompt_id', callItIds)
-            .order('submitted_at', { ascending: true });
-          if (allAnswers) {
-            for (const ans of allAnswers) {
-              if (!allAnswersMap[ans.prompt_id]) allAnswersMap[ans.prompt_id] = [];
-              allAnswersMap[ans.prompt_id].push(ans);
-            }
-          }
-        }
-
-        // For pick prompts where the current user has voted: fetch vote counts per option
-        const pickIds = prompts
-          .filter((p: any) => p.prompt_type === 'pick' && userAnswers[p.id])
-          .map((p: any) => p.id);
-        if (pickIds.length > 0) {
-          const { data: pickAnswers } = await svc.from('pool_answers')
-            .select('prompt_id, answer')
-            .in('prompt_id', pickIds);
-          if (pickAnswers) {
-            for (const ans of pickAnswers) {
-              if (!voteCountsMap[ans.prompt_id]) voteCountsMap[ans.prompt_id] = {};
-              const key = ans.answer;
-              voteCountsMap[ans.prompt_id][key] = (voteCountsMap[ans.prompt_id][key] || 0) + 1;
-            }
-          }
+    // Fetch all answers for call_it prompts
+    let allAnswersMap: Record<string, any[]> = {};
+    const callItIds = prompts.filter((p: any) => p.prompt_type === 'call_it').map((p: any) => p.id);
+    if (callItIds.length > 0) {
+      const { data: allAnswers } = await svc.from('pool_answers')
+        .select('id, prompt_id, answer, is_correct, points_earned, user_id, users:user_id(display_name, user_name)')
+        .in('prompt_id', callItIds)
+        .order('submitted_at', { ascending: true });
+      if (allAnswers) {
+        for (const ans of allAnswers) {
+          if (!allAnswersMap[ans.prompt_id]) allAnswersMap[ans.prompt_id] = [];
+          allAnswersMap[ans.prompt_id].push(ans);
         }
       }
+    }
 
-      return {
-        ...round,
-        prompts: (prompts || []).map((p: any) => ({
-          ...p,
-          user_answer: userAnswers[p.id] || null,
-          all_answers: p.prompt_type === 'call_it' ? (allAnswersMap[p.id] || []) : undefined,
-          vote_counts: p.prompt_type === 'pick' && userAnswers[p.id] ? (voteCountsMap[p.id] || {}) : undefined
-        }))
-      };
+    // Fetch vote counts for pick prompts where user has voted
+    let voteCountsMap: Record<string, Record<string, number>> = {};
+    const votedPickIds = prompts
+      .filter((p: any) => p.prompt_type === 'pick' && userAnswers[p.id])
+      .map((p: any) => p.id);
+    if (votedPickIds.length > 0) {
+      const { data: pickAnswers } = await svc.from('pool_answers').select('prompt_id, answer').in('prompt_id', votedPickIds);
+      if (pickAnswers) {
+        for (const ans of pickAnswers) {
+          if (!voteCountsMap[ans.prompt_id]) voteCountsMap[ans.prompt_id] = {};
+          voteCountsMap[ans.prompt_id][ans.answer] = (voteCountsMap[ans.prompt_id][ans.answer] || 0) + 1;
+        }
+      }
+    }
+
+    const posts = prompts.map((p: any) => ({
+      ...p,
+      user_answer: userAnswers[p.id] || null,
+      all_answers: p.prompt_type === 'call_it' ? (allAnswersMap[p.id] || []) : undefined,
+      vote_counts: p.prompt_type === 'pick' && userAnswers[p.id] ? (voteCountsMap[p.id] || {}) : undefined,
     }));
 
     return json({
       pool: { ...pool, host },
-      rounds: roundsWithPrompts,
+      posts,
       members: members || [],
       is_host: isHost,
       is_member: isMember
