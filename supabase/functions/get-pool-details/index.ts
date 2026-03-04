@@ -40,12 +40,9 @@ serve(async (req) => {
     const isMember = !!membership || isHost;
     if (!isMember) return json({ error: 'You are not a member of this pool' }, 403);
 
-    // Auto-add host to pool_members if missing (handles rooms created without proper membership seeding)
+    // Auto-add host to pool_members if missing
     if (isHost && !membership) {
-      await svc.from('pool_members').upsert(
-        { pool_id: poolId, user_id: appUser.id, role: 'host', total_points: 0 },
-        { onConflict: 'pool_id,user_id', ignoreDuplicates: true }
-      );
+      await svc.from('pool_members').insert({ pool_id: poolId, user_id: appUser.id, role: 'host', total_points: 0 });
     }
 
     // Fetch pool_members (without FK join)
