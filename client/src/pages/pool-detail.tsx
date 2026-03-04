@@ -12,12 +12,23 @@ import { formatDistanceToNow } from "date-fns";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
 async function callFn(name: string, body: unknown, token: string) {
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  return res.json();
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      console.error(`[callFn] ${name} returned non-JSON (${res.status}):`, text.slice(0, 300));
+      return { error: `Server error (${res.status})` };
+    }
+  } catch (e: any) {
+    console.error(`[callFn] ${name} fetch failed:`, e.message);
+    return { error: e.message || 'Network error' };
+  }
 }
 
 function timeAgo(dateStr: string) {
@@ -337,11 +348,14 @@ function PostComposer({ poolId, token, isHost, currentUserName, onPosted }: {
   const canPost = text.trim() && (mode !== 'pick' || questionType === 'call_it' || options.filter(o => o.trim()).length >= 2);
 
   const submit = async () => {
+    console.log('[submit] canPost:', canPost, 'mode:', mode, 'text:', text, 'token:', token ? 'set' : 'MISSING');
     if (!canPost) return;
     const payload = mode === 'comment'
       ? { pool_id: poolId, question: text.trim(), question_type: 'commentary' }
       : { pool_id: poolId, question: text.trim(), question_type: questionType, options: questionType === 'pick' ? options.filter(o => o.trim()) : [] };
+    console.log('[submit] calling add-pool-prompt with:', payload);
     const data = await callFn('add-pool-prompt', payload, token);
+    console.log('[submit] response:', data);
     if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
     setText(''); setOptions(['', '']); setMode(null); setQuestionType('pick');
     onPosted();

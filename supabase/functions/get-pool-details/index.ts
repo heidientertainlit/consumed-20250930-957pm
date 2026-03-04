@@ -54,9 +54,20 @@ serve(async (req) => {
 
     // Fetch pool_prompts (without FK join for creator)
     const { data: rawPrompts } = await svc.from('pool_prompts')
-      .select('id, pool_id, prompt_text, prompt_type, options, status, correct_answer, points_value, created_at, created_by, parent_id')
+      .select('id, pool_id, prompt_text, prompt_type, options, status, correct_answer, points_value, created_at, created_by')
       .eq('pool_id', poolId)
       .order('created_at', { ascending: true });
+
+    // Separately fetch parent_id — ignore error if column not in schema cache yet
+    let parentIdMap: Record<string, string | null> = {};
+    {
+      const { data: parentRows } = await svc.from('pool_prompts')
+        .select('id, parent_id')
+        .eq('pool_id', poolId);
+      if (parentRows) {
+        for (const row of parentRows) parentIdMap[row.id] = row.parent_id ?? null;
+      }
+    }
 
     // Collect all user IDs we need to look up
     const memberUserIds: string[] = (rawMembers || []).map((m: any) => m.user_id);
@@ -131,6 +142,7 @@ serve(async (req) => {
 
     const posts = prompts.map((p: any) => ({
       ...p,
+      parent_id: parentIdMap[p.id] ?? null,
       creator: userMap[p.created_by] || null,
       user_answer: userAnswers[p.id] || null,
       // all_answers for both pick and call_it (powers Picks tab vote breakdown)
