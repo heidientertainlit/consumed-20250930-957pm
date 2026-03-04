@@ -516,14 +516,14 @@ export default function PoolDetailPage() {
 
         {/* Overlapping member bubbles — between About and tabs */}
         {!isLoading && members.length > 0 && (
-          <div className="overflow-x-auto scrollbar-none px-4 pt-4 pb-4">
+          <div className="overflow-x-auto scrollbar-none px-4 pt-2 pb-2">
             <div className="flex" style={{ marginLeft: '0' }}>
               {members.map((m: any, i: number) => {
-                const name = (m.users as any)?.display_name || (m.users as any)?.user_name || '?';
+                const name = (m.users as any)?.display_name || (m.users as any)?.user_name || (m.users as any)?.email || 'U';
                 const words = name.trim().split(/\s+/);
                 const initials = words.length >= 2
                   ? (words[0][0] + words[1][0]).toUpperCase()
-                  : name.slice(0, 2).toUpperCase();
+                  : (name[0] || 'U').toUpperCase();
                 return (
                   <div
                     key={m.user_id}
