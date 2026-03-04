@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, Circle, MessageSquare, HelpCircle, Plus } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, Copy, Check, Crown, Lock, X, Search, UserPlus, Send, CheckCircle2, Circle, MessageSquare, BarChart2, Plus, ChevronRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -24,201 +24,55 @@ function timeAgo(dateStr: string) {
   try { return formatDistanceToNow(new Date(dateStr), { addSuffix: true }); } catch { return ''; }
 }
 
-function Avatar({ name, size = 8, color = 'purple' }: { name: string; size?: number; color?: string }) {
+function avatarColor(name: string) {
+  const palette = [
+    'bg-violet-500', 'bg-fuchsia-500', 'bg-blue-500',
+    'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500',
+  ];
+  const code = (name || '?').charCodeAt(0);
+  return palette[code % palette.length];
+}
+
+function AvatarCircle({ name, size = 'md', ring = false }: { name: string; size?: 'sm' | 'md' | 'lg'; ring?: boolean }) {
   const initial = (name || '?')[0].toUpperCase();
-  const colors: Record<string, string> = {
-    purple: 'bg-purple-100 text-purple-600',
-    fuchsia: 'bg-fuchsia-100 text-fuchsia-600',
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-green-100 text-green-600',
-    amber: 'bg-amber-100 text-amber-600',
-  };
-  const colorList = Object.values(colors);
-  const c = colorList[initial.charCodeAt(0) % colorList.length];
+  const sz = size === 'sm' ? 'w-7 h-7 text-[10px]' : size === 'lg' ? 'w-11 h-11 text-sm' : 'w-9 h-9 text-xs';
+  const ringCls = ring ? 'ring-2 ring-white' : '';
   return (
-    <div className={`w-${size} h-${size} rounded-full ${c} flex items-center justify-center text-xs font-semibold shrink-0`}>
+    <div className={`${sz} ${ringCls} ${avatarColor(name)} rounded-full flex items-center justify-center font-bold text-white shrink-0`}>
       {initial}
     </div>
   );
 }
 
-function PostComposer({ poolId, token, onPosted }: { poolId: string; token: string; onPosted: () => void }) {
-  const [mode, setMode] = useState<null | 'question' | 'comment'>(null);
-  const [question, setQuestion] = useState('');
-  const [questionType, setQuestionType] = useState<'pick' | 'call_it'>('pick');
-  const [options, setOptions] = useState(['', '']);
-  const [comment, setComment] = useState('');
-  const { toast } = useToast();
-
-  const canSubmitQuestion = question.trim() && (questionType === 'call_it' || options.filter(o => o.trim()).length >= 2);
-
-  const mutation = useMutation({
-    mutationFn: (payload: any) => callFn('add-pool-prompt', { pool_id: poolId, ...payload }, token),
-    onSuccess: (data) => {
-      if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
-      setMode(null);
-      setQuestion(''); setOptions(['', '']); setComment(''); setQuestionType('pick');
-      onPosted();
-    }
-  });
-
-  const submitQuestion = () => {
-    if (!canSubmitQuestion) return;
-    mutation.mutate({ question, question_type: questionType, options: questionType === 'pick' ? options.filter(o => o.trim()) : [] });
-  };
-
-  const submitComment = () => {
-    if (!comment.trim()) return;
-    mutation.mutate({ question: comment, question_type: 'commentary' });
-  };
-
-  const close = () => {
-    setMode(null); setQuestion(''); setOptions(['', '']); setComment(''); setQuestionType('pick');
-  };
-
-  if (!mode) {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 mb-4">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setMode('question')}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium text-gray-500 bg-gray-50 hover:bg-gray-100 transition-colors"
-          >
-            <HelpCircle size={15} className="text-purple-400" /> Ask a question
-          </button>
-          <button
-            onClick={() => setMode('comment')}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium text-gray-500 bg-gray-50 hover:bg-gray-100 transition-colors"
-          >
-            <MessageSquare size={15} className="text-blue-400" /> Post a comment
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (mode === 'comment') {
-    return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-gray-700">Post a comment</p>
-          <button onClick={close}><X size={16} className="text-gray-400" /></button>
-        </div>
-        <textarea
-          value={comment}
-          onChange={e => setComment(e.target.value)}
-          placeholder="Say something to the room..."
-          autoFocus
-          rows={3}
-          className="w-full text-sm text-gray-800 placeholder:text-gray-400 bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none resize-none"
-        />
-        <button
-          onClick={submitComment}
-          disabled={!comment.trim() || mutation.isPending}
-          className="w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 transition-opacity"
-          style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
-        >
-          {mutation.isPending ? 'Posting...' : 'Post'}
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-gray-700">Ask a question</p>
-        <button onClick={close}><X size={16} className="text-gray-400" /></button>
-      </div>
-
-      <div className="flex gap-1.5 p-1 bg-gray-100 rounded-xl">
-        <button
-          onClick={() => setQuestionType('pick')}
-          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${questionType === 'pick' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
-        >
-          Pick
-        </button>
-        <button
-          onClick={() => setQuestionType('call_it')}
-          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${questionType === 'call_it' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}
-        >
-          Call It
-        </button>
-      </div>
-      <p className="text-gray-400 text-xs">
-        {questionType === 'pick' ? 'Set the options. Members pick one. You mark the correct answer after.' : 'Members type any answer freely. You review and mark correct ones.'}
-      </p>
-
-      <Input
-        value={question}
-        onChange={e => setQuestion(e.target.value)}
-        placeholder={questionType === 'pick' ? 'Who gets eliminated this week?' : 'How many roses were given?'}
-        className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl h-11"
-        autoFocus
-      />
-
-      {questionType === 'pick' && (
-        <div className="space-y-2">
-          {options.map((opt, i) => (
-            <div key={i} className="flex gap-2">
-              <Input
-                value={opt}
-                onChange={e => { const next = [...options]; next[i] = e.target.value; setOptions(next); }}
-                placeholder={`Option ${i + 1}`}
-                className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl h-10"
-              />
-              {options.length > 2 && (
-                <button onClick={() => setOptions(options.filter((_, j) => j !== i))} className="text-gray-400 hover:text-gray-600"><X size={15} /></button>
-              )}
-            </div>
-          ))}
-          {options.length < 6 && (
-            <button onClick={() => setOptions([...options, ''])} className="text-purple-600 text-sm flex items-center gap-1 hover:text-purple-700">
-              <Plus size={13} /> Add option
-            </button>
-          )}
-        </div>
-      )}
-
-      <button
-        onClick={submitQuestion}
-        disabled={!canSubmitQuestion || mutation.isPending}
-        className="w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 transition-opacity"
-        style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
-      >
-        {mutation.isPending ? 'Posting...' : 'Post Question'}
-      </button>
-    </div>
-  );
-}
-
-function PostCard({ post, isHost, token, onRefresh }: { post: any; isHost: boolean; token: string; onRefresh: () => void }) {
+/* ─── The Pick Card ─────────────────────────────────────────────────── */
+function ThePickCard({ post, isHost, token, onRefresh }: { post: any; isHost: boolean; token: string; onRefresh: () => void }) {
   const { toast } = useToast();
   const [resolving, setResolving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [callItText, setCallItText] = useState('');
-  const [markingId, setMarkingId] = useState<string | null>(null);
-  const [localAnswers, setLocalAnswers] = useState<any[]>(post.all_answers || []);
+  const [localVoteCounts, setLocalVoteCounts] = useState<Record<string, number>>(post.vote_counts || {});
+  const [localUserAnswer, setLocalUserAnswer] = useState<string | null>(post.user_answer?.answer || null);
 
-  useEffect(() => { setLocalAnswers(post.all_answers || []); }, [post.all_answers]);
+  useEffect(() => {
+    setLocalVoteCounts(post.vote_counts || {});
+    setLocalUserAnswer(post.user_answer?.answer || null);
+  }, [post.vote_counts, post.user_answer]);
 
-  const isCallIt = post.prompt_type === 'call_it';
-  const isCommentary = post.prompt_type === 'commentary';
   const isResolved = post.status === 'resolved';
-  const userAnswer = post.user_answer?.answer;
-  const isCorrect = post.user_answer?.is_correct;
   const options: string[] = post.options || [];
-  const creator = post.creator;
-  const creatorName = creator?.display_name || creator?.user_name || 'Host';
 
   const submitAnswer = async (answer: string) => {
-    if (!answer.trim()) return;
+    if (submitting || localUserAnswer) return;
     setSubmitting(true);
-    const data = await callFn('submit-pool-answer', { prompt_id: post.id, answer: answer.trim() }, token);
+    setLocalUserAnswer(answer);
+    setLocalVoteCounts(prev => ({ ...prev, [answer]: (prev[answer] || 0) + 1 }));
+    const data = await callFn('submit-pool-answer', { prompt_id: post.id, answer }, token);
     setSubmitting(false);
-    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
-    setCallItText('');
-    onRefresh();
+    if (data.error) {
+      setLocalUserAnswer(null);
+      toast({ title: data.error, variant: 'destructive' });
+    } else {
+      onRefresh();
+    }
   };
 
   const resolvePickPrompt = async (answer: string) => {
@@ -229,189 +83,299 @@ function PostCard({ post, isHost, token, onRefresh }: { post: any; isHost: boole
     toast({ title: `Done! ${data.winners_count} correct` });
   };
 
-  const closeCallItPrompt = async () => {
-    const data = await callFn('resolve-pool-prompt', { prompt_id: post.id }, token);
-    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
-    onRefresh();
-    toast({ title: `Closed — ${data.winners_count} correct` });
-  };
-
-  const markAnswer = async (answerId: string, nowCorrect: boolean) => {
-    setMarkingId(answerId);
-    setLocalAnswers(prev => prev.map(a => a.id === answerId ? { ...a, is_correct: nowCorrect } : a));
-    const data = await callFn('mark-pool-answer', { answer_id: answerId, is_correct: nowCorrect }, token);
-    setMarkingId(null);
-    if (data.error) {
-      setLocalAnswers(prev => prev.map(a => a.id === answerId ? { ...a, is_correct: !nowCorrect } : a));
-      toast({ title: data.error, variant: 'destructive' });
-    }
-  };
+  const totalVotes = Object.values(localVoteCounts).reduce((s, n) => s + n, 0);
+  const hasVoted = !!localUserAnswer;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
-      {/* Post header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Avatar name={creatorName} size={7} />
-          <div>
-            <p className="text-gray-900 text-sm font-medium leading-none">{creatorName}</p>
-            <p className="text-gray-400 text-[11px] mt-0.5">{timeAgo(post.created_at)}</p>
-          </div>
-        </div>
+    <div className="rounded-2xl overflow-hidden shadow-sm border border-purple-100/60 mb-4">
+      {/* Header strip */}
+      <div className="px-4 py-2 flex items-center justify-between" style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}>
         <div className="flex items-center gap-1.5">
-          {!isCommentary && (
-            <span className={`text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ${isCallIt ? 'bg-blue-100 text-blue-500' : 'bg-purple-100 text-purple-500'}`}>
-              {isCallIt ? 'Call It' : 'Pick'}
-            </span>
-          )}
-          {isResolved && <span className="text-[10px] bg-green-100 text-green-600 px-1.5 py-0.5 rounded uppercase font-semibold tracking-wide">Closed</span>}
+          <BarChart2 size={13} className="text-white/80" />
+          <span className="text-white text-[11px] font-semibold uppercase tracking-widest">The Pick</span>
         </div>
+        {isResolved
+          ? <span className="text-white/70 text-[10px] font-medium bg-white/15 px-2 py-0.5 rounded-full">Closed</span>
+          : <span className="text-green-300 text-[10px] font-medium bg-white/10 px-2 py-0.5 rounded-full">Open</span>
+        }
       </div>
 
-      {/* Post content */}
-      <p className={`text-gray-800 leading-snug ${isCommentary ? 'text-sm' : 'text-sm font-medium'}`}>{post.prompt_text}</p>
+      {/* Body */}
+      <div className="bg-white p-4 space-y-3">
+        <p className="text-gray-900 font-semibold text-base leading-snug">{post.prompt_text}</p>
+        {isResolved && post.correct_answer && (
+          <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-xl px-3 py-2">
+            <CheckCircle2 size={15} className="text-green-500 shrink-0" />
+            <span>Answer: <span className="font-semibold">{post.correct_answer}</span></span>
+          </div>
+        )}
 
-      {/* ── PICK mode ── */}
-      {!isCommentary && !isCallIt && (
-        <>
-          {isResolved && post.correct_answer && (
-            <p className="text-xs text-green-600 font-medium">Answer: {post.correct_answer}</p>
-          )}
-          {!isResolved && !resolving && !isHost && (
-            <div className="space-y-1.5">
-              {userAnswer && post.vote_counts ? (
-                (() => {
-                  const totalVotes = Object.values(post.vote_counts as Record<string, number>).reduce((s: number, n: number) => s + n, 0);
-                  return options.map((opt) => {
-                    const count = (post.vote_counts as Record<string, number>)[opt] || 0;
-                    const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-                    const isSelected = userAnswer === opt;
-                    return (
-                      <div key={opt} className="space-y-0.5">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className={`font-medium ${isSelected ? 'text-purple-700' : 'text-gray-600'}`}>{opt}{isSelected && ' — your pick'}</span>
-                          <span className="text-gray-500">{pct}%</span>
-                        </div>
-                        <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                          <div className={`h-full rounded-full transition-all duration-500 ${isSelected ? 'bg-purple-500' : 'bg-gray-300'}`} style={{ width: `${pct}%` }} />
-                        </div>
-                        <p className="text-[10px] text-gray-400">{count} {count === 1 ? 'vote' : 'votes'}</p>
+        {/* Options — member view */}
+        {!isHost && (
+          <div className="space-y-2">
+            {options.map((opt) => {
+              const count = localVoteCounts[opt] || 0;
+              const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+              const isSelected = localUserAnswer === opt;
+              const showBars = hasVoted || isResolved;
+
+              return (
+                <button
+                  key={opt}
+                  onClick={() => submitAnswer(opt)}
+                  disabled={hasVoted || isResolved || submitting}
+                  className={`w-full text-left rounded-xl overflow-hidden border transition-colors ${
+                    isSelected ? 'border-purple-400 bg-purple-50' : 'border-gray-200 bg-gray-50'
+                  } disabled:cursor-default`}
+                >
+                  <div className="relative px-3 py-2.5">
+                    {showBars && (
+                      <div
+                        className={`absolute inset-y-0 left-0 rounded-xl transition-all duration-500 ${isSelected ? 'bg-purple-100' : 'bg-gray-100'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    )}
+                    <div className="relative flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? 'border-purple-500' : 'border-gray-300'}`}>
+                          {isSelected && <span className="w-2 h-2 rounded-full bg-purple-500 block" />}
+                        </span>
+                        <span className={`text-sm ${isSelected ? 'text-purple-800 font-medium' : 'text-gray-700'}`}>{opt}</span>
                       </div>
-                    );
-                  });
-                })()
-              ) : (
-                options.map((opt) => (
-                  <button
-                    key={opt}
-                    onClick={() => !userAnswer && submitAnswer(opt)}
-                    disabled={submitting || !!userAnswer}
-                    className={`w-full text-left text-sm px-3 py-2.5 rounded-xl border transition-colors flex items-center gap-2 ${
-                      userAnswer === opt ? 'bg-purple-50 border-purple-300 text-purple-700 font-medium' : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 disabled:opacity-50'
-                    }`}
-                  >
-                    <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${userAnswer === opt ? 'border-purple-500' : 'border-gray-300'}`}>
-                      {userAnswer === opt && <span className="w-2 h-2 rounded-full bg-purple-500" />}
-                    </span>
-                    {opt}
-                  </button>
-                ))
-              )}
-            </div>
-          )}
-          {isResolved && userAnswer && (
-            <div className={`text-xs px-3 py-2 rounded-xl ${isCorrect ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
-              Your pick: {userAnswer} — {isCorrect ? 'Correct!' : 'Incorrect'}
-            </div>
-          )}
-          {isHost && !isResolved && (
-            resolving ? (
-              <div className="space-y-1.5 pt-2 border-t border-gray-100">
-                <p className="text-gray-400 text-xs">Tap the correct answer:</p>
-                {options.map((opt) => (
-                  <button key={opt} onClick={() => resolvePickPrompt(opt)} className="w-full text-left text-sm px-3 py-2 rounded-xl bg-green-50 border border-green-200 text-green-700 hover:bg-green-100">
-                    {opt}
-                  </button>
-                ))}
-                <button onClick={() => setResolving(false)} className="text-gray-400 text-xs hover:text-gray-600">Cancel</button>
-              </div>
-            ) : (
-              <button onClick={() => setResolving(true)} className="text-xs text-gray-400 hover:text-purple-500 transition-colors">
-                Mark answer
-              </button>
-            )
-          )}
-        </>
-      )}
-
-      {/* ── CALL IT mode ── */}
-      {!isCommentary && isCallIt && (
-        <>
-          {!isHost && !isResolved && !userAnswer && (
-            <div className="flex gap-2">
-              <Input
-                value={callItText}
-                onChange={e => setCallItText(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') submitAnswer(callItText); }}
-                placeholder="Type your answer..."
-                className="bg-gray-50 border-gray-200 text-gray-800 placeholder:text-gray-400 rounded-xl h-10 text-sm"
-              />
-              <button
-                onClick={() => submitAnswer(callItText)}
-                disabled={!callItText.trim() || submitting}
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 disabled:opacity-40"
-                style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
-              >
-                <Send size={14} className="text-white" />
-              </button>
-            </div>
-          )}
-          {!isHost && userAnswer && (
-            <div className={`text-xs px-3 py-2 rounded-xl ${isResolved ? (isCorrect ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500') : 'bg-gray-100 text-gray-500'}`}>
-              Your answer: <span className="font-medium">{userAnswer}</span>
-              {isResolved && (isCorrect ? ' — Correct!' : ' — Incorrect')}
-              {!isResolved && ' — Waiting for results'}
-            </div>
-          )}
-          {isHost && (
-            <div className="space-y-1.5 pt-2 border-t border-gray-100">
-              {localAnswers.length === 0 ? (
-                <p className="text-gray-400 text-xs">No answers yet</p>
-              ) : (
-                localAnswers.map((ans: any) => (
-                  <div key={ans.id} className="flex items-center gap-2">
-                    <button
-                      onClick={() => markAnswer(ans.id, !ans.is_correct)}
-                      disabled={markingId === ans.id || isResolved}
-                      className="shrink-0 transition-opacity disabled:opacity-40"
-                    >
-                      {ans.is_correct ? <CheckCircle2 size={18} className="text-green-500" /> : <Circle size={18} className="text-gray-300" />}
-                    </button>
-                    <span className="flex-1 text-gray-800 text-sm">{ans.answer}</span>
-                    <span className="text-gray-400 text-xs">{(ans.users as any)?.display_name || (ans.users as any)?.user_name || ''}</span>
+                      {showBars && <span className={`text-xs font-medium ${isSelected ? 'text-purple-600' : 'text-gray-400'}`}>{pct}%</span>}
+                    </div>
                   </div>
-                ))
-              )}
-              {!isResolved && (
-                <button onClick={closeCallItPrompt} className="mt-1 text-xs text-gray-400 hover:text-red-400 transition-colors">
-                  Close question
                 </button>
-              )}
+              );
+            })}
+          </div>
+        )}
+
+        {/* Options — host resolve view */}
+        {isHost && !isResolved && (
+          resolving ? (
+            <div className="space-y-2">
+              <p className="text-gray-500 text-xs">Select the correct answer:</p>
+              {options.map((opt) => (
+                <button key={opt} onClick={() => resolvePickPrompt(opt)} className="w-full text-left text-sm px-3 py-2.5 rounded-xl bg-green-50 border border-green-200 text-green-800 hover:bg-green-100 font-medium">
+                  {opt}
+                </button>
+              ))}
+              <button onClick={() => setResolving(false)} className="text-gray-400 text-xs hover:text-gray-600">Cancel</button>
             </div>
-          )}
-        </>
-      )}
+          ) : (
+            <div className="space-y-2">
+              {options.map((opt) => {
+                const count = localVoteCounts[opt] || 0;
+                const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                return (
+                  <div key={opt} className="bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-700">{opt}</span>
+                      <span className="text-gray-400 text-xs">{pct}% · {count}</span>
+                    </div>
+                  </div>
+                );
+              })}
+              <button onClick={() => setResolving(true)} className="text-xs text-purple-500 hover:text-purple-700 transition-colors font-medium">
+                Mark correct answer
+              </button>
+            </div>
+          )
+        )}
+
+        {totalVotes > 0 && (
+          <p className="text-gray-400 text-xs">{totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}</p>
+        )}
+      </div>
     </div>
   );
 }
 
+/* ─── Comment Card ──────────────────────────────────────────────────── */
+function CommentCard({ post, isHost, token, onRefresh }: { post: any; isHost: boolean; token: string; onRefresh: () => void }) {
+  const { toast } = useToast();
+  const [showReply, setShowReply] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const creator = post.creator;
+  const name = creator?.display_name || creator?.user_name || 'Member';
+
+  const submitReply = async () => {
+    if (!replyText.trim()) return;
+    setSubmitting(true);
+    await callFn('add-pool-prompt', { pool_id: post.pool_id, question: replyText.trim(), question_type: 'commentary' }, token);
+    setReplyText(''); setShowReply(false); setSubmitting(false);
+    onRefresh();
+  };
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5 space-y-2">
+      <div className="flex items-start gap-2.5">
+        <AvatarCircle name={name} size="sm" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-gray-900 text-sm font-semibold">{name}</span>
+            <span className="text-gray-400 text-[11px]">{timeAgo(post.created_at)}</span>
+          </div>
+          <p className="text-gray-700 text-sm leading-relaxed mt-0.5">{post.prompt_text}</p>
+        </div>
+      </div>
+      <div className="pl-9">
+        <button onClick={() => setShowReply(!showReply)} className="text-gray-400 text-xs hover:text-gray-600 flex items-center gap-1 transition-colors">
+          <MessageSquare size={12} /> Reply
+        </button>
+        {showReply && (
+          <div className="mt-2 flex gap-2">
+            <input
+              value={replyText}
+              onChange={e => setReplyText(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') submitReply(); }}
+              placeholder="Write a reply..."
+              autoFocus
+              className="flex-1 text-sm bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 outline-none text-gray-800 placeholder:text-gray-400"
+            />
+            <button onClick={submitReply} disabled={!replyText.trim() || submitting} className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 disabled:opacity-40 transition-opacity" style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}>
+              <Send size={13} className="text-white" />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Post Composer ─────────────────────────────────────────────────── */
+function PostComposer({ poolId, token, isHost, currentUserName, onPosted }: {
+  poolId: string; token: string; isHost: boolean; currentUserName: string; onPosted: () => void;
+}) {
+  const [mode, setMode] = useState<null | 'comment' | 'pick'>(null);
+  const [text, setText] = useState('');
+  const [questionType, setQuestionType] = useState<'pick' | 'call_it'>('pick');
+  const [options, setOptions] = useState(['', '']);
+  const { toast } = useToast();
+
+  const canPost = text.trim() && (mode !== 'pick' || questionType === 'call_it' || options.filter(o => o.trim()).length >= 2);
+
+  const submit = async () => {
+    if (!canPost) return;
+    const payload = mode === 'comment'
+      ? { pool_id: poolId, question: text.trim(), question_type: 'commentary' }
+      : { pool_id: poolId, question: text.trim(), question_type: questionType, options: questionType === 'pick' ? options.filter(o => o.trim()) : [] };
+    const data = await callFn('add-pool-prompt', payload, token);
+    if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
+    setText(''); setOptions(['', '']); setMode(null); setQuestionType('pick');
+    onPosted();
+  };
+
+  if (!mode) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 mb-3">
+        {/* Tap target row */}
+        <div className="flex items-center gap-2.5 mb-2.5">
+          <AvatarCircle name={currentUserName} size="md" />
+          <button
+            onClick={() => setMode('comment')}
+            className="flex-1 text-left text-sm text-gray-400 bg-gray-100 rounded-full px-4 py-2.5 hover:bg-gray-200 transition-colors"
+          >
+            Write something...
+          </button>
+        </div>
+        {/* Action buttons */}
+        <div className="flex gap-0 border-t border-gray-100 pt-2">
+          <button
+            onClick={() => setMode('comment')}
+            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-gray-500 text-xs font-medium hover:bg-gray-50 transition-colors"
+          >
+            <MessageSquare size={15} className="text-blue-500" /> Comment
+          </button>
+          {isHost && (
+            <button
+              onClick={() => setMode('pick')}
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-gray-500 text-xs font-medium hover:bg-gray-50 transition-colors"
+            >
+              <BarChart2 size={15} className="text-purple-500" /> The Pick
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'comment') {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AvatarCircle name={currentUserName} size="md" />
+            <span className="text-gray-800 text-sm font-medium">{currentUserName}</span>
+          </div>
+          <button onClick={() => { setMode(null); setText(''); }}><X size={16} className="text-gray-400" /></button>
+        </div>
+        <textarea
+          value={text} onChange={e => setText(e.target.value)}
+          placeholder="What's on your mind?" autoFocus rows={3}
+          className="w-full text-sm text-gray-800 placeholder:text-gray-400 bg-transparent outline-none resize-none"
+        />
+        <button onClick={submit} disabled={!text.trim()} className="w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 transition-opacity" style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}>
+          Post
+        </button>
+      </div>
+    );
+  }
+
+  // Pick mode (host only)
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-3 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-gray-800">New Pick</p>
+        <button onClick={() => { setMode(null); setText(''); setOptions(['', '']); }}><X size={16} className="text-gray-400" /></button>
+      </div>
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
+        {(['pick', 'call_it'] as const).map(t => (
+          <button key={t} onClick={() => setQuestionType(t)}
+            className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${questionType === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'}`}>
+            {t === 'pick' ? 'Pick' : 'Call It'}
+          </button>
+        ))}
+      </div>
+      <p className="text-gray-400 text-xs">
+        {questionType === 'pick' ? 'Set the options. You mark the correct answer after it airs.' : "Members type a free answer. You mark correct ones after."}
+      </p>
+      <Input value={text} onChange={e => setText(e.target.value)}
+        placeholder={questionType === 'pick' ? 'Who goes home tonight?' : 'How many roses given this episode?'}
+        className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl h-11" autoFocus />
+      {questionType === 'pick' && (
+        <div className="space-y-2">
+          {options.map((opt, i) => (
+            <div key={i} className="flex gap-2">
+              <Input value={opt} onChange={e => { const n = [...options]; n[i] = e.target.value; setOptions(n); }}
+                placeholder={`Option ${i + 1}`} className="bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-xl h-10 text-sm" />
+              {options.length > 2 && <button onClick={() => setOptions(options.filter((_, j) => j !== i))}><X size={15} className="text-gray-400" /></button>}
+            </div>
+          ))}
+          {options.length < 6 && (
+            <button onClick={() => setOptions([...options, ''])} className="text-purple-600 text-sm flex items-center gap-1 hover:text-purple-700">
+              <Plus size={13} /> Add option
+            </button>
+          )}
+        </div>
+      )}
+      <button onClick={submit} disabled={!canPost} className="w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40 transition-opacity" style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}>
+        Post Pick
+      </button>
+    </div>
+  );
+}
+
+/* ─── Main Page ─────────────────────────────────────────────────────── */
 export default function PoolDetailPage() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<'feed' | 'leaderboard' | 'members'>('feed');
+  const [tab, setTab] = useState<'discussion' | 'leaderboard' | 'members'>('discussion');
   const [copied, setCopied] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -434,8 +398,7 @@ export default function PoolDetailPage() {
 
   const handleCopyLink = () => {
     const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-    const link = `${appUrl}/room/join/${data?.pool?.invite_code}`;
-    navigator.clipboard.writeText(link);
+    navigator.clipboard.writeText(`${appUrl}/room/join/${data?.pool?.invite_code}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast({ title: 'Invite link copied!' });
@@ -447,11 +410,8 @@ export default function PoolDetailPage() {
     searchTimeout.current = setTimeout(async () => {
       setIsSearching(true);
       const q = memberSearch.toLowerCase().trim();
-      const { data: users } = await supabase
-        .from('users')
-        .select('id, display_name, user_name')
-        .or(`user_name.ilike.%${q}%,display_name.ilike.%${q}%`)
-        .limit(6);
+      const { data: users } = await supabase.from('users').select('id, display_name, user_name')
+        .or(`user_name.ilike.%${q}%,display_name.ilike.%${q}%`).limit(6);
       setSearchResults(users || []);
       setIsSearching(false);
     }, 300);
@@ -473,52 +433,70 @@ export default function PoolDetailPage() {
   const isHost = data?.is_host || false;
   const token = session?.access_token || '';
 
+  // Separate picks and comments
+  const picks = posts.filter(p => p.prompt_type === 'pick' || p.prompt_type === 'call_it');
+  const comments = posts.filter(p => p.prompt_type === 'commentary');
+
+  // Featured pick = most recently created open pick, or most recent if all closed
+  const featuredPick = picks.find(p => p.status !== 'resolved') || picks[picks.length - 1] || null;
+
+  const myName = (data?.members?.find((m: any) => m.user_id === session?.user?.id)?.users as any)?.display_name
+    || (data?.members?.find((m: any) => m.user_id === session?.user?.id)?.users as any)?.user_name
+    || 'Me';
+
   const TABS = [
-    { key: 'feed', label: 'Feed' },
+    { key: 'discussion', label: 'Discussion' },
     { key: 'leaderboard', label: 'Leaderboard' },
     { key: 'members', label: 'Members' },
   ] as const;
 
   return (
-    <div className="min-h-screen pb-24" style={{ backgroundColor: '#f9f9fb' }}>
-      {/* Header */}
-      <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        <div className="px-4 pt-4 pb-6">
-          <button onClick={() => setLocation('/rooms')} className="text-white/70 hover:text-white transition-colors mb-3 block">
-            <ChevronLeft size={24} />
-          </button>
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-white/40 uppercase tracking-widest mb-1">Room</p>
-              <h1 className="text-2xl font-semibold text-white leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                {isLoading ? '...' : (pool?.name || 'Room')}
-              </h1>
-            </div>
-            <button
-              onClick={handleCopyLink}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-white/80 text-xs font-medium border border-white/20 hover:bg-white/10 transition-colors mt-6 shrink-0"
-            >
+    <div className="min-h-screen pb-28" style={{ backgroundColor: '#f4f4f8' }}>
+      {/* ── Dark header ── */}
+      <div style={{ background: 'linear-gradient(135deg, #0a0a0f 0%, #12121f 50%, #2d1f4e 100%)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        <div className="px-4 pt-4 pb-0">
+          {/* Back + invite row */}
+          <div className="flex items-center justify-between mb-4">
+            <button onClick={() => setLocation('/rooms')} className="text-white/60 hover:text-white transition-colors">
+              <ChevronLeft size={24} />
+            </button>
+            <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/70 text-xs font-medium border border-white/20 hover:bg-white/10 transition-colors">
               {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
               {copied ? 'Copied!' : 'Invite'}
             </button>
           </div>
 
-          {/* Avatar stack */}
+          {/* Room info */}
+          <p className="text-white/40 text-[11px] font-medium uppercase tracking-widest mb-1">Room</p>
+          <h1 className="text-white text-2xl font-semibold mb-0.5 leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            {isLoading ? '...' : pool?.name || 'Room'}
+          </h1>
+          <p className="text-white/40 text-xs mb-4">
+            <Lock size={10} className="inline mr-1" />
+            Private · {members.length} {members.length === 1 ? 'member' : 'members'}
+          </p>
+
+          {/* Member avatar scroll row */}
           {members.length > 0 && (
-            <div className="flex items-center gap-2 mt-3">
-              <div className="flex -space-x-2">
-                {members.slice(0, 5).map((m: any) => {
-                  const name = (m.users as any)?.display_name || (m.users as any)?.user_name || '?';
-                  return (
-                    <div key={m.user_id} className="w-7 h-7 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center text-[10px] font-bold text-white">
-                      {name[0].toUpperCase()}
+            <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-none -mx-4 px-4">
+              {members.map((m: any) => {
+                const name = (m.users as any)?.display_name || (m.users as any)?.user_name || '?';
+                return (
+                  <div key={m.user_id} className="flex flex-col items-center gap-1.5 shrink-0">
+                    <div className="relative">
+                      <AvatarCircle name={name} size="lg" ring />
+                      {m.role === 'host' && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                          <Crown size={8} className="text-yellow-900" />
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-              <p className="text-white/50 text-xs">
-                {members.length} {members.length === 1 ? 'member' : 'members'}
-              </p>
+                    <span className="text-white/60 text-[10px] font-medium max-w-[44px] text-center truncate leading-tight">
+                      {name.split(' ')[0]}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -529,10 +507,8 @@ export default function PoolDetailPage() {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                tab === t.key
-                  ? 'text-white border-white'
-                  : 'text-white/40 border-transparent hover:text-white/70'
+              className={`px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px ${
+                tab === t.key ? 'text-white border-white' : 'text-white/40 border-transparent hover:text-white/70'
               }`}
             >
               {t.label}
@@ -541,25 +517,65 @@ export default function PoolDetailPage() {
         </div>
       </div>
 
+      {/* ── Content ── */}
       <div className="px-4 pt-4">
         {isLoading && (
           <div className="space-y-3">
-            {[1, 2, 3].map(i => <div key={i} className="h-24 rounded-2xl bg-gray-200 animate-pulse" />)}
+            {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl bg-gray-200 animate-pulse" />)}
           </div>
         )}
 
-        {/* ── FEED ── */}
-        {!isLoading && tab === 'feed' && (
-          <div className="space-y-3">
-            {isHost && <PostComposer poolId={params.id} token={token} onPosted={refresh} />}
-            {posts.length === 0 && (
-              <div className="text-center py-16">
-                <p className="text-gray-400 text-sm">{isHost ? 'Post the first question to kick things off.' : 'Nothing posted yet — the host will post the first question soon.'}</p>
+        {/* ── DISCUSSION ── */}
+        {!isLoading && tab === 'discussion' && (
+          <div className="space-y-0">
+            {/* The Pick */}
+            {featuredPick && (
+              <ThePickCard key={featuredPick.id} post={featuredPick} isHost={isHost} token={token} onRefresh={refresh} />
+            )}
+
+            {/* Past picks (host can see all) */}
+            {isHost && picks.filter(p => p.id !== featuredPick?.id).length > 0 && (
+              <div className="mb-4">
+                <p className="text-gray-400 text-xs font-medium uppercase tracking-widest mb-2">Previous Picks</p>
+                <div className="space-y-2">
+                  {picks.filter(p => p.id !== featuredPick?.id).reverse().map(p => (
+                    <div key={p.id} className="bg-white rounded-xl border border-gray-100 px-3.5 py-2.5 flex items-center gap-2">
+                      <BarChart2 size={13} className="text-purple-400 shrink-0" />
+                      <p className="text-gray-600 text-sm flex-1 truncate">{p.prompt_text}</p>
+                      <span className="text-gray-400 text-[10px] shrink-0">{p.status === 'resolved' ? 'Closed' : 'Open'}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-            {[...posts].reverse().map((post: any) => (
-              <PostCard key={post.id} post={post} isHost={isHost} token={token} onRefresh={refresh} />
-            ))}
+
+            {!featuredPick && !isHost && (
+              <div className="text-center py-8 mb-4">
+                <p className="text-gray-400 text-sm">No pick posted yet — check back soon.</p>
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-gray-400 text-xs font-medium uppercase tracking-widest">Discussion</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+
+            {/* Composer */}
+            <PostComposer poolId={params.id} token={token} isHost={isHost} currentUserName={myName} onPosted={refresh} />
+
+            {/* Comments */}
+            <div className="space-y-3">
+              {comments.length === 0 && (
+                <div className="text-center py-6">
+                  <p className="text-gray-400 text-sm">No comments yet. Start the conversation.</p>
+                </div>
+              )}
+              {[...comments].reverse().map(c => (
+                <CommentCard key={c.id} post={c} isHost={isHost} token={token} onRefresh={refresh} />
+              ))}
+            </div>
           </div>
         )}
 
@@ -567,19 +583,20 @@ export default function PoolDetailPage() {
         {!isLoading && tab === 'leaderboard' && (
           <div className="space-y-2">
             {members.length === 0 && <p className="text-gray-400 text-sm text-center py-12">No scores yet</p>}
-            {[...members].sort((a, b) => (b.total_points || 0) - (a.total_points || 0)).map((m: any, i) => (
-              <div key={m.user_id} className="flex items-center gap-3 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm">
-                <span className={`text-sm font-bold w-6 text-center ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-600' : 'text-gray-300'}`}>{i + 1}</span>
-                <Avatar name={(m.users as any)?.display_name || (m.users as any)?.user_name || '?'} size={8} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-gray-900 text-sm font-medium truncate">{(m.users as any)?.display_name || (m.users as any)?.user_name || 'Member'}</p>
-                </div>
-                <div className="flex items-center gap-1">
-                  {m.role === 'host' && <Crown size={12} className="text-yellow-500" />}
+            {[...members].sort((a, b) => (b.total_points || 0) - (a.total_points || 0)).map((m: any, i) => {
+              const name = (m.users as any)?.display_name || (m.users as any)?.user_name || 'Member';
+              return (
+                <div key={m.user_id} className="flex items-center gap-3 bg-white rounded-2xl p-3.5 border border-gray-100 shadow-sm">
+                  <span className={`text-sm font-bold w-6 text-center shrink-0 ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-600' : 'text-gray-300'}`}>{i + 1}</span>
+                  <AvatarCircle name={name} size="md" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-gray-900 text-sm font-medium truncate">{name}</p>
+                    {m.role === 'host' && <p className="text-yellow-600 text-[11px] flex items-center gap-1"><Crown size={9} /> Host</p>}
+                  </div>
                   <span className="text-purple-600 font-semibold text-sm">{m.total_points || 0} pts</span>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -590,15 +607,10 @@ export default function PoolDetailPage() {
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="flex items-center gap-2 px-3 py-3 border-b border-gray-50">
                   <Search size={15} className="text-gray-400 shrink-0" />
-                  <input
-                    value={memberSearch}
-                    onChange={e => setMemberSearch(e.target.value)}
+                  <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)}
                     placeholder="Search by name or username..."
-                    className="flex-1 text-sm text-gray-800 placeholder:text-gray-400 outline-none bg-transparent"
-                  />
-                  {memberSearch && (
-                    <button onClick={() => { setMemberSearch(''); setSearchResults([]); }}><X size={14} className="text-gray-400" /></button>
-                  )}
+                    className="flex-1 text-sm text-gray-800 placeholder:text-gray-400 outline-none bg-transparent" />
+                  {memberSearch && <button onClick={() => { setMemberSearch(''); setSearchResults([]); }}><X size={14} className="text-gray-400" /></button>}
                 </div>
                 {isSearching && <div className="px-3 py-2 text-xs text-gray-400">Searching...</div>}
                 {searchResults.length > 0 && (
@@ -607,18 +619,18 @@ export default function PoolDetailPage() {
                       const alreadyIn = members.some(m => m.user_id === u.id);
                       return (
                         <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 border-b border-gray-50 last:border-0">
-                          <Avatar name={u.display_name || u.user_name || '?'} size={8} />
+                          <AvatarCircle name={u.display_name || u.user_name || '?'} size="md" />
                           <div className="flex-1 min-w-0">
                             <p className="text-gray-900 text-sm font-medium truncate">{u.display_name || u.user_name}</p>
                             {u.display_name && <p className="text-gray-400 text-xs">@{u.user_name}</p>}
                           </div>
-                          {alreadyIn ? (
-                            <span className="text-gray-400 text-xs">Added</span>
-                          ) : (
-                            <button onClick={() => handleAddMember(u.id)} disabled={addingId === u.id} className="flex items-center gap-1 text-purple-600 text-xs font-medium hover:text-purple-700 disabled:opacity-50">
-                              <UserPlus size={14} />{addingId === u.id ? 'Adding...' : 'Add'}
-                            </button>
-                          )}
+                          {alreadyIn
+                            ? <span className="text-gray-400 text-xs">Added</span>
+                            : <button onClick={() => handleAddMember(u.id)} disabled={addingId === u.id}
+                                className="flex items-center gap-1 text-purple-600 text-xs font-medium hover:text-purple-700 disabled:opacity-50">
+                                <UserPlus size={14} />{addingId === u.id ? 'Adding...' : 'Add'}
+                              </button>
+                          }
                         </div>
                       );
                     })}
@@ -630,18 +642,21 @@ export default function PoolDetailPage() {
               </div>
             )}
 
-            {members.map((m: any) => (
-              <div key={m.user_id} className="flex items-center gap-3 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm">
-                <Avatar name={(m.users as any)?.display_name || (m.users as any)?.user_name || '?'} size={8} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-gray-900 text-sm font-medium truncate">{(m.users as any)?.display_name || (m.users as any)?.user_name || 'Member'}</p>
-                  {m.role === 'host' && <p className="text-yellow-600 text-xs">Host</p>}
+            {members.map((m: any) => {
+              const name = (m.users as any)?.display_name || (m.users as any)?.user_name || 'Member';
+              return (
+                <div key={m.user_id} className="flex items-center gap-3 bg-white rounded-2xl p-3.5 border border-gray-100 shadow-sm">
+                  <AvatarCircle name={name} size="md" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-gray-900 text-sm font-medium truncate">{name}</p>
+                    {m.role === 'host' && <p className="text-yellow-600 text-[11px] flex items-center gap-1"><Crown size={9} /> Host</p>}
+                  </div>
+                  <span className="text-gray-400 text-sm">{m.total_points || 0} pts</span>
                 </div>
-                <span className="text-gray-400 text-sm">{m.total_points || 0} pts</span>
-              </div>
-            ))}
+              );
+            })}
 
-            <button onClick={handleCopyLink} className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-gray-200 text-gray-500 text-sm bg-white hover:bg-gray-50 transition-colors">
+            <button onClick={handleCopyLink} className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-gray-300 text-gray-500 text-sm bg-white hover:bg-gray-50 transition-colors">
               {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
               {copied ? 'Copied!' : 'Copy invite link'}
             </button>
