@@ -263,9 +263,18 @@ function ThreadCard({ post, replies, isMember, token, onRefresh, currentUserName
         <div className="flex items-start gap-2.5">
           <AvatarCircle name={name} size="sm" />
           <div className="flex-1 min-w-0">
-            <div className="flex items-baseline gap-1.5">
+            <div className="flex items-center gap-1.5">
               <span className="text-gray-900 text-sm font-semibold">{name}</span>
               <span className="text-gray-400 text-[11px]">{timeAgo(post.created_at)}</span>
+              {canDelete(post.created_by) && (
+                <button
+                  onClick={() => deletePost(post.id)}
+                  disabled={deleting === post.id}
+                  className="ml-auto text-gray-300 hover:text-red-400 transition-colors disabled:opacity-40 p-0.5"
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
             </div>
             <p className="text-gray-700 text-sm leading-relaxed mt-0.5">{post.prompt_text}</p>
           </div>
@@ -287,15 +296,6 @@ function ThreadCard({ post, replies, isMember, token, onRefresh, currentUserName
               className="text-gray-400 text-xs hover:text-gray-600 transition-colors"
             >
               {showReplies ? 'Hide' : `${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`}
-            </button>
-          )}
-          {canDelete(post.created_by) && (
-            <button
-              onClick={() => deletePost(post.id)}
-              disabled={deleting === post.id}
-              className="text-gray-300 text-xs hover:text-red-400 flex items-center gap-1 transition-colors ml-auto disabled:opacity-40"
-            >
-              <Trash2 size={11} /> {deleting === post.id ? 'Deleting…' : 'Delete'}
             </button>
           )}
         </div>
