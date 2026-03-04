@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Plus, Users, Trophy, Crown, Copy, Check, Trash2 } from "lucide-react";
+import { ChevronLeft, Plus, Trophy, Crown, Trash2, Globe2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,6 @@ export default function PoolsPage() {
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [newPoolName, setNewPoolName] = useState('');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -61,15 +60,6 @@ export default function PoolsPage() {
     }
   });
 
-  const handleCopyLink = (pool: any) => {
-    const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-    const link = `${appUrl}/room/join/${pool.invite_code}`;
-    navigator.clipboard.writeText(link);
-    setCopiedId(pool.id);
-    setTimeout(() => setCopiedId(null), 2000);
-    toast({ title: 'Link copied!' });
-  };
-
   const pools: any[] = data?.pools || [];
 
   return (
@@ -84,10 +74,10 @@ export default function PoolsPage() {
           {!showCreate ? (
             <button
               onClick={() => setShowCreate(true)}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-white text-sm font-semibold mb-2"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-full text-white text-sm font-semibold mb-2"
               style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
             >
-              <Plus size={15} /> New Room
+              <Plus size={14} /> New Room
             </button>
           ) : (
             <div className="flex gap-2 mb-2">
@@ -127,53 +117,43 @@ export default function PoolsPage() {
         )}
 
         {pools.map((pool) => (
-          <div key={pool.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <button onClick={() => setLocation(`/room/${pool.id}`)} className="w-full text-left p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-gray-900 font-semibold text-base truncate">{pool.name}</h3>
-                    {pool.is_host && <Crown size={12} className="text-yellow-500 shrink-0" />}
-                  </div>
-                  <div className="flex items-center gap-3 text-gray-400 text-xs">
-                    <span className="flex items-center gap-1"><Users size={12} />{pool.member_count} members</span>
-                    <span>{pool.round_count} rounds</span>
-                    {!pool.is_host && <span className="text-purple-500">{pool.user_points} pts</span>}
-                  </div>
-                </div>
+          <div key={pool.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-3 p-4">
+              {/* Room icon */}
+              <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
+                <Globe2 size={18} className="text-purple-500" />
               </div>
-            </button>
-            <div className="border-t border-gray-50 px-4 py-2 flex items-center justify-between">
-              <button
-                onClick={() => handleCopyLink(pool)}
-                className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 text-xs transition-colors"
-              >
-                {copiedId === pool.id ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
-                {copiedId === pool.id ? 'Copied!' : 'Copy invite link'}
+
+              {/* Name + stats */}
+              <button onClick={() => setLocation(`/room/${pool.id}`)} className="flex-1 min-w-0 text-left">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <h3 className="text-gray-900 font-semibold text-base truncate">{pool.name}</h3>
+                  {pool.is_host && <Crown size={11} className="text-yellow-500 shrink-0" />}
+                </div>
+                <p className="text-gray-400 text-xs">
+                  {pool.member_count} {pool.member_count === 1 ? 'member' : 'members'} &bull; {pool.round_count} {pool.round_count === 1 ? 'round' : 'rounds'}
+                </p>
               </button>
 
+              {/* Delete (host only) */}
               {pool.is_host && (
                 confirmDeleteId === pool.id ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">Delete room?</span>
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => deleteMutation.mutate(pool.id)}
                       disabled={deleteMutation.isPending}
-                      className="text-xs text-red-500 font-semibold hover:text-red-600 disabled:opacity-50"
+                      className="text-xs text-red-500 font-semibold disabled:opacity-50"
                     >
-                      {deleteMutation.isPending ? 'Deleting...' : 'Yes, delete'}
+                      {deleteMutation.isPending ? '...' : 'Delete'}
                     </button>
-                    <button
-                      onClick={() => setConfirmDeleteId(null)}
-                      className="text-xs text-gray-400 hover:text-gray-600"
-                    >
+                    <button onClick={() => setConfirmDeleteId(null)} className="text-xs text-gray-400">
                       Cancel
                     </button>
                   </div>
                 ) : (
                   <button
                     onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(pool.id); }}
-                    className="text-gray-300 hover:text-red-400 transition-colors p-1"
+                    className="text-gray-300 hover:text-red-400 transition-colors p-1 shrink-0"
                   >
                     <Trash2 size={14} />
                   </button>
