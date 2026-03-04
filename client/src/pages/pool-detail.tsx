@@ -133,9 +133,10 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
             </div>
           )}
 
-          {/* ── CALL IT: open-ended text input ── */}
-          {isCallIt && !isHost && (
+          {/* ── CALL IT: everyone gets the input; host additionally sees Mark correct ── */}
+          {isCallIt && (
             <div className="space-y-2">
+              {/* Text input — shown to anyone who hasn't submitted yet */}
               {!hasVoted && !isResolved && (
                 <div className="flex gap-2">
                   <input
@@ -148,47 +149,43 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
                   <button
                     onClick={() => submitAnswer(callItText)}
                     disabled={!callItText.trim() || submitting}
-                    className="px-3 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                    className="px-3 py-2 rounded-xl text-white disabled:opacity-40"
                     style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
                   >
                     <Send size={14} />
                   </button>
                 </div>
               )}
+
+              {/* Confirmation after submitting */}
               {hasVoted && (
                 <div className="bg-white/10 rounded-xl px-3 py-2 text-sm text-white/80">
                   Your call: <span className="font-semibold text-white">{localUserAnswer}</span>
                 </div>
               )}
+
+              {/* All submissions */}
               {allAnswers.length > 0 && (
                 <div className="space-y-1.5 mt-1">
-                  <p className="text-white/30 text-[11px] uppercase tracking-wide font-semibold">All calls</p>
+                  <p className="text-white/30 text-[11px] uppercase tracking-wide font-semibold">
+                    {allAnswers.length} {allAnswers.length === 1 ? 'call' : 'calls'}
+                  </p>
                   {allAnswers.map((a: any, i: number) => (
-                    <div key={i} className="bg-white/7 rounded-xl px-3 py-2 text-sm text-white/70">
-                      {a.answer}
+                    <div key={i} className="flex items-center justify-between bg-white/7 rounded-xl px-3 py-2">
+                      <span className="text-sm text-white/70">{a.answer}</span>
+                      {isHost && !isResolved && (
+                        <button onClick={() => resolvePickPrompt(a.answer)} className="text-emerald-400 text-[11px] font-semibold hover:text-emerald-300 transition-colors ml-2 shrink-0">
+                          Mark correct
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
-            </div>
-          )}
 
-          {/* ── CALL IT: host view ── */}
-          {isCallIt && isHost && (
-            <div className="space-y-2">
-              {allAnswers.length === 0 && (
-                <p className="text-white/30 text-xs">No predictions submitted yet.</p>
+              {allAnswers.length === 0 && hasVoted && (
+                <p className="text-white/30 text-xs">You're the first — waiting for others.</p>
               )}
-              {allAnswers.map((a: any, i: number) => (
-                <div key={i} className="flex items-center justify-between bg-white/7 rounded-xl px-3 py-2">
-                  <span className="text-sm text-white/80">{a.answer}</span>
-                  {!isResolved && (
-                    <button onClick={() => resolvePickPrompt(a.answer)} className="text-emerald-400 text-[11px] font-semibold hover:text-emerald-300 transition-colors">
-                      Mark correct
-                    </button>
-                  )}
-                </div>
-              ))}
             </div>
           )}
 
