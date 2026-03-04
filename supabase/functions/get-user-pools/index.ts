@@ -13,7 +13,7 @@ async function enrichPool(svc: any, pool: any, userId: string, isHost: boolean, 
   const [{ count: memberCount }, { count: roundCount }, { data: host }] = await Promise.all([
     svc.from('pool_members').select('*', { count: 'exact', head: true }).eq('pool_id', pool.id),
     svc.from('pool_rounds').select('*', { count: 'exact', head: true }).eq('pool_id', pool.id),
-    svc.from('users').select('user_name, display_name, avatar_url').eq('id', pool.host_id).single()
+    svc.from('users').select('user_name, display_name').eq('id', pool.host_id).single()
   ]);
   return {
     id: pool.id,

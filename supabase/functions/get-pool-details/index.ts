@@ -63,9 +63,9 @@ serve(async (req) => {
     const creatorIds: string[] = [...new Set((rawPrompts || []).map((p: any) => p.created_by).filter(Boolean))];
     const allUserIds = [...new Set([...memberUserIds, ...creatorIds, pool.host_id])];
 
-    // Single bulk user lookup
-    const { data: allUsers } = await svc.from('users')
-      .select('id, user_name, display_name, avatar_url')
+    // Single bulk user lookup (no avatar_url — column name varies)
+    const { data: allUsers, error: usersError } = await svc.from('users')
+      .select('id, user_name, display_name')
       .in('id', allUserIds);
 
     const userMap: Record<string, any> = {};
