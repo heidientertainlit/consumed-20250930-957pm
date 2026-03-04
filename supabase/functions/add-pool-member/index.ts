@@ -46,16 +46,26 @@ serve(async (req) => {
     const hostName = host?.display_name || host?.user_name || 'Someone';
     const roomName = pool.name || 'a room';
 
-    const { error: notifError } = await svc.from('notifications').insert({
-      user_id: target_user_id,
-      type: 'room_added',
-      triggered_by_user_id: requester.id,
-      message: `${hostName} added you to the Room "${roomName}"`,
-      list_id: pool_id,
-      read: false,
+    // Send notification via the established send-notification function (handles RLS, logging, error reporting)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    await fetch(`${supabaseUrl}/functions/v1/send-notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'apikey': serviceRoleKey,
+      },
+      body: JSON.stringify({
+        userId: target_user_id,
+        type: 'room_added',
+        triggeredByUserId: requester.id,
+        message: `${hostName} added you to the Room "${roomName}"`,
+        listId: pool_id,
+      }),
     });
 
-    return json({ success: true, user: target, _notif_error: notifError?.message || null });
+    return json({ success: true, user: target });
   } catch (e) {
     return json({ error: e.message }, 500);
   }

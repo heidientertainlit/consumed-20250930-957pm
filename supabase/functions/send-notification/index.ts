@@ -7,7 +7,7 @@ const corsHeaders = {
 
 interface NotificationRequest {
   userId: string;
-  type: 'comment' | 'comment_reply' | 'like' | 'friend_request' | 'friend_accepted' | 'follow' | 'mention' | 'inner_circle' | 'collaborator_added' | 'cast';
+  type: 'comment' | 'comment_reply' | 'like' | 'friend_request' | 'friend_accepted' | 'follow' | 'mention' | 'inner_circle' | 'collaborator_added' | 'cast' | 'room_added' | 'room_joined' | 'room_new_question';
   triggeredByUserId: string;
   message: string;
   postId?: string;
