@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Copy, Check, Crown, Lock, X, Search, UserPlus, Send, CheckCircle2, Circle, MessageSquare, BarChart2, Plus, ChevronRight } from "lucide-react";
+import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, Circle, MessageSquare, BarChart2, Plus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -385,15 +385,12 @@ function AboutSection({ pool, members, isLoading }: { pool: any; members: any[];
   const hostName = (pool?.host as any)?.display_name || (pool?.host as any)?.user_name || 'the host';
   const fullDescription = pool?.description
     || `A private prediction room hosted by ${hostName}. Members vote on weekly picks and compete on the leaderboard.`;
-  const shortDescription = fullDescription.length > 90 ? fullDescription.slice(0, 90).trim() + '…' : fullDescription;
-  const hasMore = fullDescription.length > 90;
-
-  const visibleAvatars = members.slice(0, 4);
-  const overflow = members.length > 4 ? members.length - 4 : 0;
+  const shortDescription = fullDescription.length > 100 ? fullDescription.slice(0, 97).trim() + '…' : fullDescription;
+  const hasMore = fullDescription.length > 100;
 
   return (
-    <div className="px-4 pt-4 pb-3">
-      <p className="text-gray-900 text-sm font-semibold mb-1.5">About this Room</p>
+    <div>
+      <p className="text-gray-900 text-sm font-semibold mb-1">About this Room</p>
       <p className="text-gray-500 text-sm leading-relaxed">
         {expanded ? fullDescription : shortDescription}
         {hasMore && (
@@ -402,31 +399,6 @@ function AboutSection({ pool, members, isLoading }: { pool: any; members: any[];
           </button>
         )}
       </p>
-
-      {/* Members stack */}
-      {members.length > 0 && (
-        <div className="flex items-center gap-3 mt-3">
-          <div className="flex -space-x-2.5">
-            {visibleAvatars.map((m: any) => {
-              const name = (m.users as any)?.display_name || (m.users as any)?.user_name || '?';
-              return (
-                <div key={m.user_id} className={`w-8 h-8 rounded-full ${avatarColor(name)} flex items-center justify-center text-[10px] font-bold text-white ring-2 ring-white shrink-0`}>
-                  {name[0].toUpperCase()}
-                </div>
-              );
-            })}
-            {overflow > 0 && (
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-500 ring-2 ring-white shrink-0">
-                +{overflow}
-              </div>
-            )}
-          </div>
-          <div>
-            <p className="text-gray-800 text-xs font-semibold">{members.length} {members.length === 1 ? 'Member' : 'Members'}</p>
-            <p className="text-gray-400 text-[11px]">Private room</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -515,47 +487,64 @@ export default function PoolDetailPage() {
 
   return (
     <div className="min-h-screen pb-28" style={{ backgroundColor: '#f4f4f8' }}>
-      {/* ── Dark header ── */}
-      <div style={{ background: 'linear-gradient(135deg, #0a0a0f 0%, #12121f 50%, #2d1f4e 100%)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        <div className="px-4 pt-4 pb-0">
-          {/* Back + invite row */}
-          <div className="flex items-center justify-between mb-4">
-            <button onClick={() => setLocation('/rooms')} className="text-white/60 hover:text-white transition-colors">
-              <ChevronLeft size={24} />
-            </button>
-            <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/70 text-xs font-medium border border-white/20 hover:bg-white/10 transition-colors">
-              {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-              {copied ? 'Copied!' : 'Invite'}
-            </button>
-          </div>
 
-          {/* Room info */}
-          <p className="text-white/40 text-[11px] font-medium uppercase tracking-widest mb-1">Room</p>
-          <h1 className="text-white text-2xl font-semibold mb-0.5 leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      {/* ── White header: back + invite ── */}
+      <div className="bg-white" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+        <div className="flex items-center justify-between px-4 pt-4 pb-2">
+          <button onClick={() => setLocation('/rooms')} className="text-gray-500 hover:text-gray-900 transition-colors">
+            <ChevronLeft size={24} />
+          </button>
+          <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-gray-600 text-xs font-medium border border-gray-200 hover:bg-gray-50 transition-colors">
+            {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+            {copied ? 'Copied!' : 'Invite'}
+          </button>
+        </div>
+
+        {/* Room name + About */}
+        <div className="px-4 pb-2">
+          <p className="text-gray-400 text-[10px] font-medium uppercase tracking-widest mb-0.5">Room</p>
+          <h1 className="text-gray-900 text-2xl font-semibold leading-tight mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
             {isLoading ? '...' : pool?.name || 'Room'}
           </h1>
-          <p className="text-white/40 text-xs mb-4">
-            <Lock size={10} className="inline mr-1" />
-            Private · {members.length} {members.length === 1 ? 'member' : 'members'}
-          </p>
-
+          <AboutSection pool={pool} members={members} isLoading={isLoading} />
         </div>
+
+        {/* Participant bubbles row */}
+        {!isLoading && members.length > 0 && (
+          <div className="flex gap-3 overflow-x-auto px-4 pb-4 scrollbar-none">
+            {members.map((m: any) => {
+              const name = (m.users as any)?.display_name || (m.users as any)?.user_name || '?';
+              return (
+                <div key={m.user_id} className="flex flex-col items-center gap-1.5 shrink-0">
+                  <div className="relative">
+                    <div className={`w-11 h-11 rounded-full ${avatarColor(name)} flex items-center justify-center text-sm font-bold text-white ring-2 ring-white`}>
+                      {name[0].toUpperCase()}
+                    </div>
+                    {m.role === 'host' && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <Crown size={8} className="text-yellow-900" />
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-gray-500 text-[10px] font-medium max-w-[44px] text-center truncate">
+                    {name.split(' ')[0]}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* ── About section (white card, between header and tabs) ── */}
-      <div className="bg-white border-b border-gray-100">
-        <AboutSection pool={pool} members={members} isLoading={isLoading} />
-
-        {/* Underline tabs */}
-        <div className="flex px-4 border-b border-gray-100">
+      {/* ── Purple gradient hero + tabs ── */}
+      <div style={{ background: 'linear-gradient(135deg, #0a0a0f 0%, #12121f 50%, #2d1f4e 100%)' }}>
+        <div className="flex px-4 border-b border-white/10">
           {TABS.map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               className={`px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px ${
-                tab === t.key
-                  ? 'text-gray-900 border-gray-900'
-                  : 'text-gray-400 border-transparent hover:text-gray-600'
+                tab === t.key ? 'text-white border-white' : 'text-white/40 border-transparent hover:text-white/70'
               }`}
             >
               {t.label}
@@ -601,13 +590,6 @@ export default function PoolDetailPage() {
                 <p className="text-gray-400 text-sm">No pick posted yet — check back soon.</p>
               </div>
             )}
-
-            {/* Divider */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-gray-400 text-xs font-medium uppercase tracking-widest">Discussion</span>
-              <div className="flex-1 h-px bg-gray-200" />
-            </div>
 
             {/* Composer */}
             <PostComposer poolId={params.id} token={token} isHost={isHost} currentUserName={myName} onPosted={refresh} />
