@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, Circle, MessageSquare, BarChart2, Plus } from "lucide-react";
+import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -44,9 +44,10 @@ function AvatarCircle({ name, size = 'md', ring = false }: { name: string; size?
   );
 }
 
-/* ─── The Pick Card ─────────────────────────────────────────────────── */
-function ThePickCard({ post, isHost, token, onRefresh }: { post: any; isHost: boolean; token: string; onRefresh: () => void }) {
+/* ─── Featured Pick Banner (Daily Call style) ───────────────────────── */
+function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isHost: boolean; token: string; onRefresh: () => void }) {
   const { toast } = useToast();
+  const [expanded, setExpanded] = useState(false);
   const [resolving, setResolving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [localVoteCounts, setLocalVoteCounts] = useState<Record<string, number>>(post.vote_counts || {});
@@ -59,135 +60,145 @@ function ThePickCard({ post, isHost, token, onRefresh }: { post: any; isHost: bo
 
   const isResolved = post.status === 'resolved';
   const options: string[] = post.options || [];
+  const totalVotes = Object.values(localVoteCounts).reduce((s, n) => s + n, 0);
+  const hasVoted = !!localUserAnswer;
 
   const submitAnswer = async (answer: string) => {
-    if (submitting || localUserAnswer) return;
+    if (submitting || hasVoted) return;
     setSubmitting(true);
     setLocalUserAnswer(answer);
     setLocalVoteCounts(prev => ({ ...prev, [answer]: (prev[answer] || 0) + 1 }));
     const data = await callFn('submit-pool-answer', { prompt_id: post.id, answer }, token);
     setSubmitting(false);
-    if (data.error) {
-      setLocalUserAnswer(null);
-      toast({ title: data.error, variant: 'destructive' });
-    } else {
-      onRefresh();
-    }
+    if (data.error) { setLocalUserAnswer(null); toast({ title: data.error, variant: 'destructive' }); }
+    else onRefresh();
   };
 
   const resolvePickPrompt = async (answer: string) => {
     const data = await callFn('resolve-pool-prompt', { prompt_id: post.id, correct_answer: answer }, token);
     if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
-    setResolving(false);
-    onRefresh();
+    setResolving(false); onRefresh();
     toast({ title: `Done! ${data.winners_count} correct` });
   };
 
-  const totalVotes = Object.values(localVoteCounts).reduce((s, n) => s + n, 0);
-  const hasVoted = !!localUserAnswer;
-
   return (
-    <div className="rounded-2xl overflow-hidden shadow-sm border border-purple-100/60 mb-4">
-      {/* Header strip */}
-      <div className="px-4 py-2 flex items-center justify-between" style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}>
-        <div className="flex items-center gap-1.5">
-          <BarChart2 size={13} className="text-white/80" />
-          <span className="text-white text-[11px] font-semibold uppercase tracking-widest">The Pick</span>
+    <div className="rounded-2xl overflow-hidden mb-4" style={{ background: 'linear-gradient(135deg, #12102b 0%, #1e1654 55%, #2d1f6e 100%)' }}>
+      {/* Collapsed header row — always visible, tappable */}
+      <button
+        onClick={() => setExpanded(e => !e)}
+        className="w-full flex items-center gap-3 px-4 py-3.5 text-left"
+      >
+        {/* Play icon in circle */}
+        <div className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+          <Play size={14} className="text-white fill-white ml-0.5" />
         </div>
-        {isResolved
-          ? <span className="text-white/70 text-[10px] font-medium bg-white/15 px-2 py-0.5 rounded-full">Closed</span>
-          : <span className="text-green-300 text-[10px] font-medium bg-white/10 px-2 py-0.5 rounded-full">Open</span>
-        }
-      </div>
 
-      {/* Body */}
-      <div className="bg-white p-4 space-y-3">
-        <p className="text-gray-900 font-semibold text-base leading-snug">{post.prompt_text}</p>
-        {isResolved && post.correct_answer && (
-          <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-xl px-3 py-2">
-            <CheckCircle2 size={15} className="text-green-500 shrink-0" />
-            <span>Answer: <span className="font-semibold">{post.correct_answer}</span></span>
+        {/* Label + question */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-white text-sm font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>The Pick</span>
+            {!isResolved
+              ? <span className="text-[10px] font-bold text-emerald-400 tracking-widest">LIVE</span>
+              : <span className="text-[10px] font-medium text-white/40 tracking-wide">CLOSED</span>
+            }
           </div>
-        )}
+          <p className="text-white/60 text-xs leading-snug truncate">{post.prompt_text}</p>
+        </div>
 
-        {/* Options — member view */}
-        {!isHost && (
-          <div className="space-y-2">
-            {options.map((opt) => {
-              const count = localVoteCounts[opt] || 0;
-              const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-              const isSelected = localUserAnswer === opt;
-              const showBars = hasVoted || isResolved;
+        {/* Chevron */}
+        <div className="shrink-0 text-white/40">
+          {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        </div>
+      </button>
 
-              return (
-                <button
-                  key={opt}
-                  onClick={() => submitAnswer(opt)}
-                  disabled={hasVoted || isResolved || submitting}
-                  className={`w-full text-left rounded-xl overflow-hidden border transition-colors ${
-                    isSelected ? 'border-purple-400 bg-purple-50' : 'border-gray-200 bg-gray-50'
-                  } disabled:cursor-default`}
-                >
-                  <div className="relative px-3 py-2.5">
-                    {showBars && (
-                      <div
-                        className={`absolute inset-y-0 left-0 rounded-xl transition-all duration-500 ${isSelected ? 'bg-purple-100' : 'bg-gray-100'}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    )}
-                    <div className="relative flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? 'border-purple-500' : 'border-gray-300'}`}>
-                          {isSelected && <span className="w-2 h-2 rounded-full bg-purple-500 block" />}
-                        </span>
-                        <span className={`text-sm ${isSelected ? 'text-purple-800 font-medium' : 'text-gray-700'}`}>{opt}</span>
-                      </div>
-                      {showBars && <span className={`text-xs font-medium ${isSelected ? 'text-purple-600' : 'text-gray-400'}`}>{pct}%</span>}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
+      {/* Expanded body */}
+      {expanded && (
+        <div className="px-4 pb-4 pt-1 space-y-3">
+          {/* Full question */}
+          <p className="text-white font-medium text-sm leading-snug">{post.prompt_text}</p>
 
-        {/* Options — host resolve view */}
-        {isHost && !isResolved && (
-          resolving ? (
-            <div className="space-y-2">
-              <p className="text-gray-500 text-xs">Select the correct answer:</p>
-              {options.map((opt) => (
-                <button key={opt} onClick={() => resolvePickPrompt(opt)} className="w-full text-left text-sm px-3 py-2.5 rounded-xl bg-green-50 border border-green-200 text-green-800 hover:bg-green-100 font-medium">
-                  {opt}
-                </button>
-              ))}
-              <button onClick={() => setResolving(false)} className="text-gray-400 text-xs hover:text-gray-600">Cancel</button>
+          {isResolved && post.correct_answer && (
+            <div className="flex items-center gap-2 text-xs text-emerald-300 bg-white/10 rounded-xl px-3 py-2">
+              <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
+              Answer: <span className="font-semibold">{post.correct_answer}</span>
             </div>
-          ) : (
+          )}
+
+          {/* Options — member vote */}
+          {!isHost && (
             <div className="space-y-2">
               {options.map((opt) => {
                 const count = localVoteCounts[opt] || 0;
                 const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                const isSelected = localUserAnswer === opt;
+                const showBars = hasVoted || isResolved;
                 return (
-                  <div key={opt} className="bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-700">{opt}</span>
-                      <span className="text-gray-400 text-xs">{pct}% · {count}</span>
+                  <button
+                    key={opt}
+                    onClick={() => submitAnswer(opt)}
+                    disabled={hasVoted || isResolved || submitting}
+                    className="w-full text-left rounded-xl overflow-hidden disabled:cursor-default"
+                    style={{ background: isSelected ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.08)' }}
+                  >
+                    <div className="relative px-3 py-2.5">
+                      {showBars && (
+                        <div
+                          className="absolute inset-y-0 left-0 rounded-xl transition-all duration-500"
+                          style={{ width: `${pct}%`, background: isSelected ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.06)' }}
+                        />
+                      )}
+                      <div className="relative flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? 'border-purple-400' : 'border-white/30'}`}>
+                            {isSelected && <span className="w-2 h-2 rounded-full bg-purple-400 block" />}
+                          </span>
+                          <span className={`text-sm ${isSelected ? 'text-white font-medium' : 'text-white/80'}`}>{opt}</span>
+                        </div>
+                        {showBars && <span className={`text-xs font-medium ${isSelected ? 'text-purple-300' : 'text-white/40'}`}>{pct}%</span>}
+                      </div>
                     </div>
-                  </div>
+                  </button>
                 );
               })}
-              <button onClick={() => setResolving(true)} className="text-xs text-purple-500 hover:text-purple-700 transition-colors font-medium">
-                Mark correct answer
-              </button>
+              {totalVotes > 0 && <p className="text-white/30 text-xs pl-1">{totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}</p>}
             </div>
-          )
-        )}
+          )}
 
-        {totalVotes > 0 && (
-          <p className="text-gray-400 text-xs">{totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}</p>
-        )}
-      </div>
+          {/* Options — host view */}
+          {isHost && !isResolved && (
+            resolving ? (
+              <div className="space-y-2">
+                <p className="text-white/50 text-xs">Select the correct answer:</p>
+                {options.map((opt) => (
+                  <button key={opt} onClick={() => resolvePickPrompt(opt)} className="w-full text-left text-sm px-3 py-2.5 rounded-xl font-medium" style={{ background: 'rgba(52,211,153,0.15)', color: '#6ee7b7' }}>
+                    {opt}
+                  </button>
+                ))}
+                <button onClick={() => setResolving(false)} className="text-white/30 text-xs hover:text-white/60">Cancel</button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {options.map((opt) => {
+                  const count = localVoteCounts[opt] || 0;
+                  const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                  return (
+                    <div key={opt} className="rounded-xl px-3 py-2" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-white/80">{opt}</span>
+                        <span className="text-white/40 text-xs">{pct}% · {count}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+                {totalVotes > 0 && <p className="text-white/30 text-xs pl-1">{totalVotes} votes</p>}
+                <button onClick={() => setResolving(true)} className="text-purple-400 text-xs hover:text-purple-300 transition-colors font-medium">
+                  Mark correct answer
+                </button>
+              </div>
+            )
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -578,32 +589,10 @@ export default function PoolDetailPage() {
 
         {/* ── DISCUSSION ── */}
         {!isLoading && tab === 'discussion' && (
-          <div className="space-y-0">
-            {/* The Pick */}
+          <div className="space-y-3">
+            {/* Featured Pick — Daily Call style banner */}
             {featuredPick && (
-              <ThePickCard key={featuredPick.id} post={featuredPick} isHost={isHost} token={token} onRefresh={refresh} />
-            )}
-
-            {/* Past picks (host can see all) */}
-            {isHost && picks.filter(p => p.id !== featuredPick?.id).length > 0 && (
-              <div className="mb-4">
-                <p className="text-gray-400 text-xs font-medium uppercase tracking-widest mb-2">Previous Picks</p>
-                <div className="space-y-2">
-                  {picks.filter(p => p.id !== featuredPick?.id).reverse().map(p => (
-                    <div key={p.id} className="bg-white rounded-xl border border-gray-100 px-3.5 py-2.5 flex items-center gap-2">
-                      <BarChart2 size={13} className="text-purple-400 shrink-0" />
-                      <p className="text-gray-600 text-sm flex-1 truncate">{p.prompt_text}</p>
-                      <span className="text-gray-400 text-[10px] shrink-0">{p.status === 'resolved' ? 'Closed' : 'Open'}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {!featuredPick && !isHost && (
-              <div className="text-center py-8 mb-4">
-                <p className="text-gray-400 text-sm">No pick posted yet — check back soon.</p>
-              </div>
+              <FeaturedPickBanner key={featuredPick.id} post={featuredPick} isHost={isHost} token={token} onRefresh={refresh} />
             )}
 
             {/* Composer */}
