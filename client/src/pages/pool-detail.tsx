@@ -569,7 +569,7 @@ function AboutSection({ pool, members, isLoading }: { pool: any; members: any[];
 
   const hostName = (pool?.host as any)?.display_name || (pool?.host as any)?.user_name || 'the host';
   const fullDescription = pool?.description
-    || `${hostName}'s room for ${pool?.name || 'entertainment picks'}.`;
+    || `${hostName}'s room for group predictions, picks, and more.`;
   const shortDescription = fullDescription.length > 100 ? fullDescription.slice(0, 97).trim() + '…' : fullDescription;
   const hasMore = fullDescription.length > 100;
 
@@ -751,9 +751,9 @@ export default function PoolDetailPage() {
               <button
                 onClick={() => handleToggleVisibility(!isPublic)}
                 disabled={togglingVisibility}
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-50 ${isPublic ? 'bg-emerald-500' : 'bg-white/20'}`}
+                className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-50 overflow-hidden shrink-0 ${isPublic ? 'bg-emerald-500' : 'bg-white/20'}`}
               >
-                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${isPublic ? 'translate-x-6' : 'translate-x-1'}`} />
+                <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${isPublic ? 'translate-x-5' : 'translate-x-0'}`} />
               </button>
             </div>
           )}
