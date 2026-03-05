@@ -569,7 +569,7 @@ function AboutSection({ pool, members, isLoading }: { pool: any; members: any[];
 
   const hostName = (pool?.host as any)?.display_name || (pool?.host as any)?.user_name || 'the host';
   const fullDescription = pool?.description
-    || `A private prediction room hosted by ${hostName}. Members vote on weekly picks and compete on the leaderboard.`;
+    || `${hostName}'s room for ${pool?.name || 'entertainment picks'}.`;
   const shortDescription = fullDescription.length > 100 ? fullDescription.slice(0, 97).trim() + '…' : fullDescription;
   const hasMore = fullDescription.length > 100;
 

@@ -32,6 +32,7 @@ export default function PoolsPage() {
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [newPoolName, setNewPoolName] = useState('');
+  const [newPoolDesc, setNewPoolDesc] = useState('');
   const [isPublicNew, setIsPublicNew] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [joiningId, setJoiningId] = useState<string | null>(null);
@@ -48,13 +49,14 @@ export default function PoolsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (payload: { name: string; is_public: boolean }) =>
+    mutationFn: (payload: { name: string; is_public: boolean; description?: string }) =>
       callFn('create-pool', payload, session?.access_token || ''),
     onSuccess: (data) => {
       if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
       queryClient.invalidateQueries({ queryKey: ['user-pools'] });
       setShowCreate(false);
       setNewPoolName('');
+      setNewPoolDesc('');
       setIsPublicNew(false);
       setLocation(`/room/${data.pool.id}`);
     }
@@ -66,7 +68,6 @@ export default function PoolsPage() {
       if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
       queryClient.invalidateQueries({ queryKey: ['user-pools'] });
       setConfirmDeleteId(null);
-      toast({ title: 'Room deleted' });
     }
   });
 
@@ -109,19 +110,26 @@ export default function PoolsPage() {
                   className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                   autoFocus
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && newPoolName.trim()) createMutation.mutate({ name: newPoolName, is_public: isPublicNew });
-                    if (e.key === 'Escape') { setShowCreate(false); setNewPoolName(''); setIsPublicNew(false); }
+                    if (e.key === 'Escape') { setShowCreate(false); setNewPoolName(''); setNewPoolDesc(''); setIsPublicNew(false); }
                   }}
                 />
                 <Button
-                  onClick={() => createMutation.mutate({ name: newPoolName, is_public: isPublicNew })}
+                  onClick={() => createMutation.mutate({ name: newPoolName, is_public: isPublicNew, description: newPoolDesc })}
                   disabled={!newPoolName.trim() || createMutation.isPending}
                   className="bg-purple-600 hover:bg-purple-700 text-white shrink-0"
                 >
                   {createMutation.isPending ? '...' : 'Create'}
                 </Button>
-                <Button variant="ghost" onClick={() => { setShowCreate(false); setNewPoolName(''); setIsPublicNew(false); }} className="text-white/60 shrink-0">Cancel</Button>
+                <Button variant="ghost" onClick={() => { setShowCreate(false); setNewPoolName(''); setNewPoolDesc(''); setIsPublicNew(false); }} className="text-white/60 shrink-0">Cancel</Button>
               </div>
+              {/* Optional description */}
+              <textarea
+                value={newPoolDesc}
+                onChange={(e) => setNewPoolDesc(e.target.value)}
+                placeholder="Description (optional)..."
+                rows={2}
+                className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-500"
+              />
               {/* Public / Private toggle */}
               <div className="flex items-center gap-3 pl-1">
                 <button

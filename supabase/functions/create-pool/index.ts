@@ -26,7 +26,7 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return json({ error: 'Unauthorized' }, 401);
 
-    const { name, is_public = false } = await req.json();
+    const { name, is_public = false, description = '' } = await req.json();
     if (!name?.trim()) return json({ error: 'Pool name is required' }, 400);
 
     const svc = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
@@ -37,6 +37,7 @@ serve(async (req) => {
     for (let i = 0; i < 5; i++) {
       const { data, error } = await svc.from('pools').insert({
         name: name.trim(),
+        description: description?.trim() || null,
         host_id: appUser.id,
         invite_code: generateInviteCode(),
         status: 'open',
