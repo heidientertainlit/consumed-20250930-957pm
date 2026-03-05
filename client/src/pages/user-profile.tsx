@@ -3073,7 +3073,7 @@ export default function UserProfile() {
 
         {/* Section Navigation Pills - Tab-like behavior (only for own profile) */}
         {isOwnProfile && (
-        <div className="sticky top-16 z-20 bg-gray-50 border-b border-gray-200 px-4 py-3 -mx-0">
+        <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 -mx-0">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
             <button
               onClick={() => setActiveSection('friends')}
@@ -3114,7 +3114,7 @@ export default function UserProfile() {
 
         {/* Section Navigation for Friend Profiles */}
         {!isOwnProfile && friendshipStatus === 'friends' && (
-          <div className="sticky top-16 z-20 bg-gray-50 border-b border-gray-200 px-4 py-3 -mx-0">
+          <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 -mx-0">
             <div className="flex gap-2 overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => setActiveSection('overview')}
