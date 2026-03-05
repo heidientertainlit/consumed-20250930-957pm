@@ -93,7 +93,6 @@ function FeaturedPickBanner({ post, isHost, token, onRefresh }: { post: any; isH
     const data = await callFn('resolve-pool-prompt', { prompt_id: post.id, correct_answer: answer }, token);
     if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
     setResolving(false); onRefresh();
-    toast({ title: `Done! ${data.winners_count} correct` });
   };
 
   return (
