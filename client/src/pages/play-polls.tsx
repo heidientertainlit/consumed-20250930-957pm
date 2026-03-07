@@ -173,7 +173,7 @@ export default function PlayPollsPage() {
     return 'Other';
   };
 
-  const CATEGORY_ORDER = ['Movies', 'TV', 'Music', 'Podcasts', 'Sports', 'Books', 'Pop Culture', 'Other'];
+  const CATEGORY_ORDER = ['Movies', 'TV', 'Books', 'Music', 'Podcasts', 'Sports', 'Pop Culture', 'Other'];
 
   const categoryInfo: Record<string, { label: string }> = {
     'Movies': { label: 'Movies' },

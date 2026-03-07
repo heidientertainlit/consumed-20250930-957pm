@@ -287,7 +287,7 @@ export default function PlayTriviaPage() {
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
 
   // Normalize category names to consistent format
-  const CATEGORY_ORDER = ['Movies', 'TV', 'Music', 'Podcasts', 'Gaming', 'Sports', 'Books', 'Pop Culture', 'Other'];
+  const CATEGORY_ORDER = ['Movies', 'TV', 'Books', 'Music', 'Podcasts', 'Gaming', 'Sports', 'Pop Culture', 'Other'];
 
   const normalizeCategory = (cat: string): string => {
     if (!cat) return 'Other';
