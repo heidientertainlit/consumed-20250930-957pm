@@ -189,6 +189,26 @@ export default function PlayTriviaPage() {
     }));
   };
 
+  const handleTapAndSubmit = async (game: any, option: string) => {
+    if (allPredictions[game.id] || submissionResults[game.id]) return;
+    setSelectedAnswers(prev => ({ ...prev, [game.id]: option }));
+    try {
+      const result = await submitPrediction.mutateAsync({ poolId: game.id, answer: option });
+      const pointsEarned = result.points_earned || 0;
+      const isCorrect = pointsEarned > 0;
+      setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned } }));
+      if (isCorrect && pointsEarned > 0) {
+        setShowCelebration({ points: pointsEarned });
+        const timer = setTimeout(() => setShowCelebration(null), 3000);
+        setCelebrationTimer(timer);
+      }
+      markTrivia();
+    } catch (error) {
+      console.error('Error submitting answer:', error);
+      toast({ title: "Error", description: "Failed to submit answer. Please try again.", variant: "destructive" });
+    }
+  };
+
   const handleSubmitAnswer = async (game: any) => {
     const answer = selectedAnswers[game.id];
     if (!answer) return;
@@ -412,98 +432,109 @@ export default function PlayTriviaPage() {
               <div key={category} className="mb-6">
                 {/* Category Header */}
                 <div className="flex items-center gap-2 mb-4">
-                  <h2 className="text-xl font-bold text-gray-900">{categoryInfo[category]?.label || category}</h2>
-                  <span className="text-sm text-gray-500">({games.length})</span>
+                  <h2 className="text-base font-medium text-gray-900">{categoryInfo[category]?.label || category}</h2>
+                  <span className="text-sm text-gray-400">({games.length})</span>
                 </div>
                 
                 {/* Horizontal Scrolling Cards */}
                 <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                   {games.map((game: any) => (
-                    <div key={game.id} className="flex-shrink-0 w-72">
-                      <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden h-full">
-                        <CardHeader className="pb-3 pt-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              {game.isConsumed ? (
-                                <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider">
-                                  Consumed
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider border-gray-300 text-gray-500">
-                                  User
-                                </Badge>
-                              )}
-                              <span className="text-sm font-medium text-purple-600">{game.points || 10} pts</span>
+                    <div key={game.id} className="flex-shrink-0 w-[85vw] max-w-sm">
+                      <Card className="bg-white border border-gray-200 rounded-2xl p-4 pb-3 shadow-sm overflow-hidden">
+                        {/* Card Header */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
+                              <Brain className="w-3.5 h-3.5 text-white" />
                             </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900 line-clamp-1">{categoryInfo[category]?.label || category} Trivia</p>
+                              <p className="text-[10px] text-gray-500">One question trivia</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">{game.points || 10} pts</span>
                             <button
                               onClick={() => handleInviteFriends(game)}
-                              className="p-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 transition-colors"
+                              className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
                               data-testid={`invite-${game.id}`}
                             >
-                              <UserPlus size={14} className="text-purple-600" />
+                              <Users className="w-3.5 h-3.5 text-gray-600" />
                             </button>
                           </div>
+                        </div>
 
-                          <CardTitle className="text-lg font-bold text-gray-900 line-clamp-2 leading-tight">{game.title}</CardTitle>
-                          <p className="text-gray-500 text-xs mt-1 line-clamp-2">{game.description}</p>
-                        </CardHeader>
+                        {/* Media tag chip */}
+                        {(game.tags?.[0] || game.description) && (
+                          <div className="mb-2">
+                            <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200">
+                              <span className="text-[10px] text-purple-700 font-medium">{game.tags?.[0] || game.description}</span>
+                            </div>
+                          </div>
+                        )}
 
-                        <CardContent className="pt-0 pb-4 space-y-3">
-                          {allPredictions[game.id] || submissionResults[game.id] ? (
-                            submissionResults[game.id] ? (
+                        {/* Question */}
+                        <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{game.title}</h3>
+
+                        {/* Answer state */}
+                        {allPredictions[game.id] || submissionResults[game.id] ? (
+                          <div className="flex flex-col gap-2">
+                            {submissionResults[game.id] ? (
                               submissionResults[game.id].correct ? (
-                                <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-                                  <div className="text-green-800 font-bold text-sm">✓ Correct!</div>
-                                  <div className="text-green-700 text-xs">+{submissionResults[game.id].points} pts</div>
+                                <div className="py-3 px-4 rounded-full bg-green-100 text-center">
+                                  <span className="text-sm font-medium text-green-800">Correct! +{submissionResults[game.id].points} pts</span>
                                 </div>
                               ) : (
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
-                                  <div className="text-blue-800 font-bold text-sm">💪 Keep Going!</div>
+                                <div className="py-3 px-4 rounded-full bg-gray-100 text-center">
+                                  <span className="text-sm font-medium text-gray-600">Answered — keep going!</span>
                                 </div>
                               )
                             ) : (
-                              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                                <div className="text-gray-600 text-sm font-medium">✓ Completed</div>
+                              <div className="py-3 px-4 rounded-full bg-gray-100 text-center">
+                                <span className="text-sm font-medium text-gray-500">Already answered</span>
                               </div>
-                            )
-                          ) : game.isLongForm ? (
-                            <Button 
-                              onClick={() => setSelectedTriviaGame(game)}
-                              className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-3 text-sm"
-                              data-testid={`play-${game.id}`}
-                            >
-                              <Brain size={14} className="mr-2" />
-                              Play
-                            </Button>
-                          ) : (
-                            <>
-                              <div className="grid grid-cols-2 gap-2">
-                                {(game.options || []).slice(0, 2).map((option: string, index: number) => (
-                                  <button
-                                    key={`${game.id}-${index}`}
-                                    onClick={() => handleOptionSelect(game.id, option)}
-                                    className={`p-2 text-left rounded-lg border-2 transition-all text-xs ${
-                                      selectedAnswers[game.id] === option
-                                        ? 'border-purple-500 bg-purple-50'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                    }`}
-                                    data-testid={`option-${game.id}-${index}`}
-                                  >
-                                    <div className="font-medium text-gray-900 line-clamp-2">{option}</div>
-                                  </button>
-                                ))}
-                              </div>
-                              <Button 
-                                onClick={() => handleSubmitAnswer(game)}
-                                disabled={!selectedAnswers[game.id] || submitPrediction.isPending}
-                                className="w-full bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 rounded-xl py-2 text-sm"
-                                data-testid={`submit-${game.id}`}
+                            )}
+                          </div>
+                        ) : game.isLongForm ? (
+                          <Button
+                            onClick={() => setSelectedTriviaGame(game)}
+                            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-3 text-sm"
+                            data-testid={`play-${game.id}`}
+                          >
+                            <Brain size={14} className="mr-2" />
+                            Play Challenge
+                          </Button>
+                        ) : (
+                          <div className="flex flex-col gap-2">
+                            {(game.options || []).map((option: string, index: number) => (
+                              <button
+                                key={`${game.id}-${index}`}
+                                onClick={() => handleTapAndSubmit(game, option)}
+                                disabled={submitPrediction.isPending}
+                                className={`py-3 px-4 rounded-full text-sm font-medium transition-all text-left ${
+                                  selectedAnswers[game.id] === option
+                                    ? 'bg-purple-600 text-white shadow-md'
+                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                }`}
+                                data-testid={`option-${game.id}-${index}`}
                               >
-                                {submitPrediction.isPending ? '...' : 'Submit'}
-                              </Button>
-                            </>
-                          )}
-                        </CardContent>
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Footer */}
+                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                          <button
+                            onClick={() => handleInviteFriends(game)}
+                            className="flex items-center gap-1.5 text-purple-600 text-xs font-medium"
+                          >
+                            <Users className="w-3.5 h-3.5" />
+                            Challenge a friend
+                          </button>
+                          <span className="text-green-600 text-xs font-medium">+{game.points || 10} pts</span>
+                        </div>
                       </Card>
                     </div>
                   ))}
