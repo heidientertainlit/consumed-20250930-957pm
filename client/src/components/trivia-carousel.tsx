@@ -57,7 +57,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<Record<string, string>>({});
-  const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; stats: any; friendAnswers?: FriendAnswer[] }>>({});
+  const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; points?: number; stats: any; friendAnswers?: FriendAnswer[] }>>({});
   const [celebratingItems, setCelebratingItems] = useState<Record<string, number>>({});
 
   const { data: leaderboardData } = useQuery({
@@ -373,6 +373,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         [result.itemId]: {
           answer: result.answer,
           isCorrect: result.isCorrect,
+          points: result.points,
           stats: result.stats,
           friendAnswers: result.friendAnswers
         }
@@ -577,6 +578,25 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
+                    {/* Result header */}
+                    <div className={`flex items-center justify-between py-2 px-3 rounded-xl mb-1 ${
+                      answered.isCorrect
+                        ? 'bg-green-50 border border-green-200'
+                        : 'bg-gray-50 border border-gray-200'
+                    }`}>
+                      <div className="flex items-center gap-1.5">
+                        {answered.isCorrect
+                          ? <CheckCircle className="w-4 h-4 text-green-600" />
+                          : <CheckCircle className="w-4 h-4 text-gray-400" />}
+                        <span className={`text-xs font-semibold ${answered.isCorrect ? 'text-green-700' : 'text-gray-500'}`}>
+                          {answered.isCorrect ? 'Correct!' : 'Completed'}
+                        </span>
+                      </div>
+                      {answered.isCorrect && (answered as any).points > 0 && (
+                        <span className="text-xs font-bold text-purple-700">+{(answered as any).points} pts</span>
+                      )}
+                    </div>
+
                     {item.options.map((option, idx) => {
                       const isUserAnswer = answered.answer === option;
                       const isCorrect = item.correctAnswer === option;
@@ -606,6 +626,13 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                               <span className={`text-sm font-medium ${isCorrect ? 'text-green-800' : isUserAnswer ? 'text-red-800' : 'text-gray-800'}`}>
                                 {option}
                               </span>
+                              {isUserAnswer && (
+                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                  isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+                                }`}>
+                                  You
+                                </span>
+                              )}
                             </div>
                             <span className="text-xs font-medium text-gray-600">{percentage}%</span>
                           </div>

@@ -567,9 +567,16 @@ export default function PlayTriviaPage() {
                                           style={{ width: `${pct}%` }}
                                         />
                                         <div className="absolute inset-0 flex items-center justify-between px-4">
-                                          <span className={`text-sm font-medium ${
-                                            isCorrect ? 'text-green-800' : isUser ? 'text-red-700' : 'text-gray-700'
-                                          }`}>{opt}</span>
+                                          <div className="flex items-center gap-2">
+                                            <span className={`text-sm font-medium ${
+                                              isCorrect ? 'text-green-800' : isUser ? 'text-red-700' : 'text-gray-700'
+                                            }`}>{opt}</span>
+                                            {isUser && (
+                                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                                isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+                                              }`}>You</span>
+                                            )}
+                                          </div>
                                           <span className="text-xs font-semibold text-gray-500">{pct}%</span>
                                         </div>
                                       </div>
