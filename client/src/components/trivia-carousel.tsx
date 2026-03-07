@@ -578,25 +578,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
-                    {/* Result header */}
-                    <div className={`flex items-center justify-between py-2 px-3 rounded-xl mb-1 ${
-                      answered.isCorrect
-                        ? 'bg-green-50 border border-green-200'
-                        : 'bg-gray-50 border border-gray-200'
-                    }`}>
-                      <div className="flex items-center gap-1.5">
-                        {answered.isCorrect
-                          ? <CheckCircle className="w-4 h-4 text-green-600" />
-                          : <CheckCircle className="w-4 h-4 text-gray-400" />}
-                        <span className={`text-xs font-semibold ${answered.isCorrect ? 'text-green-700' : 'text-gray-500'}`}>
-                          {answered.isCorrect ? 'Correct!' : 'Completed'}
-                        </span>
-                      </div>
-                      {answered.isCorrect && (answered as any).points > 0 && (
-                        <span className="text-xs font-bold text-purple-700">+{(answered as any).points} pts</span>
-                      )}
-                    </div>
-
                     {item.options.map((option, idx) => {
                       const isUserAnswer = answered.answer === option;
                       const isCorrect = item.correctAnswer === option;
@@ -652,7 +633,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                       }}
                       className="w-full mt-4 py-2.5 rounded-xl font-semibold text-sm text-white transition-all bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:from-blue-600 hover:via-purple-600 hover:to-purple-700"
                     >
-                      {currentIndex < (filteredData?.length || 0) - 1 ? 'Continue' : 'Done'}
+                      {currentIndex < (filteredData?.length || 0) - 1 ? 'Next question' : 'All done!'}
                     </button>
                     
                     {/* Friend answers section */}

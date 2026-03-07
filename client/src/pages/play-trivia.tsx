@@ -25,8 +25,7 @@ export default function PlayTriviaPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [shareModalGame, setShareModalGame] = useState<any>(null);
   const [submissionResults, setSubmissionResults] = useState<Record<string, { correct: boolean; points: number; stats?: Record<string, number>; userAnswer?: string }>>({});
-  const [showCelebration, setShowCelebration] = useState<{ points: number } | null>(null);
-  const [celebrationTimer, setCelebrationTimer] = useState<NodeJS.Timeout | null>(null);
+  const [celebratingItems, setCelebratingItems] = useState<Record<string, number>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [triviaType, setTriviaType] = useState<'all' | 'challenges' | 'quick'>('all');
@@ -211,9 +210,10 @@ export default function PlayTriviaPage() {
 
       setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned, stats, userAnswer: option } }));
       if (isCorrect && pointsEarned > 0) {
-        setShowCelebration({ points: pointsEarned });
-        const timer = setTimeout(() => setShowCelebration(null), 1800);
-        setCelebrationTimer(timer);
+        setCelebratingItems(prev => ({ ...prev, [game.id]: pointsEarned }));
+        setTimeout(() => {
+          setCelebratingItems(prev => { const next = { ...prev }; delete next[game.id]; return next; });
+        }, 1800);
       }
       markTrivia();
     } catch (error) {
@@ -527,24 +527,18 @@ export default function PlayTriviaPage() {
                           <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{game.title}</h3>
 
                           {/* Answer state */}
-                          {allPredictions[game.id] || submissionResults[game.id] ? (
+                          {celebratingItems[game.id] !== undefined ? (
+                            <div className="flex flex-col items-center gap-3 py-4 animate-in zoom-in-95 duration-200">
+                              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center shadow-md">
+                                <CheckCircle className="w-6 h-6 text-white" />
+                              </div>
+                              <p className="text-base font-bold text-gray-900">Correct!</p>
+                              <div className="bg-purple-50 rounded-xl px-4 py-2 border border-purple-100">
+                                <span className="text-xl font-bold text-purple-700">+{celebratingItems[game.id]} pts</span>
+                              </div>
+                            </div>
+                          ) : allPredictions[game.id] || submissionResults[game.id] ? (
                             <div className="flex flex-col gap-2">
-                              {/* Result header */}
-                              {submissionResults[game.id] && (
-                                <div className={`py-2 px-4 rounded-full text-center mb-1 ${
-                                  submissionResults[game.id].correct
-                                    ? 'bg-green-100'
-                                    : 'bg-red-50'
-                                }`}>
-                                  <span className={`text-sm font-semibold ${
-                                    submissionResults[game.id].correct ? 'text-green-800' : 'text-red-700'
-                                  }`}>
-                                    {submissionResults[game.id].correct
-                                      ? `Correct! +${submissionResults[game.id].points} pts`
-                                      : `Incorrect — correct: ${game.correct_answer || game.correctAnswer}`}
-                                  </span>
-                                </div>
-                              )}
 
                               {/* Percentage bars */}
                               {(() => {
@@ -599,7 +593,7 @@ export default function PlayTriviaPage() {
                                 }`}
                                 disabled={gameIdx >= (games as any[]).length - 1}
                               >
-                                {gameIdx < (games as any[]).length - 1 ? 'Continue' : 'All done!'}
+                                {gameIdx < (games as any[]).length - 1 ? 'Next question' : 'All done!'}
                               </button>
                             </div>
                           ) : game.isLongForm ? (
@@ -897,13 +891,6 @@ export default function PlayTriviaPage() {
         />
       )}
 
-      {/* Celebration Modal for Correct Answers */}
-      {showCelebration && (
-        <CelebrationModal
-          points={showCelebration.points}
-          onClose={() => setShowCelebration(null)}
-        />
-      )}
 
     </div>
   );
