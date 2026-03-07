@@ -45,7 +45,7 @@ export default function MediaDetail() {
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [expandedComments, setExpandedComments] = useState<Record<string, any[]>>({});
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
-  const [composeType, setComposeType] = useState<'review' | 'prediction' | 'thought'>('review');
+  const [composeType, setComposeType] = useState<'react' | 'predict'>('react');
   const [composeText, setComposeText] = useState('');
   const [composeRating, setComposeRating] = useState(0);
   const [composeSelectedList, setComposeSelectedList] = useState<{ name: string; isCustom: boolean; id?: string } | null>(null);
@@ -714,7 +714,7 @@ export default function MediaDetail() {
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
-      if (composeType === 'prediction') {
+      if (composeType === 'predict') {
         const filledOptions = composePredictionOptions.filter(opt => opt.trim());
         if (composeText.trim() && filledOptions.length >= 2) {
           const predResponse = await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
@@ -735,44 +735,20 @@ export default function MediaDetail() {
           });
           if (!predResponse.ok) throw new Error("Failed to create prediction");
         }
-      } else {
-        if (composeType === 'review' && composeRating > 0) {
-          const rateResponse = await fetch(
-            `${supabaseUrl}/functions/v1/rate-media`,
-            {
-              method: "POST",
-              headers: {
-                "Authorization": `Bearer ${session.access_token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                media_external_id: params?.id,
-                media_external_source: params?.source,
-                media_title: mediaItem.title,
-                media_type: (mediaItem.type || params?.type || 'movie').toLowerCase(),
-                media_image_url: resolvedImageUrl,
-                rating: composeRating,
-                review_content: composeText.trim() || null,
-                skip_social_post: false,
-              }),
-            }
-          );
-          if (!rateResponse.ok) console.error('Rating failed');
-        } else if (composeText.trim()) {
-          await supabase.from('social_posts').insert({
-            user_id: authUser.id,
-            content: composeText,
-            post_type: composeType === 'review' ? 'rate-review' : composeType,
-            visibility: 'public',
-            media_title: mediaItem.title,
-            media_type: (mediaItem.type || params?.type || 'movie').toLowerCase(),
-            media_external_id: params?.id,
-            media_external_source: params?.source || 'tmdb',
-            image_url: resolvedImageUrl || '',
-            fire_votes: 0,
-            ice_votes: 0,
-          });
-        }
+      } else if (composeText.trim()) {
+        await supabase.from('social_posts').insert({
+          user_id: authUser.id,
+          content: composeText,
+          post_type: 'thought',
+          visibility: 'public',
+          media_title: mediaItem.title,
+          media_type: (mediaItem.type || params?.type || 'movie').toLowerCase(),
+          media_external_id: params?.id,
+          media_external_source: params?.source || 'tmdb',
+          image_url: resolvedImageUrl || '',
+          fire_votes: 0,
+          ice_votes: 0,
+        });
       }
 
       if (composeSelectedList) {
@@ -1141,9 +1117,8 @@ export default function MediaDetail() {
             <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
               <div className="flex flex-wrap gap-2 mb-3">
                 {([
-                  { key: 'review' as const, label: 'Review' },
-                  { key: 'prediction' as const, label: 'Prediction' },
-                  { key: 'thought' as const, label: 'Thought' },
+                  { key: 'react' as const, label: 'React' },
+                  { key: 'predict' as const, label: 'Predict' },
                 ]).map(({ key, label }) => (
                   <button
                     key={key}
@@ -1163,52 +1138,14 @@ export default function MediaDetail() {
                 value={composeText}
                 onChange={(e) => setComposeText(e.target.value)}
                 placeholder={
-                  composeType === 'review' ? "Write your review..." :
-                  composeType === 'prediction' ? "What do you predict?" :
-                  "What's on your mind?"
+                  composeType === 'predict' ? "What do you predict?" :
+                  "What's your reaction?"
                 }
                 className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-purple-400 resize-none mb-3"
                 rows={3}
               />
 
-              {composeType === 'review' && (
-              <div className="flex items-center gap-0 mb-3">
-                <span className="text-sm text-gray-600 mr-2">Rating:</span>
-                {[1, 2, 3, 4, 5].map((star) => {
-                  const isFullFilled = composeRating >= star;
-                  const isHalfFilled = !isFullFilled && composeRating >= star - 0.5;
-                  return (
-                    <div key={star} className="relative w-6 h-6 cursor-pointer">
-                      <Star
-                        size={22}
-                        className="absolute inset-0 text-gray-300 transition-colors"
-                      />
-                      {isHalfFilled && (
-                        <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
-                          <Star size={22} className="text-yellow-400 fill-yellow-400" />
-                        </div>
-                      )}
-                      {isFullFilled && (
-                        <Star size={22} className="absolute inset-0 text-yellow-400 fill-yellow-400" />
-                      )}
-                      <div
-                        className="absolute left-0 top-0 w-1/2 h-full z-10"
-                        onClick={() => setComposeRating(composeRating === star - 0.5 ? 0 : star - 0.5)}
-                      />
-                      <div
-                        className="absolute right-0 top-0 w-1/2 h-full z-10"
-                        onClick={() => setComposeRating(composeRating === star ? 0 : star)}
-                      />
-                    </div>
-                  );
-                })}
-                {composeRating > 0 && (
-                  <span className="text-sm font-medium text-gray-700 ml-2">{composeRating}/5</span>
-                )}
-              </div>
-              )}
-
-              {composeType === 'prediction' && (
+              {composeType === 'predict' && (
               <div className="space-y-2 p-3 bg-gray-100 rounded-lg mb-3">
                 <span className="text-xs text-gray-500">Prediction options:</span>
                 {composePredictionOptions.map((option, index) => (
@@ -1230,7 +1167,7 @@ export default function MediaDetail() {
 
               <Button
                 onClick={handleComposePost}
-                disabled={isComposePosting || (!composeText.trim() && composeType !== 'review') || (composeType === 'review' && !composeText.trim() && !composeRating)}
+                disabled={isComposePosting || !composeText.trim()}
                 className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl py-5 text-sm font-semibold"
               >
                 {isComposePosting ? (

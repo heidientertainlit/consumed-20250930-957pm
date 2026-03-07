@@ -418,7 +418,6 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
             <h3 className="text-gray-900 font-semibold text-sm">Seen It?</h3>
             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${mediaConfig.pillBg}`}>{mediaConfig.pill}</span>
           </div>
-          <p className="text-[11px] text-gray-400 ml-6">{mediaConfig.subtitle}</p>
         </div>
         <div className="flex items-center gap-2">
           {answeredCount > 0 && (
@@ -500,21 +499,35 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
               {ratingItem === item.id ? (
                 <div className="mt-1.5 flex justify-between px-0.5">
                   {[1,2,3,4,5].map(star => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const newMap = { ...ratingMap, [item.id]: star };
-                        setRatingMap(newMap);
-                        try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
-                        handleResponse(currentSet.id, item, true);
-                        setRatingItem(null);
-                      }}
-                      className="active:scale-90 transition-all"
-                    >
-                      <Star className={`w-4 h-4 ${star <= (ratingMap[item.id] || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
-                    </button>
+                    <div key={star} className="relative w-5 h-5">
+                      <Star className={`w-5 h-5 ${(ratingMap[item.id] || 0) >= star ? 'text-yellow-400 fill-yellow-400' : (ratingMap[item.id] || 0) >= star - 0.5 ? 'text-gray-300' : 'text-gray-300'}`} />
+                      {(ratingMap[item.id] || 0) >= star - 0.5 && (ratingMap[item.id] || 0) < star && (
+                        <div className="absolute inset-0 overflow-hidden w-1/2 pointer-events-none">
+                          <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                        </div>
+                      )}
+                      <div className="absolute left-0 top-0 w-1/2 h-full z-10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const val = star - 0.5;
+                          const newMap = { ...ratingMap, [item.id]: val };
+                          setRatingMap(newMap);
+                          try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
+                          handleResponse(currentSet.id, item, true);
+                          setRatingItem(null);
+                        }}
+                      />
+                      <div className="absolute right-0 top-0 w-1/2 h-full z-10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newMap = { ...ratingMap, [item.id]: star };
+                          setRatingMap(newMap);
+                          try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
+                          handleResponse(currentSet.id, item, true);
+                          setRatingItem(null);
+                        }}
+                      />
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -522,7 +535,14 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
                   {ratingMap[item.id] ? (
                     <div className="flex gap-0.5">
                       {[1,2,3,4,5].map(star => (
-                        <Star key={star} className={`w-3 h-3 ${star <= ratingMap[item.id] ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`} />
+                        <div key={star} className="relative w-3 h-3">
+                          <Star className={`w-3 h-3 ${ratingMap[item.id] >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`} />
+                          {ratingMap[item.id] >= star - 0.5 && ratingMap[item.id] < star && (
+                            <div className="absolute inset-0 overflow-hidden w-1/2 pointer-events-none">
+                              <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   ) : response === true ? (
