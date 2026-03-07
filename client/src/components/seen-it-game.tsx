@@ -1,11 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Eye, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, Search, BookOpen, Headphones, Gamepad2, Dna } from "lucide-react";
+import { Eye, ChevronRight, Check, X, Plus, Star, Loader2, Sparkles, BookOpen, Headphones, Gamepad2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
-import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { trackEvent } from "@/lib/posthog";
 import { Link } from "wouter";
@@ -48,7 +46,6 @@ interface SeenItGameProps {
 
 export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameProps = {}) {
   const { session, user } = useAuth();
-  const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [localResponses, setLocalResponses] = useState<Record<string, boolean | 'want_to'>>(() => {
     try {
@@ -63,6 +60,10 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     } catch { return new Set(); }
   });
   const [currentSetIndex, setCurrentSetIndex] = useState(0);
+  const [ratingItem, setRatingItem] = useState<string | null>(null);
+  const [ratingMap, setRatingMap] = useState<Record<string, number>>(() => {
+    try { const s = localStorage.getItem('seen_it_ratings'); return s ? JSON.parse(s) : {}; } catch { return {}; }
+  });
 
   const { data: supabaseCompletedSets } = useQuery({
     queryKey: ['seen-it-completions', user?.id],
@@ -413,8 +414,8 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
       <div className="flex items-center justify-between mb-3">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2">
-            <Dna className="w-4 h-4 text-purple-500" />
-            <h3 className="text-gray-900 font-semibold text-sm">eDNA Check</h3>
+            <Sparkles className="w-4 h-4 text-purple-500" />
+            <h3 className="text-gray-900 font-semibold text-sm">Seen It?</h3>
             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${mediaConfig.pillBg}`}>{mediaConfig.pill}</span>
           </div>
           <p className="text-[11px] text-gray-400 ml-6">{mediaConfig.subtitle}</p>
@@ -453,7 +454,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
                     }`}
                   />
                 </Link>
-                <div className="absolute top-1.5 right-1.5 flex flex-col gap-1">
+                <div className="absolute top-1.5 right-1.5 flex flex-col gap-1.5">
                   <button 
                     onClick={(e) => {
                       e.preventDefault();
@@ -466,12 +467,19 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
                         imageUrl: item.image_url || '',
                       });
                     }}
-                    className="w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 active:scale-90 transition-all"
+                    className="w-8 h-8 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 active:scale-90 transition-all"
                   >
-                    <Plus className="w-3.5 h-3.5 text-white" />
+                    <Plus className="w-4 h-4 text-white" />
                   </button>
-                  <button className="w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 active:scale-90 transition-all">
-                    <Star className="w-3.5 h-3.5 text-white" />
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setRatingItem(ratingItem === item.id ? null : item.id);
+                    }}
+                    className={`w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center active:scale-90 transition-all ${ratingMap[item.id] ? 'bg-yellow-400/80 hover:bg-yellow-400' : 'bg-black/60 hover:bg-black/80'}`}
+                  >
+                    <Star className={`w-4 h-4 ${ratingMap[item.id] ? 'text-white fill-white' : 'text-white'}`} />
                   </button>
                 </div>
                 {answered && (
@@ -488,38 +496,40 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
               </div>
               
               <p className="text-gray-900 text-xs font-medium mt-1.5 truncate">{item.title}</p>
-              
-              <div className={`mt-1.5 space-y-1 ${answered ? 'opacity-40' : ''}`}>
-                <div className="flex gap-1">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, false); }}
-                    className={`flex-1 py-1 rounded-full text-[11px] font-medium active:scale-95 transition-all relative z-10 touch-manipulation ${
-                      response === false ? 'bg-gray-300 border border-gray-300 text-gray-700' : 'bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    Nope
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, true); }}
-                    className={`flex-1 py-1 rounded-full text-[11px] font-medium active:scale-95 transition-all relative z-10 touch-manipulation ${
-                      response === true ? 'bg-purple-500 border border-purple-500 text-white' : 'bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {response === true ? `✓ ${mediaConfig.actionDone}` : mediaConfig.actionYes}
-                  </button>
+
+              {ratingItem === item.id ? (
+                <div className="mt-1.5 flex justify-between px-0.5">
+                  {[1,2,3,4,5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newMap = { ...ratingMap, [item.id]: star };
+                        setRatingMap(newMap);
+                        try { localStorage.setItem('seen_it_ratings', JSON.stringify(newMap)); } catch {}
+                        handleResponse(currentSet.id, item, true);
+                        setRatingItem(null);
+                      }}
+                      className="active:scale-90 transition-all"
+                    >
+                      <Star className={`w-4 h-4 ${star <= (ratingMap[item.id] || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                    </button>
+                  ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); handleResponse(currentSet.id, item, 'want_to'); }}
-                  className={`w-full py-0.5 rounded-full text-[10px] font-medium active:scale-95 transition-all relative z-10 touch-manipulation ${
-                    response === 'want_to' ? 'bg-purple-600 text-white' : 'bg-purple-500 text-white hover:bg-purple-600'
-                  }`}
-                >
-                  {response === 'want_to' ? '+ Want to' : 'Want to'}
-                </button>
-              </div>
+              ) : (
+                <div className="mt-1.5 h-6 flex items-center">
+                  {ratingMap[item.id] ? (
+                    <div className="flex gap-0.5">
+                      {[1,2,3,4,5].map(star => (
+                        <Star key={star} className={`w-3 h-3 ${star <= ratingMap[item.id] ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`} />
+                      ))}
+                    </div>
+                  ) : response === true ? (
+                    <span className="text-[11px] text-green-600 font-medium">✓ {mediaConfig.actionDone}</span>
+                  ) : null}
+                </div>
+              )}
             </div>
           );
         })}
