@@ -4293,9 +4293,9 @@ export default function Feed() {
                             });
                             setIsQuickAddOpen(true);
                           }}
-                          className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center"
+                          className="absolute top-1 right-1 w-8 h-8 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center shadow-lg"
                         >
-                          <Plus size={10} className="text-white" strokeWidth={2.5} />
+                          <Plus size={18} className="text-white" strokeWidth={2.5} />
                         </button>
                       </div>
                       <p className="text-[10px] text-white/60 truncate leading-tight">{item.title}</p>
