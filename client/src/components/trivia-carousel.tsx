@@ -567,10 +567,21 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     ))}
                   </div>
                 ) : (
-                  <><div className="relative">
-                    {/* Percentage bars — always visible when answered */}
-                    <div className="flex flex-col gap-2">
-                      {item.options.map((option, idx) => {
+                  <><div className="flex flex-col gap-2">
+                    {/* Correct answer celebration banner */}
+                    {celebratingItems[item.id] !== undefined && (
+                      <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center shadow-sm">
+                            <CheckCircle className="w-4 h-4 text-white" />
+                          </div>
+                          <span className="text-sm font-bold text-green-800">Correct!</span>
+                        </div>
+                        <span className="text-xl font-bold text-purple-700">+{celebratingItems[item.id]} pts</span>
+                      </div>
+                    )}
+                    {/* Percentage bars */}
+                    {item.options.map((option, idx) => {
                         const isUserAnswer = answered.answer === option;
                         const isCorrect = item.correctAnswer === option;
                         const percentage = answered.stats?.[option] || 0;
@@ -623,20 +634,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                         {currentIndex < (filteredData?.length || 0) - 1 ? 'Next question' : 'All done!'}
                       </button>
                     </div>
-
-                    {/* Celebration overlay — sits on top, fades out after 1.6s */}
-                    <div className={`absolute inset-0 bg-white rounded-xl flex flex-col items-center justify-center gap-3 transition-opacity duration-300 ${
-                      celebratingItems[item.id] !== undefined ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                    }`}>
-                      <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center shadow-lg">
-                        <CheckCircle className="w-7 h-7 text-white" />
-                      </div>
-                      <p className="text-lg font-bold text-gray-900">Correct!</p>
-                      <div className="bg-purple-50 rounded-xl px-5 py-2.5 border border-purple-100">
-                        <span className="text-2xl font-bold text-purple-700">+{celebratingItems[item.id] ?? 0} pts</span>
-                      </div>
-                    </div>
-                  </div>
                     {/* Friend answers section */}
                     {answered && answered.friendAnswers && answered.friendAnswers.length > 0 && (
                       <div className="mt-4 pt-3 border-t border-gray-200">
