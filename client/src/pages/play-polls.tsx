@@ -1,29 +1,30 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Link, useLocation } from 'wouter';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Vote, Star, Users, UserPlus, ChevronLeft, Search, ChevronDown, Trophy } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { useLocation } from 'wouter';
+import { Card } from '@/components/ui/card';
+import { Vote, ChevronLeft, ChevronRight, ChevronDown, CheckCircle } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import GameShareModal from "@/components/game-share-modal";
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth';
+import GameShareModal from '@/components/game-share-modal';
 
 export default function PlayPollsPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [shareModalGame, setShareModalGame] = useState<any>(null);
-  const [selectedPoll, setSelectedPoll] = useState<any>(null);
+  const [submissionResults, setSubmissionResults] = useState<Record<string, { points: number; stats: Record<string, number>; userAnswer: string }>>({});
+  const [celebratingItems, setCelebratingItems] = useState<Record<string, number>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [expandedFilter, setExpandedFilter] = useState<'topic' | 'genre' | null>(null);
+  const [categoryIndices, setCategoryIndices] = useState<Record<string, number>>({});
+  const categoryScrollRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const categoryFilters = [
     { id: 'Movies', label: 'Movies' },
@@ -47,65 +48,49 @@ export default function PlayPollsPage() {
     { id: 'Documentary', label: 'Documentary' },
   ];
 
-  // Extract game ID from URL hash if present (format: /play/polls#game-id)
-  const gameIdFromUrl = window.location.hash.replace('#', '');
-
-  const handleTrackConsumption = () => {
-    setIsTrackModalOpen(true);
+  const scrollCategoryTo = (category: string, index: number, total: number) => {
+    if (index < 0 || index >= total) return;
+    const container = categoryScrollRefs.current[category];
+    if (container) {
+      container.scrollTo({ left: index * container.clientWidth, behavior: 'smooth' });
+      setCategoryIndices(prev => ({ ...prev, [category]: index }));
+    }
   };
 
-  // Fetch games directly from Supabase - both curated Consumed polls and user polls
+  const handleCategoryScroll = (category: string, total: number) => {
+    const container = categoryScrollRefs.current[category];
+    if (container) {
+      const newIndex = Math.round(container.scrollLeft / container.clientWidth);
+      setCategoryIndices(prev => ({ ...prev, [category]: Math.min(Math.max(newIndex, 0), total - 1) }));
+    }
+  };
+
   const { data: games = [], isLoading } = useQuery({
-    queryKey: ['/api/predictions/polls', selectedCategory, searchQuery, selectedGenre],
+    queryKey: ['/api/predictions/polls'],
     queryFn: async () => {
-      try {
-        const params = new URLSearchParams();
-        if (selectedCategory) params.set('category', selectedCategory);
-        if (searchQuery) params.set('search', searchQuery);
-        if (selectedGenre) params.set('genre', selectedGenre);
-
-        // Try to invoke the edge function
-        const queryString = params.toString();
-        const { data, error } = await supabase.functions.invoke(
-          queryString ? `get-polls?${queryString}` : 'get-polls',
-          { method: 'GET' }
-        );
-
-        if (error) {
-          console.error('Error invoking get-polls:', error);
-          // Fallback to direct client fetch if function fails
-          const { data: pools, error: directError } = await supabase
-            .from('prediction_pools')
-            .select('*')
-            .eq('status', 'open')
-            .eq('type', 'vote')
-            .order('created_at', { ascending: false });
-          
-          if (directError) throw new Error('Failed to fetch games');
-          return (pools || []).map((p: any) => ({
-            ...p,
-            isConsumed: p.id?.startsWith('consumed-poll-') || p.origin_type === 'consumed'
-          }));
-        }
-
-        return data.polls || [];
-      } catch (err) {
-        console.error('Fetch polls error:', err);
-        return [];
-      }
+      const { data: pools, error } = await supabase
+        .from('prediction_pools')
+        .select('*')
+        .eq('status', 'open')
+        .eq('type', 'vote')
+        .order('created_at', { ascending: false });
+      if (error) throw new Error('Failed to fetch polls');
+      return (pools || []).map((p: any) => ({
+        ...p,
+        isConsumed: p.id?.startsWith('consumed-poll-') || p.origin_type === 'consumed',
+      }));
     },
   });
 
-  // Fetch all predictions
   const { data: userPredictionsData } = useQuery({
     queryKey: ['/api/predictions/user-predictions'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return {};
+      const { data: { user: u } } = await supabase.auth.getUser();
+      if (!u) return {};
       const { data, error } = await supabase
         .from('user_predictions')
         .select('pool_id, prediction')
-        .eq('user_id', user.id);
+        .eq('user_id', u.id);
       if (error) return {};
       const predictions: Record<string, string> = {};
       data?.forEach((pred) => { predictions[pred.pool_id] = pred.prediction; });
@@ -115,213 +100,123 @@ export default function PlayPollsPage() {
 
   const allPredictions = userPredictionsData || {};
 
-  // Submit vote mutation - directly to Supabase
-  const submitPrediction = useMutation({
-    mutationFn: async ({ poolId, answer }: { poolId: string; answer: string }) => {
-      console.log('🚀 Saving vote to user_predictions table...');
-      
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        throw new Error('Must be logged in to vote');
-      }
-      
-      const { data: game, error: gameError } = await supabase
-        .from('prediction_pools')
-        .select('points_reward, type')
-        .eq('id', poolId)
-        .single();
-        
-      if (gameError || !game) {
-        throw new Error('Poll not found');
-      }
-      
-      const gameType = game.type;
-      let immediatePoints = 0;
-      
-      if (gameType === 'vote' || gameType === 'trivia') {
-        immediatePoints = game.points_reward;
-      } else if (gameType === 'predict') {
-        immediatePoints = 0;
-      }
+  const submitVote = useMutation({
+    mutationFn: async ({ gameId, poolId, answer, options, pointsReward }: {
+      gameId: string; poolId: string; answer: string; options: string[]; pointsReward: number;
+    }) => {
+      if (!user?.id) throw new Error('Not logged in');
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('user_predictions')
-        .insert({
-          user_id: user.id,
-          pool_id: poolId,
-          prediction: answer,
-          points_earned: immediatePoints,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-        
+        .insert({ user_id: user.id, pool_id: poolId, prediction: answer, points_earned: pointsReward });
+
       if (error) {
-        console.error('❌ Error saving vote:', error);
-        if (error.code === '23505') {
-          throw new Error('You have already voted on this poll');
-        }
-        throw new Error('Failed to save vote');
+        if (error.message?.includes('duplicate') || error.code === '23505') throw new Error('Already voted');
+        throw error;
       }
-      
-      console.log('✅ Vote saved successfully:', data);
-      
-      return { 
-        success: true, 
-        points_earned: immediatePoints,
-        pool_id: poolId,
-        prediction: answer,
-        game_type: gameType
-      };
+
+      if (pointsReward > 0) {
+        await supabase.rpc('increment_user_points', { user_id_param: user.id, points_to_add: pointsReward });
+      }
+
+      const { data: allPreds } = await supabase
+        .from('user_predictions').select('prediction').eq('pool_id', poolId);
+
+      const total = allPreds?.length || 1;
+      const stats: Record<string, number> = {};
+      for (const opt of options) {
+        const count = allPreds?.filter((p: any) => p.prediction === opt).length || 0;
+        stats[opt] = Math.round((count / total) * 100);
+      }
+
+      return { gameId, answer, points: pointsReward, stats };
     },
-    onSuccess: (data: any) => {
+    onSuccess: (result) => {
+      setCelebratingItems(prev => ({ ...prev, [result.gameId]: result.points }));
+      setTimeout(() => {
+        setCelebratingItems(prev => { const next = { ...prev }; delete next[result.gameId]; return next; });
+      }, 1600);
+      setSubmissionResults(prev => ({
+        ...prev,
+        [result.gameId]: { points: result.points, stats: result.stats, userAnswer: result.answer }
+      }));
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
-      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
-      
-      toast({
-        title: "Vote Submitted!",
-        description: `You voted for "${data.prediction}" and earned ${data.points_earned} points!`,
-      });
     },
-    onError: () => {
-      toast({
-        title: "Submission Failed",
-        description: "Could not submit your vote. Please try again.",
-        variant: "destructive"
-      });
-    }
+    onError: (error: Error) => {
+      if (error.message !== 'Already voted') {
+        toast({ title: 'Error', description: 'Failed to submit vote. Please try again.', variant: 'destructive' });
+      }
+    },
   });
 
-  const handleOptionSelect = (gameId: string, option: string) => {
-    setSelectedAnswers(prev => ({
-      ...prev,
-      [gameId]: option
-    }));
-  };
-
-  const handleSubmitAnswer = async (game: any) => {
-    const answer = selectedAnswers[game.id];
-    if (!answer) {
-      toast({
-        title: "Please select an option",
-        description: "Choose one of the options before submitting.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    await submitPrediction.mutateAsync({
-      poolId: game.id,
-      answer
+  const handleTapAndVote = (game: any, option: string) => {
+    if (allPredictions[game.id] || submissionResults[game.id]) return;
+    const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
+    submitVote.mutate({
+      gameId: game.id, poolId: game.id, answer: optionText,
+      options: (game.options || []).map((o: any) => typeof o === 'string' ? o : (o.label || o.text || String(o))),
+      pointsReward: game.points_reward || 2,
     });
   };
 
-  const handleInviteFriends = (item: any) => {
-    setShareModalGame(item);
-  };
-
-  // Process and filter games
-  const processedGames = games.map((pool: any) => {
-    return {
-      ...pool,
-      points: pool.points_reward,
-    };
-  });
-
-  // Filter for poll/vote games with search, category, type, and genre
-  const pollGames = React.useMemo(() => {
-    let filtered = processedGames.filter((game: any) => game.type === 'vote');
-    
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((game: any) => {
-        const titleMatch = game.title?.toLowerCase().includes(query);
-        const descMatch = game.description?.toLowerCase().includes(query);
-        return titleMatch || descMatch;
-      });
-    }
-    
-    // Apply category filter
-    if (selectedCategory) {
-      filtered = filtered.filter((game: any) => game.category === selectedCategory);
-    }
-    
-    // Apply genre filter (tags array)
-    if (selectedGenre) {
-      filtered = filtered.filter((game: any) => {
-        const tags = game.tags || [];
-        return tags.includes(selectedGenre);
-      });
-    }
-    
-    // Sort: uncompleted polls first, completed polls at the bottom
-    filtered.sort((a: any, b: any) => {
-      const aCompleted = allPredictions[a.id] ? 1 : 0;
-      const bCompleted = allPredictions[b.id] ? 1 : 0;
-      return aCompleted - bCompleted;
-    });
-    
-    return filtered;
-  }, [processedGames, searchQuery, selectedCategory, selectedGenre, allPredictions]);
-
-  // Normalize category names to consistent format
   const normalizeCategory = (cat: string): string => {
     if (!cat) return 'Other';
     const lower = cat.toLowerCase().trim();
     if (lower === 'movies' || lower === 'movie') return 'Movies';
-    if (lower === 'tv' || lower === 'tv shows' || lower === 'tv-show' || lower === 'tv show') return 'TV';
-    if (lower === 'books' || lower === 'book') return 'Books';
-    if (lower === 'sports' || lower === 'sport') return 'Sports';
+    if (lower === 'tv' || lower === 'tv shows' || lower === 'tv-show' || lower === 'tv show' ||
+        lower === 'reality' || lower === 'reality tv') return 'TV';
     if (lower === 'music') return 'Music';
     if (lower === 'podcasts' || lower === 'podcast') return 'Podcasts';
+    if (lower === 'sports' || lower === 'sport') return 'Sports';
+    if (lower === 'books' || lower === 'book') return 'Books';
     if (lower === 'pop culture') return 'Pop Culture';
-    return cat;
+    return 'Other';
   };
 
-  // Group polls by category for carousel display
-  const pollsByCategory = useMemo(() => {
-    const groups: Record<string, any[]> = {};
-    pollGames.forEach((game: any) => {
-      const category = normalizeCategory(game.category);
-      if (!groups[category]) {
-        groups[category] = [];
-      }
-      groups[category].push(game);
-    });
-    return groups;
-  }, [pollGames]);
+  const CATEGORY_ORDER = ['Movies', 'TV', 'Music', 'Podcasts', 'Sports', 'Books', 'Pop Culture', 'Other'];
 
-  // Category display info
   const categoryInfo: Record<string, { label: string }> = {
     'Movies': { label: 'Movies' },
     'TV': { label: 'TV Shows' },
     'Music': { label: 'Music' },
-    'Books': { label: 'Books' },
-    'Sports': { label: 'Sports' },
     'Podcasts': { label: 'Podcasts' },
+    'Sports': { label: 'Sports' },
+    'Books': { label: 'Books' },
     'Pop Culture': { label: 'Pop Culture' },
     'Other': { label: 'General' },
   };
 
-  // Auto-open poll if gameId is in URL hash
-  React.useEffect(() => {
-    if (gameIdFromUrl && !selectedPoll && pollGames.length > 0) {
-      const gameToOpen = pollGames.find((g: any) => g.id === gameIdFromUrl);
-      if (gameToOpen) {
-        setSelectedPoll(gameToOpen);
-      }
+  const pollGames = useMemo(() => {
+    let filtered = [...games];
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter((g: any) => g.title?.toLowerCase().includes(q) || g.description?.toLowerCase().includes(q));
     }
-  }, [gameIdFromUrl, pollGames, selectedPoll]);
+    if (selectedCategory) {
+      filtered = filtered.filter((g: any) => normalizeCategory(g.category) === selectedCategory);
+    }
+    if (selectedGenre) {
+      filtered = filtered.filter((g: any) => (g.tags || []).includes(selectedGenre));
+    }
+    return filtered;
+  }, [games, searchQuery, selectedCategory, selectedGenre]);
+
+  const pollsByCategory = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    pollGames.forEach((game: any) => {
+      const cat = normalizeCategory(game.category);
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(game);
+    });
+    return CATEGORY_ORDER.filter(cat => groups[cat]).map(cat => [cat, groups[cat]] as [string, any[]]);
+  }, [pollGames]);
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 pb-20">
-        <Navigation onTrackConsumption={handleTrackConsumption} />
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="text-center py-20">
-            <div className="text-xl">Loading polls...</div>
-          </div>
+        <Navigation onTrackConsumption={() => setIsTrackModalOpen(true)} />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-xl text-gray-500">Loading polls...</div>
         </div>
       </div>
     );
@@ -329,355 +224,213 @@ export default function PlayPollsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <Navigation onTrackConsumption={handleTrackConsumption} />
+      <Navigation onTrackConsumption={() => setIsTrackModalOpen(true)} />
 
-      {/* Header Section with Gradient */}
+      {/* Header */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
           <div className="flex items-center gap-3 mb-4">
-            <button
-              onClick={() => window.history.back()}
-              className="flex items-center text-gray-400 hover:text-white transition-colors"
-            >
+            <button onClick={() => window.history.back()} className="flex items-center text-gray-400 hover:text-white transition-colors">
               <ChevronLeft size={20} />
             </button>
-            <h1 className="text-2xl font-semibold text-white" data-testid="polls-title">Polls</h1>
+            <h1 className="text-2xl font-semibold text-white">Polls</h1>
           </div>
 
-            {/* Filter Dropdowns Row */}
-            <div className="flex flex-wrap gap-3">
-              {/* Topic Filter Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setExpandedFilter(expandedFilter === 'topic' ? null : 'topic')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all text-sm ${
-                    selectedCategory
-                      ? 'text-purple-300'
-                      : 'text-gray-400 hover:text-gray-200'
-                  }`}
-                  data-testid="topic-filter-toggle"
-                >
-                  <span>
-                    Topic{selectedCategory ? `: ${categoryFilters.find(c => c.id === selectedCategory)?.label}` : ''}
-                  </span>
-                  <ChevronDown size={14} className={`transition-transform ${expandedFilter === 'topic' ? 'rotate-180' : ''}`} />
-                </button>
-                {expandedFilter === 'topic' && (
-                  <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[160px]">
-                    <button
-                      onClick={() => {
-                        setSelectedCategory(null);
-                        setExpandedFilter(null);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
-                        !selectedCategory
-                          ? 'bg-purple-100 text-purple-700 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                      data-testid="filter-all-topics"
-                    >
-                      All Topics
-                    </button>
-                    {categoryFilters.map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => {
-                          setSelectedCategory(cat.id);
-                          setExpandedFilter(null);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
-                          selectedCategory === cat.id
-                            ? 'bg-purple-100 text-purple-700 font-medium'
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                        data-testid={`filter-${cat.id}`}
-                      >
-                        {cat.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Genre Filter Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setExpandedFilter(expandedFilter === 'genre' ? null : 'genre')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all text-sm ${
-                    selectedGenre
-                      ? 'text-purple-300'
-                      : 'text-gray-400 hover:text-gray-200'
-                  }`}
-                  data-testid="genre-filter-toggle"
-                >
-                  <span>
-                    Genre{selectedGenre ? `: ${selectedGenre}` : ''}
-                  </span>
-                  <ChevronDown size={14} className={`transition-transform ${expandedFilter === 'genre' ? 'rotate-180' : ''}`} />
-                </button>
-                {expandedFilter === 'genre' && (
-                  <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[150px]">
-                    <button
-                      onClick={() => {
-                        setSelectedGenre(null);
-                        setExpandedFilter(null);
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
-                        !selectedGenre
-                          ? 'bg-purple-100 text-purple-700 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                      data-testid="genre-filter-all"
-                    >
-                      All Genres
-                    </button>
-                    {genreFilters.map((genre) => (
-                      <button
-                        key={genre.id}
-                        onClick={() => {
-                          setSelectedGenre(genre.id);
-                          setExpandedFilter(null);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
-                          selectedGenre === genre.id
-                            ? 'bg-purple-100 text-purple-700 font-medium'
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                        data-testid={`genre-filter-${genre.id}`}
-                      >
-                        {genre.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+          {/* Filter dropdowns */}
+          <div className="flex flex-wrap gap-3">
+            <div className="relative">
+              <button
+                onClick={() => setExpandedFilter(expandedFilter === 'topic' ? null : 'topic')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all text-sm ${selectedCategory ? 'text-purple-300' : 'text-gray-400 hover:text-gray-200'}`}
+              >
+                <span>Topic{selectedCategory ? `: ${categoryFilters.find(c => c.id === selectedCategory)?.label}` : ''}</span>
+                <ChevronDown size={14} className={`transition-transform ${expandedFilter === 'topic' ? 'rotate-180' : ''}`} />
+              </button>
+              {expandedFilter === 'topic' && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[160px]">
+                  <button onClick={() => { setSelectedCategory(null); setExpandedFilter(null); }} className={`w-full text-left px-3 py-2 rounded-md text-sm ${!selectedCategory ? 'bg-purple-100 text-purple-700 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>All Topics</button>
+                  {categoryFilters.map(cat => (
+                    <button key={cat.id} onClick={() => { setSelectedCategory(cat.id); setExpandedFilter(null); }} className={`w-full text-left px-3 py-2 rounded-md text-sm ${selectedCategory === cat.id ? 'bg-purple-100 text-purple-700 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>{cat.label}</button>
+                  ))}
+                </div>
+              )}
             </div>
+
+            <div className="relative">
+              <button
+                onClick={() => setExpandedFilter(expandedFilter === 'genre' ? null : 'genre')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all text-sm ${selectedGenre ? 'text-purple-300' : 'text-gray-400 hover:text-gray-200'}`}
+              >
+                <span>Genre{selectedGenre ? `: ${selectedGenre}` : ''}</span>
+                <ChevronDown size={14} className={`transition-transform ${expandedFilter === 'genre' ? 'rotate-180' : ''}`} />
+              </button>
+              {expandedFilter === 'genre' && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[150px]">
+                  <button onClick={() => { setSelectedGenre(null); setExpandedFilter(null); }} className={`w-full text-left px-3 py-2 rounded-md text-sm ${!selectedGenre ? 'bg-purple-100 text-purple-700 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>All Genres</button>
+                  {genreFilters.map(genre => (
+                    <button key={genre.id} onClick={() => { setSelectedGenre(genre.id); setExpandedFilter(null); }} className={`w-full text-left px-3 py-2 rounded-md text-sm ${selectedGenre === genre.id ? 'bg-purple-100 text-purple-700 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>{genre.label}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-
-        {/* Polls by Category */}
-        {Object.keys(pollsByCategory).length > 0 ? (
-          <div className="space-y-8">
-            {Object.entries(pollsByCategory).map(([category, games]) => (
-              <div key={category} className="mb-6">
-                {/* Category Header */}
-                <div className="flex items-center gap-2 mb-4">
-                  <h2 className="text-xl font-bold text-gray-900">{categoryInfo[category]?.label || category}</h2>
-                  <span className="text-sm text-gray-500">({games.length})</span>
-                </div>
-                
-                {/* Horizontal Scrolling Cards */}
-                <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                  {games.map((game: any) => (
-                    <div key={game.id} className="flex-shrink-0 w-72">
-                      <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden h-full">
-                        <CardHeader className="pb-3 pt-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              {game.isConsumed ? (
-                                <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider">
-                                  Consumed
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider border-gray-300 text-gray-500">
-                                  User
-                                </Badge>
-                              )}
-                              <span className="text-sm font-medium text-purple-600">{game.points || 10} pts</span>
-                            </div>
-                            <button
-                              onClick={() => handleInviteFriends(game)}
-                              className="p-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 transition-colors"
-                              data-testid={`invite-${game.id}`}
-                            >
-                              <UserPlus size={14} className="text-purple-600" />
-                            </button>
+      <div className="max-w-4xl mx-auto px-4 py-4">
+        {pollsByCategory.length > 0 ? (
+          <div className="space-y-5">
+            {pollsByCategory
+              .filter(([cat]) => !selectedCategory || cat === selectedCategory)
+              .map(([category, categoryGames]) => {
+                const label = categoryInfo[category]?.label || category;
+                const currentIndex = categoryIndices[category] || 0;
+                return (
+                  <div key={category}>
+                    <Card className="bg-white border border-gray-200 rounded-2xl p-4 pb-3 shadow-sm overflow-hidden">
+                      {/* Card header — matches trivia style */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
+                            <Vote className="w-3.5 h-3.5 text-white" />
                           </div>
-
-                          <CardTitle className="text-lg font-bold text-gray-900 line-clamp-2 leading-tight">{game.title}</CardTitle>
-                        </CardHeader>
-
-                        <CardContent className="pt-0 pb-4 space-y-2">
-                          {allPredictions[game.id] ? (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-                              <div className="text-green-800 font-bold text-sm">✓ Voted</div>
-                              <div className="text-green-700 text-xs line-clamp-1">"{allPredictions[game.id]}"</div>
-                            </div>
-                          ) : (
-                            <>
-                              <div className="flex flex-col gap-1.5">
-                                {(game.options || []).slice(0, 3).map((option: any, index: number) => {
-                                  const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
-                                  return (
-                                    <button
-                                      key={index}
-                                      onClick={() => handleOptionSelect(game.id, optionText)}
-                                      className={`w-full px-3 py-2 text-center rounded-full border-2 transition-all text-xs font-medium ${
-                                        selectedAnswers[game.id] === optionText
-                                          ? 'border-purple-500 bg-purple-600 text-white'
-                                          : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300'
-                                      }`}
-                                      data-testid={`option-${game.id}-${index}`}
-                                    >
-                                      <span className="line-clamp-1">{optionText}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                              <Button
-                                onClick={() => handleSubmitAnswer(game)}
-                                disabled={!selectedAnswers[game.id] || submitPrediction.isPending}
-                                className="w-full bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 rounded-full py-2 text-sm"
-                                data-testid={`submit-${game.id}`}
-                              >
-                                {submitPrediction.isPending ? '...' : 'Vote'}
-                              </Button>
-                            </>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">{label} Polls</p>
+                            <p className="text-[10px] text-gray-500">Tap to vote</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {currentIndex > 0 && (
+                            <button onClick={() => scrollCategoryTo(category, currentIndex - 1, categoryGames.length)} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                              <ChevronLeft className="w-4 h-4 text-gray-600" />
+                            </button>
                           )}
-                        </CardContent>
-                      </Card>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : pollGames.length > 0 && (
-          <div className="mb-8">
-            <div className="space-y-4">
-              {pollGames.map((game: any) => (
-                <Card key={game.id} className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-2">
-                        {game.isConsumed ? (
-                          <Badge className="bg-purple-600 text-white hover:bg-purple-700 text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider">
-                            Consumed
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-bold uppercase tracking-wider border-gray-300 text-gray-500">
-                            User
-                          </Badge>
-                        )}
-                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs font-medium uppercase">
-                          Poll
-                        </Badge>
+                          {currentIndex < categoryGames.length - 1 && (
+                            <button onClick={() => scrollCategoryTo(category, currentIndex + 1, categoryGames.length)} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                              <ChevronRight className="w-4 h-4 text-gray-600" />
+                            </button>
+                          )}
+                          <span className="text-xs text-gray-500 ml-1">{currentIndex + 1}/{categoryGames.length}</span>
+                        </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleInviteFriends(game)}
-                        className="px-3 py-1.5 text-xs bg-purple-600 text-white hover:bg-purple-700 border-0 rounded-lg"
-                        data-testid={`invite-${game.id}`}
+
+                      {/* Snap-scroll container */}
+                      <div
+                        ref={el => { categoryScrollRefs.current[category] = el; }}
+                        onScroll={() => handleCategoryScroll(category, categoryGames.length)}
+                        className="flex overflow-x-auto snap-x snap-mandatory"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                       >
-                        <UserPlus size={14} className="mr-1" />
-                        Invite to Play
-                      </Button>
-                    </div>
+                        {(categoryGames as any[]).map((game: any, gameIdx: number) => {
+                          const options: string[] = (game.options || []).map((o: any) =>
+                            typeof o === 'string' ? o : (o.label || o.text || String(o))
+                          );
+                          return (
+                            <div key={game.id} className="flex-shrink-0 w-full snap-center">
+                              {/* Media tag chip */}
+                              {(game.media_title || game.tags?.[0]) && (
+                                <div className="mb-2">
+                                  <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200">
+                                    <span className="text-[10px] text-purple-700 font-medium">{game.media_title || game.tags?.[0]}</span>
+                                  </div>
+                                </div>
+                              )}
 
-                    <CardTitle className="text-xl font-bold text-gray-900 mb-2 mt-2">{game.title}</CardTitle>
+                              <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{game.title}</h3>
 
-                    <div className="flex items-center space-x-4 text-sm text-gray-600">
-                      <div className="flex items-center space-x-1">
-                        <Star size={14} className="text-purple-600" />
-                        <span className="font-medium text-purple-600">You Earn: {game.points || 10} pts</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Users size={14} />
-                        <span>{game.participants || 0}</span>
-                      </div>
-                    </div>
-                  </CardHeader>
+                              {/* Voted / unanswered state */}
+                              {allPredictions[game.id] || submissionResults[game.id] || celebratingItems[game.id] !== undefined ? (
+                                (() => {
+                                  const result = submissionResults[game.id];
+                                  const prevAnswer = allPredictions[game.id];
+                                  const userAnswer = result?.userAnswer || prevAnswer;
+                                  const stats = result?.stats;
+                                  const isCelebrating = celebratingItems[game.id] !== undefined;
+                                  return (
+                                    <div className="relative">
+                                      <div className="flex flex-col gap-2">
+                                        {options.map((opt, oi) => {
+                                          const pct = stats ? (stats[opt] || 0) : 0;
+                                          const isUserPick = opt === userAnswer;
+                                          return (
+                                            <div
+                                              key={oi}
+                                              className={`relative py-3 px-4 rounded-full overflow-hidden transition-all ${isUserPick ? 'bg-purple-100' : 'bg-gray-100'}`}
+                                            >
+                                              <div
+                                                className={`absolute inset-0 transition-all duration-1000 ease-out ${isUserPick ? 'bg-purple-200/60' : 'bg-gray-200/40'}`}
+                                                style={{ width: `${pct}%` }}
+                                              />
+                                              <div className="relative flex justify-between items-center">
+                                                <div className="flex items-center gap-2">
+                                                  {isUserPick && <CheckCircle className="w-4 h-4 text-purple-600 shrink-0" />}
+                                                  <span className={`text-sm font-medium ${isUserPick ? 'text-purple-800' : 'text-gray-800'}`}>{opt}</span>
+                                                  {isUserPick && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-200 text-purple-800">You</span>}
+                                                </div>
+                                                <span className="text-xs font-medium text-gray-600">{pct}%</span>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                        <button
+                                          onClick={() => { if (gameIdx < categoryGames.length - 1) scrollCategoryTo(category, gameIdx + 1, categoryGames.length); }}
+                                          className="w-full mt-2 py-2.5 rounded-xl font-semibold text-sm text-white transition-all bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:opacity-90"
+                                        >
+                                          Next poll
+                                        </button>
+                                      </div>
 
-                  <CardContent className="space-y-4">
-                    {allPredictions[game.id] ? (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                        <div className="text-green-800 font-medium">✓ Submitted</div>
-                        <div className="text-green-700 text-sm">
-                          You voted for "{allPredictions[game.id]}"
-                        </div>
+                                      {/* Voted! overlay */}
+                                      <div className={`absolute inset-0 rounded-xl flex flex-col items-center justify-center gap-3 transition-opacity duration-300 bg-black/60 ${isCelebrating ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                                        <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center shadow-lg">
+                                          <CheckCircle className="w-7 h-7 text-white" />
+                                        </div>
+                                        <p className="text-xl font-bold text-white">Voted!</p>
+                                        <div className="bg-white/20 rounded-xl px-5 py-2.5 border border-white/30">
+                                          <span className="text-2xl font-bold text-white">+{celebratingItems[game.id] ?? result?.points ?? 0} pts</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })()
+                              ) : (
+                                <div className="flex flex-col gap-2">
+                                  {options.map((opt, idx) => (
+                                    <button
+                                      key={idx}
+                                      onClick={() => handleTapAndVote(game, opt)}
+                                      disabled={submitVote.isPending}
+                                      className="py-3 px-4 rounded-full text-sm font-medium transition-all text-left bg-gray-100 text-gray-800 hover:bg-gray-200 active:scale-[0.98]"
+                                    >
+                                      {opt}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                    ) : (
-                      <>
-                        <div className="flex flex-col gap-2">
-                          {(game.options || []).map((option: any, index: number) => {
-                            const optionText = typeof option === 'string' ? option : (option.label || option.text || String(option));
-                            return (
-                              <button
-                                key={index}
-                                onClick={() => handleOptionSelect(game.id, optionText)}
-                                className={`w-full px-4 py-3 text-center rounded-full border-2 transition-all text-sm font-medium ${
-                                  selectedAnswers[game.id] === optionText
-                                    ? 'border-purple-500 bg-purple-600 text-white'
-                                    : 'border-gray-200 bg-white text-gray-900 hover:border-gray-300 hover:bg-gray-50'
-                                }`}
-                                data-testid={`option-${game.id}-${index}`}
-                              >
-                                {optionText}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <Button
-                          onClick={() => handleSubmitAnswer(game)}
-                          disabled={!selectedAnswers[game.id] || submitPrediction.isPending}
-                          className="w-full bg-gray-500 hover:bg-gray-600 text-white disabled:opacity-50 rounded-full py-4"
-                          data-testid={`submit-${game.id}`}
-                        >
-                          {submitPrediction.isPending ? 'Submitting...' : 'Submit'}
-                        </Button>
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </Card>
+                  </div>
+                );
+              })}
           </div>
-        )}
-
-        {pollGames.length === 0 && (
+        ) : (
           <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
             <Vote className="mx-auto mb-4 text-gray-400" size={48} />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               {searchQuery || selectedCategory ? 'No matching polls found' : 'No polls available'}
             </h3>
-            <p className="text-gray-600">
-              {searchQuery || selectedCategory 
-                ? 'Try a different search term or filter' 
-                : 'Check back soon for new polls!'}
+            <p className="text-gray-600 text-sm">
+              {searchQuery || selectedCategory ? 'Try a different filter' : 'Check back soon for new polls!'}
             </p>
-            {(searchQuery || selectedCategory) && (
-              <Button
-                variant="outline"
-                onClick={() => { setSearchQuery(''); setSelectedCategory(null); }}
-                className="mt-4"
-                data-testid="clear-filters"
-              >
-                Clear Filters
-              </Button>
-            )}
           </div>
         )}
       </div>
 
-      {shareModalGame && (
-        <GameShareModal
-          isOpen={!!shareModalGame}
-          onClose={() => setShareModalGame(null)}
-          gameId={shareModalGame.id}
-          gameTitle={shareModalGame.title}
-          gameType={shareModalGame.type || "vote"}
-        />
-      )}
-
-      <ConsumptionTracker
-        isOpen={isTrackModalOpen}
-        onClose={() => setIsTrackModalOpen(false)}
-      />
-
-
+      {isTrackModalOpen && <ConsumptionTracker isOpen={isTrackModalOpen} onClose={() => setIsTrackModalOpen(false)} />}
+      {shareModalGame && <GameShareModal game={shareModalGame} onClose={() => setShareModalGame(null)} />}
     </div>
   );
 }
