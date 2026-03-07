@@ -416,6 +416,9 @@ export default function MediaDetail() {
 
   // Separate reviews from other activity
   const reviews = socialActivity.filter((post: any) => post.rating);
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((sum: number, r: any) => sum + Number(r.rating), 0) / reviews.length).toFixed(1)
+    : null;
   const predictions = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.type === 'predict');
   const polls = socialActivity.filter((post: any) => post.prediction_pool_id && post.prediction_pools?.type === 'vote');
   const conversations = socialActivity.filter((post: any) => !post.rating && !post.prediction_pool_id && post.content && post.content.trim());
@@ -916,7 +919,7 @@ export default function MediaDetail() {
             {/* Info column */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
-                <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight mb-1">{mediaData.title}</h1>
+                <h1 className="text-xl md:text-2xl font-semibold text-gray-900 leading-tight mb-1">{mediaData.title}</h1>
                 <button
                   onClick={handleShare}
                   className="flex-shrink-0 p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
@@ -929,11 +932,13 @@ export default function MediaDetail() {
               
               {/* Compact metadata chips */}
               <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 mb-3">
-                <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-full">
-                  <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                  <span className="font-medium">{mediaItem.rating}</span>
-                  <span className="text-gray-500">avg</span>
-                </div>
+                {avgRating && (
+                  <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-full">
+                    <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                    <span className="font-medium">{avgRating}</span>
+                    <span className="text-gray-500">avg</span>
+                  </div>
+                )}
                 {(userRating?.rating || userReview?.rating) && (
                   <div className="flex items-center gap-1 bg-purple-50 px-2 py-1 rounded-full">
                     <Star className="w-3 h-3 text-purple-600 fill-current" />
@@ -964,7 +969,7 @@ export default function MediaDetail() {
           </div>
 
           {/* Description snippet */}
-          {mediaItem.description && (
+          {mediaItem.description && mediaItem.description !== 'No description available.' && (
             <div className="mt-3">
               <p className={`text-sm text-gray-600 leading-relaxed ${!showAbout ? 'line-clamp-2' : ''}`}>
                 {mediaItem.description}
