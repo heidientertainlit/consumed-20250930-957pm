@@ -58,6 +58,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<Record<string, string>>({});
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; stats: any; friendAnswers?: FriendAnswer[] }>>({});
+  const [celebratingItems, setCelebratingItems] = useState<Record<string, number>>({});
 
   const { data: leaderboardData } = useQuery({
     queryKey: ['trivia-leaderboard-position', user?.id, session?.access_token],
@@ -361,6 +362,12 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       return { itemId, answer, isCorrect, points, stats, friendAnswers };
     },
     onSuccess: (result) => {
+      if (result.isCorrect) {
+        setCelebratingItems(prev => ({ ...prev, [result.itemId]: result.points }));
+        setTimeout(() => {
+          setCelebratingItems(prev => { const next = { ...prev }; delete next[result.itemId]; return next; });
+        }, 1600);
+      }
       setAnsweredQuestions(prev => ({
         ...prev,
         [result.itemId]: {
@@ -541,7 +548,17 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 
                 <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{item.question}</h3>
                 
-                {!answered ? (
+                {celebratingItems[item.id] !== undefined ? (
+                  <div className="flex flex-col items-center gap-3 py-4 animate-in zoom-in-95 duration-200">
+                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center shadow-md">
+                      <CheckCircle className="w-6 h-6 text-white" />
+                    </div>
+                    <p className="text-base font-bold text-gray-900">Correct!</p>
+                    <div className="bg-purple-50 rounded-xl px-4 py-2 border border-purple-100">
+                      <span className="text-xl font-bold text-purple-700">+{celebratingItems[item.id]} pts</span>
+                    </div>
+                  </div>
+                ) : !answered ? (
                   <div className="flex flex-col gap-2">
                     {item.options.map((option, idx) => (
                       <button

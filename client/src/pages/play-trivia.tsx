@@ -178,10 +178,6 @@ export default function PlayTriviaPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/pools'] });
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
-      toast({
-        title: "Success!",
-        description: "Your answer has been submitted",
-      });
     },
   });
 
@@ -202,7 +198,7 @@ export default function PlayTriviaPage() {
       setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned } }));
       if (isCorrect && pointsEarned > 0) {
         setShowCelebration({ points: pointsEarned });
-        const timer = setTimeout(() => setShowCelebration(null), 3000);
+        const timer = setTimeout(() => setShowCelebration(null), 1800);
         setCelebrationTimer(timer);
       }
       markTrivia();
@@ -217,29 +213,15 @@ export default function PlayTriviaPage() {
     if (!answer) return;
 
     try {
-      // Submit to backend - it will check if answer is correct and return points_earned
-      const result = await submitPrediction.mutateAsync({
-        poolId: game.id,
-        answer
-      });
-
-      // Backend returns { success: true, points_earned: number }
+      const result = await submitPrediction.mutateAsync({ poolId: game.id, answer });
       const pointsEarned = result.points_earned || 0;
       const isCorrect = pointsEarned > 0;
 
-      // Store result for UI feedback
-      setSubmissionResults(prev => ({
-        ...prev,
-        [game.id]: { correct: isCorrect, points: pointsEarned }
-      }));
+      setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned } }));
 
-      // Show celebration modal for correct answers
       if (isCorrect && pointsEarned > 0) {
         setShowCelebration({ points: pointsEarned });
-        // Auto-hide celebration after 3 seconds
-        const timer = setTimeout(() => {
-          setShowCelebration(null);
-        }, 3000);
+        const timer = setTimeout(() => setShowCelebration(null), 1800);
         setCelebrationTimer(timer);
       }
       
