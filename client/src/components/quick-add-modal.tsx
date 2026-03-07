@@ -80,7 +80,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
   const [selectedRankId, setSelectedRankId] = useState("");
   const [reviewText, setReviewText] = useState("");
   const [containsSpoilers, setContainsSpoilers] = useState(false);
-  const [privateMode, setPrivateMode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isListDrawerOpen, setIsListDrawerOpen] = useState(false);
   const [isQuickAddMode, setIsQuickAddMode] = useState(false);
@@ -400,8 +399,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
         // If rating is provided, let rate-media handle the social post (it stores ratings properly)
         // Otherwise use inline-post for reactions
         if (selectedMedia && rating > 0) {
-          await addRating(supabaseUrl, session.access_token, selectedMedia, externalId!, externalSource!, reviewText.trim(), containsSpoilers, privateMode);
-        } else if (!privateMode) {
+          await addRating(supabaseUrl, session.access_token, selectedMedia, externalId!, externalSource!, reviewText.trim(), containsSpoilers, false);
+        } else {
           const response = await fetch(
             `${supabaseUrl}/functions/v1/inline-post`,
             {
@@ -433,7 +432,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
         
         // If media is attached AND user selected a list, track it
         if (selectedMedia && mediaData && selectedListId && selectedListId !== '' && selectedListId !== 'none') {
-          await trackMediaToList(supabaseUrl, session.access_token, mediaData, selectedListId, privateMode, rewatchCount, dnfReason);
+          await trackMediaToList(supabaseUrl, session.access_token, mediaData, selectedListId, false, rewatchCount, dnfReason);
         }
         
       } else if (postType === 'predict') {
@@ -1184,17 +1183,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                       </label>
                     </div>
                     
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="private-mode"
-                        checked={privateMode}
-                        onCheckedChange={(checked) => setPrivateMode(checked as boolean)}
-                        data-testid="checkbox-private-mode"
-                      />
-                      <label htmlFor="private-mode" className="text-sm text-gray-600">
-                        Don't post to feed
-                      </label>
-                    </div>
                   </div>
 
                   {/* TV season/episode picker */}
