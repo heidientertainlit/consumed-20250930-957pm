@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -193,10 +194,6 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       queryClient.invalidateQueries({ queryKey: ['user-lists'] });
-      toast({
-        title: "Removed from library",
-        description: "Item has been removed from your library",
-      });
       setIsMoveSheetOpen(false);
     },
     onError: (error) => {
@@ -209,9 +206,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
   });
 
   const handleRemoveFromLibrary = () => {
-    if (confirm(`Are you sure you want to remove "${item.title}" from your library?`)) {
-      deleteItemMutation.mutate(item.id);
-    }
+    deleteItemMutation.mutate(item.id);
   };
 
   const dnfReasonMutation = useMutation({
@@ -735,13 +730,33 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
               I'm finished!
             </button>
             
-            <button
-              onClick={handleRemoveFromLibrary}
-              disabled={isUpdating || deleteItemMutation.isPending}
-              className="w-full text-center text-gray-400 text-sm hover:text-red-500 py-2"
-            >
-              Remove from Library
-            </button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button
+                  disabled={isUpdating || deleteItemMutation.isPending}
+                  className="w-full text-center text-gray-400 text-sm hover:text-red-500 py-2"
+                >
+                  Remove from Library
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remove from library?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will remove "{item.title}" from all your lists.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleRemoveFromLibrary}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Remove
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </SheetContent>
       </Sheet>
@@ -836,20 +851,40 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
             )}
 
             <div className="border-t border-gray-100 my-2 pt-2">
-              <button
-                onClick={handleRemoveFromLibrary}
-                disabled={isUpdating || deleteItemMutation.isPending}
-                className="w-full p-4 text-left rounded-lg hover:bg-red-50 flex items-center gap-3 transition-colors"
-                data-testid={`remove-item-${item.id}`}
-              >
-                <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Trash2 className="text-gray-500" size={20} />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Remove from Library</p>
-                  <p className="text-sm text-gray-500">Delete from all your lists</p>
-                </div>
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    disabled={isUpdating || deleteItemMutation.isPending}
+                    className="w-full p-4 text-left rounded-lg hover:bg-red-50 flex items-center gap-3 transition-colors"
+                    data-testid={`remove-item-${item.id}`}
+                  >
+                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Trash2 className="text-gray-500" size={20} />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">Remove from Library</p>
+                      <p className="text-sm text-gray-500">Delete from all your lists</p>
+                    </div>
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Remove from library?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will remove "{item.title}" from all your lists.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleRemoveFromLibrary}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Remove
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </DrawerContent>

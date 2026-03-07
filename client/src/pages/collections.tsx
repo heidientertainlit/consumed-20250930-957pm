@@ -20,6 +20,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { 
   List, 
@@ -1441,10 +1442,6 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       queryClient.invalidateQueries({ queryKey: ['user-lists'] });
-      toast({
-        title: "Removed from library",
-        description: "Item has been removed from your library",
-      });
       setIsProgressSheetOpen(false);
       setIsMoveSheetOpen(false);
     },
@@ -1458,9 +1455,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
   });
 
   const handleRemoveFromLibrary = () => {
-    if (confirm(`Are you sure you want to remove "${item.title}" from your library?`)) {
-      deleteItemMutation.mutate(item.id);
-    }
+    deleteItemMutation.mutate(item.id);
   };
   
   const mediaType = (item.media_type || 'movie').toLowerCase();
@@ -1997,13 +1992,33 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
               I'm finished!
             </button>
             
-            <button
-              onClick={handleRemoveFromLibrary}
-              disabled={isUpdating || deleteItemMutation.isPending}
-              className="w-full text-center text-gray-400 text-sm hover:text-red-500 py-2"
-            >
-              Remove from Library
-            </button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button
+                  disabled={isUpdating || deleteItemMutation.isPending}
+                  className="w-full text-center text-gray-400 text-sm hover:text-red-500 py-2"
+                >
+                  Remove from Library
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Remove from library?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will remove "{item.title}" from all your lists.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleRemoveFromLibrary}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Remove
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </SheetContent>
       </Sheet>
