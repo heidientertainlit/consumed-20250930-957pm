@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2 } from "lucide-react";
+import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useRoute, useLocation } from "wouter";
@@ -963,6 +963,23 @@ export default function MediaDetail() {
             </div>
           </div>
 
+          {/* Description snippet */}
+          {mediaItem.description && (
+            <div className="mt-3">
+              <p className={`text-sm text-gray-600 leading-relaxed ${!showAbout ? 'line-clamp-2' : ''}`}>
+                {mediaItem.description}
+              </p>
+              {mediaItem.description.length > 120 && (
+                <button
+                  onClick={() => setShowAbout(!showAbout)}
+                  className="text-xs text-purple-600 font-medium mt-0.5"
+                >
+                  {showAbout ? 'Less' : 'More'}
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Action buttons - below poster, full width row */}
           {session && (
             <div className="flex gap-2 mt-4">
@@ -1071,61 +1088,11 @@ export default function MediaDetail() {
             </div>
           )}
 
-          {/* About - expandable section */}
-          <div className="mt-4 pt-3 border-t border-gray-100">
-            <button
-              onClick={() => setShowAbout(!showAbout)}
-              className="flex items-center justify-between w-full text-left"
-              data-testid="button-toggle-about"
-            >
-              <span className="text-base font-semibold text-gray-900">About</span>
-              <ChevronDown 
-                size={18} 
-                className={`text-gray-400 transition-transform ${showAbout ? 'rotate-180' : ''}`} 
-              />
-            </button>
-            
-            {showAbout && (
-              <div className="mt-3 space-y-4">
-                <p className="text-sm text-gray-600 leading-relaxed">{mediaItem.description}</p>
-                
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-gray-400">Category</span>
-                    <p className="font-medium text-gray-700">{mediaItem.category}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Language</span>
-                    <p className="font-medium text-gray-700">{mediaItem.language}</p>
-                  </div>
-                  {mediaItem.type === 'Movie' && mediaItem.releaseDate && (
-                    <div>
-                      <span className="text-gray-400">Release Year</span>
-                      <p className="font-medium text-gray-700">{new Date(mediaItem.releaseDate).getFullYear()}</p>
-                    </div>
-                  )}
-                  {(mediaItem.type === 'TV Show' || mediaItem.type === 'Podcast') && mediaItem.releaseDate && (
-                    <div>
-                      <span className="text-gray-400">Started</span>
-                      <p className="font-medium text-gray-700">
-                        {new Date(mediaItem.releaseDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                      </p>
-                    </div>
-                  )}
-                  {mediaItem.runtime && (
-                    <div>
-                      <span className="text-gray-400">Runtime</span>
-                      <p className="font-medium text-gray-700">{mediaItem.runtime} min</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
 
-          {/* Say something - opens unified composer modal */}
+          {/* Your Take */}
           {session && (
           <div ref={composeSectionRef} className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Your Take</p>
             <button
               onClick={() => {
                 setQuickAddMedia({
@@ -1151,7 +1118,7 @@ export default function MediaDetail() {
           </div>
           )}
 
-          {/* Reviews & Ratings - stacked collapsible */}
+          {/* Activity Section */}
           <div className="mt-3 pt-3 border-t border-gray-100">
             <button
               onClick={() => setShowReviews(!showReviews)}
@@ -1159,14 +1126,41 @@ export default function MediaDetail() {
               data-testid="button-toggle-reviews"
             >
               <span className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <Star className="w-4 h-4 text-yellow-500" />
-                Reactions {reviews.length > 0 && `(${reviews.length})`}
+                <Flame className="w-4 h-4 text-orange-500" />
+                Activity {socialActivity.length > 0 && `(${socialActivity.length})`}
               </span>
               <ChevronDown 
                 size={18} 
                 className={`text-gray-400 transition-transform ${showReviews ? 'rotate-180' : ''}`} 
               />
             </button>
+
+            {/* Activity glimpse - always visible preview */}
+            {!showReviews && socialActivity.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {socialActivity.slice(0, 3).map((post: any) => {
+                  const name = post.users?.display_name || post.users?.user_name || 'Someone';
+                  return (
+                    <div key={post.id} className="flex items-center gap-1.5 text-sm text-gray-500 py-0.5">
+                      <span className="font-medium text-gray-700">{name}</span>
+                      {post.rating ? (
+                        <span className="flex items-center gap-0.5">
+                          rated
+                          {Array.from({ length: Math.round(Number(post.rating)) }, (_, i) => (
+                            <Star key={i} size={10} className="fill-yellow-400 text-yellow-400" />
+                          ))}
+                        </span>
+                      ) : post.prediction_pool_id ? (
+                        <span>made a prediction</span>
+                      ) : (
+                        <span>shared a reaction</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {showReviews && (
               <>
                 {/* Your Rating - always show at top if user has rated */}
