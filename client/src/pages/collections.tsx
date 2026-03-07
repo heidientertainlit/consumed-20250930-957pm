@@ -339,8 +339,7 @@ export default function CollectionsPage() {
       }
       return { ...await response.json(), listName };
     },
-    onSuccess: (data) => {
-      toast({ title: `Moved to ${data.listName}` });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
     },

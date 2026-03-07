@@ -885,8 +885,7 @@ export default function UserProfile() {
       }
       return { ...await response.json(), listName };
     },
-    onSuccess: (data) => {
-      toast({ title: `Moved to ${data.listName}` });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       fetchUserLists(viewingUserId);
     },

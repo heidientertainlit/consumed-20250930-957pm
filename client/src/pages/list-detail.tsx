@@ -721,8 +721,6 @@ export default function ListDetail() {
       if (result?.skipped) return;
       const targetList = allUserLists.find((l: any) => l.id === variables.targetListId);
       const targetName = targetList ? getDisplayTitle(targetList.title) : 'list';
-      toast({ title: variables.force ? `Removed from this list (already in ${targetName})` : `Moved to ${targetName}` });
-
       const isFinishedList = targetList?.title?.toLowerCase() === 'finished';
       if (isFinishedList && moveItem) {
         setRateAfterMoveItem(moveItem);

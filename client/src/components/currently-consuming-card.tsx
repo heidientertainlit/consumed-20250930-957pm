@@ -136,9 +136,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
       }
       return { ...await response.json(), listName };
     },
-    onSuccess: (data) => {
-      const isDuplicate = data?.message?.toLowerCase().includes('already');
-      toast({ title: isDuplicate ? 'Already in list!' : `Added to ${data.listName}` });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       setIsMoveSheetOpen(false);
     },
