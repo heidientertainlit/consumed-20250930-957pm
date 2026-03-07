@@ -49,6 +49,7 @@ export default function MediaDetail() {
   const [composeType, setComposeType] = useState<'react' | 'predict'>('react');
   const [composeText, setComposeText] = useState('');
   const [composeRating, setComposeRating] = useState(0);
+  const [composeHoverRating, setComposeHoverRating] = useState(0);
   const [composeSelectedList, setComposeSelectedList] = useState<{ name: string; isCustom: boolean; id?: string } | null>(null);
   const [isComposePosting, setIsComposePosting] = useState(false);
   const [composePredictionOptions, setComposePredictionOptions] = useState<string[]>(["", ""]);
@@ -739,11 +740,12 @@ export default function MediaDetail() {
           });
           if (!predResponse.ok) throw new Error("Failed to create prediction");
         }
-      } else if (composeText.trim()) {
+      } else if (composeText.trim() || composeRating > 0) {
         await supabase.from('social_posts').insert({
           user_id: authUser.id,
-          content: composeText,
-          post_type: 'thought',
+          content: composeText || null,
+          post_type: composeRating > 0 ? 'rate-review' : 'thought',
+          rating: composeRating > 0 ? composeRating : null,
           visibility: 'public',
           media_title: mediaItem.title,
           media_type: (mediaItem.type || params?.type || 'movie').toLowerCase(),
@@ -753,6 +755,14 @@ export default function MediaDetail() {
           fire_votes: 0,
           ice_votes: 0,
         });
+        if (composeRating > 0) {
+          await supabase.from('media_ratings').upsert({
+            user_id: authUser.id,
+            media_external_id: params?.id,
+            media_external_source: params?.source || 'tmdb',
+            rating: composeRating,
+          }, { onConflict: 'user_id,media_external_id,media_external_source' });
+        }
       }
 
       if (composeSelectedList) {
@@ -764,6 +774,7 @@ export default function MediaDetail() {
 
       setComposeText('');
       setComposeRating(0);
+      setComposeHoverRating(0);
       setComposeSelectedList(null);
       setComposePredictionOptions(["", ""]);
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
@@ -1097,83 +1108,140 @@ export default function MediaDetail() {
           )}
 
 
-          {/* Your Reaction */}
+          {/* Your Reaction — inline composer */}
           {session && (
           <div ref={composeSectionRef} className="mt-4 pt-4 border-t border-gray-100">
-            <p className="text-base font-semibold text-gray-900 mb-2">Your Reaction</p>
-            <div className="bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden">
+            <p className="text-base font-semibold text-gray-900 mb-3">Your Reaction</p>
+
+            {/* Tab switcher */}
+            <div className="flex gap-2 mb-3">
               <button
-                onClick={() => {
-                  setQuickAddPostType("react");
-                  setQuickAddMedia({
-                    title: mediaItem?.title || mediaData.title,
-                    mediaType: (() => {
-                      const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
-                      if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
-                      if (raw.includes('podcast')) return 'podcast';
-                      if (raw === 'movie') return 'movie';
-                      return raw;
-                    })(),
-                    imageUrl: resolvedImageUrl || mediaData.artwork,
-                    externalId: params?.id,
-                    externalSource: params?.source,
-                  });
-                  setIsQuickAddOpen(true);
-                }}
-                className="w-full text-left px-4 pt-3 pb-2 text-sm text-gray-400"
-                data-testid="button-say-something"
+                onClick={() => setComposeType('react')}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  composeType === 'react'
+                    ? 'bg-gray-900 text-white'
+                    : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
               >
-                What's your take on this?
+                Reaction
               </button>
-              <div className="flex items-center gap-2 px-3 pb-3 pt-1 border-t border-gray-100">
+              <button
+                onClick={() => setComposeType('predict')}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  composeType === 'predict'
+                    ? 'bg-gray-900 text-white'
+                    : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Predict
+              </button>
+            </div>
+
+            {/* Text area */}
+            <textarea
+              value={composeText}
+              onChange={(e) => setComposeText(e.target.value)}
+              placeholder={composeType === 'react' ? "What's your reaction?" : "Make a prediction..."}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+              rows={3}
+            />
+
+            {composeType === 'react' && (
+              <>
+                {/* Star rating */}
+                <div className="flex items-center gap-3 mt-3">
+                  <span className="text-sm text-gray-500">Rating:</span>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setComposeRating(composeRating === star ? 0 : star)}
+                        onMouseEnter={() => setComposeHoverRating(star)}
+                        onMouseLeave={() => setComposeHoverRating(0)}
+                      >
+                        <Star
+                          size={22}
+                          className={
+                            star <= (composeHoverRating || composeRating)
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-gray-300'
+                          }
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Status pills */}
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {[
+                    { label: 'Finished', value: 'finished' },
+                    { label: 'Currently', value: 'currently_consuming' },
+                    { label: 'Want To', value: 'want_to_consume' },
+                    { label: 'Favorites', value: 'favorites' },
+                    { label: 'DNF', value: 'dnf' },
+                  ].map((item) => (
+                    <button
+                      key={item.value}
+                      onClick={() =>
+                        setComposeSelectedList(
+                          composeSelectedList?.name === item.value
+                            ? null
+                            : { name: item.value, isCustom: false }
+                        )
+                      }
+                      className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                        composeSelectedList?.name === item.value
+                          ? 'bg-purple-600 text-white'
+                          : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setShowCreateListDialog(true)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    Custom <ChevronDown size={12} />
+                  </button>
+                </div>
+              </>
+            )}
+
+            {composeType === 'predict' && (
+              <div className="mt-3 space-y-2">
+                {composePredictionOptions.map((opt, idx) => (
+                  <input
+                    key={idx}
+                    type="text"
+                    value={opt}
+                    onChange={(e) => {
+                      const updated = [...composePredictionOptions];
+                      updated[idx] = e.target.value;
+                      setComposePredictionOptions(updated);
+                    }}
+                    placeholder={`Option ${idx + 1}`}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                ))}
                 <button
-                  onClick={() => {
-                    setQuickAddPostType("react");
-                    setQuickAddMedia({
-                      title: mediaItem?.title || mediaData.title,
-                      mediaType: (() => {
-                        const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
-                        if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
-                        if (raw.includes('podcast')) return 'podcast';
-                        if (raw === 'movie') return 'movie';
-                        return raw;
-                      })(),
-                      imageUrl: resolvedImageUrl || mediaData.artwork,
-                      externalId: params?.id,
-                      externalSource: params?.source,
-                    });
-                    setIsQuickAddOpen(true);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-600 text-white text-xs font-medium hover:bg-purple-700 transition-colors"
+                  onClick={() => setComposePredictionOptions([...composePredictionOptions, ''])}
+                  className="text-xs text-purple-600 font-medium"
                 >
-                  <MessageCircle size={12} />
-                  Reaction
-                </button>
-                <button
-                  onClick={() => {
-                    setQuickAddPostType("predict");
-                    setQuickAddMedia({
-                      title: mediaItem?.title || mediaData.title,
-                      mediaType: (() => {
-                        const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
-                        if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
-                        if (raw.includes('podcast')) return 'podcast';
-                        if (raw === 'movie') return 'movie';
-                        return raw;
-                      })(),
-                      imageUrl: resolvedImageUrl || mediaData.artwork,
-                      externalId: params?.id,
-                      externalSource: params?.source,
-                    });
-                    setIsQuickAddOpen(true);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-purple-300 text-purple-600 text-xs font-medium hover:bg-purple-50 transition-colors"
-                >
-                  <Target size={12} />
-                  Prediction
+                  + Add option
                 </button>
               </div>
-            </div>
+            )}
+
+            {/* Post button */}
+            <button
+              onClick={handleComposePost}
+              disabled={isComposePosting || (!composeText.trim() && !composeRating && !composeSelectedList)}
+              className="w-full mt-4 py-3 rounded-xl bg-purple-500 text-white font-medium text-sm hover:bg-purple-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {isComposePosting ? 'Posting...' : 'Post'}
+            </button>
           </div>
           )}
 
