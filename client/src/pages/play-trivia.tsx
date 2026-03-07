@@ -188,8 +188,12 @@ export default function PlayTriviaPage() {
     const isCorrect = correctAnswer ? option === correctAnswer : false;
     const pointsEarned = isCorrect ? (game.points_reward || 10) : 0;
 
-    // Show answered state + celebration immediately (before stats load)
-    setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned, stats: {}, userAnswer: option } }));
+    // Seed initial stats so bars render immediately (user's pick = 100%, others = 0%)
+    const initialStats: Record<string, number> = {};
+    for (const opt of (game.options || [])) {
+      initialStats[opt] = opt === option ? 100 : 0;
+    }
+    setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned, stats: initialStats, userAnswer: option } }));
     if (isCorrect) {
       setCelebratingItems(prev => ({ ...prev, [game.id]: pointsEarned }));
       setTimeout(() => {
