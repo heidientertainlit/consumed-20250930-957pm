@@ -280,15 +280,8 @@ export default function PlayTriviaPage() {
       });
     }
     
-    // Sort: uncompleted games first, completed games at the bottom
-    filtered.sort((a: any, b: any) => {
-      const aCompleted = allPredictions[a.id] ? 1 : 0;
-      const bCompleted = allPredictions[b.id] ? 1 : 0;
-      return aCompleted - bCompleted;
-    });
-    
     return filtered;
-  }, [processedGames, searchQuery, selectedCategory, triviaType, selectedGenre, allPredictions]);
+  }, [processedGames, searchQuery, selectedCategory, triviaType, selectedGenre]);
   
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
@@ -571,7 +564,7 @@ export default function PlayTriviaPage() {
                                       }}
                                       className="w-full mt-2 py-2.5 rounded-xl font-semibold text-sm text-white transition-all bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:opacity-90"
                                     >
-                                      {gameIdx < (games as any[]).length - 1 ? 'Next question' : 'All done!'}
+                                      Next question
                                     </button>
                                   </div>
 
