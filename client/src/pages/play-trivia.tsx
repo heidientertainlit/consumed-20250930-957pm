@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth';
 import { Link, useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +21,7 @@ import { useFirstSessionHooks } from '@/components/first-session-hooks';
 export default function PlayTriviaPage() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const { markTrivia } = useFirstSessionHooks();
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [selectedTriviaGame, setSelectedTriviaGame] = useState<any>(null);
@@ -134,147 +137,85 @@ export default function PlayTriviaPage() {
 
   const allPredictions = userPredictionsData || {};
 
-  // Submit prediction mutation
+  // Submit prediction — direct Supabase insert + stats in one shot, exactly like TriviaCarousel
   const submitPrediction = useMutation({
-    mutationFn: async ({ poolId, answer }: { poolId: string; answer: string }) => {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Not authenticated');
+    mutationFn: async ({ gameId, poolId, answer, options, correctAnswer, pointsReward }: {
+      gameId: string; poolId: string; answer: string; options: string[]; correctAnswer?: string; pointsReward: number;
+    }) => {
+      if (!user?.id) throw new Error('Not logged in');
+      const isCorrect = correctAnswer ? answer === correctAnswer : false;
+      const points = isCorrect ? pointsReward : 0;
+
+      const { error } = await supabase
+        .from('user_predictions')
+        .insert({ user_id: user.id, pool_id: poolId, prediction: answer, points_earned: points });
+
+      if (error) {
+        if (error.message?.includes('duplicate') || error.code === '23505') throw new Error('Already answered');
+        throw error;
       }
 
-      const response = await fetch(`${supabaseUrl}/functions/v1/predictions/predict`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          pool_id: poolId,
-          prediction: answer,
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to submit answer: ${errorText}`);
+      if (points > 0) {
+        await supabase.rpc('increment_user_points', { user_id_param: user.id, points_to_add: points });
       }
 
-      return await response.json();
+      const { data: allPreds } = await supabase
+        .from('user_predictions').select('prediction').eq('pool_id', poolId);
+
+      const total = allPreds?.length || 1;
+      const stats: Record<string, number> = {};
+      for (const opt of options) {
+        const count = allPreds?.filter((p: any) => p.prediction === opt).length || 0;
+        stats[opt] = Math.round((count / total) * 100);
+      }
+
+      return { gameId, answer, isCorrect, points, stats };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/predictions/pools'] });
+    onSuccess: (result) => {
+      if (result.isCorrect) {
+        setCelebratingItems(prev => ({ ...prev, [result.gameId]: result.points }));
+        setTimeout(() => {
+          setCelebratingItems(prev => { const next = { ...prev }; delete next[result.gameId]; return next; });
+        }, 1600);
+      }
+      setSubmissionResults(prev => ({
+        ...prev,
+        [result.gameId]: { correct: result.isCorrect, points: result.points, stats: result.stats, userAnswer: result.answer }
+      }));
+      markTrivia();
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
+    },
+    onError: (error: Error) => {
+      if (error.message !== 'Already answered') {
+        toast({ title: "Error", description: "Failed to submit answer. Please try again.", variant: "destructive" });
+      }
     },
   });
 
   const handleOptionSelect = (gameId: string, option: string) => {
-    setSelectedAnswers(prev => ({
-      ...prev,
-      [gameId]: option
-    }));
+    setSelectedAnswers(prev => ({ ...prev, [gameId]: option }));
   };
 
-  const handleTapAndSubmit = async (game: any, option: string) => {
+  const handleTapAndSubmit = (game: any, option: string) => {
     if (allPredictions[game.id] || submissionResults[game.id]) return;
     setSelectedAnswers(prev => ({ ...prev, [game.id]: option }));
-
-    // Compute correctness immediately from game data (no network needed)
-    const correctAnswer = game.correct_answer || game.correctAnswer;
-    const isCorrect = correctAnswer ? option === correctAnswer : false;
-    const pointsEarned = isCorrect ? (game.points_reward || 10) : 0;
-
-    // Seed initial stats so bars render immediately (user's pick = 100%, others = 0%)
-    const initialStats: Record<string, number> = {};
-    for (const opt of (game.options || [])) {
-      initialStats[opt] = opt === option ? 100 : 0;
-    }
-    setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned, stats: initialStats, userAnswer: option } }));
-    if (isCorrect) {
-      setCelebratingItems(prev => ({ ...prev, [game.id]: pointsEarned }));
-      setTimeout(() => {
-        setCelebratingItems(prev => { const next = { ...prev }; delete next[game.id]; return next; });
-      }, 1800);
-    }
-
-    try {
-      // Submit to backend in background
-      await submitPrediction.mutateAsync({ poolId: game.id, answer: option });
-
-      // Fetch stats after submission
-      let stats: Record<string, number> = {};
-      try {
-        const { createClient } = await import('@supabase/supabase-js');
-        const sb = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
-        const { data: allPreds } = await sb.from('user_predictions').select('prediction').eq('pool_id', game.id);
-        const total = allPreds?.length || 1;
-        for (const opt of (game.options || [])) {
-          const count = (allPreds || []).filter((p: any) => p.prediction === opt).length;
-          stats[opt] = Math.round((count / total) * 100);
-        }
-      } catch {}
-
-      // Update with real stats once loaded
-      setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned, stats, userAnswer: option } }));
-      markTrivia();
-    } catch (error) {
-      console.error('Error submitting answer:', error);
-      toast({ title: "Error", description: "Failed to submit answer. Please try again.", variant: "destructive" });
-    }
+    submitPrediction.mutate({
+      gameId: game.id, poolId: game.id, answer: option,
+      options: game.options || [],
+      correctAnswer: game.correct_answer || game.correctAnswer,
+      pointsReward: game.points_reward || 10,
+    });
   };
 
-  const handleSubmitAnswer = async (game: any) => {
+  const handleSubmitAnswer = (game: any) => {
     const answer = selectedAnswers[game.id];
-    if (!answer) return;
-
-    const correctAnswer = game.correct_answer || game.correctAnswer;
-    const isCorrect = correctAnswer ? answer === correctAnswer : false;
-    const pointsEarned = isCorrect ? (game.points_reward || 10) : 0;
-
-    // Seed initial stats immediately so bars show right away
-    const initialStats: Record<string, number> = {};
-    for (const opt of (game.options || [])) {
-      initialStats[opt] = opt === answer ? 100 : 0;
-    }
-    setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned, stats: initialStats, userAnswer: answer } }));
-    if (isCorrect) {
-      setCelebratingItems(prev => ({ ...prev, [game.id]: pointsEarned }));
-      setTimeout(() => {
-        setCelebratingItems(prev => { const next = { ...prev }; delete next[game.id]; return next; });
-      }, 1800);
-    }
-
-    try {
-      await submitPrediction.mutateAsync({ poolId: game.id, answer });
-      markTrivia();
-
-      // Fetch real stats and update bars
-      const { data: statsData } = await supabase
-        .from('user_predictions')
-        .select('prediction')
-        .eq('pool_id', game.id);
-      if (statsData && statsData.length > 0) {
-        const counts: Record<string, number> = {};
-        statsData.forEach((r: any) => { counts[r.prediction] = (counts[r.prediction] || 0) + 1; });
-        const total = statsData.length;
-        const realStats: Record<string, number> = {};
-        for (const opt of (game.options || [])) {
-          realStats[opt] = Math.round(((counts[opt] || 0) / total) * 100);
-        }
-        setSubmissionResults(prev => ({ ...prev, [game.id]: { ...prev[game.id], stats: realStats } }));
-      }
-    } catch (error) {
-      console.error('Error submitting answer:', error);
-      toast({
-        title: "Error",
-        description: "Failed to submit answer. Please try again.",
-        variant: "destructive"
-      });
-    }
+    if (!answer || submissionResults[game.id]) return;
+    submitPrediction.mutate({
+      gameId: game.id, poolId: game.id, answer,
+      options: game.options || [],
+      correctAnswer: game.correct_answer || game.correctAnswer,
+      pointsReward: game.points_reward || 10,
+    });
   };
 
   const handleInviteFriends = (item: any) => {
