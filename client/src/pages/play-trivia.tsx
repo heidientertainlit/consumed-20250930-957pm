@@ -24,7 +24,7 @@ export default function PlayTriviaPage() {
   const [selectedTriviaGame, setSelectedTriviaGame] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [shareModalGame, setShareModalGame] = useState<any>(null);
-  const [submissionResults, setSubmissionResults] = useState<Record<string, { correct: boolean; points: number }>>({});
+  const [submissionResults, setSubmissionResults] = useState<Record<string, { correct: boolean; points: number; stats?: Record<string, number>; userAnswer?: string }>>({});
   const [showCelebration, setShowCelebration] = useState<{ points: number } | null>(null);
   const [celebrationTimer, setCelebrationTimer] = useState<NodeJS.Timeout | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -195,7 +195,21 @@ export default function PlayTriviaPage() {
       const result = await submitPrediction.mutateAsync({ poolId: game.id, answer: option });
       const pointsEarned = result.points_earned || 0;
       const isCorrect = pointsEarned > 0;
-      setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned } }));
+
+      // Fetch percentage stats from all answers
+      let stats: Record<string, number> = {};
+      try {
+        const { createClient } = await import('@supabase/supabase-js');
+        const sb = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
+        const { data: allPreds } = await sb.from('user_predictions').select('prediction').eq('pool_id', game.id);
+        const total = allPreds?.length || 1;
+        for (const opt of (game.options || [])) {
+          const count = (allPreds || []).filter((p: any) => p.prediction === opt).length;
+          stats[opt] = Math.round((count / total) * 100);
+        }
+      } catch {}
+
+      setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned, stats, userAnswer: option } }));
       if (isCorrect && pointsEarned > 0) {
         setShowCelebration({ points: pointsEarned });
         const timer = setTimeout(() => setShowCelebration(null), 1800);
@@ -496,7 +510,7 @@ export default function PlayTriviaPage() {
                       className="flex overflow-x-auto snap-x snap-mandatory"
                       style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
-                      {(games as any[]).map((game: any) => (
+                      {(games as any[]).map((game: any, gameIdx: number) => (
                         <div key={game.id} className="flex-shrink-0 w-full snap-center">
                           {/* Media tag chip */}
                           {(game.tags?.[0] || game.media_title || game.description) && (
@@ -515,21 +529,71 @@ export default function PlayTriviaPage() {
                           {/* Answer state */}
                           {allPredictions[game.id] || submissionResults[game.id] ? (
                             <div className="flex flex-col gap-2">
-                              {submissionResults[game.id] ? (
-                                submissionResults[game.id].correct ? (
-                                  <div className="py-3 px-4 rounded-full bg-green-100 text-center">
-                                    <span className="text-sm font-medium text-green-800">Correct! +{submissionResults[game.id].points} pts</span>
-                                  </div>
-                                ) : (
-                                  <div className="py-3 px-4 rounded-full bg-gray-100 text-center">
-                                    <span className="text-sm font-medium text-gray-600">Answered</span>
-                                  </div>
-                                )
-                              ) : (
-                                <div className="py-3 px-4 rounded-full bg-gray-100 text-center">
-                                  <span className="text-sm font-medium text-gray-500">Already answered</span>
+                              {/* Result header */}
+                              {submissionResults[game.id] && (
+                                <div className={`py-2 px-4 rounded-full text-center mb-1 ${
+                                  submissionResults[game.id].correct
+                                    ? 'bg-green-100'
+                                    : 'bg-red-50'
+                                }`}>
+                                  <span className={`text-sm font-semibold ${
+                                    submissionResults[game.id].correct ? 'text-green-800' : 'text-red-700'
+                                  }`}>
+                                    {submissionResults[game.id].correct
+                                      ? `Correct! +${submissionResults[game.id].points} pts`
+                                      : `Incorrect — correct: ${game.correct_answer || game.correctAnswer}`}
+                                  </span>
                                 </div>
                               )}
+
+                              {/* Percentage bars */}
+                              {(() => {
+                                const result = submissionResults[game.id];
+                                const prevAnswer = allPredictions[game.id];
+                                const userAnswer = result?.userAnswer || prevAnswer?.prediction;
+                                const correctAnswer = game.correct_answer || game.correctAnswer;
+                                const stats = result?.stats;
+                                return (game.options || []).map((opt: string, oi: number) => {
+                                  const pct = stats ? (stats[opt] || 0) : 0;
+                                  const isCorrect = opt === correctAnswer;
+                                  const isUser = opt === userAnswer;
+                                  return (
+                                    <div key={oi} className="flex flex-col gap-1">
+                                      <div className="relative h-10 rounded-full overflow-hidden bg-gray-100">
+                                        <div
+                                          className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
+                                            isCorrect ? 'bg-green-200' : isUser ? 'bg-red-100' : 'bg-gray-200'
+                                          }`}
+                                          style={{ width: `${pct}%` }}
+                                        />
+                                        <div className="absolute inset-0 flex items-center justify-between px-4">
+                                          <span className={`text-sm font-medium ${
+                                            isCorrect ? 'text-green-800' : isUser ? 'text-red-700' : 'text-gray-700'
+                                          }`}>{opt}</span>
+                                          <span className="text-xs font-semibold text-gray-500">{pct}%</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                });
+                              })()}
+
+                              {/* Continue button */}
+                              <button
+                                onClick={() => {
+                                  if (gameIdx < (games as any[]).length - 1) {
+                                    scrollCategoryTo(category, gameIdx + 1, (games as any[]).length);
+                                  }
+                                }}
+                                className={`w-full mt-2 py-2.5 rounded-full font-semibold text-sm text-white transition-all ${
+                                  gameIdx < (games as any[]).length - 1
+                                    ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:opacity-90'
+                                    : 'bg-gray-300 text-gray-500 cursor-default'
+                                }`}
+                                disabled={gameIdx >= (games as any[]).length - 1}
+                              >
+                                {gameIdx < (games as any[]).length - 1 ? 'Continue' : 'All done!'}
+                              </button>
                             </div>
                           ) : game.isLongForm ? (
                             <Button
