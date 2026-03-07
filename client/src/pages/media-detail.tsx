@@ -932,10 +932,12 @@ export default function MediaDetail() {
               
               {/* Compact metadata chips */}
               <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 mb-3">
-                {avgRating && (
+                {((mediaItem.rating && mediaItem.rating !== '0') || avgRating) && (
                   <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-full">
                     <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                    <span className="font-medium">{avgRating}</span>
+                    <span className="font-medium">
+                      {(mediaItem.rating && mediaItem.rating !== '0') ? mediaItem.rating : avgRating}
+                    </span>
                     <span className="text-gray-500">avg</span>
                   </div>
                 )}
