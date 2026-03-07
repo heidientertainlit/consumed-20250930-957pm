@@ -4295,7 +4295,7 @@ export default function Feed() {
                           }}
                           className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center shadow-lg"
                         >
-                          <Plus size={18} className="text-white" strokeWidth={2.5} />
+                          <Plus className="w-4 h-4 text-white" />
                         </button>
                       </div>
                       <p className="text-[10px] text-white/60 truncate leading-tight">{item.title}</p>
