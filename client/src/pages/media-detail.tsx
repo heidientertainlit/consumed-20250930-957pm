@@ -919,7 +919,7 @@ export default function MediaDetail() {
             {/* Info column */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
-                <h1 className="text-xl md:text-2xl font-semibold text-gray-900 leading-tight mb-1">{mediaData.title}</h1>
+                <h1 className="text-lg md:text-xl font-medium text-gray-900 leading-tight mb-1">{mediaData.title}</h1>
                 <button
                   onClick={handleShare}
                   className="flex-shrink-0 p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
