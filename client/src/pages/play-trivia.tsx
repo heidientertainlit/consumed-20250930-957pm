@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Link, useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Brain, Star, Users, UserPlus, ChevronLeft, Search, ChevronDown, Trophy } from 'lucide-react';
+import { Brain, Star, Users, UserPlus, ChevronLeft, ChevronRight, Search, ChevronDown, Trophy } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { TriviaGameModal } from '@/components/trivia-game-modal';
@@ -32,6 +32,25 @@ export default function PlayTriviaPage() {
   const [triviaType, setTriviaType] = useState<'all' | 'challenges' | 'quick'>('all');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [expandedFilter, setExpandedFilter] = useState<'type' | 'topic' | 'genre' | null>(null);
+  const [categoryIndices, setCategoryIndices] = useState<Record<string, number>>({});
+  const categoryScrollRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const scrollCategoryTo = (category: string, index: number, total: number) => {
+    if (index < 0 || index >= total) return;
+    const container = categoryScrollRefs.current[category];
+    if (container) {
+      container.scrollTo({ left: index * container.clientWidth, behavior: 'smooth' });
+      setCategoryIndices(prev => ({ ...prev, [category]: index }));
+    }
+  };
+
+  const handleCategoryScroll = (category: string, total: number) => {
+    const container = categoryScrollRefs.current[category];
+    if (container) {
+      const newIndex = Math.round(container.scrollLeft / container.clientWidth);
+      setCategoryIndices(prev => ({ ...prev, [category]: Math.min(Math.max(newIndex, 0), total - 1) }));
+    }
+  };
 
   const genreFilters = [
     { id: 'True Crime', label: 'True Crime' },
@@ -77,43 +96,27 @@ export default function PlayTriviaPage() {
     setIsTrackModalOpen(true);
   };
 
-  // Fetch trivia games directly from Supabase - only trivia type
+  // Fetch trivia games directly from Supabase - always fetch all (including answered)
   const { data: games = [], isLoading } = useQuery({
-    queryKey: ['/api/predictions/trivia', selectedCategory, searchQuery, selectedGenre],
+    queryKey: ['/api/predictions/trivia'],
     queryFn: async () => {
       const { createClient } = await import('@supabase/supabase-js');
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-      const params = new URLSearchParams();
-      if (selectedCategory) params.set('category', selectedCategory);
-      if (searchQuery) params.set('search', searchQuery);
-      if (selectedGenre) params.set('genre', selectedGenre);
+      const { data: pools, error } = await supabase
+        .from('prediction_pools')
+        .select('*')
+        .eq('status', 'open')
+        .eq('type', 'trivia')
+        .order('created_at', { ascending: false });
 
-      const queryString = params.toString();
-      const { data, error } = await supabase.functions.invoke(
-        queryString ? `get-trivia?${queryString}` : 'get-trivia',
-        { method: 'GET' }
-      );
-
-      if (error) {
-        // Fallback to direct client fetch if function fails
-        const { data: pools, error: directError } = await supabase
-          .from('prediction_pools')
-          .select('*')
-          .eq('status', 'open')
-          .eq('type', 'trivia')
-          .order('created_at', { ascending: false });
-        
-        if (directError) throw new Error('Failed to fetch games');
-        return (pools || []).map((p: any) => ({
-          ...p,
-          isConsumed: p.id?.startsWith('consumed-trivia-') || p.origin_type === 'consumed'
-        }));
-      }
-
-      return data.trivia || [];
+      if (error) throw new Error('Failed to fetch trivia');
+      return (pools || []).map((p: any) => ({
+        ...p,
+        isConsumed: p.id?.startsWith('consumed-trivia-') || p.origin_type === 'consumed'
+      }));
     },
   });
 
@@ -427,120 +430,135 @@ export default function PlayTriviaPage() {
 
         {/* Trivia Games by Category */}
         {Object.keys(gamesByCategory).length > 0 ? (
-          <div className="space-y-8">
-            {Object.entries(gamesByCategory).map(([category, games]) => (
-              <div key={category} className="mb-6">
-                {/* Category Header */}
-                <div className="flex items-center gap-2 mb-4">
-                  <h2 className="text-base font-medium text-gray-900">{categoryInfo[category]?.label || category}</h2>
-                  <span className="text-sm text-gray-400">({games.length})</span>
-                </div>
-                
-                {/* Horizontal Scrolling Cards */}
-                <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                  {games.map((game: any) => (
-                    <div key={game.id} className="flex-shrink-0 w-[85vw] max-w-sm">
-                      <Card className="bg-white border border-gray-200 rounded-2xl p-4 pb-3 shadow-sm overflow-hidden">
-                        {/* Card Header */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
-                              <Brain className="w-3.5 h-3.5 text-white" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-semibold text-gray-900 line-clamp-1">{categoryInfo[category]?.label || category} Trivia</p>
-                              <p className="text-[10px] text-gray-500">One question trivia</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-500">{game.points || 10} pts</span>
-                            <button
-                              onClick={() => handleInviteFriends(game)}
-                              className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-                              data-testid={`invite-${game.id}`}
-                            >
-                              <Users className="w-3.5 h-3.5 text-gray-600" />
-                            </button>
-                          </div>
+          <div className="space-y-5">
+            {Object.entries(gamesByCategory).map(([category, games]) => {
+              const label = categoryInfo[category]?.label || category;
+              const currentIndex = categoryIndices[category] || 0;
+              
+              return (
+                <div key={category}>
+                  <Card className="bg-white border border-gray-200 rounded-2xl p-4 pb-3 shadow-sm overflow-hidden">
+                    {/* Card Header — same as TriviaCarousel feed style */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
+                          <Brain className="w-3.5 h-3.5 text-white" />
                         </div>
-
-                        {/* Media tag chip */}
-                        {(game.tags?.[0] || game.description) && (
-                          <div className="mb-2">
-                            <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200">
-                              <span className="text-[10px] text-purple-700 font-medium">{game.tags?.[0] || game.description}</span>
-                            </div>
-                          </div>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900">{label} Trivia</p>
+                          <p className="text-[10px] text-gray-500">One question trivia</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {currentIndex > 0 && (
+                          <button
+                            onClick={() => scrollCategoryTo(category, currentIndex - 1, games.length)}
+                            className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                          >
+                            <ChevronLeft className="w-4 h-4 text-gray-600" />
+                          </button>
                         )}
+                        {currentIndex < games.length - 1 && (
+                          <button
+                            onClick={() => scrollCategoryTo(category, currentIndex + 1, games.length)}
+                            className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                          >
+                            <ChevronRight className="w-4 h-4 text-gray-600" />
+                          </button>
+                        )}
+                        <span className="text-xs text-gray-500 ml-1">{currentIndex + 1}/{games.length}</span>
+                      </div>
+                    </div>
 
-                        {/* Question */}
-                        <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{game.title}</h3>
+                    {/* Questions snap-scroll container */}
+                    <div
+                      ref={el => { categoryScrollRefs.current[category] = el; }}
+                      onScroll={() => handleCategoryScroll(category, games.length)}
+                      className="flex overflow-x-auto snap-x snap-mandatory"
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                      {(games as any[]).map((game: any) => (
+                        <div key={game.id} className="flex-shrink-0 w-full snap-center">
+                          {/* Media tag chip */}
+                          {(game.tags?.[0] || game.media_title || game.description) && (
+                            <div className="mb-2">
+                              <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200">
+                                <span className="text-[10px] text-purple-700 font-medium">
+                                  {game.tags?.[0] || game.media_title || game.description}
+                                </span>
+                              </div>
+                            </div>
+                          )}
 
-                        {/* Answer state */}
-                        {allPredictions[game.id] || submissionResults[game.id] ? (
-                          <div className="flex flex-col gap-2">
-                            {submissionResults[game.id] ? (
-                              submissionResults[game.id].correct ? (
-                                <div className="py-3 px-4 rounded-full bg-green-100 text-center">
-                                  <span className="text-sm font-medium text-green-800">Correct! +{submissionResults[game.id].points} pts</span>
-                                </div>
+                          {/* Question */}
+                          <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{game.title}</h3>
+
+                          {/* Answer state */}
+                          {allPredictions[game.id] || submissionResults[game.id] ? (
+                            <div className="flex flex-col gap-2">
+                              {submissionResults[game.id] ? (
+                                submissionResults[game.id].correct ? (
+                                  <div className="py-3 px-4 rounded-full bg-green-100 text-center">
+                                    <span className="text-sm font-medium text-green-800">Correct! +{submissionResults[game.id].points} pts</span>
+                                  </div>
+                                ) : (
+                                  <div className="py-3 px-4 rounded-full bg-gray-100 text-center">
+                                    <span className="text-sm font-medium text-gray-600">Answered</span>
+                                  </div>
+                                )
                               ) : (
                                 <div className="py-3 px-4 rounded-full bg-gray-100 text-center">
-                                  <span className="text-sm font-medium text-gray-600">Answered — keep going!</span>
+                                  <span className="text-sm font-medium text-gray-500">Already answered</span>
                                 </div>
-                              )
-                            ) : (
-                              <div className="py-3 px-4 rounded-full bg-gray-100 text-center">
-                                <span className="text-sm font-medium text-gray-500">Already answered</span>
-                              </div>
-                            )}
-                          </div>
-                        ) : game.isLongForm ? (
-                          <Button
-                            onClick={() => setSelectedTriviaGame(game)}
-                            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-3 text-sm"
-                            data-testid={`play-${game.id}`}
-                          >
-                            <Brain size={14} className="mr-2" />
-                            Play Challenge
-                          </Button>
-                        ) : (
-                          <div className="flex flex-col gap-2">
-                            {(game.options || []).map((option: string, index: number) => (
-                              <button
-                                key={`${game.id}-${index}`}
-                                onClick={() => handleTapAndSubmit(game, option)}
-                                disabled={submitPrediction.isPending}
-                                className={`py-3 px-4 rounded-full text-sm font-medium transition-all text-left ${
-                                  selectedAnswers[game.id] === option
-                                    ? 'bg-purple-600 text-white shadow-md'
-                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                }`}
-                                data-testid={`option-${game.id}-${index}`}
-                              >
-                                {option}
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                              )}
+                            </div>
+                          ) : game.isLongForm ? (
+                            <Button
+                              onClick={() => setSelectedTriviaGame(game)}
+                              className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-full py-3 text-sm"
+                              data-testid={`play-${game.id}`}
+                            >
+                              <Brain size={14} className="mr-2" />
+                              Play Challenge
+                            </Button>
+                          ) : (
+                            <div className="flex flex-col gap-2">
+                              {(game.options || []).map((option: string, index: number) => (
+                                <button
+                                  key={`${game.id}-${index}`}
+                                  onClick={() => handleTapAndSubmit(game, option)}
+                                  disabled={submitPrediction.isPending}
+                                  className={`py-3 px-4 rounded-full text-sm font-medium transition-all text-left ${
+                                    selectedAnswers[game.id] === option
+                                      ? 'bg-purple-600 text-white shadow-md'
+                                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                  }`}
+                                  data-testid={`option-${game.id}-${index}`}
+                                >
+                                  {option}
+                                </button>
+                              ))}
+                            </div>
+                          )}
 
-                        {/* Footer */}
-                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
-                          <button
-                            onClick={() => handleInviteFriends(game)}
-                            className="flex items-center gap-1.5 text-purple-600 text-xs font-medium"
-                          >
-                            <Users className="w-3.5 h-3.5" />
-                            Challenge a friend
-                          </button>
-                          <span className="text-green-600 text-xs font-medium">+{game.points || 10} pts</span>
+                          {/* Footer */}
+                          <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                            <button
+                              onClick={() => handleInviteFriends(game)}
+                              className="flex items-center gap-1.5 text-purple-600 text-xs font-medium"
+                            >
+                              <Users className="w-3.5 h-3.5" />
+                              Challenge a friend
+                            </button>
+                            <span className="text-green-600 text-xs font-medium">+{game.points || 10} pts</span>
+                          </div>
                         </div>
-                      </Card>
+                      ))}
                     </div>
-                  ))}
+                  </Card>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : lowStakesGames.length > 0 && (
           <div className="mb-8">
