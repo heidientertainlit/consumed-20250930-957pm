@@ -453,7 +453,7 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
                     }`}
                   />
                 </Link>
-                <div className="absolute top-1.5 right-1.5 flex flex-col gap-1.5">
+                <div className="absolute bottom-1.5 right-1.5 flex flex-col gap-1.5">
                   <button 
                     onClick={(e) => {
                       e.preventDefault();

@@ -4293,7 +4293,7 @@ export default function Feed() {
                             });
                             setIsQuickAddOpen(true);
                           }}
-                          className="absolute bottom-1 left-1 w-8 h-8 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center shadow-lg"
+                          className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center shadow-lg"
                         >
                           <Plus size={18} className="text-white" strokeWidth={2.5} />
                         </button>
