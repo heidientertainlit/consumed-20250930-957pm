@@ -6253,6 +6253,27 @@ export default function Feed() {
                           <MessageCircle size={18} />
                           <span className="text-sm">{post.comments}</span>
                         </button>
+                        {/* Add to library - only for posts with media */}
+                        {post.mediaItems && post.mediaItems.length > 0 && (
+                          <button
+                            onClick={() => {
+                              const media = post.mediaItems[0];
+                              setQuickAddMedia({
+                                title: media.title,
+                                mediaType: media.mediaType || 'movie',
+                                externalId: media.externalId,
+                                externalSource: media.externalSource || 'tmdb',
+                                imageUrl: media.imageUrl || '',
+                              });
+                              setIsQuickAddOpen(true);
+                            }}
+                            className="flex items-center space-x-1 text-gray-500 hover:text-purple-500 transition-colors"
+                            data-testid={`button-add-to-library-${post.id}`}
+                            title="Add to library"
+                          >
+                            <Plus size={18} />
+                          </button>
+                        )}
                         {/* Star rating for posts with media */}
                         {post.mediaItems && post.mediaItems.length > 0 && !activeInlineRating && (
                           <button 
