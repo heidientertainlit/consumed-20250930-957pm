@@ -1126,7 +1126,6 @@ export default function MediaDetail() {
           {/* Say something - opens unified composer modal */}
           {session && (
           <div ref={composeSectionRef} className="mt-4 pt-4 border-t border-gray-100">
-            <h3 className="text-base font-bold text-gray-900 mb-3">Say something</h3>
             <button
               onClick={() => {
                 setQuickAddMedia({
@@ -1161,7 +1160,7 @@ export default function MediaDetail() {
             >
               <span className="text-base font-semibold text-gray-900 flex items-center gap-2">
                 <Star className="w-4 h-4 text-yellow-500" />
-                Reviews & Ratings {reviews.length > 0 && `(${reviews.length})`}
+                Reactions {reviews.length > 0 && `(${reviews.length})`}
               </span>
               <ChevronDown 
                 size={18} 
