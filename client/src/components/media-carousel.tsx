@@ -420,18 +420,18 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
                 setShowListMenu(!showListMenu);
               }
             }}
-            className={`h-6 w-6 rounded-full backdrop-blur-sm shadow-md flex items-center justify-center transition-all duration-300 ${
+            className={`h-9 w-9 rounded-full backdrop-blur-sm shadow-lg flex items-center justify-center transition-all duration-300 ${
               showAddSuccess 
                 ? 'bg-green-500 text-white scale-110' 
-                : 'bg-black/80 hover:bg-black text-white'
+                : 'bg-black/70 hover:bg-black text-white'
             }`}
             data-testid={`add-to-list-${item.id}`}
             disabled={addToListMutation.isPending || showAddSuccess}
           >
             {showAddSuccess ? (
-              <Check className="h-3 w-3" />
+              <Check className="h-5 w-5" />
             ) : (
-              <Plus className="h-3 w-3" />
+              <Plus className="h-5 w-5" />
             )}
           </button>
           
