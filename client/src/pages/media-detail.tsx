@@ -43,6 +43,7 @@ export default function MediaDetail() {
   const [replyContent, setReplyContent] = useState("");
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
+  const [quickAddPostType, setQuickAddPostType] = useState<"react" | "predict">("react");
   const [expandedComments, setExpandedComments] = useState<Record<string, any[]>>({});
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
   const [composeType, setComposeType] = useState<'react' | 'predict'>('react');
@@ -1096,32 +1097,83 @@ export default function MediaDetail() {
           )}
 
 
-          {/* Your Take */}
+          {/* Your Reaction */}
           {session && (
           <div ref={composeSectionRef} className="mt-4 pt-4 border-t border-gray-100">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Your Take</p>
-            <button
-              onClick={() => {
-                setQuickAddMedia({
-                  title: mediaItem?.title || mediaData.title,
-                  mediaType: (() => {
-                    const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
-                    if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
-                    if (raw.includes('podcast')) return 'podcast';
-                    if (raw === 'movie') return 'movie';
-                    return raw;
-                  })(),
-                  imageUrl: resolvedImageUrl || mediaData.artwork,
-                  externalId: params?.id,
-                  externalSource: params?.source,
-                });
-                setIsQuickAddOpen(true);
-              }}
-              className="w-full text-left bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-400 hover:bg-gray-100 active:bg-gray-100 transition-colors"
-              data-testid="button-say-something"
-            >
-              React or predict...
-            </button>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Your Reaction</p>
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden">
+              <button
+                onClick={() => {
+                  setQuickAddPostType("react");
+                  setQuickAddMedia({
+                    title: mediaItem?.title || mediaData.title,
+                    mediaType: (() => {
+                      const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
+                      if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
+                      if (raw.includes('podcast')) return 'podcast';
+                      if (raw === 'movie') return 'movie';
+                      return raw;
+                    })(),
+                    imageUrl: resolvedImageUrl || mediaData.artwork,
+                    externalId: params?.id,
+                    externalSource: params?.source,
+                  });
+                  setIsQuickAddOpen(true);
+                }}
+                className="w-full text-left px-4 pt-3 pb-2 text-sm text-gray-400"
+                data-testid="button-say-something"
+              >
+                What's your take on this?
+              </button>
+              <div className="flex items-center gap-2 px-3 pb-3 pt-1 border-t border-gray-100">
+                <button
+                  onClick={() => {
+                    setQuickAddPostType("react");
+                    setQuickAddMedia({
+                      title: mediaItem?.title || mediaData.title,
+                      mediaType: (() => {
+                        const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
+                        if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
+                        if (raw.includes('podcast')) return 'podcast';
+                        if (raw === 'movie') return 'movie';
+                        return raw;
+                      })(),
+                      imageUrl: resolvedImageUrl || mediaData.artwork,
+                      externalId: params?.id,
+                      externalSource: params?.source,
+                    });
+                    setIsQuickAddOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-600 text-white text-xs font-medium hover:bg-purple-700 transition-colors"
+                >
+                  <MessageCircle size={12} />
+                  Reaction
+                </button>
+                <button
+                  onClick={() => {
+                    setQuickAddPostType("predict");
+                    setQuickAddMedia({
+                      title: mediaItem?.title || mediaData.title,
+                      mediaType: (() => {
+                        const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
+                        if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
+                        if (raw.includes('podcast')) return 'podcast';
+                        if (raw === 'movie') return 'movie';
+                        return raw;
+                      })(),
+                      imageUrl: resolvedImageUrl || mediaData.artwork,
+                      externalId: params?.id,
+                      externalSource: params?.source,
+                    });
+                    setIsQuickAddOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-purple-300 text-purple-600 text-xs font-medium hover:bg-purple-50 transition-colors"
+                >
+                  <Target size={12} />
+                  Prediction
+                </button>
+              </div>
+            </div>
           </div>
           )}
 
@@ -1557,8 +1609,10 @@ export default function MediaDetail() {
         onClose={() => {
           setIsQuickAddOpen(false);
           setQuickAddMedia(null);
+          setQuickAddPostType("react");
         }}
         preSelectedMedia={quickAddMedia}
+        initialPostType={quickAddPostType}
       />
       
     </div>

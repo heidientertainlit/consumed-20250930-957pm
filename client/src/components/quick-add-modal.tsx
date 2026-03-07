@@ -57,12 +57,13 @@ interface QuickAddModalProps {
   onClose: () => void;
   preSelectedMedia?: PreSelectedMedia | null;
   defaultListId?: string;
+  initialPostType?: "react" | "predict" | "rank";
 }
 
 type Stage = "search" | "composer";
 type PostType = "react" | "predict" | "rank";
 
-export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId }: QuickAddModalProps) {
+export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId, initialPostType }: QuickAddModalProps) {
   const { user, session } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -222,8 +223,11 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
         });
         setStage("composer");
       }
+      if (initialPostType) {
+        setPostType(initialPostType);
+      }
     }
-  }, [isOpen, preSelectedMedia, defaultListId]);
+  }, [isOpen, preSelectedMedia, defaultListId, initialPostType]);
 
   const resetModal = () => {
     setStage("search");
