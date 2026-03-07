@@ -79,14 +79,6 @@ export default function PlayTriviaPage() {
     { id: 'Pop Culture', label: 'Pop Culture', icon: '⭐' },
   ];
 
-  // Cleanup celebration timer on unmount
-  React.useEffect(() => {
-    return () => {
-      if (celebrationTimer) {
-        clearTimeout(celebrationTimer);
-      }
-    };
-  }, [celebrationTimer]);
 
   // Extract game ID from URL hash if present (format: /play/trivia#game-id)
   const gameIdFromUrl = window.location.hash.replace('#', '');
