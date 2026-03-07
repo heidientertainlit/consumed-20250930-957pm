@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Brain, Star, Users, UserPlus, ChevronLeft, ChevronRight, Search, ChevronDown, Trophy } from 'lucide-react';
+import { Brain, Star, Users, UserPlus, ChevronLeft, ChevronRight, Search, ChevronDown, Trophy, CheckCircle, XCircle } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { TriviaGameModal } from '@/components/trivia-game-modal';
@@ -184,8 +184,9 @@ export default function PlayTriviaPage() {
     setSelectedAnswers(prev => ({ ...prev, [game.id]: option }));
     try {
       const result = await submitPrediction.mutateAsync({ poolId: game.id, answer: option });
-      const pointsEarned = result.points_earned || 0;
-      const isCorrect = pointsEarned > 0;
+      const correctAnswer = game.correct_answer || game.correctAnswer;
+      const isCorrect = correctAnswer ? option === correctAnswer : (result.points_earned || 0) > 0;
+      const pointsEarned = result.points_earned || (isCorrect ? (game.points_reward || 10) : 0);
 
       // Fetch percentage stats from all answers
       let stats: Record<string, number> = {};
@@ -201,7 +202,7 @@ export default function PlayTriviaPage() {
       } catch {}
 
       setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned, stats, userAnswer: option } }));
-      if (isCorrect && pointsEarned > 0) {
+      if (isCorrect) {
         setCelebratingItems(prev => ({ ...prev, [game.id]: pointsEarned }));
         setTimeout(() => {
           setCelebratingItems(prev => { const next = { ...prev }; delete next[game.id]; return next; });
@@ -531,6 +532,43 @@ export default function PlayTriviaPage() {
                             </div>
                           ) : allPredictions[game.id] || submissionResults[game.id] ? (
                             <div className="flex flex-col gap-2">
+
+                              {/* Prominent result header */}
+                              {(() => {
+                                const result = submissionResults[game.id];
+                                const prevAnswer = allPredictions[game.id];
+                                const userAnswer = result?.userAnswer || prevAnswer?.prediction;
+                                const correctAnswer = game.correct_answer || game.correctAnswer;
+                                const gotItRight = result ? result.correct : (userAnswer && userAnswer === correctAnswer);
+                                if (result) {
+                                  return (
+                                    <div className={`py-3 px-4 rounded-xl flex items-center gap-3 mb-1 ${
+                                      gotItRight ? 'bg-green-100 border border-green-300' : 'bg-red-50 border border-red-200'
+                                    }`}>
+                                      {gotItRight
+                                        ? <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                                        : <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />}
+                                      <div className="flex-1 min-w-0">
+                                        <div className={`text-sm font-bold ${gotItRight ? 'text-green-800' : 'text-red-700'}`}>
+                                          {gotItRight ? 'Correct!' : 'Incorrect'}
+                                        </div>
+                                        {!gotItRight && correctAnswer && (
+                                          <div className="text-xs text-gray-500">Correct: {correctAnswer}</div>
+                                        )}
+                                      </div>
+                                      {gotItRight && result.points > 0 && (
+                                        <span className="text-base font-bold text-purple-700">+{result.points} pts</span>
+                                      )}
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <div className="py-2.5 px-4 rounded-xl flex items-center gap-2 mb-1 bg-gray-100 border border-gray-200">
+                                    <CheckCircle className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                                    <span className="text-sm font-semibold text-gray-500">Already completed</span>
+                                  </div>
+                                );
+                              })()}
 
                               {/* Percentage bars */}
                               {(() => {
