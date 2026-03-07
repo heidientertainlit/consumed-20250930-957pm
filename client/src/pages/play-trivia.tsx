@@ -520,112 +520,101 @@ export default function PlayTriviaPage() {
                           <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{game.title}</h3>
 
                           {/* Answer state */}
-                          {celebratingItems[game.id] !== undefined ? (
-                            <div className="flex flex-col items-center gap-3 py-4 animate-in zoom-in-95 duration-200">
-                              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center shadow-md">
-                                <CheckCircle className="w-6 h-6 text-white" />
-                              </div>
-                              <p className="text-base font-bold text-gray-900">Correct!</p>
-                              <div className="bg-purple-50 rounded-xl px-4 py-2 border border-purple-100">
-                                <span className="text-xl font-bold text-purple-700">+{celebratingItems[game.id]} pts</span>
-                              </div>
-                            </div>
-                          ) : allPredictions[game.id] || submissionResults[game.id] ? (
-                            <div className="flex flex-col gap-2">
-
-                              {/* Prominent result header */}
-                              {(() => {
-                                const result = submissionResults[game.id];
-                                const prevAnswer = allPredictions[game.id];
-                                const userAnswer = result?.userAnswer || prevAnswer?.prediction;
-                                const correctAnswer = game.correct_answer || game.correctAnswer;
-                                const gotItRight = result ? result.correct : (userAnswer && userAnswer === correctAnswer);
-                                if (result) {
-                                  return (
-                                    <div className={`py-3 px-4 rounded-xl flex items-center gap-3 mb-1 ${
-                                      gotItRight ? 'bg-green-100 border border-green-300' : 'bg-red-50 border border-red-200'
-                                    }`}>
-                                      {gotItRight
-                                        ? <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                                        : <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />}
-                                      <div className="flex-1 min-w-0">
-                                        <div className={`text-sm font-bold ${gotItRight ? 'text-green-800' : 'text-red-700'}`}>
-                                          {gotItRight ? 'Correct!' : 'Incorrect'}
+                          {allPredictions[game.id] || submissionResults[game.id] || celebratingItems[game.id] !== undefined ? (
+                            (() => {
+                              const result = submissionResults[game.id];
+                              const prevAnswer = allPredictions[game.id];
+                              const userAnswer = result?.userAnswer || prevAnswer?.prediction;
+                              const correctAnswer = game.correct_answer || game.correctAnswer;
+                              const gotItRight = result ? result.correct : (userAnswer && userAnswer === correctAnswer);
+                              const stats = result?.stats;
+                              return (
+                                <div className="relative">
+                                  <div className="flex flex-col gap-2">
+                                    {/* Incorrect / already-played header */}
+                                    {result && !gotItRight && (
+                                      <div className="py-2.5 px-4 rounded-xl flex items-center gap-2 bg-red-50 border border-red-200">
+                                        <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                        <div className="flex-1 min-w-0">
+                                          <span className="text-sm font-bold text-red-700">Incorrect</span>
+                                          {correctAnswer && (
+                                            <span className="text-xs text-gray-500 ml-2">Correct: {correctAnswer}</span>
+                                          )}
                                         </div>
-                                        {!gotItRight && correctAnswer && (
-                                          <div className="text-xs text-gray-500">Correct: {correctAnswer}</div>
-                                        )}
                                       </div>
-                                      {gotItRight && result.points > 0 && (
-                                        <span className="text-base font-bold text-purple-700">+{result.points} pts</span>
-                                      )}
-                                    </div>
-                                  );
-                                }
-                                return (
-                                  <div className="py-2.5 px-4 rounded-xl flex items-center gap-2 mb-1 bg-gray-100 border border-gray-200">
-                                    <CheckCircle className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                                    <span className="text-sm font-semibold text-gray-500">Already completed</span>
-                                  </div>
-                                );
-                              })()}
+                                    )}
+                                    {!result && prevAnswer && (
+                                      <div className="py-2 px-4 rounded-xl flex items-center gap-2 bg-gray-100 border border-gray-200">
+                                        <CheckCircle className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                                        <span className="text-sm font-semibold text-gray-500">Already completed</span>
+                                      </div>
+                                    )}
 
-                              {/* Percentage bars */}
-                              {(() => {
-                                const result = submissionResults[game.id];
-                                const prevAnswer = allPredictions[game.id];
-                                const userAnswer = result?.userAnswer || prevAnswer?.prediction;
-                                const correctAnswer = game.correct_answer || game.correctAnswer;
-                                const stats = result?.stats;
-                                return (game.options || []).map((opt: string, oi: number) => {
-                                  const pct = stats ? (stats[opt] || 0) : 0;
-                                  const isCorrect = opt === correctAnswer;
-                                  const isUser = opt === userAnswer;
-                                  return (
-                                    <div key={oi} className="flex flex-col gap-1">
-                                      <div className="relative h-10 rounded-full overflow-hidden bg-gray-100">
+                                    {/* Percentage bars */}
+                                    {(game.options || []).map((opt: string, oi: number) => {
+                                      const pct = stats ? (stats[opt] || 0) : 0;
+                                      const isCorrect = opt === correctAnswer;
+                                      const isUser = opt === userAnswer;
+                                      return (
                                         <div
-                                          className={`absolute inset-y-0 left-0 rounded-full transition-all duration-500 ${
-                                            isCorrect ? 'bg-green-200' : isUser ? 'bg-red-100' : 'bg-gray-200'
+                                          key={oi}
+                                          className={`relative py-3 px-4 rounded-full overflow-hidden transition-all ${
+                                            isCorrect ? 'bg-green-100' : isUser ? 'bg-red-100' : 'bg-gray-100'
                                           }`}
-                                          style={{ width: `${pct}%` }}
-                                        />
-                                        <div className="absolute inset-0 flex items-center justify-between px-4">
-                                          <div className="flex items-center gap-2">
-                                            <span className={`text-sm font-medium ${
-                                              isCorrect ? 'text-green-800' : isUser ? 'text-red-700' : 'text-gray-700'
-                                            }`}>{opt}</span>
-                                            {isUser && (
-                                              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                                                isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
-                                              }`}>You</span>
-                                            )}
+                                        >
+                                          <div
+                                            className={`absolute inset-0 transition-all duration-1000 ease-out ${
+                                              isCorrect ? 'bg-green-200/60' : 'bg-gray-200/40'
+                                            }`}
+                                            style={{ width: `${pct}%` }}
+                                          />
+                                          <div className="relative flex justify-between items-center">
+                                            <div className="flex items-center gap-2">
+                                              {isCorrect && <CheckCircle className="w-4 h-4 text-green-600" />}
+                                              {isUser && !isCorrect && <XCircle className="w-4 h-4 text-red-500" />}
+                                              <span className={`text-sm font-medium ${
+                                                isCorrect ? 'text-green-800' : isUser ? 'text-red-800' : 'text-gray-800'
+                                              }`}>{opt}</span>
+                                              {isUser && (
+                                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                                  isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+                                                }`}>You</span>
+                                              )}
+                                            </div>
+                                            <span className="text-xs font-medium text-gray-600">{pct}%</span>
                                           </div>
-                                          <span className="text-xs font-semibold text-gray-500">{pct}%</span>
                                         </div>
-                                      </div>
-                                    </div>
-                                  );
-                                });
-                              })()}
+                                      );
+                                    })}
 
-                              {/* Continue button */}
-                              <button
-                                onClick={() => {
-                                  if (gameIdx < (games as any[]).length - 1) {
-                                    scrollCategoryTo(category, gameIdx + 1, (games as any[]).length);
-                                  }
-                                }}
-                                className={`w-full mt-2 py-2.5 rounded-full font-semibold text-sm text-white transition-all ${
-                                  gameIdx < (games as any[]).length - 1
-                                    ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:opacity-90'
-                                    : 'bg-gray-300 text-gray-500 cursor-default'
-                                }`}
-                                disabled={gameIdx >= (games as any[]).length - 1}
-                              >
-                                {gameIdx < (games as any[]).length - 1 ? 'Next question' : 'All done!'}
-                              </button>
-                            </div>
+                                    {/* Continue button */}
+                                    <button
+                                      onClick={() => {
+                                        if (gameIdx < (games as any[]).length - 1) {
+                                          scrollCategoryTo(category, gameIdx + 1, (games as any[]).length);
+                                        }
+                                      }}
+                                      className="w-full mt-2 py-2.5 rounded-xl font-semibold text-sm text-white transition-all bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:opacity-90"
+                                    >
+                                      {gameIdx < (games as any[]).length - 1 ? 'Next question' : 'All done!'}
+                                    </button>
+                                  </div>
+
+                                  {/* Celebration overlay — dims bars, shows Correct! + pts */}
+                                  <div className={`absolute inset-0 rounded-xl flex flex-col items-center justify-center gap-3 transition-opacity duration-300 bg-black/60 ${
+                                    celebratingItems[game.id] !== undefined ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                                  }`}>
+                                    <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center shadow-lg">
+                                      <CheckCircle className="w-7 h-7 text-white" />
+                                    </div>
+                                    <p className="text-xl font-bold text-white">Correct!</p>
+                                    <div className="bg-white/20 rounded-xl px-5 py-2.5 border border-white/30">
+                                      <span className="text-2xl font-bold text-white">+{celebratingItems[game.id] ?? 0} pts</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })()
                           ) : game.isLongForm ? (
                             <Button
                               onClick={() => setSelectedTriviaGame(game)}
