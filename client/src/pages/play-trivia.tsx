@@ -6,8 +6,7 @@ import { Link, useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Brain, Star, Users, UserPlus, ChevronLeft, ChevronRight, Search, ChevronDown, Trophy, CheckCircle, XCircle } from 'lucide-react';
+import { Brain, Star, Users, UserPlus, ChevronLeft, ChevronRight, ChevronDown, Trophy, CheckCircle, XCircle } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { TriviaGameModal } from '@/components/trivia-game-modal';
@@ -29,7 +28,6 @@ export default function PlayTriviaPage() {
   const [shareModalGame, setShareModalGame] = useState<any>(null);
   const [submissionResults, setSubmissionResults] = useState<Record<string, { correct: boolean; points: number; stats?: Record<string, number>; userAnswer?: string }>>({});
   const [celebratingItems, setCelebratingItems] = useState<Record<string, number>>({});
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [triviaType, setTriviaType] = useState<'all' | 'challenges' | 'quick'>('all');
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
@@ -240,20 +238,6 @@ export default function PlayTriviaPage() {
   const triviaGames = useMemo(() => {
     let filtered = processedGames.filter((game: any) => game.type === 'trivia');
     
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((game: any) => {
-        const titleMatch = game.title?.toLowerCase().includes(query);
-        const descMatch = game.description?.toLowerCase().includes(query);
-        // Also search in questions if available
-        const questionsMatch = Array.isArray(game.options) && game.options.some((opt: any) => 
-          typeof opt === 'object' && opt.question?.toLowerCase().includes(query)
-        );
-        return titleMatch || descMatch || questionsMatch;
-      });
-    }
-    
     // Apply category filter
     if (selectedCategory && selectedCategory !== 'all') {
       filtered = filtered.filter((game: any) => game.category === selectedCategory);
@@ -281,7 +265,7 @@ export default function PlayTriviaPage() {
     }
     
     return filtered;
-  }, [processedGames, searchQuery, selectedCategory, triviaType, selectedGenre]);
+  }, [processedGames, selectedCategory, triviaType, selectedGenre]);
   
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
@@ -359,7 +343,7 @@ export default function PlayTriviaPage() {
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
       {/* Header Section with Gradient */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-4 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
           <div className="flex items-center gap-3 mb-4">
             <button
@@ -371,52 +355,36 @@ export default function PlayTriviaPage() {
             <h1 className="text-2xl font-semibold text-white" data-testid="trivia-title">Trivia</h1>
           </div>
 
-            {/* Search Row */}
-            <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-              <Input
-                type="text"
-                placeholder="Search trivia..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-gray-400"
-                data-testid="trivia-search-input"
-              />
-            </div>
-
-        </div>
-      </div>
-
-      {/* Pill category filters — scrollable row in the light section */}
-      {gamesByCategory.length > 0 && (
-        <div className="bg-gray-50 px-4 pt-4 pb-2">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                !selectedCategory
-                  ? 'bg-purple-700 text-white'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:border-purple-300'
-              }`}
-            >
-              All
-            </button>
-            {gamesByCategory.map(([cat]) => (
+          {/* Pill category filters inside gradient */}
+          {gamesByCategory.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1" style={{ scrollbarWidth: 'none' }}>
               <button
-                key={cat}
-                onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                onClick={() => setSelectedCategory(null)}
                 className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  selectedCategory === cat
-                    ? 'bg-purple-700 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-purple-300'
+                  !selectedCategory
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white/10 border border-white/20 text-gray-300 hover:bg-white/20'
                 }`}
               >
-                {categoryInfo[cat]?.label || cat}
+                All
               </button>
-            ))}
-          </div>
+              {gamesByCategory.map(([cat]) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-white/10 border border-white/20 text-gray-300 hover:bg-white/20'
+                  }`}
+                >
+                  {categoryInfo[cat]?.label || cat}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       <div className="max-w-4xl mx-auto px-4 py-4">
 
@@ -860,17 +828,17 @@ export default function PlayTriviaPage() {
           <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
             <Brain className="mx-auto mb-4 text-gray-400" size={48} />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchQuery || selectedCategory || triviaType !== 'all' ? 'No matching trivia found' : 'No trivia games available'}
+              {selectedCategory || triviaType !== 'all' ? 'No matching trivia found' : 'No trivia games available'}
             </h3>
             <p className="text-gray-600">
-              {searchQuery || selectedCategory || triviaType !== 'all'
-                ? 'Try a different search term or filter' 
+              {selectedCategory || triviaType !== 'all'
+                ? 'Try a different filter' 
                 : 'Check back soon for new trivia!'}
             </p>
-            {(searchQuery || selectedCategory || triviaType !== 'all') && (
+            {(selectedCategory || triviaType !== 'all') && (
               <Button
                 variant="outline"
-                onClick={() => { setSearchQuery(''); setSelectedCategory(null); setTriviaType('all'); }}
+                onClick={() => { setSelectedCategory(null); setTriviaType('all'); }}
                 className="mt-4"
                 data-testid="clear-filters"
               >
