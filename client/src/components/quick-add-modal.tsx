@@ -60,7 +60,7 @@ interface QuickAddModalProps {
 }
 
 type Stage = "search" | "composer";
-type PostType = "thought" | "review" | "prediction" | "rank";
+type PostType = "react" | "predict" | "rank";
 
 export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId }: QuickAddModalProps) {
   const { user, session } = useAuth();
@@ -114,7 +114,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
   const [musicFormat, setMusicFormat] = useState<"album" | "single" | "track">("album");
   
   // Post type for composer
-  const [postType, setPostType] = useState<PostType>("thought");
+  const [postType, setPostType] = useState<PostType>("react");
   
   const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
 
@@ -246,7 +246,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
     setTvSeason("");
     setTvEpisode("");
     setMusicFormat("album");
-    setPostType("thought");
+    setPostType("react");
     setPredictionOptions(["", ""]);
   };
   
@@ -315,7 +315,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
     setTvSeason("");
     setTvEpisode("");
     setMusicFormat("album");
-    setPostType("thought");
+    setPostType("react");
     setPredictionOptions(["", ""]);
   };
   
@@ -347,7 +347,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
       return;
     }
     
-    if (postType === 'prediction') {
+    if (postType === 'predict') {
       const validOptions = predictionOptions.filter(o => o.trim());
       if (validOptions.length < 2) {
         toast({
@@ -396,14 +396,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
       console.log('🎯 Composer: Posting', { postType, hasMedia: !!selectedMedia, mediaData, reviewText: reviewText.substring(0, 50) });
       
       // Handle based on post type
-      if (postType === 'thought' || postType === 'review') {
-        const typeMap: Record<string, string> = {
-          'thought': 'thought',
-          'review': 'rate-review',
-        };
-        
+      if (postType === 'react') {
         // If rating is provided, let rate-media handle the social post (it stores ratings properly)
-        // Otherwise use inline-post for thoughts/hot takes
+        // Otherwise use inline-post for reactions
         if (selectedMedia && rating > 0) {
           await addRating(supabaseUrl, session.access_token, selectedMedia, externalId!, externalSource!, reviewText.trim(), containsSpoilers, privateMode);
         } else if (!privateMode) {
@@ -417,7 +412,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               },
               body: JSON.stringify({
                 content: reviewText.trim(),
-                type: typeMap[postType],
+                type: 'thought',
                 ...(selectedMedia && {
                   media_title: selectedMedia.title,
                   media_type: selectedMedia.type,
@@ -441,7 +436,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
           await trackMediaToList(supabaseUrl, session.access_token, mediaData, selectedListId, privateMode, rewatchCount, dnfReason);
         }
         
-      } else if (postType === 'prediction') {
+      } else if (postType === 'predict') {
         const validOptions = predictionOptions.filter(o => o.trim());
         
         const response = await fetch(
@@ -1005,9 +1000,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               {!defaultListId && (
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { id: 'thought', label: 'Thought' },
-                    { id: 'review', label: 'Review' },
-                    { id: 'prediction', label: 'Prediction' },
+                    { id: 'react', label: 'React' },
+                    { id: 'predict', label: 'Predict' },
                   ].map((type) => (
                     <button
                       key={type.id}
@@ -1036,10 +1030,10 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               )}
 
               {/* Dynamic content based on post type */}
-              {postType === 'thought' && (
+              {postType === 'react' && (
                 <>
                   <Textarea
-                    placeholder={defaultListId ? "Add a review (optional)..." : "What's on your mind?"}
+                    placeholder={defaultListId ? "Add a reaction (optional)..." : "What's your reaction?"}
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
                     onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
@@ -1050,21 +1044,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                 </>
               )}
 
-
-              {postType === 'review' && (
-                <>
-                  <Textarea
-                    placeholder="Write your review..."
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
-                    className="bg-white border-gray-200 resize-none min-h-[80px]"
-                    rows={3}
-                  />
-                </>
-              )}
-
-              {postType === 'prediction' && (
+              {postType === 'predict' && (
                 <>
                   <Textarea
                     placeholder="What do you predict?"
@@ -1119,7 +1099,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               )}
 
               {/* Show rating and list options when media is attached or in add-to-list mode */}
-              {(defaultListId || (selectedMedia && (postType === 'thought' || postType === 'review'))) && (
+              {(defaultListId || (selectedMedia && postType === 'react')) && (
                 <>
                   {/* Rating */}
                   <div className="flex items-center gap-2">
@@ -1192,18 +1172,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                 <div className="space-y-3 pt-2 border-t border-gray-100">
                   {/* Checkboxes row - above season/episode so dropdown doesn't overlap */}
                   <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="repeat-checkbox"
-                        checked={rewatchCount > 1}
-                        onCheckedChange={(checked) => setRewatchCount(checked ? 2 : 1)}
-                        data-testid="checkbox-repeat"
-                      />
-                      <label htmlFor="repeat-checkbox" className="text-sm text-gray-600">
-                        Repeat?
-                      </label>
-                    </div>
-                    
                     <div className="flex items-center gap-2">
                       <Checkbox
                         id="spoilers-checkbox"

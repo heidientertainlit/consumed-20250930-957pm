@@ -993,7 +993,20 @@ export default function MediaDetail() {
               <Button 
                 size="sm"
                 onClick={() => {
-                  composeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  setQuickAddMedia({
+                    title: mediaItem?.title || mediaData.title,
+                    mediaType: (() => {
+                      const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
+                      if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
+                      if (raw.includes('podcast')) return 'podcast';
+                      if (raw === 'movie') return 'movie';
+                      return raw;
+                    })(),
+                    imageUrl: resolvedImageUrl || mediaData.artwork,
+                    externalId: params?.id,
+                    externalSource: params?.source,
+                  });
+                  setIsQuickAddOpen(true);
                 }}
                 className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
                 data-testid="button-add-rating"
@@ -1110,73 +1123,32 @@ export default function MediaDetail() {
             )}
           </div>
 
-          {/* Say something - inline compose */}
+          {/* Say something - opens unified composer modal */}
           {session && (
           <div ref={composeSectionRef} className="mt-4 pt-4 border-t border-gray-100">
             <h3 className="text-base font-bold text-gray-900 mb-3">Say something</h3>
-            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-              <div className="flex flex-wrap gap-2 mb-3">
-                {([
-                  { key: 'react' as const, label: 'React' },
-                  { key: 'predict' as const, label: 'Predict' },
-                ]).map(({ key, label }) => (
-                  <button
-                    key={key}
-                    onClick={() => setComposeType(key)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                      composeType === key
-                        ? 'bg-gray-900 text-white border-gray-900'
-                        : 'bg-white text-gray-700 border-gray-200 active:bg-gray-100'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-
-              <textarea
-                value={composeText}
-                onChange={(e) => setComposeText(e.target.value)}
-                placeholder={
-                  composeType === 'predict' ? "What do you predict?" :
-                  "What's your reaction?"
-                }
-                className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-purple-400 resize-none mb-3"
-                rows={3}
-              />
-
-              {composeType === 'predict' && (
-              <div className="space-y-2 p-3 bg-gray-100 rounded-lg mb-3">
-                <span className="text-xs text-gray-500">Prediction options:</span>
-                {composePredictionOptions.map((option, index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    value={option}
-                    onChange={(e) => {
-                      const newOpts = [...composePredictionOptions];
-                      newOpts[index] = e.target.value;
-                      setComposePredictionOptions(newOpts);
-                    }}
-                    placeholder={`Option ${index + 1}`}
-                    className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500 bg-white"
-                  />
-                ))}
-              </div>
-              )}
-
-              <Button
-                onClick={handleComposePost}
-                disabled={isComposePosting || !composeText.trim()}
-                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-xl py-5 text-sm font-semibold"
-              >
-                {isComposePosting ? (
-                  <><Loader2 size={16} className="mr-2 animate-spin" /> Posting...</>
-                ) : (
-                  'Post'
-                )}
-              </Button>
-            </div>
+            <button
+              onClick={() => {
+                setQuickAddMedia({
+                  title: mediaItem?.title || mediaData.title,
+                  mediaType: (() => {
+                    const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
+                    if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
+                    if (raw.includes('podcast')) return 'podcast';
+                    if (raw === 'movie') return 'movie';
+                    return raw;
+                  })(),
+                  imageUrl: resolvedImageUrl || mediaData.artwork,
+                  externalId: params?.id,
+                  externalSource: params?.source,
+                });
+                setIsQuickAddOpen(true);
+              }}
+              className="w-full text-left bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-400 hover:bg-gray-100 active:bg-gray-100 transition-colors"
+              data-testid="button-say-something"
+            >
+              React or predict...
+            </button>
           </div>
           )}
 
