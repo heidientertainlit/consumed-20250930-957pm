@@ -182,13 +182,26 @@ export default function PlayTriviaPage() {
   const handleTapAndSubmit = async (game: any, option: string) => {
     if (allPredictions[game.id] || submissionResults[game.id]) return;
     setSelectedAnswers(prev => ({ ...prev, [game.id]: option }));
-    try {
-      const result = await submitPrediction.mutateAsync({ poolId: game.id, answer: option });
-      const correctAnswer = game.correct_answer || game.correctAnswer;
-      const isCorrect = correctAnswer ? option === correctAnswer : (result.points_earned || 0) > 0;
-      const pointsEarned = result.points_earned || (isCorrect ? (game.points_reward || 10) : 0);
 
-      // Fetch percentage stats from all answers
+    // Compute correctness immediately from game data (no network needed)
+    const correctAnswer = game.correct_answer || game.correctAnswer;
+    const isCorrect = correctAnswer ? option === correctAnswer : false;
+    const pointsEarned = isCorrect ? (game.points_reward || 10) : 0;
+
+    // Show answered state + celebration immediately (before stats load)
+    setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned, stats: {}, userAnswer: option } }));
+    if (isCorrect) {
+      setCelebratingItems(prev => ({ ...prev, [game.id]: pointsEarned }));
+      setTimeout(() => {
+        setCelebratingItems(prev => { const next = { ...prev }; delete next[game.id]; return next; });
+      }, 1800);
+    }
+
+    try {
+      // Submit to backend in background
+      await submitPrediction.mutateAsync({ poolId: game.id, answer: option });
+
+      // Fetch stats after submission
       let stats: Record<string, number> = {};
       try {
         const { createClient } = await import('@supabase/supabase-js');
@@ -201,13 +214,8 @@ export default function PlayTriviaPage() {
         }
       } catch {}
 
+      // Update with real stats once loaded
       setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned, stats, userAnswer: option } }));
-      if (isCorrect) {
-        setCelebratingItems(prev => ({ ...prev, [game.id]: pointsEarned }));
-        setTimeout(() => {
-          setCelebratingItems(prev => { const next = { ...prev }; delete next[game.id]; return next; });
-        }, 1800);
-      }
       markTrivia();
     } catch (error) {
       console.error('Error submitting answer:', error);
