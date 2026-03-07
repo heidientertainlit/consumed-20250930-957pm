@@ -982,6 +982,47 @@ export default function MediaDetail() {
             </div>
           </div>
 
+          {/* Find On Platforms - above description */}
+          {mediaItem.platforms && mediaItem.platforms.length > 0 && (
+            <div className="mt-3">
+              <h3 className="text-xs font-medium text-gray-500 mb-2">
+                {mediaItem.type === 'Movie' || mediaItem.type === 'TV Show'
+                  ? 'Watch On'
+                  : mediaItem.type === 'Podcast' || mediaItem.type === 'Music'
+                  ? 'Listen On'
+                  : mediaItem.type === 'Book'
+                  ? 'Read On'
+                  : 'Find On'}
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {mediaItem.platforms.map((platform: any, index: number) => (
+                  platform.url ? (
+                    <a
+                      key={index}
+                      href={platform.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-xs"
+                    >
+                      {platform.logo && (
+                        <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
+                      )}
+                      <span className="font-medium text-gray-700">{platform.name}</span>
+                      <ExternalLink className="w-2.5 h-2.5 text-gray-400" />
+                    </a>
+                  ) : (
+                    <div key={index} className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-lg text-xs">
+                      {platform.logo && (
+                        <img src={platform.logo} alt={platform.name} className="w-3 h-3 object-contain" />
+                      )}
+                      <span className="font-medium text-gray-700">{platform.name}</span>
+                    </div>
+                  )
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Description snippet */}
           {mediaItem.description && (
             <div className="mt-3">
@@ -1053,59 +1094,6 @@ export default function MediaDetail() {
             </div>
           )}
 
-          {/* Find On Platforms - compact inline */}
-          {mediaItem.platforms && mediaItem.platforms.length > 0 && (
-            <div className="mt-4 pt-3 border-t border-gray-100">
-              <h3 className="text-xs font-medium text-gray-500 mb-2">
-                {mediaItem.type === 'Movie' || mediaItem.type === 'TV Show' 
-                  ? 'Watch On' 
-                  : mediaItem.type === 'Podcast' || mediaItem.type === 'Music' 
-                  ? 'Listen On' 
-                  : mediaItem.type === 'Book' 
-                  ? 'Read On' 
-                  : 'Find On'}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {mediaItem.platforms.map((platform: any, index: number) => (
-                  platform.url ? (
-                    <a
-                      key={index}
-                      href={platform.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors text-xs"
-                      data-testid={`platform-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
-                    >
-                      {platform.logo && (
-                        <img 
-                          src={platform.logo} 
-                          alt={platform.name}
-                          className="w-3 h-3 object-contain"
-                        />
-                      )}
-                      <span className="font-medium text-gray-700">{platform.name}</span>
-                      <ExternalLink className="w-2.5 h-2.5 text-gray-400" />
-                    </a>
-                  ) : (
-                    <div
-                      key={index}
-                      className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded-lg text-xs"
-                      data-testid={`platform-${platform.name.toLowerCase().replace(/\s+/g, '-')}`}
-                    >
-                      {platform.logo && (
-                        <img 
-                          src={platform.logo} 
-                          alt={platform.name}
-                          className="w-3 h-3 object-contain"
-                        />
-                      )}
-                      <span className="font-medium text-gray-700">{platform.name}</span>
-                    </div>
-                  )
-                ))}
-              </div>
-            </div>
-          )}
 
 
           {/* Your Reaction — inline composer */}
