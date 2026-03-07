@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, Flame } from "lucide-react";
+import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useRoute, useLocation } from "wouter";
@@ -1100,7 +1100,7 @@ export default function MediaDetail() {
           {/* Your Reaction */}
           {session && (
           <div ref={composeSectionRef} className="mt-4 pt-4 border-t border-gray-100">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Your Reaction</p>
+            <p className="text-base font-semibold text-gray-900 mb-2">Your Reaction</p>
             <div className="bg-gray-50 border border-gray-200 rounded-2xl overflow-hidden">
               <button
                 onClick={() => {
@@ -1179,22 +1179,8 @@ export default function MediaDetail() {
 
           {/* Activity Section */}
           <div className="mt-3 pt-3 border-t border-gray-100">
-            <button
-              onClick={() => setShowReviews(!showReviews)}
-              className="flex items-center justify-between w-full text-left"
-              data-testid="button-toggle-reviews"
-            >
-              <span className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <Flame className="w-4 h-4 text-orange-500" />
-                Activity {socialActivity.length > 0 && `(${socialActivity.length})`}
-              </span>
-              <ChevronDown 
-                size={18} 
-                className={`text-gray-400 transition-transform ${showReviews ? 'rotate-180' : ''}`} 
-              />
-            </button>
 
-            {/* Activity glimpse - always visible preview */}
+            {/* Activity glimpse - compact preview rows */}
             {!showReviews && socialActivity.length > 0 && (
               <div className="mt-2 space-y-1">
                 {socialActivity.slice(0, 3).map((post: any) => {
@@ -1217,6 +1203,14 @@ export default function MediaDetail() {
                     </div>
                   );
                 })}
+                {socialActivity.length > 0 && (
+                  <button
+                    onClick={() => setShowReviews(true)}
+                    className="text-xs text-purple-600 font-medium mt-1"
+                  >
+                    See all {socialActivity.length > 3 ? `${socialActivity.length} ` : ''}reactions
+                  </button>
+                )}
               </div>
             )}
 
