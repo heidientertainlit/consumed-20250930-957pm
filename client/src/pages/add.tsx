@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, TrendingUp, Plus, Mic, Gamepad2, MessageSquarePlus, Star, X, Brain } from "lucide-react";
+import { Search as SearchIcon, Sparkles, Loader2, Film, Music, BookOpen, Tv, TrendingUp, Plus, Mic, Gamepad2, MessageSquarePlus, Star, X, Brain, ChevronRight } from "lucide-react";
+import InlineComposer from "@/components/inline-composer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/navigation";
@@ -391,16 +392,31 @@ export default function Search() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#08080d] via-[#0f0f1a] via-[#1a1530] to-[#2d1f4e] pb-24">
       <Navigation />
-      
-      {/* Hero - Centered search */}
-      <div className="flex flex-col items-center px-4 -mt-px pt-[15vh]">
-        <div className="text-center mb-8" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          <h1 className="text-white text-2xl font-bold tracking-tight mb-4">All your entertainment.<br />All in one place.</h1>
-          <p className="text-purple-400 text-xs font-semibold tracking-[0.25em] uppercase">TRACK. PLAY. CONNECT.</p>
+
+      <div className="max-w-xl mx-auto px-4 pt-5">
+
+        {/* Page header */}
+        <div className="mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-white text-xl font-bold tracking-tight">What's happening?</h1>
+          <p className="text-white/35 text-xs mt-1">React, predict, or add to your library.</p>
+        </div>
+
+        {/* Inline Composer */}
+        <div className="mb-5">
+          <InlineComposer onPostSuccess={() => {
+            queryClient.refetchQueries({ queryKey: ['social-feed'] });
+          }} />
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className="h-px flex-1 bg-white/[0.07]" />
+          <span className="text-white/25 text-[11px] tracking-widest uppercase">or</span>
+          <div className="h-px flex-1 bg-white/[0.07]" />
         </div>
 
         {/* Search Bar */}
-        <div className="bg-white rounded-2xl p-3 shadow-lg w-full max-w-xl">
+        <div className="bg-white rounded-2xl p-3 shadow-lg mb-4">
           <div className="flex items-center gap-2">
             <SearchIcon className="text-gray-400 ml-2 flex-shrink-0" size={20} />
             <Input
@@ -417,7 +433,6 @@ export default function Search() {
                 }
               }}
               className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-gray-900 placeholder:text-gray-400"
-              autoFocus
               data-testid="unified-search-input"
             />
             <button
@@ -440,9 +455,29 @@ export default function Search() {
           </div>
         </div>
 
-        {/* DNA + Quick Links (only when no search query) */}
+        {/* Quiet links: New Rank + New Room */}
         {!searchQuery.trim() && (
-          <div className="w-full max-w-xl mt-6 rounded-lg backdrop-blur-md bg-white/[0.03] border border-white/[0.06] px-5 py-4">
+          <div className="flex gap-3 mb-5">
+            <Link
+              href="/collections"
+              className="flex-1 flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:bg-white/[0.06] transition-colors"
+            >
+              <span className="text-white/50 text-sm">New Rank</span>
+              <ChevronRight size={14} className="text-white/25" />
+            </Link>
+            <Link
+              href="/pools"
+              className="flex-1 flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:bg-white/[0.06] transition-colors"
+            >
+              <span className="text-white/50 text-sm">New Room</span>
+              <ChevronRight size={14} className="text-white/25" />
+            </Link>
+          </div>
+        )}
+
+        {/* DNA panel (only when no search query) */}
+        {!searchQuery.trim() && (
+          <div className="rounded-lg backdrop-blur-md bg-white/[0.03] border border-white/[0.06] px-5 py-4">
             {totalItemsAdded >= 3 && dnaProfile ? (
               <div className="mb-3">
                 <div className="flex items-center gap-3">
@@ -502,8 +537,8 @@ export default function Search() {
 
       </div>
 
-      {/* Main Content Area */}
-      <div className="max-w-7xl mx-auto px-4 pt-4 pb-6 space-y-4">
+      {/* Search Results + AI Area */}
+      <div className="max-w-xl mx-auto px-4 pt-2 pb-6 space-y-4">
 
         {/* AI Search Loading State */}
         {isAiMode && isSearching && (
