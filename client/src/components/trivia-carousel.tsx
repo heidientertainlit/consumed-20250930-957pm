@@ -636,6 +636,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                         <span className="text-2xl font-bold text-purple-700">+{celebratingItems[item.id] ?? 0} pts</span>
                       </div>
                     </div>
+                  </div>
                     {/* Friend answers section */}
                     {answered && answered.friendAnswers && answered.friendAnswers.length > 0 && (
                       <div className="mt-4 pt-3 border-t border-gray-200">
