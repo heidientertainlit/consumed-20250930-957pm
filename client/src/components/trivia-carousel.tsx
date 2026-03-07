@@ -549,17 +549,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 
                 <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{item.question}</h3>
                 
-                {celebratingItems[item.id] !== undefined ? (
-                  <div className="flex flex-col items-center gap-3 py-4 animate-in zoom-in-95 duration-200">
-                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center shadow-md">
-                      <CheckCircle className="w-6 h-6 text-white" />
-                    </div>
-                    <p className="text-base font-bold text-gray-900">Correct!</p>
-                    <div className="bg-purple-50 rounded-xl px-4 py-2 border border-purple-100">
-                      <span className="text-xl font-bold text-purple-700">+{celebratingItems[item.id]} pts</span>
-                    </div>
-                  </div>
-                ) : !answered ? (
+                {!answered ? (
                   <div className="flex flex-col gap-2">
                     {item.options.map((option, idx) => (
                       <button
@@ -577,74 +567,83 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     ))}
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-2">
-                    {item.options.map((option, idx) => {
-                      const isUserAnswer = answered.answer === option;
-                      const isCorrect = item.correctAnswer === option;
-                      const percentage = answered.stats?.[option] || 0;
-                      
-                      return (
-                        <div 
-                          key={idx}
-                          className={`relative py-3 px-4 rounded-full overflow-hidden transition-all ${
-                            isCorrect
-                              ? 'bg-green-100'
-                              : isUserAnswer
-                                ? 'bg-red-100'
-                                : 'bg-gray-100'
-                          }`}
-                        >
+                  <><div className="relative">
+                    {/* Percentage bars — always visible when answered */}
+                    <div className="flex flex-col gap-2">
+                      {item.options.map((option, idx) => {
+                        const isUserAnswer = answered.answer === option;
+                        const isCorrect = item.correctAnswer === option;
+                        const percentage = answered.stats?.[option] || 0;
+                        return (
                           <div 
-                            className={`absolute inset-0 transition-all duration-1000 ease-out ${
-                              isCorrect ? 'bg-green-200/60' : 'bg-gray-200/40'
-                            }`} 
-                            style={{ width: `${percentage}%` }} 
-                          />
-                          <div className="relative flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              {isCorrect && <CheckCircle className="w-4 h-4 text-green-600" />}
-                              {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-500" />}
-                              <span className={`text-sm font-medium ${isCorrect ? 'text-green-800' : isUserAnswer ? 'text-red-800' : 'text-gray-800'}`}>
-                                {option}
-                              </span>
-                              {isUserAnswer && (
-                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                                  isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
-                                }`}>
-                                  You
+                            key={idx}
+                            className={`relative py-3 px-4 rounded-full overflow-hidden transition-all ${
+                              isCorrect ? 'bg-green-100' : isUserAnswer ? 'bg-red-100' : 'bg-gray-100'
+                            }`}
+                          >
+                            <div 
+                              className={`absolute inset-0 transition-all duration-1000 ease-out ${
+                                isCorrect ? 'bg-green-200/60' : 'bg-gray-200/40'
+                              }`} 
+                              style={{ width: `${percentage}%` }} 
+                            />
+                            <div className="relative flex justify-between items-center">
+                              <div className="flex items-center gap-2">
+                                {isCorrect && <CheckCircle className="w-4 h-4 text-green-600" />}
+                                {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-500" />}
+                                <span className={`text-sm font-medium ${isCorrect ? 'text-green-800' : isUserAnswer ? 'text-red-800' : 'text-gray-800'}`}>
+                                  {option}
                                 </span>
-                              )}
+                                {isUserAnswer && (
+                                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                    isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+                                  }`}>
+                                    You
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-xs font-medium text-gray-600">{percentage}%</span>
                             </div>
-                            <span className="text-xs font-medium text-gray-600">{percentage}%</span>
                           </div>
-                        </div>
-                      );
-                    })}
-                    
-                    {/* Continue/Done button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (currentIndex < (filteredData?.length || 0) - 1) {
-                          scrollToNext();
-                        } else {
-                          queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
-                        }
-                      }}
-                      className="w-full mt-4 py-2.5 rounded-xl font-semibold text-sm text-white transition-all bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:from-blue-600 hover:via-purple-600 hover:to-purple-700"
-                    >
-                      {currentIndex < (filteredData?.length || 0) - 1 ? 'Next question' : 'All done!'}
-                    </button>
-                    
+                        );
+                      })}
+
+                      {/* Continue/Done button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (currentIndex < (filteredData?.length || 0) - 1) {
+                            scrollToNext();
+                          } else {
+                            queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
+                          }
+                        }}
+                        className="w-full mt-4 py-2.5 rounded-xl font-semibold text-sm text-white transition-all bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:from-blue-600 hover:via-purple-600 hover:to-purple-700"
+                      >
+                        {currentIndex < (filteredData?.length || 0) - 1 ? 'Next question' : 'All done!'}
+                      </button>
+                    </div>
+
+                    {/* Celebration overlay — sits on top, fades out after 1.6s */}
+                    <div className={`absolute inset-0 bg-white rounded-xl flex flex-col items-center justify-center gap-3 transition-opacity duration-300 ${
+                      celebratingItems[item.id] !== undefined ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                    }`}>
+                      <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center shadow-lg">
+                        <CheckCircle className="w-7 h-7 text-white" />
+                      </div>
+                      <p className="text-lg font-bold text-gray-900">Correct!</p>
+                      <div className="bg-purple-50 rounded-xl px-5 py-2.5 border border-purple-100">
+                        <span className="text-2xl font-bold text-purple-700">+{celebratingItems[item.id] ?? 0} pts</span>
+                      </div>
+                    </div>
                     {/* Friend answers section */}
-                    {answered.friendAnswers && answered.friendAnswers.length > 0 && (
+                    {answered && answered.friendAnswers && answered.friendAnswers.length > 0 && (
                       <div className="mt-4 pt-3 border-t border-gray-200">
                         <div className="flex items-center gap-2 mb-2">
                           <Users className="w-4 h-4 text-purple-600" />
                           <span className="text-xs font-semibold text-gray-700">Friends who played</span>
                         </div>
                         <div className="flex flex-wrap gap-3">
-                          {/* Friends who got it right */}
                           {answered.friendAnswers.filter(f => f.isCorrect).length > 0 && (
                             <div className="flex items-center gap-1.5">
                               <div className="flex -space-x-2">
@@ -672,8 +671,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                               </div>
                             </div>
                           )}
-                          
-                          {/* Friends who got it wrong */}
                           {answered.friendAnswers.filter(f => !f.isCorrect).length > 0 && (
                             <div className="flex items-center gap-1.5">
                               <div className="flex -space-x-2">
@@ -704,8 +701,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                         </div>
                       </div>
                     )}
-                  </div>
-                )}
+                  </>)}
                 
                 <div className="flex items-center justify-between mt-4">
                   <button 
