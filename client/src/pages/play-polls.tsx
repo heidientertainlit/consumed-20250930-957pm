@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card } from '@/components/ui/card';
-import { Vote, ChevronLeft, ChevronRight, ChevronDown, CheckCircle } from 'lucide-react';
+import { Vote, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { queryClient } from '@/lib/queryClient';
@@ -19,34 +19,9 @@ export default function PlayPollsPage() {
   const [shareModalGame, setShareModalGame] = useState<any>(null);
   const [submissionResults, setSubmissionResults] = useState<Record<string, { points: number; stats: Record<string, number>; userAnswer: string }>>({});
   const [celebratingItems, setCelebratingItems] = useState<Record<string, number>>({});
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  const [expandedFilter, setExpandedFilter] = useState<'topic' | 'genre' | null>(null);
   const [categoryIndices, setCategoryIndices] = useState<Record<string, number>>({});
   const categoryScrollRefs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  const categoryFilters = [
-    { id: 'Movies', label: 'Movies' },
-    { id: 'TV', label: 'TV Shows' },
-    { id: 'Music', label: 'Music' },
-    { id: 'Books', label: 'Books' },
-    { id: 'Sports', label: 'Sports' },
-    { id: 'Podcasts', label: 'Podcasts' },
-    { id: 'Pop Culture', label: 'Pop Culture' },
-  ];
-
-  const genreFilters = [
-    { id: 'True Crime', label: 'True Crime' },
-    { id: 'Comedy', label: 'Comedy' },
-    { id: 'Drama', label: 'Drama' },
-    { id: 'Sci-Fi', label: 'Sci-Fi' },
-    { id: 'Fantasy', label: 'Fantasy' },
-    { id: 'Horror', label: 'Horror' },
-    { id: 'Romance', label: 'Romance' },
-    { id: 'Action', label: 'Action' },
-    { id: 'Documentary', label: 'Documentary' },
-  ];
 
   const scrollCategoryTo = (category: string, index: number, total: number) => {
     if (index < 0 || index >= total) return;
@@ -187,19 +162,8 @@ export default function PlayPollsPage() {
   };
 
   const pollGames = useMemo(() => {
-    let filtered = [...games];
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter((g: any) => g.title?.toLowerCase().includes(q) || g.description?.toLowerCase().includes(q));
-    }
-    if (selectedCategory) {
-      filtered = filtered.filter((g: any) => normalizeCategory(g.category) === selectedCategory);
-    }
-    if (selectedGenre) {
-      filtered = filtered.filter((g: any) => (g.tags || []).includes(selectedGenre));
-    }
-    return filtered;
-  }, [games, searchQuery, selectedCategory, selectedGenre]);
+    return [...games];
+  }, [games]);
 
   const pollsByCategory = useMemo(() => {
     const groups: Record<string, any[]> = {};
@@ -227,7 +191,7 @@ export default function PlayPollsPage() {
       <Navigation onTrackConsumption={() => setIsTrackModalOpen(true)} />
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-4 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
           <div className="flex items-center gap-3 mb-4">
             <button onClick={() => window.history.back()} className="flex items-center text-gray-400 hover:text-white transition-colors">
@@ -236,44 +200,34 @@ export default function PlayPollsPage() {
             <h1 className="text-2xl font-semibold text-white">Polls</h1>
           </div>
 
-          {/* Filter dropdowns */}
-          <div className="flex flex-wrap gap-3">
-            <div className="relative">
+          {/* Pill category filters inside gradient — same as trivia */}
+          {pollsByCategory.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1" style={{ scrollbarWidth: 'none' }}>
               <button
-                onClick={() => setExpandedFilter(expandedFilter === 'topic' ? null : 'topic')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all text-sm ${selectedCategory ? 'text-purple-300' : 'text-gray-400 hover:text-gray-200'}`}
+                onClick={() => setSelectedCategory(null)}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  !selectedCategory
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white/10 border border-white/20 text-gray-300 hover:bg-white/20'
+                }`}
               >
-                <span>Topic{selectedCategory ? `: ${categoryFilters.find(c => c.id === selectedCategory)?.label}` : ''}</span>
-                <ChevronDown size={14} className={`transition-transform ${expandedFilter === 'topic' ? 'rotate-180' : ''}`} />
+                All
               </button>
-              {expandedFilter === 'topic' && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[160px]">
-                  <button onClick={() => { setSelectedCategory(null); setExpandedFilter(null); }} className={`w-full text-left px-3 py-2 rounded-md text-sm ${!selectedCategory ? 'bg-purple-100 text-purple-700 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>All Topics</button>
-                  {categoryFilters.map(cat => (
-                    <button key={cat.id} onClick={() => { setSelectedCategory(cat.id); setExpandedFilter(null); }} className={`w-full text-left px-3 py-2 rounded-md text-sm ${selectedCategory === cat.id ? 'bg-purple-100 text-purple-700 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>{cat.label}</button>
-                  ))}
-                </div>
-              )}
+              {pollsByCategory.map(([cat]) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-white/10 border border-white/20 text-gray-300 hover:bg-white/20'
+                  }`}
+                >
+                  {categoryInfo[cat]?.label || cat}
+                </button>
+              ))}
             </div>
-
-            <div className="relative">
-              <button
-                onClick={() => setExpandedFilter(expandedFilter === 'genre' ? null : 'genre')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded transition-all text-sm ${selectedGenre ? 'text-purple-300' : 'text-gray-400 hover:text-gray-200'}`}
-              >
-                <span>Genre{selectedGenre ? `: ${selectedGenre}` : ''}</span>
-                <ChevronDown size={14} className={`transition-transform ${expandedFilter === 'genre' ? 'rotate-180' : ''}`} />
-              </button>
-              {expandedFilter === 'genre' && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[150px]">
-                  <button onClick={() => { setSelectedGenre(null); setExpandedFilter(null); }} className={`w-full text-left px-3 py-2 rounded-md text-sm ${!selectedGenre ? 'bg-purple-100 text-purple-700 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>All Genres</button>
-                  {genreFilters.map(genre => (
-                    <button key={genre.id} onClick={() => { setSelectedGenre(genre.id); setExpandedFilter(null); }} className={`w-full text-left px-3 py-2 rounded-md text-sm ${selectedGenre === genre.id ? 'bg-purple-100 text-purple-700 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}>{genre.label}</button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
