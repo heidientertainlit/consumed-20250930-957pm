@@ -231,20 +231,42 @@ export default function PlayTriviaPage() {
     const answer = selectedAnswers[game.id];
     if (!answer) return;
 
+    const correctAnswer = game.correct_answer || game.correctAnswer;
+    const isCorrect = correctAnswer ? answer === correctAnswer : false;
+    const pointsEarned = isCorrect ? (game.points_reward || 10) : 0;
+
+    // Seed initial stats immediately so bars show right away
+    const initialStats: Record<string, number> = {};
+    for (const opt of (game.options || [])) {
+      initialStats[opt] = opt === answer ? 100 : 0;
+    }
+    setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned, stats: initialStats, userAnswer: answer } }));
+    if (isCorrect) {
+      setCelebratingItems(prev => ({ ...prev, [game.id]: pointsEarned }));
+      setTimeout(() => {
+        setCelebratingItems(prev => { const next = { ...prev }; delete next[game.id]; return next; });
+      }, 1800);
+    }
+
     try {
-      const result = await submitPrediction.mutateAsync({ poolId: game.id, answer });
-      const pointsEarned = result.points_earned || 0;
-      const isCorrect = pointsEarned > 0;
-
-      setSubmissionResults(prev => ({ ...prev, [game.id]: { correct: isCorrect, points: pointsEarned } }));
-
-      if (isCorrect && pointsEarned > 0) {
-        setShowCelebration({ points: pointsEarned });
-        const timer = setTimeout(() => setShowCelebration(null), 1800);
-        setCelebrationTimer(timer);
-      }
-      
+      await submitPrediction.mutateAsync({ poolId: game.id, answer });
       markTrivia();
+
+      // Fetch real stats and update bars
+      const { data: statsData } = await supabase
+        .from('user_predictions')
+        .select('prediction')
+        .eq('pool_id', game.id);
+      if (statsData && statsData.length > 0) {
+        const counts: Record<string, number> = {};
+        statsData.forEach((r: any) => { counts[r.prediction] = (counts[r.prediction] || 0) + 1; });
+        const total = statsData.length;
+        const realStats: Record<string, number> = {};
+        for (const opt of (game.options || [])) {
+          realStats[opt] = Math.round(((counts[opt] || 0) / total) * 100);
+        }
+        setSubmissionResults(prev => ({ ...prev, [game.id]: { ...prev[game.id], stats: realStats } }));
+      }
     } catch (error) {
       console.error('Error submitting answer:', error);
       toast({
@@ -724,30 +746,66 @@ export default function PlayTriviaPage() {
                   </CardHeader>
 
                   <CardContent className="space-y-4">
-                    {allPredictions[game.id] || submissionResults[game.id] ? (
-                      submissionResults[game.id] ? (
-                        submissionResults[game.id].correct ? (
-                          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                            <div className="text-green-800 font-bold text-lg">✓ Correct!</div>
-                            <div className="text-green-700 text-sm mt-1">
-                              You earned {submissionResults[game.id].points} points
+                    {allPredictions[game.id] || submissionResults[game.id] || celebratingItems[game.id] !== undefined ? (
+                      (() => {
+                        const result = submissionResults[game.id];
+                        const prevAnswer = allPredictions[game.id];
+                        const userAnswer = result?.userAnswer || prevAnswer?.prediction;
+                        const correctAnswer = game.correct_answer || game.correctAnswer;
+                        const stats = result?.stats;
+                        const isCelebrating = celebratingItems[game.id] !== undefined;
+                        return (
+                          <div className="relative">
+                            <div className="flex flex-col gap-2">
+                              {(game.options || []).map((opt: string) => {
+                                const pct = stats ? (stats[opt] || 0) : 0;
+                                const isUserPick = opt === userAnswer;
+                                const isCorrectOpt = correctAnswer ? opt === correctAnswer : false;
+                                return (
+                                  <div key={opt} className="relative rounded-full overflow-hidden bg-gray-100 h-10">
+                                    <div
+                                      className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out"
+                                      style={{
+                                        width: `${pct}%`,
+                                        background: isCorrectOpt
+                                          ? 'linear-gradient(90deg,#22c55e,#16a34a)'
+                                          : isUserPick
+                                          ? 'linear-gradient(90deg,#ef4444,#b91c1c)'
+                                          : '#d1d5db'
+                                      }}
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-between px-3">
+                                      <div className="flex items-center gap-2">
+                                        {isCorrectOpt
+                                          ? <CheckCircle size={14} className="text-green-600 shrink-0" />
+                                          : isUserPick
+                                          ? <XCircle size={14} className="text-red-500 shrink-0" />
+                                          : <div className="w-3.5 h-3.5" />
+                                        }
+                                        <span className="text-sm font-medium text-gray-800 truncate">{opt}</span>
+                                        {isUserPick && (
+                                          <span className="text-[10px] bg-gray-300 text-gray-700 px-1.5 py-0.5 rounded-full font-semibold">You</span>
+                                        )}
+                                      </div>
+                                      <span className="text-xs font-bold text-gray-600">{pct}%</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              <button
+                                className="w-full mt-2 py-2.5 rounded-xl font-semibold text-sm text-white transition-all bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:opacity-90"
+                              >
+                                Next question
+                              </button>
+                            </div>
+                            <div className={`absolute inset-0 bg-black/70 rounded-xl flex flex-col items-center justify-center gap-2 transition-opacity duration-500 ${isCelebrating ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                              <CheckCircle size={32} className="text-green-400" />
+                              <p className="text-white font-bold text-lg">Correct!</p>
+                              <p className="text-green-400 font-semibold text-sm">+{celebratingItems[game.id] || result?.points || 0} pts</p>
                             </div>
                           </div>
-                        ) : (
-                          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6 text-center">
-                            <div className="text-4xl mb-2">💪</div>
-                            <div className="text-blue-900 font-bold text-lg mb-2">Keep Going!</div>
-                            <div className="text-blue-700 text-sm">
-                              Every attempt makes you smarter. Try another trivia challenge!
-                            </div>
-                          </div>
-                        )
-                      ) : (
-                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-                          <div className="text-gray-800 font-medium">✓ Submitted</div>
-                          <div className="text-gray-700 text-sm">Game completed!</div>
-                        </div>
-                      )
+                        );
+                      })()
                     ) : game.isLongForm ? (
                       <Button 
                         onClick={() => setSelectedTriviaGame(game)}
