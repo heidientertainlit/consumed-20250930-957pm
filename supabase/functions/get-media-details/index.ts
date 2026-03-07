@@ -2,6 +2,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+function stripHtml(raw: string | undefined | null): string | null {
+  if (!raw) return null;
+  const clean = raw
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+  return clean.length > 0 ? clean : null;
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
@@ -99,7 +113,7 @@ serve(async (req) => {
           creator: data.credits?.crew?.find((c: any) => c.job === 'Director')?.name || 
                    data.created_by?.[0]?.name || 'Unknown',
           artwork: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null,
-          description: data.overview || 'No description available.',
+          description: stripHtml(data.overview),
           rating: data.vote_average ? (data.vote_average / 2).toFixed(1) : '0',
           releaseDate: data.release_date || data.first_air_date,
           runtime: data.runtime || data.episode_run_time?.[0],
@@ -194,7 +208,7 @@ serve(async (req) => {
           type: isEpisode ? 'Podcast Episode' : (isPodcast ? 'Podcast' : 'Music'),
           creator: data.artists?.[0]?.name || data.publisher || data.show?.publisher || data.show?.name || 'Unknown',
           artwork: data.images?.[0]?.url || data.album?.images?.[0]?.url || data.show?.images?.[0]?.url,
-          description: data.description || data.html_description || 'No description available.',
+          description: stripHtml(data.description || data.html_description),
           rating: '4.5',
           releaseDate: data.release_date,
           category: data.genres?.[0] || (isPodcast || isEpisode ? 'Podcast' : 'Music'),
@@ -223,7 +237,7 @@ serve(async (req) => {
             type: 'YouTube',
             creator: video.snippet.channelTitle,
             artwork: video.snippet.thumbnails?.high?.url || video.snippet.thumbnails?.medium?.url,
-            description: video.snippet.description || 'No description available.',
+            description: stripHtml(video.snippet.description),
             rating: '4.0',
             releaseDate: video.snippet.publishedAt,
             category: 'Video',
@@ -270,7 +284,7 @@ serve(async (req) => {
           type: 'Book',
           creator: volumeInfo.authors?.join(', ') || 'Unknown Author',
           artwork: coverUrl,
-          description: volumeInfo.description || 'No description available.',
+          description: stripHtml(volumeInfo.description),
           rating: volumeInfo.averageRating ? volumeInfo.averageRating.toFixed(1) : '0',
           releaseDate: volumeInfo.publishedDate,
           category: volumeInfo.categories?.[0] || 'Book',
@@ -352,7 +366,7 @@ serve(async (req) => {
           type: 'Book',
           creator: authorData?.name || data.by_statement || 'Unknown Author',
           artwork: coverUrl,
-          description: typeof data.description === 'string' ? data.description : data.description?.value || 'No description available.',
+          description: stripHtml(typeof data.description === 'string' ? data.description : data.description?.value),
           rating: '4.2',
           releaseDate: data.first_publish_date || data.publish_date,
           category: data.subjects?.[0] || 'Fiction',

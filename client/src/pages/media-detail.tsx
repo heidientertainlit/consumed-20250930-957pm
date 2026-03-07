@@ -971,7 +971,7 @@ export default function MediaDetail() {
           </div>
 
           {/* Description snippet */}
-          {mediaItem.description && mediaItem.description !== 'No description available.' && (
+          {mediaItem.description && (
             <div className="mt-3">
               <p className={`text-sm text-gray-600 leading-relaxed ${!showAbout ? 'line-clamp-2' : ''}`}>
                 {mediaItem.description}
