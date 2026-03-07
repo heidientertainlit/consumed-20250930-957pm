@@ -330,45 +330,49 @@ export default function PlayTriviaPage() {
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
 
   // Normalize category names to consistent format
+  const CATEGORY_ORDER = ['Movies', 'TV', 'Music', 'Podcasts', 'Gaming', 'Sports', 'Books', 'Pop Culture', 'Other'];
+
   const normalizeCategory = (cat: string): string => {
     if (!cat) return 'Other';
     const lower = cat.toLowerCase().trim();
     if (lower === 'movies' || lower === 'movie') return 'Movies';
-    if (lower === 'tv' || lower === 'tv shows' || lower === 'tv-show' || lower === 'tv show') return 'TV';
-    if (lower === 'books' || lower === 'book') return 'Books';
-    if (lower === 'games' || lower === 'game') return 'Games';
+    if (lower === 'tv' || lower === 'tv shows' || lower === 'tv-show' || lower === 'tv show' ||
+        lower === 'reality' || lower === 'reality tv' || lower === 'reality-tv') return 'TV';
     if (lower === 'music') return 'Music';
     if (lower === 'podcasts' || lower === 'podcast') return 'Podcasts';
+    if (lower === 'gaming' || lower === 'games' || lower === 'game' || lower === 'video games') return 'Gaming';
+    if (lower === 'sports' || lower === 'sport') return 'Sports';
+    if (lower === 'books' || lower === 'book') return 'Books';
     if (lower === 'pop culture') return 'Pop Culture';
-    return cat; // Return original if no match
+    return 'Other';
   };
 
-  // Group games by category for carousel display
+  // Category display info
+  const categoryInfo: Record<string, { label: string }> = {
+    'Movies': { label: 'Movies' },
+    'TV': { label: 'TV Shows' },
+    'Music': { label: 'Music' },
+    'Podcasts': { label: 'Podcasts' },
+    'Gaming': { label: 'Gaming' },
+    'Sports': { label: 'Sports' },
+    'Books': { label: 'Books' },
+    'Pop Culture': { label: 'Pop Culture' },
+    'Other': { label: 'General' },
+  };
+
+  // Group games by category for carousel display, sorted by defined order
   const gamesByCategory = useMemo(() => {
     const groups: Record<string, any[]> = {};
     lowStakesGames.forEach((game: any) => {
       const category = normalizeCategory(game.category);
-      if (!groups[category]) {
-        groups[category] = [];
-      }
+      if (!groups[category]) groups[category] = [];
       groups[category].push(game);
     });
-    return groups;
+    // Return as ordered array of [category, games] entries
+    return CATEGORY_ORDER
+      .filter(cat => groups[cat])
+      .map(cat => [cat, groups[cat]] as [string, any[]]);
   }, [lowStakesGames]);
-
-  // Category display info - consistent labeling without emojis
-  const categoryInfo: Record<string, { label: string }> = {
-    'Movies': { label: 'Movies' },
-    'TV': { label: 'TV Shows' },
-    'tv': { label: 'TV Shows' },
-    'tv-show': { label: 'TV Shows' },
-    'Music': { label: 'Music' },
-    'Books': { label: 'Books' },
-    'Games': { label: 'Games' },
-    'Podcasts': { label: 'Podcasts' },
-    'Pop Culture': { label: 'Pop Culture' },
-    'Other': { label: 'General' },
-  };
 
   // Auto-open game if gameId is in URL
   React.useEffect(() => {
@@ -426,12 +430,45 @@ export default function PlayTriviaPage() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      {/* Pill category filters — scrollable row in the light section */}
+      {gamesByCategory.length > 0 && (
+        <div className="bg-gray-50 px-4 pt-4 pb-2">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                !selectedCategory
+                  ? 'bg-purple-700 text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:border-purple-300'
+              }`}
+            >
+              All
+            </button>
+            {gamesByCategory.map(([cat]) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  selectedCategory === cat
+                    ? 'bg-purple-700 text-white'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-purple-300'
+                }`}
+              >
+                {categoryInfo[cat]?.label || cat}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-4xl mx-auto px-4 py-4">
 
         {/* Trivia Games by Category */}
-        {Object.keys(gamesByCategory).length > 0 ? (
+        {gamesByCategory.length > 0 ? (
           <div className="space-y-5">
-            {Object.entries(gamesByCategory).map(([category, games]) => {
+            {gamesByCategory
+              .filter(([cat]) => !selectedCategory || cat === selectedCategory)
+              .map(([category, games]) => {
               const label = categoryInfo[category]?.label || category;
               const currentIndex = categoryIndices[category] || 0;
               
