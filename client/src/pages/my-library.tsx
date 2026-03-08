@@ -402,10 +402,10 @@ export default function MyLibrary() {
           <h2 className="text-white text-2xl font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>My Library</h2>
           <button
             onClick={() => setIsAddMediaOpen(true)}
-            className="flex items-center gap-2 px-8 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white text-sm font-semibold transition-all shadow-lg"
+            className="w-full max-w-sm flex items-center gap-3 px-4 py-3 rounded-full bg-white/10 border border-white/20 hover:bg-white/15 transition-all text-left"
           >
-            <Plus size={16} />
-            Add Media
+            <SearchIcon size={16} className="text-white/50 flex-shrink-0" />
+            <span className="text-white/50 text-sm">Search to add media...</span>
           </button>
         </div>
       </div>
