@@ -9,9 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 import CreateListDialog from "@/components/create-list-dialog";
 import { supabase } from "@/lib/supabase";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
+import { QuickAddModal } from "@/components/quick-add-modal";
 
 export default function MyLibrary() {
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
+  const [isAddMediaOpen, setIsAddMediaOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'in-progress' | 'lists' | 'history'>('in-progress');
   const [listSearch, setListSearch] = useState('');
   const [mediaHistorySearch, setMediaHistorySearch] = useState('');
@@ -399,7 +401,7 @@ export default function MyLibrary() {
         <div className="pt-8 pb-6 px-4 flex flex-col items-center gap-4">
           <h2 className="text-white text-2xl font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>My Library</h2>
           <button
-            onClick={() => setLocation('/add')}
+            onClick={() => setIsAddMediaOpen(true)}
             className="flex items-center gap-2 px-8 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white text-sm font-semibold transition-all shadow-lg"
           >
             <Plus size={16} />
@@ -810,6 +812,10 @@ export default function MyLibrary() {
         </div>
 
       <CreateListDialog open={isCreateListOpen} onOpenChange={setIsCreateListOpen} />
+      <QuickAddModal
+        isOpen={isAddMediaOpen}
+        onClose={() => setIsAddMediaOpen(false)}
+      />
     </div>
   );
 }
