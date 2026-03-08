@@ -4305,89 +4305,49 @@ export default function Feed() {
               </div>
             </div>
 
-            {/* Quick picks row */}
-            {suggestedQuickAdds.length > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-white/30 text-xs flex-shrink-0">Quick picks:</span>
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-                  {suggestedQuickAdds.slice(0, 3).map((item: any, idx: number) => (
-                    <button
-                      key={item.id || idx}
-                      onClick={() => {
-                        setQuickAddMedia({
-                          title: item.title,
-                          mediaType: item.type || item.mediaType || 'movie',
-                          externalId: item.external_id || item.externalId || item.id,
-                          externalSource: item.external_source || item.externalSource || 'tmdb',
-                          imageUrl: item.image_url || item.imageUrl || item.poster_url || '',
-                        });
-                        setIsQuickAddOpen(true);
-                      }}
-                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.07] border border-white/[0.12] hover:bg-white/10 transition-colors flex-shrink-0"
-                    >
-                      {(item.image_url || item.imageUrl || item.poster_url) && (
-                        <img
-                          src={
-                            (item.image_url || item.imageUrl || item.poster_url || '').startsWith('http')
-                              ? (item.image_url || item.imageUrl || item.poster_url)
-                              : `https://image.tmdb.org/t/p/w92${item.image_url || item.imageUrl || item.poster_url}`
-                          }
-                          alt={item.title}
-                          className="w-5 h-5 rounded-sm object-cover flex-shrink-0"
-                        />
-                      )}
-                      <span className="text-white/60 text-xs truncate max-w-[80px]">{item.title}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
           
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-4 pb-6" data-feed-content>
-        {/* Trending Strip - top of white feed area */}
+        {/* Trending Strip - pill style */}
         {friendsConsuming.length > 0 && (
-          <div className="mb-5">
-            <h2 className="text-base font-semibold text-gray-800 mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>Trending</h2>
-            <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
-              {friendsConsuming.map((item: any, idx: number) => (
-                <Link key={item.id || idx} href={(() => { if (!item.external_id || isNaN(Number(item.external_id))) return '#'; const t = (item.media_type || '').toLowerCase(); const type = (t === 'tv' || t.includes('show') || t === 'tv_show') ? 'tv' : t === 'movie' ? 'movie' : t || 'movie'; return `/media/${type}/${item.external_source || 'tmdb'}/${item.external_id}`; })()}>
-                  <div className="w-[80px] flex-shrink-0 cursor-pointer group">
-                    <div className="relative aspect-[2/3] rounded-xl overflow-hidden mb-1.5 shadow-sm group-hover:shadow-md transition-all">
-                      {(item.image_url && item.image_url.startsWith('http')) ? (
-                        <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
-                      ) : item.image_url && !item.image_url.startsWith('http') ? (
-                        <img src={`https://image.tmdb.org/t/p/w200${item.image_url}`} alt={item.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center">
-                          <Film size={16} className="text-purple-400/50" />
-                        </div>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setQuickAddMedia({
-                            title: item.title,
-                            mediaType: item.media_type || 'movie',
-                            externalId: item.external_id || item.id,
-                            externalSource: item.external_source || 'tmdb',
-                            imageUrl: item.image_url || '',
-                          });
-                          setIsQuickAddOpen(true);
-                        }}
-                        className="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-full bg-white/90 shadow-sm flex items-center justify-center hover:bg-white transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5 text-gray-700" />
-                      </button>
-                    </div>
-                    <p className="text-[11px] text-gray-600 truncate leading-tight font-medium">{item.title}</p>
-                  </div>
-                </Link>
-              ))}
+          <div className="mb-4">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Trending</p>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {friendsConsuming.map((item: any, idx: number) => {
+                const imgSrc = item.image_url
+                  ? item.image_url.startsWith('http')
+                    ? item.image_url
+                    : `https://image.tmdb.org/t/p/w92${item.image_url}`
+                  : null;
+                return (
+                  <button
+                    key={item.id || idx}
+                    onClick={() => {
+                      setQuickAddMedia({
+                        title: item.title,
+                        mediaType: item.media_type || 'movie',
+                        externalId: item.external_id || item.id,
+                        externalSource: item.external_source || 'tmdb',
+                        imageUrl: item.image_url || '',
+                      });
+                      setIsQuickAddOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow hover:border-purple-200 transition-all flex-shrink-0"
+                  >
+                    {imgSrc ? (
+                      <img src={imgSrc} alt={item.title} className="w-5 h-5 rounded-sm object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-sm bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <Film size={10} className="text-gray-400" />
+                      </div>
+                    )}
+                    <span className="text-gray-700 text-xs font-medium truncate max-w-[100px]">{item.title}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
