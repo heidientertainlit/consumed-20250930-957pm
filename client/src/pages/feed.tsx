@@ -24,7 +24,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 import { HotTakeFeedCard } from "@/components/hot-take-feed-card";
-import { Star, StarHalf, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play } from "lucide-react";
+import { Star, StarHalf, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -4265,31 +4265,82 @@ export default function Feed() {
           {/* Composer Trigger - dark hero zone */}
           <div>
             <p className="text-white/50 text-sm mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>What are you consuming?</p>
+
+            {/* Search-bar style composer trigger */}
             <button
               onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
-              className="w-full text-left px-4 py-3 rounded-2xl bg-white/[0.07] border border-white/[0.12] text-white/30 text-sm mb-3 hover:bg-white/[0.10] transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.07] border border-white/[0.12] mb-3 hover:bg-white/[0.10] transition-colors"
             >
-              Search movies, books, music, shows...
+              <SearchIcon size={16} className="text-white/40 flex-shrink-0" />
+              <span className="flex-1 text-left text-white/30 text-sm">Search movies, books, music, shows...</span>
+              <Mic size={16} className="text-white/40 flex-shrink-0" />
             </button>
-            <div className="flex gap-2">
+
+            {/* Action pills + more */}
+            <div className="flex items-center gap-2 mb-4">
               {([
-                { type: "react" as const, label: "React" },
-                { type: "predict" as const, label: "Predict" },
-                { type: "rank" as const, label: "Review" },
-              ]).map(({ type, label }) => (
+                { type: "react" as const, label: "React", Icon: MessageCircle },
+                { type: "predict" as const, label: "Predict", Icon: TrendingUp },
+                { type: "rank" as const, label: "Review", Icon: Star },
+              ]).map(({ type, label, Icon }) => (
                 <button
                   key={type}
                   onClick={() => { setComposerInitialType(type); setComposerOpen(true); }}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     type === "react"
                       ? "bg-purple-600 text-white hover:bg-purple-700"
-                      : "border border-white/20 text-white/60 hover:bg-white/10"
+                      : "bg-white/[0.07] border border-white/[0.12] text-white/60 hover:bg-white/10"
                   }`}
                 >
+                  <Icon size={13} />
                   {label}
                 </button>
               ))}
+              <button
+                onClick={() => { setComposerOpen(true); }}
+                className="ml-auto flex items-center justify-center w-8 h-8 rounded-full bg-white/[0.07] border border-white/[0.12] text-white/40 hover:bg-white/10 transition-colors"
+              >
+                <MoreHorizontal size={15} />
+              </button>
             </div>
+
+            {/* Quick picks row */}
+            {suggestedQuickAdds.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-white/30 text-xs flex-shrink-0">Quick picks:</span>
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+                  {suggestedQuickAdds.slice(0, 3).map((item: any, idx: number) => (
+                    <button
+                      key={item.id || idx}
+                      onClick={() => {
+                        setQuickAddMedia({
+                          title: item.title,
+                          mediaType: item.type || item.mediaType || 'movie',
+                          externalId: item.external_id || item.externalId || item.id,
+                          externalSource: item.external_source || item.externalSource || 'tmdb',
+                          imageUrl: item.image_url || item.imageUrl || item.poster_url || '',
+                        });
+                        setIsQuickAddOpen(true);
+                      }}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.07] border border-white/[0.12] hover:bg-white/10 transition-colors flex-shrink-0"
+                    >
+                      {(item.image_url || item.imageUrl || item.poster_url) && (
+                        <img
+                          src={
+                            (item.image_url || item.imageUrl || item.poster_url || '').startsWith('http')
+                              ? (item.image_url || item.imageUrl || item.poster_url)
+                              : `https://image.tmdb.org/t/p/w92${item.image_url || item.imageUrl || item.poster_url}`
+                          }
+                          alt={item.title}
+                          className="w-5 h-5 rounded-sm object-cover flex-shrink-0"
+                        />
+                      )}
+                      <span className="text-white/60 text-xs truncate max-w-[80px]">{item.title}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           
         </div>
