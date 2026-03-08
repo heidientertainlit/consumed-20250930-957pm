@@ -10,13 +10,14 @@ import CreateListDialog from "@/components/create-list-dialog";
 import { supabase } from "@/lib/supabase";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
 import { QuickAddModal } from "@/components/quick-add-modal";
+import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 
 export default function MyLibrary() {
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
   const [librarySearchQuery, setLibrarySearchQuery] = useState('');
   const [librarySearchFocused, setLibrarySearchFocused] = useState(false);
-  const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
-  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [listSheetMedia, setListSheetMedia] = useState<any>(null);
+  const [isListSheetOpen, setIsListSheetOpen] = useState(false);
   const [composerMedia, setComposerMedia] = useState<any>(null);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const librarySearchRef = useRef<HTMLInputElement>(null);
@@ -485,7 +486,7 @@ export default function MyLibrary() {
                           <button
                             onMouseDown={(e) => {
                               e.preventDefault();
-                              setQuickAddMedia({
+                              setListSheetMedia({
                                 title: media.title,
                                 mediaType: media.type || 'movie',
                                 imageUrl: media.image,
@@ -493,7 +494,7 @@ export default function MyLibrary() {
                                 externalSource: media.external_source || 'tmdb',
                                 creator: media.creator,
                               });
-                              setIsQuickAddOpen(true);
+                              setIsListSheetOpen(true);
                             }}
                             className="w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
                           >
@@ -931,11 +932,13 @@ export default function MyLibrary() {
         </div>
 
       <CreateListDialog open={isCreateListOpen} onOpenChange={setIsCreateListOpen} />
-      <QuickAddModal
-        isOpen={isQuickAddOpen}
-        onClose={() => setIsQuickAddOpen(false)}
-        preSelectedMedia={quickAddMedia}
-      />
+      {listSheetMedia && (
+        <QuickAddListSheet
+          isOpen={isListSheetOpen}
+          onClose={() => setIsListSheetOpen(false)}
+          media={listSheetMedia}
+        />
+      )}
       <QuickAddModal
         isOpen={isComposerOpen}
         onClose={() => setIsComposerOpen(false)}
