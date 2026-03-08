@@ -915,6 +915,62 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {/* Inline media attach — shown in searchToCompose mode when no media selected yet */}
+              {searchToCompose && !selectedMedia && (
+                <div className="relative">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Attach media (optional)"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-3 border border-dashed border-gray-300 rounded-xl bg-white focus:outline-none focus:border-purple-400 text-sm"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => { setSearchQuery(""); setSearchResults([]); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                  {(searchResults.length > 0 || isSearching) && (
+                    <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                      {isSearching ? (
+                        <div className="p-4 flex justify-center">
+                          <Loader2 className="animate-spin text-purple-600" size={20} />
+                        </div>
+                      ) : searchResults.map((result, index) => {
+                        const posterImage = result.poster_url || result.image_url;
+                        return (
+                          <div
+                            key={`${result.external_id || result.id}-${index}`}
+                            onClick={() => {
+                              setSelectedMedia(result);
+                              setSearchQuery("");
+                              setSearchResults([]);
+                            }}
+                            className="flex items-center gap-3 p-2.5 hover:bg-purple-50 cursor-pointer border-b border-gray-50 last:border-b-0"
+                          >
+                            {posterImage ? (
+                              <img src={posterImage} alt="" className="w-8 h-12 object-cover rounded shrink-0" />
+                            ) : (
+                              <div className="w-8 h-12 bg-gradient-to-br from-purple-100 to-blue-100 rounded flex items-center justify-center shrink-0">
+                                {getMediaIcon(result.type)}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 text-sm truncate">{result.title}</p>
+                              <p className="text-xs text-gray-500 capitalize">{result.type}{result.year ? ` • ${result.year}` : ''}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Search bar for add-to-list mode */}
               {defaultListId && (
                 <div className="relative">

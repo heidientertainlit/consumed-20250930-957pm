@@ -6528,7 +6528,7 @@ export default function Feed() {
         isOpen={composerOpen}
         onClose={() => setComposerOpen(false)}
         initialPostType={composerInitialType}
-        skipToComposer={false}
+        skipToComposer={true}
         searchToCompose={true}
       />
 
