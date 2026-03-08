@@ -6533,6 +6533,7 @@ export default function Feed() {
         onClose={() => setComposerOpen(false)}
         initialPostType={composerInitialType}
         skipToComposer={false}
+        searchToCompose={true}
       />
 
       <QuickAddListSheet

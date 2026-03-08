@@ -59,12 +59,13 @@ interface QuickAddModalProps {
   defaultListId?: string;
   initialPostType?: "react" | "predict" | "rank";
   skipToComposer?: boolean;
+  searchToCompose?: boolean;
 }
 
 type Stage = "search" | "composer";
 type PostType = "react" | "predict" | "rank";
 
-export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId, initialPostType, skipToComposer }: QuickAddModalProps) {
+export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId, initialPostType, skipToComposer, searchToCompose }: QuickAddModalProps) {
   const { user, session } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -786,7 +787,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                   className="px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-xl whitespace-nowrap transition-colors"
                   data-testid="just-post-button"
                 >
-                  💭 Just post
+                  Just post
                 </button>
               </div>
             </div>
@@ -805,10 +806,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                     <div
                       key={`${result.external_id || result.id}-${index}`}
                       onClick={() => {
-                        if (defaultListId) {
+                        if (defaultListId || searchToCompose) {
                           handleSelectMedia(result);
                         } else {
-                          console.log('🎯 Row clicked - navigating to media:', result.title);
                           onClose();
                           const mediaType = result.type || 'movie';
                           const externalId = result.external_id || result.id;
@@ -820,7 +820,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                       tabIndex={0}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                          if (defaultListId) {
+                          if (defaultListId || searchToCompose) {
                             handleSelectMedia(result);
                           } else {
                             onClose();
