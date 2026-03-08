@@ -4262,56 +4262,84 @@ export default function Feed() {
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-5 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
           
-          {/* What Friends Are Consuming - subtle inline row */}
-          {friendsConsuming.length > 0 && (
-            <div className="mb-1">
-              <div className="mb-6">
-                <h1 className="text-2xl font-semibold text-white text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>Trending</h1>
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
-                {friendsConsuming.map((item: any, idx: number) => (
-                  <Link key={item.id || idx} href={(() => { if (!item.external_id || isNaN(Number(item.external_id))) return '#'; const t = (item.media_type || '').toLowerCase(); const type = (t === 'tv' || t.includes('show') || t === 'tv_show') ? 'tv' : t === 'movie' ? 'movie' : t || 'movie'; return `/media/${type}/${item.external_source || 'tmdb'}/${item.external_id}`; })()}>
-                    <div className="w-[72px] flex-shrink-0 cursor-pointer group">
-                      <div className="relative aspect-[2/3] rounded-md overflow-hidden mb-1 ring-1 ring-white/10 group-hover:ring-purple-400/50 transition-all">
-                        {(item.image_url && item.image_url.startsWith('http')) ? (
-                          <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
-                        ) : item.image_url && !item.image_url.startsWith('http') ? (
-                          <img src={`https://image.tmdb.org/t/p/w200${item.image_url}`} alt={item.title} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-purple-900/60 to-indigo-900/60 flex items-center justify-center">
-                            <Film size={12} className="text-purple-400/50" />
-                          </div>
-                        )}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setQuickAddMedia({
-                              title: item.title,
-                              mediaType: item.media_type || 'movie',
-                              externalId: item.external_id || item.id,
-                              externalSource: item.external_source || 'tmdb',
-                              imageUrl: item.image_url || '',
-                            });
-                            setIsQuickAddOpen(true);
-                          }}
-                          className="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center"
-                        >
-                          <Plus className="w-4 h-4 text-white/60" />
-                        </button>
-                      </div>
-                      <p className="text-[10px] text-white/60 truncate leading-tight">{item.title}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+          {/* Composer Trigger - dark hero zone */}
+          <div>
+            <p className="text-white/50 text-sm mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>What are you consuming?</p>
+            <button
+              onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
+              className="w-full text-left px-4 py-3 rounded-2xl bg-white/[0.07] border border-white/[0.12] text-white/30 text-sm mb-3 hover:bg-white/[0.10] transition-colors"
+            >
+              Search movies, books, music, shows...
+            </button>
+            <div className="flex gap-2">
+              {([
+                { type: "react" as const, label: "React" },
+                { type: "predict" as const, label: "Predict" },
+                { type: "rank" as const, label: "Review" },
+              ]).map(({ type, label }) => (
+                <button
+                  key={type}
+                  onClick={() => { setComposerInitialType(type); setComposerOpen(true); }}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    type === "react"
+                      ? "bg-purple-600 text-white hover:bg-purple-700"
+                      : "border border-white/20 text-white/60 hover:bg-white/10"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
           
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-4 pb-6" data-feed-content>
+        {/* Trending Strip - top of white feed area */}
+        {friendsConsuming.length > 0 && (
+          <div className="mb-5">
+            <h2 className="text-base font-semibold text-gray-800 mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>Trending</h2>
+            <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+              {friendsConsuming.map((item: any, idx: number) => (
+                <Link key={item.id || idx} href={(() => { if (!item.external_id || isNaN(Number(item.external_id))) return '#'; const t = (item.media_type || '').toLowerCase(); const type = (t === 'tv' || t.includes('show') || t === 'tv_show') ? 'tv' : t === 'movie' ? 'movie' : t || 'movie'; return `/media/${type}/${item.external_source || 'tmdb'}/${item.external_id}`; })()}>
+                  <div className="w-[80px] flex-shrink-0 cursor-pointer group">
+                    <div className="relative aspect-[2/3] rounded-xl overflow-hidden mb-1.5 shadow-sm group-hover:shadow-md transition-all">
+                      {(item.image_url && item.image_url.startsWith('http')) ? (
+                        <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                      ) : item.image_url && !item.image_url.startsWith('http') ? (
+                        <img src={`https://image.tmdb.org/t/p/w200${item.image_url}`} alt={item.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-100 to-indigo-100 flex items-center justify-center">
+                          <Film size={16} className="text-purple-400/50" />
+                        </div>
+                      )}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setQuickAddMedia({
+                            title: item.title,
+                            mediaType: item.media_type || 'movie',
+                            externalId: item.external_id || item.id,
+                            externalSource: item.external_source || 'tmdb',
+                            imageUrl: item.image_url || '',
+                          });
+                          setIsQuickAddOpen(true);
+                        }}
+                        className="absolute bottom-1.5 right-1.5 w-7 h-7 rounded-full bg-white/90 shadow-sm flex items-center justify-center hover:bg-white transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-gray-700" />
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-gray-600 truncate leading-tight font-medium">{item.title}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Pending Friend Casts - You've Been Cast! - At top of white feed area */}
         {pendingCasts.length > 0 && (
           <div className="space-y-3 mb-4">
@@ -4372,135 +4400,6 @@ export default function Feed() {
             </div>
           ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'challenges'].includes(selectedFilter) ? (
             <div className="space-y-4 pb-24">
-              {/* Composer Trigger */}
-              <div className="mb-4 rounded-2xl border border-gray-200 shadow-sm bg-white p-3">
-                <button
-                  onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
-                  className="w-full text-left px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-400 text-sm hover:bg-gray-100 transition-colors"
-                >
-                  What are you consuming?
-                </button>
-                <div className="flex gap-2 mt-2.5">
-                  {([
-                    { type: "react" as const, label: "React" },
-                    { type: "predict" as const, label: "Predict" },
-                    { type: "rank" as const, label: "Review" },
-                  ]).map(({ type, label }) => (
-                    <button
-                      key={type}
-                      onClick={() => { setComposerInitialType(type); setComposerOpen(true); }}
-                      className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                        type === "react"
-                          ? "bg-purple-600 text-white hover:bg-purple-700"
-                          : "border border-gray-300 text-gray-600 hover:bg-gray-100"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Feed Filter - Single subtle button, expands to show all filters */}
-              <div className="mb-2">
-                <button
-                  onClick={() => setShowCategoryPills(!showCategoryPills)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                    (selectedFilter !== 'All' && selectedFilter !== 'all') || selectedCategory
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : showCategoryPills
-                        ? 'bg-gray-200 text-gray-700 border border-gray-300'
-                        : 'bg-gray-100 text-gray-500 border border-dashed border-gray-300 hover:bg-gray-200'
-                  }`}
-                >
-                  <SlidersHorizontal size={14} />
-                  <span>{
-                    selectedCategory 
-                      ? selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)
-                      : selectedFilter !== 'All' && selectedFilter !== 'all' 
-                        ? selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1) 
-                        : 'Filter'
-                  }</span>
-                  {((selectedFilter !== 'All' && selectedFilter !== 'all') || selectedCategory) && (
-                    <X 
-                      size={12} 
-                      className="ml-1 hover:text-white/80"
-                      onClick={(e) => { e.stopPropagation(); setSelectedFilter('All'); setSelectedCategory(null); setShowCategoryPills(false); }}
-                    />
-                  )}
-                </button>
-              </div>
-
-              {/* Filter Pills - Shown when Filter button toggled */}
-              {showCategoryPills && (
-                <div className="space-y-2 mb-3">
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                    <span className="text-[10px] text-gray-400 uppercase tracking-wide flex-shrink-0">Media</span>
-                    {[
-                      { id: null, label: 'All', Icon: Sparkles },
-                      { id: 'movies', label: 'Movies', Icon: Film },
-                      { id: 'tv', label: 'TV', Icon: Tv2 },
-                      { id: 'music', label: 'Music', Icon: Music },
-                      { id: 'books', label: 'Books', Icon: Book },
-                      { id: 'sports', label: 'Sports', Icon: Activity },
-                      { id: 'podcasts', label: 'Podcasts', Icon: Headphones },
-                      { id: 'gaming', label: 'Gaming', Icon: Gamepad2 },
-                    ].map((cat) => (
-                      <button
-                        key={cat.id || 'all'}
-                        onClick={() => {
-                          setSelectedCategory(cat.id === selectedCategory ? null : cat.id);
-                        }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                          cat.id === null && selectedCategory === null
-                            ? 'bg-gradient-to-r from-indigo-600 via-purple-700 to-blue-700 text-white shadow-sm'
-                            : cat.id !== null && cat.id === selectedCategory
-                              ? 'bg-purple-100 text-purple-700 border border-purple-300'
-                              : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                        }`}
-                      >
-                        <cat.Icon size={12} />
-                        {cat.label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                    <span className="text-[10px] text-gray-400 uppercase tracking-wide flex-shrink-0">Play</span>
-                    {[
-                      { id: 'all', label: 'All', Icon: Sparkles },
-                      { id: 'trivia', label: 'Trivia', Icon: Brain },
-                      { id: 'challenges', label: 'Challenges', Icon: Trophy },
-                      { id: 'polls', label: 'Polls', Icon: BarChart },
-                      { id: 'predictions', label: 'Predictions', Icon: Target },
-                      { id: 'commentary', label: 'Commentary', Icon: Flame },
-                    ].map((filter) => (
-                      <button
-                        key={filter.id}
-                        onClick={() => {
-                          setSelectedFilter(filter.id === selectedFilter ? 'All' : filter.id);
-                          if (filter.id === 'all' || filter.id === selectedFilter) {
-                            setShowCategoryPills(false);
-                          }
-                        }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                          (filter.id === 'all' && selectedFilter === 'All') || filter.id === selectedFilter
-                            ? 'bg-gradient-to-r from-indigo-600 via-purple-700 to-blue-700 text-white shadow-sm'
-                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                        }`}
-                      >
-                        <filter.Icon size={12} />
-                        <span>{filter.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-
-              {/* What Friends Are Consuming - moved to hero gradient above */}
-
-              {/* User posts first - Quick Glimpse moved below */}
-
               {/* Empty state for filtered views */}
               {feedFilter === 'friends' && filteredPosts.length === 0 && (
                 <div className="bg-white rounded-2xl p-8 text-center border border-gray-100" data-testid="empty-filter-state">
