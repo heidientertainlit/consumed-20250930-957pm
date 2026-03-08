@@ -616,12 +616,12 @@ serve(async (req) => {
       // 6. Popularity/social proof for providers that have it
       const popularity = (item as any).popularity;
       if (typeof popularity === 'number' && popularity > 0) {
-        score += Math.min(25, popularity / 4);
+        score += Math.min(45, popularity / 2);
       }
       
       const voteCount = (item as any).vote_count;
       if (typeof voteCount === 'number' && voteCount > 0) {
-        score += Math.min(20, voteCount / 100);
+        score += Math.min(30, voteCount / 80);
       }
       
       // For books: ratings_count or edition_count indicates cultural significance
@@ -664,19 +664,8 @@ serve(async (req) => {
         }
       }
       
-      // 8. Book bonus for exact/near-exact title matches
-      // Books are often the original source material (Anne of Green Gables, etc.)
+      // 8. Book classic bonus - old books with many editions are literary classics
       if (item.type === 'book') {
-        // Strong bonus for exact title match - book is likely the original
-        if (normalizedTitle === normalizedQuery || title === queryLower) {
-          score += 35;  // Significant boost for exact match books
-        } else if (normalizedTitle.startsWith(normalizedQuery) || title.startsWith(queryLower)) {
-          score += 25;  // Good boost when book title starts with query
-        } else if (title.includes(queryLower) || normalizedTitle.includes(normalizedQuery)) {
-          score += 15;  // Moderate boost for partial match
-        }
-        
-        // Classic book bonus - old books with many editions are literary classics
         if (editionCount && editionCount > 50) {
           score += 20;  // Many editions = enduring classic
         } else if (editionCount && editionCount > 20) {
