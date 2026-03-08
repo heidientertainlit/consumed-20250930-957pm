@@ -147,7 +147,7 @@ serve(async (req) => {
             );
             if (tmdbResponse.ok) {
               const tmdbData = await tmdbResponse.json();
-              tmdbData.results?.slice(0, 15).forEach((item: any) => {
+              tmdbData.results?.slice(0, 25).forEach((item: any) => {
                 if ((item.media_type === 'movie' || item.media_type === 'tv') && isContentAppropriate(item, item.media_type)) {
                   const releaseDate = item.release_date || item.first_air_date || '';
                   const year = releaseDate ? releaseDate.substring(0, 4) : '';

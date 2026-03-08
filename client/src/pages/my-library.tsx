@@ -168,6 +168,16 @@ export default function MyLibrary() {
     }
   }, [session?.access_token, user?.id]);
 
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && session?.access_token && user?.id) {
+        fetchCurrentlyItems();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [session?.access_token, user?.id]);
+
   const updateProgressMutation = useMutation({
     mutationFn: async ({ itemId, progress, total, mode, progressDisplay }: { itemId: string; progress: number; total?: number; mode: string; progressDisplay: string }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
@@ -935,7 +945,10 @@ export default function MyLibrary() {
       {listSheetMedia && (
         <QuickAddListSheet
           isOpen={isListSheetOpen}
-          onClose={() => setIsListSheetOpen(false)}
+          onClose={() => {
+            setIsListSheetOpen(false);
+            setTimeout(() => fetchCurrentlyItems(), 800);
+          }}
           media={listSheetMedia}
         />
       )}
