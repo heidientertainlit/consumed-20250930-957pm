@@ -1081,16 +1081,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                 </div>
               )}
 
-              {/* Attach media section - only for non-list mode */}
-              {!defaultListId && !selectedMedia && (
-                <button
-                  onClick={() => setStage("search")}
-                  className="w-full flex items-center gap-2 p-3 border border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-purple-400 hover:text-purple-600 transition-colors"
-                >
-                  <Search size={18} />
-                  <span>Attach media (optional)</span>
-                </button>
-              )}
 
               {/* Dynamic content based on post type */}
               {postType === 'react' && (
