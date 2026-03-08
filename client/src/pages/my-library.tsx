@@ -21,7 +21,7 @@ export default function MyLibrary() {
   const [composerMedia, setComposerMedia] = useState<any>(null);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const librarySearchRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState<'in-progress' | 'lists' | 'history'>('in-progress');
+  const [activeTab, setActiveTab] = useState<'in-progress' | 'lists' | 'all-media'>('in-progress');
   const [listSearch, setListSearch] = useState('');
   const [mediaHistorySearch, setMediaHistorySearch] = useState('');
   const [mediaHistoryType, setMediaHistoryType] = useState('all');
@@ -565,15 +565,15 @@ export default function MyLibrary() {
               Lists
             </button>
             <button
-              onClick={() => setActiveTab('history')}
+              onClick={() => setActiveTab('all-media')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                activeTab === 'history'
+                activeTab === 'all-media'
                   ? 'bg-gray-700 text-white shadow-sm'
                   : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
               }`}
             >
               <Clock size={14} />
-              History
+              All My Media
             </button>
           </div>
 
@@ -710,7 +710,7 @@ export default function MyLibrary() {
             </div>
           )}
 
-          {activeTab === 'history' && (
+          {activeTab === 'all-media' && (
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
                   <div className="flex items-center gap-1 mb-3">
                     <div className="flex items-center bg-gray-100 rounded p-0.5">
