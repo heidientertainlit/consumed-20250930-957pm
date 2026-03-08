@@ -4263,11 +4263,11 @@ export default function Feed() {
             <div className="rounded-2xl bg-[#1a1035] border border-purple-500/30 shadow-lg shadow-purple-900/20 mb-3 overflow-hidden">
               <button
                 onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
-                className="w-full text-left px-4 pt-3 pb-4 hover:bg-white/5 transition-colors"
+                className="w-full text-left px-4 pt-5 pb-3 hover:bg-white/5 transition-colors"
               >
-                <span className="text-white/55 text-sm">What are you consuming?</span>
+                <span className="text-white/80 text-base font-medium">What are you consuming?</span>
               </button>
-              <div className="flex items-center gap-2 px-3 pb-3">
+              <div className="flex items-center gap-1.5 px-4 pb-5">
                 {([
                   { type: "react" as const, label: "React", Icon: MessageCircle },
                   { type: "predict" as const, label: "Predict", Icon: TrendingUp },
@@ -4276,22 +4276,12 @@ export default function Feed() {
                   <button
                     key={type}
                     onClick={() => { setComposerInitialType(type); setComposerOpen(true); }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                      type === "react"
-                        ? "bg-purple-600 text-white hover:bg-purple-700"
-                        : "bg-white/[0.07] border border-white/20 text-white/60 hover:bg-white/10"
-                    }`}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-normal bg-white/[0.06] border border-white/10 text-white/35 hover:bg-white/10 hover:text-white/55 transition-colors"
                   >
-                    <Icon size={12} />
+                    <Icon size={11} />
                     {label}
                   </button>
                 ))}
-                <button
-                  onClick={() => { setComposerOpen(true); }}
-                  className="ml-auto flex items-center justify-center w-7 h-7 rounded-full bg-white/[0.07] border border-white/20 text-white/40 hover:bg-white/10 transition-colors"
-                >
-                  <MoreHorizontal size={14} />
-                </button>
               </div>
             </div>
 
