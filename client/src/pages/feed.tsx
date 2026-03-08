@@ -4258,10 +4258,6 @@ export default function Feed() {
           
           {/* Composer Trigger - dark hero zone */}
           <div>
-            {/* Centered headline */}
-            <h1 className="text-2xl font-semibold text-white text-center mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Activity
-            </h1>
 
             {/* Unified composer card — dark purple frosted style */}
             <div className="rounded-2xl bg-[#1a1035] border border-purple-500/30 shadow-lg shadow-purple-900/20 mb-3 overflow-hidden">
