@@ -1177,152 +1177,50 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                     {renderStars()}
                   </div>
 
-              {/* List selection - horizontal pills with custom list dropdown */}
-              <div className="flex flex-wrap items-center gap-2">
-                {[
-                  { id: 'finished', label: 'Finished' },
-                  { id: 'currently', label: 'Currently' },
-                  { id: 'queue', label: 'Want To' },
-                  { id: 'favorites', label: 'Favorites' },
-                  { id: 'dnf', label: 'DNF' },
-                ].map((list) => (
-                  <button
-                    key={list.id}
-                    type="button"
-                    onClick={() => {
-                      if (list.id === 'dnf') {
-                        setPendingDnfListId(list.id);
-                        setIsDnfDrawerOpen(true);
-                      } else {
-                        setSelectedListId(selectedListId === list.id ? "" : list.id);
-                      }
-                    }}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      selectedListId === list.id
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    data-testid={`list-pill-${list.id}`}
-                  >
-                    {list.label}
-                  </button>
-                ))}
-                {/* Custom lists pill - always show so users can access their custom lists */}
-                <button
-                  type="button"
-                  onClick={() => setIsListDrawerOpen(true)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
-                    !['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  data-testid="custom-list-dropdown"
+              {/* Add to list — single dropdown */}
+              <div className="relative">
+                <select
+                  value={selectedListId}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'dnf') {
+                      setPendingDnfListId(val);
+                      setIsDnfDrawerOpen(true);
+                    } else {
+                      setSelectedListId(val);
+                    }
+                  }}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white text-gray-700 appearance-none pr-8 focus:outline-none focus:border-purple-400"
+                  data-testid="add-to-list-select"
                 >
-                  {!['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId) 
-                    ? userLists.find((l: any) => l.id === selectedListId)?.title || userLists.find((l: any) => l.id === selectedListId)?.name || 'Custom'
-                    : 'Custom'
+                  <option value="">Add to list</option>
+                  <option value="finished">Finished</option>
+                  <option value="currently">Currently watching / reading</option>
+                  <option value="queue">Want To</option>
+                  <option value="favorites">Favorites</option>
+                  <option value="dnf">DNF</option>
+                  {userLists
+                    .filter((l: any) => !['finished', 'currently', 'queue', 'favorites', 'dnf'].includes(l.id))
+                    .map((l: any) => (
+                      <option key={l.id} value={l.id}>{l.title || l.name}</option>
+                    ))
                   }
-                  <ChevronDown size={14} />
-                </button>
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
 
-              {/* More options toggle */}
-              <button
-                type="button"
-                onClick={() => setShowMoreOptions(!showMoreOptions)}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 py-1"
-                data-testid="more-options-toggle"
-              >
-                <ChevronDown size={14} className={`transition-transform ${showMoreOptions ? 'rotate-180' : ''}`} />
-                {showMoreOptions ? 'Less options' : 'More options'}
-              </button>
-
-              {/* Collapsible advanced options */}
-              {showMoreOptions && (
-                <div className="space-y-3 pt-2 border-t border-gray-100">
-                  {/* Checkboxes row - above season/episode so dropdown doesn't overlap */}
-                  <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="spoilers-checkbox"
-                        checked={containsSpoilers}
-                        onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
-                        data-testid="checkbox-spoilers"
-                      />
-                      <label htmlFor="spoilers-checkbox" className="text-sm text-gray-600">
-                        Spoilers
-                      </label>
-                    </div>
-                    
-                  </div>
-
-                  {/* TV season/episode picker */}
-                  {(() => { const t = (selectedMedia?.type || selectedMedia?.media_type || '').toLowerCase(); return t === 'tv' || t.includes('show') || t === 'tv_show' || t.includes('podcast'); })() && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-gray-500 uppercase">Season & Episode</p>
-                      <div className="flex gap-2">
-                        <div className="flex-1">
-                          <select
-                            value={tvSeason}
-                            onChange={(e) => {
-                              setTvSeason(e.target.value);
-                              if (!e.target.value) setTvEpisode("");
-                            }}
-                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white"
-                            data-testid="season-select"
-                          >
-                            <option value="">All Seasons</option>
-                            {Array.from({ length: 20 }, (_, i) => (
-                              <option key={i + 1} value={String(i + 1)}>Season {i + 1}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="flex-1">
-                          <select
-                            value={tvEpisode}
-                            onChange={(e) => setTvEpisode(e.target.value)}
-                            disabled={!tvSeason}
-                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white disabled:opacity-50 disabled:bg-gray-50"
-                            data-testid="episode-select"
-                          >
-                            <option value="">All Episodes</option>
-                            {Array.from({ length: 30 }, (_, i) => (
-                              <option key={i + 1} value={String(i + 1)}>Episode {i + 1}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Music format picker */}
-                  {(selectedMedia?.type === 'music' || selectedMedia?.media_type === 'music') && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-gray-500 uppercase">Format</p>
-                      <div className="flex gap-2">
-                        {[
-                          { value: 'album', label: 'Album' },
-                          { value: 'single', label: 'Single' },
-                          { value: 'track', label: 'Track' }
-                        ].map((option) => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => setMusicFormat(option.value as "album" | "single" | "track")}
-                            className={`flex-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                              musicFormat === option.value
-                                ? 'bg-purple-600 text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Spoilers checkbox */}
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="spoilers-checkbox"
+                  checked={containsSpoilers}
+                  onCheckedChange={(checked) => setContainsSpoilers(checked as boolean)}
+                  data-testid="checkbox-spoilers"
+                />
+                <label htmlFor="spoilers-checkbox" className="text-sm text-gray-500 cursor-pointer">
+                  Contains spoilers
+                </label>
+              </div>
                 </>
               )}
             </div>
