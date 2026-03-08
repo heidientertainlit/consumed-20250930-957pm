@@ -400,9 +400,9 @@ export default function MyLibrary() {
           <h2 className="text-white text-2xl font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>My Library</h2>
           <button
             onClick={() => setLocation('/add')}
-            className="flex items-center gap-2 px-5 py-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition-colors shadow-md"
+            className="flex items-center gap-2 px-8 py-2.5 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 text-white text-sm font-semibold transition-all shadow-lg"
           >
-            <Plus size={15} />
+            <Plus size={16} />
             Add Media
           </button>
         </div>
@@ -414,8 +414,8 @@ export default function MyLibrary() {
               onClick={() => setActiveTab('in-progress')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 activeTab === 'in-progress'
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+                  ? 'bg-gray-700 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
               }`}
             >
               <Play size={14} />
@@ -425,8 +425,8 @@ export default function MyLibrary() {
               onClick={() => setActiveTab('lists')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 activeTab === 'lists'
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+                  ? 'bg-gray-700 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
               }`}
             >
               <List size={14} />
@@ -436,8 +436,8 @@ export default function MyLibrary() {
               onClick={() => setActiveTab('history')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 activeTab === 'history'
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
-                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+                  ? 'bg-gray-700 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
               }`}
             >
               <Clock size={14} />
