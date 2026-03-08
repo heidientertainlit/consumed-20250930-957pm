@@ -917,6 +917,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {/* Inline media attach — shown in searchToCompose mode when no media selected yet */}
               {searchToCompose && !selectedMedia && (
+                <div className="space-y-1.5">
+                <p className="text-xs text-gray-400 px-1">Add media to rate, react to, or predict</p>
                 <div className="relative">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
@@ -968,6 +970,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                       })}
                     </div>
                   )}
+                </div>
                 </div>
               )}
 
