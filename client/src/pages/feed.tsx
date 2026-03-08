@@ -4259,31 +4259,17 @@ export default function Feed() {
           {/* Composer Trigger - dark hero zone */}
           <div>
 
-            {/* Unified composer card — dark purple frosted style */}
-            <div className="rounded-2xl bg-[#2a1f4e] border border-purple-400/40 shadow-lg shadow-purple-900/20 mb-3 overflow-hidden">
-              <button
-                onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
-                className="w-full text-left px-4 pt-5 pb-5 hover:bg-white/5 transition-colors"
-              >
-                <span className="text-white/60 text-base font-medium">What are you consuming?</span>
-              </button>
-              <div className="flex items-center gap-1.5 px-4 pb-5">
-                {([
-                  { type: "react" as const, label: "React", Icon: MessageCircle },
-                  { type: "predict" as const, label: "Predict", Icon: TrendingUp },
-                  { type: "rank" as const, label: "Review", Icon: Star },
-                ]).map(({ type, label, Icon }) => (
-                  <button
-                    key={type}
-                    onClick={() => { setComposerInitialType(type); setComposerOpen(true); }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-normal bg-white/[0.06] border border-white/10 text-white/35 hover:bg-white/10 hover:text-white/55 transition-colors"
-                  >
-                    <Icon size={11} />
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <h1 className="text-2xl font-bold text-white mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Activity
+            </h1>
+
+            <button
+              onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.07] border border-white/10 hover:bg-white/10 transition-colors"
+            >
+              <MessageCircle size={18} className="text-white/40 shrink-0" />
+              <span className="text-white/40 text-sm">Share your take...</span>
+            </button>
 
           </div>
           
