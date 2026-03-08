@@ -516,22 +516,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
       </div>
 
       {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ overflow: 'visible' }}>
-        {/* Floating plus button with white ring for gap effect */}
-        <div className="absolute left-1/2 -translate-x-1/2 z-10" style={{ top: -24 }}>
-          <Link
-            href="/add"
-            className="flex items-center justify-center"
-            data-testid="nav-home"
-          >
-            <div className="w-[58px] h-[58px] rounded-full bg-white flex items-center justify-center p-[4px]">
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-purple-500 via-purple-600 to-blue-600 flex items-center justify-center">
-                <Plus className="text-white" size={26} strokeWidth={2.5} />
-              </div>
-            </div>
-          </Link>
-        </div>
-
+      <nav className="fixed bottom-0 left-0 right-0 z-50">
         {/* Thin nav bar */}
         <div className="flex justify-around items-center px-2" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 8px), 8px)', paddingTop: '8px' }}>
           {/* Activity Feed */}
@@ -548,7 +533,6 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
           <Link
             href="/play"
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location.startsWith("/play") ? "bg-white/15" : ""}`}
-            style={{ marginRight: -6 }}
             data-testid="nav-play"
           >
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -564,14 +548,10 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             <span className="text-white text-[10px] mt-0.5">Play</span>
           </Link>
 
-          {/* Spacer for center button */}
-          <div style={{ width: 56 }} />
-
           {/* Library */}
           <Link
             href="/my-library"
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/my-library" ? "bg-white/15" : ""}`}
-            style={{ marginLeft: -6 }}
             data-testid="nav-library"
             onTouchStart={prefetchCollections}
             onMouseEnter={prefetchCollections}
