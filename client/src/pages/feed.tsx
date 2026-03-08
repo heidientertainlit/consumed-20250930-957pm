@@ -1618,6 +1618,8 @@ export default function Feed() {
 
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [trackModalPreSelectedMedia, setTrackModalPreSelectedMedia] = useState<any>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [composerInitialType, setComposerInitialType] = useState<"react" | "predict" | "rank">("react");
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [selectedFilter, setSelectedFilter] = useState("All");
@@ -4370,6 +4372,35 @@ export default function Feed() {
             </div>
           ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'challenges'].includes(selectedFilter) ? (
             <div className="space-y-4 pb-24">
+              {/* Composer Trigger */}
+              <div className="mb-4 rounded-2xl border border-gray-200 shadow-sm bg-white p-3">
+                <button
+                  onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
+                  className="w-full text-left px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-400 text-sm hover:bg-gray-100 transition-colors"
+                >
+                  What are you consuming?
+                </button>
+                <div className="flex gap-2 mt-2.5">
+                  {([
+                    { type: "react" as const, label: "React" },
+                    { type: "predict" as const, label: "Predict" },
+                    { type: "rank" as const, label: "Review" },
+                  ]).map(({ type, label }) => (
+                    <button
+                      key={type}
+                      onClick={() => { setComposerInitialType(type); setComposerOpen(true); }}
+                      className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                        type === "react"
+                          ? "bg-purple-600 text-white hover:bg-purple-700"
+                          : "border border-gray-300 text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Feed Filter - Single subtle button, expands to show all filters */}
               <div className="mb-2">
                 <button
@@ -6590,6 +6621,12 @@ export default function Feed() {
           setTrackModalPreSelectedMedia(null);
         }}
         preSelectedMedia={trackModalPreSelectedMedia}
+      />
+
+      <QuickAddModal
+        isOpen={composerOpen}
+        onClose={() => setComposerOpen(false)}
+        initialPostType={composerInitialType}
       />
 
       <QuickAddListSheet
