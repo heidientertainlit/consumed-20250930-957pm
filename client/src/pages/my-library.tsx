@@ -12,7 +12,7 @@ import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
 
 export default function MyLibrary() {
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'lists' | 'history'>('lists');
+  const [activeTab, setActiveTab] = useState<'in-progress' | 'lists' | 'history'>('in-progress');
   const [listSearch, setListSearch] = useState('');
   const [mediaHistorySearch, setMediaHistorySearch] = useState('');
   const [mediaHistoryType, setMediaHistoryType] = useState('all');
@@ -396,59 +396,31 @@ export default function MyLibrary() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] -mt-px">
-        <div className="pt-8 pb-4 px-4 text-center">
+        <div className="pt-8 pb-6 px-4 flex flex-col items-center gap-4">
           <h2 className="text-white text-2xl font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>My Library</h2>
-        </div>
-
-        <div className="px-4 pb-6">
-          <div className="max-w-3xl lg:mx-auto">
-            <div className="mb-2">
-              <h2 className="text-sm font-medium text-white/80">In Progress</h2>
-            </div>
-            {currentlyItems.length > 0 ? (
-              <div 
-                className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 lg:justify-center"
-                style={{ WebkitOverflowScrolling: 'touch' }}
-              >
-                {currentlyItems.map((item: any) => (
-                  <CurrentlyConsumingCard 
-                    key={item.id} 
-                    item={item}
-                    onUpdateProgress={(progress, total, mode, progressDisplay) => {
-                      updateProgressMutation.mutate({
-                        itemId: item.id,
-                        progress,
-                        total,
-                        mode,
-                        progressDisplay
-                      });
-                    }}
-                    onMoveToList={(targetList, listName) => {
-                      moveToListMutation.mutate({
-                        itemId: item.id,
-                        targetList,
-                        listName
-                      });
-                    }}
-                    isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="pb-1">
-                <div className="bg-white/10 border border-white/20 rounded-lg p-3 text-center">
-                  <Clock className="mx-auto mb-1 text-white/40" size={18} />
-                  <p className="text-white/70 text-xs">No items in your Currently list yet</p>
-                  <p className="text-white/40 text-[10px] mt-0.5">Search and add to "Currently" to track progress</p>
-                </div>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => setLocation('/add')}
+            className="flex items-center gap-2 px-5 py-2 rounded-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium transition-colors shadow-md"
+          >
+            <Plus size={15} />
+            Add Media
+          </button>
         </div>
       </div>
 
       <div className="bg-white max-w-7xl mx-auto px-4 pt-4 pb-6 space-y-4">
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <button
+              onClick={() => setActiveTab('in-progress')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                activeTab === 'in-progress'
+                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 border border-gray-200 hover:border-purple-300'
+              }`}
+            >
+              <Play size={14} />
+              In Progress
+            </button>
             <button
               onClick={() => setActiveTab('lists')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
@@ -472,6 +444,47 @@ export default function MyLibrary() {
               History
             </button>
           </div>
+
+          {activeTab === 'in-progress' && (
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 -mt-1">
+              {currentlyItems.length > 0 ? (
+                <div
+                  className="flex gap-3 overflow-x-auto scrollbar-hide pb-1"
+                  style={{ WebkitOverflowScrolling: 'touch' }}
+                >
+                  {currentlyItems.map((item: any) => (
+                    <CurrentlyConsumingCard
+                      key={item.id}
+                      item={item}
+                      onUpdateProgress={(progress, total, mode, progressDisplay) => {
+                        updateProgressMutation.mutate({
+                          itemId: item.id,
+                          progress,
+                          total,
+                          mode,
+                          progressDisplay
+                        });
+                      }}
+                      onMoveToList={(targetList, listName) => {
+                        moveToListMutation.mutate({
+                          itemId: item.id,
+                          targetList,
+                          listName
+                        });
+                      }}
+                      isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Clock className="mx-auto mb-2 text-gray-300" size={28} />
+                  <p className="text-sm text-gray-600 mb-1">Nothing in progress yet</p>
+                  <p className="text-xs text-gray-400">Add media and mark it as "Currently" to track your progress here</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {activeTab === 'lists' && (
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 -mt-1">
