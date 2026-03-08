@@ -328,25 +328,24 @@ export default function PlayRanks() {
       {/* Header Section with Gradient */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => window.history.back()}
-                className="flex items-center text-gray-400 hover:text-white transition-colors"
-                data-testid="back-button"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <h1 className="text-2xl font-semibold text-white" data-testid="ranks-title">Ranks</h1>
-            </div>
+          <div className="flex items-center gap-3 mb-2">
             <button
-              onClick={() => setIsCreateRankOpen(true)}
-              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium px-4 py-2 rounded-full transition-colors"
+              onClick={() => window.history.back()}
+              className="flex items-center text-gray-400 hover:text-white transition-colors"
+              data-testid="back-button"
             >
-              <Plus size={16} />
-              Create
+              <ChevronLeft size={20} />
             </button>
+            <h1 className="text-2xl font-semibold text-white" data-testid="ranks-title">Ranks</h1>
           </div>
+          <button
+            onClick={() => setIsCreateRankOpen(true)}
+            className="flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-opacity hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #db2777)' }}
+          >
+            <Plus size={16} />
+            Create a Rank
+          </button>
 
         </div>
       </div>
