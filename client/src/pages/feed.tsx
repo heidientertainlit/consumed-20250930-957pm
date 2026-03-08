@@ -742,20 +742,36 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const mediaTypeLabel = post.mediaType === 'tv' ? 'TV' : post.mediaType;
 
   return (
-    <div className="snap-start flex-shrink-0 w-[78vw] max-w-[300px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="snap-start flex-shrink-0 w-[85vw] max-w-[340px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="p-4">
-        <div className="flex justify-end items-center gap-2 mb-2">
-          {mediaTypeLabel && (
-            <span className="text-[11px] font-medium text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full capitalize">{mediaTypeLabel}</span>
-          )}
-          {currentUserId && post.user?.id === currentUserId && onDeletePost && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }}
-              className="text-gray-300 hover:text-red-500 transition-colors"
-            >
-              <Trash2 size={14} />
-            </button>
-          )}
+        {/* User header inside card */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold overflow-hidden flex-shrink-0">
+              {post.user?.avatar
+                ? <img src={post.user.avatar} alt="" className="w-full h-full object-cover" />
+                : (post.user?.displayName || post.user?.username || '?')[0]?.toUpperCase()}
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-gray-900 leading-tight">{post.user?.displayName || post.user?.username || 'Someone'}</p>
+              {post.user?.username && post.user.username !== post.user?.displayName && (
+                <p className="text-[10px] text-gray-400 leading-tight">@{post.user.username}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {mediaTypeLabel && (
+              <span className="text-[11px] font-medium text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full capitalize">{mediaTypeLabel}</span>
+            )}
+            {currentUserId && post.user?.id === currentUserId && onDeletePost && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }}
+                className="text-gray-300 hover:text-red-500 transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
         </div>
         {post.mediaTitle ? (
           <div className="flex gap-3">
@@ -2031,31 +2047,10 @@ export default function Feed() {
   const renderFeedItem = (item: any, keyPrefix: string) => {
     if (item?.type === 'ugc_group') {
       const grp = item as { id: string; user: UGCPost['user']; posts: UGCPost[]; timestamp: string };
-      const avatar = grp.user?.avatar;
-      const displayName = grp.user?.displayName || grp.user?.username || 'Someone';
-      const rawUsername = grp.user?.username || '';
-      const avatarLetter = (displayName || rawUsername)[0]?.toUpperCase() || '?';
 
       return (
         <div key={`${keyPrefix}-${grp.id}`} className="mb-4">
-          {/* User header */}
-          <div className="flex items-center gap-2.5 px-1 pb-2">
-            <Link href={`/user/${grp.user?.id || ''}`}>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer flex-shrink-0 overflow-hidden">
-                {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : avatarLetter}
-              </div>
-            </Link>
-            <div>
-              <Link href={`/user/${grp.user?.id || ''}`}>
-                <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer leading-tight">{displayName}</p>
-              </Link>
-              {rawUsername && rawUsername !== displayName && (
-                <p className="text-xs text-gray-400 leading-tight">@{rawUsername}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Horizontally swipeable post cards */}
+          {/* Horizontally swipeable post cards — user name is inside each card */}
           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
             {grp.posts.map((p) => (
               <UGCGroupCard
