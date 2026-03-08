@@ -4264,16 +4264,12 @@ export default function Feed() {
           
           {/* Composer Trigger - dark hero zone */}
           <div>
-            <p className="text-white/50 text-sm mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>What are you consuming?</p>
-
-            {/* Search-bar style composer trigger */}
+            {/* Simple text-style composer trigger */}
             <button
               onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.07] border border-white/[0.12] mb-3 hover:bg-white/[0.10] transition-colors"
+              className="w-full text-left px-4 py-3 rounded-2xl bg-white/90 mb-3 hover:bg-white transition-colors shadow-sm"
             >
-              <SearchIcon size={16} className="text-white/40 flex-shrink-0" />
-              <span className="flex-1 text-left text-white/30 text-sm">Search movies, books, music, shows...</span>
-              <Mic size={16} className="text-white/40 flex-shrink-0" />
+              <span className="text-gray-400 text-sm">What are you watching, reading, or listening to?</span>
             </button>
 
             {/* Action pills + more */}

@@ -70,7 +70,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
   const [, setLocation] = useLocation();
   const { markRated } = useFirstSessionHooks();
   
-  const [stage, setStage] = useState<Stage>("search");
+  const [stage, setStage] = useState<Stage>(() => skipToComposer ? "composer" : "search");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -234,7 +234,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
   }, [isOpen, preSelectedMedia, defaultListId, initialPostType, skipToComposer]);
 
   const resetModal = () => {
-    setStage("search");
+    setStage(skipToComposer ? "composer" : "search");
     setSearchQuery("");
     setSearchResults([]);
     setSelectedMedia(null);
