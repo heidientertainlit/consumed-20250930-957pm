@@ -2037,27 +2037,29 @@ export default function Feed() {
       const avatarLetter = (displayName || rawUsername)[0]?.toUpperCase() || '?';
 
       return (
-        <div key={`${keyPrefix}-${grp.id}`} className="mb-4">
-          {/* User header — shown once above all carousel cards */}
-          <div className="flex items-start gap-3 px-1 mb-2">
-            <Link href={`/user/${grp.user?.id || ''}`}>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-semibold cursor-pointer flex-shrink-0 overflow-hidden">
-                {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : avatarLetter}
-              </div>
-            </Link>
-            <div className="flex-1 min-w-0 pt-0.5">
+        <div key={`${keyPrefix}-${grp.id}`} className="mb-4 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          {/* User header — inside the card, trivia-style */}
+          <div className="flex items-center justify-between px-4 pt-3 pb-2.5 border-b border-gray-100">
+            <div className="flex items-center gap-2.5">
               <Link href={`/user/${grp.user?.id || ''}`}>
-                <span className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer text-sm">{displayName}</span>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer flex-shrink-0 overflow-hidden">
+                  {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : avatarLetter}
+                </div>
               </Link>
-              {rawUsername && rawUsername !== displayName && (
-                <p className="text-xs text-gray-400 leading-tight">@{rawUsername}</p>
-              )}
+              <div>
+                <Link href={`/user/${grp.user?.id || ''}`}>
+                  <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer leading-tight">{displayName}</p>
+                </Link>
+                {rawUsername && rawUsername !== displayName && (
+                  <p className="text-xs text-gray-400 leading-tight">@{rawUsername}</p>
+                )}
+              </div>
             </div>
-            <span className="text-xs text-gray-400 pt-1 flex-shrink-0">{grp.posts.length} updates</span>
+            <span className="text-xs text-gray-400">{grp.posts.length} update{grp.posts.length !== 1 ? 's' : ''}</span>
           </div>
 
           {/* Horizontally swipeable post cards */}
-          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
+          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory px-4 pt-3">
             {grp.posts.map((p) => (
               <UGCGroupCard
                 key={p.id}
