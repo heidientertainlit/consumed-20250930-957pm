@@ -4260,12 +4260,12 @@ export default function Feed() {
           <div>
 
             {/* Unified composer card — dark purple frosted style */}
-            <div className="rounded-2xl bg-[#1a1035] border border-purple-500/30 shadow-lg shadow-purple-900/20 mb-3 overflow-hidden">
+            <div className="rounded-2xl bg-[#2a1f4e] border border-purple-400/40 shadow-lg shadow-purple-900/20 mb-3 overflow-hidden">
               <button
                 onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
                 className="w-full text-left px-4 pt-5 pb-5 hover:bg-white/5 transition-colors"
               >
-                <span className="text-white/80 text-base font-medium">What are you consuming?</span>
+                <span className="text-white/60 text-base font-medium">What are you consuming?</span>
               </button>
               <div className="flex items-center gap-1.5 px-4 pb-5">
                 {([
