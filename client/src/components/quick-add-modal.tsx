@@ -57,13 +57,13 @@ interface QuickAddModalProps {
   onClose: () => void;
   preSelectedMedia?: PreSelectedMedia | null;
   defaultListId?: string;
-  initialPostType?: "react" | "predict" | "rank";
+  initialPostType?: "react" | "predict" | "rank" | "review";
   skipToComposer?: boolean;
   searchToCompose?: boolean;
 }
 
 type Stage = "search" | "composer";
-type PostType = "react" | "predict" | "rank";
+type PostType = "react" | "predict" | "rank" | "review";
 
 export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId, initialPostType, skipToComposer, searchToCompose }: QuickAddModalProps) {
   const { user, session } = useAuth();
@@ -345,8 +345,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
       return;
     }
     
-    // For other posts, require text content OR a rating (when media is attached)
-    if (postType !== 'rank' && !reviewText.trim() && !(selectedMedia && rating > 0)) {
+    // For other posts, require text content OR a rating
+    if (postType !== 'rank' && !reviewText.trim() && !(rating > 0 && (postType === 'review' || selectedMedia))) {
       toast({
         title: "Add content",
         description: "Please write something or add a rating for your post.",
@@ -404,7 +404,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
       console.log('🎯 Composer: Posting', { postType, hasMedia: !!selectedMedia, mediaData, reviewText: reviewText.substring(0, 50) });
       
       // Handle based on post type
-      if (postType === 'react') {
+      if (postType === 'react' || postType === 'review') {
         // If rating is provided, let rate-media handle the social post (it stores ratings properly)
         // Otherwise use inline-post for reactions
         if (selectedMedia && rating > 0) {
@@ -1068,6 +1068,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                   {[
                     { id: 'react', label: 'React' },
                     { id: 'predict', label: 'Predict' },
+                    { id: 'review', label: 'Review' },
                   ].map((type) => (
                     <button
                       key={type.id}
@@ -1154,8 +1155,21 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                 </>
               )}
 
-              {/* Show rating and list options when media is attached or in add-to-list mode */}
-              {(defaultListId || (selectedMedia && postType === 'react')) && (
+              {postType === 'review' && (
+                <>
+                  <Textarea
+                    placeholder="Write your review..."
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
+                    className="bg-white border-gray-200 resize-none min-h-[80px]"
+                    rows={3}
+                  />
+                </>
+              )}
+
+              {/* Show rating and list options when media is attached or in add-to-list mode, or always for review */}
+              {(defaultListId || (selectedMedia && postType === 'react') || postType === 'review') && (
                 <>
                   {/* Rating */}
                   <div className="flex items-center gap-2">
@@ -1316,7 +1330,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
             <div className="p-4 border-t border-gray-100">
               <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting || (defaultListId ? !selectedMedia : (!reviewText.trim() && postType !== 'rank' && rating === 0))}
+                disabled={isSubmitting || (defaultListId ? !selectedMedia : (!reviewText.trim() && postType !== 'rank' && !(rating > 0 && (postType === 'review' || selectedMedia))))}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
                 data-testid="quick-add-submit"
               >
