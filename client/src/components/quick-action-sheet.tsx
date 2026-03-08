@@ -615,7 +615,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
               {/* Post type toggle */}
               <div className="flex items-center gap-2 flex-wrap">
                 {([
-                  { key: 'thought' as const, label: 'Thought' },
+                  { key: 'thought' as const, label: 'Reaction' },
                   { key: 'review' as const, label: 'Review' },
                   { key: 'prediction' as const, label: 'Prediction' },
                 ] as const).map(({ key, label }) => (
@@ -637,7 +637,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                 value={contentText}
                 onChange={(e) => setContentText(e.target.value)}
                 placeholder={
-                  trackPostType === 'thought' ? "What's on your mind?" :
+                  trackPostType === 'thought' ? "What's your reaction?" :
                   trackPostType === 'review' ? "Write your review..." :
                   "What do you predict?"
                 }
