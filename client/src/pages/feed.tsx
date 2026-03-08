@@ -2037,9 +2037,9 @@ export default function Feed() {
       const avatarLetter = (displayName || rawUsername)[0]?.toUpperCase() || '?';
 
       return (
-        <div key={`${keyPrefix}-${grp.id}`} className="mb-4 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          {/* User header — inside the card */}
-          <div className="flex items-center gap-2.5 px-4 pt-3 pb-1">
+        <div key={`${keyPrefix}-${grp.id}`} className="mb-4">
+          {/* User header */}
+          <div className="flex items-center gap-2.5 px-1 pb-2">
             <Link href={`/user/${grp.user?.id || ''}`}>
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer flex-shrink-0 overflow-hidden">
                 {avatar ? <img src={avatar} alt="" className="w-full h-full object-cover" /> : avatarLetter}
@@ -2056,7 +2056,7 @@ export default function Feed() {
           </div>
 
           {/* Horizontally swipeable post cards */}
-          <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide snap-x snap-mandatory px-4 pt-0">
+          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
             {grp.posts.map((p) => (
               <UGCGroupCard
                 key={p.id}
