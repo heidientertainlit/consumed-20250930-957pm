@@ -6577,6 +6577,7 @@ export default function Feed() {
         isOpen={composerOpen}
         onClose={() => setComposerOpen(false)}
         initialPostType={composerInitialType}
+        skipToComposer={true}
       />
 
       <QuickAddListSheet
