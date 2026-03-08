@@ -10,7 +10,6 @@ import CreateListDialog from "@/components/create-list-dialog";
 import { supabase } from "@/lib/supabase";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
 import { QuickAddModal } from "@/components/quick-add-modal";
-import { QuickActionSheet } from "@/components/quick-action-sheet";
 
 export default function MyLibrary() {
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
@@ -18,8 +17,8 @@ export default function MyLibrary() {
   const [librarySearchFocused, setLibrarySearchFocused] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-  const [actionSheetMedia, setActionSheetMedia] = useState<any>(null);
-  const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
+  const [composerMedia, setComposerMedia] = useState<any>(null);
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
   const librarySearchRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<'in-progress' | 'lists' | 'history'>('in-progress');
   const [listSearch, setListSearch] = useState('');
@@ -503,7 +502,7 @@ export default function MyLibrary() {
                           <button
                             onMouseDown={(e) => {
                               e.preventDefault();
-                              setActionSheetMedia({
+                              setComposerMedia({
                                 title: media.title,
                                 mediaType: media.type || 'movie',
                                 imageUrl: media.image,
@@ -511,7 +510,7 @@ export default function MyLibrary() {
                                 externalSource: media.external_source || 'tmdb',
                                 creator: media.creator,
                               });
-                              setIsActionSheetOpen(true);
+                              setIsComposerOpen(true);
                             }}
                             className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
                           >
@@ -937,10 +936,11 @@ export default function MyLibrary() {
         onClose={() => setIsQuickAddOpen(false)}
         preSelectedMedia={quickAddMedia}
       />
-      <QuickActionSheet
-        isOpen={isActionSheetOpen}
-        onClose={() => setIsActionSheetOpen(false)}
-        preselectedMedia={actionSheetMedia}
+      <QuickAddModal
+        isOpen={isComposerOpen}
+        onClose={() => setIsComposerOpen(false)}
+        preSelectedMedia={composerMedia}
+        skipToComposer={true}
       />
     </div>
   );
