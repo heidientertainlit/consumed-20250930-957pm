@@ -4267,7 +4267,7 @@ export default function Feed() {
             <div className="rounded-2xl bg-[#1a1035] border border-purple-500/30 shadow-lg shadow-purple-900/20 mb-3 overflow-hidden">
               <button
                 onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
-                className="w-full text-left px-4 pt-3 pb-2 hover:bg-white/5 transition-colors"
+                className="w-full text-left px-4 pt-3 pb-4 hover:bg-white/5 transition-colors"
               >
                 <span className="text-white/55 text-sm">What are you consuming?</span>
               </button>
@@ -6532,7 +6532,7 @@ export default function Feed() {
         isOpen={composerOpen}
         onClose={() => setComposerOpen(false)}
         initialPostType={composerInitialType}
-        skipToComposer={true}
+        skipToComposer={false}
       />
 
       <QuickAddListSheet
