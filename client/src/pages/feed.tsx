@@ -4266,7 +4266,7 @@ export default function Feed() {
           <div>
             {/* Centered headline */}
             <h1 className="text-2xl font-semibold text-white text-center mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              What are you consuming?
+              Activity
             </h1>
 
             {/* Unified composer card — dark purple frosted style */}
@@ -4275,7 +4275,7 @@ export default function Feed() {
                 onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
                 className="w-full text-left px-4 pt-3 pb-2 hover:bg-white/5 transition-colors"
               >
-                <span className="text-white/30 text-sm">What are you watching, reading, or listening to?</span>
+                <span className="text-white/30 text-sm">What are you consuming?</span>
               </button>
               <div className="flex items-center gap-2 px-3 pb-3">
                 {([
