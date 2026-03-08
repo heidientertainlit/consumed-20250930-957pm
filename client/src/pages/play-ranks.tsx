@@ -338,66 +338,6 @@ export default function PlayRanks() {
             <h1 className="text-2xl font-semibold text-white" data-testid="ranks-title">Ranks</h1>
           </div>
 
-          <div className="mb-4">
-            {/* Filter Row */}
-            <div className="flex flex-wrap gap-2 items-center justify-between">
-              <div className="flex gap-2">
-                {/* Topic Filter Dropdown */}
-                <div className="relative">
-                  <button
-                    onClick={() => setExpandedFilter(expandedFilter === 'topic' ? null : 'topic')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
-                      selectedCategory
-                        ? 'bg-purple-600/30 border-purple-400 text-purple-200'
-                        : 'bg-white/10 border-white/20 text-gray-200 hover:bg-white/15'
-                    }`}
-                    data-testid="topic-filter-toggle"
-                  >
-                    <span className="text-sm font-medium">
-                      Topic{selectedCategory ? `: ${categoryFilters.find(c => c.id === selectedCategory)?.label}` : ''}
-                    </span>
-                    <ChevronDown size={16} className={`transition-transform ${expandedFilter === 'topic' ? 'rotate-180' : ''}`} />
-                  </button>
-                  {expandedFilter === 'topic' && (
-                    <div className="absolute top-full left-0 mt-1 bg-white rounded-lg border border-gray-200 shadow-lg p-2 z-20 min-w-[160px]">
-                      <button
-                        onClick={() => {
-                          setSelectedCategory(null);
-                          setExpandedFilter(null);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
-                          !selectedCategory
-                            ? 'bg-purple-100 text-purple-700 font-medium'
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                        data-testid="filter-all-topics"
-                      >
-                        All Topics
-                      </button>
-                      {categoryFilters.map((cat) => (
-                        <button
-                          key={cat.id}
-                          onClick={() => {
-                            setSelectedCategory(cat.id);
-                            setExpandedFilter(null);
-                          }}
-                          className={`w-full text-left px-3 py-2 rounded-md text-sm transition-all ${
-                            selectedCategory === cat.id
-                              ? 'bg-purple-100 text-purple-700 font-medium'
-                              : 'text-gray-700 hover:bg-gray-100'
-                          }`}
-                          data-testid={`filter-${cat.id}`}
-                        >
-                          {cat.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-            </div>
-          </div>
         </div>
       </div>
 
@@ -517,15 +457,6 @@ export default function PlayRanks() {
                       )}
                     </div>
                     
-                    {item.isConsumed ? (
-                      <p className="text-xs text-gray-500 mt-3 text-center">
-                        Create your own version of this ranking!
-                      </p>
-                    ) : (
-                      <p className="text-xs text-purple-600 mt-3 text-center font-medium">
-                        Tap to view full ranking and vote
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
