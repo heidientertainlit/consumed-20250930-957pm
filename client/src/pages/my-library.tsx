@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Loader2, Film, Music, BookOpen, Tv, Mic, Gamepad2, Clock, Plus, Download, Share2, Lock, List, ChevronRight, Calendar, Play, Trophy, LayoutGrid } from "lucide-react";
+import { Search as SearchIcon, Loader2, Film, Music, BookOpen, Tv, Mic, Gamepad2, Clock, Plus, Download, Share2, Lock, List, ChevronRight, Calendar, Play, Trophy, LayoutGrid, Activity, MessageSquarePlus, Star, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
@@ -10,10 +10,17 @@ import CreateListDialog from "@/components/create-list-dialog";
 import { supabase } from "@/lib/supabase";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
 import { QuickAddModal } from "@/components/quick-add-modal";
+import { QuickActionSheet } from "@/components/quick-action-sheet";
 
 export default function MyLibrary() {
   const [isCreateListOpen, setIsCreateListOpen] = useState(false);
-  const [isAddMediaOpen, setIsAddMediaOpen] = useState(false);
+  const [librarySearchQuery, setLibrarySearchQuery] = useState('');
+  const [librarySearchFocused, setLibrarySearchFocused] = useState(false);
+  const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [actionSheetMedia, setActionSheetMedia] = useState<any>(null);
+  const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
+  const librarySearchRef = useRef<HTMLInputElement>(null);
   const [activeTab, setActiveTab] = useState<'in-progress' | 'lists' | 'history'>('in-progress');
   const [listSearch, setListSearch] = useState('');
   const [mediaHistorySearch, setMediaHistorySearch] = useState('');
@@ -27,6 +34,26 @@ export default function MyLibrary() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: librarySearchResults = [], isLoading: isSearching } = useQuery({
+    queryKey: ['library-media-search', librarySearchQuery],
+    queryFn: async () => {
+      if (!librarySearchQuery.trim() || !session?.access_token) return [];
+      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ query: librarySearchQuery }),
+      });
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.results || [];
+    },
+    enabled: !!librarySearchQuery.trim() && !!session?.access_token,
+    staleTime: 1000 * 60 * 5,
+  });
 
   const { data: userStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['user-stats-dna', user?.id],
@@ -398,16 +425,109 @@ export default function MyLibrary() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] -mt-px">
-        <div className="pt-8 pb-6 px-4 flex flex-col items-center gap-4">
+        <div className="pt-8 pb-4 px-4 flex flex-col items-center gap-4">
           <h2 className="text-white text-2xl font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>My Library</h2>
-          <button
-            onClick={() => setIsAddMediaOpen(true)}
-            className="w-full max-w-sm flex items-center gap-3 px-4 py-3 rounded-full bg-white/10 border border-white/20 hover:bg-white/15 transition-all text-left"
-          >
-            <SearchIcon size={16} className="text-white/50 flex-shrink-0" />
-            <span className="text-white/50 text-sm">Search to add media...</span>
-          </button>
+          <div className="relative w-full max-w-sm">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-full bg-white/10 border border-white/20 focus-within:bg-white/15 focus-within:border-white/30 transition-all">
+              <SearchIcon size={16} className="text-white/50 flex-shrink-0" />
+              <input
+                ref={librarySearchRef}
+                type="text"
+                placeholder="Search to add media..."
+                value={librarySearchQuery}
+                onChange={(e) => setLibrarySearchQuery(e.target.value)}
+                onFocus={() => setLibrarySearchFocused(true)}
+                onBlur={() => setTimeout(() => setLibrarySearchFocused(false), 150)}
+                className="flex-1 bg-transparent text-white text-sm placeholder:text-white/50 outline-none"
+              />
+              {librarySearchQuery && (
+                <button onClick={() => { setLibrarySearchQuery(''); librarySearchRef.current?.focus(); }}>
+                  <X size={14} className="text-white/40 hover:text-white/70" />
+                </button>
+              )}
+            </div>
+
+            {/* Inline results dropdown */}
+            {librarySearchQuery.trim() && (librarySearchFocused || librarySearchQuery.trim()) && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-[#1a1a2e] border border-white/10 rounded-xl max-h-80 overflow-y-auto z-50 shadow-xl">
+                {isSearching && (
+                  <div className="p-4 text-center text-gray-400 text-sm">Searching...</div>
+                )}
+                {!isSearching && librarySearchResults.length === 0 && librarySearchQuery.length > 1 && (
+                  <div className="p-4 text-center text-gray-400 text-sm">No results found</div>
+                )}
+                {librarySearchResults.length > 0 && (
+                  <div>
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-white/10">
+                      Media
+                    </div>
+                    {librarySearchResults.slice(0, 8).map((media: any, idx: number) => (
+                      <div
+                        key={`${media.external_id}-${idx}`}
+                        className="flex items-center gap-3 px-3 py-2 hover:bg-white/5"
+                      >
+                        <div
+                          onClick={() => { setLibrarySearchQuery(''); setLocation(`/media/${media.external_source || 'tmdb'}/${media.external_id}`); }}
+                          className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                        >
+                          {media.image ? (
+                            <img src={media.image} alt={media.title} className="w-10 h-14 object-cover rounded flex-shrink-0" />
+                          ) : (
+                            <div className="w-10 h-14 bg-gray-700 rounded flex items-center justify-center flex-shrink-0">
+                              <Activity size={16} className="text-gray-500" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white text-sm font-medium truncate">{media.title}</p>
+                            <p className="text-gray-400 text-xs">{media.type}{media.year && ` • ${media.year}`}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setQuickAddMedia({
+                                title: media.title,
+                                mediaType: media.type || 'movie',
+                                imageUrl: media.image,
+                                externalId: media.external_id,
+                                externalSource: media.external_source || 'tmdb',
+                                creator: media.creator,
+                              });
+                              setIsQuickAddOpen(true);
+                            }}
+                            className="w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
+                          >
+                            <Plus size={16} className="text-white" />
+                          </button>
+                          <button
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setActionSheetMedia({
+                                title: media.title,
+                                mediaType: media.type || 'movie',
+                                imageUrl: media.image,
+                                externalId: media.external_id,
+                                externalSource: media.external_source || 'tmdb',
+                                creator: media.creator,
+                              });
+                              setIsActionSheetOpen(true);
+                            }}
+                            className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
+                          >
+                            <MessageSquarePlus size={14} className="text-white" />
+                            <Star size={8} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
+        <div className="pb-2" />
       </div>
 
       <div className="bg-white max-w-7xl mx-auto px-4 pt-4 pb-6 space-y-4">
@@ -813,8 +933,14 @@ export default function MyLibrary() {
 
       <CreateListDialog open={isCreateListOpen} onOpenChange={setIsCreateListOpen} />
       <QuickAddModal
-        isOpen={isAddMediaOpen}
-        onClose={() => setIsAddMediaOpen(false)}
+        isOpen={isQuickAddOpen}
+        onClose={() => setIsQuickAddOpen(false)}
+        preSelectedMedia={quickAddMedia}
+      />
+      <QuickActionSheet
+        isOpen={isActionSheetOpen}
+        onClose={() => setIsActionSheetOpen(false)}
+        preselectedMedia={actionSheetMedia}
       />
     </div>
   );
