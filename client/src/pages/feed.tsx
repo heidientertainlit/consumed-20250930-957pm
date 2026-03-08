@@ -4264,40 +4264,45 @@ export default function Feed() {
           
           {/* Composer Trigger - dark hero zone */}
           <div>
-            {/* Simple text-style composer trigger */}
-            <button
-              onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
-              className="w-full text-left px-4 py-3 rounded-2xl bg-white/90 mb-3 hover:bg-white transition-colors shadow-sm"
-            >
-              <span className="text-gray-400 text-sm">What are you watching, reading, or listening to?</span>
-            </button>
+            {/* Centered headline */}
+            <h1 className="text-2xl font-semibold text-white text-center mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              What are you consuming?
+            </h1>
 
-            {/* Action pills + more */}
-            <div className="flex items-center gap-2 mb-4">
-              {([
-                { type: "react" as const, label: "React", Icon: MessageCircle },
-                { type: "predict" as const, label: "Predict", Icon: TrendingUp },
-                { type: "rank" as const, label: "Review", Icon: Star },
-              ]).map(({ type, label, Icon }) => (
-                <button
-                  key={type}
-                  onClick={() => { setComposerInitialType(type); setComposerOpen(true); }}
-                  className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    type === "react"
-                      ? "bg-purple-600 text-white hover:bg-purple-700"
-                      : "bg-white/[0.07] border border-white/[0.12] text-white/60 hover:bg-white/10"
-                  }`}
-                >
-                  <Icon size={13} />
-                  {label}
-                </button>
-              ))}
+            {/* Unified composer card — text bar + pills inside one box */}
+            <div className="rounded-2xl bg-white/90 shadow-sm mb-3 overflow-hidden">
               <button
-                onClick={() => { setComposerOpen(true); }}
-                className="ml-auto flex items-center justify-center w-8 h-8 rounded-full bg-white/[0.07] border border-white/[0.12] text-white/40 hover:bg-white/10 transition-colors"
+                onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
+                className="w-full text-left px-4 pt-3 pb-2 hover:bg-white/95 transition-colors"
               >
-                <MoreHorizontal size={15} />
+                <span className="text-gray-400 text-sm">What are you watching, reading, or listening to?</span>
               </button>
+              <div className="flex items-center gap-2 px-3 pb-3">
+                {([
+                  { type: "react" as const, label: "React", Icon: MessageCircle },
+                  { type: "predict" as const, label: "Predict", Icon: TrendingUp },
+                  { type: "rank" as const, label: "Review", Icon: Star },
+                ]).map(({ type, label, Icon }) => (
+                  <button
+                    key={type}
+                    onClick={() => { setComposerInitialType(type); setComposerOpen(true); }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      type === "react"
+                        ? "bg-purple-600 text-white hover:bg-purple-700"
+                        : "bg-gray-100 border border-gray-200 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    <Icon size={12} />
+                    {label}
+                  </button>
+                ))}
+                <button
+                  onClick={() => { setComposerOpen(true); }}
+                  className="ml-auto flex items-center justify-center w-7 h-7 rounded-full bg-gray-100 border border-gray-200 text-gray-400 hover:bg-gray-200 transition-colors"
+                >
+                  <MoreHorizontal size={14} />
+                </button>
+              </div>
             </div>
 
             {/* Quick picks row */}

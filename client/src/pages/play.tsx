@@ -86,9 +86,9 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
 
       {/* Purple hero — heading + points + Daily Call */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] px-4 pt-6 pb-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="relative flex items-center justify-center mb-4">
           <h1
-            className="text-2xl font-bold text-white"
+            className="text-2xl font-bold text-white text-center"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
             Play
@@ -96,7 +96,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
           {totalPoints !== null && (
             <button
               onClick={() => setLocation("/points")}
-              className="flex items-center gap-1.5 bg-white/10 active:bg-white/20 rounded-full px-3 py-1.5 transition-colors"
+              className="absolute right-0 flex items-center gap-1.5 bg-white/10 active:bg-white/20 rounded-full px-3 py-1.5 transition-colors"
             >
               <Star size={13} className="text-amber-400" fill="currentColor" />
               <span className="text-white text-sm font-semibold">{totalPoints.toLocaleString()}</span>
