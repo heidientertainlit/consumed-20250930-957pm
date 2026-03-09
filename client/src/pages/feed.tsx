@@ -4279,7 +4279,7 @@ export default function Feed() {
           {/* Composer Trigger - dark hero zone */}
           <div>
 
-            <h1 className="text-2xl font-bold text-white mb-3 text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h1 className="text-2xl font-bold text-white mb-6 text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
               Activity
             </h1>
 
