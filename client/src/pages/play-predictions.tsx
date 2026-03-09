@@ -62,8 +62,13 @@ function PredictionCarouselSection({
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Target size={15} className="text-purple-600" />
-          <span className="text-sm font-semibold text-gray-900">{label}</span>
+          <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
+            <Target className="w-3.5 h-3.5 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-900">{label} Predictions</p>
+            <p className="text-[10px] text-gray-500">Tap to predict</p>
+          </div>
         </div>
         <div className="flex items-center gap-1">
           {currentIndex > 0 && (
@@ -76,7 +81,7 @@ function PredictionCarouselSection({
               <ChevronRight className="w-4 h-4 text-gray-600" />
             </button>
           )}
-          <span className="text-xs text-gray-400 ml-1">{currentIndex + 1}/{games.length}</span>
+          <span className="text-xs text-gray-500 ml-1">{currentIndex + 1}/{games.length}</span>
         </div>
       </div>
 

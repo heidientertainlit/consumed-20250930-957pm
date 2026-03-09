@@ -468,6 +468,19 @@ export default function PlayRanks() {
             </Button>
           </div>
         ) : (
+          <>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
+                  <Trophy className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Community Rankings</p>
+                  <p className="text-[10px] text-gray-500">Tap to explore</p>
+                </div>
+              </div>
+              <span className="text-xs text-gray-500">{filteredRanks.length} lists</span>
+            </div>
           <div className="space-y-4">
             {filteredRanks.map((item: any) => (
               <div 
@@ -561,6 +574,7 @@ export default function PlayRanks() {
               </div>
             ))}
           </div>
+          </>
         )}
       </div>
     </div>
