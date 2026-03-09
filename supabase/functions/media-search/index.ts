@@ -280,67 +280,74 @@ serve(async (req) => {
       })());
     }
 
-    // Spotify Search (podcasts)
+    // Podcast Search — iTunes Search API (free, no auth) primary, Spotify fallback
     if (!type || type === 'podcast') {
       searchPromises.push((async () => {
         try {
-          const clientId = Deno.env.get('SPOTIFY_CLIENT_ID');
-          const clientSecret = Deno.env.get('SPOTIFY_CLIENT_SECRET');
-          
-          if (clientId && clientSecret) {
-            const authResponse = await fetchWithTimeout('https://accounts.spotify.com/api/token', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
-                'Content-Type': 'application/x-www-form-urlencoded'
-              },
-              body: 'grant_type=client_credentials'
-            }, 3000);
-            
-            if (authResponse.ok) {
-              const authData = await authResponse.json();
-              const accessToken = authData.access_token;
-              
-              const spotifyResponse = await fetchWithTimeout(
-                `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=show,episode&limit=10&market=US`,
-                { headers: { 'Authorization': `Bearer ${accessToken}` } },
-                3000
-              );
-              
-              if (spotifyResponse.ok) {
-                const spotifyData = await spotifyResponse.json();
-                
-                // Add podcast shows
-                spotifyData.shows?.items?.slice(0, 5).forEach((podcast: any) => {
-                  if (isContentAppropriate(podcast, 'podcast')) {
-                    podcastResults.push({
-                      title: podcast.name,
-                      type: 'podcast',
-                      media_subtype: 'show',
-                      creator: podcast.publisher,
-                      poster_url: podcast.images?.[0]?.url || '',
-                      external_id: podcast.id,
-                      external_source: 'spotify',
-                      description: podcast.description
-                    });
-                  }
+          // Primary: iTunes Search API (free, reliable, no credentials needed)
+          const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchQuery)}&media=podcast&entity=podcast&limit=10&country=US`;
+          const itunesResponse = await fetchWithTimeout(itunesUrl, {}, 5000);
+
+          if (itunesResponse.ok) {
+            const itunesData = await itunesResponse.json();
+            (itunesData.results || []).slice(0, 8).forEach((podcast: any) => {
+              if (isContentAppropriate(podcast, 'podcast')) {
+                podcastResults.push({
+                  title: podcast.collectionName || podcast.trackName,
+                  type: 'podcast',
+                  media_subtype: 'show',
+                  creator: podcast.artistName || 'Unknown',
+                  poster_url: podcast.artworkUrl600 || podcast.artworkUrl100 || podcast.artworkUrl60 || '',
+                  external_id: String(podcast.collectionId || podcast.trackId),
+                  external_source: 'itunes',
+                  description: podcast.primaryGenreName || ''
                 });
-                
-                // Add individual podcast episodes
-                spotifyData.episodes?.items?.slice(0, 5).forEach((episode: any) => {
-                  if (isContentAppropriate(episode, 'podcast')) {
-                    podcastResults.push({
-                      title: episode.name,
-                      type: 'podcast',
-                      media_subtype: 'episode',
-                      creator: episode.show?.publisher || episode.show?.name || 'Unknown Show',
-                      poster_url: episode.images?.[0]?.url || episode.show?.images?.[0]?.url || '',
-                      external_id: episode.id,
-                      external_source: 'spotify',
-                      description: `Episode • ${episode.show?.name || 'Unknown Show'} • ${episode.release_date || ''}`
-                    });
-                  }
-                });
+              }
+            });
+          }
+
+          // Fallback: Spotify (if iTunes returned nothing and credentials available)
+          if (podcastResults.length === 0) {
+            const clientId = Deno.env.get('SPOTIFY_CLIENT_ID');
+            const clientSecret = Deno.env.get('SPOTIFY_CLIENT_SECRET');
+
+            if (clientId && clientSecret) {
+              const authResponse = await fetchWithTimeout('https://accounts.spotify.com/api/token', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+                  'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: 'grant_type=client_credentials'
+              }, 4000);
+
+              if (authResponse.ok) {
+                const authData = await authResponse.json();
+                const accessToken = authData.access_token;
+
+                const spotifyResponse = await fetchWithTimeout(
+                  `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=show&limit=10&market=US`,
+                  { headers: { 'Authorization': `Bearer ${accessToken}` } },
+                  4000
+                );
+
+                if (spotifyResponse.ok) {
+                  const spotifyData = await spotifyResponse.json();
+                  spotifyData.shows?.items?.slice(0, 5).forEach((podcast: any) => {
+                    if (isContentAppropriate(podcast, 'podcast')) {
+                      podcastResults.push({
+                        title: podcast.name,
+                        type: 'podcast',
+                        media_subtype: 'show',
+                        creator: podcast.publisher,
+                        poster_url: podcast.images?.[0]?.url || '',
+                        external_id: podcast.id,
+                        external_source: 'spotify',
+                        description: podcast.description
+                      });
+                    }
+                  });
+                }
               }
             }
           }
