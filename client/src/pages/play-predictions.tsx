@@ -4,13 +4,12 @@ import { useLocation } from 'wouter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+
 import { Trophy, Star, Users, Target, ChevronLeft, Lock, ChevronRight, Plus, Check } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { PredictionGameModal } from '@/components/prediction-game-modal';
-
-import InlineComposer from '@/components/inline-composer';
+import { QuickAddModal } from '@/components/quick-add-modal';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -618,18 +617,15 @@ export default function PlayPredictionsPage() {
         />
       )}
 
-      <Dialog open={showComposer} onOpenChange={setShowComposer}>
-        <DialogContent className="p-0 max-w-lg w-full overflow-hidden rounded-2xl" aria-describedby={undefined}>
-          <DialogTitle className="sr-only">Create Prediction</DialogTitle>
-          <InlineComposer
-            defaultType="prediction"
-            onPostSuccess={() => {
-              setShowComposer(false);
-              queryClient.invalidateQueries({ queryKey: ['/api/predictions/pools'] });
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+      <QuickAddModal
+        isOpen={showComposer}
+        onClose={() => {
+          setShowComposer(false);
+          queryClient.invalidateQueries({ queryKey: ['/api/predictions/pools'] });
+        }}
+        initialPostType="predict"
+        skipToComposer={true}
+      />
 
     </div>
   );
