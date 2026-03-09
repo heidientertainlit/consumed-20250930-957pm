@@ -4,12 +4,13 @@ import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Star, Users, UserPlus, ChevronLeft, Search, Lock, ChevronRight } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Trophy, Star, Users, UserPlus, ChevronLeft, Lock, ChevronRight, Plus } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { PredictionGameModal } from '@/components/prediction-game-modal';
 import GameShareModal from "@/components/game-share-modal";
+import InlineComposer from '@/components/inline-composer';
 import { queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabase';
@@ -21,17 +22,7 @@ export default function PlayPredictionsPage() {
   const [selectedPredictionGame, setSelectedPredictionGame] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [shareModalGame, setShareModalGame] = useState<any>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  
-  const categoryFilters = [
-    { id: 'Movies', label: 'Movies', icon: '🎬' },
-    { id: 'TV', label: 'TV', icon: '📺' },
-    { id: 'Music', label: 'Music', icon: '🎵' },
-    { id: 'Sports', label: 'Sports', icon: '🏆' },
-    { id: 'Awards', label: 'Awards', icon: '🏅' },
-  ];
+  const [showComposer, setShowComposer] = useState(false);
 
 
   // Extract game ID from URL hash if present (format: /play/predictions#game-id)
@@ -217,28 +208,9 @@ export default function PlayPredictionsPage() {
     };
   });
 
-  // Filter for prediction games with search and category (consumed + community)
   const predictionGames = React.useMemo(() => {
-    let filtered = processedGames.filter((game: any) => game.type === 'predict');
-    
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((game: any) => {
-        const titleMatch = game.title?.toLowerCase().includes(query);
-        const descMatch = game.description?.toLowerCase().includes(query);
-        const mediaMatch = game.media_title?.toLowerCase().includes(query);
-        return titleMatch || descMatch || mediaMatch;
-      });
-    }
-    
-    // Apply category filter
-    if (selectedCategory) {
-      filtered = filtered.filter((game: any) => game.category === selectedCategory);
-    }
-    
-    return filtered;
-  }, [processedGames, searchQuery, selectedCategory]);
+    return processedGames.filter((game: any) => game.type === 'predict');
+  }, [processedGames]);
   
   const lowStakesGames = predictionGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = predictionGames.filter((game: any) => game.isHighStakes);
@@ -284,49 +256,22 @@ export default function PlayPredictionsPage() {
             <h1 className="text-2xl font-semibold text-white" data-testid="predictions-title">Predictions</h1>
           </div>
 
-          {/* Search Row */}
-          <div className="relative mb-3">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <Input
-              type="text"
-              placeholder="Search predictions..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/10 border-white/20 rounded-xl text-white placeholder:text-gray-400"
-              data-testid="predictions-search-input"
-            />
-          </div>
-
-          {/* Filter chips */}
-          <div className="flex flex-wrap gap-2">
-            {categoryFilters.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                  selectedCategory === cat.id
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-white/10 text-gray-300 hover:bg-white/20'
-                }`}
-                data-testid={`filter-${cat.id}`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
+          <Button
+            onClick={() => setShowComposer(true)}
+            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-4 py-2 text-sm font-medium"
+            data-testid="create-prediction-btn"
+          >
+            <Plus size={16} />
+            Create Prediction
+          </Button>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-4">
 
         {/* Awards Events Section */}
-        {(!selectedCategory || selectedCategory === 'Awards') && (() => {
-          const filtered = awardsEvents.filter((e: any) =>
-            searchQuery.trim()
-              ? e.name?.toLowerCase().includes(searchQuery.toLowerCase())
-              : true
-          );
-          if (filtered.length === 0) return null;
+        {(() => {
+          if (awardsEvents.length === 0) return null;
           return (
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-3">
@@ -617,27 +562,18 @@ export default function PlayPredictionsPage() {
           </div>
         )}
 
-        {predictionGames.length === 0 && (selectedCategory === 'Awards' || (!selectedCategory && awardsEvents.length === 0)) && (
+        {predictionGames.length === 0 && awardsEvents.length === 0 && (
           <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
             <Trophy className="mx-auto mb-4 text-gray-400" size={48} />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchQuery || selectedCategory ? 'No matching predictions found' : 'No predictions available'}
-            </h3>
-            <p className="text-gray-600">
-              {searchQuery || selectedCategory
-                ? 'Try a different search term or filter' 
-                : 'Check back soon for new prediction games!'}
-            </p>
-            {(searchQuery || selectedCategory) && (
-              <Button
-                variant="outline"
-                onClick={() => { setSearchQuery(''); setSelectedCategory(null); }}
-                className="mt-4"
-                data-testid="clear-filters"
-              >
-                Clear Filters
-              </Button>
-            )}
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No predictions available</h3>
+            <p className="text-gray-600 mb-4">Be the first — create a prediction for others to weigh in on.</p>
+            <Button
+              onClick={() => setShowComposer(true)}
+              className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
+            >
+              <Plus size={16} className="mr-2" />
+              Create Prediction
+            </Button>
           </div>
         )}
       </div>
@@ -670,6 +606,18 @@ export default function PlayPredictionsPage() {
         />
       )}
 
+      <Dialog open={showComposer} onOpenChange={setShowComposer}>
+        <DialogContent className="p-0 max-w-lg w-full overflow-hidden rounded-2xl" aria-describedby={undefined}>
+          <DialogTitle className="sr-only">Create Prediction</DialogTitle>
+          <InlineComposer
+            defaultType="prediction"
+            onPostSuccess={() => {
+              setShowComposer(false);
+              queryClient.invalidateQueries({ queryKey: ['/api/predictions/pools'] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
