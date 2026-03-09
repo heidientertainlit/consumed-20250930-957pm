@@ -358,65 +358,93 @@ serve(async (req) => {
       })());
     }
 
-    // Spotify Search (music)
+    // Music Search — iTunes primary, OpenAI fallback
     if (!type || type === 'music') {
       searchPromises.push((async () => {
         try {
-          const clientId = Deno.env.get('SPOTIFY_CLIENT_ID');
-          const clientSecret = Deno.env.get('SPOTIFY_CLIENT_SECRET');
-          
-          if (clientId && clientSecret) {
-            const authResponse = await fetchWithTimeout('https://accounts.spotify.com/api/token', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
-                'Content-Type': 'application/x-www-form-urlencoded'
-              },
-              body: 'grant_type=client_credentials'
-            }, 3000);
-            
-            if (authResponse.ok) {
-              const authData = await authResponse.json();
-              const accessToken = authData.access_token;
-              
-              const spotifyResponse = await fetchWithTimeout(
-                `https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=album,track&limit=10`,
-                { headers: { 'Authorization': `Bearer ${accessToken}` } },
-                3000
-              );
-              
-              if (spotifyResponse.ok) {
-                const spotifyData = await spotifyResponse.json();
-                
-                spotifyData.albums?.items?.slice(0, 5).forEach((album: any) => {
-                  if (isContentAppropriate(album, 'music')) {
-                    musicResults.push({
-                      title: album.name,
-                      type: 'music',
-                      media_subtype: 'album',
-                      creator: album.artists?.[0]?.name || 'Unknown Artist',
-                      poster_url: album.images?.[0]?.url || '',
-                      external_id: album.id,
-                      external_source: 'spotify',
-                      description: `Album • ${album.total_tracks || 0} tracks • ${album.release_date?.substring(0, 4) || 'Unknown year'}`
-                    });
-                  }
+          // Primary: iTunes Search API (free, comprehensive catalog, no auth)
+          const itunesMusicUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchQuery)}&media=music&entity=album,musicTrack&limit=15&country=US`;
+          const itunesMusicResponse = await fetchWithTimeout(itunesMusicUrl, {}, 5000);
+
+          if (itunesMusicResponse.ok) {
+            const itunesMusicData = await itunesMusicResponse.json();
+            const seen = new Set<string>();
+            (itunesMusicData.results || []).forEach((item: any) => {
+              if (!isContentAppropriate(item, 'music')) return;
+              if (item.wrapperType === 'collection' || item.kind === 'album') {
+                const key = `album-${item.collectionId}`;
+                if (seen.has(key)) return;
+                seen.add(key);
+                musicResults.push({
+                  title: item.collectionName,
+                  type: 'music',
+                  media_subtype: 'album',
+                  creator: item.artistName || 'Unknown Artist',
+                  poster_url: (item.artworkUrl100 || '').replace('100x100', '600x600'),
+                  external_id: String(item.collectionId),
+                  external_source: 'itunes',
+                  description: `Album • ${item.primaryGenreName || ''} • ${item.releaseDate?.substring(0, 4) || ''}`
                 });
-                
-                spotifyData.tracks?.items?.slice(0, 5).forEach((track: any) => {
-                  if (isContentAppropriate(track, 'music')) {
-                    musicResults.push({
-                      title: track.name,
-                      type: 'music',
-                      media_subtype: 'song',
-                      creator: track.artists?.[0]?.name || 'Unknown Artist',
-                      poster_url: track.album?.images?.[0]?.url || '',
-                      external_id: track.id,
-                      external_source: 'spotify',
-                      description: `Song • ${track.album?.name || 'Unknown Album'}`
-                    });
-                  }
+              } else if (item.kind === 'song') {
+                const key = `song-${item.trackId}`;
+                if (seen.has(key)) return;
+                seen.add(key);
+                musicResults.push({
+                  title: item.trackName,
+                  type: 'music',
+                  media_subtype: 'song',
+                  creator: item.artistName || 'Unknown Artist',
+                  poster_url: (item.artworkUrl100 || '').replace('100x100', '600x600'),
+                  external_id: String(item.trackId),
+                  external_source: 'itunes',
+                  description: `Song • ${item.collectionName || 'Unknown Album'}`
                 });
+              }
+            });
+          }
+
+          // Fallback: OpenAI — for obscure/niche music iTunes may miss
+          if (musicResults.length === 0) {
+            const openaiKey = Deno.env.get('OPENAI_API_KEY');
+            if (openaiKey) {
+              const openaiResponse = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${openaiKey}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  model: 'gpt-4o-mini',
+                  messages: [{
+                    role: 'system',
+                    content: 'You are a music database. Return a JSON array of up to 5 music results matching the query. Each object must have: title (album or song name), creator (artist name), year (4-digit string), subtype ("album" or "song"). Return ONLY valid JSON, no markdown.'
+                  }, {
+                    role: 'user',
+                    content: `Music search: "${searchQuery}"`
+                  }],
+                  temperature: 0,
+                  max_tokens: 400
+                })
+              }, 6000);
+
+              if (openaiResponse.ok) {
+                const openaiData = await openaiResponse.json();
+                const raw = openaiData.choices?.[0]?.message?.content?.trim() || '[]';
+                try {
+                  const suggestions: any[] = JSON.parse(raw);
+                  suggestions.slice(0, 5).forEach((item: any) => {
+                    musicResults.push({
+                      title: item.title || 'Unknown',
+                      type: 'music',
+                      media_subtype: item.subtype || 'album',
+                      creator: item.creator || 'Unknown Artist',
+                      poster_url: '',
+                      external_id: `openai-${(item.title || '').toLowerCase().replace(/\s+/g, '-')}-${(item.creator || '').toLowerCase().replace(/\s+/g, '-')}`,
+                      external_source: 'openai',
+                      description: `${item.subtype === 'song' ? 'Song' : 'Album'} • ${item.year || ''}`
+                    });
+                  });
+                } catch (_) { /* ignore parse errors */ }
               }
             }
           }
