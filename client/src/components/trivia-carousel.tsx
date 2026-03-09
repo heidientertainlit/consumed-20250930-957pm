@@ -704,26 +704,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                     )}
                   </>)}
                 
-                <div className="flex items-center justify-between mt-4">
-                  <button 
-                    className="flex items-center gap-1 text-xs text-purple-600 font-medium hover:text-purple-700 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (navigator.share) {
-                        navigator.share({
-                          title: 'Trivia Question',
-                          text: `Can you answer this? ${item.question}`,
-                          url: window.location.origin
-                        });
-                      } else {
-                        navigator.clipboard.writeText(`Can you answer this? ${item.question} - Play at ${window.location.origin}`);
-                        toast({ title: "Link copied!", description: "Share it with your friends" });
-                      }
-                    }}
-                  >
-                    <Users className="w-3.5 h-3.5" />
-                    Challenge a friend
-                  </button>
+                <div className="flex items-center justify-end mt-4">
                   <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold">
                     +{item.pointsReward} pts
                   </div>

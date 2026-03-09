@@ -1197,13 +1197,6 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
                 >
                   <Plus size={16} />
                 </button>
-                <button
-                  onClick={() => onAddToList(media)}
-                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-yellow-500 active:scale-110 transition-all"
-                  title="Rate"
-                >
-                  <Star size={16} />
-                </button>
               </>
             );
           })()}
