@@ -525,7 +525,9 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
             data-testid="nav-activity"
           >
-            <Activity className="text-white" size={22} />
+            <div className="h-[22px] flex items-center justify-center">
+              <Activity className="text-white" size={22} />
+            </div>
             <span className="text-white text-[10px] mt-0.5">Activity</span>
           </Link>
 
@@ -535,7 +537,9 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location.startsWith("/play") ? "bg-white/15" : ""}`}
             data-testid="nav-play"
           >
-            <Trophy size={22} className="text-white" strokeWidth={1.5} />
+            <div className="h-[22px] flex items-center justify-center">
+              <Trophy size={19} className="text-white" strokeWidth={1.25} />
+            </div>
             <span className="text-white text-[10px] mt-0.5">Play</span>
           </Link>
 
@@ -547,19 +551,23 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             onTouchStart={prefetchCollections}
             onMouseEnter={prefetchCollections}
           >
-            <Library className="text-white" size={22} />
+            <div className="h-[22px] flex items-center justify-center">
+              <Library className="text-white" size={22} />
+            </div>
             <span className="text-white text-[10px] mt-0.5">Library</span>
           </Link>
 
-          {/* My DNA */}
+          {/* Me */}
           <Link
             href="/me?tab=dna"
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/me" ? "bg-white/15" : ""}`}
             data-testid="nav-dna"
           >
-            <div className="relative">
-              <User className="text-white" size={22} />
-              <Dna className="text-white absolute -bottom-1 -right-1.5" size={11} />
+            <div className="h-[22px] flex items-center justify-center">
+              <div className="relative">
+                <User className="text-white" size={22} />
+                <Dna className="text-white absolute -bottom-1 -right-1.5" size={11} />
+              </div>
             </div>
             <span className="text-white text-[10px] mt-0.5">Me</span>
           </Link>
