@@ -1980,11 +1980,13 @@ export default function Feed() {
     }
     const deduped = Array.from(dedupMap.values());
 
-    // Step 2: Group posts per user — if a user has multiple posts within 12 hours,
+    // Step 2: Group posts per user — if a user has multiple posts within 1 hour,
     // bundle them into a swipeable group card instead of individual cards.
+    // Cap groups at 3 posts so busy users don't collapse the whole feed into one card.
     // We preserve the original API order (firstIndex) for inter-user ordering so
     // that users without timestamps don't sink to the bottom.
-    const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+    const ONE_HOUR_MS = 60 * 60 * 1000;
+    const MAX_GROUP_SIZE = 3;
     const byUser = new Map<string, { posts: UGCPost[]; firstIndex: number }>();
     deduped.forEach((post, idx) => {
       const uid = post.user?.id || 'anon';
@@ -1996,7 +1998,7 @@ export default function Feed() {
     for (const [, { posts, firstIndex }] of byUser) {
       // Sort newest first within each user's posts
       posts.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
-      // Group into 12-hour windows
+      // Group into 1-hour windows, max 3 per group
       let grp: UGCPost[] = [posts[0]];
       const flushGrp = (g: UGCPost[]) => {
         if (g.length >= 2) {
@@ -2015,7 +2017,7 @@ export default function Feed() {
       for (let i = 1; i < posts.length; i++) {
         const grpTop = new Date(grp[0].timestamp || 0).getTime();
         const cur = new Date(posts[i].timestamp || 0).getTime();
-        if (grpTop - cur < TWELVE_HOURS_MS) {
+        if (grpTop - cur < ONE_HOUR_MS && grp.length < MAX_GROUP_SIZE) {
           grp.push(posts[i]);
         } else {
           flushGrp(grp);
