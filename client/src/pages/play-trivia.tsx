@@ -479,13 +479,6 @@ export default function PlayTriviaPage() {
                                         </div>
                                       </div>
                                     )}
-                                    {!result && prevAnswer && (
-                                      <div className="py-2 px-4 rounded-xl flex items-center gap-2 bg-gray-100 border border-gray-200">
-                                        <CheckCircle className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                                        <span className="text-sm font-semibold text-gray-500">Already completed</span>
-                                      </div>
-                                    )}
-
                                     {/* Percentage bars */}
                                     {(game.options || []).map((opt: string, oi: number) => {
                                       const pct = stats ? (stats[opt] || 0) : 0;
@@ -581,14 +574,7 @@ export default function PlayTriviaPage() {
                           )}
 
                           {/* Footer */}
-                          <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
-                            <button
-                              onClick={() => handleInviteFriends(game)}
-                              className="flex items-center gap-1.5 text-purple-600 text-xs font-medium"
-                            >
-                              <Users className="w-3.5 h-3.5" />
-                              Challenge a friend
-                            </button>
+                          <div className="flex items-center justify-end mt-3 pt-2 border-t border-gray-100">
                             <span className="text-green-600 text-xs font-medium">+{game.points || 10} pts</span>
                           </div>
                         </div>
