@@ -1,10 +1,7 @@
-import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
-import { Target, HelpCircle, Vote, BarChart2, UserPlus, Users, Trophy, ChevronRight, Star } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/lib/auth";
+import { Target, HelpCircle, Vote, BarChart2, UserPlus, Users, Trophy, ChevronRight } from "lucide-react";
 
 const gameModes = [
   {
@@ -65,45 +62,19 @@ const gameModes = [
 
 export default function PlayPage({ initialTab }: { initialTab?: string }) {
   const [, setLocation] = useLocation();
-  const { user, session } = useAuth();
-  const [totalPoints, setTotalPoints] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!user?.id || !session?.access_token) return;
-    fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/calculate-user-points?user_id=${user.id}`, {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.points?.all_time != null) setTotalPoints(data.points.all_time);
-      })
-      .catch(() => {});
-  }, [user?.id, session?.access_token]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0f' }}>
       <Navigation />
 
-      {/* Purple hero — heading + points + Daily Call */}
+      {/* Purple hero — heading + Daily Call */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] px-4 pt-6 pb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1
-            className="text-2xl font-bold text-white"
-            style={{ fontFamily: "Poppins, sans-serif" }}
-          >
-            Play
-          </h1>
-          {totalPoints !== null && (
-            <button
-              onClick={() => setLocation("/points")}
-              className="flex items-center gap-1.5 bg-white/10 active:bg-white/20 rounded-full px-3 py-1.5 transition-colors"
-            >
-              <Star size={13} className="text-amber-400" fill="currentColor" />
-              <span className="text-white text-sm font-semibold">{totalPoints.toLocaleString()}</span>
-              <span className="text-white/60 text-xs">pts</span>
-            </button>
-          )}
-        </div>
+        <h1
+          className="text-2xl font-bold text-white text-center mb-4"
+          style={{ fontFamily: "Poppins, sans-serif" }}
+        >
+          Play
+        </h1>
         <DailyChallengeCard />
       </div>
 
