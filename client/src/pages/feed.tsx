@@ -4540,14 +4540,13 @@ export default function Feed() {
 
               {renderPostBatchByIndex(0)}
 
-              {renderRoomCarousel(0, "Quick Glimpse")}
-
-              {/* Filtered views - show only the selected category */}
-              {/* TRIVIA filter - Movies category */}
+              {/* TRIVIA filter - Movies category — appears ABOVE Quick Glimpse */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && 
                (!selectedCategory || selectedCategory === 'movies') && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Movies" />
               )}
+
+              {renderRoomCarousel(0, "Quick Glimpse")}
 
               {/* TRIVIA - Other categories (show when that category is selected) */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'music' && (
@@ -4588,6 +4587,9 @@ export default function Feed() {
               )}
 
               {renderPostBatchByIndex(4)}
+              {renderPostBatchByIndex(25)}
+              {renderPostBatchByIndex(26)}
+              {renderPostBatchByIndex(27)}
 
               {/* POLLS filter - Movies category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
@@ -4686,6 +4688,9 @@ export default function Feed() {
               )}
 
               {renderPostBatchByIndex(16)}
+              {renderPostBatchByIndex(22)}
+              {renderPostBatchByIndex(23)}
+              {renderPostBatchByIndex(24)}
 
               {renderRoomCarousel(3, "Quick Glimpse")}
 
@@ -4704,6 +4709,9 @@ export default function Feed() {
               )}
 
               {renderPostBatchByIndex(19)}
+              {renderPostBatchByIndex(28)}
+              {renderPostBatchByIndex(29)}
+              {renderPostBatchByIndex(30)}
 
               {/* TRIVIA - Gaming category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
@@ -4711,6 +4719,8 @@ export default function Feed() {
               )}
 
               {renderPostBatchByIndex(20)}
+              {renderPostBatchByIndex(31)}
+              {renderPostBatchByIndex(32)}
 
               {/* TRIVIA - Sports category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
