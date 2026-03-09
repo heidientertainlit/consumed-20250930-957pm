@@ -302,7 +302,7 @@ export default function RankDetail() {
               {isPublic ? '🌐 Public' : '🔒 Private'}
             </span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -316,18 +316,6 @@ export default function RankDetail() {
               >
                 <Link2 size={14} className="mr-1.5" />
                 Copy Link
-              </Button>
-
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => rankData?.id && shareRankMutation.mutate(rankData.id)}
-                disabled={shareRankMutation.isPending || !isPublic}
-                className="text-xs px-3 text-purple-600 border-purple-200 hover:bg-purple-50"
-                data-testid="button-share-rank-main"
-              >
-                <Share2 size={14} className="mr-1.5" />
-                Post to Feed
               </Button>
 
               <Button

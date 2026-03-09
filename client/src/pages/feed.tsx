@@ -1116,6 +1116,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
       case 'predict':
       case 'prediction': return { label: 'Prediction', color: 'text-purple-500', bg: 'bg-purple-50', icon: Target };
       case 'poll': return { label: 'Poll', color: 'text-purple-500', bg: 'bg-purple-50', icon: Target };
+      case 'rank_share': return { label: 'Rank', color: 'text-purple-500', bg: 'bg-purple-50', icon: Trophy };
       default: return { label: 'Post', color: 'text-gray-400', bg: 'bg-gray-50', icon: MessageCircle };
     }
   };

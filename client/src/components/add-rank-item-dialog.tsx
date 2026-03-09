@@ -140,6 +140,17 @@ export default function AddRankItemDialog({
       queryClient.invalidateQueries({ queryKey: ['rank-detail', rankId] });
       resetForm();
       onOpenChange(false);
+      // Share to feed after items added — 24h cooldown in edge function prevents spam
+      if (session?.access_token) {
+        fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/share-rank', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ rankId }),
+        }).catch(() => {});
+      }
     },
     onError: (error: Error) => {
       toast({
