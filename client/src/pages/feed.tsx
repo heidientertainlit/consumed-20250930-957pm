@@ -913,6 +913,20 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
   const displayName = post.user?.displayName || post.user?.username || 'Someone';
   const rawUsername = post.user?.username || '';
   const avatarLetter = (displayName || rawUsername)[0]?.toUpperCase() || '?';
+
+  const displayContent = (() => {
+    if (!post.content) return post.content;
+    const contentLower = post.content.toLowerCase();
+    const mediaTitle = post.mediaTitle || (post.mediaItems?.[0]?.title ?? '');
+    if (mediaTitle) {
+      const prefix = `added ${mediaTitle.toLowerCase()} to `;
+      if (contentLower.startsWith(prefix)) {
+        const listName = post.content.slice(prefix.length);
+        return `Added to ${listName}`;
+      }
+    }
+    return post.content;
+  })();
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -1043,8 +1057,8 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
               </div>
             )}
 
-            {post.content && !post.mediaTitle && (
-              <p className="text-gray-800 text-sm leading-relaxed mt-2">{post.content}</p>
+            {displayContent && !post.mediaTitle && (
+              <p className="text-gray-800 text-sm leading-relaxed mt-2">{displayContent}</p>
             )}
           </div>
         </div>
@@ -1088,10 +1102,10 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
                   })}
                 </div>
               )}
-              {post.content && (
+              {displayContent && (
                 post.containsSpoilers && !isSpoilerRevealed ? (
                   <div className="relative mt-1.5">
-                    <p className="text-gray-700 text-sm leading-relaxed blur-md select-none line-clamp-3">{post.content}</p>
+                    <p className="text-gray-700 text-sm leading-relaxed blur-md select-none line-clamp-3">{displayContent}</p>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <button
                         onClick={(e) => { e.stopPropagation(); setIsSpoilerRevealed(true); }}
@@ -1104,8 +1118,8 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
                   </div>
                 ) : (
                   <div onClick={() => setContentExpanded(e => !e)} className="cursor-pointer">
-                    <p className={`text-gray-700 text-sm leading-relaxed mt-1.5 ${contentExpanded ? '' : 'line-clamp-3'}`}>{post.content}</p>
-                    {!contentExpanded && post.content.length > 120 && (
+                    <p className={`text-gray-700 text-sm leading-relaxed mt-1.5 ${contentExpanded ? '' : 'line-clamp-3'}`}>{displayContent}</p>
+                    {!contentExpanded && displayContent.length > 120 && (
                       <span className="text-purple-500 text-xs font-medium">Read more</span>
                     )}
                   </div>
@@ -1114,10 +1128,10 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
             </div>
           </div>
         )}
-        {post.mediaTitle && !(post.mediaImage && post.mediaImage.startsWith('http')) && post.content && (
+        {post.mediaTitle && !(post.mediaImage && post.mediaImage.startsWith('http')) && displayContent && (
           post.containsSpoilers && !isSpoilerRevealed ? (
             <div className="relative mt-2">
-              <p className="text-gray-800 text-sm leading-relaxed blur-md select-none">{post.content}</p>
+              <p className="text-gray-800 text-sm leading-relaxed blur-md select-none">{displayContent}</p>
               <div className="absolute inset-0 flex items-center justify-center">
                 <button
                   onClick={(e) => { e.stopPropagation(); setIsSpoilerRevealed(true); }}
@@ -1129,7 +1143,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
               </div>
             </div>
           ) : (
-            <p className="text-gray-800 text-sm leading-relaxed mt-2">{post.content}</p>
+            <p className="text-gray-800 text-sm leading-relaxed mt-2">{displayContent}</p>
           )
         )}
 
