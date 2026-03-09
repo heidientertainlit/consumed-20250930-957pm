@@ -4274,7 +4274,7 @@ export default function Feed() {
 
       {/* Header Section */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-9 -mt-px">
-        <div className="max-w-4xl mx-auto px-4 pt-10">
+        <div className="max-w-4xl mx-auto px-4 pt-8">
           
           {/* Composer Trigger - dark hero zone */}
           <div>
