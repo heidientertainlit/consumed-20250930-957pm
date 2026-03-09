@@ -5347,18 +5347,28 @@ export default function Feed() {
                                 </p>
                               );
                             }
-                            return (
-                              <p className="text-sm">
-                                <Link 
-                                  href={`/user/${post.user.id}`}
-                                  className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
-                                  data-testid={`link-user-${post.user.id}`}
-                                >
-                                  {post.user.username}
-                                </Link>
-                                <span className="text-gray-500"> {post.content || `added ${post.mediaItems[0].title}`}</span>
-                              </p>
-                            );
+                            {
+                              const mediaTitle = post.mediaItems[0]?.title || '';
+                              const prefix = `added ${mediaTitle.toLowerCase()} to `;
+                              const listNameFromContent = contentLower.startsWith(prefix)
+                                ? post.content!.slice(prefix.length)
+                                : null;
+                              const actionText = listNameFromContent
+                                ? `Added to ${listNameFromContent}`
+                                : post.content || `Added to list`;
+                              return (
+                                <p className="text-sm">
+                                  <Link
+                                    href={`/user/${post.user.id}`}
+                                    className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer transition-colors"
+                                    data-testid={`link-user-${post.user.id}`}
+                                  >
+                                    {post.user.username}
+                                  </Link>
+                                  <span className="text-gray-500"> {actionText}</span>
+                                </p>
+                              );
+                            }
                           } else if (isRatedPost && hasMediaItems) {
                             const listData = (post as any).listData;
                             return (
