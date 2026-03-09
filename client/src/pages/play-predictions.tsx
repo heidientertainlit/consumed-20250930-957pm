@@ -66,10 +66,14 @@ export default function PlayPredictionsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('awards_events')
-        .select('id, name, year, status, ceremony_date, deadline')
-        .order('ceremony_date', { ascending: true });
+        .select('id, name, year, status, ceremony_date, deadline');
       if (error) return [];
-      return data || [];
+      // Open events first (latest ceremony date first), then locked (latest first)
+      return (data || []).sort((a: any, b: any) => {
+        if (a.status === 'open' && b.status !== 'open') return -1;
+        if (a.status !== 'open' && b.status === 'open') return 1;
+        return new Date(b.ceremony_date).getTime() - new Date(a.ceremony_date).getTime();
+      });
     },
   });
 
