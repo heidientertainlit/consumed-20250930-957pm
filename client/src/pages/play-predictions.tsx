@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-import { Trophy, Star, Users, Target, ChevronLeft, Lock, ChevronRight, Plus, Check, Heart, MessageCircle } from 'lucide-react';
+import { Trophy, Star, Users, Target, ChevronLeft, Lock, ChevronRight, Plus, Check } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { PredictionGameModal } from '@/components/prediction-game-modal';
@@ -195,17 +195,6 @@ function PredictionCarouselSection({
                       </Button>
                     </>
                   )}
-                  {/* Likes and Comments */}
-                  <div className="flex items-center gap-4 border-t border-gray-100 pt-3 mt-3">
-                    <div className="flex items-center gap-1.5 text-gray-400">
-                      <Heart size={16} />
-                      <span className="text-sm">{game.likes_count || 0}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-gray-400">
-                      <MessageCircle size={16} />
-                      <span className="text-sm">{game.comments_count || 0}</span>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </div>
