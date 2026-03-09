@@ -135,22 +135,19 @@ function PredictionCarouselSection({
                         const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                         const isChosen = voted === option;
                         return (
-                          <div key={i} className="relative w-full h-11 rounded-full overflow-hidden bg-gray-100">
-                            <div
-                              className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${
-                                isChosen
-                                  ? 'bg-gradient-to-r from-indigo-600 to-blue-500'
-                                  : 'bg-gradient-to-r from-purple-500 to-purple-400 opacity-70'
-                              }`}
-                              style={{ width: `${Math.max(pct, 8)}%` }}
-                            />
-                            <div className="absolute inset-0 flex items-center justify-between px-4">
-                              <div className="flex items-center gap-2">
-                                {isChosen && <Check size={14} className="text-white flex-shrink-0" />}
-                                <span className="text-sm font-medium text-white drop-shadow-sm">{option}</span>
-                              </div>
-                              <span className="text-sm font-medium text-white drop-shadow-sm">{pct}%</span>
-                            </div>
+                          <div
+                            key={i}
+                            className={`w-full rounded-full px-4 py-3 flex items-center justify-between transition-all duration-300 ${
+                              isChosen
+                                ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 ring-2 ring-blue-300'
+                                : 'bg-gradient-to-r from-purple-950/60 via-purple-800/60 to-violet-500/60 opacity-70'
+                            }`}
+                          >
+                            <span className="text-sm font-medium text-white flex items-center gap-2">
+                              {isChosen && <Check size={14} className="flex-shrink-0" />}
+                              {option}
+                            </span>
+                            <span className="text-sm font-semibold text-white">{pct}%</span>
                           </div>
                         );
                       })}
