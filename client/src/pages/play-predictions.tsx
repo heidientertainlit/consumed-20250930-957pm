@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
-import { Trophy, Star, Users, Target, ChevronLeft, Lock, ChevronRight, Plus, Check } from 'lucide-react';
+import { Trophy, Star, Users, Target, ChevronLeft, Lock, ChevronRight, Plus, Check, Heart, MessageCircle } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { PredictionGameModal } from '@/components/prediction-game-modal';
@@ -195,6 +195,17 @@ function PredictionCarouselSection({
                       </Button>
                     </>
                   )}
+                  {/* Likes and Comments */}
+                  <div className="flex items-center gap-4 border-t border-gray-100 pt-3 mt-3">
+                    <div className="flex items-center gap-1.5 text-gray-400">
+                      <Heart size={16} />
+                      <span className="text-sm">{game.likes_count || 0}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-gray-400">
+                      <MessageCircle size={16} />
+                      <span className="text-sm">{game.comments_count || 0}</span>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -445,25 +456,26 @@ export default function PlayPredictionsPage() {
       {/* Header Section with Gradient */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
         <div className="max-w-4xl mx-auto px-4 pt-4">
-          <div className="flex items-center gap-3 mb-4">
-            <button
-              onClick={() => window.history.back()}
-              className="flex items-center text-gray-400 hover:text-white transition-colors"
-              data-testid="back-button"
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.history.back()}
+                className="flex items-center text-gray-400 hover:text-white transition-colors"
+                data-testid="back-button"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <h1 className="text-2xl font-semibold text-white" data-testid="predictions-title">Predictions</h1>
+            </div>
+            <Button
+              onClick={() => setShowComposer(true)}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-blue-500 to-green-400 hover:from-blue-600 hover:to-green-500 text-white rounded-full px-4 py-2 text-sm font-semibold shadow-md border-0"
+              data-testid="create-prediction-btn"
             >
-              <ChevronLeft size={20} />
-            </button>
-            <h1 className="text-2xl font-semibold text-white" data-testid="predictions-title">Predictions</h1>
+              <Plus size={15} />
+              Create Prediction
+            </Button>
           </div>
-
-          <Button
-            onClick={() => setShowComposer(true)}
-            className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-4 py-2 text-sm font-medium"
-            data-testid="create-prediction-btn"
-          >
-            <Plus size={16} />
-            Create Prediction
-          </Button>
         </div>
       </div>
 
