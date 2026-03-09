@@ -46,6 +46,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<Record<string, string>>({});
   const [votedPolls, setVotedPolls] = useState<Record<string, { vote: string; stats: Record<string, number> }>>({});
+  const [votedLoaded, setVotedLoaded] = useState(false);
   const [otherSearchOpen, setOtherSearchOpen] = useState<Record<string, boolean>>({});
   const [otherSearchQuery, setOtherSearchQuery] = useState<Record<string, string>>({});
   const [otherSearchResults, setOtherSearchResults] = useState<Record<string, any[]>>({});
@@ -119,7 +120,10 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
 
   useEffect(() => {
     const loadVoted = async () => {
-      if (!user?.id || !data || data.length === 0) return;
+      if (!user?.id || !data || data.length === 0) {
+        setVotedLoaded(true);
+        return;
+      }
       
       const { data: predictions } = await supabase
         .from('user_predictions')
@@ -154,6 +158,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         }
         setVotedPolls(voted);
       }
+      setVotedLoaded(true);
     };
     
     loadVoted();
@@ -351,7 +356,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   }, []);
 
   if (!session) return null;
-  if (isLoading) {
+  if (isLoading || !votedLoaded) {
     return (
       <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm mb-4">
         <div className="flex items-center justify-center py-6">

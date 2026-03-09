@@ -58,6 +58,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<Record<string, string>>({});
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; points?: number; stats: any; friendAnswers?: FriendAnswer[] }>>({});
+  const [answeredLoaded, setAnsweredLoaded] = useState(false);
   const [celebratingItems, setCelebratingItems] = useState<Record<string, number>>({});
 
   const { data: leaderboardData } = useQuery({
@@ -216,7 +217,10 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
 
   useEffect(() => {
     const loadAnswered = async () => {
-      if (!user?.id || !data || data.length === 0) return;
+      if (!user?.id || !data || data.length === 0) {
+        setAnsweredLoaded(true);
+        return;
+      }
       
       // Get unique pool IDs from our flattened items
       const uniquePoolIds = [...new Set(data.map(q => q.poolId || q.id))];
@@ -260,6 +264,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         }
         setAnsweredQuestions(answered);
       }
+      setAnsweredLoaded(true);
     };
     
     loadAnswered();
@@ -435,7 +440,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
 
   if (!session) return null;
 
-  if (isLoading) {
+  if (isLoading || !answeredLoaded) {
     return (
       <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-center py-6">
