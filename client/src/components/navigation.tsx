@@ -522,7 +522,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
           {/* Activity Feed */}
           <Link
             href="/activity"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/activity" ? "bg-white/15" : ""}`}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/activity" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`}
             data-testid="nav-activity"
           >
             <div className="h-[22px] flex items-center justify-center">
@@ -534,11 +534,11 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
           {/* Play */}
           <Link
             href="/play"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location.startsWith("/play") ? "bg-white/15" : ""}`}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location.startsWith("/play") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`}
             data-testid="nav-play"
           >
             <div className="h-[22px] flex items-center justify-center">
-              <Trophy size={19} className="text-white" strokeWidth={1.25} />
+              <Trophy size={20} className="text-white" strokeWidth={1.4} />
             </div>
             <span className="text-white text-[10px] mt-0.5">Play</span>
           </Link>
@@ -546,7 +546,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
           {/* Library */}
           <Link
             href="/my-library"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/my-library" ? "bg-white/15" : ""}`}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/my-library" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`}
             data-testid="nav-library"
             onTouchStart={prefetchCollections}
             onMouseEnter={prefetchCollections}
@@ -560,7 +560,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
           {/* Me */}
           <Link
             href="/me?tab=dna"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location === "/me" ? "bg-white/15" : ""}`}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/me" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`}
             data-testid="nav-dna"
           >
             <div className="h-[22px] flex items-center justify-center">
