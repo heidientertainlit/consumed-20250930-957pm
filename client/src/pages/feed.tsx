@@ -1180,7 +1180,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
             <MessageCircle size={16} />
             <span className="text-xs">{post.comments || 0}</span>
           </button>
-          {onAddToList && (post.externalId || post.mediaItems?.[0]?.externalId) && (() => {
+          {onAddToList && (post.externalId || post.mediaItems?.[0]?.externalId || post.mediaTitle) && (() => {
             const media = {
               title: post.mediaTitle || post.mediaItems?.[0]?.title || '',
               externalId: post.externalId || post.mediaItems?.[0]?.externalId || '',
