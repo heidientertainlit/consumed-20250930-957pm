@@ -81,7 +81,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
   }, [user?.id, session?.access_token]);
 
   return (
-    <div className="min-h-screen pb-24" style={{ backgroundColor: '#0a0a0f' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#0a0a0f' }}>
       <Navigation />
 
       {/* Purple hero — heading + points + Daily Call */}
