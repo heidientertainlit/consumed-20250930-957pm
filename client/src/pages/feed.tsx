@@ -663,7 +663,7 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost }: {
+function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList }: {
   post: UGCPost;
   onLike: (id: string) => void;
   isLiked: boolean;
@@ -671,6 +671,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   fetchComments: (postId: string) => Promise<any[]>;
   currentUserId?: string;
   onDeletePost?: (postId: string) => void;
+  onAddToList?: (media: any) => void;
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -678,8 +679,53 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [contentExpanded, setContentExpanded] = useState(false);
+  const [showRating, setShowRating] = useState(false);
+  const [ratingValue, setRatingValue] = useState(0);
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [communityRating, setCommunityRating] = useState<number | null>(null);
   const hasFetched = useRef(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+
+  useEffect(() => {
+    const externalId = post.externalId;
+    const externalSource = post.externalSource;
+    if (!externalId || !externalSource) return;
+    supabase
+      .from('media_ratings')
+      .select('rating')
+      .eq('media_external_id', externalId)
+      .eq('media_external_source', externalSource)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const avg = data.reduce((sum: number, r: any) => sum + Number(r.rating), 0) / data.length;
+          setCommunityRating(Math.round(avg * 10) / 10);
+        }
+      });
+  }, [post.externalId, post.externalSource]);
+
+  const handleSubmitRating = async (rating: number) => {
+    if (!session?.access_token) return;
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/rate-media`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          media_external_id: post.externalId,
+          media_external_source: post.externalSource || 'tmdb',
+          media_title: post.mediaTitle,
+          media_type: post.mediaType || 'movie',
+          media_image_url: post.mediaImage,
+          rating,
+          skip_social_post: false,
+        }),
+      });
+      setRatingValue(rating);
+      setRatingSubmitted(true);
+      setTimeout(() => setShowRating(false), 800);
+    } catch (err) {
+      console.error('Rating failed', err);
+    }
+  };
 
   const timeAgo = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -838,11 +884,60 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <MessageCircle size={16} />
             <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
           </button>
+          {(post.externalId || post.mediaTitle) && (
+            <>
+              {onAddToList && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
+                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
+                  title="Add to list"
+                >
+                  <Plus size={16} />
+                </button>
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowRating(r => !r); }}
+                className={`flex items-center gap-1 text-sm active:scale-110 transition-all ${showRating || ratingSubmitted ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'}`}
+                title="Rate"
+              >
+                <Star size={16} fill={ratingSubmitted ? 'currentColor' : 'none'} />
+                {communityRating !== null && (
+                  <span className={`text-[11px] font-medium ${showRating || ratingSubmitted ? 'text-yellow-500' : 'text-gray-400'}`}>
+                    {communityRating}
+                  </span>
+                )}
+              </button>
+            </>
+          )}
           <div className="ml-auto flex items-center gap-1.5">
             <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
             <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
           </div>
         </div>
+
+        {showRating && (
+          <div className="mt-2 pt-2 border-t border-gray-50">
+            <div className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map(star => (
+                <div key={star} className="relative" style={{ width: 34, height: 34 }}>
+                  <Star size={34} className="absolute inset-0 text-gray-200" />
+                  <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}>
+                    <Star size={34} className="fill-yellow-400 text-yellow-400" />
+                  </div>
+                  <button className="absolute top-0 left-0 h-full z-10" style={{ width: '30%' }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5} stars`} />
+                  <button className="absolute top-0 right-0 h-full z-10" style={{ width: '70%' }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star} stars`} />
+                </div>
+              ))}
+              {ratingSubmitted ? (
+                <span className="ml-2 text-xs text-green-600 font-medium">Saved!</span>
+              ) : ratingValue > 0 ? (
+                <span className="ml-2 text-xs text-gray-500">{ratingValue}/5</span>
+              ) : (
+                <span className="ml-2 text-xs text-gray-400">Tap to rate</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {showComments && (
@@ -2205,6 +2300,7 @@ export default function Feed() {
                 fetchComments={fetchComments}
                 currentUserId={currentAppUserId || undefined}
                 onDeletePost={handleDeletePost}
+                onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
               />
             ))}
           </div>
