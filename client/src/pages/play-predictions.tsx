@@ -111,7 +111,7 @@ function PredictionCarouselSection({
                   {game.media_title && (
                     <div className="text-sm font-medium text-purple-600 mb-1">{game.media_title}</div>
                   )}
-                  <h3 className="font-bold text-gray-900 text-base leading-snug mb-3">{game.title}</h3>
+                  <h3 className="font-semibold text-gray-900 text-base leading-snug mb-3">{game.title}</h3>
 
                   <div className="flex items-center gap-4 text-xs mb-4">
                     <div className="flex items-center gap-1">
@@ -137,16 +137,15 @@ function PredictionCarouselSection({
                     </Button>
                   ) : (
                     <>
-                      <p className="text-xs text-gray-500 font-medium mb-2">Quick Predict:</p>
-                      <div className="grid grid-cols-2 gap-2 mb-3">
-                        {(game.options || []).slice(0, 2).map((option: string, i: number) => (
+                      <div className="flex flex-col gap-2 mb-3">
+                        {(game.options || []).slice(0, 4).map((option: string, i: number) => (
                           <button
                             key={i}
                             onClick={() => onOptionSelect(game.id, option)}
-                            className={`p-3 text-sm font-medium rounded-xl border-2 transition-all text-left ${
+                            className={`w-full py-3 px-5 rounded-full text-sm font-medium transition-all text-left ${
                               selected === option
-                                ? 'border-purple-500 bg-purple-50 text-purple-800'
-                                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                                ? 'bg-gradient-to-r from-purple-700 to-purple-500 text-white shadow-md ring-2 ring-purple-300'
+                                : 'bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-700 hover:to-purple-600'
                             }`}
                           >
                             {option}
@@ -156,7 +155,7 @@ function PredictionCarouselSection({
                       <Button
                         onClick={() => onSubmit(game)}
                         disabled={!selected || isSubmitting}
-                        className="w-full bg-gray-500 hover:bg-gray-600 text-white disabled:opacity-50 rounded-xl"
+                        className="w-full bg-gray-200 hover:bg-gray-300 text-gray-600 disabled:opacity-40 rounded-full font-medium"
                       >
                         {isSubmitting ? 'Submitting...' : 'Submit'}
                       </Button>
