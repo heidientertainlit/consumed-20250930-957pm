@@ -495,6 +495,7 @@ export default function SwipeableRatingCards({ posts, onLike, onDelete, likedPos
           media_external_source: media.externalSource || 'tmdb',
           media_title: media.title,
           media_type: media.mediaType || 'movie',
+          media_image_url: media.imageUrl || '',
           rating: rating,
         })
       });

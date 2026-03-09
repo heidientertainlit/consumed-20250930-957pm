@@ -225,6 +225,23 @@ serve(async (req) => {
                 console.error('Spotify API error:', spotifyError);
               }
             }
+            // Fallback: use iTunes Search API (no credentials needed)
+            if (mediaTitle) {
+              try {
+                const q = encodeURIComponent(mediaTitle.slice(0, 50));
+                const itunesRes = await fetch(`https://itunes.apple.com/search?term=${q}&media=podcast&limit=3`);
+                if (itunesRes.ok) {
+                  const itunesData = await itunesRes.json();
+                  const match = itunesData.results?.[0];
+                  if (match?.artworkUrl600 || match?.artworkUrl100) {
+                    console.log('iTunes podcast image found for:', mediaTitle);
+                    return match.artworkUrl600 || match.artworkUrl100;
+                  }
+                }
+              } catch (itunesError) {
+                console.error('iTunes API error:', itunesError);
+              }
+            }
             return null;
           }
           
