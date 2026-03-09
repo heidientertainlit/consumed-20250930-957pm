@@ -891,7 +891,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   );
 }
 
-function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLiked, isCommentsActive, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, currentUserId, onDeleteComment, onDeletePost, onLikeComment }: {
+function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLiked, isCommentsActive, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, currentUserId, onDeleteComment, onDeletePost, onLikeComment, onAddToList }: {
   post: UGCPost;
   onLike?: (id: string) => void;
   onComment?: (id: string) => void;
@@ -908,6 +908,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
   onDeleteComment?: (commentId: string, postId: string) => void;
   onDeletePost?: (postId: string) => void;
   onLikeComment?: (commentId: string) => void;
+  onAddToList?: (media: any) => void;
 }) {
   const [isSpoilerRevealed, setIsSpoilerRevealed] = useState(false);
   const displayName = post.user?.displayName || post.user?.username || 'Someone';
@@ -1179,6 +1180,33 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
             <MessageCircle size={16} />
             <span className="text-xs">{post.comments || 0}</span>
           </button>
+          {onAddToList && (post.externalId || post.mediaItems?.[0]?.externalId) && (() => {
+            const media = {
+              title: post.mediaTitle || post.mediaItems?.[0]?.title || '',
+              externalId: post.externalId || post.mediaItems?.[0]?.externalId || '',
+              externalSource: post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb',
+              imageUrl: post.mediaImage || post.mediaItems?.[0]?.imageUrl || post.mediaItems?.[0]?.poster_url || '',
+              type: post.mediaType || post.mediaItems?.[0]?.type || 'movie',
+            };
+            return (
+              <>
+                <button
+                  onClick={() => onAddToList(media)}
+                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
+                  title="Add to list"
+                >
+                  <Plus size={16} />
+                </button>
+                <button
+                  onClick={() => onAddToList(media)}
+                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-yellow-500 active:scale-110 transition-all"
+                  title="Rate"
+                >
+                  <Star size={16} />
+                </button>
+              </>
+            );
+          })()}
           <div className="ml-auto flex items-center gap-1.5">
             <span className={`text-[11px] font-medium ${typeInfo.color} flex items-center gap-1 ${typeInfo.bg} px-2 py-0.5 rounded-full`}>
               <TypeIcon size={11} />
@@ -2210,6 +2238,7 @@ export default function Feed() {
         onDeleteComment={handleDeleteComment}
         onDeletePost={handleDeletePost}
         onLikeComment={handleLikeComment}
+        onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
       />
     );
   };
