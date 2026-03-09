@@ -535,16 +535,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             className={`flex flex-col items-center justify-center p-2 rounded-xl transition-colors ${location.startsWith("/play") ? "bg-white/15" : ""}`}
             data-testid="nav-play"
           >
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <circle cx="11" cy="11" r="4" />
-              <circle cx="11" cy="11" r="1.5" fill="white" stroke="none" />
-              <line x1="17" y1="5" x2="12.5" y2="9.5" />
-              <line x1="12.5" y1="9.5" x2="14.5" y2="9.5" />
-              <line x1="12.5" y1="9.5" x2="12.5" y2="7.5" />
-              <line x1="17" y1="5" x2="20" y2="8" />
-              <line x1="17" y1="5" x2="14" y2="2" />
-            </svg>
+            <Trophy size={22} className="text-white" strokeWidth={1.5} />
             <span className="text-white text-[10px] mt-0.5">Play</span>
           </Link>
 
