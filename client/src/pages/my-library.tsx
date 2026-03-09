@@ -435,7 +435,7 @@ export default function MyLibrary() {
     <div className="min-h-screen bg-gray-50 pb-24">
       <Navigation />
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] -mt-px">
-        <div className="pt-8 pb-4 px-4 flex flex-col items-center gap-4">
+        <div className="pt-8 pb-8 px-4 flex flex-col items-center gap-4">
           <h2 className="text-white text-2xl font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>My Library</h2>
           <div className="relative w-full max-w-sm">
             <div className="flex items-center gap-3 px-4 py-3 rounded-full bg-white/10 border border-white/20 focus-within:bg-white/15 focus-within:border-white/30 transition-all">
