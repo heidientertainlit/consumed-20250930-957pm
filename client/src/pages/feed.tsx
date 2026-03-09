@@ -939,6 +939,24 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
   const [showRating, setShowRating] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [communityRating, setCommunityRating] = useState<number | null>(null);
+
+  useEffect(() => {
+    const externalId = post.externalId || post.mediaItems?.[0]?.externalId;
+    const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource;
+    if (!externalId || !externalSource) return;
+    supabase
+      .from('media_ratings')
+      .select('rating')
+      .eq('media_external_id', externalId)
+      .eq('media_external_source', externalSource)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const avg = data.reduce((sum: number, r: any) => sum + Number(r.rating), 0) / data.length;
+          setCommunityRating(Math.round(avg * 10) / 10);
+        }
+      });
+  }, [post.externalId, post.externalSource]);
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
@@ -1242,6 +1260,11 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
                   title="Rate"
                 >
                   <Star size={16} fill={ratingSubmitted ? 'currentColor' : 'none'} />
+                  {communityRating !== null && (
+                    <span className={`text-[11px] font-medium ${showRating || ratingSubmitted ? 'text-yellow-500' : 'text-gray-400'}`}>
+                      {communityRating}
+                    </span>
+                  )}
                 </button>
               </>
             );
@@ -4390,10 +4413,10 @@ export default function Feed() {
 
             <button
               onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.07] border border-white/10 hover:bg-white/10 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-white/[0.12] border border-white/20 hover:bg-white/[0.18] transition-colors"
             >
-              <MessageCircle size={18} className="text-white/40 shrink-0" />
-              <span className="text-white/40 text-sm">Share your take...</span>
+              <MessageCircle size={18} className="text-purple-300/80 shrink-0" />
+              <span className="text-white/65 text-sm">Share your take...</span>
             </button>
 
           </div>
