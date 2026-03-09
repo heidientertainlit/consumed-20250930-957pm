@@ -224,10 +224,6 @@ export default function Library() {
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Progress updated!",
-        description: "Your progress has been saved.",
-      });
       queryClient.invalidateQueries({ queryKey: ['user-lists'] });
     },
     onError: () => {

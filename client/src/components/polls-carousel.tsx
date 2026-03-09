@@ -372,7 +372,12 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
 
   // Randomize the order using session seed (changes daily)
   const categoryOffset = category ? category.charCodeAt(0) : 0;
-  const filteredData = shuffleArray(categoryFiltered, sessionSeed + categoryOffset);
+  const shuffled = shuffleArray(categoryFiltered, sessionSeed + categoryOffset);
+  // Move already-voted polls to the end
+  const filteredData = [
+    ...shuffled.filter(p => !votedPolls[p.id]),
+    ...shuffled.filter(p => !!votedPolls[p.id]),
+  ];
 
   if (filteredData.length === 0) return null;
 

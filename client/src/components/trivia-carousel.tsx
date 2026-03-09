@@ -471,7 +471,12 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
 
   // Randomize the order using session seed (changes daily)
   const categoryOffset = category ? category.charCodeAt(0) : 0;
-  filteredData = shuffleArray(filteredData, sessionSeed + categoryOffset);
+  const shuffledTrivia = shuffleArray(filteredData, sessionSeed + categoryOffset);
+  // Move already-answered questions to the end
+  filteredData = [
+    ...shuffledTrivia.filter(item => !answeredQuestions[item.id]),
+    ...shuffledTrivia.filter(item => !!answeredQuestions[item.id]),
+  ];
 
   if (filteredData.length === 0) {
     return null;

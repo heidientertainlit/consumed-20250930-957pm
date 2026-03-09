@@ -850,7 +850,6 @@ export default function UserProfile() {
       return { ...await response.json(), progressDisplay };
     },
     onSuccess: (data) => {
-      toast({ title: `Progress updated to ${data.progressDisplay}` });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       fetchUserLists(viewingUserId);
     },

@@ -303,7 +303,6 @@ export default function CollectionsPage() {
       return { ...await response.json(), progressDisplay };
     },
     onSuccess: (data) => {
-      toast({ title: `Progress updated to ${data.progressDisplay}` });
       queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] });
     },

@@ -203,7 +203,6 @@ export default function MyLibrary() {
       return { ...responseData, progressDisplay };
     },
     onSuccess: (data) => {
-      toast({ title: `Progress updated to ${data.progressDisplay}` });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       fetchCurrentlyItems();
     },
