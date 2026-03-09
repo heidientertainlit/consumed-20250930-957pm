@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Plus, ChevronLeft, ChevronDown, Loader2, Award, ArrowBigUp, ArrowBigDown, Globe, Lock } from "lucide-react";
+import { Trophy, Plus, ChevronLeft, ChevronDown, Loader2, Award, ArrowBigUp, ArrowBigDown, Globe, Lock, Users } from "lucide-react";
 
 export default function PlayRanks() {
   const { user, session } = useAuth();
@@ -354,7 +354,7 @@ export default function PlayRanks() {
 
       {/* Create Rank Dialog */}
       <Dialog open={isCreateRankOpen} onOpenChange={setIsCreateRankOpen}>
-        <DialogContent className="mx-4 rounded-2xl !bg-white">
+        <DialogContent className="rounded-2xl !bg-white w-[calc(100vw-2rem)] max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-gray-900">Create Rank</DialogTitle>
           </DialogHeader>
@@ -467,15 +467,24 @@ export default function PlayRanks() {
                 <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden hover:shadow-md transition-shadow ${
                   item.isConsumed ? 'border-purple-200' : 'border-gray-200'
                 }`}>
-                  {item.isConsumed && (
-                    <div className="absolute -top-0 left-4 z-10">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-600 text-white text-[10px] font-bold rounded-b-lg uppercase tracking-wider">
-                        <Award size={10} />
-                        Consumed
+                  <div className="p-4">
+                    {/* Pill badges */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">
+                        RANK
                       </span>
+                      {item.isConsumed ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-purple-600 text-white text-[10px] font-semibold rounded-full uppercase tracking-wide">
+                          <Award size={9} />
+                          Consumed
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                          <Users size={10} />
+                          Community
+                        </span>
+                      )}
                     </div>
-                  )}
-                  <div className="p-4 pt-8">
                     {/* Author info for community ranks */}
                     {!item.isConsumed && item.author && (
                       <div className="flex items-center gap-2 mb-3">

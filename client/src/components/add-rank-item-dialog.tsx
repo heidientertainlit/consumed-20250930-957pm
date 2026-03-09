@@ -137,10 +137,6 @@ export default function AddRankItemDialog({
       return results;
     },
     onSuccess: (results) => {
-      toast({
-        title: "Items Added!",
-        description: `Added ${results.length} item${results.length > 1 ? 's' : ''} to "${rankTitle}"`,
-      });
       queryClient.invalidateQueries({ queryKey: ['rank-detail', rankId] });
       resetForm();
       onOpenChange(false);
