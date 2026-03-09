@@ -373,6 +373,13 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
           </Link>
           
           <div className="flex items-center gap-3">
+            {totalPoints !== null && (
+              <Link href="/points" className="flex items-center gap-1 bg-white/10 active:bg-white/20 rounded-full px-2.5 py-1 transition-colors">
+                <Star size={11} className="text-amber-400" fill="currentColor" />
+                <span className="text-white text-xs font-semibold">{totalPoints.toLocaleString()}</span>
+                <span className="text-white/60 text-[10px]">pts</span>
+              </Link>
+            )}
             <button
               onClick={handleSearchToggle}
               className="hover:opacity-70 transition-opacity"
@@ -382,13 +389,6 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               {isSearchExpanded ? <X className="text-white" size={20} /> : <Search className="text-white" size={20} />}
             </button>
             <NotificationBell />
-            {totalPoints !== null && (
-              <Link href="/points" className="flex items-center gap-1 bg-white/10 active:bg-white/20 rounded-full px-2.5 py-1 transition-colors">
-                <Star size={11} className="text-amber-400" fill="currentColor" />
-                <span className="text-white text-xs font-semibold">{totalPoints.toLocaleString()}</span>
-                <span className="text-white/60 text-[10px]">pts</span>
-              </Link>
-            )}
           </div>
         </div>
 
