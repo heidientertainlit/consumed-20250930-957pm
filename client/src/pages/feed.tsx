@@ -936,6 +936,43 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
   const [replyingTo, setReplyingTo] = useState<{ id: string; name: string } | null>(null);
   const commentInputRef = useRef<HTMLInputElement>(null);
   const [contentExpanded, setContentExpanded] = useState(false);
+  const [showRating, setShowRating] = useState(false);
+  const [ratingValue, setRatingValue] = useState(0);
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+
+  const handleSubmitRating = async (rating: number) => {
+    if (!session?.access_token) return;
+    const media = {
+      title: post.mediaTitle || post.mediaItems?.[0]?.title || '',
+      externalId: post.externalId || post.mediaItems?.[0]?.externalId || '',
+      externalSource: post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb',
+      imageUrl: post.mediaImage || post.mediaItems?.[0]?.imageUrl || '',
+      type: post.mediaType || post.mediaItems?.[0]?.type || 'movie',
+    };
+    try {
+      await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/rate-media`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            media_external_id: media.externalId,
+            media_external_source: media.externalSource,
+            media_title: media.title,
+            media_type: media.type,
+            media_image_url: media.imageUrl,
+            rating,
+            skip_social_post: false,
+          }),
+        }
+      );
+      setRatingValue(rating);
+      setRatingSubmitted(true);
+      setTimeout(() => setShowRating(false), 800);
+    } catch (err) {
+      console.error('Rating failed', err);
+    }
+  };
 
   const handleCommentLike = (commentId: string, commentLikesCount: number) => {
     const wasLiked = localLikedComments.has(commentId);
@@ -1180,7 +1217,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
             <MessageCircle size={16} />
             <span className="text-xs">{post.comments || 0}</span>
           </button>
-          {onAddToList && (post.externalId || post.mediaItems?.[0]?.externalId || post.mediaTitle) && (() => {
+          {(post.externalId || post.mediaItems?.[0]?.externalId || post.mediaTitle) && (() => {
             const media = {
               title: post.mediaTitle || post.mediaItems?.[0]?.title || '',
               externalId: post.externalId || post.mediaItems?.[0]?.externalId || '',
@@ -1190,12 +1227,21 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
             };
             return (
               <>
+                {onAddToList && (
+                  <button
+                    onClick={() => onAddToList(media)}
+                    className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
+                    title="Add to list"
+                  >
+                    <Plus size={16} />
+                  </button>
+                )}
                 <button
-                  onClick={() => onAddToList(media)}
-                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
-                  title="Add to list"
+                  onClick={() => setShowRating(r => !r)}
+                  className={`flex items-center gap-1 text-sm active:scale-110 transition-all ${showRating || ratingSubmitted ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'}`}
+                  title="Rate"
                 >
-                  <Plus size={16} />
+                  <Star size={16} fill={ratingSubmitted ? 'currentColor' : 'none'} />
                 </button>
               </>
             );
@@ -1208,6 +1254,43 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
             <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
           </div>
         </div>
+
+        {showRating && (
+          <div className="mt-2 pt-2 border-t border-gray-50">
+            <div className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map(star => (
+                <div key={star} className="relative" style={{ width: 34, height: 34 }}>
+                  <Star size={34} className="absolute inset-0 text-gray-200" />
+                  <div
+                    className="absolute inset-0 overflow-hidden pointer-events-none"
+                    style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}
+                  >
+                    <Star size={34} className="fill-yellow-400 text-yellow-400" />
+                  </div>
+                  <button
+                    className="absolute top-0 left-0 h-full z-10"
+                    style={{ width: '30%' }}
+                    onClick={() => handleSubmitRating(star - 0.5)}
+                    aria-label={`Rate ${star - 0.5} stars`}
+                  />
+                  <button
+                    className="absolute top-0 right-0 h-full z-10"
+                    style={{ width: '70%' }}
+                    onClick={() => handleSubmitRating(star)}
+                    aria-label={`Rate ${star} stars`}
+                  />
+                </div>
+              ))}
+              {ratingSubmitted ? (
+                <span className="ml-2 text-xs text-green-600 font-medium">Saved!</span>
+              ) : ratingValue > 0 ? (
+                <span className="ml-2 text-xs text-gray-500">{ratingValue}/5</span>
+              ) : (
+                <span className="ml-2 text-xs text-gray-400">Tap to rate</span>
+              )}
+            </div>
+          </div>
+        )}
 
         {isCommentsActive && (
           <div className="mt-3 pt-3 border-t border-gray-100">
