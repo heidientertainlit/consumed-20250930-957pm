@@ -109,17 +109,18 @@ serve(async (req) => {
     const queryHasMovie = /\b(movie|film|watch)\b/i.test(query);
     const queryHasMusic = /\b(song|album|music|listen)\b/i.test(query);
     const queryHasTv = /\b(show|series|tv)\b/i.test(query);
+    const queryHasPodcast = /\b(podcast|podcasts)\b/i.test(query);
     
     // Strip type keywords from query for cleaner API searches
     // e.g., "anne of green gables book" → "anne of green gables"
     const cleanedQuery = query
-      .replace(/\b(book|novel|read|movie|film|watch|song|album|music|listen|show|series|tv)\b/gi, '')
+      .replace(/\b(book|novel|read|movie|film|watch|song|album|music|listen|show|series|tv|podcast|podcasts)\b/gi, '')
       .replace(/\s+/g, ' ')
       .trim();
     
     // Use cleaned query for API calls, but keep original for logging
     const searchQuery = cleanedQuery.length > 2 ? cleanedQuery : query;
-    console.log('Original query:', query, '| Cleaned query:', searchQuery, '| Type hints:', { queryHasBook, queryHasMovie, queryHasMusic, queryHasTv });
+    console.log('Original query:', query, '| Cleaned query:', searchQuery, '| Type hints:', { queryHasBook, queryHasMovie, queryHasMusic, queryHasTv, queryHasPodcast });
 
     // Collect results by type first, then merge in desired order
     const bookResults: any[] = [];
@@ -607,6 +608,7 @@ serve(async (req) => {
       if (queryHasMovie && item.type === 'movie') score += 40;
       if (queryHasMusic && item.type === 'music') score += 40;
       if (queryHasTv && item.type === 'tv') score += 40;
+      if (queryHasPodcast && item.type === 'podcast') score += 60;
       
       // 5. Type filter boost - if caller passed a specific type
       if (type && item.type === type) {
