@@ -302,14 +302,30 @@ export default function PlayRanks() {
       if (!response.ok) throw new Error('Failed to create rank');
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       const rankId = data?.data?.id;
-      toast({ title: "Rank created!", description: `"${newRankName}" has been created. Now add items to it.` });
+      const rankName = newRankName;
+      const rankVis = newRankVisibility;
       setNewRankName("");
       setNewRankVisibility("public");
       setIsCreateRankOpen(false);
       queryClient.invalidateQueries({ queryKey: ['my-ranks-for-discovery'] });
       queryClient.invalidateQueries({ queryKey: ['public-ranks'] });
+      if (rankId && rankVis === 'public' && session?.access_token) {
+        try {
+          await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/share-rank', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ rankId, caption: `Created a new ranked list: ${rankName}` }),
+          });
+          setTimeout(() => queryClient.refetchQueries({ queryKey: ['social-feed'] }), 800);
+        } catch {
+          // silent — rank was still created successfully
+        }
+      }
       if (rankId) {
         setLocation(`/rank/${rankId}`);
       }

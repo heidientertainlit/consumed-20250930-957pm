@@ -5186,13 +5186,7 @@ export default function Feed() {
                   return null;
                 }
 
-                // Skip user rank_share posts - only show Consumed Rankings carousel
-                if (post.type === 'rank_share') {
-                  return null;
-                }
-
-                // Legacy rank_share rendering removed - user ranks no longer shown in feed
-                if (false && post.type === 'rank_share' && (post as any).rankData) {
+                if (post.type === 'rank_share' && (post as any).rankData) {
                   const rankPost = post as any;
                   return (
                     <div key={`rank-${post.id}`} id={`post-${post.id}`}>
