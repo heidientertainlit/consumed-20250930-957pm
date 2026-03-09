@@ -271,7 +271,10 @@ export default function PlayPredictionsPage() {
 
         {/* Awards Events Section */}
         {(() => {
-          if (awardsEvents.length === 0) return null;
+          const visibleAwards = awardsEvents.filter((e: any) =>
+            !['gg-2026', 'sag-awards-2026'].includes(e.id)
+          );
+          if (visibleAwards.length === 0) return null;
           return (
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-3">
@@ -279,7 +282,7 @@ export default function PlayPredictionsPage() {
                 <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Awards</h2>
               </div>
               <div className="space-y-3">
-                {filtered.map((event: any) => {
+                {visibleAwards.map((event: any) => {
                   const isOpen = event.status === 'open';
                   const isCompleted = event.status === 'completed';
                   return (
