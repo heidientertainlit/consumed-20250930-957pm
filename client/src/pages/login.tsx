@@ -180,12 +180,12 @@ export default function LoginPage() {
               className="h-16 w-auto"
             />
           </div>
-          <p className="text-gray-300 text-base mb-2">
-            Where entertainment lives.
-          </p>
           <h1 className="text-white text-base font-bold tracking-widest">
             CONNECT. TRACK. PLAY.
           </h1>
+          <p className="text-gray-300 text-base mb-2">
+            Where entertainment lives.
+          </p>
         </div>
         
         <div className="bg-white rounded-3xl p-8 shadow-2xl">
