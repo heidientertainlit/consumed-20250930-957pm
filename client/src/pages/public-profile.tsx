@@ -125,7 +125,7 @@ export default function PublicProfilePage() {
         <div className="min-h-screen bg-gradient-to-b from-purple-900 via-gray-900 to-black flex flex-col items-center justify-center p-4">
           <div className="text-center mb-8">
             <img src="/consumed-logo-new.png" alt="consumed" className="h-8 mx-auto mb-2" />
-            <p className="text-purple-300 text-sm">Track. Play. Connect.</p>
+            <p className="text-purple-300 text-sm">Connect. Track. Play.</p>
           </div>
 
           <div className="bg-white/[0.06] backdrop-blur-md border border-white/[0.1] rounded-2xl p-8 max-w-sm w-full text-center">
