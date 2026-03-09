@@ -341,10 +341,10 @@ export default function PlayRanks() {
             </div>
             <button
               onClick={() => setIsCreateRankOpen(true)}
-              className="flex items-center gap-2 text-white text-sm font-semibold px-4 py-2 rounded-full transition-opacity hover:opacity-90"
+              className="flex items-center gap-1.5 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-90"
               style={{ background: 'linear-gradient(135deg, #7c3aed, #db2777)' }}
             >
-              <Plus size={16} />
+              <Plus size={13} />
               Create Rank
             </button>
           </div>
