@@ -122,14 +122,25 @@ function PredictionCarouselSection({
                     </div>
                     <div className="flex items-center gap-1 text-gray-400">
                       <Users size={12} />
-                      <span>{game.participants || 0} players</span>
+                      <span>{
+                        (() => {
+                          const counts = voteCounts[game.id] || {};
+                          const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
+                          const voted = allPredictions[game.id];
+                          return total || game.participants || (voted ? 1 : 0);
+                        })()
+                      } players</span>
                     </div>
                   </div>
 
                   {voted ? (
                     <div className="flex flex-col gap-2">
                       {(game.options || []).map((option: string, i: number) => {
-                        const counts = voteCounts[game.id] || {};
+                        const rawCounts = voteCounts[game.id] || {};
+                        // Fallback: if RLS hides other votes, at least count the current user's vote
+                        const counts = Object.keys(rawCounts).length === 0
+                          ? { [voted]: 1 }
+                          : rawCounts;
                         const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
                         const count = counts[option] || 0;
                         const pct = total > 0 ? Math.round((count / total) * 100) : 0;
