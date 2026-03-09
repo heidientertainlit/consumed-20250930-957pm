@@ -181,7 +181,7 @@ export default function LoginPage() {
             />
           </div>
           <p className="text-gray-300 text-sm mb-2">
-            All your entertainment, all in one place.
+            Where entertainment lives.
           </p>
           <h1 className="text-white text-base font-bold tracking-widest">
             CONNECT. TRACK. PLAY.
