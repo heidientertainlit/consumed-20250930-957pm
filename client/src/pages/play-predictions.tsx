@@ -4,7 +4,7 @@ import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Star, Users, UserPlus, ChevronLeft, Search, SlidersHorizontal } from 'lucide-react';
+import { Trophy, Star, Users, UserPlus, ChevronLeft, Search, Lock, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
@@ -57,6 +57,19 @@ export default function PlayPredictionsPage() {
         ...p,
         isConsumed: p.origin_type === 'consumed' || p.id?.startsWith('consumed-'),
       }));
+    },
+  });
+
+  // Fetch awards events
+  const { data: awardsEvents = [] } = useQuery({
+    queryKey: ['/api/awards/events'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('awards_events')
+        .select('id, name, year, status, ceremony_date, deadline')
+        .order('ceremony_date', { ascending: true });
+      if (error) return [];
+      return data || [];
     },
   });
 
@@ -301,6 +314,85 @@ export default function PlayPredictionsPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-4">
+
+        {/* Awards Events Section */}
+        {(!selectedCategory || selectedCategory === 'Awards') && (() => {
+          const filtered = awardsEvents.filter((e: any) =>
+            searchQuery.trim()
+              ? e.name?.toLowerCase().includes(searchQuery.toLowerCase())
+              : true
+          );
+          if (filtered.length === 0) return null;
+          return (
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Trophy size={16} className="text-amber-500" />
+                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Awards</h2>
+              </div>
+              <div className="space-y-3">
+                {filtered.map((event: any) => {
+                  const isOpen = event.status === 'open';
+                  const isCompleted = event.status === 'completed';
+                  return (
+                    <button
+                      key={event.id}
+                      onClick={() => setLocation(`/play/awards/${event.id}`)}
+                      className="w-full text-left"
+                    >
+                      <Card className={`border shadow-sm rounded-2xl overflow-hidden transition-all hover:shadow-md ${
+                        isOpen
+                          ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200'
+                          : isCompleted
+                            ? 'bg-gray-50 border-gray-200'
+                            : 'bg-white border-gray-200'
+                      }`}>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                isOpen ? 'bg-amber-100' : 'bg-gray-100'
+                              }`}>
+                                <Trophy size={20} className={isOpen ? 'text-amber-600' : 'text-gray-400'} />
+                              </div>
+                              <div>
+                                <div className="font-semibold text-gray-900 text-sm">{event.name} {event.year}</div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  {isOpen && (
+                                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs px-2 py-0">
+                                      Open
+                                    </Badge>
+                                  )}
+                                  {event.status === 'locked' && (
+                                    <Badge className="bg-gray-100 text-gray-500 hover:bg-gray-100 text-xs px-2 py-0 flex items-center gap-1">
+                                      <Lock size={10} />
+                                      Locked
+                                    </Badge>
+                                  )}
+                                  {isCompleted && (
+                                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs px-2 py-0">
+                                      Results In
+                                    </Badge>
+                                  )}
+                                  {event.deadline && isOpen && (
+                                    <span className="text-xs text-gray-400">
+                                      Closes {new Date(event.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <ChevronRight size={18} className="text-gray-400 flex-shrink-0" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Predictions */}
         {lowStakesGames.length > 0 && (
           <div className="mb-8">
@@ -521,7 +613,7 @@ export default function PlayPredictionsPage() {
           </div>
         )}
 
-        {predictionGames.length === 0 && (
+        {predictionGames.length === 0 && (selectedCategory === 'Awards' || (!selectedCategory && awardsEvents.length === 0)) && (
           <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
             <Trophy className="mx-auto mb-4 text-gray-400" size={48} />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
