@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Trophy, Star, Users, Target, ChevronLeft, Lock, ChevronRight, Plus } from 'lucide-react';
+import { Trophy, Star, Users, Target, ChevronLeft, Lock, ChevronRight, Plus, Check } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { PredictionGameModal } from '@/components/prediction-game-modal';
@@ -19,6 +19,7 @@ function PredictionCarouselSection({
   label,
   games,
   allPredictions,
+  voteCounts,
   selectedAnswers,
   onOptionSelect,
   onSubmit,
@@ -28,6 +29,7 @@ function PredictionCarouselSection({
   label: string;
   games: any[];
   allPredictions: Record<string, string>;
+  voteCounts: Record<string, Record<string, number>>;
   selectedAnswers: Record<string, string>;
   onOptionSelect: (gameId: string, option: string) => void;
   onSubmit: (game: any) => void;
@@ -125,8 +127,33 @@ function PredictionCarouselSection({
                   </div>
 
                   {voted ? (
-                    <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
-                      <div className="text-green-700 font-medium text-sm">Submitted: "{voted}"</div>
+                    <div className="flex flex-col gap-2">
+                      {(game.options || []).map((option: string, i: number) => {
+                        const counts = voteCounts[game.id] || {};
+                        const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
+                        const count = counts[option] || 0;
+                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                        const isChosen = voted === option;
+                        return (
+                          <div key={i} className="relative w-full h-11 rounded-full overflow-hidden bg-gray-100">
+                            <div
+                              className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ${
+                                isChosen
+                                  ? 'bg-gradient-to-r from-indigo-600 to-blue-500'
+                                  : 'bg-gradient-to-r from-purple-500 to-purple-400 opacity-70'
+                              }`}
+                              style={{ width: `${Math.max(pct, 8)}%` }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-between px-4">
+                              <div className="flex items-center gap-2">
+                                {isChosen && <Check size={14} className="text-white flex-shrink-0" />}
+                                <span className="text-sm font-medium text-white drop-shadow-sm">{option}</span>
+                              </div>
+                              <span className="text-sm font-medium text-white drop-shadow-sm">{pct}%</span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : game.isMultiCategory ? (
                     <Button
@@ -242,6 +269,23 @@ export default function PlayPredictionsPage() {
 
   const allPredictions = userPredictionsData || {};
 
+  // Fetch vote counts for all prediction pools
+  const { data: voteCountsData = {} } = useQuery({
+    queryKey: ['/api/predictions/vote-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_predictions')
+        .select('pool_id, prediction');
+      if (error || !data) return {};
+      const counts: Record<string, Record<string, number>> = {};
+      data.forEach((row: any) => {
+        if (!counts[row.pool_id]) counts[row.pool_id] = {};
+        counts[row.pool_id][row.prediction] = (counts[row.pool_id][row.prediction] || 0) + 1;
+      });
+      return counts;
+    },
+  });
+
   // Submit prediction mutation - directly to Supabase
   const submitPrediction = useMutation({
     mutationFn: async ({ poolId, answer }: { poolId: string; answer: string }) => {
@@ -303,6 +347,7 @@ export default function PlayPredictionsPage() {
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/predictions/vote-counts'] });
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
       
       toast({
@@ -521,6 +566,7 @@ export default function PlayPredictionsPage() {
               label={LABEL_MAP[cat] || cat.charAt(0).toUpperCase() + cat.slice(1)}
               games={grouped[cat]}
               allPredictions={allPredictions}
+              voteCounts={voteCountsData as Record<string, Record<string, number>>}
               selectedAnswers={selectedAnswers}
               onOptionSelect={handleOptionSelect}
               onSubmit={handleSubmitAnswer}
