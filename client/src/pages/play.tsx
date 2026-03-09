@@ -108,7 +108,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
       </div>
 
       {/* Light section — game modes + leaderboard */}
-      <div className="bg-gray-50 px-4 pt-5 pb-4 space-y-5">
+      <div className="bg-gray-50 px-4 pt-5 pb-28 space-y-5">
         {/* Game Modes */}
         <div>
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
