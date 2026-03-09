@@ -1048,6 +1048,11 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
                           className="w-full pl-9 pr-8 py-2.5 bg-transparent border-0 focus:outline-none text-sm text-gray-900 placeholder:text-gray-400"
                           autoFocus
                           data-testid="input-media-search"
+                          onFocus={(e) => {
+                            setTimeout(() => {
+                              e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }, 350);
+                          }}
                         />
                         <button
                           onClick={() => {

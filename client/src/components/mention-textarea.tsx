@@ -35,6 +35,7 @@ interface MentionTextareaProps {
   testId?: string;
   minHeight?: string;
   onMediaSelect?: (media: MediaItem) => void;
+  onFocus?: () => void;
 }
 
 export default function MentionTextarea({
@@ -48,6 +49,7 @@ export default function MentionTextarea({
   testId,
   minHeight = "120px",
   onMediaSelect,
+  onFocus,
 }: MentionTextareaProps) {
   const [showMentions, setShowMentions] = useState(false);
   const [showMedia, setShowMedia] = useState(false);
@@ -326,6 +328,12 @@ export default function MentionTextarea({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
+        onFocus={() => {
+          onFocus?.();
+          setTimeout(() => {
+            textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 350);
+        }}
         placeholder={placeholder}
         className={`focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-0 focus:outline-none ${className || ''}`}
         maxLength={maxLength}
