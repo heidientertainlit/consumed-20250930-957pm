@@ -743,7 +743,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
   return (
     <>
     <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DrawerContent ref={drawerRef} className="bg-white rounded-t-3xl max-h-[85dvh] overflow-hidden flex flex-col [&>div:first-child]:hidden" style={{ maxHeight: '85dvh' }}>
+      <DrawerContent ref={drawerRef} className="bg-white rounded-t-3xl max-h-[85svh] overflow-hidden flex flex-col [&>div:first-child]:hidden" style={{ maxHeight: '85svh' }}>
         {stage === "search" ? (
           <>
             {/* Header */}
