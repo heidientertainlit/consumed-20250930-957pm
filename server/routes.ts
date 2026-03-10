@@ -1,11 +1,47 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { createClient } from "@supabase/supabase-js";
+import fs from "fs";
+import path from "path";
 // All user data is handled by Supabase Edge Functions
 // These routes only proxy external APIs (TMDB, NYT, Spotify) that need server-side API keys
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+function getSupabaseForOG() {
+  const key = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
+  return createClient(supabaseUrl, key);
+}
+
+function readIndexHtml(): string {
+  const devPath = path.resolve(process.cwd(), 'client', 'index.html');
+  const prodPath = path.resolve(process.cwd(), 'server', 'public', 'index.html');
+  try {
+    if (fs.existsSync(devPath)) return fs.readFileSync(devPath, 'utf-8');
+    if (fs.existsSync(prodPath)) return fs.readFileSync(prodPath, 'utf-8');
+  } catch {}
+  return '';
+}
+
+function injectOGTags(html: string, tags: { title: string; description: string; image?: string; url?: string }): string {
+  const appUrl = process.env.VITE_APP_URL || 'https://consumed.app';
+  const image = tags.image || `${appUrl}/icon-192.png`;
+  const url = tags.url || appUrl;
+  const ogTags = `
+    <meta property="og:title" content="${tags.title}" />
+    <meta property="og:description" content="${tags.description}" />
+    <meta property="og:image" content="${image}" />
+    <meta property="og:url" content="${url}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Consumed" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${tags.title}" />
+    <meta name="twitter:description" content="${tags.description}" />
+    <meta name="twitter:image" content="${image}" />
+    <title>${tags.title}</title>`;
+  return html.replace(/<title>.*?<\/title>/, ogTags);
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
 
@@ -584,6 +620,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch list" });
     }
   });
+
+  // --- OG Meta Tag Routes (must be before Vite catch-all) ---
+  // These inject proper Open Graph tags for link previews in iMessage, SMS, etc.
+
+  const ogSupabase = getSupabaseForOG();
+  const reqOrigin = (req: any) => `${req.protocol}://${req.get('host')}`;
+
+  // User invite link: /invite/:userId
+  app.get('/invite/:userId', async (req, res, next) => {
+    try {
+      const { userId } = req.params;
+      const { data: user } = await ogSupabase
+        .from('users')
+        .select('display_name, user_name')
+        .eq('id', userId)
+        .maybeSingle();
+
+      const html = readIndexHtml();
+      if (!html) return next();
+
+      const name = user?.display_name || user?.user_name || 'a friend';
+      const injected = injectOGTags(html, {
+        title: `${name} invited you to Consumed`,
+        description: 'Track what you watch, read, and listen to. Play games with friends and build your Entertainment DNA.',
+        url: `${reqOrigin(req)}/invite/${userId}`,
+      });
+      res.status(200).set('Content-Type', 'text/html').end(injected);
+    } catch { next(); }
+  });
+
+  // Friend profile share: /u/:userId
+  app.get('/u/:userId', async (req, res, next) => {
+    try {
+      const { userId } = req.params;
+      const { data: user } = await ogSupabase
+        .from('users')
+        .select('display_name, user_name')
+        .eq('id', userId)
+        .maybeSingle();
+
+      const html = readIndexHtml();
+      if (!html) return next();
+
+      const name = user?.display_name || user?.user_name || 'Someone';
+      const username = user?.user_name ? `@${user.user_name}` : '';
+      const injected = injectOGTags(html, {
+        title: `${name} on Consumed`,
+        description: `Check out ${username ? username + "'s" : 'their'} entertainment profile on Consumed.`,
+        url: `${reqOrigin(req)}/u/${userId}`,
+      });
+      res.status(200).set('Content-Type', 'text/html').end(injected);
+    } catch { next(); }
+  });
+
+  // Pool (Room) join link: /pool/join/:code or /room/join/:code
+  const poolJoinHandler = async (req: any, res: any, next: any) => {
+    try {
+      const { code } = req.params;
+      const { data: pool } = await ogSupabase
+        .from('pools')
+        .select('title, description')
+        .eq('invite_code', code)
+        .maybeSingle();
+
+      const html = readIndexHtml();
+      if (!html) return next();
+
+      const title = pool?.title || 'A Consumed Room';
+      const injected = injectOGTags(html, {
+        title: `Join "${title}" on Consumed`,
+        description: pool?.description || "You've been invited to join a prediction room on Consumed. Make your picks!",
+        url: `${reqOrigin(req)}${req.path}`,
+      });
+      res.status(200).set('Content-Type', 'text/html').end(injected);
+    } catch { next(); }
+  };
+  app.get('/pool/join/:code', poolJoinHandler);
+  app.get('/room/join/:code', poolJoinHandler);
 
   const httpServer = createServer(app);
   return httpServer;
