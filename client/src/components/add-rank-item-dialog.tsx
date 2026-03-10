@@ -310,9 +310,9 @@ export default function AddRankItemDialog({
             data-testid="button-add-rank-item"
           >
             {addItemsMutation.isPending ? (
-              <><Loader2 className="animate-spin mr-1" size={14} /> Adding...</>
+              <><Loader2 className="animate-spin mr-1" size={14} /> Posting...</>
             ) : (
-              <>Add{selectedMedia.length > 0 ? ` (${selectedMedia.length})` : ''}</>
+              <>Post{selectedMedia.length > 0 ? ` (${selectedMedia.length})` : ''}</>
             )}
           </Button>
         </div>

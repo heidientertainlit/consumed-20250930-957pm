@@ -1,11 +1,8 @@
 import { useState } from 'react';
 import { useLocation, useParams, Link } from 'wouter';
-import { ArrowLeft, Trophy, Plus, GripVertical, Globe, Lock, Trash2, MoreVertical, X, Share2, Link2 } from 'lucide-react';
+import { ArrowLeft, Trophy, Plus, GripVertical, Globe, Lock, Trash2, X, Link2 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
@@ -117,40 +114,6 @@ export default function RankDetail() {
     onError: (error) => {
       toast({
         title: "Delete Failed",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  });
-
-  const shareRankMutation = useMutation({
-    mutationFn: async (rankId: string) => {
-      if (!session?.access_token) throw new Error('Authentication required');
-      
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      const response = await fetch(`${supabaseUrl}/functions/v1/share-rank`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ rankId }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to share rank');
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['social-feed'] });
-      toast({ 
-        title: "Shared to Feed!",
-        description: "Your rank is now visible in the activity feed." 
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Share Failed",
         description: error.message,
         variant: "destructive"
       });
@@ -284,78 +247,59 @@ export default function RankDetail() {
             </div>
           </div>
 
-          {/* Actions Row */}
-          <div className="flex items-center justify-between pl-9">
-            <span 
-              onClick={() => {
-                if (!privacyMutation.isPending) {
-                  privacyMutation.mutate(!isPublic);
-                }
-              }}
-              className={`text-xs px-3 py-1 rounded-full cursor-pointer transition-colors font-medium ${
-                isPublic 
-                  ? 'bg-purple-100 text-purple-700 hover:bg-purple-200' 
+          {/* Actions Row 1: Toggle + Add + Trash */}
+          <div className="flex items-center gap-2 pl-9 mb-2">
+            <button
+              onClick={() => { if (!privacyMutation.isPending) privacyMutation.mutate(!isPublic); }}
+              disabled={privacyMutation.isPending}
+              data-testid="toggle-rank-privacy"
+              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+                isPublic
+                  ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
-              data-testid="toggle-rank-privacy"
             >
-              {isPublic ? '🌐 Public' : '🔒 Private'}
-            </span>
+              {isPublic ? <Globe size={12} /> : <Lock size={12} />}
+              {isPublic ? 'Public' : 'Private'}
+            </button>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  const url = `${import.meta.env.VITE_APP_URL || window.location.origin}/rank/${rankData.id}?user=${session?.user?.id}`;
-                  navigator.clipboard.writeText(url);
-                  toast({ title: "Link copied!", description: "Share this link with anyone" });
-                }}
-                className="text-xs px-3 text-gray-600 border-gray-200 hover:bg-gray-50"
-                data-testid="button-copy-link"
-              >
-                <Link2 size={14} className="mr-1.5" />
-                Copy Link
-              </Button>
+            <button
+              onClick={() => setIsTrackModalOpen(true)}
+              data-testid="button-add-item"
+              className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full font-medium bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+            >
+              <Plus size={12} />
+              Add
+            </button>
 
-              <Button
-                size="sm"
-                onClick={() => setIsTrackModalOpen(true)}
-                className="bg-purple-600 hover:bg-purple-700 text-xs px-3"
-                data-testid="button-add-item"
-              >
-                <Plus size={14} className="mr-1" />
-                Add
-              </Button>
+            <button
+              onClick={handleDeleteRank}
+              disabled={deleteRankMutation.isPending}
+              data-testid="button-delete-rank"
+              className="flex items-center justify-center w-7 h-7 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors ml-auto"
+            >
+              {deleteRankMutation.isPending ? (
+                <span className="text-[10px]">...</span>
+              ) : (
+                <Trash2 size={15} />
+              )}
+            </button>
+          </div>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="px-2">
-                    <MoreVertical size={16} />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem 
-                    onClick={() => {
-                      const url = `${import.meta.env.VITE_APP_URL || window.location.origin}/rank/${rankData.id}?user=${session?.user?.id}`;
-                      navigator.clipboard.writeText(url);
-                      toast({ title: "Link copied!", description: "Share this link with anyone" });
-                    }}
-                  >
-                    <Link2 size={14} className="mr-2" />
-                    Copy Link
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={handleDeleteRank}
-                    disabled={deleteRankMutation.isPending}
-                    className="text-red-600"
-                  >
-                    <Trash2 size={14} className="mr-2" />
-                    {deleteRankMutation.isPending ? 'Deleting...' : 'Delete Rank'}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+          {/* Actions Row 2: Copy Link */}
+          <div className="pl-9">
+            <button
+              onClick={() => {
+                const url = `${import.meta.env.VITE_APP_URL || window.location.origin}/rank/${rankData.id}?user=${session?.user?.id}`;
+                navigator.clipboard.writeText(url);
+                toast({ title: "Link copied!", description: "Share this link with anyone" });
+              }}
+              data-testid="button-copy-link"
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              <Link2 size={12} />
+              Copy Link
+            </button>
           </div>
         </div>
       </div>
