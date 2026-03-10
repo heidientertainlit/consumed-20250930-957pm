@@ -11,6 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trophy, Plus, ChevronLeft, ChevronDown, Loader2, Award, ArrowBigUp, ArrowBigDown, Globe, Lock, Users } from "lucide-react";
 
+const SUPABASE_URL = 'https://mahpgcogwpawvviapqza.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
 export default function PlayRanks() {
   const { user, session } = useAuth();
   const { toast } = useToast();
@@ -21,6 +24,45 @@ export default function PlayRanks() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [expandedFilter, setExpandedFilter] = useState<'topic' | null>(null);
+  const [localVotes, setLocalVotes] = useState<Record<string, 'up' | 'down' | null>>({});
+
+  const voteMutation = useMutation({
+    mutationFn: async ({ rankItemId, direction }: { rankItemId: string; direction: 'up' | 'down' }) => {
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/vote-rank-item`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || ''}`,
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ rankItemId, direction }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to vote');
+      }
+      return response.json();
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Vote failed', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const handleVote = (e: React.MouseEvent, rankItemId: string, direction: 'up' | 'down', ownerId?: string) => {
+    e.stopPropagation();
+    if (!session?.access_token) {
+      toast({ title: 'Sign in to vote', variant: 'destructive' });
+      return;
+    }
+    if (ownerId && ownerId === user?.id) {
+      toast({ title: "Can't vote on your own rank", variant: 'destructive' });
+      return;
+    }
+    const current = localVotes[rankItemId];
+    const newVote = current === direction ? null : direction;
+    setLocalVotes(prev => ({ ...prev, [rankItemId]: newVote }));
+    voteMutation.mutate({ rankItemId, direction });
+  };
 
   const categoryFilters = [
     { id: 'Movies', label: 'Movies' },
@@ -532,16 +574,36 @@ export default function PlayRanks() {
                             )}
                           </div>
                           
-                          {/* Add up/down votes for showcase preview */}
-                          <div className="flex items-center gap-2 ml-auto">
-                            <div className="flex items-center text-gray-400">
+                          {/* Up/down vote buttons */}
+                          <div className="flex items-center gap-1 ml-auto">
+                            <button
+                              onClick={(e) => handleVote(e, rankItem.id, 'up', item.rank?.user_id)}
+                              disabled={voteMutation.isPending}
+                              className={`flex items-center gap-0.5 px-1 py-0.5 rounded transition-colors ${
+                                localVotes[rankItem.id] === 'up'
+                                  ? 'text-green-500'
+                                  : 'text-gray-400 hover:text-green-500'
+                              }`}
+                            >
                               <ArrowBigUp size={14} />
-                              <span className="text-[10px] font-medium ml-0.5">{rankItem.up_vote_count || 0}</span>
-                            </div>
-                            <div className="flex items-center text-gray-400">
+                              <span className="text-[10px] font-medium">
+                                {(rankItem.up_vote_count || 0) + (localVotes[rankItem.id] === 'up' ? 1 : 0)}
+                              </span>
+                            </button>
+                            <button
+                              onClick={(e) => handleVote(e, rankItem.id, 'down', item.rank?.user_id)}
+                              disabled={voteMutation.isPending}
+                              className={`flex items-center gap-0.5 px-1 py-0.5 rounded transition-colors ${
+                                localVotes[rankItem.id] === 'down'
+                                  ? 'text-red-500'
+                                  : 'text-gray-400 hover:text-red-500'
+                              }`}
+                            >
                               <ArrowBigDown size={14} />
-                              <span className="text-[10px] font-medium ml-0.5">{rankItem.down_vote_count || 0}</span>
-                            </div>
+                              <span className="text-[10px] font-medium">
+                                {(rankItem.down_vote_count || 0) + (localVotes[rankItem.id] === 'down' ? 1 : 0)}
+                              </span>
+                            </button>
                           </div>
                         </div>
                       ))}
