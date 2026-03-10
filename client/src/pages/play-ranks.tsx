@@ -26,6 +26,7 @@ export default function PlayRanks() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [expandedFilter, setExpandedFilter] = useState<'topic' | null>(null);
   const [localVotes, setLocalVotes] = useState<Record<string, 'up' | 'down' | null>>({});
+  const [expandedRanks, setExpandedRanks] = useState<Record<string, boolean>>({});
 
   const voteMutation = useMutation({
     mutationFn: async ({ rankItemId, direction }: { rankItemId: string; direction: 'up' | 'down' }) => {
@@ -513,8 +514,8 @@ export default function PlayRanks() {
                     </div>
                     
                     <div className="space-y-2">
-                      {(item.rank?.items || []).slice(0, 3).map((rankItem: any, idx: number) => (
-                        <div key={idx} className="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-lg">
+                      {(item.rank?.items || []).slice(0, expandedRanks[item.postId] ? undefined : 3).map((rankItem: any, idx: number) => (
+                        <div key={rankItem.id || idx} className="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-lg">
                           <span className={`w-6 h-6 flex items-center justify-center text-xs font-bold rounded ${
                             item.isConsumed 
                               ? 'bg-purple-100 text-purple-700' 
@@ -567,9 +568,17 @@ export default function PlayRanks() {
                         </div>
                       ))}
                       {(item.rank?.items?.length || 0) > 3 && (
-                        <p className="text-xs text-purple-600 text-center py-1">
-                          +{item.rank.items.length - 3} more items
-                        </p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedRanks(prev => ({ ...prev, [item.postId]: !prev[item.postId] }));
+                          }}
+                          className="w-full text-xs text-purple-600 text-center py-1 hover:text-purple-800 transition-colors"
+                        >
+                          {expandedRanks[item.postId]
+                            ? 'Show less'
+                            : `+${item.rank.items.length - 3} more items`}
+                        </button>
                       )}
                     </div>
                     
@@ -634,8 +643,8 @@ export default function PlayRanks() {
                             <h3 className="font-semibold text-gray-900">{item.rank?.title || 'Untitled Rank'}</h3>
                           </div>
                           <div className="space-y-2">
-                            {(item.rank?.items || []).slice(0, 3).map((rankItem: any, idx: number) => (
-                              <div key={idx} className="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-lg">
+                            {(item.rank?.items || []).slice(0, expandedRanks[item.postId] ? undefined : 3).map((rankItem: any, idx: number) => (
+                              <div key={rankItem.id || idx} className="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-lg">
                                 <span className="w-6 h-6 flex items-center justify-center text-xs font-bold rounded bg-orange-100 text-orange-700">
                                   {rankItem.position || idx + 1}
                                 </span>
@@ -674,9 +683,17 @@ export default function PlayRanks() {
                               </div>
                             ))}
                             {(item.rank?.items?.length || 0) > 3 && (
-                              <p className="text-xs text-purple-600 text-center py-1">
-                                +{item.rank.items.length - 3} more items
-                              </p>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedRanks(prev => ({ ...prev, [item.postId]: !prev[item.postId] }));
+                                }}
+                                className="w-full text-xs text-purple-600 text-center py-1 hover:text-purple-800 transition-colors"
+                              >
+                                {expandedRanks[item.postId]
+                                  ? 'Show less'
+                                  : `+${item.rank.items.length - 3} more items`}
+                              </button>
                             )}
                           </div>
                         </div>
