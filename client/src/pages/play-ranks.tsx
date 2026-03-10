@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trophy, Plus, ChevronLeft, ChevronDown, Loader2, Award, ArrowBigUp, ArrowBigDown, Globe, Lock, Users } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const SUPABASE_URL = 'https://mahpgcogwpawvviapqza.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -76,83 +77,111 @@ export default function PlayRanks() {
 
   // Fetch Consumed-curated ranks from backend
   const { data: consumedRanksData, isLoading: isLoadingConsumed } = useQuery({
-    queryKey: ['consumed-ranks'],
+    queryKey: ['consumed-ranks-play'],
     queryFn: async () => {
-      try {
-        const response = await fetch(
-          'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-consumed-ranks',
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': SUPABASE_ANON_KEY,
-            },
-          }
-        );
-        
-        if (!response.ok) {
-          console.log('get-consumed-ranks not available, using fallback');
-          return null;
-        }
-        
-        const data = await response.json();
-        console.log('Consumed ranks fetched:', data.ranks?.length || 0);
-        
-        if (data.needsSeeding) {
-          console.log('Seeding Consumed ranks...');
-          await fetch(
-            'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-consumed-ranks?action=seed',
-            { headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY } }
-          );
-          const refetchResponse = await fetch(
-            'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-consumed-ranks',
-            { headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY } }
-          );
-          if (refetchResponse.ok) {
-            const refetchData = await refetchResponse.json();
-            return refetchData.ranks || null;
-          }
-        }
-        
-        return data.ranks || null;
-      } catch (error) {
-        console.log('Error fetching consumed ranks:', error);
-        return null;
-      }
+      const { data: ranksData, error } = await supabase
+        .from('ranks')
+        .select('id, title, description, category, visibility, user_id, created_at')
+        .eq('origin_type', 'consumed')
+        .eq('visibility', 'public')
+        .order('created_at', { ascending: false });
+
+      if (error || !ranksData || ranksData.length === 0) return [];
+
+      const rankIds = ranksData.map(r => r.id);
+      const { data: allItems } = await supabase
+        .from('rank_items')
+        .select('id, rank_id, position, title, media_type, creator, image_url, up_vote_count, down_vote_count')
+        .in('rank_id', rankIds)
+        .order('position', { ascending: true });
+
+      const itemsByRank: Record<string, any[]> = {};
+      (allItems || []).forEach((item: any) => {
+        if (!itemsByRank[item.rank_id]) itemsByRank[item.rank_id] = [];
+        itemsByRank[item.rank_id].push(item);
+      });
+
+      return ranksData.map(rank => ({
+        postId: `consumed-${rank.id}`,
+        rank: {
+          id: rank.id,
+          title: rank.title,
+          description: rank.description,
+          user_id: rank.user_id,
+          visibility: rank.visibility,
+          items: itemsByRank[rank.id] || [],
+        },
+        author: { id: rank.user_id, user_name: 'Consumed', display_name: 'Consumed' },
+        isConsumed: true,
+        createdAt: rank.created_at,
+        likesCount: 0,
+        commentsCount: 0,
+      }));
     },
     staleTime: 60000,
   });
 
-  // Fetch public community ranks via edge function
+  // Fetch public community ranks directly from Supabase
   const { data: publicRanksData, isLoading: isLoadingPublic } = useQuery({
-    queryKey: ['public-ranks', selectedCategory, searchQuery],
+    queryKey: ['public-ranks-play'],
     queryFn: async () => {
-      try {
-        const params = new URLSearchParams();
-        if (selectedCategory) params.set('topic', selectedCategory);
-        if (searchQuery.trim()) params.set('search', searchQuery.trim());
-        params.set('limit', '30');
-        
-        const response = await fetch(
-          `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-ranks?${params.toString()}`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
+      const { data: ranksData, error } = await supabase
+        .from('ranks')
+        .select('id, title, description, user_id, visibility, created_at')
+        .eq('visibility', 'public')
+        .neq('origin_type', 'consumed')
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      if (error || !ranksData || ranksData.length === 0) return [];
+
+      const rankIds = ranksData.map(r => r.id);
+      const userIds = [...new Set(ranksData.map(r => r.user_id).filter(Boolean))];
+
+      const [{ data: allItems }, { data: usersData }] = await Promise.all([
+        supabase
+          .from('rank_items')
+          .select('id, rank_id, position, title, media_type, creator, image_url, up_vote_count, down_vote_count')
+          .in('rank_id', rankIds)
+          .order('position', { ascending: true }),
+        supabase
+          .from('users')
+          .select('id, user_name, display_name')
+          .in('id', userIds),
+      ]);
+
+      const itemsByRank: Record<string, any[]> = {};
+      (allItems || []).forEach((item: any) => {
+        if (!itemsByRank[item.rank_id]) itemsByRank[item.rank_id] = [];
+        itemsByRank[item.rank_id].push(item);
+      });
+      const usersMap = new Map((usersData || []).map((u: any) => [u.id, u]));
+
+      return ranksData
+        .filter(rank => (itemsByRank[rank.id] || []).length > 0)
+        .map(rank => {
+          const author = usersMap.get(rank.user_id) as any;
+          return {
+            postId: rank.id,
+            rank: {
+              id: rank.id,
+              title: rank.title,
+              description: rank.description,
+              user_id: rank.user_id,
+              visibility: rank.visibility,
+              items: itemsByRank[rank.id] || [],
             },
-          }
-        );
-        
-        if (!response.ok) {
-          console.log('get-public-ranks not available');
-          return [];
-        }
-        
-        const data = await response.json();
-        console.log('Public ranks fetched:', data.ranks?.length || 0);
-        return data.ranks || [];
-      } catch (error) {
-        console.log('Error fetching public ranks:', error);
-        return [];
-      }
+            author: {
+              id: rank.user_id,
+              user_name: author?.user_name || 'Unknown',
+              display_name: author?.display_name,
+            },
+            isConsumed: false,
+            createdAt: rank.created_at,
+            likesCount: 0,
+            commentsCount: 0,
+          };
+        });
     },
     staleTime: 30000,
   });
@@ -210,94 +239,8 @@ export default function PlayRanks() {
     staleTime: 30000,
   });
 
-  // Fallback Consumed ranks if backend not available
-  const fallbackConsumedRanks = [
-    {
-      postId: 'consumed-best-90s-movies',
-      rank: {
-        id: 'consumed-best-90s-movies',
-        title: 'Best 90s Movies',
-        user_id: 'consumed',
-        visibility: 'public',
-        items: [
-          { id: 'fb-90s-1', position: 1, title: 'Pulp Fiction', media_type: 'movie', creator: 'Quentin Tarantino' },
-          { id: 'fb-90s-2', position: 2, title: 'The Shawshank Redemption', media_type: 'movie', creator: 'Frank Darabont' },
-          { id: 'fb-90s-3', position: 3, title: 'Fight Club', media_type: 'movie', creator: 'David Fincher' },
-          { id: 'fb-90s-4', position: 4, title: 'Goodfellas', media_type: 'movie', creator: 'Martin Scorsese' },
-          { id: 'fb-90s-5', position: 5, title: 'The Silence of the Lambs', media_type: 'movie', creator: 'Jonathan Demme' },
-          { id: 'fb-90s-6', position: 6, title: 'Schindler\'s List', media_type: 'movie', creator: 'Steven Spielberg' },
-          { id: 'fb-90s-7', position: 7, title: 'Forrest Gump', media_type: 'movie', creator: 'Robert Zemeckis' },
-          { id: 'fb-90s-8', position: 8, title: 'The Matrix', media_type: 'movie', creator: 'The Wachowskis' },
-          { id: 'fb-90s-9', position: 9, title: 'Jurassic Park', media_type: 'movie', creator: 'Steven Spielberg' },
-          { id: 'fb-90s-10', position: 10, title: 'Home Alone', media_type: 'movie', creator: 'Chris Columbus' },
-        ],
-      },
-      author: { id: 'consumed', user_name: 'Consumed', display_name: 'Consumed' },
-      isConsumed: true,
-      createdAt: new Date().toISOString(),
-      likesCount: 42,
-      commentsCount: 8,
-    },
-    {
-      postId: 'consumed-top-sci-fi-shows',
-      rank: {
-        id: 'consumed-top-sci-fi-shows',
-        title: 'Top Sci-Fi TV Shows',
-        user_id: 'consumed',
-        visibility: 'public',
-        items: [
-          { id: 'fb-scifi-1', position: 1, title: 'Breaking Bad', media_type: 'tv', creator: 'Vince Gilligan' },
-          { id: 'fb-scifi-2', position: 2, title: 'Black Mirror', media_type: 'tv', creator: 'Charlie Brooker' },
-          { id: 'fb-scifi-3', position: 3, title: 'Stranger Things', media_type: 'tv', creator: 'The Duffer Brothers' },
-          { id: 'fb-scifi-4', position: 4, title: 'Westworld', media_type: 'tv', creator: 'Jonathan Nolan' },
-          { id: 'fb-scifi-5', position: 5, title: 'The Expanse', media_type: 'tv', creator: 'Mark Fergus' },
-          { id: 'fb-scifi-6', position: 6, title: 'Battlestar Galactica', media_type: 'tv', creator: 'Ronald D. Moore' },
-          { id: 'fb-scifi-7', position: 7, title: 'Dark', media_type: 'tv', creator: 'Baran bo Odar' },
-          { id: 'fb-scifi-8', position: 8, title: 'Severance', media_type: 'tv', creator: 'Dan Erickson' },
-        ],
-      },
-      author: { id: 'consumed', user_name: 'Consumed', display_name: 'Consumed' },
-      isConsumed: true,
-      createdAt: new Date().toISOString(),
-      likesCount: 35,
-      commentsCount: 12,
-    },
-    {
-      postId: 'consumed-goat-albums',
-      rank: {
-        id: 'consumed-goat-albums',
-        title: 'GOAT Albums of All Time',
-        user_id: 'consumed',
-        visibility: 'public',
-        items: [
-          { id: 'fb-album-1', position: 1, title: 'Thriller', media_type: 'music', creator: 'Michael Jackson' },
-          { id: 'fb-album-2', position: 2, title: 'Abbey Road', media_type: 'music', creator: 'The Beatles' },
-          { id: 'fb-album-3', position: 3, title: 'To Pimp a Butterfly', media_type: 'music', creator: 'Kendrick Lamar' },
-          { id: 'fb-album-4', position: 4, title: 'Purple Rain', media_type: 'music', creator: 'Prince' },
-          { id: 'fb-album-5', position: 5, title: 'The Dark Side of the Moon', media_type: 'music', creator: 'Pink Floyd' },
-          { id: 'fb-album-6', position: 6, title: 'Nevermind', media_type: 'music', creator: 'Nirvana' },
-          { id: 'fb-album-7', position: 7, title: 'Blonde', media_type: 'music', creator: 'Frank Ocean' },
-          { id: 'fb-album-8', position: 8, title: 'Lemonade', media_type: 'music', creator: 'Beyonce' },
-          { id: 'fb-album-9', position: 9, title: 'OK Computer', media_type: 'music', creator: 'Radiohead' },
-        ],
-      },
-      author: { id: 'consumed', user_name: 'Consumed', display_name: 'Consumed' },
-      isConsumed: true,
-      createdAt: new Date().toISOString(),
-      likesCount: 28,
-      commentsCount: 5,
-    },
-  ];
-
-  // Use backend Consumed ranks if available, otherwise fallback
-  const consumedRanks = consumedRanksData || fallbackConsumedRanks;
-
-  // Combine community public ranks and user ranks (non-consumed)
-  const communityRanks = (publicRanksData || []).map((item: any) => ({
-    ...item,
-    postId: item.rank?.id,
-    isConsumed: false,
-  }));
+  const consumedRanks = consumedRanksData || [];
+  const communityRanks = publicRanksData || [];
   const myRanks = userRanksData || [];
 
   const applyFilters = (items: any[]) => {
@@ -326,8 +269,8 @@ export default function PlayRanks() {
 
   const filteredConsumedRanks = useMemo(() => applyFilters(consumedRanks), [consumedRanks, searchQuery, selectedCategory]);
   const filteredCommunityRanks = useMemo(() => applyFilters(
-    [...myRanks, ...communityRanks].filter((item: any) => item.rank?.id && (item.rank?.items?.length > 0 || item.rank?.title))
-  ), [myRanks, communityRanks, searchQuery, selectedCategory]);
+    communityRanks.filter((item: any) => item.rank?.id && item.rank?.items?.length > 0)
+  ), [communityRanks, searchQuery, selectedCategory]);
 
   const filteredRanks = useMemo(() => [...filteredConsumedRanks, ...filteredCommunityRanks], [filteredConsumedRanks, filteredCommunityRanks]);
 
