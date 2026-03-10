@@ -269,7 +269,7 @@ export default function RankFeedCard({
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <Link href={`/profile/${author.user_name}`}>
+          <Link href={`/user/${author.id}`}>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm cursor-pointer">
               {author.profile_image_url ? (
                 <img src={author.profile_image_url} alt="" className="w-full h-full rounded-full object-cover" />
@@ -280,7 +280,7 @@ export default function RankFeedCard({
           </Link>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <Link href={`/profile/${author.user_name}`}>
+              <Link href={`/user/${author.id}`}>
                 <span className="font-semibold text-gray-900 hover:underline cursor-pointer">
                   @{author.user_name}
                 </span>
