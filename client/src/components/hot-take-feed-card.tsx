@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Flame, Snowflake, MessageCircle, Trash2, Plus } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Link } from 'wouter';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -104,18 +105,22 @@ export function HotTakeFeedCard({ post, onComment, onDelete, currentUserId }: Ho
     <Card className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
       <div className="p-4">
         <div className="flex items-start gap-3 mb-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center overflow-hidden">
-            {post.user?.avatar_url ? (
-              <img src={post.user.avatar_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <Flame className="w-5 h-5 text-white" />
-            )}
-          </div>
+          <Link href={`/user/${post.user?.id || ''}`}>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center overflow-hidden cursor-pointer">
+              {post.user?.avatar_url ? (
+                <img src={post.user.avatar_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <Flame className="w-5 h-5 text-white" />
+              )}
+            </div>
+          </Link>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-900 text-sm">
-                {post.user?.displayName || post.user?.username || 'Anonymous'}
-              </span>
+              <Link href={`/user/${post.user?.id || ''}`}>
+                <span className="font-semibold text-gray-900 text-sm hover:text-purple-600 cursor-pointer">
+                  {post.user?.displayName || post.user?.username || 'Anonymous'}
+                </span>
+              </Link>
               <span className="text-xs text-gray-400">{formatTime(post.created_at)}</span>
             </div>
             {post.media_title && (

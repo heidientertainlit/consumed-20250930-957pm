@@ -792,19 +792,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       <div className="p-4">
         {/* User header inside card */}
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
+          <Link href={`/user/${post.user?.id || ''}`} className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold overflow-hidden flex-shrink-0">
               {post.user?.avatar
                 ? <img src={post.user.avatar} alt="" className="w-full h-full object-cover" />
                 : (post.user?.displayName || post.user?.username || '?')[0]?.toUpperCase()}
             </div>
             <div>
-              <p className="text-xs font-semibold text-gray-900 leading-tight">{post.user?.displayName || post.user?.username || 'Someone'}</p>
+              <p className="text-xs font-semibold text-gray-900 leading-tight hover:text-purple-600">{post.user?.displayName || post.user?.username || 'Someone'}</p>
               {post.user?.username && post.user.username !== post.user?.displayName && (
                 <p className="text-[10px] text-gray-400 leading-tight">@{post.user.username}</p>
               )}
             </div>
-          </div>
+          </Link>
           <div className="flex items-center gap-1.5">
             {mediaTypeLabel && (
               <span className="text-[11px] font-medium text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full capitalize">{mediaTypeLabel}</span>
