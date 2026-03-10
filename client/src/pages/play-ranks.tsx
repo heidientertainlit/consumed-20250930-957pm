@@ -84,6 +84,7 @@ export default function PlayRanks() {
           {
             headers: {
               'Content-Type': 'application/json',
+              'apikey': SUPABASE_ANON_KEY,
             },
           }
         );
@@ -100,11 +101,11 @@ export default function PlayRanks() {
           console.log('Seeding Consumed ranks...');
           await fetch(
             'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-consumed-ranks?action=seed',
-            { headers: { 'Content-Type': 'application/json' } }
+            { headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY } }
           );
           const refetchResponse = await fetch(
             'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-consumed-ranks',
-            { headers: { 'Content-Type': 'application/json' } }
+            { headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY } }
           );
           if (refetchResponse.ok) {
             const refetchData = await refetchResponse.json();
@@ -574,36 +575,40 @@ export default function PlayRanks() {
                             )}
                           </div>
                           
-                          {/* Up/down vote buttons */}
+                          {/* Up/down vote buttons — only for real DB items */}
                           <div className="flex items-center gap-1 ml-auto">
-                            <button
-                              onClick={(e) => handleVote(e, rankItem.id, 'up', item.rank?.user_id)}
-                              disabled={voteMutation.isPending}
-                              className={`flex items-center gap-0.5 px-1 py-0.5 rounded transition-colors ${
-                                localVotes[rankItem.id] === 'up'
-                                  ? 'text-green-500'
-                                  : 'text-gray-400 hover:text-green-500'
-                              }`}
-                            >
-                              <ArrowBigUp size={14} />
-                              <span className="text-[10px] font-medium">
-                                {(rankItem.up_vote_count || 0) + (localVotes[rankItem.id] === 'up' ? 1 : 0)}
-                              </span>
-                            </button>
-                            <button
-                              onClick={(e) => handleVote(e, rankItem.id, 'down', item.rank?.user_id)}
-                              disabled={voteMutation.isPending}
-                              className={`flex items-center gap-0.5 px-1 py-0.5 rounded transition-colors ${
-                                localVotes[rankItem.id] === 'down'
-                                  ? 'text-red-500'
-                                  : 'text-gray-400 hover:text-red-500'
-                              }`}
-                            >
-                              <ArrowBigDown size={14} />
-                              <span className="text-[10px] font-medium">
-                                {(rankItem.down_vote_count || 0) + (localVotes[rankItem.id] === 'down' ? 1 : 0)}
-                              </span>
-                            </button>
+                            {rankItem.id && rankItem.id.length >= 10 && (
+                              <>
+                                <button
+                                  onClick={(e) => handleVote(e, rankItem.id, 'up', item.rank?.user_id)}
+                                  disabled={voteMutation.isPending}
+                                  className={`flex items-center gap-0.5 px-1 py-0.5 rounded transition-colors ${
+                                    localVotes[rankItem.id] === 'up'
+                                      ? 'text-green-500'
+                                      : 'text-gray-400 hover:text-green-500'
+                                  }`}
+                                >
+                                  <ArrowBigUp size={14} />
+                                  <span className="text-[10px] font-medium">
+                                    {(rankItem.up_vote_count || 0) + (localVotes[rankItem.id] === 'up' ? 1 : 0)}
+                                  </span>
+                                </button>
+                                <button
+                                  onClick={(e) => handleVote(e, rankItem.id, 'down', item.rank?.user_id)}
+                                  disabled={voteMutation.isPending}
+                                  className={`flex items-center gap-0.5 px-1 py-0.5 rounded transition-colors ${
+                                    localVotes[rankItem.id] === 'down'
+                                      ? 'text-red-500'
+                                      : 'text-gray-400 hover:text-red-500'
+                                  }`}
+                                >
+                                  <ArrowBigDown size={14} />
+                                  <span className="text-[10px] font-medium">
+                                    {(rankItem.down_vote_count || 0) + (localVotes[rankItem.id] === 'down' ? 1 : 0)}
+                                  </span>
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       ))}
