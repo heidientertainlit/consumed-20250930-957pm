@@ -355,14 +355,13 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
     });
     if (user?.id) {
       supabase.from('seen_it_completions').upsert({
-        id: `${user.id}-${setId}`,
         set_id: setId,
         user_id: user.id,
         seen_count: seenCount,
         total_count: totalCount,
         percentage: totalCount > 0 ? Math.round((seenCount / totalCount) * 100) : 0,
         completed_at: new Date().toISOString()
-      }, { onConflict: 'id' }).then(({ error }) => {
+      }, { onConflict: 'user_id,set_id' }).then(({ error }) => {
         if (error) console.error('❌ Failed to save set completion to Supabase:', error);
         else {
           console.log('✅ Set completion saved:', setId);

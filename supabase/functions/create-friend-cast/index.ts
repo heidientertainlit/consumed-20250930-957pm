@@ -123,7 +123,7 @@ serve(async (req) => {
         userId: targetFriendId,
         type: 'cast',
         triggeredByUserId: user.id,
-        message: `${creatorName} cast you as ${celebName} in their movie! 🎬`,
+        message: `${creatorName} cast you as ${celebName} in their movie!`,
         friendCastId: friendCast.id
       };
       console.log('Notification payload:', JSON.stringify(notifPayload));

@@ -468,11 +468,6 @@ function Router() {
 }
 
 function App() {
-  useEffect(() => {
-    initPostHog();
-    console.log("PostHog init attempted", !!import.meta.env.VITE_POSTHOG_KEY);
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

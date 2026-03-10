@@ -168,7 +168,7 @@ serve(async (req) => {
         .single();
 
       const voterName = voter?.display_name || voter?.user_name || 'Someone';
-      const emoji = voteType === 'fire' ? '🔥' : '🧊';
+      const voteLabel = voteType === 'fire' ? 'fire' : 'ice';
 
       await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-notification`, {
         method: 'POST',
@@ -180,7 +180,7 @@ serve(async (req) => {
           userId: postData.user_id,
           type: 'hot_take_vote',
           triggeredByUserId: user.id,
-          message: `${voterName} voted ${emoji} on your Hot Take`,
+          message: `${voterName} voted ${voteLabel} on your Hot Take`,
           postId: postId
         })
       });

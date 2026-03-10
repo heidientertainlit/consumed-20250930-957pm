@@ -178,7 +178,7 @@ serve(async (req) => {
           userId: friendCast.creator_id,
           type: 'cast',
           triggeredByUserId: user.id,
-          message: `${targetName} approved your casting! They'll be played by ${friendCast.creator_pick_celeb_name} 🎬`,
+          message: `${targetName} approved your casting! They'll be played by ${friendCast.creator_pick_celeb_name}.`,
           friendCastId: friendCastId
         })
       });

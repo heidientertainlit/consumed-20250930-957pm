@@ -101,7 +101,7 @@ serve(async (req) => {
         userId: targetUserId,
         type: 'hot_take_pass',
         triggeredByUserId: user.id,
-        message: `🔥 ${senderName} passed you a Hot Take: "${post.content?.substring(0, 50)}..."`,
+        message: `${senderName} passed you a Hot Take: "${post.content?.substring(0, 50)}..."`,
         postId: postId
       })
     });
