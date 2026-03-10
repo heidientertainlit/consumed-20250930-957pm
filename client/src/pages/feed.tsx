@@ -37,6 +37,7 @@ import ConsolidatedActivityCard, { ConsolidatedActivity } from "@/components/con
 import GroupedActivityCard from "@/components/grouped-activity-card";
 import RecommendationCard from "@/components/recommendation-card";
 import ConsumptionCarousel from "@/components/consumption-carousel";
+import TrendingCarousel from "@/components/trending-carousel";
 import SwipeableRatingCards from "@/components/swipeable-rating-cards";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1979,41 +1980,28 @@ export default function Feed() {
   // Create a Set of friend user IDs for quick lookup
   const friendIds = new Set(friendsData.map((friend: any) => friend.friend?.id || friend.id).filter(Boolean));
 
-  const { data: friendsConsuming = [] } = useQuery({
-    queryKey: ['friends-consuming', Array.from(friendIds).sort().join(',')],
+  const { data: trendingContent = [] } = useQuery({
+    queryKey: ['trending-content'],
     queryFn: async () => {
       if (!session?.access_token) return [];
-      const targetIds = friendIds.size > 0 ? Array.from(friendIds) : [];
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      
       try {
-        console.log('🍿 Fetching friends consuming... targetIds:', targetIds.length);
-        const response = await fetch(`${supabaseUrl}/functions/v1/get-friends-consuming`, {
-          method: 'POST',
+        const response = await fetch(`${supabaseUrl}/functions/v1/get-trending-content`, {
+          method: 'GET',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
             'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
           },
-          body: JSON.stringify({ friendIds: targetIds }),
         });
-        
-        if (!response.ok) {
-          const errText = await response.text().catch(() => '');
-          console.log('🍿 Friends consuming fetch failed:', response.status, errText);
-          return [];
-        }
-        
+        if (!response.ok) return [];
         const data = await response.json();
-        console.log('🍿 Friends consuming data:', data.items?.length || 0, 'items');
         return data.items || [];
-      } catch (err: any) {
-        console.error('🍿 Friends consuming error:', err?.message || err);
+      } catch {
         return [];
       }
     },
     enabled: !!session?.access_token,
-    staleTime: 60000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { 
@@ -4632,46 +4620,20 @@ export default function Feed() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-4 pb-6" data-feed-content>
-        {/* Trending Strip - pill style */}
-        {friendsConsuming.length > 0 && (
-          <div className="mb-4">
-            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Trending</p>
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-              {friendsConsuming.map((item: any, idx: number) => {
-                const imgSrc = item.image_url
-                  ? item.image_url.startsWith('http')
-                    ? item.image_url
-                    : `https://image.tmdb.org/t/p/w92${item.image_url}`
-                  : null;
-                return (
-                  <button
-                    key={item.id || idx}
-                    onClick={() => {
-                      setQuickAddMedia({
-                        title: item.title,
-                        mediaType: item.media_type || 'movie',
-                        externalId: item.external_id || item.id,
-                        externalSource: item.external_source || 'tmdb',
-                        imageUrl: item.image_url || '',
-                      });
-                      setIsQuickAddOpen(true);
-                    }}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm hover:shadow hover:border-purple-200 transition-all flex-shrink-0"
-                  >
-                    {imgSrc ? (
-                      <img src={imgSrc} alt={item.title} className="w-5 h-5 rounded-sm object-cover flex-shrink-0" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-sm bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <Film size={10} className="text-gray-400" />
-                      </div>
-                    )}
-                    <span className="text-gray-700 text-xs font-medium truncate max-w-[100px]">{item.title}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Trending Strip */}
+        <TrendingCarousel
+          items={trendingContent}
+          onItemClick={(item) => {
+            setQuickAddMedia({
+              title: item.title,
+              mediaType: item.media_type || 'movie',
+              externalId: item.external_id || item.id,
+              externalSource: item.external_source || 'tmdb',
+              imageUrl: item.image_url || '',
+            });
+            setIsQuickAddOpen(true);
+          }}
+        />
 
         {/* Pending Friend Casts - You've Been Cast! - At top of white feed area */}
         {pendingCasts.length > 0 && (
