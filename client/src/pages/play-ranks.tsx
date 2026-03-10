@@ -274,26 +274,16 @@ export default function PlayRanks() {
   // Use backend Consumed ranks if available, otherwise fallback
   const consumedRanks = consumedRanksData || fallbackConsumedRanks;
 
-  // Combine Consumed showcase ranks with community public ranks and user ranks
+  // Combine community public ranks and user ranks (non-consumed)
   const communityRanks = (publicRanksData || []).map((item: any) => ({
     ...item,
     postId: item.rank?.id,
     isConsumed: false,
   }));
   const myRanks = userRanksData || [];
-  
-  // Consumed showcases first, then user's ranks, then community ranks
-  const allRanks = [...consumedRanks, ...myRanks, ...communityRanks];
 
-  // Filter ranks
-  const filteredRanks = useMemo(() => {
-    // Start with ranks that have valid IDs and at least one item (or are Consumed showcase)
-    let result = allRanks.filter((item: any) => {
-      if (item.isConsumed) return true; // Always show Consumed showcase ranks
-      return item.rank?.id && (item.rank?.items?.length > 0 || item.rank?.title);
-    });
-
-    // Search filter
+  const applyFilters = (items: any[]) => {
+    let result = items;
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter((item: any) => {
@@ -301,27 +291,27 @@ export default function PlayRanks() {
         return title.includes(query);
       });
     }
-
-    // Category filter - match rank title or items' media types
     if (selectedCategory) {
       result = result.filter((item: any) => {
         const title = item.rank?.title?.toLowerCase() || '';
         const categoryLower = selectedCategory.toLowerCase();
-        
-        // Check if title mentions the category
         if (title.includes(categoryLower)) return true;
-        
-        // Check items' media types
         const items = item.rank?.items || [];
-        return items.some((i: any) => 
+        return items.some((i: any) =>
           i.media_type?.toLowerCase() === categoryLower ||
           i.media_type?.toLowerCase().includes(categoryLower)
         );
       });
     }
-
     return result;
-  }, [allRanks, searchQuery, selectedCategory]);
+  };
+
+  const filteredConsumedRanks = useMemo(() => applyFilters(consumedRanks), [consumedRanks, searchQuery, selectedCategory]);
+  const filteredCommunityRanks = useMemo(() => applyFilters(
+    [...myRanks, ...communityRanks].filter((item: any) => item.rank?.id && (item.rank?.items?.length > 0 || item.rank?.title))
+  ), [myRanks, communityRanks, searchQuery, selectedCategory]);
+
+  const filteredRanks = useMemo(() => [...filteredConsumedRanks, ...filteredCommunityRanks], [filteredConsumedRanks, filteredCommunityRanks]);
 
   const createRankMutation = useMutation({
     mutationFn: async () => {
@@ -495,20 +485,23 @@ export default function PlayRanks() {
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
-                  <Trophy className="w-3.5 h-3.5 text-white" />
+            {/* Consumed Ranks Section */}
+            {filteredConsumedRanks.length > 0 && (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
+                      <Award className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Consumed Ranks</p>
+                      <p className="text-[10px] text-gray-500">Curated by Consumed</p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-500">{filteredConsumedRanks.length} lists</span>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">Community Rankings</p>
-                  <p className="text-[10px] text-gray-500">Tap to explore</p>
-                </div>
-              </div>
-              <span className="text-xs text-gray-500">{filteredRanks.length} lists</span>
-            </div>
-          <div className="space-y-4">
-            {filteredRanks.map((item: any) => (
+                <div className="space-y-4 mb-6">
+                  {filteredConsumedRanks.map((item: any) => (
               <div 
                 key={item.postId} 
                 className="relative cursor-pointer"
@@ -575,9 +568,9 @@ export default function PlayRanks() {
                             )}
                           </div>
                           
-                          {/* Up/down vote buttons — only for real DB items */}
+                          {/* Up/down vote buttons */}
                           <div className="flex items-center gap-1 ml-auto">
-                            {rankItem.id && rankItem.id.length >= 10 && (
+                            {rankItem.id && (
                               <>
                                 <button
                                   onClick={(e) => handleVote(e, rankItem.id, 'up', item.rank?.user_id)}
@@ -622,8 +615,116 @@ export default function PlayRanks() {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Community Ranks Section */}
+            {filteredCommunityRanks.length > 0 && (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
+                      <Users className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Community Ranks</p>
+                      <p className="text-[10px] text-gray-500">Ranked by users</p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-500">{filteredCommunityRanks.length} lists</span>
+                </div>
+                <div className="space-y-4">
+                  {filteredCommunityRanks.map((item: any) => (
+                    <div
+                      key={item.postId || item.rank?.id}
+                      className="relative cursor-pointer"
+                      onClick={() => {
+                        if (item.rank?.id) {
+                          setLocation(`/rank/${item.rank.id}?user=${item.author?.id}`);
+                        }
+                      }}
+                    >
+                      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">
+                              RANK
+                            </span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+                              <Users size={10} />
+                              Community
+                            </span>
+                          </div>
+                          {item.author && (
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                                {(item.author.user_name || 'U')[0].toUpperCase()}
+                              </div>
+                              <div>
+                                <span className="text-sm font-medium text-gray-900">@{item.author.user_name}</span>
+                                <span className="text-xs text-gray-500 ml-2">shared a ranked list</span>
+                              </div>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 mb-3">
+                            <Trophy className="text-orange-500" size={18} />
+                            <h3 className="font-semibold text-gray-900">{item.rank?.title || 'Untitled Rank'}</h3>
+                          </div>
+                          <div className="space-y-2">
+                            {(item.rank?.items || []).slice(0, 3).map((rankItem: any, idx: number) => (
+                              <div key={idx} className="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-lg">
+                                <span className="w-6 h-6 flex items-center justify-center text-xs font-bold rounded bg-orange-100 text-orange-700">
+                                  {rankItem.position || idx + 1}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">{rankItem.title}</p>
+                                  {rankItem.creator && rankItem.creator.toLowerCase() !== 'unknown' && (
+                                    <p className="text-xs text-gray-500 truncate">{rankItem.creator}</p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1 ml-auto">
+                                  {rankItem.id && (
+                                    <>
+                                      <button
+                                        onClick={(e) => handleVote(e, rankItem.id, 'up', item.rank?.user_id)}
+                                        disabled={voteMutation.isPending}
+                                        className={`flex items-center gap-0.5 px-1 py-0.5 rounded transition-colors ${localVotes[rankItem.id] === 'up' ? 'text-green-500' : 'text-gray-400 hover:text-green-500'}`}
+                                      >
+                                        <ArrowBigUp size={14} />
+                                        <span className="text-[10px] font-medium">
+                                          {(rankItem.up_vote_count || 0) + (localVotes[rankItem.id] === 'up' ? 1 : 0)}
+                                        </span>
+                                      </button>
+                                      <button
+                                        onClick={(e) => handleVote(e, rankItem.id, 'down', item.rank?.user_id)}
+                                        disabled={voteMutation.isPending}
+                                        className={`flex items-center gap-0.5 px-1 py-0.5 rounded transition-colors ${localVotes[rankItem.id] === 'down' ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                                      >
+                                        <ArrowBigDown size={14} />
+                                        <span className="text-[10px] font-medium">
+                                          {(rankItem.down_vote_count || 0) + (localVotes[rankItem.id] === 'down' ? 1 : 0)}
+                                        </span>
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                            {(item.rank?.items?.length || 0) > 3 && (
+                              <p className="text-xs text-purple-600 text-center py-1">
+                                +{item.rank.items.length - 3} more items
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
