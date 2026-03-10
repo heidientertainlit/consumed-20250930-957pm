@@ -71,6 +71,7 @@ import PoolJoinPage from "@/pages/pool-join";
 import PrivacyPolicy from "@/pages/privacy-policy";
 import TermsOfService from "@/pages/terms-of-service";
 import ResponsibleGaming from "@/pages/responsible-gaming";
+import ProfileByUsername from "@/pages/profile-by-username";
 
 // Simple redirect component for wouter
 function RedirectTo({ to }: { to: string }) {
@@ -420,6 +421,12 @@ function Router() {
           <Route path="/profile">
             <ProtectedRoute>
               <UserProfile />
+            </ProtectedRoute>
+          </Route>
+
+          <Route path="/profile/:username">
+            <ProtectedRoute>
+              <ProfileByUsername />
             </ProtectedRoute>
           </Route>
 
