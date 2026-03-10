@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Plus, ChevronLeft, ChevronDown, Loader2, Award, ArrowBigUp, ArrowBigDown, Globe, Lock, Users } from "lucide-react";
+import { Trophy, Plus, ChevronLeft, ChevronDown, Loader2, ArrowBigUp, ArrowBigDown, Globe, Lock, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { RanksCarousel } from "@/components/ranks-carousel";
 
 const SUPABASE_URL = 'https://mahpgcogwpawvviapqza.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -75,52 +76,6 @@ export default function PlayRanks() {
     { id: 'Games', label: 'Games' },
     { id: 'Podcasts', label: 'Podcasts' },
   ];
-
-  // Fetch Consumed-curated ranks from backend
-  const { data: consumedRanksData, isLoading: isLoadingConsumed } = useQuery({
-    queryKey: ['consumed-ranks-play'],
-    queryFn: async () => {
-      const { data: ranksData, error } = await supabase
-        .from('ranks')
-        .select('id, title, description, category, visibility, user_id, created_at')
-        .eq('origin_type', 'consumed')
-        .eq('visibility', 'public')
-        .order('created_at', { ascending: false });
-
-      if (error || !ranksData || ranksData.length === 0) return [];
-
-      const rankIds = ranksData.map(r => r.id);
-      const { data: allItems } = await supabase
-        .from('rank_items')
-        .select('id, rank_id, position, title, media_type, creator, image_url, up_vote_count, down_vote_count')
-        .in('rank_id', rankIds)
-        .order('position', { ascending: true });
-
-      const itemsByRank: Record<string, any[]> = {};
-      (allItems || []).forEach((item: any) => {
-        if (!itemsByRank[item.rank_id]) itemsByRank[item.rank_id] = [];
-        itemsByRank[item.rank_id].push(item);
-      });
-
-      return ranksData.map(rank => ({
-        postId: `consumed-${rank.id}`,
-        rank: {
-          id: rank.id,
-          title: rank.title,
-          description: rank.description,
-          user_id: rank.user_id,
-          visibility: rank.visibility,
-          items: itemsByRank[rank.id] || [],
-        },
-        author: { id: rank.user_id, user_name: 'Consumed', display_name: 'Consumed' },
-        isConsumed: true,
-        createdAt: rank.created_at,
-        likesCount: 0,
-        commentsCount: 0,
-      }));
-    },
-    staleTime: 60000,
-  });
 
   // Fetch public community ranks directly from Supabase
   const { data: publicRanksData, isLoading: isLoadingPublic } = useQuery({
@@ -240,7 +195,6 @@ export default function PlayRanks() {
     staleTime: 30000,
   });
 
-  const consumedRanks = consumedRanksData || [];
   const communityRanks = publicRanksData || [];
   const myRanks = userRanksData || [];
 
@@ -268,12 +222,9 @@ export default function PlayRanks() {
     return result;
   };
 
-  const filteredConsumedRanks = useMemo(() => applyFilters(consumedRanks), [consumedRanks, searchQuery, selectedCategory]);
   const filteredCommunityRanks = useMemo(() => applyFilters(
     communityRanks.filter((item: any) => item.rank?.id && item.rank?.items?.length > 0)
   ), [communityRanks, searchQuery, selectedCategory]);
-
-  const filteredRanks = useMemo(() => [...filteredConsumedRanks, ...filteredCommunityRanks], [filteredConsumedRanks, filteredCommunityRanks]);
 
   const createRankMutation = useMutation({
     mutationFn: async () => {
@@ -312,8 +263,6 @@ export default function PlayRanks() {
       toast({ title: "Error", description: "Failed to create rank", variant: "destructive" });
     },
   });
-
-  const isLoading = isLoadingPublic || isLoadingConsumed;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -411,10 +360,15 @@ export default function PlayRanks() {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
 
-        {/* Ranks List */}
-        {isLoading ? (
+        {/* Consumed Ranks Section — Debate the Rank carousel */}
+        <div className="mb-6">
+          <RanksCarousel expanded={true} offset={0} />
+        </div>
+
+        {/* Community Ranks Section */}
+        {isLoadingPublic ? (
           <div className="space-y-4">
-            {[1, 2, 3].map((n) => (
+            {[1, 2].map((n) => (
               <div key={n} className="bg-white rounded-xl p-6 animate-pulse">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-gray-200 rounded-full" />
@@ -427,168 +381,12 @@ export default function PlayRanks() {
                 <div className="space-y-2">
                   <div className="h-10 bg-gray-100 rounded" />
                   <div className="h-10 bg-gray-100 rounded" />
-                  <div className="h-10 bg-gray-100 rounded" />
                 </div>
               </div>
             ))}
           </div>
-        ) : filteredRanks.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center">
-            <Trophy className="mx-auto mb-3 text-gray-300" size={48} />
-            <p className="text-gray-600 mb-2">No ranks found</p>
-            <p className="text-sm text-gray-500 mb-4">Be the first to create a ranked list!</p>
-            <Button 
-              onClick={() => setIsCreateRankOpen(true)}
-              className="bg-orange-600 hover:bg-orange-700"
-            >
-              <Plus size={16} className="mr-2" />
-              Create Rank
-            </Button>
-          </div>
         ) : (
           <>
-            {/* Consumed Ranks Section */}
-            {filteredConsumedRanks.length > 0 && (
-              <>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
-                      <Award className="w-3.5 h-3.5 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">Consumed Ranks</p>
-                      <p className="text-[10px] text-gray-500">Curated by Consumed</p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-gray-500">{filteredConsumedRanks.length} lists</span>
-                </div>
-                <div className="space-y-4 mb-6">
-                  {filteredConsumedRanks.map((item: any) => (
-              <div 
-                key={item.postId} 
-                className="relative cursor-pointer"
-                onClick={() => {
-                  if (!item.isConsumed && item.rank?.id) {
-                    setLocation(`/rank/${item.rank.id}?user=${item.author?.id}`);
-                  }
-                }}
-              >
-                {/* Rank showcase card */}
-                <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden hover:shadow-md transition-shadow ${
-                  item.isConsumed ? 'border-purple-200' : 'border-gray-200'
-                }`}>
-                  <div className="p-4">
-                    {/* Pill badges */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">
-                        RANK
-                      </span>
-                      {item.isConsumed ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-purple-600 text-white text-[10px] font-semibold rounded-full uppercase tracking-wide">
-                          <Award size={9} />
-                          Consumed
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
-                          <Users size={10} />
-                          Community
-                        </span>
-                      )}
-                    </div>
-                    {/* Author info for community ranks */}
-                    {!item.isConsumed && item.author && (
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                          {(item.author.user_name || 'U')[0].toUpperCase()}
-                        </div>
-                        <div>
-                          <span className="text-sm font-medium text-gray-900">@{item.author.user_name}</span>
-                          <span className="text-xs text-gray-500 ml-2">shared a ranked list</span>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center gap-2 mb-3">
-                      <Trophy className={item.isConsumed ? "text-purple-500" : "text-orange-500"} size={18} />
-                      <h3 className="font-semibold text-gray-900">{item.rank?.title || 'Untitled Rank'}</h3>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      {(item.rank?.items || []).slice(0, expandedRanks[item.postId] ? undefined : 3).map((rankItem: any, idx: number) => (
-                        <div key={rankItem.id || idx} className="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-lg">
-                          <span className={`w-6 h-6 flex items-center justify-center text-xs font-bold rounded ${
-                            item.isConsumed 
-                              ? 'bg-purple-100 text-purple-700' 
-                              : 'bg-orange-100 text-orange-700'
-                          }`}>
-                            {rankItem.position || idx + 1}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{rankItem.title}</p>
-                            {rankItem.creator && rankItem.creator.toLowerCase() !== 'unknown' && (
-                              <p className="text-xs text-gray-500 truncate">{rankItem.creator}</p>
-                            )}
-                          </div>
-                          
-                          {/* Up/down vote buttons */}
-                          <div className="flex items-center gap-1 ml-auto">
-                            {rankItem.id && (
-                              <>
-                                <button
-                                  onClick={(e) => handleVote(e, rankItem.id, 'up', item.rank?.user_id)}
-                                  disabled={voteMutation.isPending}
-                                  className={`flex items-center gap-0.5 px-1 py-0.5 rounded transition-colors ${
-                                    localVotes[rankItem.id] === 'up'
-                                      ? 'text-green-500'
-                                      : 'text-gray-400 hover:text-green-500'
-                                  }`}
-                                >
-                                  <ArrowBigUp size={14} />
-                                  <span className="text-[10px] font-medium">
-                                    {(rankItem.up_vote_count || 0) + (localVotes[rankItem.id] === 'up' ? 1 : 0)}
-                                  </span>
-                                </button>
-                                <button
-                                  onClick={(e) => handleVote(e, rankItem.id, 'down', item.rank?.user_id)}
-                                  disabled={voteMutation.isPending}
-                                  className={`flex items-center gap-0.5 px-1 py-0.5 rounded transition-colors ${
-                                    localVotes[rankItem.id] === 'down'
-                                      ? 'text-red-500'
-                                      : 'text-gray-400 hover:text-red-500'
-                                  }`}
-                                >
-                                  <ArrowBigDown size={14} />
-                                  <span className="text-[10px] font-medium">
-                                    {(rankItem.down_vote_count || 0) + (localVotes[rankItem.id] === 'down' ? 1 : 0)}
-                                  </span>
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      {(item.rank?.items?.length || 0) > 3 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExpandedRanks(prev => ({ ...prev, [item.postId]: !prev[item.postId] }));
-                          }}
-                          className="w-full text-xs text-purple-600 text-center py-1 hover:text-purple-800 transition-colors"
-                        >
-                          {expandedRanks[item.postId]
-                            ? 'Show less'
-                            : `+${item.rank.items.length - 3} more items`}
-                        </button>
-                      )}
-                    </div>
-                    
-                  </div>
-                </div>
-              </div>
-                  ))}
-                </div>
-              </>
-            )}
 
             {/* Community Ranks Section */}
             {filteredCommunityRanks.length > 0 && (
