@@ -357,9 +357,9 @@ export default function RankFeedCard({
       {/* Rank Title */}
       <Link href={`/rank/${rank.id}`}>
         <div className="px-4 py-3 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-100 cursor-pointer hover:from-purple-100 hover:to-blue-100 transition-colors">
-          <h3 className="font-bold text-gray-900 flex items-center gap-2">
-            <Trophy size={16} className="text-purple-600" />
-            {rank.title}
+          <h3 className="font-bold text-gray-900 flex items-start gap-2">
+            <Trophy size={16} className="text-purple-600 flex-shrink-0 mt-0.5" />
+            <span className="leading-snug">{rank.title}</span>
           </h3>
         </div>
       </Link>
@@ -400,14 +400,14 @@ export default function RankFeedCard({
               
               {/* Title with Media Icon & Creator */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  {mediaIcon}
+                <div className="flex items-start gap-1.5">
+                  {mediaIcon && <span className="flex-shrink-0 mt-0.5">{mediaIcon}</span>}
                   {isClickable ? (
                     <Link href={mediaUrl!}>
-                      <p className="font-medium text-gray-900 text-sm truncate hover:text-purple-600 cursor-pointer">{item.title}</p>
+                      <p className="font-medium text-gray-900 text-sm leading-snug hover:text-purple-600 cursor-pointer">{item.title}</p>
                     </Link>
                   ) : (
-                    <p className="font-medium text-gray-900 text-sm truncate">{item.title}</p>
+                    <p className="font-medium text-gray-900 text-sm leading-snug">{item.title}</p>
                   )}
                 </div>
                 {displayCreator && (

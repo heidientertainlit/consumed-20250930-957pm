@@ -2109,7 +2109,6 @@ export default function Feed() {
         const hasUser = p.user?.id && p.user?.username && p.user.username !== 'Unknown';
         const hasCreator = p.creator?.id && p.creator?.username && p.creator.username !== 'Unknown';
         if (!hasUser && !hasCreator) return false;
-        if (p.type === 'rank_share') return false;
         if (p.type === 'cast_approved') return true;
         if (p.type === 'hot_take' || p.post_type === 'hot_take') return true;
         if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
@@ -2410,6 +2409,116 @@ export default function Feed() {
       return (
         <div key={`${keyPrefix}-pred-${item.id}`} className="mb-4">
           <CollaborativePredictionCard prediction={predictionCardData as any} />
+        </div>
+      );
+    }
+
+    // Rank share posts — render as RankFeedCard using the preserved _rawPost
+    if (item._rawPost?.type === 'rank_share') {
+      const rawPost = item._rawPost as any;
+      if (rawPost.rankData) {
+        return (
+          <div key={`${keyPrefix}-rank-${item.id}`} id={`post-${item.id}`} className="mb-4">
+            <RankFeedCard
+              rank={rawPost.rankData}
+              author={{
+                id: rawPost.user?.id || '',
+                user_name: rawPost.user?.username || '',
+                display_name: rawPost.user?.displayName,
+                profile_image_url: rawPost.user?.avatar
+              }}
+              caption={rawPost.content}
+              createdAt={rawPost.timestamp}
+              postId={item.id}
+              likesCount={rawPost.likes}
+              commentsCount={rawPost.comments}
+              isLiked={likedPosts.has(item.id)}
+              onLike={handleLike}
+              expandedComments={expandedComments.has(item.id)}
+              onToggleComments={() => setExpandedComments(prev => {
+                const newSet = new Set(prev);
+                if (newSet.has(item.id)) newSet.delete(item.id);
+                else newSet.add(item.id);
+                return newSet;
+              })}
+              fetchComments={fetchComments}
+              commentInput={commentInputs[item.id] || ''}
+              onCommentInputChange={(value) => handleCommentInputChange(item.id, value)}
+              onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(item.id, parentCommentId, content)}
+              isSubmitting={commentMutation.isPending}
+              currentUserId={user?.id}
+              onDeleteComment={handleDeleteComment}
+              onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
+              onVoteComment={handleVoteComment}
+              likedComments={likedComments}
+              commentVotes={commentVotes}
+            />
+          </div>
+        );
+      }
+      const rankId = rawPost.rankId;
+      const rankTitle = (() => {
+        const content = rawPost.content || '';
+        const prefix = 'Check out my ranked list: ';
+        return content.startsWith(prefix) ? content.slice(prefix.length) : content;
+      })();
+      return (
+        <div key={`${keyPrefix}-rank-stub-${item.id}`} id={`post-${item.id}`} className="mb-4">
+          <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
+            <div className="bg-gradient-to-r from-purple-700 to-indigo-700 px-4 py-2.5 flex items-center gap-2">
+              <Trophy size={14} className="text-white" />
+              <p className="text-sm text-white font-medium">Ranked List</p>
+            </div>
+            <div className="p-4">
+              {rawPost.user && (
+                <div className="flex items-center gap-2 mb-3">
+                  <Link href={`/user/${rawPost.user.id}`}>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
+                      {rawPost.user.avatar ? (
+                        <img src={rawPost.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <span className="text-xs">{rawPost.user.username?.[0]?.toUpperCase() || '?'}</span>
+                      )}
+                    </div>
+                  </Link>
+                  <Link href={`/user/${rawPost.user.id}`}>
+                    <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">
+                      {rawPost.user.displayName || rawPost.user.username}
+                    </span>
+                  </Link>
+                </div>
+              )}
+              <p className="font-semibold text-gray-900 mb-3">{rankTitle}</p>
+              {rankId && (
+                <Link href={`/ranks/${rankId}`}>
+                  <button className="w-full py-2 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors">
+                    View Ranked List
+                  </button>
+                </Link>
+              )}
+              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
+                <button
+                  onClick={() => handleLike(item.id)}
+                  className={`flex items-center gap-1.5 text-sm ${likedPosts.has(item.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                >
+                  <Heart size={16} fill={likedPosts.has(item.id) ? 'currentColor' : 'none'} />
+                  <span>{rawPost.likes || 0}</span>
+                </button>
+                <button
+                  onClick={() => setExpandedComments(prev => {
+                    const newSet = new Set(prev);
+                    if (newSet.has(item.id)) newSet.delete(item.id);
+                    else newSet.add(item.id);
+                    return newSet;
+                  })}
+                  className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
+                >
+                  <MessageCircle size={16} />
+                  <span>{rawPost.comments || 0}</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       );
     }
