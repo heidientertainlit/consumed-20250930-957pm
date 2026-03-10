@@ -531,9 +531,9 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
                   ))}
                 </div>
               ) : (
-                <div className="mt-1.5 h-6 flex items-center">
+                <div className="mt-1.5">
                   {ratingMap[item.id] ? (
-                    <div className="flex gap-0.5">
+                    <div className="flex gap-0.5 h-6 items-center">
                       {[1,2,3,4,5].map(star => (
                         <div key={star} className="relative w-3 h-3">
                           <Star className={`w-3 h-3 ${ratingMap[item.id] >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`} />
@@ -546,8 +546,35 @@ export default function SeenItGame({ mediaTypeFilter, onAddToList }: SeenItGameP
                       ))}
                     </div>
                   ) : response === true ? (
-                    <span className="text-[11px] text-green-600 font-medium">✓ {mediaConfig.actionDone}</span>
-                  ) : null}
+                    <span className="text-[11px] text-green-600 font-medium h-6 flex items-center">✓ {mediaConfig.actionDone}</span>
+                  ) : response === false ? (
+                    <span className="text-[11px] text-red-400 font-medium h-6 flex items-center">✗ Not yet</span>
+                  ) : (
+                    <div className="flex gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleResponse(currentSet.id, item, true);
+                        }}
+                        className="flex-1 py-1 rounded-lg bg-green-50 border border-green-200 text-[11px] font-semibold text-green-700 hover:bg-green-100 active:scale-95 transition-all flex items-center justify-center gap-0.5"
+                      >
+                        <Check className="w-3 h-3" />
+                        Yes
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleResponse(currentSet.id, item, false);
+                        }}
+                        className="flex-1 py-1 rounded-lg bg-red-50 border border-red-200 text-[11px] font-semibold text-red-500 hover:bg-red-100 active:scale-95 transition-all flex items-center justify-center gap-0.5"
+                      >
+                        <X className="w-3 h-3" />
+                        No
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
