@@ -1,11 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowBigUp, ArrowBigDown, Trophy, Film, Tv, Music, BookOpen, Gamepad2, Mic, Heart, MessageCircle, MoreHorizontal, Trash2, Award } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { ArrowBigUp, ArrowBigDown, Film, Tv, Music, BookOpen, Gamepad2, Mic, Heart, MessageCircle, Trash2, Award } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -295,29 +289,14 @@ export default function RankFeedCard({
             </div>
             <p className="text-xs text-gray-500">shared a ranked list</p>
           </div>
-          <Trophy className="text-purple-500" size={20} />
-          
           {isOwner && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button 
-                  className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-                  data-testid={`rank-menu-${rank.id}`}
-                >
-                  <MoreHorizontal size={18} className="text-gray-500" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem 
-                  onClick={() => setShowDeleteDialog(true)}
-                  className="text-red-600 focus:text-red-600"
-                  data-testid={`delete-rank-${rank.id}`}
-                >
-                  <Trash2 size={16} className="mr-2" />
-                  Delete Rank
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <button 
+              onClick={() => setShowDeleteDialog(true)}
+              className="p-1.5 hover:bg-red-50 rounded-full transition-colors"
+              data-testid={`delete-rank-${rank.id}`}
+            >
+              <Trash2 size={17} className="text-gray-400 hover:text-red-500 transition-colors" />
+            </button>
           )}
         </div>
       </div>
@@ -357,9 +336,8 @@ export default function RankFeedCard({
       {/* Rank Title */}
       <Link href={`/rank/${rank.id}`}>
         <div className="px-4 py-3 bg-gradient-to-r from-purple-50 to-blue-50 border-b border-gray-100 cursor-pointer hover:from-purple-100 hover:to-blue-100 transition-colors">
-          <h3 className="font-bold text-gray-900 flex items-start gap-2">
-            <Trophy size={16} className="text-purple-600 flex-shrink-0 mt-0.5" />
-            <span className="leading-snug">{rank.title}</span>
+          <h3 className="font-bold text-gray-900">
+            {rank.title}
           </h3>
         </div>
       </Link>
