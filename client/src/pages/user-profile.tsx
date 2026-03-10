@@ -2845,7 +2845,9 @@ export default function UserProfile() {
                     {/* Items Logged */}
                     <div className="flex items-center space-x-1.5 -ml-1.5 px-1.5 py-0.5">
                       <TrendingUp className="text-blue-500" size={14} />
-                      <span className="text-sm font-semibold text-gray-800">{totalItemsLogged}</span>
+                      <span className="text-sm font-semibold text-gray-800">
+                        {!isOwnProfile && friendshipStatus !== 'friends' ? '—' : totalItemsLogged}
+                      </span>
                       <span className="text-xs text-gray-500">items logged</span>
                     </div>
 
