@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
-import { QuickAddModal } from './quick-add-modal';
+import { QuickAddListSheet } from './quick-add-list-sheet';
 
 type LeaderboardVariant = 'trivia' | 'overall' | 'consumption' | 'polls' | 'predictions';
 
@@ -849,10 +849,10 @@ export default function ConsumptionCarousel({ items, title = "Community", onItem
       </div>
 
       {showAddModal && (
-        <QuickAddModal
+        <QuickAddListSheet
           isOpen={!!showAddModal}
           onClose={() => setShowAddModal(null)}
-          preSelectedMedia={{
+          media={{
             title: showAddModal.mediaTitle || '',
             mediaType: showAddModal.mediaType || 'movie',
             imageUrl: showAddModal.mediaImage,
