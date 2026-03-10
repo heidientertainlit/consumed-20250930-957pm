@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Plus, ChevronLeft, ChevronDown, Loader2, ArrowBigUp, ArrowBigDown, Globe, Lock, Users } from "lucide-react";
+import { Plus, ChevronLeft, ChevronDown, Loader2, ArrowBigUp, ArrowBigDown, Globe, Lock, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { RanksCarousel } from "@/components/ranks-carousel";
 
@@ -436,8 +436,7 @@ export default function PlayRanks() {
                               </div>
                             </div>
                           )}
-                          <div className="flex items-center gap-2 mb-3">
-                            <Trophy className="text-orange-500" size={18} />
+                          <div className="mb-3">
                             <h3 className="font-semibold text-gray-900">{item.rank?.title || 'Untitled Rank'}</h3>
                           </div>
                           <div className="space-y-2">
