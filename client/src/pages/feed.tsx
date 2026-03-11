@@ -4956,6 +4956,12 @@ export default function Feed() {
 
               {renderPostBatchByIndex(10)}
 
+              {/* TRIVIA filter - Books category */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && 
+               (!selectedCategory || selectedCategory === 'books') && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
+              )}
+
               {/* Read It? - Books */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
@@ -5002,11 +5008,6 @@ export default function Feed() {
               {renderRoomCarousel(3, "Quick Glimpse")}
 
               {renderPostBatchByIndex(17)}
-
-              {/* TRIVIA - Books category */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
-              )}
 
               {renderPostBatchByIndex(18)}
 

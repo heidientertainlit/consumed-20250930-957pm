@@ -386,12 +386,25 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       
       incrementActivityCount();
     },
-    onError: (error: Error) => {
-      toast({
-        title: 'Already Played',
-        description: error.message,
-        variant: 'destructive'
-      });
+    onError: (error: Error, variables) => {
+      if (error.message === 'You already answered this question') {
+        setAnsweredQuestions(prev => ({
+          ...prev,
+          [variables.itemId]: {
+            answer: variables.answer,
+            isCorrect: variables.correctAnswer === variables.answer,
+            points: 0,
+            stats: {},
+            friendAnswers: []
+          }
+        }));
+      } else {
+        toast({
+          title: 'Error',
+          description: error.message,
+          variant: 'destructive'
+        });
+      }
     }
   });
 
