@@ -113,7 +113,7 @@ export default function PlayTriviaPage() {
   });
 
   // Fetch all predictions
-  const { data: userPredictionsData } = useQuery({
+  const { data: userPredictionsData, isLoading: predictionsLoading } = useQuery({
     queryKey: ['/api/predictions/user-predictions'],
     queryFn: async () => {
       const { createClient } = await import('@supabase/supabase-js');
@@ -339,7 +339,7 @@ export default function PlayTriviaPage() {
     }
   }, [gameIdFromUrl, triviaGames, selectedTriviaGame]);
 
-  if (isLoading) {
+  if (isLoading || predictionsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 pb-20">
         <Navigation onTrackConsumption={handleTrackConsumption} />

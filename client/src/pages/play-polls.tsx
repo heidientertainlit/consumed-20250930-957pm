@@ -57,7 +57,7 @@ export default function PlayPollsPage() {
     },
   });
 
-  const { data: userPredictionsData } = useQuery({
+  const { data: userPredictionsData, isLoading: predictionsLoading } = useQuery({
     queryKey: ['/api/predictions/user-predictions'],
     queryFn: async () => {
       const { data: { user: u } } = await supabase.auth.getUser();
@@ -179,7 +179,7 @@ export default function PlayPollsPage() {
     return CATEGORY_ORDER.filter(cat => groups[cat]).map(cat => [cat, groups[cat]] as [string, any[]]);
   }, [pollGames]);
 
-  if (isLoading) {
+  if (isLoading || predictionsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 pb-20">
         <Navigation onTrackConsumption={() => setIsTrackModalOpen(true)} />
