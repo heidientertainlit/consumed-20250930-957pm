@@ -4697,7 +4697,7 @@ export default function Feed() {
             <div className="text-center py-8">
               <p className="text-gray-600">Please sign in to view your social feed.</p>
             </div>
-          ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'challenges'].includes(selectedFilter) ? (
+          ) : (filteredPosts && filteredPosts.length > 0) || ['trivia', 'polls', 'predictions', 'dna', 'challenges', 'All', 'all', 'games'].includes(selectedFilter) ? (
             <div className="space-y-4 pb-24">
               {/* Empty state for filtered views */}
               {feedFilter === 'friends' && filteredPosts.length === 0 && (
