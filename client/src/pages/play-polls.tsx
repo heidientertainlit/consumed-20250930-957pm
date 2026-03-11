@@ -162,8 +162,13 @@ export default function PlayPollsPage() {
   };
 
   const pollGames = useMemo(() => {
-    return [...games];
-  }, [games]);
+    return [...games].sort((a: any, b: any) => {
+      const aAnswered = !!(allPredictions[a.id] || submissionResults[a.id]);
+      const bAnswered = !!(allPredictions[b.id] || submissionResults[b.id]);
+      if (aAnswered === bAnswered) return 0;
+      return aAnswered ? 1 : -1;
+    });
+  }, [games, allPredictions, submissionResults]);
 
   const pollsByCategory = useMemo(() => {
     const groups: Record<string, any[]> = {};

@@ -264,8 +264,13 @@ export default function PlayTriviaPage() {
       });
     }
     
-    return filtered;
-  }, [processedGames, selectedCategory, triviaType, selectedGenre]);
+    return filtered.sort((a: any, b: any) => {
+      const aAnswered = !!(allPredictions[a.id] || submissionResults[a.id]);
+      const bAnswered = !!(allPredictions[b.id] || submissionResults[b.id]);
+      if (aAnswered === bAnswered) return 0;
+      return aAnswered ? 1 : -1;
+    });
+  }, [processedGames, selectedCategory, triviaType, selectedGenre, allPredictions, submissionResults]);
   
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
