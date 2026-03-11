@@ -3104,6 +3104,8 @@ export default function Feed() {
             mediaTitle: p.mediaItems?.[0]?.title || 'Unknown',
             mediaType: p.mediaItems?.[0]?.mediaType,
             mediaImage: p.mediaItems?.[0]?.imageUrl,
+            mediaExternalId: p.mediaItems?.[0]?.externalId || p.externalId,
+            mediaExternalSource: p.mediaItems?.[0]?.externalSource || p.externalSource || 'tmdb',
             rating: p.rating,
             listName: (p as any).listData?.name,
             timestamp: p.timestamp
@@ -3141,6 +3143,8 @@ export default function Feed() {
         mediaTitle: p.mediaItems?.[0]?.title || 'Unknown',
         mediaType: p.mediaItems?.[0]?.mediaType,
         mediaImage: p.mediaItems?.[0]?.imageUrl,
+        mediaExternalId: p.mediaItems?.[0]?.externalId || p.externalId,
+        mediaExternalSource: p.mediaItems?.[0]?.externalSource || p.externalSource || 'tmdb',
         rating: p.rating,
         listName: (p as any).listData?.name,
         timestamp: p.timestamp
