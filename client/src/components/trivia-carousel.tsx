@@ -271,13 +271,16 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const answerMutation = useMutation({
     mutationFn: async ({ itemId, poolId, answer, pointsReward, correctAnswer, options }: { itemId: string; poolId: string; answer: string; pointsReward: number; correctAnswer?: string; options: string[] }) => {
       if (!user?.id) throw new Error('Not logged in');
+      console.log('[Trivia] Submitting answer:', { itemId, poolId, answer, correctAnswer });
       
-      const { data: existingAnswer } = await supabase
+      const { data: existingAnswer, error: existingError } = await supabase
         .from('user_predictions')
         .select('id')
         .eq('user_id', user.id)
         .eq('pool_id', poolId)
         .single();
+      
+      console.log('[Trivia] Existing answer check:', { existingAnswer, existingError: existingError?.message });
       
       if (existingAnswer) {
         throw new Error('You already answered this question');
@@ -295,11 +298,12 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
           points_earned: points
         });
       
+      console.log('[Trivia] Insert result:', { error: error?.message, code: error?.code });
       if (error) {
-        if (error.message.includes('duplicate')) {
+        if (error.message.includes('duplicate') || error.code === '23505') {
           throw new Error('You already answered this question');
         }
-        throw error;
+        throw new Error(`Insert failed: ${error.message}`);
       }
       
       await supabase.rpc('increment_user_points', { user_id_param: user.id, points_to_add: points });
@@ -365,6 +369,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       return { itemId, answer, isCorrect, points, stats, friendAnswers };
     },
     onSuccess: (result) => {
+      console.log('[Trivia] onSuccess:', { itemId: result.itemId, answer: result.answer, isCorrect: result.isCorrect });
       if (result.isCorrect) {
         setCelebratingItems(prev => ({ ...prev, [result.itemId]: result.points }));
         setTimeout(() => {
@@ -385,6 +390,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       incrementActivityCount();
     },
     onError: (error: Error, variables) => {
+      console.log('[Trivia] onError:', { message: error.message, itemId: variables.itemId, poolId: variables.poolId });
       if (error.message === 'You already answered this question') {
         setAnsweredQuestions(prev => ({
           ...prev,

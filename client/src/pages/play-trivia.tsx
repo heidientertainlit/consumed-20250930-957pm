@@ -183,8 +183,18 @@ export default function PlayTriviaPage() {
       markTrivia();
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
     },
-    onError: (error: Error) => {
-      if (error.message !== 'Already answered') {
+    onError: (error: Error, variables) => {
+      if (error.message === 'Already answered') {
+        setSubmissionResults(prev => ({
+          ...prev,
+          [variables.gameId]: {
+            correct: variables.correctAnswer ? variables.answer === variables.correctAnswer : false,
+            points: 0,
+            stats: {},
+            userAnswer: variables.answer
+          }
+        }));
+      } else {
         toast({ title: "Error", description: "Failed to submit answer. Please try again.", variant: "destructive" });
       }
     },
@@ -264,13 +274,8 @@ export default function PlayTriviaPage() {
       });
     }
     
-    return filtered.sort((a: any, b: any) => {
-      const aAnswered = !!(allPredictions[a.id] || submissionResults[a.id]);
-      const bAnswered = !!(allPredictions[b.id] || submissionResults[b.id]);
-      if (aAnswered === bAnswered) return 0;
-      return aAnswered ? 1 : -1;
-    });
-  }, [processedGames, selectedCategory, triviaType, selectedGenre, allPredictions, submissionResults]);
+    return filtered;
+  }, [processedGames, selectedCategory, triviaType, selectedGenre]);
   
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
