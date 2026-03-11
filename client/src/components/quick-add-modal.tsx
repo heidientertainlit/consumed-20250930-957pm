@@ -854,14 +854,14 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                       {/* Media info */}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 truncate">{result.title}</p>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          {getMediaIcon(result.type)}
+                        <div className="flex items-center gap-1 text-sm text-gray-500 flex-wrap">
+                          {result.creator && (
+                            <span className="truncate max-w-[140px]">{result.creator}</span>
+                          )}
+                          {result.creator && <span>•</span>}
                           <span className="capitalize">{result.type}</span>
                           {result.year && <span>• {result.year}</span>}
                         </div>
-                        {result.creator && (
-                          <p className="text-xs text-gray-400 truncate">{result.creator}</p>
-                        )}
                       </div>
                       
                       {/* Quick add "+" button - opens list drawer for immediate add */}
