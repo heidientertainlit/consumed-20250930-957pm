@@ -961,7 +961,10 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                             )}
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-gray-900 text-sm truncate">{result.title}</p>
-                              <p className="text-xs text-gray-500 capitalize">{result.type}{result.year ? ` • ${result.year}` : ''}</p>
+                              {result.creator && (
+                                <p className="text-xs text-gray-600 truncate">{result.creator}</p>
+                              )}
+                              <p className="text-xs text-gray-400 capitalize">{result.type}{result.year ? ` • ${result.year}` : ''}</p>
                             </div>
                           </div>
                         );
@@ -1016,7 +1019,10 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                             )}
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-gray-900 text-sm truncate">{result.title}</p>
-                              <p className="text-xs text-gray-500 capitalize">{result.type}{result.year ? ` • ${result.year}` : ''}</p>
+                              {result.creator && (
+                                <p className="text-xs text-gray-600 truncate">{result.creator}</p>
+                              )}
+                              <p className="text-xs text-gray-400 capitalize">{result.type}{result.year ? ` • ${result.year}` : ''}</p>
                             </div>
                           </div>
                         );
