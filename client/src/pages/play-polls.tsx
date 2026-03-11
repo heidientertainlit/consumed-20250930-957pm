@@ -115,7 +115,6 @@ export default function PlayPollsPage() {
         ...prev,
         [result.gameId]: { points: result.points, stats: result.stats, userAnswer: result.answer }
       }));
-      queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
     },
     onError: (error: Error) => {
       if (error.message !== 'Already voted') {
@@ -163,12 +162,12 @@ export default function PlayPollsPage() {
 
   const pollGames = useMemo(() => {
     return [...games].sort((a: any, b: any) => {
-      const aAnswered = !!(allPredictions[a.id] || submissionResults[a.id]);
-      const bAnswered = !!(allPredictions[b.id] || submissionResults[b.id]);
+      const aAnswered = !!allPredictions[a.id];
+      const bAnswered = !!allPredictions[b.id];
       if (aAnswered === bAnswered) return 0;
       return aAnswered ? 1 : -1;
     });
-  }, [games, allPredictions, submissionResults]);
+  }, [games, allPredictions]);
 
   const pollsByCategory = useMemo(() => {
     const groups: Record<string, any[]> = {};

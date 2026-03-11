@@ -181,7 +181,6 @@ export default function PlayTriviaPage() {
         [result.gameId]: { correct: result.isCorrect, points: result.points, stats: result.stats, userAnswer: result.answer }
       }));
       markTrivia();
-      queryClient.invalidateQueries({ queryKey: ['/api/predictions/user-predictions'] });
     },
     onError: (error: Error, variables) => {
       if (error.message === 'Already answered') {
@@ -274,8 +273,13 @@ export default function PlayTriviaPage() {
       });
     }
     
-    return filtered;
-  }, [processedGames, selectedCategory, triviaType, selectedGenre]);
+    return filtered.sort((a: any, b: any) => {
+      const aAnswered = !!allPredictions[a.id];
+      const bAnswered = !!allPredictions[b.id];
+      if (aAnswered === bAnswered) return 0;
+      return aAnswered ? 1 : -1;
+    });
+  }, [processedGames, selectedCategory, triviaType, selectedGenre, allPredictions]);
   
   const lowStakesGames = triviaGames.filter((game: any) => !game.isHighStakes);
   const highStakesGames = triviaGames.filter((game: any) => game.isHighStakes);
