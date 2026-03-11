@@ -28,20 +28,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // ✅ Request push permission ONLY on native, after OneSignal has had a moment to init.
   const requestPushPermissionIfNative = async () => {
     const platform = Capacitor.getPlatform()
     if (platform !== "ios" && platform !== "android") return
 
     try {
-      // Small delay helps on cold start so OneSignal is ready
       await new Promise((r) => setTimeout(r, 800))
-
-      console.log("🔔 Requesting push permission (post-login)...")
       await OneSignal.Notifications.requestPermission(true)
-      console.log("🔔 requestPermission finished")
     } catch (e) {
-      console.log("🔔 Push permission request failed:", e)
+      console.log("Push permission request failed:", e)
+    }
+  }
+
+  // Links this device's push token to the user's ID in OneSignal so we can target them.
+  const linkOneSignalUser = async (userId: string) => {
+    const platform = Capacitor.getPlatform()
+    if (platform !== "ios" && platform !== "android") return
+
+    try {
+      await OneSignal.login(userId)
+    } catch (e) {
+      console.log("OneSignal login failed:", e)
     }
   }
 
@@ -69,8 +76,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.log("PostHog identify", session.user.id)
           })
 
-        // ✅ If user is already logged in on app launch, Supabase may NOT fire SIGNED_IN
         await requestPushPermissionIfNative()
+        await linkOneSignalUser(session.user.id)
       }
     })
 
@@ -100,10 +107,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           trackEvent('user_signed_in')
 
-          // ✅ Ask for push permission AFTER sign-in (native only)
           await requestPushPermissionIfNative()
+          await linkOneSignalUser(session.user.id)
 
         } else if (event === 'SIGNED_OUT') {
+          try { await OneSignal.logout() } catch (_) {}
           sessionTracker.endSession()
           resetUser()
           trackEvent('user_signed_out')

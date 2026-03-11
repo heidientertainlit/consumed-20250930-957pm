@@ -5,6 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const ONESIGNAL_APP_ID = 'f3e5ce59-cb78-4f05-8d7b-511c45dc2c76';
+
 interface NotificationRequest {
   userId: string;
   type: 'comment' | 'comment_reply' | 'like' | 'friend_request' | 'friend_accepted' | 'follow' | 'mention' | 'inner_circle' | 'collaborator_added' | 'cast' | 'room_added' | 'room_joined' | 'room_new_question';
@@ -16,6 +18,67 @@ interface NotificationRequest {
   friendCastId?: string;
 }
 
+// Maps notification type to the deep-link route the user should land on when they tap the push.
+function routeForType(type: string, postId?: string): string {
+  switch (type) {
+    case 'friend_request':
+    case 'friend_accepted':
+      return '/notifications';
+    case 'comment':
+    case 'comment_reply':
+    case 'like':
+    case 'mention':
+      return postId ? `/post/${postId}` : '/notifications';
+    case 'collaborator_added':
+      return '/library';
+    case 'room_added':
+    case 'room_joined':
+    case 'room_new_question':
+      return '/play';
+    default:
+      return '/notifications';
+  }
+}
+
+async function sendOneSignalPush(userId: string, message: string, route: string): Promise<void> {
+  const apiKey = Deno.env.get('ONESIGNAL_API_KEY');
+  if (!apiKey) {
+    console.log('ONESIGNAL_API_KEY not set — skipping push');
+    return;
+  }
+
+  const body = {
+    app_id: ONESIGNAL_APP_ID,
+    include_aliases: { external_id: [userId] },
+    target_channel: 'push',
+    headings: { en: 'Consumed' },
+    contents: { en: message },
+    data: { route },
+    ios_badgeType: 'Increase',
+    ios_badgeCount: 1,
+  };
+
+  try {
+    const res = await fetch('https://api.onesignal.com/notifications', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Key ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      console.error('OneSignal push failed:', json);
+    } else {
+      console.log('OneSignal push sent, id:', json.id);
+    }
+  } catch (e) {
+    console.error('OneSignal fetch error:', e);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -24,13 +87,10 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    // Use service role to bypass RLS
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     const { userId, type, triggeredByUserId, message, postId, commentId, listId, friendCastId }: NotificationRequest = await req.json();
 
-    // Don't send notification to yourself
     if (userId === triggeredByUserId) {
       return new Response(
         JSON.stringify({ success: true, message: 'No self-notification sent' }),
@@ -38,9 +98,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log('Creating notification:', { userId, type, triggeredByUserId, message, friendCastId });
-
-    // Insert notification - don't include friend_cast_id as the column may not exist
     const notificationData: Record<string, unknown> = {
       user_id: userId,
       type,
@@ -51,9 +108,7 @@ Deno.serve(async (req) => {
       list_id: listId || null,
       read: false,
     };
-    
-    console.log('Notification data to insert:', notificationData);
-    
+
     const { data, error } = await supabaseAdmin
       .from('notifications')
       .insert(notificationData)
@@ -62,14 +117,14 @@ Deno.serve(async (req) => {
 
     if (error) {
       console.error('Error creating notification:', error);
-      console.error('Error details:', JSON.stringify(error));
       return new Response(
         JSON.stringify({ error: error.message, details: error }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    console.log('Notification created successfully:', data);
+
+    const route = routeForType(type, postId);
+    await sendOneSignalPush(userId, message, route);
 
     return new Response(
       JSON.stringify({ success: true, notification: data }),
