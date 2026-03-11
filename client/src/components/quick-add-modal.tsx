@@ -1049,6 +1049,10 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900">{selectedMedia.title}</p>
                     <div className="flex items-center gap-1 text-sm text-gray-500">
+                      {(selectedMedia.creator || selectedMedia.artist) && (
+                        <span className="truncate">{selectedMedia.creator || selectedMedia.artist}</span>
+                      )}
+                      {(selectedMedia.creator || selectedMedia.artist) && <span>•</span>}
                       <span className="capitalize">{selectedMedia.type}</span>
                       {selectedMedia.year && <span>• {selectedMedia.year}</span>}
                     </div>
