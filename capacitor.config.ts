@@ -18,6 +18,10 @@ const config: CapacitorConfig = {
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },
+    Keyboard: {
+      accessoryBarVisible: false,
+      resize: 'none',
+    },
   },
   ios: {
     contentInset: 'automatic',
