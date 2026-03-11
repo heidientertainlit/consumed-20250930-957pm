@@ -243,7 +243,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         } else {
           setStep('just-tracked');
         }
-      } else if (shouldShowFollowUp(listName)) {
+      } else if (shouldShowFollowUp(listName) && media?.externalId) {
         setStep('rate');
       } else {
         setStep('just-tracked');
@@ -257,6 +257,10 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
 
   const handleSubmitRating = async () => {
     if (!session?.access_token || !media || selectedRating === 0) return;
+    if (!media.externalId) {
+      setStep('recommend');
+      return;
+    }
     
     setIsSubmittingRating(true);
     try {
