@@ -138,12 +138,10 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         answeredPoolIds = (userPredictions || []).map(p => p.pool_id);
       }
       
-      const unansweredPools = (pools || []).filter(pool => !answeredPoolIds.includes(pool.id));
-      
       // Flatten pools into individual trivia questions
       const items: TriviaItem[] = [];
       
-      for (const pool of unansweredPools) {
+      for (const pool of (pools || [])) {
         if (pool.options && Array.isArray(pool.options)) {
           const firstOpt = pool.options[0];
           const isObject = typeof firstOpt === 'object' && firstOpt !== null;
@@ -490,11 +488,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   // Randomize the order using session seed (changes daily)
   const categoryOffset = category ? category.charCodeAt(0) : 0;
   const shuffledTrivia = shuffleArray(filteredData, sessionSeed + categoryOffset);
-  // Move already-answered questions to the end
-  filteredData = [
-    ...shuffledTrivia.filter(item => !answeredQuestions[item.id]),
-    ...shuffledTrivia.filter(item => !!answeredQuestions[item.id]),
-  ];
+  filteredData = shuffledTrivia;
 
   if (filteredData.length === 0) {
     return null;
