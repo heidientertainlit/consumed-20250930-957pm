@@ -10,6 +10,21 @@ import { trackEvent } from '@/lib/posthog';
 import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, CheckCircle, XCircle } from 'lucide-react';
 import { incrementActivityCount } from '@/components/dna-survey-nudge';
 
+function normalizeCategory(cat: string | null | undefined): string {
+  if (!cat) return 'Other';
+  const lower = cat.toLowerCase().trim();
+  if (lower === 'movies' || lower === 'movie') return 'Movies';
+  if (lower === 'tv' || lower === 'tv shows' || lower === 'tv-show' || lower === 'tv show' ||
+      lower === 'reality' || lower === 'reality tv' || lower === 'reality-tv') return 'TV';
+  if (lower === 'music') return 'Music';
+  if (lower === 'podcasts' || lower === 'podcast') return 'Podcasts';
+  if (lower === 'gaming' || lower === 'games' || lower === 'game' || lower === 'video games') return 'Gaming';
+  if (lower === 'sports' || lower === 'sport') return 'Sports';
+  if (lower === 'books' || lower === 'book') return 'Books';
+  if (lower === 'pop culture') return 'Pop Culture';
+  return cat;
+}
+
 function shuffleArray<T>(array: T[], seed: number): T[] {
   const shuffled = [...array];
   let currentSeed = seed;
@@ -173,7 +188,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   question: q.question,
                   options: q.options,
                   correctAnswer: q.answer || pool.correct_answer,
-                  category: pool.category,
+                  category: normalizeCategory(pool.category),
                   mediaTitle: mediaTitle,
                   pointsReward: 10,
                   isChallenge: false,
@@ -194,7 +209,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 question: pool.title,
                 options: optionsList,
                 correctAnswer: pool.correct_answer,
-                category: pool.category,
+                category: normalizeCategory(pool.category),
                 mediaTitle: pool.media_title,
                 pointsReward: 10,
                 isChallenge: false,

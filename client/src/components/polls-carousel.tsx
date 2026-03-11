@@ -11,6 +11,21 @@ import { trackEvent } from '@/lib/posthog';
 import { BarChart3, Loader2, ChevronLeft, ChevronRight, Users, Check, Search, Plus, X } from 'lucide-react';
 import { incrementActivityCount } from '@/components/dna-survey-nudge';
 
+function normalizeCategory(cat: string | null | undefined): string {
+  if (!cat) return 'Other';
+  const lower = cat.toLowerCase().trim();
+  if (lower === 'movies' || lower === 'movie') return 'Movies';
+  if (lower === 'tv' || lower === 'tv shows' || lower === 'tv-show' || lower === 'tv show' ||
+      lower === 'reality' || lower === 'reality tv' || lower === 'reality-tv') return 'TV';
+  if (lower === 'music') return 'Music';
+  if (lower === 'podcasts' || lower === 'podcast') return 'Podcasts';
+  if (lower === 'gaming' || lower === 'games' || lower === 'game' || lower === 'video games') return 'Gaming';
+  if (lower === 'sports' || lower === 'sport') return 'Sports';
+  if (lower === 'books' || lower === 'book') return 'Books';
+  if (lower === 'pop culture') return 'Pop Culture';
+  return cat;
+}
+
 function shuffleArray<T>(array: T[], seed: number): T[] {
   const shuffled = [...array];
   let currentSeed = seed;
@@ -104,7 +119,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
           id: pool.id,
           title: pool.title,
           options: Array.isArray(pool.options) ? pool.options.filter((o: any) => typeof o === 'string') : [],
-          category: pool.category,
+          category: normalizeCategory(pool.category),
           pointsReward: pool.points_reward || 2,
           origin_type: pool.origin_type || undefined,
           origin_user_id: pool.origin_user_id || undefined,
