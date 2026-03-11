@@ -770,7 +770,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none"
-                    autoFocus
+                    style={{ fontSize: '16px' }}
                     data-testid="quick-add-search"
                   />
                   {searchQuery && (
@@ -986,7 +986,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:border-purple-400"
-                    autoFocus
+                    style={{ fontSize: '16px' }}
                   />
                   {searchQuery && (
                     <button 
@@ -1102,8 +1102,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                     placeholder={defaultListId ? "Add a reaction (optional)..." : "What's your reaction?"}
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
-                    onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
                     className="bg-white border-gray-200 resize-none min-h-[80px]"
+                    style={{ fontSize: '16px' }}
                     rows={3}
                     data-testid="thought-textarea"
                   />
@@ -1116,8 +1116,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                     placeholder="What do you predict?"
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
-                    onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
                     className="bg-white border-gray-200 resize-none min-h-[80px]"
+                    style={{ fontSize: '16px' }}
                     rows={2}
                   />
                   <div className="space-y-2">
@@ -1170,8 +1170,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                     placeholder="Write your review..."
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
-                    onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
                     className="bg-white border-gray-200 resize-none min-h-[80px]"
+                    style={{ fontSize: '16px' }}
                     rows={3}
                   />
                 </>
