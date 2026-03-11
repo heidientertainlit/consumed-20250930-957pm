@@ -244,10 +244,6 @@ export default function SwipeableGameCards({ className, initialGameId }: Swipeab
         game: currentGame,
       });
       setSubmittedGames(prev => new Set([...prev, currentGame.id]));
-      toast({
-        title: "Vote submitted!",
-        description: `+${currentGame.points_reward} points`,
-      });
       // Move to next game
       handleNextGame();
     } finally {

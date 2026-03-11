@@ -259,11 +259,6 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
         game: game,
       });
       
-      toast({
-        title: `+${game.points_reward} points`,
-        duration: 1500,
-      });
-      
       const options = getGameOptions(game);
       const results = await fetchVoteResults(game.id, options, userChoice);
       setVoteResults(results);
@@ -293,11 +288,6 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
     const earnedPoints = isCorrect ? pointsPerQuestion : 0;
     const newScore = triviaScore + earnedPoints;
     if (isCorrect) setTriviaScore(newScore);
-    
-    toast({
-      title: isCorrect ? `Correct! +${earnedPoints} pts` : `Wrong! Answer: ${triviaQuestion.correct}`,
-      duration: 1500,
-    });
     
     setSelectedAnswer(null);
     
