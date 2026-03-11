@@ -4898,6 +4898,12 @@ export default function Feed() {
               {renderPostBatchByIndex(26)}
               {renderPostBatchByIndex(27)}
 
+              {/* TRIVIA - Books (All feed only; books category-selected view handled above) */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && 
+               !selectedCategory && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
+              )}
+
               {/* POLLS filter - Movies category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
                (!selectedCategory || selectedCategory === 'movies') && (
@@ -4955,12 +4961,6 @@ export default function Feed() {
               )}
 
               {renderPostBatchByIndex(10)}
-
-              {/* TRIVIA filter - Books category */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && 
-               (!selectedCategory || selectedCategory === 'books') && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
-              )}
 
               {/* Read It? - Books */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
