@@ -140,7 +140,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         .eq('status', 'open')
         .or(`publish_at.is.null,publish_at.lte.${now}`)
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(500);
       
       if (error) throw error;
       

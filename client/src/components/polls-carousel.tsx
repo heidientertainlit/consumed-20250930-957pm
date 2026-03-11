@@ -76,7 +76,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         .eq('type', 'vote')
         .eq('status', 'open')
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(500);
       
       if (error) throw error;
       
