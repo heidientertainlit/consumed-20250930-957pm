@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
 import { BarChart3, Loader2, ChevronLeft, ChevronRight, Users, Check, Search, Plus, X } from 'lucide-react';
 import { incrementActivityCount } from '@/components/dna-survey-nudge';
@@ -254,21 +253,8 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         [result.pollId]: { vote: result.vote, stats: result.stats }
       }));
       
-      queryClient.invalidateQueries({ queryKey: ['polls-carousel'] });
-      
       incrementActivityCount();
       trackEvent('poll_voted', { poll_id: result.pollId, points_earned: result.points });
-      
-      toast({
-        title: `+${result.points} points!`,
-        description: 'Your vote has been counted',
-      });
-      
-      setTimeout(() => {
-        if (data && currentIndex < data.length - 1) {
-          scrollToNext();
-        }
-      }, 4000);
     },
     onError: (error: Error) => {
       toast({
@@ -517,6 +503,14 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                         </div>
                       </div>
                     </div>
+                  )}
+                  {currentIndex < filteredData.length - 1 && (
+                    <button
+                      onClick={scrollToNext}
+                      className="w-full mt-1 py-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold"
+                    >
+                      Next question
+                    </button>
                   )}
                 </div>
               )}
