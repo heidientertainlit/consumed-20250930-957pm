@@ -130,7 +130,8 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
       
       return items;
     },
-    enabled: !!session?.access_token
+    enabled: !!session?.access_token,
+    staleTime: 5 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -140,43 +141,52 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         setVotedLoaded(true);
         return;
       }
-      
+
+      // Query 1: get this user's votes for displayed polls
       const { data: predictions } = await supabase
         .from('user_predictions')
         .select('pool_id, prediction')
         .eq('user_id', user.id)
         .in('pool_id', data.map(p => p.id));
-      
-      if (predictions && predictions.length > 0) {
-        const voted: Record<string, { vote: string; stats: Record<string, number> }> = {};
-        
-        for (const p of predictions) {
-          const poll = data.find(item => item.id === p.pool_id);
-          if (!poll) continue;
-          
-          const { data: allVotes } = await supabase
-            .from('user_predictions')
-            .select('prediction')
-            .eq('pool_id', p.pool_id);
-          
-          const total = allVotes?.length || 1;
-          const stats: Record<string, number> = {};
-          for (const opt of poll.options) {
-            const count = allVotes?.filter(v => v.prediction === opt).length || 0;
-            stats[opt] = Math.round((count / total) * 100);
-          }
-          const otherCount = allVotes?.filter(v => v.prediction === 'Other').length || 0;
-          if (otherCount > 0) {
-            stats['Other'] = Math.round((otherCount / total) * 100);
-          }
-          
-          voted[p.pool_id] = { vote: p.prediction, stats };
-        }
-        setVotedPolls(voted);
+
+      if (!predictions || predictions.length === 0) {
+        setVotedLoaded(true);
+        return;
       }
+
+      // Query 2: batch-fetch all votes for every voted poll in one go
+      const votedPoolIds = [...new Set(predictions.map(p => p.pool_id))];
+      const { data: allVotes } = await supabase
+        .from('user_predictions')
+        .select('pool_id, prediction')
+        .in('pool_id', votedPoolIds);
+
+      // Build stats client-side — no more per-poll queries
+      const votesByPool: Record<string, string[]> = {};
+      for (const v of allVotes || []) {
+        if (!votesByPool[v.pool_id]) votesByPool[v.pool_id] = [];
+        votesByPool[v.pool_id].push(v.prediction);
+      }
+
+      const voted: Record<string, { vote: string; stats: Record<string, number> }> = {};
+      for (const p of predictions) {
+        const poll = data.find(item => item.id === p.pool_id);
+        if (!poll) continue;
+        const poolVotes = votesByPool[p.pool_id] || [];
+        const total = poolVotes.length || 1;
+        const stats: Record<string, number> = {};
+        for (const opt of poll.options) {
+          stats[opt] = Math.round((poolVotes.filter(v => v === opt).length / total) * 100);
+        }
+        const otherCount = poolVotes.filter(v => v === 'Other').length;
+        if (otherCount > 0) stats['Other'] = Math.round((otherCount / total) * 100);
+        voted[p.pool_id] = { vote: p.prediction, stats };
+      }
+
+      setVotedPolls(voted);
       setVotedLoaded(true);
     };
-    
+
     loadVoted();
   }, [data, user?.id]);
 

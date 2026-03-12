@@ -225,7 +225,8 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       
       return items;
     },
-    enabled: !!session?.access_token
+    enabled: !!session?.access_token,
+    staleTime: 5 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -235,52 +236,61 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         setAnsweredLoaded(true);
         return;
       }
-      
-      // Get unique pool IDs from our flattened items
+
+      // Query 1: get this user's answers across all trivia pools
       const uniquePoolIds = [...new Set(data.map(q => q.poolId || q.id))];
-      
-      const { data: predictions } = await supabase
+      const { data: userPredictions } = await supabase
         .from('user_predictions')
         .select('pool_id, prediction')
         .eq('user_id', user.id)
         .in('pool_id', uniquePoolIds);
-      
-      if (predictions && predictions.length > 0) {
-        const answered: Record<string, { answer: string; isCorrect: boolean; stats: any }> = {};
-        
-        for (const p of predictions) {
-          // Find all questions from this pool
-          const poolQuestions = data.filter(q => (q.poolId || q.id) === p.pool_id);
-          
-          for (const question of poolQuestions) {
-            // Check if this prediction matches this question's answer
-            if (question.options.includes(p.prediction)) {
-              const { data: allPredictions } = await supabase
-                .from('user_predictions')
-                .select('prediction')
-                .eq('pool_id', p.pool_id);
-              
-              const total = allPredictions?.length || 1;
-              const stats: Record<string, number> = {};
-              for (const opt of question?.options || []) {
-                const count = allPredictions?.filter(pred => pred.prediction === opt).length || 0;
-                stats[opt] = Math.round((count / total) * 100);
-              }
-              
-              answered[question.id] = {
-                answer: p.prediction,
-                isCorrect: question?.correctAnswer === p.prediction,
-                stats
-              };
-              break; // Only match one question per prediction
+
+      if (!userPredictions || userPredictions.length === 0) {
+        setAnsweredLoaded(true);
+        return;
+      }
+
+      // Query 2: batch-fetch all community answers for every answered pool in one go
+      const answeredPoolIds = [...new Set(userPredictions.map(p => p.pool_id))];
+      const { data: allPoolPredictions } = await supabase
+        .from('user_predictions')
+        .select('pool_id, prediction')
+        .in('pool_id', answeredPoolIds);
+
+      // Build stats client-side — no more per-pool queries
+      const predsByPool: Record<string, string[]> = {};
+      for (const p of allPoolPredictions || []) {
+        if (!predsByPool[p.pool_id]) predsByPool[p.pool_id] = [];
+        predsByPool[p.pool_id].push(p.prediction);
+      }
+
+      const answered: Record<string, { answer: string; isCorrect: boolean; stats: any }> = {};
+      for (const userPred of userPredictions) {
+        const poolQuestions = data.filter(q => (q.poolId || q.id) === userPred.pool_id);
+        const poolPreds = predsByPool[userPred.pool_id] || [];
+        const total = poolPreds.length || 1;
+
+        for (const question of poolQuestions) {
+          if (question.options.includes(userPred.prediction)) {
+            const stats: Record<string, number> = {};
+            for (const opt of question.options) {
+              const count = poolPreds.filter(p => p === opt).length;
+              stats[opt] = Math.round((count / total) * 100);
             }
+            answered[question.id] = {
+              answer: userPred.prediction,
+              isCorrect: question.correctAnswer === userPred.prediction,
+              stats,
+            };
+            break;
           }
         }
-        setAnsweredQuestions(answered);
       }
+
+      setAnsweredQuestions(answered);
       setAnsweredLoaded(true);
     };
-    
+
     loadAnswered();
   }, [data, user?.id]);
 
