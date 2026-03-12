@@ -134,6 +134,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   });
 
   useEffect(() => {
+    setVotedLoaded(false);
     const loadVoted = async () => {
       if (!user?.id || !data || data.length === 0) {
         setVotedLoaded(true);

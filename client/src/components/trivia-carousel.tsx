@@ -229,6 +229,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   });
 
   useEffect(() => {
+    setAnsweredLoaded(false);
     const loadAnswered = async () => {
       if (!user?.id || !data || data.length === 0) {
         setAnsweredLoaded(true);
