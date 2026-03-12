@@ -74,6 +74,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const [selectedAnswer, setSelectedAnswer] = useState<Record<string, string>>({});
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; points?: number; stats: any; friendAnswers?: FriendAnswer[] }>>({});
   const [answeredLoaded, setAnsweredLoaded] = useState(false);
+  const [lockedOrder, setLockedOrder] = useState<TriviaItem[] | null>(null);
   const [celebratingItems, setCelebratingItems] = useState<Record<string, number>>({});
 
   const { data: leaderboardData } = useQuery({
@@ -231,8 +232,35 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
 
   useEffect(() => {
     setAnsweredLoaded(false);
+    setLockedOrder(null);
+
+    const computeOrder = (answeredState: Record<string, any>, items: TriviaItem[]) => {
+      const knownCategories = ['movies', 'tv', 'books', 'music', 'sports', 'podcasts', 'games'];
+      let filtered = items;
+      if (category) {
+        if (category.toLowerCase() === 'other') {
+          filtered = filtered.filter(item => !item.category || !knownCategories.includes(item.category.toLowerCase()));
+        } else if (category.toLowerCase() === 'mixed') {
+          filtered = filtered.filter(item => !item.category || item.category.toLowerCase() === 'mixed' || item.category.toLowerCase() === 'entertainment');
+        } else {
+          filtered = filtered.filter(item => item.category?.toLowerCase() === category.toLowerCase());
+        }
+      }
+      if (challengesOnly) {
+        filtered = filtered.filter(item => item.isChallenge);
+      }
+      const catOffset = category ? category.charCodeAt(0) : 0;
+      const shuffled = shuffleArray(filtered, sessionSeed + catOffset);
+      // Unanswered first, answered at the end — order locked so answering mid-session doesn't jump
+      return [
+        ...shuffled.filter(item => !answeredState[item.id]),
+        ...shuffled.filter(item => !!answeredState[item.id]),
+      ];
+    };
+
     const loadAnswered = async () => {
       if (!user?.id || !data || data.length === 0) {
+        setLockedOrder(computeOrder({}, data || []));
         setAnsweredLoaded(true);
         return;
       }
@@ -246,6 +274,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         .in('pool_id', uniquePoolIds);
 
       if (!userPredictions || userPredictions.length === 0) {
+        setLockedOrder(computeOrder({}, data));
         setAnsweredLoaded(true);
         return;
       }
@@ -288,6 +317,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       }
 
       setAnsweredQuestions(answered);
+      setLockedOrder(computeOrder(answered, data));
       setAnsweredLoaded(true);
     };
 
@@ -490,30 +520,8 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     return null;
   }
 
-  const knownCategories = ['movies', 'tv', 'books', 'music', 'sports', 'podcasts', 'games'];
-
-  let filteredData = data;
-  
-  // Filter by category
-  if (category) {
-    if (category.toLowerCase() === 'other') {
-      filteredData = filteredData.filter(item => !item.category || !knownCategories.includes(item.category.toLowerCase()));
-    } else if (category.toLowerCase() === 'mixed') {
-      filteredData = filteredData.filter(item => !item.category || item.category.toLowerCase() === 'mixed' || item.category.toLowerCase() === 'entertainment');
-    } else {
-      filteredData = filteredData.filter(item => item.category?.toLowerCase() === category.toLowerCase());
-    }
-  }
-  
-  // Filter by challenges (multi-question trivia)
-  if (challengesOnly) {
-    filteredData = filteredData.filter(item => item.isChallenge);
-  }
-
-  // Randomize the order using session seed (changes daily)
-  const categoryOffset = category ? category.charCodeAt(0) : 0;
-  const shuffledTrivia = shuffleArray(filteredData, sessionSeed + categoryOffset);
-  filteredData = shuffledTrivia;
+  // Use the locked order (computed once at load time) so answering never causes a re-sort
+  const filteredData = lockedOrder || [];
 
   if (filteredData.length === 0) {
     return null;
