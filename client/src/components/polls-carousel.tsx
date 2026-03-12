@@ -61,6 +61,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   const [selectedOption, setSelectedOption] = useState<Record<string, string>>({});
   const [votedPolls, setVotedPolls] = useState<Record<string, { vote: string; stats: Record<string, number> }>>({});
   const [votedLoaded, setVotedLoaded] = useState(false);
+  const [lockedOrder, setLockedOrder] = useState<PollItem[] | null>(null);
   const [otherSearchOpen, setOtherSearchOpen] = useState<Record<string, boolean>>({});
   const [otherSearchQuery, setOtherSearchQuery] = useState<Record<string, string>>({});
   const [otherSearchResults, setOtherSearchResults] = useState<Record<string, any[]>>({});
@@ -135,8 +136,26 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
 
   useEffect(() => {
     setVotedLoaded(false);
+    setLockedOrder(null);
+
+    const computeOrder = (votedState: Record<string, any>, items: PollItem[]) => {
+      const knownCats = ['movies', 'tv', 'books', 'music', 'sports', 'podcasts', 'games'];
+      const catFiltered = category
+        ? category.toLowerCase() === 'other'
+          ? items.filter(p => !p.category || !knownCats.includes(p.category.toLowerCase()))
+          : items.filter(p => p.category?.toLowerCase() === category.toLowerCase())
+        : items;
+      const catOffset = category ? category.charCodeAt(0) : 0;
+      const shuffled = shuffleArray(catFiltered, sessionSeed + catOffset);
+      return [
+        ...shuffled.filter(p => !votedState[p.id]),
+        ...shuffled.filter(p => !!votedState[p.id]),
+      ];
+    };
+
     const loadVoted = async () => {
       if (!user?.id || !data || data.length === 0) {
+        setLockedOrder(computeOrder({}, data || []));
         setVotedLoaded(true);
         return;
       }
@@ -149,6 +168,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         .in('pool_id', data.map(p => p.id));
 
       if (!predictions || predictions.length === 0) {
+        setLockedOrder(computeOrder({}, data));
         setVotedLoaded(true);
         return;
       }
@@ -183,6 +203,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
       }
 
       setVotedPolls(voted);
+      setLockedOrder(computeOrder(voted, data));
       setVotedLoaded(true);
     };
 
@@ -379,22 +400,8 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   }
   if (isError || !data || data.length === 0) return null;
 
-  const knownCategories = ['movies', 'tv', 'books', 'music', 'sports', 'podcasts', 'games'];
-  
-  const categoryFiltered = category 
-    ? category.toLowerCase() === 'other'
-      ? data.filter(item => !item.category || !knownCategories.includes(item.category.toLowerCase()))
-      : data.filter(item => item.category?.toLowerCase() === category.toLowerCase())
-    : data;
-
-  // Randomize the order using session seed (changes daily)
-  const categoryOffset = category ? category.charCodeAt(0) : 0;
-  const shuffled = shuffleArray(categoryFiltered, sessionSeed + categoryOffset);
-  // Move already-voted polls to the end
-  const filteredData = [
-    ...shuffled.filter(p => !votedPolls[p.id]),
-    ...shuffled.filter(p => !!votedPolls[p.id]),
-  ];
+  // Use the locked order (computed once at load time) so voting never causes a re-sort
+  const filteredData = lockedOrder || [];
 
   if (filteredData.length === 0) return null;
 
