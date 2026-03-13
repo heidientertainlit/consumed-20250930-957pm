@@ -154,10 +154,11 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         answeredPoolIds = (userPredictions || []).map(p => p.pool_id);
       }
       
-      // Flatten pools into individual trivia questions
+      // Flatten pools into individual trivia questions, skipping already-answered ones
       const items: TriviaItem[] = [];
       
       for (const pool of (pools || [])) {
+        if (answeredPoolIds.includes(pool.id)) continue;
         if (pool.options && Array.isArray(pool.options)) {
           const firstOpt = pool.options[0];
           const isObject = typeof firstOpt === 'object' && firstOpt !== null;
