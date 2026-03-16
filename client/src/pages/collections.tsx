@@ -1900,7 +1900,8 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
                       type="number"
                       min={0}
                       value={editProgress}
-                      onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value) || 0))}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value.replace(/^0+/, '')) || 0))}
                       className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
                     />
                   </div>

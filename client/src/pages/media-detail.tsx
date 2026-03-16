@@ -575,15 +575,15 @@ export default function MediaDetail() {
     queryKey: ['currently-item', params?.source, params?.id, user?.id],
     queryFn: async () => {
       if (!user?.id || !params?.id || !params?.source) return null;
+      // Fetch all list_items for this user+media, then filter in JS for "Currently" list
       const { data } = await supabase
         .from('list_items')
-        .select('id, progress, total, progress_total, progress_mode, lists!inner(title)')
+        .select('id, progress, total, progress_total, progress_mode, list_id, lists(id, title)')
         .eq('external_id', params.id)
         .eq('external_source', params.source)
-        .eq('user_id', user.id)
-        .eq('lists.title', 'Currently')
-        .maybeSingle();
-      return data || null;
+        .eq('user_id', user.id);
+      if (!data) return null;
+      return data.find((item: any) => (item.lists as any)?.title === 'Currently') || null;
     },
     enabled: !!user?.id && !!params?.id && !!params?.source,
   });
@@ -1811,7 +1811,8 @@ export default function MediaDetail() {
                       type="number"
                       min={0}
                       value={editProgress}
-                      onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value) || 0))}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value.replace(/^0+/, '')) || 0))}
                       className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
                     />
                   </div>
