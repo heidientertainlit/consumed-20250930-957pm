@@ -83,6 +83,46 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
     staleTime: 1000 * 60 * 30,
   });
 
+  const { data: bookPageCount } = useQuery({
+    queryKey: ['book-page-count', item.external_source, item.external_id],
+    queryFn: async () => {
+      const response = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-media-details?source=${item.external_source || 'googlebooks'}&external_id=${item.external_id}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.pageCount || 0;
+    },
+    enabled: isBook && isProgressSheetOpen && !!item.external_id && !!session?.access_token && editTotal === 0,
+    staleTime: Infinity,
+  });
+
+  useEffect(() => {
+    if (isBook && bookPageCount && bookPageCount > 0 && editTotal === 0) {
+      setEditTotal(bookPageCount);
+      setLocalTotal(bookPageCount);
+      // Silently persist to DB so it's pre-filled next time without a fetch
+      if (session?.access_token) {
+        fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-item-progress', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            item_id: item.id,
+            progress: item.progress || 0,
+            total: bookPageCount,
+            progress_mode: 'page',
+          }),
+        }).catch(() => {}); // fire-and-forget, non-critical
+      }
+    }
+  }, [bookPageCount]);
+
   const { data: customLists = [] } = useQuery({
     queryKey: ['user-custom-lists-move', session?.user?.id],
     queryFn: async () => {
