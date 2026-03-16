@@ -1,7 +1,8 @@
 
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2 } from "lucide-react";
+import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import Navigation from "@/components/navigation";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +11,7 @@ import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 import CreateListDialog from "@/components/create-list-dialog";
 import { QuickAddModal } from "@/components/quick-add-modal";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 import { supabase } from "@/lib/supabase";
 import { apiRequest } from "@/lib/queryClient";
@@ -56,6 +58,12 @@ export default function MediaDetail() {
   const composeSectionRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Progress sheet state
+  const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
+  const [editProgress, setEditProgress] = useState(0);
+  const [editTotal, setEditTotal] = useState(0);
+  const [editMode, setEditMode] = useState<'percent' | 'page' | 'episode' | 'minutes'>('percent');
 
   // Scroll to top when page loads
   useEffect(() => {
@@ -562,6 +570,55 @@ export default function MediaDetail() {
     enabled: !!user?.id && !!params?.id && !!params?.source,
   });
 
+  // Query: is this media in the user's "Currently" list?
+  const { data: currentlyItem, refetch: refetchCurrentlyItem } = useQuery({
+    queryKey: ['currently-item', params?.source, params?.id, user?.id],
+    queryFn: async () => {
+      if (!user?.id || !params?.id || !params?.source) return null;
+      const { data } = await supabase
+        .from('list_items')
+        .select('id, progress, total, progress_total, progress_mode, lists!inner(title)')
+        .eq('external_id', params.id)
+        .eq('external_source', params.source)
+        .eq('user_id', user.id)
+        .eq('lists.title', 'Currently')
+        .maybeSingle();
+      return data || null;
+    },
+    enabled: !!user?.id && !!params?.id && !!params?.source,
+  });
+
+  // Sync sheet state when currently item loads
+  useEffect(() => {
+    if (currentlyItem) {
+      const t = currentlyItem.progress_total ?? currentlyItem.total ?? 0;
+      const p = currentlyItem.progress ?? 0;
+      const m = currentlyItem.progress_mode || (params?.type === 'book' ? 'page' : 'percent');
+      setEditProgress(p);
+      setEditTotal(t);
+      setEditMode(m as any);
+    }
+  }, [currentlyItem?.id, currentlyItem?.progress, currentlyItem?.total]);
+
+  // Update progress mutation (for media detail page)
+  const updateProgressMutation = useMutation({
+    mutationFn: async ({ progress, total, mode }: { progress: number; total: number; mode: string }) => {
+      if (!currentlyItem?.id || !session?.access_token) throw new Error('Not available');
+      const res = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/update-item-progress', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item_id: currentlyItem.id, progress, total, progress_mode: mode }),
+      });
+      if (!res.ok) throw new Error('Failed to update progress');
+      return res.json();
+    },
+    onSuccess: () => {
+      setIsProgressSheetOpen(false);
+      refetchCurrentlyItem();
+      toast({ title: 'Progress updated' });
+    },
+  });
+
   // Delete list item mutation
   const deleteListItemMutation = useMutation({
     mutationFn: async (itemId: string) => {
@@ -1043,54 +1100,110 @@ export default function MediaDetail() {
           {/* Action buttons - below poster, full width row */}
           {session && (
             <div className="flex gap-2 mt-4">
-              <Button 
-                size="sm"
-                onClick={() => {
-                  setQuickAddMedia({
-                    title: mediaItem?.title || mediaData.title,
-                    mediaType: (() => {
-                      const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
-                      if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
-                      if (raw.includes('podcast')) return 'podcast';
-                      if (raw === 'movie') return 'movie';
-                      return raw;
-                    })(),
-                    imageUrl: resolvedImageUrl || mediaData.artwork,
-                    externalId: params?.id,
-                    externalSource: params?.source,
-                  });
-                  setIsQuickAddOpen(true);
-                }}
-                className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
-                data-testid="button-quick-add"
-              >
-                <Plus size={14} className="mr-1" />
-                Add
-              </Button>
-              <Button 
-                size="sm"
-                onClick={() => {
-                  setQuickAddMedia({
-                    title: mediaItem?.title || mediaData.title,
-                    mediaType: (() => {
-                      const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
-                      if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
-                      if (raw.includes('podcast')) return 'podcast';
-                      if (raw === 'movie') return 'movie';
-                      return raw;
-                    })(),
-                    imageUrl: resolvedImageUrl || mediaData.artwork,
-                    externalId: params?.id,
-                    externalSource: params?.source,
-                  });
-                  setIsQuickAddOpen(true);
-                }}
-                className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
-                data-testid="button-add-rating"
-              >
-                <Star size={14} className="mr-1" />
-                Rate
-              </Button>
+              {currentlyItem ? (
+                <>
+                  {/* Progress bar + Update button when currently consuming */}
+                  <button
+                    onClick={() => setIsProgressSheetOpen(true)}
+                    className="flex-1 flex items-center gap-2 bg-purple-600/50 hover:bg-purple-600/70 text-white rounded-full px-4 h-9 transition-colors"
+                  >
+                    <div className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-purple-300 to-blue-300 rounded-full transition-all"
+                        style={{
+                          width: editMode === 'percent'
+                            ? `${editProgress}%`
+                            : editTotal > 0
+                              ? `${Math.min(100, (editProgress / editTotal) * 100)}%`
+                              : '0%'
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium whitespace-nowrap">
+                      {editMode === 'page'
+                        ? `p${editProgress}${editTotal > 0 ? `/${editTotal}` : ''}`
+                        : editMode === 'percent'
+                          ? `${editProgress}%`
+                          : `${editProgress}${editTotal > 0 ? `/${editTotal}` : ''}`}
+                    </span>
+                    <TrendingUp size={13} />
+                  </button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setQuickAddMedia({
+                        title: mediaItem?.title || mediaData.title,
+                        mediaType: (() => {
+                          const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
+                          if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
+                          if (raw.includes('podcast')) return 'podcast';
+                          if (raw === 'movie') return 'movie';
+                          return raw;
+                        })(),
+                        imageUrl: resolvedImageUrl || mediaData.artwork,
+                        externalId: params?.id,
+                        externalSource: params?.source,
+                      });
+                      setIsQuickAddOpen(true);
+                    }}
+                    className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
+                  >
+                    <Star size={14} className="mr-1" />
+                    Rate
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setQuickAddMedia({
+                        title: mediaItem?.title || mediaData.title,
+                        mediaType: (() => {
+                          const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
+                          if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
+                          if (raw.includes('podcast')) return 'podcast';
+                          if (raw === 'movie') return 'movie';
+                          return raw;
+                        })(),
+                        imageUrl: resolvedImageUrl || mediaData.artwork,
+                        externalId: params?.id,
+                        externalSource: params?.source,
+                      });
+                      setIsQuickAddOpen(true);
+                    }}
+                    className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
+                    data-testid="button-quick-add"
+                  >
+                    <Plus size={14} className="mr-1" />
+                    Add
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setQuickAddMedia({
+                        title: mediaItem?.title || mediaData.title,
+                        mediaType: (() => {
+                          const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
+                          if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
+                          if (raw.includes('podcast')) return 'podcast';
+                          if (raw === 'movie') return 'movie';
+                          return raw;
+                        })(),
+                        imageUrl: resolvedImageUrl || mediaData.artwork,
+                        externalId: params?.id,
+                        externalSource: params?.source,
+                      });
+                      setIsQuickAddOpen(true);
+                    }}
+                    className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
+                    data-testid="button-add-rating"
+                  >
+                    <Star size={14} className="mr-1" />
+                    Rate
+                  </Button>
+                </>
+              )}
             </div>
           )}
 
@@ -1664,6 +1777,107 @@ export default function MediaDetail() {
         preSelectedMedia={quickAddMedia}
         initialPostType={quickAddPostType}
       />
+
+      {/* Update Progress Sheet */}
+      <Sheet open={isProgressSheetOpen} onOpenChange={setIsProgressSheetOpen}>
+        <SheetContent side="bottom" className="bg-white rounded-t-2xl p-0">
+          <div className="flex items-center justify-center px-4 py-4 border-b border-gray-100">
+            <SheetTitle className="text-lg font-semibold text-gray-900">Update Progress</SheetTitle>
+          </div>
+          <div className="px-4 py-4 space-y-4 pb-8">
+            {/* Mode tabs */}
+            {editMode !== 'percent' && (
+              <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+                {(['page', 'percent'] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setEditMode(m)}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all capitalize ${
+                      editMode === m ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    {m === 'page' ? 'Page' : 'Percent'}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {editMode === 'page' ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Current Page</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={editProgress}
+                      onChange={(e) => setEditProgress(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Total Pages</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={editTotal}
+                      onChange={(e) => setEditTotal(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {[10, 25, 50].map((pages) => (
+                    <button
+                      key={pages}
+                      onClick={() => setEditProgress(Math.min(editProgress + pages, editTotal || 9999))}
+                      className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    >
+                      +{pages} pages
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-700">Percentage Complete</label>
+                <div className="relative flex-1">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={editProgress}
+                    onChange={(e) => setEditProgress(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="text-center text-lg font-semibold pr-8 bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">%</span>
+                </div>
+                <div className="flex gap-2">
+                  {[25, 50, 75, 100].map((pct) => (
+                    <button
+                      key={pct}
+                      onClick={() => setEditProgress(pct)}
+                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        editProgress === pct ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Button
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-3 font-semibold"
+              disabled={updateProgressMutation.isPending}
+              onClick={() => updateProgressMutation.mutate({ progress: editProgress, total: editTotal, mode: editMode })}
+            >
+              {updateProgressMutation.isPending ? 'Saving...' : 'Update Progress'}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
       
     </div>
   );
