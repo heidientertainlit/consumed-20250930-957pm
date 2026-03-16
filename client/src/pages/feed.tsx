@@ -170,6 +170,13 @@ const formatUsername = (username?: string): string => {
   return clean || 'User';
 };
 
+// Normalize media type for URL construction — prevents TV show IDs hitting the movie endpoint
+const normalizeMediaType = (type: string | undefined | null): string => {
+  const t = (type || '').toLowerCase().trim();
+  if (t === 'tv' || t === 'tv_show' || t === 'tvshow' || t === 'series') return 'tv';
+  return 'movie';
+};
+
 const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number; session: any }): Promise<SocialPost[]> => {
   if (!session?.access_token) {
     throw new Error('No authentication token available');
@@ -824,7 +831,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           <div className="flex gap-3">
             {post.mediaImage && post.mediaImage.startsWith('http') ? (
               post.externalId && post.externalSource ? (
-                <Link href={`/media/${post.mediaType || 'movie'}/${post.externalSource}/${post.externalId}`}>
+                <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
                   <img src={post.mediaImage} alt={post.mediaTitle} className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md cursor-pointer hover:opacity-90 transition-opacity" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                 </Link>
               ) : (
@@ -833,7 +840,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             ) : null}
             <div className="min-w-0 flex-1 flex flex-col justify-center">
               {post.externalId && post.externalSource ? (
-                <Link href={`/media/${post.mediaType || 'movie'}/${post.externalSource}/${post.externalId}`}>
+                <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
                   <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{post.mediaTitle}</p>
                 </Link>
               ) : (
@@ -1220,7 +1227,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
           <div className="flex gap-3 mt-2">
             {post.mediaImage && post.mediaImage.startsWith('http') && (
               post.externalId && post.externalSource ? (
-                <Link href={`/media/${post.mediaType || 'movie'}/${post.externalSource}/${post.externalId}`}>
+                <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
                   <img
                     src={post.mediaImage}
                     alt={post.mediaTitle}
@@ -1239,7 +1246,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
             )}
             <div className="min-w-0 flex-1 flex flex-col justify-center">
               {post.externalId && post.externalSource ? (
-                <Link href={`/media/${post.mediaType || 'movie'}/${post.externalSource}/${post.externalId}`}>
+                <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
                   <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{post.mediaTitle}</p>
                 </Link>
               ) : (

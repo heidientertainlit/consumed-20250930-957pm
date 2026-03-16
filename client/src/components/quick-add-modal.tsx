@@ -462,7 +462,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               media_external_id: externalId || null,
               media_external_source: externalSource || null,
               media_title: selectedMedia?.title || null,
-              media_type: mediaData?.media_type || null,
+              media_type: mediaData?.mediaType || selectedMedia?.type || null,
             }),
           }
         );
