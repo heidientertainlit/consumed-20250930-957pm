@@ -575,15 +575,23 @@ export default function MediaDetail() {
     queryKey: ['currently-item', params?.source, params?.id, user?.id],
     queryFn: async () => {
       if (!user?.id || !params?.id || !params?.source) return null;
-      // Fetch all list_items for this user+media, then filter in JS for "Currently" list
-      const { data } = await supabase
+      // Step 1: get the user's "Currently" list ID
+      const { data: currentlyList } = await supabase
+        .from('lists')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('title', 'Currently')
+        .maybeSingle();
+      if (!currentlyList?.id) return null;
+      // Step 2: find this media item in that list
+      const { data: item } = await supabase
         .from('list_items')
-        .select('id, progress, total, progress_total, progress_mode, list_id, lists(id, title)')
+        .select('id, progress, total, progress_total, progress_mode')
+        .eq('list_id', currentlyList.id)
         .eq('external_id', params.id)
         .eq('external_source', params.source)
-        .eq('user_id', user.id);
-      if (!data) return null;
-      return data.find((item: any) => (item.lists as any)?.title === 'Currently') || null;
+        .maybeSingle();
+      return item || null;
     },
     enabled: !!user?.id && !!params?.id && !!params?.source,
   });
