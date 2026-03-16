@@ -49,7 +49,7 @@ export default function MediaDetail() {
   const [quickAddPostType, setQuickAddPostType] = useState<"react" | "predict">("react");
   const [expandedComments, setExpandedComments] = useState<Record<string, any[]>>({});
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
-  const [composeType, setComposeType] = useState<'react' | 'predict'>('react');
+  const [composeType, setComposeType] = useState<'react' | 'predict' | 'review'>('review');
   const [composeText, setComposeText] = useState('');
   const [composeRating, setComposeRating] = useState(0);
   const [composeHoverRating, setComposeHoverRating] = useState(0);
@@ -1222,6 +1222,16 @@ export default function MediaDetail() {
             {/* Tab switcher */}
             <div className="flex gap-2 mb-3">
               <button
+                onClick={() => setComposeType('review')}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  composeType === 'review'
+                    ? 'bg-gray-900 text-white'
+                    : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Review
+              </button>
+              <button
                 onClick={() => setComposeType('react')}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   composeType === 'react'
@@ -1229,7 +1239,7 @@ export default function MediaDetail() {
                     : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                Reaction
+                React
               </button>
               <button
                 onClick={() => setComposeType('predict')}
@@ -1247,12 +1257,12 @@ export default function MediaDetail() {
             <textarea
               value={composeText}
               onChange={(e) => setComposeText(e.target.value)}
-              placeholder={composeType === 'react' ? "What's your reaction?" : "Make a prediction..."}
+              placeholder={composeType === 'review' ? "Write your review..." : composeType === 'react' ? "What's your reaction?" : "Make a prediction..."}
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
               rows={3}
             />
 
-            {composeType === 'react' && (
+            {(composeType === 'react' || composeType === 'review') && (
               <>
                 {/* Star rating */}
                 <div className="flex items-center gap-3 mt-3">
