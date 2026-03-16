@@ -1111,10 +1111,17 @@ export default function MediaDetail() {
                   <Button
                     size="sm"
                     onClick={() => setIsProgressSheetOpen(true)}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs h-9 rounded-full px-5 shadow-md"
+                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-9 rounded-full px-4 shadow-md"
                   >
-                    <TrendingUp size={14} className="mr-1.5" />
+                    <TrendingUp size={13} className="mr-1.5" />
                     Update Progress
+                    <span className="ml-1.5 text-purple-200 font-normal">
+                      {editMode === 'page'
+                        ? `${editProgress}${editTotal > 0 ? `/${editTotal} pg` : ' pg'}`
+                        : editMode === 'percent'
+                          ? `${editProgress}%`
+                          : `${editProgress}${editTotal > 0 ? `/${editTotal}` : ''}`}
+                    </span>
                   </Button>
                   <Button
                     size="sm"
