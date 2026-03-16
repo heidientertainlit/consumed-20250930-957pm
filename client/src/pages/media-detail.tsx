@@ -61,7 +61,6 @@ export default function MediaDetail() {
 
   // Progress sheet state
   const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
-  const [isListSheetOpen, setIsListSheetOpen] = useState(false);
   const [editProgress, setEditProgress] = useState(0);
   const [editTotal, setEditTotal] = useState(0);
   const [editMode, setEditMode] = useState<'percent' | 'page' | 'episode' | 'minutes'>('percent');
@@ -1126,7 +1125,22 @@ export default function MediaDetail() {
                     </button>
                     <div className="w-px h-5 bg-white/30 flex-shrink-0" />
                     <button
-                      onClick={() => setIsListSheetOpen(true)}
+                      onClick={() => {
+                        setQuickAddMedia({
+                          title: mediaItem?.title || mediaData.title,
+                          mediaType: (() => {
+                            const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
+                            if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
+                            if (raw.includes('podcast')) return 'podcast';
+                            if (raw === 'movie') return 'movie';
+                            return raw;
+                          })(),
+                          imageUrl: resolvedImageUrl || mediaData.artwork,
+                          externalId: params?.id,
+                          externalSource: params?.source,
+                        });
+                        setIsQuickAddOpen(true);
+                      }}
                       className="px-2 h-full text-white hover:bg-purple-700 transition-colors flex items-center"
                     >
                       <ChevronDown size={14} />
@@ -1884,38 +1898,6 @@ export default function MediaDetail() {
         </SheetContent>
       </Sheet>
 
-      {/* Move to List Sheet */}
-      <Sheet open={isListSheetOpen} onOpenChange={setIsListSheetOpen}>
-        <SheetContent side="bottom" className="bg-white rounded-t-2xl p-0">
-          <div className="p-4 border-b">
-            <SheetTitle className="text-lg font-semibold text-gray-900">Move to List</SheetTitle>
-          </div>
-          <div className="p-2">
-            {[
-              { label: 'Mark as Finished', list: 'Finished' },
-              { label: 'Move to Want To', list: 'Want To' },
-              { label: 'Did Not Finish', list: 'Did Not Finish' },
-              { label: 'Add to Favorites', list: 'Favorites' },
-            ].map(({ label, list }) => (
-              <button
-                key={list}
-                onClick={() => { handleAddMediaToList(list); setIsListSheetOpen(false); }}
-                className="w-full text-left px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 rounded-xl transition-colors"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="px-4 pb-6 pt-1">
-            <button
-              onClick={() => setIsListSheetOpen(false)}
-              className="w-full py-3 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </SheetContent>
-      </Sheet>
       
     </div>
   );
