@@ -571,29 +571,26 @@ export default function MediaDetail() {
   });
 
   // Query: is this media in the user's "Currently" list?
+  // Uses the same edge function as my-library (handles user ID resolution server-side)
   const { data: currentlyItem, refetch: refetchCurrentlyItem } = useQuery({
     queryKey: ['currently-item', params?.source, params?.id, user?.id],
     queryFn: async () => {
-      if (!user?.id || !params?.id || !params?.source) return null;
-      // Step 1: get the user's "Currently" list ID
-      const { data: currentlyList } = await supabase
-        .from('lists')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('title', 'Currently')
-        .maybeSingle();
-      if (!currentlyList?.id) return null;
-      // Step 2: find this media item in that list
-      const { data: item } = await supabase
-        .from('list_items')
-        .select('id, progress, total, progress_total, progress_mode')
-        .eq('list_id', currentlyList.id)
-        .eq('external_id', params.id)
-        .eq('external_source', params.source)
-        .maybeSingle();
-      return item || null;
+      if (!user?.id || !session?.access_token || !params?.id || !params?.source) return null;
+      const res = await fetch(
+        `https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media?user_id=${user.id}`,
+        { headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' } }
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      const currentlyList = (data.lists || []).find((l: any) => l.title === 'Currently');
+      if (!currentlyList?.items) return null;
+      const match = currentlyList.items.find(
+        (item: any) => item.external_id === params.id && item.external_source === params.source
+      );
+      return match || null;
     },
-    enabled: !!user?.id && !!params?.id && !!params?.source,
+    enabled: !!user?.id && !!session?.access_token && !!params?.id && !!params?.source,
+    staleTime: 0,
   });
 
   // Sync sheet state when currently item loads
