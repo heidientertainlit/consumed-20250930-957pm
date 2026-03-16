@@ -1911,7 +1911,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
                       min={0}
                       value={editTotal}
                       onChange={(e) => setEditTotal(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     />
                   </div>
                 </div>
