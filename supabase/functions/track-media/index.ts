@@ -194,7 +194,7 @@ serve(async (req) => {
     // Parse the request body
     const requestBody = await req.json();
     const { media, rating, review, listType, skip_social_post, rewatchCount, containsSpoilers, privateMode } = requestBody;
-    const { title, mediaType, mediaSubtype, creator, imageUrl, externalId, externalSource, seasonNumber, episodeNumber, episodeTitle } = media || {};
+    const { title, mediaType, mediaSubtype, creator, imageUrl, externalId, externalSource, seasonNumber, episodeNumber, episodeTitle, pageCount } = media || {};
 
     let targetList = null;
 
@@ -287,18 +287,26 @@ serve(async (req) => {
     }
 
     // Insert the media item with core columns only (matching add-media-to-list)
+    const insertData: any = {
+      list_id: targetList?.id || null,
+      user_id: appUser.id,
+      title: title || 'Untitled',
+      media_type: mediaType || 'mixed',
+      creator: creator || '',
+      image_url: finalImageUrl,
+      external_id: externalId || null,
+      external_source: externalSource || 'tmdb'
+    };
+
+    // For books with a known page count, pre-fill the total so the progress modal shows it immediately
+    if (mediaType === 'book' && pageCount && pageCount > 0) {
+      insertData.total = pageCount;
+      insertData.progress_mode = 'page';
+    }
+
     const { data: mediaItem, error: mediaError } = await supabaseAdmin
       .from('list_items')
-      .insert({
-        list_id: targetList?.id || null,
-        user_id: appUser.id,
-        title: title || 'Untitled',
-        media_type: mediaType || 'mixed',
-        creator: creator || '',
-        image_url: finalImageUrl,
-        external_id: externalId || null,
-        external_source: externalSource || 'tmdb'
-      })
+      .insert(insertData)
       .select()
       .single();
 

@@ -36,6 +36,7 @@ interface MediaResult {
   description?: string;
   videoId?: string;
   url?: string;
+  page_count?: number;
 }
 
 export default function ConsumptionTracker({ isOpen, onClose, defaultListType, targetRankId, targetListDisplayName, targetCustomListId }: ConsumptionTrackerProps) {
@@ -191,6 +192,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
             externalId: mediaData.external_id,
             externalSource: mediaData.external_source,
             description: mediaData.description,
+            pageCount: mediaData.page_count || 0,
           },
           rating: rating > 0 ? rating : null,
           review: review.trim() || null,

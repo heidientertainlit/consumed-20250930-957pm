@@ -221,7 +221,8 @@ serve(async (req) => {
                     external_source: 'googlebooks',
                     description: volumeInfo.description?.substring(0, 200) || '',
                     release_date: volumeInfo.publishedDate || null,
-                    ratings_count: volumeInfo.ratingsCount ?? 0
+                    ratings_count: volumeInfo.ratingsCount ?? 0,
+                    page_count: volumeInfo.pageCount || 0
                   });
                   foundBooks = true;
                 }
