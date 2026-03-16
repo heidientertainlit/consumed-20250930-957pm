@@ -1222,16 +1222,6 @@ export default function MediaDetail() {
             {/* Tab switcher */}
             <div className="flex gap-2 mb-3">
               <button
-                onClick={() => setComposeType('review')}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  composeType === 'review'
-                    ? 'bg-gray-900 text-white'
-                    : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                Review
-              </button>
-              <button
                 onClick={() => setComposeType('react')}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   composeType === 'react'
@@ -1250,6 +1240,16 @@ export default function MediaDetail() {
                 }`}
               >
                 Predict
+              </button>
+              <button
+                onClick={() => setComposeType('review')}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  composeType === 'review'
+                    ? 'bg-gray-900 text-white'
+                    : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                Review
               </button>
             </div>
 
