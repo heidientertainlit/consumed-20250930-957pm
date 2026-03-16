@@ -8,6 +8,14 @@ const corsHeaders = {
   'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
 };
 
+function normType(t: string | null | undefined): string | null {
+  if (!t) return null;
+  const s = t.toLowerCase().trim().replace(/[\s_]+/g, '');
+  if (s === 'tv' || s === 'tvshow' || s === 'series' || s === 'television') return 'tv';
+  if (s === 'movie' || s === 'film') return 'movie';
+  return t.toLowerCase().trim();
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -87,7 +95,8 @@ serve(async (req) => {
         });
       }
 
-      const { content, media_title, media_type, media_creator, media_image_url, rating, media_external_id, media_external_source, contains_spoilers, list_id, type, prediction_question, prediction_options, poll_question, poll_options } = body;
+      const { content, media_title, media_type: rawMediaType, media_creator, media_image_url, rating, media_external_id, media_external_source, contains_spoilers, list_id, type, prediction_question, prediction_options, poll_question, poll_options } = body;
+      const media_type = normType(rawMediaType);
 
       console.log('Creating post for user:', appUser.id);
       console.log('Request body:', body);

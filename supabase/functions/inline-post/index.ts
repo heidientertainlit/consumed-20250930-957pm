@@ -7,6 +7,14 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
+function normType(t: string | null | undefined): string | null {
+  if (!t) return null;
+  const s = t.toLowerCase().trim().replace(/[\s_]+/g, '');
+  if (s === 'tv' || s === 'tvshow' || s === 'series' || s === 'television') return 'tv';
+  if (s === 'movie' || s === 'film') return 'movie';
+  return t.toLowerCase().trim();
+}
+
 // Helper function to fetch image URL from TMDB when not provided by client
 async function fetchTmdbPosterUrl(externalId: string | null, externalSource: string | null): Promise<string | null> {
   if (!externalId || externalSource !== 'tmdb') return null;
@@ -139,7 +147,7 @@ serve(async (req) => {
         contains_spoilers = false,
         rating,
         media_title,
-        media_type,
+        media_type: rawMediaType,
         media_creator,
         media_image_url,
         media_external_id,
@@ -151,6 +159,7 @@ serve(async (req) => {
         list_id,
         rec_category
       } = body;
+      const media_type = normType(rawMediaType);
 
       console.log('Inline post type:', type);
       console.log('User:', appUser.id);
@@ -211,7 +220,7 @@ serve(async (req) => {
           post_type: 'prediction',
           prediction_pool_id: poolId,
           media_title: media_title || prediction_question.substring(0, 100),
-          media_type: media_type ? media_type.toLowerCase() : null,
+          media_type: media_type || null,
           media_creator: media_creator || null,
           media_external_id: media_external_id || null,
           media_external_source: media_external_source || null,

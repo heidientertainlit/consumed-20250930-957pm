@@ -7,6 +7,14 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
+function normType(t: string | null | undefined): string | null {
+  if (!t) return null;
+  const s = t.toLowerCase().trim().replace(/[\s_]+/g, '');
+  if (s === 'tv' || s === 'tvshow' || s === 'series' || s === 'television') return 'tv';
+  if (s === 'movie' || s === 'film') return 'movie';
+  return t.toLowerCase().trim();
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -95,11 +103,12 @@ serve(async (req) => {
         visibility = 'public',
         contains_spoilers = false,
         media_title = null,
-        media_type = null,
+        media_type: rawMediaType = null,
         media_external_id = null,
         media_external_source = null,
         media_image_url = null
       } = body;
+      const media_type = normType(rawMediaType);
 
       console.log('Creating poll:', { 
         question, 

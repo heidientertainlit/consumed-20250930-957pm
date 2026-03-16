@@ -6,6 +6,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+function normType(t: string | null | undefined): string | null {
+  if (!t) return null;
+  const s = t.toLowerCase().trim().replace(/[\s_]+/g, '');
+  if (s === 'tv' || s === 'tvshow' || s === 'series' || s === 'television') return 'tv';
+  if (s === 'movie' || s === 'film') return 'movie';
+  return t.toLowerCase().trim();
+}
+
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
@@ -68,11 +76,12 @@ serve(async (req) => {
       media_external_id,
       media_external_source,
       media_title,
-      media_type,
+      media_type: rawMediaType,
       media_image_url,
       deadline,
       points_reward = 20
     } = body;
+    const media_type = normType(rawMediaType);
 
     // Support both new format (options array) and old format (option_1_label, option_2_label)
     let finalOptions: string[] = [];

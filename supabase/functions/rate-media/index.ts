@@ -6,6 +6,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
 };
 
+function normType(t: string | null | undefined): string | null {
+  if (!t) return null;
+  const s = t.toLowerCase().trim().replace(/[\s_]+/g, '');
+  if (s === 'tv' || s === 'tvshow' || s === 'series' || s === 'television') return 'tv';
+  if (s === 'movie' || s === 'film') return 'movie';
+  return t.toLowerCase().trim();
+}
+
 // Helper function to fetch poster URL from TMDB when not provided
 async function fetchTmdbPosterUrl(externalId: string | null, externalSource: string | null, mediaType?: string): Promise<string | null> {
   if (!externalId || (externalSource !== 'tmdb' && externalSource !== 'movie' && externalSource !== 'tv')) return null;
@@ -129,12 +137,13 @@ serve(async (req) => {
       media_external_id,
       media_external_source,
       media_title,
-      media_type,
+      media_type: rawMediaType,
       rating,
       skip_social_post,
       review_content,
       contains_spoilers
     } = body;
+    const media_type = normType(rawMediaType);
 
     console.log('Rating request:', {
       userId: appUser.id,
