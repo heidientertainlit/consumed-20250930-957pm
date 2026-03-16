@@ -11,6 +11,7 @@ import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 import CreateListDialog from "@/components/create-list-dialog";
 import { QuickAddModal } from "@/components/quick-add-modal";
+import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 import { supabase } from "@/lib/supabase";
@@ -61,6 +62,7 @@ export default function MediaDetail() {
 
   // Progress sheet state
   const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
+  const [isListSheetOpen, setIsListSheetOpen] = useState(false);
   const [editProgress, setEditProgress] = useState(0);
   const [editTotal, setEditTotal] = useState(0);
   const [editMode, setEditMode] = useState<'percent' | 'page' | 'episode' | 'minutes'>('percent');
@@ -1125,22 +1127,7 @@ export default function MediaDetail() {
                     </button>
                     <div className="w-px h-5 bg-white/30 flex-shrink-0" />
                     <button
-                      onClick={() => {
-                        setQuickAddMedia({
-                          title: mediaItem?.title || mediaData.title,
-                          mediaType: (() => {
-                            const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
-                            if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
-                            if (raw.includes('podcast')) return 'podcast';
-                            if (raw === 'movie') return 'movie';
-                            return raw;
-                          })(),
-                          imageUrl: resolvedImageUrl || mediaData.artwork,
-                          externalId: params?.id,
-                          externalSource: params?.source,
-                        });
-                        setIsQuickAddOpen(true);
-                      }}
+                      onClick={() => setIsListSheetOpen(true)}
                       className="px-2 h-full text-white hover:bg-purple-700 transition-colors flex items-center"
                     >
                       <ChevronDown size={14} />
@@ -1898,7 +1885,24 @@ export default function MediaDetail() {
         </SheetContent>
       </Sheet>
 
-      
+      <QuickAddListSheet
+        isOpen={isListSheetOpen}
+        onClose={() => setIsListSheetOpen(false)}
+        media={mediaItem || mediaData ? {
+          title: mediaItem?.title || mediaData.title,
+          mediaType: (() => {
+            const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
+            if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
+            if (raw.includes('podcast')) return 'podcast';
+            if (raw === 'movie') return 'movie';
+            return raw;
+          })(),
+          imageUrl: resolvedImageUrl || mediaData.artwork,
+          externalId: params?.id,
+          externalSource: params?.source,
+        } : null}
+      />
+
     </div>
   );
 }
