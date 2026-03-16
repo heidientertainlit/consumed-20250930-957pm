@@ -2403,7 +2403,7 @@ export default function Feed() {
       };
       return (
         <div key={`${keyPrefix}-pred-${item.id}`} className="mb-4">
-          <CollaborativePredictionCard prediction={predictionCardData as any} />
+          <CollaborativePredictionCard prediction={predictionCardData as any} currentUserId={currentAppUserId || undefined} />
         </div>
       );
     }
@@ -5261,7 +5261,7 @@ export default function Feed() {
                   };
                   return (
                     <div key={`prediction-${post.id}`} className="mb-4">
-                      <CollaborativePredictionCard prediction={predictionCardData as any} />
+                      <CollaborativePredictionCard prediction={predictionCardData as any} currentUserId={currentAppUserId || undefined} />
                     </div>
                   );
                 }

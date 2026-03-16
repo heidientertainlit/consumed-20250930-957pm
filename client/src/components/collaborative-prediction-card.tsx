@@ -60,10 +60,12 @@ interface PredictionCard {
 
 interface PredictionCardProps {
   prediction: PredictionCard;
+  currentUserId?: string;
 }
 
 export default function CollaborativePredictionCard({ 
-  prediction
+  prediction,
+  currentUserId,
 }: PredictionCardProps) {
   const { creator, title, mediaTitle, userHasAnswered, likesCount = 0, commentsCount = 0, isLiked = false, poolId, origin_type = 'user', origin_user_id, status = 'open', type, userVotes = [], options = [], optionVotes = [], mediaItems } = prediction;
   
@@ -81,8 +83,11 @@ export default function CollaborativePredictionCard({
   const [votedOption, setVotedOption] = useState<string | null>(null);
 
   // Check if current user is the creator
-  const appUserId = session?.user?.user_metadata?.id || session?.user?.id;
-  const isCreator = origin_user_id && appUserId === origin_user_id;
+  // currentUserId (app user ID) takes priority over session auth UUID to handle accounts
+  // where the auth UUID differs from the app user ID stored in posts.
+  const appUserId = currentUserId || session?.user?.user_metadata?.id || session?.user?.id;
+  const isCreator = (origin_user_id && appUserId === origin_user_id) ||
+                    (creator?.id && appUserId === creator?.id);
 
   // Check if prediction is completed
   const isCompleted = status === 'completed';
