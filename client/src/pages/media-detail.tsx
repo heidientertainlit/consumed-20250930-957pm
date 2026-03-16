@@ -1107,32 +1107,15 @@ export default function MediaDetail() {
             <div className="flex gap-2 mt-4">
               {currentlyItem ? (
                 <>
-                  {/* Progress bar + Update button when currently consuming */}
-                  <button
+                  {/* Update Progress button when currently consuming */}
+                  <Button
+                    size="sm"
                     onClick={() => setIsProgressSheetOpen(true)}
-                    className="flex-1 flex items-center gap-2 bg-purple-600/50 hover:bg-purple-600/70 text-white rounded-full px-4 h-9 transition-colors"
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-xs h-9 rounded-full px-5 shadow-md"
                   >
-                    <div className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-purple-300 to-blue-300 rounded-full transition-all"
-                        style={{
-                          width: editMode === 'percent'
-                            ? `${editProgress}%`
-                            : editTotal > 0
-                              ? `${Math.min(100, (editProgress / editTotal) * 100)}%`
-                              : '0%'
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs font-medium whitespace-nowrap">
-                      {editMode === 'page'
-                        ? `p${editProgress}${editTotal > 0 ? `/${editTotal}` : ''}`
-                        : editMode === 'percent'
-                          ? `${editProgress}%`
-                          : `${editProgress}${editTotal > 0 ? `/${editTotal}` : ''}`}
-                    </span>
-                    <TrendingUp size={13} />
-                  </button>
+                    <TrendingUp size={14} className="mr-1.5" />
+                    Update Progress
+                  </Button>
                   <Button
                     size="sm"
                     onClick={() => {
