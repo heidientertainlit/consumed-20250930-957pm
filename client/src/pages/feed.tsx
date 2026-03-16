@@ -173,7 +173,7 @@ const formatUsername = (username?: string): string => {
 // Normalize media type for URL construction — prevents TV show IDs hitting the movie endpoint
 const normalizeMediaType = (type: string | undefined | null): string => {
   const t = (type || '').toLowerCase().trim();
-  if (t === 'tv' || t === 'tv_show' || t === 'tvshow' || t === 'series') return 'tv';
+  if (t === 'tv' || t === 'tv show' || t === 'tv_show' || t === 'tvshow' || t === 'series' || t === 'television') return 'tv';
   return 'movie';
 };
 

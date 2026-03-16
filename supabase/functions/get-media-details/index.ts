@@ -109,7 +109,7 @@ serve(async (req) => {
         
         mediaDetails = {
           title: data.title || data.name,
-          type: isMovie ? 'Movie' : 'TV Show',
+          type: isMovie ? 'movie' : 'tv',
           creator: data.credits?.crew?.find((c: any) => c.job === 'Director')?.name || 
                    data.created_by?.[0]?.name || 'Unknown',
           artwork: data.poster_path ? `https://image.tmdb.org/t/p/w500${data.poster_path}` : null,

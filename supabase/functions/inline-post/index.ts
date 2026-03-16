@@ -211,7 +211,7 @@ serve(async (req) => {
           post_type: 'prediction',
           prediction_pool_id: poolId,
           media_title: media_title || prediction_question.substring(0, 100),
-          media_type: media_type || 'Movie',
+          media_type: media_type ? media_type.toLowerCase() : null,
           media_creator: media_creator || null,
           media_external_id: media_external_id || null,
           media_external_source: media_external_source || null,

@@ -442,7 +442,7 @@ export default function MediaDetail() {
       if (!session?.access_token || !mediaItem?.title) return [];
       
       const mediaType = mediaItem.type || mediaItem.media_type || params?.type;
-      const prompt = `Find me media similar to "${mediaItem.title}" (${mediaType}). Include: other ${mediaType === 'TV Show' ? 'TV shows' : mediaType === 'Movie' ? 'movies' : mediaType?.toLowerCase() + 's'} like it, soundtrack music, books it's based on or similar books, related podcasts, and any connected media. Mix of types please.`;
+      const prompt = `Find me media similar to "${mediaItem.title}" (${mediaType}). Include: other ${mediaType === 'tv' ? 'TV shows' : mediaType === 'movie' ? 'movies' : mediaType?.toLowerCase() + 's'} like it, soundtrack music, books it's based on or similar books, related podcasts, and any connected media. Mix of types please.`;
       
       const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/conversational-search', {
         method: 'POST',
@@ -1024,13 +1024,13 @@ export default function MediaDetail() {
                     <span className="text-purple-500">you</span>
                   </div>
                 )}
-                {mediaItem.type === 'Movie' && mediaItem.releaseDate && (
+                {mediaItem.type === 'movie' && mediaItem.releaseDate && (
                   <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
                     <Calendar className="w-3 h-3" />
                     <span>{new Date(mediaItem.releaseDate).getFullYear()}</span>
                   </div>
                 )}
-                {(mediaItem.type === 'TV Show' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1 && (
+                {(mediaItem.type === 'tv' || mediaItem.type === 'Podcast') && mediaItem.totalEpisodes > 1 && (
                   <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
                     <Calendar className="w-3 h-3" />
                     <span>{mediaItem.totalEpisodes} eps</span>
@@ -1050,7 +1050,7 @@ export default function MediaDetail() {
           {mediaItem.platforms && mediaItem.platforms.length > 0 && (
             <div className="mt-3">
               <h3 className="text-xs font-medium text-gray-500 mb-2">
-                {mediaItem.type === 'Movie' || mediaItem.type === 'TV Show'
+                {mediaItem.type === 'movie' || mediaItem.type === 'tv'
                   ? 'Watch On'
                   : mediaItem.type === 'Podcast' || mediaItem.type === 'Music'
                   ? 'Listen On'
@@ -1663,7 +1663,7 @@ export default function MediaDetail() {
                       const handleClick = () => {
                         // Navigate to media detail if we have IDs, otherwise search
                         if (item.external_id && item.external_source) {
-                          setLocation(`/media/${item.type || 'Movie'}/${item.external_source}/${item.external_id}`);
+                          setLocation(`/media/${item.type || 'movie'}/${item.external_source}/${item.external_id}`);
                         } else {
                           const searchTerm = item.title + (item.year ? ` ${item.year}` : '');
                           setLocation(`/add?q=${encodeURIComponent(searchTerm)}`);
@@ -1674,7 +1674,7 @@ export default function MediaDetail() {
                         e.stopPropagation();
                         setQuickAddMedia({
                           title: item.title,
-                          mediaType: item.type || 'Movie',
+                          mediaType: item.type || 'movie',
                           imageUrl: item.poster_url,
                           externalId: item.external_id,
                           externalSource: item.external_source,
