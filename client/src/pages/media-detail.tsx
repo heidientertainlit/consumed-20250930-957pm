@@ -1107,22 +1107,46 @@ export default function MediaDetail() {
             <div className="flex gap-2 mt-4">
               {currentlyItem ? (
                 <>
-                  {/* Update Progress button when currently consuming */}
-                  <Button
-                    size="sm"
-                    onClick={() => setIsProgressSheetOpen(true)}
-                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-9 rounded-full px-4 shadow-md"
-                  >
-                    <TrendingUp size={13} className="mr-1.5" />
-                    Update Progress
-                    <span className="ml-1.5 text-purple-200 font-normal">
-                      {editMode === 'page'
-                        ? `${editProgress}${editTotal > 0 ? `/${editTotal} pg` : ' pg'}`
-                        : editMode === 'percent'
-                          ? `${editProgress}%`
-                          : `${editProgress}${editTotal > 0 ? `/${editTotal}` : ''}`}
-                    </span>
-                  </Button>
+                  {/* Split Progress button: left=update progress, right=move list */}
+                  <div className="flex items-center bg-purple-600 rounded-full h-9 shadow-md overflow-hidden">
+                    <button
+                      onClick={() => setIsProgressSheetOpen(true)}
+                      className="flex items-center gap-1.5 pl-3 pr-2 h-full text-white text-xs hover:bg-purple-700 transition-colors"
+                    >
+                      <TrendingUp size={13} />
+                      <span className="font-medium">Progress</span>
+                      <span className="text-purple-200 font-normal">
+                        {editMode === 'page'
+                          ? `${editProgress}${editTotal > 0 ? `/${editTotal} pg` : ' pg'}`
+                          : editMode === 'percent'
+                            ? `${editProgress}%`
+                            : `${editProgress}${editTotal > 0 ? `/${editTotal}` : ''}`}
+                      </span>
+                    </button>
+                    <div className="w-px h-5 bg-white/30 flex-shrink-0" />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="px-2 h-full text-white hover:bg-purple-700 transition-colors flex items-center">
+                          <ChevronDown size={14} />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="min-w-[160px]">
+                        <DropdownMenuItem onClick={() => handleAddMediaToList('Finished')}>
+                          Mark as Finished
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAddMediaToList('Want To')}>
+                          Move to Want To
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleAddMediaToList('Did Not Finish')}>
+                          Did Not Finish
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleAddMediaToList('Favorites')}>
+                          Add to Favorites
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                   <Button
                     size="sm"
                     onClick={() => {
