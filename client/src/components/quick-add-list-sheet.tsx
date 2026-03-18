@@ -621,24 +621,6 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     handleClose();
   };
 
-  if (step === 'progress') {
-    if (!progressLibraryId || !media) return null;
-    return (
-      <ProgressUpdateSheet
-        isOpen={true}
-        onOpenChange={(open) => { if (!open) handleClose(); }}
-        item={{
-          id: progressLibraryId,
-          title: media.title || '',
-          image_url: media.imageUrl,
-          media_type: media.mediaType || '',
-          external_id: media.externalId,
-          external_source: media.externalSource,
-        }}
-        onProgressSaved={handleClose}
-      />
-    );
-  }
 
   if (step === 'recommend') {
     return (
@@ -699,59 +681,77 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   }
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DrawerContent className="bg-white rounded-t-2xl">
-        <DrawerHeader className="text-center pb-2 border-b border-gray-100">
-          <DrawerTitle className="text-lg font-semibold text-gray-900">
-            Add to List
-          </DrawerTitle>
-          {media && (
-            <p className="text-sm text-gray-500 mt-1">{media.title}</p>
-          )}
-        </DrawerHeader>
-        
-        <div className="px-4 py-4 max-h-[60vh] overflow-y-auto space-y-2">
-          {isLoadingLists ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="animate-spin text-purple-500" size={24} />
-            </div>
-          ) : userLists.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <p>No lists yet</p>
-              <p className="text-sm mt-1">Create a list to start tracking</p>
-            </div>
-          ) : (
-            sortedLists.map((list: any) => {
-              const style = getListStyle(list.title || list.name);
-              const listName = list.title || list.name;
-              const displayName = getDisplayName(listName);
-              const isAddingThis = isAdding === list.id;
-              
-              return (
-                <button
-                  key={list.id}
-                  onClick={() => handleAddToList(list.id, listName)}
-                  disabled={isAdding !== null}
-                  className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors disabled:opacity-50"
-                  data-testid={`list-option-${list.id}`}
-                >
-                  <div className={`w-10 h-10 ${style.bg} rounded-full flex items-center justify-center`}>
-                    {isAddingThis ? (
-                      <Loader2 className="animate-spin text-purple-600" size={20} />
-                    ) : (
-                      style.icon
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{displayName}</p>
-                    <p className="text-sm text-gray-500">{style.desc}</p>
-                  </div>
-                </button>
-              );
-            })
-          )}
-        </div>
-      </DrawerContent>
-    </Drawer>
+    <>
+      <Drawer open={isOpen && step !== 'progress'} onOpenChange={(open) => !open && step !== 'progress' && handleClose()}>
+        <DrawerContent className="bg-white rounded-t-2xl">
+          <DrawerHeader className="text-center pb-2 border-b border-gray-100">
+            <DrawerTitle className="text-lg font-semibold text-gray-900">
+              Add to List
+            </DrawerTitle>
+            {media && (
+              <p className="text-sm text-gray-500 mt-1">{media.title}</p>
+            )}
+          </DrawerHeader>
+          
+          <div className="px-4 py-4 max-h-[60vh] overflow-y-auto space-y-2">
+            {isLoadingLists ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="animate-spin text-purple-500" size={24} />
+              </div>
+            ) : userLists.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>No lists yet</p>
+                <p className="text-sm mt-1">Create a list to start tracking</p>
+              </div>
+            ) : (
+              sortedLists.map((list: any) => {
+                const style = getListStyle(list.title || list.name);
+                const listName = list.title || list.name;
+                const displayName = getDisplayName(listName);
+                const isAddingThis = isAdding === list.id;
+                
+                return (
+                  <button
+                    key={list.id}
+                    onClick={() => handleAddToList(list.id, listName)}
+                    disabled={isAdding !== null}
+                    className="w-full p-4 text-left rounded-lg hover:bg-gray-50 flex items-center gap-3 transition-colors disabled:opacity-50"
+                    data-testid={`list-option-${list.id}`}
+                  >
+                    <div className={`w-10 h-10 ${style.bg} rounded-full flex items-center justify-center`}>
+                      {isAddingThis ? (
+                        <Loader2 className="animate-spin text-purple-600" size={20} />
+                      ) : (
+                        style.icon
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">{displayName}</p>
+                      <p className="text-sm text-gray-500">{style.desc}</p>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {progressLibraryId && media && (
+        <ProgressUpdateSheet
+          isOpen={step === 'progress' && isOpen}
+          onOpenChange={(open) => { if (!open) handleClose(); }}
+          item={{
+            id: progressLibraryId,
+            title: media.title || '',
+            image_url: media.imageUrl,
+            media_type: media.mediaType || '',
+            external_id: media.externalId,
+            external_source: media.externalSource,
+          }}
+          onProgressSaved={handleClose}
+        />
+      )}
+    </>
   );
 }
