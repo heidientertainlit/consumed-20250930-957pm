@@ -1198,7 +1198,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
                     <Trash2 size={14} />
                   </button>
                 )}
-                {post.user?.id !== currentUserId && (
+                {currentUserId && post.user?.id !== currentUserId && (
                   <button className="text-gray-300 hover:text-orange-400 p-1 transition-colors">
                     <Flag size={13} />
                   </button>
