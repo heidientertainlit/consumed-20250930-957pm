@@ -532,65 +532,6 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     );
   }
 
-  if (step === 'just-tracked') {
-    return (
-      <JustTrackedSheet
-        isOpen={isOpen}
-        onClose={handleClose}
-        media={media ? {
-          title: media.title,
-          mediaType: media.mediaType,
-          imageUrl: media.imageUrl,
-          externalId: media.externalId,
-          externalSource: media.externalSource,
-          creator: media.creator,
-        } : null}
-        listName={addedListName}
-        onDropHotTake={onOpenHotTakeComposer && media ? () => {
-          const mediaData = {
-            title: media.title,
-            mediaType: media.mediaType,
-            imageUrl: media.imageUrl,
-            externalId: media.externalId,
-            externalSource: media.externalSource,
-          };
-          handleClose();
-          onOpenHotTakeComposer(mediaData);
-        } : undefined}
-        onRateIt={async () => {
-          const isCurrently = addedListName?.toLowerCase().includes('current');
-          if (isCurrently) {
-            if (media?.externalId) {
-              setIsLoadingProgress(true);
-              let itemId: string | null = null;
-              for (let attempt = 0; attempt < 4; attempt++) {
-                if (attempt > 0) await new Promise(r => setTimeout(r, 400));
-                const { data } = await supabase
-                  .from('library_items')
-                  .select('id')
-                  .eq('external_id', media.externalId)
-                  .limit(1);
-                if (data && data.length > 0) { itemId = data[0].id; break; }
-              }
-              setIsLoadingProgress(false);
-              if (itemId) {
-                setProgressLibraryId(itemId);
-                setStep('progress');
-              } else {
-                handleClose();
-              }
-            } else {
-              setStep('progress');
-            }
-          } else {
-            setStep('rate');
-          }
-        }}
-        isLoadingRateIt={isLoadingProgress}
-        showRateOption={true}
-      />
-    );
-  }
 
   const handleSaveProgress = async () => {
     if (!session?.access_token || !media?.externalId) { handleClose(); return; }
@@ -682,7 +623,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
 
   return (
     <>
-      <Drawer open={isOpen && step !== 'progress'} onOpenChange={(open) => !open && step !== 'progress' && handleClose()}>
+      <Drawer open={isOpen && step === 'select-list'} onOpenChange={(open) => !open && step === 'select-list' && handleClose()}>
         <DrawerContent className="bg-white rounded-t-2xl">
           <DrawerHeader className="text-center pb-2 border-b border-gray-100">
             <DrawerTitle className="text-lg font-semibold text-gray-900">
@@ -736,6 +677,62 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
           </div>
         </DrawerContent>
       </Drawer>
+
+      <JustTrackedSheet
+        isOpen={step === 'just-tracked' && isOpen}
+        onClose={handleClose}
+        media={media ? {
+          title: media.title,
+          mediaType: media.mediaType,
+          imageUrl: media.imageUrl,
+          externalId: media.externalId,
+          externalSource: media.externalSource,
+          creator: media.creator,
+        } : null}
+        listName={addedListName}
+        onDropHotTake={onOpenHotTakeComposer && media ? () => {
+          const mediaData = {
+            title: media.title,
+            mediaType: media.mediaType,
+            imageUrl: media.imageUrl,
+            externalId: media.externalId,
+            externalSource: media.externalSource,
+          };
+          handleClose();
+          onOpenHotTakeComposer(mediaData);
+        } : undefined}
+        onRateIt={async () => {
+          const isCurrently = addedListName?.toLowerCase().includes('current');
+          if (isCurrently) {
+            if (media?.externalId) {
+              setIsLoadingProgress(true);
+              let itemId: string | null = null;
+              for (let attempt = 0; attempt < 4; attempt++) {
+                if (attempt > 0) await new Promise(r => setTimeout(r, 400));
+                const { data } = await supabase
+                  .from('library_items')
+                  .select('id')
+                  .eq('external_id', media.externalId)
+                  .limit(1);
+                if (data && data.length > 0) { itemId = data[0].id; break; }
+              }
+              setIsLoadingProgress(false);
+              if (itemId) {
+                setProgressLibraryId(itemId);
+                setStep('progress');
+              } else {
+                handleClose();
+              }
+            } else {
+              setStep('progress');
+            }
+          } else {
+            setStep('rate');
+          }
+        }}
+        isLoadingRateIt={isLoadingProgress}
+        showRateOption={true}
+      />
 
       {progressLibraryId && media && (
         <ProgressUpdateSheet
