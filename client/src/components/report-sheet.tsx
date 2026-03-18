@@ -111,7 +111,7 @@ export function ReportSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
-      <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh] overflow-y-auto pb-safe">
+      <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh] overflow-y-auto pb-safe bg-white text-gray-900">
         {step === "reason" && (
           <>
             <SheetHeader className="pb-2">
