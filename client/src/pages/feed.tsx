@@ -4687,8 +4687,8 @@ export default function Feed() {
               onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
               className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-white/[0.12] border border-white/20 hover:bg-white/[0.18] transition-colors"
             >
-              <MessageCircle size={18} className="text-purple-300/80 shrink-0" />
-              <span className="text-white/65 text-sm">Share your take...</span>
+              <SearchIcon size={18} className="text-purple-300/80 shrink-0" />
+              <span className="text-white/65 text-sm">Search something to track, rate, or talk about</span>
             </button>
 
           </div>
@@ -6983,7 +6983,6 @@ export default function Feed() {
         isOpen={composerOpen}
         onClose={() => setComposerOpen(false)}
         initialPostType={composerInitialType}
-        skipToComposer={true}
         searchToCompose={true}
       />
 
