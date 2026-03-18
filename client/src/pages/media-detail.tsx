@@ -1315,12 +1315,40 @@ export default function MediaDetail() {
                       {item.label}
                     </button>
                   ))}
-                  <button
-                    onClick={() => setShowCreateListDialog(true)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border border-gray-300 text-gray-600 hover:bg-gray-50 transition-colors"
-                  >
-                    Custom <ChevronDown size={12} />
-                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                          composeSelectedList?.isCustom
+                            ? 'bg-purple-600 text-white border-purple-600'
+                            : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {composeSelectedList?.isCustom ? composeSelectedList.name : 'Custom'}
+                        <ChevronDown size={12} />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-48">
+                      {customLists.length === 0 && (
+                        <DropdownMenuItem disabled className="text-gray-400 text-sm">
+                          No custom lists yet
+                        </DropdownMenuItem>
+                      )}
+                      {customLists.map((list: any) => (
+                        <DropdownMenuItem
+                          key={list.id}
+                          onClick={() => setComposeSelectedList({ name: list.name, isCustom: true, id: list.id })}
+                          className={composeSelectedList?.id === list.id ? 'bg-purple-50 text-purple-700' : ''}
+                        >
+                          {list.name}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setShowCreateListDialog(true)} className="text-purple-600 font-medium">
+                        + Create new list
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </>
             )}
