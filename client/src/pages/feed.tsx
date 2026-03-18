@@ -2373,6 +2373,24 @@ export default function Feed() {
                 <span>{raw.comments || item.comments || 0}</span>
               </button>
             </div>
+            {expandedComments.has(postId) && (
+              <div className="pt-3 mt-2 border-t border-gray-100 px-4 pb-3">
+                <CommentsSection
+                  postId={postId}
+                  isLiked={likedPosts.has(postId)}
+                  onLike={handleLike}
+                  expandedComments={true}
+                  onToggleComments={() => {}}
+                  fetchComments={fetchComments}
+                  commentInput={commentInputs[postId] || ''}
+                  onCommentInputChange={(value) => handleCommentInputChange(postId, value)}
+                  onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(postId, parentCommentId, content)}
+                  isSubmitting={commentMutation.isPending}
+                  currentUserId={user?.id}
+                  onDeleteComment={handleDeleteComment}
+                />
+              </div>
+            )}
           </div>
         </div>
       );
