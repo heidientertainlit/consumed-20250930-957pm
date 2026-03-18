@@ -24,7 +24,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 import { HotTakeFeedCard } from "@/components/hot-take-feed-card";
-import { Star, StarHalf, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal } from "lucide-react";
+import { Star, StarHalf, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -1192,15 +1192,15 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
                   <p className="text-xs text-gray-400 leading-tight">@{rawUsername}</p>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                {post.mediaType && (
-                  <span className="text-[11px] font-medium text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full capitalize">
-                    {post.mediaType === 'tv' ? 'TV' : post.mediaType}
-                  </span>
-                )}
+              <div className="flex items-center gap-0.5 flex-shrink-0">
                 {currentUserId && post.user?.id === currentUserId && onDeletePost && (
                   <button onClick={() => onDeletePost(post.id)} className="text-gray-300 hover:text-red-500 p-1">
                     <Trash2 size={14} />
+                  </button>
+                )}
+                {currentUserId && post.user?.id !== currentUserId && (
+                  <button className="text-gray-300 hover:text-orange-400 p-1 transition-colors">
+                    <Flag size={13} />
                   </button>
                 )}
               </div>
@@ -1247,10 +1247,26 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
             <div className="min-w-0 flex-1 flex flex-col justify-center">
               {post.externalId && post.externalSource ? (
                 <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-                  <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{post.mediaTitle}</p>
+                  <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2 flex items-center gap-1">
+                    {post.mediaType === 'tv' && <Tv2 size={12} className="text-purple-400 flex-shrink-0" />}
+                    {post.mediaType === 'movie' && <Film size={12} className="text-purple-400 flex-shrink-0" />}
+                    {post.mediaType === 'book' && <Book size={12} className="text-purple-400 flex-shrink-0" />}
+                    {post.mediaType === 'music' && <Music size={12} className="text-purple-400 flex-shrink-0" />}
+                    {post.mediaType === 'podcast' && <Headphones size={12} className="text-purple-400 flex-shrink-0" />}
+                    {post.mediaType === 'game' && <Gamepad2 size={12} className="text-purple-400 flex-shrink-0" />}
+                    {post.mediaTitle}
+                  </p>
                 </Link>
               ) : (
-                <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
+                <p className="text-sm font-semibold text-gray-900 line-clamp-2 flex items-center gap-1">
+                  {post.mediaType === 'tv' && <Tv2 size={12} className="text-purple-400 flex-shrink-0" />}
+                  {post.mediaType === 'movie' && <Film size={12} className="text-purple-400 flex-shrink-0" />}
+                  {post.mediaType === 'book' && <Book size={12} className="text-purple-400 flex-shrink-0" />}
+                  {post.mediaType === 'music' && <Music size={12} className="text-purple-400 flex-shrink-0" />}
+                  {post.mediaType === 'podcast' && <Headphones size={12} className="text-purple-400 flex-shrink-0" />}
+                  {post.mediaType === 'game' && <Gamepad2 size={12} className="text-purple-400 flex-shrink-0" />}
+                  {post.mediaTitle}
+                </p>
               )}
               {post.rating && post.rating > 0 && (
                 <div className="flex items-center gap-0.5 mt-1">
