@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Send, User, Trash2, MessageCircle, ArrowBigUp, ArrowBigDown, ChevronDown, ChevronUp, Heart } from "lucide-react";
+import { Send, User, Trash2, MessageCircle, ArrowBigUp, ArrowBigDown, ChevronDown, ChevronUp, Heart, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { renderMentions } from "@/lib/mentions";
 import MentionInput from "@/components/mention-input";
@@ -46,6 +46,7 @@ interface CommentsSectionProps {
   isSubmitting: boolean;
   currentUserId?: string;
   onDeleteComment?: (commentId: string, postId: string) => void;
+  onReportComment?: (commentId: string, userId: string, userName: string) => void;
   onLikeComment?: (commentId: string) => void;
   onVoteComment?: (commentId: string, direction: 'up' | 'down') => void;
   likedComments?: Set<string>;
@@ -64,6 +65,7 @@ interface CommentItemProps {
   depth: number;
   currentUserId?: string;
   onDeleteComment?: (commentId: string, postId: string) => void;
+  onReportComment?: (commentId: string, userId: string, userName: string) => void;
   onLikeComment?: (commentId: string) => void;
   onVoteComment?: (commentId: string, direction: 'up' | 'down') => void;
   likedComments: Set<string>;
@@ -82,6 +84,7 @@ function CommentItem({
   depth,
   currentUserId,
   onDeleteComment,
+  onReportComment,
   onLikeComment,
   onVoteComment,
   likedComments,
@@ -231,7 +234,7 @@ function CommentItem({
                 </button>
               )}
             </div>
-            {currentUserId === comment.user.id && onDeleteComment && (
+            {currentUserId === comment.user.id && onDeleteComment ? (
               <button
                 onClick={() => onDeleteComment(comment.id, postId)}
                 className="text-gray-300 hover:text-red-500 transition-colors p-1"
@@ -240,7 +243,15 @@ function CommentItem({
               >
                 <Trash2 size={14} />
               </button>
-            )}
+            ) : currentUserId && currentUserId !== comment.user.id && onReportComment ? (
+              <button
+                onClick={() => onReportComment(comment.id, comment.user.id, comment.user.username)}
+                className="text-gray-300 hover:text-orange-500 transition-colors p-1"
+                title="Report comment"
+              >
+                <Flag size={14} />
+              </button>
+            ) : null}
           </div>
           
           {/* Reply Input */}
@@ -273,6 +284,7 @@ function CommentItem({
                 depth={depth + 1}
                 currentUserId={currentUserId}
                 onDeleteComment={onDeleteComment}
+                onReportComment={onReportComment}
                 onLikeComment={onLikeComment}
                 onVoteComment={onVoteComment}
                 likedComments={likedComments}
@@ -324,7 +336,7 @@ function CommentItem({
             <span className="text-xs text-gray-500">
               {formatCommentDate(comment.createdAt)}
             </span>
-            {currentUserId === comment.user.id && onDeleteComment && (
+            {currentUserId === comment.user.id && onDeleteComment ? (
               <button
                 onClick={() => onDeleteComment(comment.id, postId)}
                 className="text-gray-400 hover:text-red-500 transition-colors ml-auto"
@@ -333,7 +345,15 @@ function CommentItem({
               >
                 <Trash2 size={14} />
               </button>
-            )}
+            ) : currentUserId && currentUserId !== comment.user.id && onReportComment ? (
+              <button
+                onClick={() => onReportComment(comment.id, comment.user.id, comment.user.username)}
+                className="text-gray-400 hover:text-orange-500 transition-colors ml-auto"
+                title="Report comment"
+              >
+                <Flag size={14} />
+              </button>
+            ) : null}
           </div>
           {mediaData ? (
             <div className="flex items-center gap-2 mb-2">
@@ -453,6 +473,7 @@ function CommentItem({
               depth={depth + 1}
               currentUserId={currentUserId}
               onDeleteComment={onDeleteComment}
+              onReportComment={onReportComment}
               onLikeComment={onLikeComment}
               onVoteComment={onVoteComment}
               likedComments={likedComments}
@@ -482,6 +503,7 @@ export default function CommentsSection({
   isSubmitting,
   currentUserId,
   onDeleteComment,
+  onReportComment,
   onLikeComment,
   onVoteComment,
   likedComments = new Set(),
@@ -589,6 +611,7 @@ export default function CommentsSection({
                   depth={0}
                   currentUserId={currentUserId}
                   onDeleteComment={onDeleteComment}
+                  onReportComment={onReportComment}
                   onLikeComment={onLikeComment}
                   onVoteComment={onVoteComment}
                   likedComments={likedComments}

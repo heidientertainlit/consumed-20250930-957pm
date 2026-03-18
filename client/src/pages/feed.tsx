@@ -1593,6 +1593,10 @@ function CurrentlyConsumingFeedCard({
   commentVotes: Map<string, 'up' | 'down'>;
   onBet?: (postId: string, mediaTitle: string, userName: string, targetUserId: string, externalId?: string, externalSource?: string, mediaType?: string) => void;
 }) {
+  const [reportCommentDataLocal, setReportCommentDataLocal] = useState<{ commentId: string; userId: string; userName: string } | null>(null);
+  const handleReportComment = (commentId: string, userId: string, userName: string) => {
+    setReportCommentDataLocal({ commentId, userId, userName });
+  };
   const [showRating, setShowRating] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
   const [selectedRating, setSelectedRating] = useState(0);
@@ -1646,6 +1650,7 @@ function CurrentlyConsumingFeedCard({
   const displayName = post.user?.displayName || post.user?.username;
   
   return (
+    <>
     <div id={`post-${post.id}`}>
       {carouselElements}
       <div className="mb-4">
@@ -1888,6 +1893,7 @@ function CurrentlyConsumingFeedCard({
                 isSubmitting={commentMutation.isPending}
                 currentUserId={user?.id}
                 onDeleteComment={handleDeleteComment}
+                onReportComment={handleReportComment}
                 onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
                 onVoteComment={handleVoteComment}
                 likedComments={likedComments}
@@ -1898,6 +1904,15 @@ function CurrentlyConsumingFeedCard({
         </div>
       </div>
     </div>
+    <ReportSheet
+      isOpen={reportCommentDataLocal !== null}
+      onClose={() => setReportCommentDataLocal(null)}
+      contentType="comment"
+      contentId={reportCommentDataLocal?.commentId || ''}
+      reportedUserId={reportCommentDataLocal?.userId || ''}
+      reportedUserName={reportCommentDataLocal?.userName || ''}
+    />
+    </>
   );
 }
 
@@ -1924,6 +1939,7 @@ export default function Feed() {
   const [feedSearchResults, setFeedSearchResults] = useState<any[]>([]);
   const [feedIsSearching, setFeedIsSearching] = useState(false);
   const [feedSearchMedia, setFeedSearchMedia] = useState<any>(null);
+  const [reportCommentData, setReportCommentData] = useState<{ commentId: string; userId: string; userName: string } | null>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [selectedFilter, setSelectedFilter] = useState("All");
@@ -2439,6 +2455,7 @@ export default function Feed() {
                   isSubmitting={commentMutation.isPending}
                   currentUserId={user?.id}
                   onDeleteComment={handleDeleteComment}
+                  onReportComment={handleReportComment}
                   onLikeComment={handleLikeComment}
                 />
               </div>
@@ -2513,6 +2530,7 @@ export default function Feed() {
               isSubmitting={commentMutation.isPending}
               currentUserId={user?.id}
               onDeleteComment={handleDeleteComment}
+              onReportComment={handleReportComment}
               onLikeComment={commentLikesEnabled ? handleLikeComment : undefined}
               onVoteComment={handleVoteComment}
               likedComments={likedComments}
@@ -2607,6 +2625,7 @@ export default function Feed() {
         session={session}
         currentUserId={currentAppUserId || undefined}
         onDeleteComment={handleDeleteComment}
+        onReportComment={handleReportComment}
         onDeletePost={handleDeletePost}
         onLikeComment={handleLikeComment}
         onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
@@ -4107,6 +4126,10 @@ export default function Feed() {
     }, 300);
     return () => clearTimeout(timer);
   }, [feedSearchQuery, session?.access_token]);
+
+  const handleReportComment = (commentId: string, userId: string, userName: string) => {
+    setReportCommentData({ commentId, userId, userName });
+  };
 
   const handleLike = (postId: string) => {
     console.log('🔴 handleLike called with postId:', postId, 'isValidUUID:', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(postId));
@@ -7156,6 +7179,16 @@ export default function Feed() {
           </div>
         </div>
       )}
+
+      {/* Comment Report Sheet */}
+      <ReportSheet
+        isOpen={reportCommentData !== null}
+        onClose={() => setReportCommentData(null)}
+        contentType="comment"
+        contentId={reportCommentData?.commentId || ''}
+        reportedUserId={reportCommentData?.userId || ''}
+        reportedUserName={reportCommentData?.userName || ''}
+      />
 
       {/* Feedback Dialog */}
       <FeedbackDialog isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
