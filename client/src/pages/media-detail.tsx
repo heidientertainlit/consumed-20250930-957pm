@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp } from "lucide-react";
+import { ArrowLeft, Share, Star, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp, ListPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/navigation";
@@ -1288,67 +1288,15 @@ export default function MediaDetail() {
                   </div>
                 </div>
 
-                {/* Status pills */}
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {[
-                    { label: 'Finished', value: 'finished' },
-                    { label: 'Currently', value: 'currently_consuming' },
-                    { label: 'Want To', value: 'want_to_consume' },
-                    { label: 'Favorites', value: 'favorites' },
-                    { label: 'DNF', value: 'dnf' },
-                  ].map((item) => (
-                    <button
-                      key={item.value}
-                      onClick={() =>
-                        setComposeSelectedList(
-                          composeSelectedList?.name === item.value
-                            ? null
-                            : { name: item.value, isCustom: false }
-                        )
-                      }
-                      className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
-                        composeSelectedList?.name === item.value
-                          ? 'bg-purple-600 text-white'
-                          : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                          composeSelectedList?.isCustom
-                            ? 'bg-purple-600 text-white border-purple-600'
-                            : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-                        }`}
-                      >
-                        {composeSelectedList?.isCustom ? composeSelectedList.name : 'Custom'}
-                        <ChevronDown size={12} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-48">
-                      {customLists.length === 0 && (
-                        <DropdownMenuItem disabled className="text-gray-400 text-sm">
-                          No custom lists yet
-                        </DropdownMenuItem>
-                      )}
-                      {customLists.map((list: any) => (
-                        <DropdownMenuItem
-                          key={list.id}
-                          onClick={() => setComposeSelectedList({ name: list.name, isCustom: true, id: list.id })}
-                          className={composeSelectedList?.id === list.id ? 'bg-purple-50 text-purple-700' : ''}
-                        >
-                          {list.name}
-                        </DropdownMenuItem>
-                      ))}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => setShowCreateListDialog(true)} className="text-purple-600 font-medium">
-                        + Create new list
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                {/* Add to list button */}
+                <div className="mt-3">
+                  <button
+                    onClick={() => setIsListSheetOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <ListPlus size={16} />
+                    Add to List
+                  </button>
                 </div>
               </>
             )}
