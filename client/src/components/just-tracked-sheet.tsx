@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Check, Flame, Star, Users, Sparkles, ChevronRight, Dna, HelpCircle, Gamepad2, Film, Tv, BookOpen, Music, Headphones, Gamepad } from "lucide-react";
+import { Check, Flame, Star, Users, Sparkles, ChevronRight, Dna, HelpCircle, Gamepad2, Film, Tv, BookOpen, Music, Headphones, Gamepad, TrendingUp } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
@@ -94,6 +94,7 @@ export function JustTrackedSheet({
   const [triviaRevealed, setTriviaRevealed] = useState(false);
 
   const isWantToList = listName?.toLowerCase().includes('want') || listName?.toLowerCase().includes('queue');
+  const isCurrentlyList = listName?.toLowerCase() === 'currently' || listName?.toLowerCase().includes('current');
 
   const { data: triviaQuestion } = useQuery({
     queryKey: ['want-to-trivia', media?.mediaType],
@@ -433,14 +434,25 @@ export function JustTrackedSheet({
             ) : showRateOption && onRateIt ? (
               <button
                 onClick={onRateIt}
-                className="w-full p-4 text-left rounded-xl bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 flex items-center gap-3 transition-colors border border-yellow-100"
+                className={`w-full p-4 text-left rounded-xl flex items-center gap-3 transition-colors ${
+                  isCurrentlyList
+                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-100'
+                    : 'bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 border border-yellow-100'
+                }`}
               >
-                <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Star className="text-white fill-white" size={20} />
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  isCurrentlyList
+                    ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                    : 'bg-gradient-to-br from-yellow-400 to-amber-500'
+                }`}>
+                  {isCurrentlyList
+                    ? <TrendingUp className="text-white" size={20} />
+                    : <Star className="text-white fill-white" size={20} />
+                  }
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-900">Rate It</p>
-                  <p className="text-sm text-gray-500">How many stars does it deserve?</p>
+                  <p className="font-semibold text-gray-900">{isCurrentlyList ? 'Update Progress' : 'Rate It'}</p>
+                  <p className="text-sm text-gray-500">{isCurrentlyList ? 'Log where you are right now' : 'How many stars does it deserve?'}</p>
                 </div>
                 <ChevronRight className="text-gray-400" size={18} />
               </button>
