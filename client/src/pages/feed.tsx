@@ -29,6 +29,7 @@ import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
 import { UserPollsCarousel } from "@/components/user-polls-carousel";
+import { ReportSheet } from "@/components/report-sheet";
 import { type UGCPost } from "@/components/user-content-carousel";
 import ConversationsPanel from "@/components/conversations-panel";
 import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog";
@@ -1014,6 +1015,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
   onAddToList?: (media: any) => void;
 }) {
   const [isSpoilerRevealed, setIsSpoilerRevealed] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const displayName = post.user?.displayName || post.user?.username || 'Someone';
   const rawUsername = post.user?.username || '';
   const avatarLetter = (displayName || rawUsername)[0]?.toUpperCase() || '?';
@@ -1172,6 +1174,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
   };
 
   return (
+    <>
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="p-4">
         <div className="flex items-start gap-3">
@@ -1199,7 +1202,10 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
                   </button>
                 )}
                 {currentUserId && post.user?.id !== currentUserId && (
-                  <button className="text-gray-300 hover:text-orange-400 p-1 transition-colors">
+                  <button
+                    onClick={() => setIsReportOpen(true)}
+                    className="text-gray-300 hover:text-orange-400 p-1 transition-colors"
+                  >
                     <Flag size={13} />
                   </button>
                 )}
@@ -1529,6 +1535,15 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
         )}
       </div>
     </div>
+    <ReportSheet
+      isOpen={isReportOpen}
+      onClose={() => setIsReportOpen(false)}
+      contentType="post"
+      contentId={post.id}
+      reportedUserId={post.user?.id}
+      reportedUserName={post.user?.username}
+    />
+    </>
   );
 }
 

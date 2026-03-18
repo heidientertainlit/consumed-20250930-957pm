@@ -32,57 +32,46 @@ serve(async (req) => {
       .eq("email", user.email)
       .single();
 
-    const reporterId = appUser?.id ?? user.id;
+    const blockerId = appUser?.id ?? user.id;
 
-    const { content_type, content_id, reason, description, reported_user_id } = await req.json();
+    const { blocked_user_id, action = "block" } = await req.json();
+    if (!blocked_user_id) return json({ error: "blocked_user_id is required" }, 400);
+    if (blockerId === blocked_user_id) return json({ error: "Cannot block yourself" }, 400);
 
-    if (!content_type || !content_id || !reason) {
-      return json({ error: "Missing required fields: content_type, content_id, reason" }, 400);
-    }
-
-    const validContentTypes = ["post", "comment", "hot_take", "list", "review"];
-    const validReasons = ["spam", "harassment", "hate_speech", "misinformation", "inappropriate", "spoiler", "other"];
-
-    if (!validContentTypes.includes(content_type)) return json({ error: "Invalid content type" }, 400);
-    if (!validReasons.includes(reason)) return json({ error: "Invalid reason" }, 400);
-
-    // Use service role to bypass RLS
     const admin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Check for duplicate report
+    if (action === "unblock") {
+      await admin
+        .from("user_blocks")
+        .delete()
+        .eq("blocker_id", blockerId)
+        .eq("blocked_id", blocked_user_id);
+      return json({ success: true, action: "unblocked" });
+    }
+
+    // Check if already blocked
     const { data: existing } = await admin
-      .from("content_reports")
+      .from("user_blocks")
       .select("id")
-      .eq("reporter_id", reporterId)
-      .eq("content_type", content_type)
-      .eq("content_id", content_id)
+      .eq("blocker_id", blockerId)
+      .eq("blocked_id", blocked_user_id)
       .maybeSingle();
 
-    if (existing) return json({ error: "You have already reported this content" }, 400);
+    if (existing) return json({ success: true, action: "already_blocked" });
 
-    const { data: report, error: insertError } = await admin
-      .from("content_reports")
-      .insert({
-        reporter_id: reporterId,
-        content_type,
-        content_id,
-        reason,
-        description: description || null,
-        reported_user_id: reported_user_id || null,
-        status: "pending",
-      })
-      .select()
-      .single();
+    const { error: insertError } = await admin
+      .from("user_blocks")
+      .insert({ blocker_id: blockerId, blocked_id: blocked_user_id });
 
     if (insertError) {
       console.error("Insert error:", insertError);
-      return json({ error: "Failed to submit report" }, 500);
+      return json({ error: "Failed to block user" }, 500);
     }
 
-    return json({ success: true, report_id: report.id });
+    return json({ success: true, action: "blocked" });
   } catch (err) {
     console.error("Error:", err);
     return json({ error: "Internal server error" }, 500);
