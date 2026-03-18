@@ -526,7 +526,7 @@ export default function CommentsSection({
     ? `Recommend a ${categoryLabel} 👇` 
     : hotTakeMode 
       ? 'Drop your take...'
-      : 'Add a comment';
+      : 'Add comment...';
 
   // Count for social proof
   const commentCount = comments?.length || 0;
@@ -546,7 +546,7 @@ export default function CommentsSection({
   };
 
   return (
-    <div className={`rounded-lg ${isRecsMode ? 'p-2 space-y-2 bg-gray-50' : hotTakeMode ? 'space-y-3 bg-white' : 'p-4 space-y-3 bg-gray-50'}`}>
+    <div className={`${isRecsMode ? 'p-2 space-y-2 bg-gray-50 rounded-lg' : hotTakeMode ? 'space-y-3 bg-white' : 'px-4 pb-4 pt-3 space-y-3'}`}>
       {/* Comments List — rendered first so input stays at the bottom */}
       {isRecsMode ? (
         showAddRecInput && (
@@ -623,7 +623,7 @@ export default function CommentsSection({
               onChange={onCommentInputChange}
               className={hotTakeMode 
                 ? "flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-black placeholder:text-gray-400 focus:border-purple-400 focus:outline-none"
-                : "bg-white text-black placeholder:text-gray-500"
+                : "flex-1 bg-gray-100 border-0 rounded-full px-4 py-2.5 text-sm text-black placeholder:text-gray-400 focus:outline-none focus:bg-gray-100"
               }
               disabled={isSubmitting}
               session={session}
