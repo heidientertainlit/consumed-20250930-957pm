@@ -721,118 +721,20 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         showRateOption={true}
       />
 
-      <Drawer open={step === 'progress' && isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DrawerContent className="bg-white rounded-t-2xl p-0">
-          <div className="flex items-center justify-center px-4 py-4 border-b border-gray-100">
-            <DrawerTitle className="text-lg font-semibold text-gray-900">Update Progress</DrawerTitle>
-          </div>
-          <div className="px-4 py-4 space-y-4 pb-8">
-            {media && (
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                {media.imageUrl ? (
-                  <img src={media.imageUrl} alt={media.title} className="w-12 h-16 object-cover rounded-lg" />
-                ) : (
-                  <div className="w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
-                    <Play size={20} className="text-purple-400" />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-gray-900 truncate">{media.title}</h4>
-                  <p className="text-sm text-gray-500 capitalize">{media.mediaType}</p>
-                </div>
-              </div>
-            )}
-            {(progressMode === 'episode' || progressMode === 'page') && (
-              <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
-                {(progressMode === 'episode'
-                  ? [{ value: 'episode', label: 'Episode' }, { value: 'percent', label: 'Percent' }]
-                  : [{ value: 'page', label: 'Page' }, { value: 'percent', label: 'Percent' }]
-                ).map((opt) => (
-                  <button key={opt.value} onClick={() => setProgressMode(opt.value as any)}
-                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${progressMode === opt.value ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            )}
-            {progressMode === 'percent' && (
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-gray-700">Percentage Complete</label>
-                <div className="relative">
-                  <Input type="number" min={0} max={100} value={progressValue}
-                    onChange={(e) => setProgressValue(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-                    className="text-center text-lg font-semibold pr-8 bg-white text-gray-900 border-gray-200" />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">%</span>
-                </div>
-                <div className="flex gap-2">
-                  {[25, 50, 75, 100].map((pct) => (
-                    <button key={pct} onClick={() => setProgressValue(pct)}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${progressValue === pct ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-                      {pct}%
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {progressMode === 'episode' && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Season</label>
-                    <Input type="number" min={1} value={progressSeason}
-                      onChange={(e) => setProgressSeason(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Episode</label>
-                    <Input type="number" min={1} value={progressEpisode}
-                      onChange={(e) => setProgressEpisode(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200" />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setProgressEpisode(progressEpisode + 1)}
-                    className="flex-1 py-2 rounded-lg text-sm font-medium bg-purple-100 text-purple-700 hover:bg-purple-200">+1 Episode</button>
-                  <button onClick={() => { setProgressSeason(progressSeason + 1); setProgressEpisode(1); }}
-                    className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">Next Season</button>
-                </div>
-              </div>
-            )}
-            {progressMode === 'page' && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Current Page</label>
-                    <Input type="number" min={0} value={progressValue} onFocus={(e) => e.target.select()}
-                      onChange={(e) => setProgressValue(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Total Pages</label>
-                    <Input type="number" min={0} value={progressTotal || ''}
-                      onChange={(e) => setProgressTotal(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200" />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {[10, 25, 50].map((pages) => (
-                    <button key={pages} onClick={() => setProgressValue(Math.min(progressValue + pages, progressTotal || 9999))}
-                      className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">+{pages} pages</button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <Button onClick={handleSaveProgress} disabled={isSavingProgress}
-              className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-base font-medium">
-              {isSavingProgress ? <Loader2 size={18} className="animate-spin mr-2" /> : null}
-              Save Progress
-            </Button>
-            <button onClick={handleClose} className="w-full text-center text-gray-400 text-sm hover:text-gray-600 py-2">
-              Skip for now
-            </button>
-          </div>
-        </DrawerContent>
-      </Drawer>
+      {media && (
+        <ProgressUpdateSheet
+          isOpen={step === 'progress' && isOpen}
+          onOpenChange={(open) => { if (!open) handleClose(); }}
+          item={{
+            title: media.title || '',
+            image_url: media.imageUrl,
+            media_type: media.mediaType || '',
+            external_id: media.externalId,
+            external_source: media.externalSource,
+          }}
+          onProgressSaved={handleClose}
+        />
+      )}
     </>
   );
 }

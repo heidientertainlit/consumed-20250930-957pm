@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -10,9 +10,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Film, Tv, BookOpen, Music, Headphones, Gamepad2, Play } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export interface ProgressItem {
-  id: string;
+  id?: string;
   title: string;
   image_url?: string;
   media_type: string;
@@ -73,6 +74,37 @@ export function ProgressUpdateSheet({
   const [editSeason, setEditSeason] = useState(itemTotal ?? 1);
   const [editEpisode, setEditEpisode] = useState(item.progress || (isTv ? 1 : 0));
 
+  const [resolvedId, setResolvedId] = useState<string | null>(item.id || null);
+  const [isResolvingId, setIsResolvingId] = useState(false);
+  const resolveAttemptRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (item.id) { setResolvedId(item.id); return; }
+    if (!item.external_id) return;
+    setResolvedId(null);
+    setIsResolvingId(true);
+    let attempts = 0;
+    const tryResolve = async () => {
+      const { data } = await supabase
+        .from('library_items')
+        .select('id')
+        .eq('external_id', item.external_id!)
+        .limit(1);
+      if (data && data.length > 0) {
+        setResolvedId(data[0].id);
+        setIsResolvingId(false);
+      } else if (attempts < 6) {
+        attempts++;
+        resolveAttemptRef.current = setTimeout(tryResolve, 500);
+      } else {
+        setIsResolvingId(false);
+      }
+    };
+    tryResolve();
+    return () => { if (resolveAttemptRef.current) clearTimeout(resolveAttemptRef.current); };
+  }, [isOpen, item.id, item.external_id]);
+
   useEffect(() => {
     if (isOpen) {
       const t = item.progress_total ?? item.total;
@@ -130,10 +162,12 @@ export function ProgressUpdateSheet({
   const updateMutation = useMutation({
     mutationFn: async ({ progress, total, mode }: { progress: number; total?: number; mode: string }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
+      const itemId = resolvedId || item.id;
+      if (!itemId) throw new Error('Item ID not resolved');
       const res = await fetch(`${SUPABASE_URL}/functions/v1/update-item-progress`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ item_id: item.id, progress, progress_total: total, progress_mode: mode }),
+        body: JSON.stringify({ item_id: itemId, progress, progress_total: total, progress_mode: mode }),
       });
       if (!res.ok) throw new Error('Failed to update progress');
       return res.json();
@@ -406,10 +440,10 @@ export function ProgressUpdateSheet({
 
           <Button
             onClick={handleSaveProgress}
-            disabled={updateMutation.isPending}
+            disabled={updateMutation.isPending || isResolvingId || (!resolvedId && !item.id)}
             className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-base font-medium"
           >
-            {updateMutation.isPending ? 'Saving...' : 'Update Progress'}
+            {updateMutation.isPending ? 'Saving...' : isResolvingId ? 'Loading...' : 'Update Progress'}
           </Button>
 
           {onFinished && (
