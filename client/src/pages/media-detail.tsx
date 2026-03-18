@@ -1161,22 +1161,7 @@ export default function MediaDetail() {
                 <>
                   <Button
                     size="sm"
-                    onClick={() => {
-                      setQuickAddMedia({
-                        title: mediaItem?.title || mediaData.title,
-                        mediaType: (() => {
-                          const raw = (mediaItem?.type || mediaData.type || params?.type || '').toLowerCase();
-                          if (raw === 'tv' || raw.includes('show') || raw === 'tv_show') return 'tv';
-                          if (raw.includes('podcast')) return 'podcast';
-                          if (raw === 'movie') return 'movie';
-                          return raw;
-                        })(),
-                        imageUrl: resolvedImageUrl || mediaData.artwork,
-                        externalId: params?.id,
-                        externalSource: params?.source,
-                      });
-                      setIsQuickAddOpen(true);
-                    }}
+                    onClick={() => setIsListSheetOpen(true)}
                     className="bg-gradient-to-r from-purple-700 via-purple-500 to-purple-400 hover:from-purple-800 hover:via-purple-600 hover:to-purple-500 text-white text-xs h-9 rounded-full px-5 shadow-md"
                     data-testid="button-quick-add"
                   >
@@ -1288,16 +1273,6 @@ export default function MediaDetail() {
                   </div>
                 </div>
 
-                {/* Add to list button */}
-                <div className="mt-3">
-                  <button
-                    onClick={() => setIsListSheetOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <ListPlus size={16} />
-                    Add to List
-                  </button>
-                </div>
               </>
             )}
 
