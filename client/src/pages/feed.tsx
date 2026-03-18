@@ -2002,6 +2002,17 @@ export default function Feed() {
 
 
   // Fetch user's friends list for filtering
+  const { data: currentUserName } = useQuery({
+    queryKey: ['current-user-name', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase.from('users').select('user_name').eq('id', user.id).single();
+      return data?.user_name || null;
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: friendsData = [] } = useQuery({
     queryKey: ['user-friends'],
     queryFn: async () => {
@@ -2377,7 +2388,7 @@ export default function Feed() {
                   <p className="text-sm text-gray-900">cast <span className="font-semibold">@{targetUserName}</span> as</p>
                   <span className="text-xs text-gray-400">{postTimestamp ? formatDate(postTimestamp) : 'Today'}</span>
                 </div>
-                {user?.id && postUser?.id === user.id && (
+                {user?.id && (postUser?.id === user.id || (currentUserName && targetUserName === currentUserName)) && (
                   <button onClick={() => handleDeletePost(postId)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
                     <Trash2 size={16} />
                   </button>

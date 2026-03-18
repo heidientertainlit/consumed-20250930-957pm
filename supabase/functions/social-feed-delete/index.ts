@@ -136,14 +136,25 @@ serve(async (req) => {
     console.log('Ownership check: post.user_id=', post.user_id, 'appUser.id=', appUser.id);
     
     if (post.user_id !== appUser.id) {
-      return new Response(JSON.stringify({ 
-        error: 'Unauthorized - you can only delete your own posts',
-        post_owner: post.user_id,
-        requesting_user: appUser.id
-      }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      // Allow castee to delete a cast_approved post they were cast in
+      const { data: castRecord } = await serviceSupabase
+        .from('friend_casts')
+        .select('id')
+        .eq('feed_post_id', post.id)
+        .eq('target_friend_id', user.id)
+        .maybeSingle();
+
+      if (!castRecord) {
+        return new Response(JSON.stringify({ 
+          error: 'Unauthorized - you can only delete your own posts',
+          post_owner: post.user_id,
+          requesting_user: appUser.id
+        }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      console.log('Castee deletion authorized via friend_casts:', castRecord.id);
     }
 
     if (post.prediction_pool_id) {
