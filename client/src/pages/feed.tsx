@@ -1198,7 +1198,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
                     <Trash2 size={14} />
                   </button>
                 )}
-                {currentUserId && post.user?.id !== currentUserId && (
+                {post.user?.id !== currentUserId && (
                   <button className="text-gray-300 hover:text-orange-400 p-1 transition-colors">
                     <Flag size={13} />
                   </button>
@@ -1228,45 +1228,53 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
             {post.mediaImage && post.mediaImage.startsWith('http') && (
               post.externalId && post.externalSource ? (
                 <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
+                  <div className="relative flex-shrink-0">
+                    <img
+                      src={post.mediaImage}
+                      alt={post.mediaTitle}
+                      className="w-20 h-[120px] rounded-xl object-cover shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    {post.mediaType && (
+                      <div className="absolute bottom-1.5 left-1.5 bg-black/60 rounded-md p-0.5">
+                        {post.mediaType === 'tv' && <Tv2 size={11} className="text-white" />}
+                        {post.mediaType === 'movie' && <Film size={11} className="text-white" />}
+                        {post.mediaType === 'book' && <Book size={11} className="text-white" />}
+                        {post.mediaType === 'music' && <Music size={11} className="text-white" />}
+                        {post.mediaType === 'podcast' && <Headphones size={11} className="text-white" />}
+                        {post.mediaType === 'game' && <Gamepad2 size={11} className="text-white" />}
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ) : (
+                <div className="relative flex-shrink-0">
                   <img
                     src={post.mediaImage}
                     alt={post.mediaTitle}
-                    className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                    className="w-20 h-[120px] rounded-xl object-cover shadow-md"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
-                </Link>
-              ) : (
-                <img
-                  src={post.mediaImage}
-                  alt={post.mediaTitle}
-                  className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
+                  {post.mediaType && (
+                    <div className="absolute bottom-1.5 left-1.5 bg-black/60 rounded-md p-0.5">
+                      {post.mediaType === 'tv' && <Tv2 size={11} className="text-white" />}
+                      {post.mediaType === 'movie' && <Film size={11} className="text-white" />}
+                      {post.mediaType === 'book' && <Book size={11} className="text-white" />}
+                      {post.mediaType === 'music' && <Music size={11} className="text-white" />}
+                      {post.mediaType === 'podcast' && <Headphones size={11} className="text-white" />}
+                      {post.mediaType === 'game' && <Gamepad2 size={11} className="text-white" />}
+                    </div>
+                  )}
+                </div>
               )
             )}
             <div className="min-w-0 flex-1 flex flex-col justify-center">
               {post.externalId && post.externalSource ? (
                 <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-                  <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2 flex items-center gap-1">
-                    {post.mediaType === 'tv' && <Tv2 size={12} className="text-purple-400 flex-shrink-0" />}
-                    {post.mediaType === 'movie' && <Film size={12} className="text-purple-400 flex-shrink-0" />}
-                    {post.mediaType === 'book' && <Book size={12} className="text-purple-400 flex-shrink-0" />}
-                    {post.mediaType === 'music' && <Music size={12} className="text-purple-400 flex-shrink-0" />}
-                    {post.mediaType === 'podcast' && <Headphones size={12} className="text-purple-400 flex-shrink-0" />}
-                    {post.mediaType === 'game' && <Gamepad2 size={12} className="text-purple-400 flex-shrink-0" />}
-                    {post.mediaTitle}
-                  </p>
+                  <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{post.mediaTitle}</p>
                 </Link>
               ) : (
-                <p className="text-sm font-semibold text-gray-900 line-clamp-2 flex items-center gap-1">
-                  {post.mediaType === 'tv' && <Tv2 size={12} className="text-purple-400 flex-shrink-0" />}
-                  {post.mediaType === 'movie' && <Film size={12} className="text-purple-400 flex-shrink-0" />}
-                  {post.mediaType === 'book' && <Book size={12} className="text-purple-400 flex-shrink-0" />}
-                  {post.mediaType === 'music' && <Music size={12} className="text-purple-400 flex-shrink-0" />}
-                  {post.mediaType === 'podcast' && <Headphones size={12} className="text-purple-400 flex-shrink-0" />}
-                  {post.mediaType === 'game' && <Gamepad2 size={12} className="text-purple-400 flex-shrink-0" />}
-                  {post.mediaTitle}
-                </p>
+                <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
               )}
               {post.rating && post.rating > 0 && (
                 <div className="flex items-center gap-0.5 mt-1">
