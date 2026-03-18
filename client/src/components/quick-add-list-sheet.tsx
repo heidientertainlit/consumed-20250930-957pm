@@ -56,6 +56,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   const [progressEpisode, setProgressEpisode] = useState<number>(1);
   const [isSavingProgress, setIsSavingProgress] = useState(false);
   const [progressLibraryId, setProgressLibraryId] = useState<string | null>(null);
+  const [isLoadingProgress, setIsLoadingProgress] = useState(false);
 
   const REQUIRED_SYSTEM_LISTS = ['Currently', 'Want To', 'Finished', 'Did Not Finish', 'Favorites'];
 
@@ -98,6 +99,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     setTriviaAnswer(null);
     setTriviaRevealed(false);
     setProgressLibraryId(null);
+    setIsLoadingProgress(false);
     onClose();
   };
 
@@ -555,24 +557,36 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
           handleClose();
           onOpenHotTakeComposer(mediaData);
         } : undefined}
-        onRateIt={() => {
+        onRateIt={async () => {
           const isCurrently = addedListName?.toLowerCase().includes('current');
           if (isCurrently) {
-            setStep('progress');
             if (media?.externalId) {
-              supabase
-                .from('library_items')
-                .select('id')
-                .eq('external_id', media.externalId)
-                .limit(1)
-                .then(({ data }) => {
-                  if (data && data.length > 0) setProgressLibraryId(data[0].id);
-                });
+              setIsLoadingProgress(true);
+              let itemId: string | null = null;
+              for (let attempt = 0; attempt < 4; attempt++) {
+                if (attempt > 0) await new Promise(r => setTimeout(r, 400));
+                const { data } = await supabase
+                  .from('library_items')
+                  .select('id')
+                  .eq('external_id', media.externalId)
+                  .limit(1);
+                if (data && data.length > 0) { itemId = data[0].id; break; }
+              }
+              setIsLoadingProgress(false);
+              if (itemId) {
+                setProgressLibraryId(itemId);
+                setStep('progress');
+              } else {
+                handleClose();
+              }
+            } else {
+              setStep('progress');
             }
           } else {
             setStep('rate');
           }
         }}
+        isLoadingRateIt={isLoadingProgress}
         showRateOption={true}
       />
     );
@@ -608,13 +622,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   };
 
   if (step === 'progress') {
-    if (!progressLibraryId || !media) {
-      return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50">
-          <Loader2 size={32} className="text-white animate-spin" />
-        </div>
-      );
-    }
+    if (!progressLibraryId || !media) return null;
     return (
       <ProgressUpdateSheet
         isOpen={true}
