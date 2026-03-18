@@ -1920,6 +1920,10 @@ export default function Feed() {
   const [trackModalPreSelectedMedia, setTrackModalPreSelectedMedia] = useState<any>(null);
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerInitialType, setComposerInitialType] = useState<"react" | "predict" | "rank">("react");
+  const [feedSearchQuery, setFeedSearchQuery] = useState("");
+  const [feedSearchResults, setFeedSearchResults] = useState<any[]>([]);
+  const [feedIsSearching, setFeedIsSearching] = useState(false);
+  const [feedSearchMedia, setFeedSearchMedia] = useState<any>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [selectedFilter, setSelectedFilter] = useState("All");
@@ -4065,6 +4069,45 @@ export default function Feed() {
   };
 
 
+  const handleFeedSearch = async (query: string) => {
+    if (!session?.access_token) return;
+    setFeedIsSearching(true);
+    try {
+      const response = await fetch(
+        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query: query.trim() }),
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setFeedSearchResults(data.results || []);
+      } else {
+        setFeedSearchResults([]);
+      }
+    } catch {
+      setFeedSearchResults([]);
+    } finally {
+      setFeedIsSearching(false);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (feedSearchQuery.trim()) {
+        handleFeedSearch(feedSearchQuery);
+      } else {
+        setFeedSearchResults([]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [feedSearchQuery, session?.access_token]);
+
   const handleLike = (postId: string) => {
     console.log('🔴 handleLike called with postId:', postId, 'isValidUUID:', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(postId));
     const wasLiked = likedPosts.has(postId);
@@ -4683,13 +4726,71 @@ export default function Feed() {
               Activity
             </h1>
 
-            <button
-              onClick={() => { setComposerInitialType("react"); setComposerOpen(true); }}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-white/[0.12] border border-white/20 hover:bg-white/[0.18] transition-colors"
-            >
-              <SearchIcon size={18} className="text-purple-300/80 shrink-0" />
-              <span className="text-white/65 text-sm">Search something to track, rate, or talk about</span>
-            </button>
+            <div className="relative">
+              <div className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-white/[0.12] border border-white/20 focus-within:border-purple-400/60 transition-colors">
+                {feedIsSearching
+                  ? <div className="w-[18px] h-[18px] border-2 border-purple-300/60 border-t-transparent rounded-full animate-spin shrink-0" />
+                  : <SearchIcon size={18} className="text-purple-300/80 shrink-0" />
+                }
+                <input
+                  type="text"
+                  value={feedSearchQuery}
+                  onChange={(e) => setFeedSearchQuery(e.target.value)}
+                  placeholder="Search something to track, rate, or talk about"
+                  className="flex-1 bg-transparent text-white placeholder-white/50 text-sm outline-none"
+                />
+                {feedSearchQuery && (
+                  <button onClick={() => { setFeedSearchQuery(""); setFeedSearchResults([]); }} className="shrink-0">
+                    <X size={16} className="text-white/40" />
+                  </button>
+                )}
+              </div>
+
+              {feedSearchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl bg-[#1a1a2e] border border-white/10 shadow-2xl z-50 overflow-hidden max-h-80 overflow-y-auto">
+                  <p className="text-xs font-semibold text-white/40 uppercase tracking-wider px-4 pt-3 pb-1">Media</p>
+                  {feedSearchResults.slice(0, 6).map((result, index) => {
+                    const poster = result.poster_url || result.image_url;
+                    return (
+                      <div key={`${result.external_id || result.id}-${index}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] transition-colors">
+                        {poster
+                          ? <img src={poster} alt={result.title} className="w-10 h-14 object-cover rounded-lg shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                          : <div className="w-10 h-14 bg-white/10 rounded-lg shrink-0" />
+                        }
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-white text-sm truncate">{result.title}</p>
+                          <p className="text-xs text-white/50 capitalize">{result.type}{result.year ? ` • ${result.year}` : ''}</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => {
+                              setFeedSearchQuery("");
+                              setFeedSearchResults([]);
+                              setQuickAddMedia({ title: result.title, mediaType: result.type || 'movie', externalId: result.external_id || result.id, externalSource: result.external_source || 'tmdb', imageUrl: poster || '' });
+                              setIsQuickAddOpen(true);
+                            }}
+                            className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center"
+                          >
+                            <Plus size={18} className="text-white" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setFeedSearchQuery("");
+                              setFeedSearchResults([]);
+                              setFeedSearchMedia({ title: result.title, mediaType: result.type || 'movie', externalId: result.external_id || result.id, externalSource: result.external_source || 'tmdb', imageUrl: poster || '' });
+                              setComposerOpen(true);
+                            }}
+                            className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center"
+                          >
+                            <MessageCircle size={16} className="text-white" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
           </div>
           
@@ -6981,9 +7082,11 @@ export default function Feed() {
 
       <QuickAddModal
         isOpen={composerOpen}
-        onClose={() => setComposerOpen(false)}
+        onClose={() => { setComposerOpen(false); setFeedSearchMedia(null); }}
         initialPostType={composerInitialType}
-        searchToCompose={true}
+        preSelectedMedia={feedSearchMedia}
+        skipToComposer={!!feedSearchMedia}
+        searchToCompose={!feedSearchMedia}
       />
 
       <QuickAddListSheet
