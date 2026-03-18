@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { X, Loader2, Check, Play, Clock, Ban, Heart, Folder, Star, MessageSquare, Share2, HelpCircle, Sparkles, TrendingUp, Minus, Plus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -605,137 +607,180 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     const mt = media?.mediaType?.toLowerCase() || '';
     const isTv = mt === 'tv' || mt.includes('series') || mt.includes('show');
     const isBook = mt === 'book';
-    const isMusic = mt === 'music' || mt === 'podcast';
+    const hasModes = isTv || isBook;
+    const modeOptions = isTv
+      ? [{ value: 'episode', label: 'Episode' }, { value: 'percent', label: 'Percent' }]
+      : isBook
+        ? [{ value: 'page', label: 'Page' }, { value: 'percent', label: 'Percent' }]
+        : [];
 
     return (
       <Drawer open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <DrawerContent className="bg-white rounded-t-2xl">
-          <DrawerHeader className="text-center pb-2 border-b border-gray-100">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <TrendingUp className="text-blue-600" size={18} />
-              </div>
-              <DrawerTitle className="text-lg font-semibold text-gray-900">Update Progress</DrawerTitle>
-            </div>
+        <DrawerContent className="bg-white rounded-t-2xl p-0">
+          <div className="flex items-center justify-center px-4 py-4 border-b border-gray-100">
+            <DrawerTitle className="text-lg font-semibold text-gray-900">Update Progress</DrawerTitle>
+          </div>
+
+          <div className="px-4 py-4 space-y-4 pb-8">
             {media && (
-              <p className="text-sm text-gray-500">
-                Where are you with <span className="font-medium text-gray-700">{media.title}</span>?
-              </p>
-            )}
-          </DrawerHeader>
-
-          <div className="px-4 py-6 space-y-5 pb-8">
-            {isTv && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Season</label>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => setProgressSeason(Math.max(1, progressSeason - 1))} className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                        <Minus size={16} className="text-gray-600" />
-                      </button>
-                      <span className="flex-1 text-center text-lg font-semibold text-gray-900">{progressSeason}</span>
-                      <button onClick={() => setProgressSeason(progressSeason + 1)} className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                        <Plus size={16} className="text-gray-600" />
-                      </button>
-                    </div>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                {media.imageUrl ? (
+                  <img src={media.imageUrl} alt={media.title} className="w-12 h-16 object-cover rounded-lg" />
+                ) : (
+                  <div className="w-12 h-16 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
+                    <Play size={20} className="text-purple-400" />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Episode</label>
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => setProgressEpisode(Math.max(1, progressEpisode - 1))} className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                        <Minus size={16} className="text-gray-600" />
-                      </button>
-                      <span className="flex-1 text-center text-lg font-semibold text-gray-900">{progressEpisode}</span>
-                      <button onClick={() => setProgressEpisode(progressEpisode + 1)} className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                        <Plus size={16} className="text-gray-600" />
-                      </button>
-                    </div>
-                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium text-gray-900 truncate">{media.title}</h4>
+                  <p className="text-sm text-gray-500 capitalize">{media.mediaType}</p>
                 </div>
-                <p className="text-center text-sm text-gray-400">Currently on S{progressSeason}E{progressEpisode}</p>
-              </>
+              </div>
             )}
 
-            {isBook && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Current Page</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={progressValue || ''}
-                      onChange={(e) => setProgressValue(Math.max(0, parseInt(e.target.value) || 0))}
-                      placeholder="0"
-                      className="w-full h-10 px-3 text-center text-lg font-semibold bg-white text-gray-900 border border-gray-200 rounded-md focus:border-purple-400 focus:outline-none"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Total Pages</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={progressTotal || ''}
-                      onChange={(e) => setProgressTotal(Math.max(0, parseInt(e.target.value) || 0))}
-                      placeholder="0"
-                      className="w-full h-10 px-3 text-center text-lg font-semibold bg-white text-gray-900 border border-gray-200 rounded-md focus:border-purple-400 focus:outline-none"
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  {[10, 25, 50, 100].map((p) => (
-                    <button key={p} onClick={() => setProgressValue(Math.min(progressValue + p, progressTotal || 9999))}
-                      className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
-                      +{p}
-                    </button>
-                  ))}
-                </div>
-              </>
+            {hasModes && (
+              <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+                {modeOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setProgressMode(opt.value as any)}
+                    className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                      progressMode === opt.value
+                        ? 'bg-white text-purple-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             )}
 
-            {!isTv && !isBook && (
-              <>
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-gray-700">
-                    {isMusic ? 'Percentage complete' : 'How far in?'}
-                  </label>
-                  <div className="flex items-center justify-between">
-                    <span className="text-3xl font-bold text-gray-900">{progressValue}%</span>
-                  </div>
-                  <input
-                    type="range"
+            {progressMode === 'percent' && (
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-700">Percentage Complete</label>
+                <div className="relative">
+                  <Input
+                    type="number"
                     min={0}
                     max={100}
                     value={progressValue}
-                    onChange={(e) => setProgressValue(parseInt(e.target.value))}
-                    className="w-full accent-purple-600"
+                    onChange={(e) => setProgressValue(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="text-center text-lg font-semibold pr-8 bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
                   />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">%</span>
                 </div>
                 <div className="flex gap-2">
                   {[25, 50, 75, 100].map((pct) => (
-                    <button key={pct} onClick={() => setProgressValue(pct)}
-                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${progressValue === pct ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    <button
+                      key={pct}
+                      onClick={() => setProgressValue(pct)}
+                      className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        progressValue === pct ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
                       {pct}%
                     </button>
                   ))}
                 </div>
-              </>
+              </div>
             )}
 
-            <div className="flex gap-3 pt-2">
-              <button onClick={handleClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors">
-                Skip
-              </button>
-              <button
-                onClick={handleSaveProgress}
-                disabled={isSavingProgress}
-                className="flex-1 py-3 rounded-xl bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-              >
-                {isSavingProgress ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
-                Save
-              </button>
-            </div>
+            {progressMode === 'episode' && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Season</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={progressSeason}
+                      onChange={(e) => setProgressSeason(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Episode</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={progressEpisode}
+                      onChange={(e) => setProgressEpisode(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setProgressEpisode(progressEpisode + 1)}
+                    className="flex-1 py-2 rounded-lg text-sm font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
+                  >
+                    +1 Episode
+                  </button>
+                  <button
+                    onClick={() => { setProgressSeason(progressSeason + 1); setProgressEpisode(1); }}
+                    className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                  >
+                    Next Season
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {progressMode === 'page' && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Current Page</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={progressValue}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => setProgressValue(Math.max(0, parseInt(e.target.value.replace(/^0+/, '')) || 0))}
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Total Pages</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={progressTotal || ''}
+                      onChange={(e) => setProgressTotal(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="text-center text-lg font-semibold bg-white text-gray-900 border-gray-200 focus:border-purple-400 focus:ring-purple-400"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {[10, 25, 50].map((pages) => (
+                    <button
+                      key={pages}
+                      onClick={() => setProgressValue(Math.min(progressValue + pages, progressTotal || 9999))}
+                      className="flex-1 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                    >
+                      +{pages} pages
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Button
+              onClick={handleSaveProgress}
+              disabled={isSavingProgress}
+              className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-base font-medium"
+            >
+              {isSavingProgress ? <Loader2 size={18} className="animate-spin mr-2" /> : null}
+              Update Progress
+            </Button>
+
+            <button
+              onClick={handleClose}
+              className="w-full text-center text-gray-400 text-sm hover:text-gray-600 py-2 transition-colors"
+            >
+              Skip for now
+            </button>
           </div>
         </DrawerContent>
       </Drawer>
