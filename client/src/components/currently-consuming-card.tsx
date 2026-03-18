@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Film, Tv, BookOpen, Music, Headphones, Gamepad2, Play, Plus, Check, X, Clock, Trophy, Star, Trash2, List } from 'lucide-react';
+import { ProgressUpdateSheet } from '@/components/progress-update-sheet';
 import { supabase } from '@/lib/supabase';
 import { DnfReasonDrawer } from '@/components/dnf-reason-drawer';
 
@@ -518,7 +519,29 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
         <h4 className="text-[11px] font-medium text-white truncate px-0.5 mt-0.5">{item.title}</h4>
       </div>
 
-      <Sheet open={isProgressSheetOpen} onOpenChange={setIsProgressSheetOpen}>
+      <ProgressUpdateSheet
+        isOpen={isProgressSheetOpen}
+        onOpenChange={setIsProgressSheetOpen}
+        item={{
+          id: item.id,
+          title: item.title,
+          image_url: item.image_url,
+          media_type: item.media_type,
+          progress: item.progress,
+          progress_mode: item.progress_mode,
+          progress_total: item.progress_total,
+          total: item.total,
+          external_id: item.external_id,
+          external_source: item.external_source,
+        }}
+        onProgressSaved={() => {
+          queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+        }}
+        onFinished={handleFinishWithRating}
+        showRemoveOption={true}
+        onRemove={handleRemoveFromLibrary}
+      />
+      {false && <Sheet open={isProgressSheetOpen} onOpenChange={setIsProgressSheetOpen}>
         <SheetContent side="bottom" className="bg-white rounded-t-2xl p-0">
           <div className="flex items-center justify-center px-4 py-4 border-b border-gray-100">
             <SheetTitle className="text-lg font-semibold text-gray-900">Update Progress</SheetTitle>
@@ -798,7 +821,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
             </AlertDialog>
           </div>
         </SheetContent>
-      </Sheet>
+      </Sheet>}
 
       <Drawer open={isMoveSheetOpen} onOpenChange={setIsMoveSheetOpen}>
         <DrawerContent className="bg-white rounded-t-2xl">
