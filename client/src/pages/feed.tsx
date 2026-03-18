@@ -24,7 +24,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 import { HotTakeFeedCard } from "@/components/hot-take-feed-card";
-import { Star, StarHalf, Heart, MessageCircle, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag } from "lucide-react";
+import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -4748,20 +4748,20 @@ export default function Feed() {
 
               {feedSearchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl bg-[#1a1a2e] border border-white/10 shadow-2xl z-50 overflow-hidden max-h-80 overflow-y-auto">
-                  <p className="text-xs font-semibold text-white/40 uppercase tracking-wider px-4 pt-3 pb-1">Media</p>
+                  <p className="text-xs font-semibold text-white/40 uppercase tracking-wider px-4 pt-3 pb-2">Media</p>
                   {feedSearchResults.slice(0, 6).map((result, index) => {
-                    const poster = result.poster_url || result.image_url;
+                    const poster = result.poster_url || result.image_url || result.poster_path || result.image;
                     return (
-                      <div key={`${result.external_id || result.id}-${index}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] transition-colors">
+                      <div key={`${result.external_id || result.id}-${index}`} className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.05] transition-colors">
                         {poster
-                          ? <img src={poster} alt={result.title} className="w-10 h-14 object-cover rounded-lg shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                          : <div className="w-10 h-14 bg-white/10 rounded-lg shrink-0" />
+                          ? <img src={poster} alt={result.title} className="w-12 h-16 object-cover rounded-lg shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                          : <div className="w-12 h-16 bg-white/10 rounded-lg shrink-0 flex items-center justify-center"><Film size={16} className="text-white/30" /></div>
                         }
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white text-sm truncate">{result.title}</p>
+                          <p className="font-semibold text-white text-sm truncate">{result.title}</p>
                           <p className="text-xs text-white/50 capitalize">{result.type}{result.year ? ` • ${result.year}` : ''}</p>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <button
                             onClick={() => {
                               setFeedSearchQuery("");
@@ -4769,9 +4769,9 @@ export default function Feed() {
                               setQuickAddMedia({ title: result.title, mediaType: result.type || 'movie', externalId: result.external_id || result.id, externalSource: result.external_source || 'tmdb', imageUrl: poster || '' });
                               setIsQuickAddOpen(true);
                             }}
-                            className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center"
+                            className="w-10 h-10 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
                           >
-                            <Plus size={18} className="text-white" />
+                            <Plus size={20} className="text-white" />
                           </button>
                           <button
                             onClick={() => {
@@ -4780,9 +4780,10 @@ export default function Feed() {
                               setFeedSearchMedia({ title: result.title, mediaType: result.type || 'movie', externalId: result.external_id || result.id, externalSource: result.external_source || 'tmdb', imageUrl: poster || '' });
                               setComposerOpen(true);
                             }}
-                            className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center"
+                            className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
                           >
-                            <MessageCircle size={16} className="text-white" />
+                            <MessageSquarePlus size={16} className="text-white" />
+                            <Star size={10} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
                           </button>
                         </div>
                       </div>
