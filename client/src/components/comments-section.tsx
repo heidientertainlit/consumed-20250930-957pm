@@ -547,7 +547,7 @@ export default function CommentsSection({
 
   return (
     <div className={`rounded-lg ${isRecsMode ? 'p-2 space-y-2 bg-gray-50' : hotTakeMode ? 'space-y-3 bg-white' : 'p-4 space-y-3 bg-gray-50'}`}>
-      {/* Top-level Comment Input - only show in recs mode when forceShowAddInput is true */}
+      {/* Comments List — rendered first so input stays at the bottom */}
       {isRecsMode ? (
         showAddRecInput && (
           <div className="space-y-1 mb-2">
@@ -567,96 +567,94 @@ export default function CommentsSection({
           </div>
         )
       ) : (
-        <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-          {!hotTakeMode && (
-            <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-              <User size={16} className="text-gray-600" />
+        <>
+          {isLoading ? (
+            <div className="space-y-2">
+              {[1, 2].map((n) => (
+                <div key={n} className="flex items-start space-x-2 animate-pulse">
+                  <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                  <div className="flex-1">
+                    <div className="h-3 bg-gray-200 rounded w-1/4 mb-1"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                </div>
+              ))}
             </div>
+          ) : comments && comments.length > 0 ? (
+            <div className={isRecsMode ? "space-y-2" : "space-y-3"}>
+              {comments.map((comment) => (
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  depth={0}
+                  currentUserId={currentUserId}
+                  onDeleteComment={onDeleteComment}
+                  onLikeComment={onLikeComment}
+                  onVoteComment={onVoteComment}
+                  likedComments={likedComments}
+                  commentVotes={commentVotes}
+                  commentLikesEnabled={commentLikesEnabled}
+                  postId={postId}
+                  onSubmitReply={handleSubmitReply}
+                  isSubmitting={isSubmitting}
+                  session={session}
+                  isRecsMode={isRecsMode}
+                  recCategory={recCategory}
+                />
+              ))}
+            </div>
+          ) : (
+            !hotTakeMode && (
+              <div className="text-center text-gray-400 text-sm py-2">
+                No comments yet. Be the first to comment!
+              </div>
+            )
           )}
-          <MentionInput
-            placeholder={placeholder}
-            value={commentInput}
-            onChange={onCommentInputChange}
-            className={hotTakeMode 
-              ? "flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-black placeholder:text-gray-400 focus:border-purple-400 focus:outline-none"
-              : "bg-white text-black placeholder:text-gray-500"
-            }
-            disabled={isSubmitting}
-            session={session}
-            testId="input-new-comment"
-          />
-          <Button
-            type="submit"
-            size="sm"
-            disabled={!commentInput.trim() || isSubmitting}
-            className={hotTakeMode 
-              ? "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-full w-10 h-10 p-0 flex items-center justify-center"
-              : "bg-purple-600 hover:bg-purple-700 text-white px-3 py-1"
-            }
-            data-testid="button-submit-comment"
-          >
-            <Send size={16} />
-          </Button>
-        </form>
+          {/* Comment input — always at bottom */}
+          <form onSubmit={handleSubmit} className="flex items-center space-x-2">
+            {!hotTakeMode && (
+              <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+                <User size={16} className="text-gray-600" />
+              </div>
+            )}
+            <MentionInput
+              placeholder={placeholder}
+              value={commentInput}
+              onChange={onCommentInputChange}
+              className={hotTakeMode 
+                ? "flex-1 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 text-black placeholder:text-gray-400 focus:border-purple-400 focus:outline-none"
+                : "bg-white text-black placeholder:text-gray-500"
+              }
+              disabled={isSubmitting}
+              session={session}
+              testId="input-new-comment"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!commentInput.trim() || isSubmitting}
+              className={hotTakeMode 
+                ? "bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-full w-10 h-10 p-0 flex items-center justify-center"
+                : "bg-purple-600 hover:bg-purple-700 text-white rounded-full w-9 h-9 p-0 flex items-center justify-center flex-shrink-0"
+              }
+              data-testid="button-submit-comment"
+            >
+              <Send size={16} />
+            </Button>
+          </form>
+        </>
       )}
 
-      {/* Comments List */}
-      {isLoading ? (
-        <div className="space-y-2">
-          {[1, 2].map((n) => (
-            <div key={n} className="flex items-start space-x-2 animate-pulse">
-              <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
-              <div className="flex-1">
-                <div className="h-3 bg-gray-200 rounded w-1/4 mb-1"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-              </div>
-            </div>
-          ))}
+      {/* Social proof CTA for recs mode */}
+      {isRecsMode && comments && comments.length > 0 && (
+        <div 
+          className="text-center text-sm text-purple-600 pt-2 border-t border-purple-200 mt-3"
+          data-testid="status-recs-social-proof"
+        >
+          {commentCount === 1 
+            ? "1 friend replied • Be the next one →" 
+            : `${commentCount} friends replied • Add yours →`}
         </div>
-      ) : comments && comments.length > 0 ? (
-        <>
-          <div className={isRecsMode ? "space-y-2" : "space-y-3"}>
-            {comments.map((comment) => (
-              <CommentItem
-                key={comment.id}
-                comment={comment}
-                depth={0}
-                currentUserId={currentUserId}
-                onDeleteComment={onDeleteComment}
-                onLikeComment={onLikeComment}
-                onVoteComment={onVoteComment}
-                likedComments={likedComments}
-                commentVotes={commentVotes}
-                commentLikesEnabled={commentLikesEnabled}
-                postId={postId}
-                onSubmitReply={handleSubmitReply}
-                isSubmitting={isSubmitting}
-                session={session}
-                isRecsMode={isRecsMode}
-                recCategory={recCategory}
-              />
-            ))}
-          </div>
-          {/* Social proof CTA for recs mode */}
-          {isRecsMode && (
-            <div 
-              className="text-center text-sm text-purple-600 pt-2 border-t border-purple-200 mt-3"
-              data-testid="status-recs-social-proof"
-            >
-              {commentCount === 1 
-                ? "1 friend replied • Be the next one →" 
-                : `${commentCount} friends replied • Add yours →`}
-            </div>
-          )}
-        </>
-      ) : (
-        !isRecsMode && (
-          <div className="text-center text-gray-400 text-sm py-2">
-            {hotTakeMode
-              ? "No takes yet. Be the first!"
-              : "No comments yet. Be the first to comment!"}
-          </div>
-        )
       )}
     </div>
   );

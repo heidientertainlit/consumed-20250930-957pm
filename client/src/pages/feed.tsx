@@ -2374,13 +2374,10 @@ export default function Feed() {
               </button>
             </div>
             {expandedComments.has(postId) && (
-              <div className="pt-3 mt-2 border-t border-gray-100 px-4 pb-3">
+              <div className="border-t border-gray-100">
                 <CommentsSection
                   postId={postId}
-                  isLiked={likedPosts.has(postId)}
-                  onLike={handleLike}
-                  expandedComments={true}
-                  onToggleComments={() => {}}
+                  session={session}
                   fetchComments={fetchComments}
                   commentInput={commentInputs[postId] || ''}
                   onCommentInputChange={(value) => handleCommentInputChange(postId, value)}
@@ -2388,6 +2385,7 @@ export default function Feed() {
                   isSubmitting={commentMutation.isPending}
                   currentUserId={user?.id}
                   onDeleteComment={handleDeleteComment}
+                  onLikeComment={handleLikeComment}
                 />
               </div>
             )}
