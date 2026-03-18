@@ -106,6 +106,16 @@ serve(async (req) => {
       console.log('Pagination:', { limit, offset, specificPostId });
       console.log('🔥 EDGE FUNCTION VERSION: 2026-01-28-v3 - specific post support');
       
+      // Fetch blocked user IDs (both directions) to exclude from feed
+      const [{ data: blockedByMe }, { data: blockedMe }] = await Promise.all([
+        supabaseAdmin.from('user_blocks').select('blocked_id').eq('blocker_id', appUser.id),
+        supabaseAdmin.from('user_blocks').select('blocker_id').eq('blocked_id', appUser.id),
+      ]);
+      const blockedUserIds = [
+        ...(blockedByMe?.map((r: any) => r.blocked_id) || []),
+        ...(blockedMe?.map((r: any) => r.blocker_id) || []),
+      ];
+
       // Build the base query
       let query = supabase
         .from('social_posts')
@@ -141,6 +151,11 @@ serve(async (req) => {
         query = query.eq('id', specificPostId);
       } else {
         query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+      }
+
+      // Exclude posts from blocked users (both directions)
+      if (blockedUserIds.length > 0) {
+        query = query.not('user_id', 'in', `(${blockedUserIds.join(',')})`);
       }
       
       const { data: posts, error } = await query;

@@ -71,6 +71,12 @@ serve(async (req) => {
       return json({ error: "Failed to block user" }, 500);
     }
 
+    // Remove friendship in both directions
+    await admin
+      .from("friendships")
+      .delete()
+      .or(`and(user_id.eq.${blockerId},friend_id.eq.${blocked_user_id}),and(user_id.eq.${blocked_user_id},friend_id.eq.${blockerId})`);
+
     return json({ success: true, action: "blocked" });
   } catch (err) {
     console.error("Error:", err);
