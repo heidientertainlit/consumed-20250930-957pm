@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { copyLink } from "@/lib/share";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { ReportSheet } from "@/components/report-sheet";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/lib/auth";
 
 export default function CreatorProfile() {
   const { toast } = useToast();
