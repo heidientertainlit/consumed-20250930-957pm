@@ -4184,7 +4184,7 @@ export default function UserProfile() {
 
             <div className="flex justify-center mt-16">
               <button
-                className="text-xs text-gray-400 hover:text-red-500 transition-colors underline"
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors underline flex items-center"
                 onClick={async () => {
                   const firstConfirm = confirm('Are you sure? This permanently deletes your account.');
                   if (!firstConfirm) return;
@@ -4224,7 +4224,10 @@ export default function UserProfile() {
                 <Trash2 size={12} className="inline mr-1" />
                 Delete Account
               </button>
-              <Link href="/privacy" className="block text-center text-xs text-gray-400 hover:text-purple-600 underline mt-10 transition-colors">
+            </div>
+
+            <div className="flex justify-center mt-16">
+              <Link href="/privacy" className="text-xs text-gray-400 hover:text-purple-600 underline transition-colors">
                 Privacy Policy
               </Link>
             </div>
