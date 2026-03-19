@@ -17,7 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus, Trash2, Dna, Send, Check } from "lucide-react";
+import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus, Trash2, Dna, Send, Check, Flag, Ban } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { 
@@ -52,6 +52,7 @@ import { ShareImageSheet } from "@/components/share-image-sheet";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { supabase } from "@/lib/supabase";
 import html2canvas from "html2canvas";
+import { ReportSheet } from "@/components/report-sheet";
 
 export default function UserProfile() {
   const { user, session, loading, signOut } = useAuth();
@@ -103,6 +104,10 @@ export default function UserProfile() {
   const [friendshipStatus, setFriendshipStatus] = useState<'none' | 'friends' | 'pending_sent' | 'pending_received' | 'loading'>('loading');
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isProfileOptionsOpen, setIsProfileOptionsOpen] = useState(false);
+  const [isReportUserOpen, setIsReportUserOpen] = useState(false);
+  const [isBlockConfirmOpen, setIsBlockConfirmOpen] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
 
   // Public profile - no restrictions for viewing
   const canViewProfile = true; // Always true for now - will add privacy settings later
@@ -1153,6 +1158,30 @@ export default function UserProfile() {
   };
 
   // Send friend request
+  const handleBlockUser = async () => {
+    if (!session?.access_token || !viewingUserId) return;
+    setIsBlocking(true);
+    try {
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/block-user`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ blocked_user_id: viewingUserId }),
+      });
+      toast({ title: "User blocked", description: "They won't appear in your feed." });
+      setIsBlockConfirmOpen(false);
+      setIsProfileOptionsOpen(false);
+      setLocation('/');
+    } catch {
+      toast({ title: "Something went wrong", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setIsBlocking(false);
+    }
+  };
+
   const sendFriendRequest = async (friendId: string) => {
     if (!session?.access_token) return;
 
@@ -2935,9 +2964,9 @@ export default function UserProfile() {
                   Sign In to Connect
                 </Button>
               ) : friendshipStatus !== 'loading' && (
-                <>
+                <div className="flex items-center gap-3 flex-wrap">
                   {friendshipStatus === 'friends' ? (
-                    <div className="flex items-center gap-3 flex-wrap">
+                    <>
                       <Button 
                         disabled
                         className="bg-gray-300 text-gray-600 rounded-full px-8 py-3 text-base font-semibold cursor-not-allowed"
@@ -2956,7 +2985,7 @@ export default function UserProfile() {
                           hasSurvey={dnaProfileStatus === 'has_profile'}
                         />
                       )}
-                    </div>
+                    </>
                   ) : friendshipStatus === 'pending_sent' ? (
                     <Button 
                       disabled
@@ -2995,7 +3024,16 @@ export default function UserProfile() {
                       )}
                     </Button>
                   )}
-                </>
+                  {user && (
+                    <button
+                      onClick={() => setIsProfileOptionsOpen(true)}
+                      className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
+                      title="More options"
+                    >
+                      <MoreHorizontal size={20} />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -5077,6 +5115,70 @@ export default function UserProfile() {
         title={dnaShareSheetTitle}
         shareText={dnaProfile ? `I'm a "${dnaProfile.label}" - ${dnaProfile.tagline}. Check out my entertainment DNA on Consumed!` : undefined}
       />
+
+      {/* Profile Options Sheet */}
+      <Sheet open={isProfileOptionsOpen} onOpenChange={setIsProfileOptionsOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl pb-safe bg-white text-gray-900">
+          <SheetTitle className="text-base font-semibold text-gray-900 mb-4">
+            {userProfileData?.display_name || userProfileData?.user_name ? `@${userProfileData?.user_name}` : 'User options'}
+          </SheetTitle>
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={() => { setIsProfileOptionsOpen(false); setTimeout(() => setIsReportUserOpen(true), 150); }}
+              className="flex items-center gap-3 w-full px-3 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+            >
+              <Flag size={18} className="text-gray-500" />
+              <span className="text-sm font-medium">Report this user</span>
+            </button>
+            <button
+              onClick={() => { setIsProfileOptionsOpen(false); setTimeout(() => setIsBlockConfirmOpen(true), 150); }}
+              className="flex items-center gap-3 w-full px-3 py-3 text-left text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+            >
+              <Ban size={18} className="text-red-500" />
+              <span className="text-sm font-medium">Block this user</span>
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Block Confirmation Sheet */}
+      <Sheet open={isBlockConfirmOpen} onOpenChange={setIsBlockConfirmOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl pb-safe bg-white text-gray-900">
+          <SheetTitle className="text-base font-semibold text-gray-900 mb-2">
+            Block @{userProfileData?.user_name || 'this user'}?
+          </SheetTitle>
+          <p className="text-sm text-gray-500 mb-6">They won't be able to see your profile and you won't see their content.</p>
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={handleBlockUser}
+              disabled={isBlocking}
+              className="w-full bg-red-600 hover:bg-red-700 text-white rounded-full py-3 font-semibold"
+            >
+              {isBlocking ? <Loader2 size={18} className="mr-2 animate-spin" /> : <Ban size={18} className="mr-2" />}
+              {isBlocking ? 'Blocking...' : 'Block user'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsBlockConfirmOpen(false)}
+              className="w-full rounded-full py-3 font-semibold border-gray-200"
+            >
+              Cancel
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Report User Sheet */}
+      {viewingUserId && (
+        <ReportSheet
+          isOpen={isReportUserOpen}
+          onClose={() => setIsReportUserOpen(false)}
+          contentType="user"
+          contentId={viewingUserId}
+          reportedUserId={viewingUserId}
+          reportedUserName={userProfileData?.user_name}
+        />
+      )}
     </>
   );
 }

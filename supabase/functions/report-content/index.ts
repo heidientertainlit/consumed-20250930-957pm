@@ -40,7 +40,7 @@ serve(async (req) => {
       return json({ error: "Missing required fields: content_type, content_id, reason" }, 400);
     }
 
-    const validContentTypes = ["post", "comment", "hot_take", "list", "review"];
+    const validContentTypes = ["post", "comment", "hot_take", "list", "review", "user"];
     const validReasons = ["spam", "harassment", "hate_speech", "misinformation", "inappropriate", "spoiler", "other"];
 
     if (!validContentTypes.includes(content_type)) return json({ error: "Invalid content type" }, 400);

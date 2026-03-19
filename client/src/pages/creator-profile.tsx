@@ -6,15 +6,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { 
   User, Users, Star, Trophy, Heart, Share2, ExternalLink, 
   Globe, ShoppingBag, Film, Tv, Music, BookOpen, Sparkles,
-  CheckCircle, Bell, Lock, Crown, MessageCircle
+  CheckCircle, Bell, Lock, Crown, MessageCircle, MoreHorizontal, Flag, Ban, Loader2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { copyLink } from "@/lib/share";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { ReportSheet } from "@/components/report-sheet";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function CreatorProfile() {
   const { toast } = useToast();
+  const { session } = useAuth();
   const [isFollowing, setIsFollowing] = useState(false);
   const [isInnerCircle, setIsInnerCircle] = useState(false);
+  const [isCreatorOptionsOpen, setIsCreatorOptionsOpen] = useState(false);
+  const [isReportCreatorOpen, setIsReportCreatorOpen] = useState(false);
+  const [isBlockConfirmOpen, setIsBlockConfirmOpen] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
 
   const creator = {
     id: "creator-demo-1",
@@ -83,6 +91,28 @@ export default function CreatorProfile() {
       });
     } catch (error) {
       toast({ title: "Failed to copy", variant: "destructive" });
+    }
+  };
+
+  const handleBlockCreator = async () => {
+    if (!session?.access_token) return;
+    setIsBlocking(true);
+    try {
+      await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/block-user`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ blocked_user_id: creator.id }),
+      });
+      toast({ title: "Creator blocked", description: "They won't appear in your feed." });
+      setIsBlockConfirmOpen(false);
+    } catch {
+      toast({ title: "Something went wrong", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setIsBlocking(false);
     }
   };
 
@@ -186,6 +216,13 @@ export default function CreatorProfile() {
               >
                 <Share2 size={16} />
               </Button>
+              <button
+                onClick={() => setIsCreatorOptionsOpen(true)}
+                className="p-2 text-gray-400 hover:text-gray-300 rounded-full hover:bg-gray-800 transition-colors flex-shrink-0"
+                title="More options"
+              >
+                <MoreHorizontal size={20} />
+              </button>
             </div>
 
             {/* External Links */}
@@ -312,6 +349,68 @@ export default function CreatorProfile() {
       </div>
       
       <Navigation />
+
+      {/* Creator Options Sheet */}
+      <Sheet open={isCreatorOptionsOpen} onOpenChange={setIsCreatorOptionsOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl pb-safe bg-white text-gray-900">
+          <SheetTitle className="text-base font-semibold text-gray-900 mb-4">
+            @{creator.username}
+          </SheetTitle>
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={() => { setIsCreatorOptionsOpen(false); setTimeout(() => setIsReportCreatorOpen(true), 150); }}
+              className="flex items-center gap-3 w-full px-3 py-3 text-left text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+            >
+              <Flag size={18} className="text-gray-500" />
+              <span className="text-sm font-medium">Report this creator</span>
+            </button>
+            <button
+              onClick={() => { setIsCreatorOptionsOpen(false); setTimeout(() => setIsBlockConfirmOpen(true), 150); }}
+              className="flex items-center gap-3 w-full px-3 py-3 text-left text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+            >
+              <Ban size={18} className="text-red-500" />
+              <span className="text-sm font-medium">Block this creator</span>
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Block Creator Confirmation Sheet */}
+      <Sheet open={isBlockConfirmOpen} onOpenChange={setIsBlockConfirmOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl pb-safe bg-white text-gray-900">
+          <SheetTitle className="text-base font-semibold text-gray-900 mb-2">
+            Block @{creator.username}?
+          </SheetTitle>
+          <p className="text-sm text-gray-500 mb-6">They won't appear in your feed and you won't see their content.</p>
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={handleBlockCreator}
+              disabled={isBlocking}
+              className="w-full bg-red-600 hover:bg-red-700 text-white rounded-full py-3 font-semibold"
+            >
+              {isBlocking ? <Loader2 size={18} className="mr-2 animate-spin" /> : <Ban size={18} className="mr-2" />}
+              {isBlocking ? 'Blocking...' : 'Block creator'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsBlockConfirmOpen(false)}
+              className="w-full rounded-full py-3 font-semibold border-gray-200"
+            >
+              Cancel
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Report Creator Sheet */}
+      <ReportSheet
+        isOpen={isReportCreatorOpen}
+        onClose={() => setIsReportCreatorOpen(false)}
+        contentType="user"
+        contentId={creator.id}
+        reportedUserId={creator.id}
+        reportedUserName={creator.username}
+      />
     </div>
   );
 }

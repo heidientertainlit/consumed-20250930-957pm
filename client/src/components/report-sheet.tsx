@@ -18,7 +18,7 @@ const REPORT_REASONS = [
 interface ReportSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  contentType: "post" | "comment" | "hot_take";
+  contentType: "post" | "comment" | "hot_take" | "user";
   contentId: string;
   reportedUserId?: string;
   reportedUserName?: string;
@@ -116,7 +116,7 @@ export function ReportSheet({
           <>
             <SheetHeader className="pb-2">
               <SheetTitle className="text-base font-semibold text-gray-900 text-left">
-                Report {contentType === "post" ? "post" : contentType === "comment" ? "comment" : "hot take"}
+                {contentType === "user" ? `Report ${reportedUserName ? `@${reportedUserName}` : "user"}` : `Report ${contentType === "post" ? "post" : contentType === "comment" ? "comment" : "hot take"}`}
               </SheetTitle>
               <p className="text-sm text-gray-500 text-left">Why are you reporting this?</p>
             </SheetHeader>
