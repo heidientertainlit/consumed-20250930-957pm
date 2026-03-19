@@ -4224,7 +4224,7 @@ export default function UserProfile() {
                 <Trash2 size={12} className="inline mr-1" />
                 Delete Account
               </button>
-              <Link href="/privacy" className="block text-center text-xs text-gray-400 hover:text-purple-600 underline mt-2 transition-colors">
+              <Link href="/privacy" className="block text-center text-xs text-gray-400 hover:text-purple-600 underline mt-10 transition-colors">
                 Privacy Policy
               </Link>
             </div>
