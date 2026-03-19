@@ -1036,6 +1036,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState<any[]>([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [reportCommentLocal, setReportCommentLocal] = useState<{ commentId: string; userId: string; userName: string } | null>(null);
   const hasFetchedComments = useRef(false);
   const [localLikedComments, setLocalLikedComments] = useState<Set<string>>(new Set());
   const [replyingTo, setReplyingTo] = useState<{ id: string; name: string } | null>(null);
@@ -1470,7 +1471,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-semibold text-gray-800">{commenterName}</span>
                           <span className="text-[10px] text-gray-400">{timeAgo(comment.createdAt)}</span>
-                          {currentUserId && comment.user?.id === currentUserId && onDeleteComment && (
+                          {currentUserId && comment.user?.id === currentUserId && onDeleteComment ? (
                             <button
                               onClick={() => {
                                 onDeleteComment(String(comment.id), post.id);
@@ -1480,7 +1481,15 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
                             >
                               <Trash2 size={12} />
                             </button>
-                          )}
+                          ) : currentUserId && comment.user?.id && comment.user.id !== currentUserId ? (
+                            <button
+                              onClick={() => setReportCommentLocal({ commentId: String(comment.id), userId: comment.user.id, userName: comment.user.username || commenterName })}
+                              className="text-gray-300 hover:text-orange-500 transition-colors ml-auto p-1"
+                              title="Report comment"
+                            >
+                              <Flag size={12} />
+                            </button>
+                          ) : null}
                         </div>
                         <p className="text-xs text-gray-600 leading-tight mb-1">{comment.content}</p>
                         <div className="flex items-center gap-3">
@@ -1542,6 +1551,14 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
       contentId={post.id}
       reportedUserId={post.user?.id}
       reportedUserName={post.user?.username}
+    />
+    <ReportSheet
+      isOpen={reportCommentLocal !== null}
+      onClose={() => setReportCommentLocal(null)}
+      contentType="comment"
+      contentId={reportCommentLocal?.commentId || ''}
+      reportedUserId={reportCommentLocal?.userId || ''}
+      reportedUserName={reportCommentLocal?.userName || ''}
     />
     </>
   );
