@@ -93,14 +93,14 @@ serve(async (req) => {
       items.push({
         id: 'lb-leader',
         icon: 'trophy',
-        text: `${leaderName} is leading the leaderboard ${timeLabel} with ${leaderScore} pts — play Trivia to compete`,
+        text: `${leaderName} is leading the Overall Engagement leaderboard ${timeLabel} with ${leaderScore} pts — play Trivia to compete`,
         link: '/leaderboard?tab=engagement',
       });
     } else {
       items.push({
         id: 'lb-leader-you',
         icon: 'trophy',
-        text: `You're leading the leaderboard ${timeLabel} with ${leaderScore} pts — keep playing to hold your spot`,
+        text: `You're leading the Overall Engagement leaderboard ${timeLabel} with ${leaderScore} pts — keep playing to hold your spot`,
         link: '/leaderboard?tab=engagement',
       });
     }
