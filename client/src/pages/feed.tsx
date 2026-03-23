@@ -4793,14 +4793,20 @@ export default function Feed() {
                     const poster = result.poster_url || result.image_url || result.poster_path || result.image;
                     return (
                       <div key={`${result.external_id || result.id}-${index}`} className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.05] transition-colors">
-                        {poster
-                          ? <img src={poster} alt={result.title} className="w-12 h-16 object-cover rounded-lg shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                          : <div className="w-12 h-16 bg-white/10 rounded-lg shrink-0 flex items-center justify-center"><Film size={16} className="text-white/30" /></div>
-                        }
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-white text-sm truncate">{result.title}</p>
-                          <p className="text-xs text-white/50 capitalize">{result.type}{result.year ? ` • ${result.year}` : ''}</p>
-                        </div>
+                        <Link
+                          href={`/media/${normalizeMediaType(result.type)}/${result.external_source || 'tmdb'}/${result.external_id || result.id}`}
+                          className="flex items-center gap-3 flex-1 min-w-0"
+                          onClick={() => { setFeedSearchQuery(""); setFeedSearchResults([]); }}
+                        >
+                          {poster
+                            ? <img src={poster} alt={result.title} className="w-12 h-16 object-cover rounded-lg shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                            : <div className="w-12 h-16 bg-white/10 rounded-lg shrink-0 flex items-center justify-center"><Film size={16} className="text-white/30" /></div>
+                          }
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-white text-sm truncate">{result.title}</p>
+                            <p className="text-xs text-white/50 capitalize">{result.type}{result.year ? ` • ${result.year}` : ''}</p>
+                          </div>
+                        </Link>
                         <div className="flex items-center gap-1.5 shrink-0">
                           <button
                             onClick={() => {
