@@ -159,8 +159,8 @@ serve(async (req) => {
       });
     }
 
-    // Pick 2 at random (not all 3 — keeps it from feeling spammy)
-    const shuffled = items.sort(() => Math.random() - 0.5).slice(0, 2);
+    // Pick up to 4 — enough to sprinkle throughout the feed without repeating
+    const shuffled = items.sort(() => Math.random() - 0.5).slice(0, 4);
 
     return new Response(JSON.stringify({ items: shuffled }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

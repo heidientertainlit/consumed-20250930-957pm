@@ -5208,6 +5208,11 @@ export default function Feed() {
 
               {renderPostBatchByIndex(5)}
 
+              {/* Play activity — card 3 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 2 && (
+                <div className="mt-4">{renderPlayActivityCard(playActivity[2])}</div>
+              )}
+
               {/* Points Glimpse - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <PointsGlimpse />
@@ -5225,6 +5230,11 @@ export default function Feed() {
               {renderRoomCarousel(1, "Quick Glimpse")}
 
               {renderPostBatchByIndex(8)}
+
+              {/* Play activity — card 4 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 3 && (
+                <div className="mt-4">{renderPlayActivityCard(playActivity[3])}</div>
+              )}
 
               {/* Oscar Ballot Completions - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
