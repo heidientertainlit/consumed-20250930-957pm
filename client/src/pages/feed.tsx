@@ -5068,8 +5068,6 @@ export default function Feed() {
 
               {renderPostBatchByIndex(0)}
 
-              {renderRoomCarousel(0, "Quick Glimpse")}
-
               {renderPostBatchByIndex(1)}
 
               {/* TRIVIA filter - Movies category — appears after 2 post batches */}
