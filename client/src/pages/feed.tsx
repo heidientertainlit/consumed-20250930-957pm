@@ -5068,13 +5068,15 @@ export default function Feed() {
 
               {renderPostBatchByIndex(0)}
 
-              {/* TRIVIA filter - Movies category — appears ABOVE Quick Glimpse */}
+              {renderRoomCarousel(0, "Quick Glimpse")}
+
+              {renderPostBatchByIndex(1)}
+
+              {/* TRIVIA filter - Movies category — appears after 2 post batches */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && 
                (!selectedCategory || selectedCategory === 'movies') && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Movies" />
               )}
-
-              {renderRoomCarousel(0, "Quick Glimpse")}
 
               {/* TRIVIA - Other categories (show when that category is selected) */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'music' && (
@@ -5092,8 +5094,6 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'games' && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
               )}
-
-              {renderPostBatchByIndex(1)}
 
               {/* Entertainment DNA Card #1 - in All or DNA filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
