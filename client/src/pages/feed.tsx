@@ -2074,6 +2074,62 @@ export default function Feed() {
   // Create a Set of friend user IDs for quick lookup
   const friendIds = new Set(friendsData.map((friend: any) => friend.friend?.id || friend.id).filter(Boolean));
 
+  // Play activity — recent friend wins/streaks, sprinkled into feed
+  const { data: playActivity = [] } = useQuery({
+    queryKey: ['play-activity', Array.from(friendIds).join(',')],
+    queryFn: async () => {
+      if (!friendIds.size) return [];
+      const friendIdList = Array.from(friendIds) as string[];
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const results: any[] = [];
+
+      const getName = (userId: string) => {
+        const f = friendsData.find((f: any) => (f.friend?.id || f.id) === userId);
+        return f?.friend?.display_name || f?.friend?.user_name || f?.display_name || f?.user_name || 'Someone';
+      };
+
+      try {
+        const { data: wins } = await supabase
+          .from('user_predictions')
+          .select('user_id, points_earned, created_at, pool_id')
+          .in('user_id', friendIdList)
+          .eq('is_winner', true)
+          .gte('created_at', sevenDaysAgo)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        (wins || []).forEach((w: any) => {
+          results.push({
+            id: `win-${w.user_id}-${w.created_at}`,
+            type: 'prediction_win',
+            text: `${getName(w.user_id)} called it — prediction correct (+${w.points_earned || 20} pts)`,
+            icon: 'trophy',
+          });
+        });
+
+        const milestones = [7, 14, 21, 30, 60, 100];
+        const { data: streaks } = await supabase
+          .from('login_streaks')
+          .select('user_id, current_streak')
+          .in('user_id', friendIdList)
+          .in('current_streak', milestones);
+
+        (streaks || []).forEach((s: any) => {
+          results.push({
+            id: `streak-${s.user_id}-${s.current_streak}`,
+            type: 'streak',
+            text: `${getName(s.user_id)} is on a ${s.current_streak}-day streak`,
+            icon: 'flame',
+          });
+        });
+      } catch (_) {}
+
+      return results.sort(() => Math.random() - 0.5).slice(0, 3);
+    },
+    enabled: friendIds.size > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: trendingContent = [] } = useQuery({
     queryKey: ['trending-content'],
     queryFn: async () => {
@@ -2363,6 +2419,23 @@ export default function Feed() {
     });
     return map;
   }, [standaloneUGCPosts]);
+
+  // Compact play activity card — friend wins, streaks, etc.
+  const renderPlayActivityCard = (item: any) => {
+    const iconConfig: Record<string, { Icon: any; iconColor: string; bgColor: string }> = {
+      trophy: { Icon: Trophy, iconColor: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
+      flame:  { Icon: Flame,  iconColor: 'text-orange-400', bgColor: 'bg-orange-400/10' },
+    };
+    const { Icon, iconColor, bgColor } = iconConfig[item.icon] || iconConfig.trophy;
+    return (
+      <div key={item.id} className="flex items-center gap-3 px-4 py-3 mx-0 rounded-2xl bg-white/5 border border-white/10 mb-2">
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${bgColor}`}>
+          <Icon size={15} className={iconColor} />
+        </div>
+        <p className="text-sm text-white/80 flex-1 leading-snug">{item.text}</p>
+      </div>
+    );
+  };
 
   // Renders one feed item — either a single post or a grouped user activity carousel
   const renderFeedItem = (item: any, keyPrefix: string) => {
@@ -5100,12 +5173,22 @@ export default function Feed() {
 
               {renderPostBatchByIndex(2)}
 
+              {/* Play activity — sprinkle 1 friend win/streak card */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 0 && (
+                renderPlayActivityCard(playActivity[0])
+              )}
+
               {/* TV Polls */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
               )}
 
               {renderPostBatchByIndex(3)}
+
+              {/* Play activity — sprinkle remaining friend win/streak cards */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 1 && (
+                <>{playActivity.slice(1).map(renderPlayActivityCard)}</>
+              )}
 
               {/* Seen It Game */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
