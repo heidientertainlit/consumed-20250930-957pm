@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const ONESIGNAL_APP_ID = 'f3e5ce59-cb78-4f05-8d7b-511c45dc2c76';
+const ONESIGNAL_APP_ID = Deno.env.get('ONESIGNAL_APP_ID') || 'f3e5ce59-cb78-4f05-8d7b-511c45dc2c76';
 
 interface NotificationRequest {
   userId: string;
@@ -41,9 +41,9 @@ function routeForType(type: string, postId?: string): string {
 }
 
 async function sendOneSignalPush(userId: string, message: string, route: string): Promise<void> {
-  const apiKey = Deno.env.get('ONESIGNAL_API_KEY');
+  const apiKey = Deno.env.get('ONESIGNAL_REST_API_KEY') || Deno.env.get('ONESIGNAL_API_KEY');
   if (!apiKey) {
-    console.log('ONESIGNAL_API_KEY not set — skipping push');
+    console.log('ONESIGNAL_REST_API_KEY not set — skipping push');
     return;
   }
 
