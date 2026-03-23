@@ -2390,20 +2390,25 @@ export default function Feed() {
     return map;
   }, [standaloneUGCPosts]);
 
-  // Compact play activity card — friend wins, streaks, etc.
+  // Compact play activity card — leaderboard nudges and friend activity
   const renderPlayActivityCard = (item: any) => {
     const iconConfig: Record<string, { Icon: any; iconColor: string; bgColor: string }> = {
-      trophy: { Icon: Trophy, iconColor: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
-      flame:  { Icon: Flame,  iconColor: 'text-orange-400', bgColor: 'bg-orange-400/10' },
+      trophy:    { Icon: Trophy,    iconColor: 'text-yellow-400', bgColor: 'bg-yellow-400/10' },
+      flame:     { Icon: Flame,     iconColor: 'text-orange-400', bgColor: 'bg-orange-400/10' },
+      'bar-chart': { Icon: BarChart, iconColor: 'text-purple-400', bgColor: 'bg-purple-400/10' },
+      users:     { Icon: Users,     iconColor: 'text-blue-400',   bgColor: 'bg-blue-400/10'   },
     };
     const { Icon, iconColor, bgColor } = iconConfig[item.icon] || iconConfig.trophy;
     return (
-      <div key={item.id} className="flex items-center gap-3 px-4 py-3 mx-0 rounded-2xl bg-white/5 border border-white/10 mb-2">
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${bgColor}`}>
-          <Icon size={15} className={iconColor} />
+      <Link key={item.id} to="/play/predictions">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/5 border border-white/10 mb-2 active:opacity-70 transition-opacity">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${bgColor}`}>
+            <Icon size={15} className={iconColor} />
+          </div>
+          <p className="text-sm text-white/80 flex-1 leading-snug">{item.text}</p>
+          <ChevronRight size={14} className="text-white/30 shrink-0" />
         </div>
-        <p className="text-sm text-white/80 flex-1 leading-snug">{item.text}</p>
-      </div>
+      </Link>
     );
   };
 

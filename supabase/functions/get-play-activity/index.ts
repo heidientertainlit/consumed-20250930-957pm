@@ -32,65 +32,113 @@ serve(async (req) => {
     }
 
     const { friendIds = [] } = await req.json().catch(() => ({ friendIds: [] }));
-    const allUserIds = [...new Set([user.id, ...friendIds])];
 
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const results: any[] = [];
+    // --- Build a mini leaderboard from social_posts engagement ---
+    // Points: 10 per post + 2 per like received + 3 per comment received
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Fetch user display names
+    const { data: posts } = await adminClient
+      .from('social_posts')
+      .select('user_id, likes_count, comments_count')
+      .gte('created_at', weekAgo);
+
+    const scoreMap: Record<string, number> = {};
+    for (const p of posts || []) {
+      const uid = p.user_id;
+      scoreMap[uid] = (scoreMap[uid] || 0) + 10 + (p.likes_count || 0) * 2 + (p.comments_count || 0) * 3;
+    }
+
+    // If no weekly data, try all-time
+    if (Object.keys(scoreMap).length === 0) {
+      const { data: allPosts } = await adminClient
+        .from('social_posts')
+        .select('user_id, likes_count, comments_count');
+      for (const p of allPosts || []) {
+        const uid = p.user_id;
+        scoreMap[uid] = (scoreMap[uid] || 0) + 10 + (p.likes_count || 0) * 2 + (p.comments_count || 0) * 3;
+      }
+    }
+
+    const leaderboard = Object.entries(scoreMap)
+      .map(([userId, score]) => ({ userId, score }))
+      .sort((a, b) => b.score - a.score);
+
+    if (leaderboard.length === 0) {
+      return new Response(JSON.stringify({ items: [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Fetch user display names for everyone on the leaderboard
+    const allUserIds = [...new Set([...leaderboard.map(e => e.userId)])];
     const { data: users } = await adminClient
       .from('users')
       .select('id, user_name, display_name')
       .in('id', allUserIds);
 
     const userMap: Record<string, string> = {};
-    (users || []).forEach((u: any) => {
+    for (const u of users || []) {
       userMap[u.id] = u.display_name || u.user_name || 'Someone';
-    });
+    }
 
-    const getName = (userId: string) => userMap[userId] || 'Someone';
+    const items: any[] = [];
+    const currentUserRank = leaderboard.findIndex(e => e.userId === user.id);
+    const leader = leaderboard[0];
+    const leaderName = userMap[leader.userId] || 'Someone';
+    const leaderScore = leader.score;
 
-    // Prediction wins
-    const { data: wins } = await adminClient
-      .from('user_predictions')
-      .select('user_id, points_earned, created_at')
-      .in('user_id', allUserIds)
-      .eq('is_winner', true)
-      .gte('created_at', thirtyDaysAgo)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    (wins || []).forEach((w: any) => {
-      const pts = w.points_earned || 20;
-      results.push({
-        id: `win-${w.user_id}-${w.created_at}`,
-        type: 'prediction_win',
-        text: `${getName(w.user_id)} called it — prediction correct (+${pts} pts)`,
+    // Card 1: Who's leading
+    if (leader.userId !== user.id) {
+      items.push({
+        id: 'lb-leader',
+        type: 'leaderboard',
         icon: 'trophy',
-        ts: w.created_at,
+        text: `${leaderName} is leading this week with ${leaderScore} pts — play Trivia to take the top spot`,
       });
-    });
-
-    // Streak milestones (any streak >= 3 days)
-    const { data: streaks } = await adminClient
-      .from('login_streaks')
-      .select('user_id, current_streak, updated_at')
-      .in('user_id', allUserIds)
-      .gte('current_streak', 3)
-      .order('current_streak', { ascending: false });
-
-    (streaks || []).forEach((s: any) => {
-      results.push({
-        id: `streak-${s.user_id}-${s.current_streak}`,
-        type: 'streak',
-        text: `${getName(s.user_id)} is on a ${s.current_streak}-day streak`,
-        icon: 'flame',
-        ts: s.updated_at,
+    } else {
+      items.push({
+        id: 'lb-leader-you',
+        type: 'leaderboard',
+        icon: 'trophy',
+        text: `You're leading the leaderboard this week — keep playing to stay at the top`,
       });
-    });
+    }
 
-    // Shuffle and return up to 3
-    const shuffled = results.sort(() => Math.random() - 0.5).slice(0, 3);
+    // Card 2: Current user's rank vs the person just above them
+    if (currentUserRank > 1) {
+      const above = leaderboard[currentUserRank - 1];
+      const aboveName = userMap[above.userId] || 'Someone';
+      const gap = above.score - (scoreMap[user.id] || 0);
+      items.push({
+        id: 'lb-rank',
+        type: 'leaderboard',
+        icon: 'bar-chart',
+        text: `You're ranked #${currentUserRank + 1} — just ${gap} pts behind ${aboveName}. Play Trivia to climb`,
+      });
+    } else if (currentUserRank === 1) {
+      items.push({
+        id: 'lb-rank-2',
+        type: 'leaderboard',
+        icon: 'bar-chart',
+        text: `You're in 2nd place — just ${leaderScore - (scoreMap[user.id] || 0)} pts behind ${leaderName}. Play Trivia to take #1`,
+      });
+    }
+
+    // Card 3: A friend's leaderboard position (most-engaged friend)
+    const friendOnBoard = leaderboard.find(e => friendIds.includes(e.userId) && e.userId !== user.id);
+    if (friendOnBoard) {
+      const friendRank = leaderboard.indexOf(friendOnBoard) + 1;
+      const friendName = userMap[friendOnBoard.userId] || 'Someone';
+      items.push({
+        id: `lb-friend-${friendOnBoard.userId}`,
+        type: 'leaderboard',
+        icon: 'users',
+        text: `${friendName} is ranked #${friendRank} this week with ${friendOnBoard.score} pts`,
+      });
+    }
+
+    // Shuffle lightly and return up to 3
+    const shuffled = items.sort(() => Math.random() - 0.5).slice(0, 3);
 
     return new Response(JSON.stringify({ items: shuffled }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
