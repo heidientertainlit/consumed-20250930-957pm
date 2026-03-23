@@ -145,18 +145,76 @@ serve(async (req) => {
       });
     }
 
-    // --- Card: Trivia call-to-action using #2 or #3 as benchmark ---
-    if (leaderboard.length >= 2) {
-      const benchmark = leader.userId !== user.id ? leader : leaderboard[1];
-      const benchName = userMap[benchmark.userId] || 'Someone';
-      const triviaCategories = ['Movies', 'TV', 'Music', 'Books'];
-      const category = triviaCategories[Math.floor(Math.random() * triviaCategories.length)];
-      items.push({
-        id: 'lb-trivia-cta',
-        icon: 'play',
-        text: `${benchName} is winning ${timeLabel} — beat them with ${category} Trivia`,
-        link: '/play/trivia',
-      });
+    // --- Trivia cards: who played what, now it's your turn ---
+
+    // Get trivia pools to know real category names
+    const { data: triviaPools } = await adminClient
+      .from('prediction_pools')
+      .select('id, title, category')
+      .eq('type', 'trivia')
+      .limit(20);
+
+    // Get trivia answers from friends (and self) on those pools
+    const triviaPoolIds = (triviaPools || []).map((p: any) => p.id);
+    let friendTriviaAnswers: any[] = [];
+    if (triviaPoolIds.length > 0 && friendIds.length > 0) {
+      const { data: answers } = await adminClient
+        .from('user_predictions')
+        .select('user_id, pool_id, created_at')
+        .in('user_id', friendIds)
+        .in('pool_id', triviaPoolIds)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      friendTriviaAnswers = answers || [];
+    }
+
+    // Fetch names for anyone not already in userMap
+    const missingIds = friendIds.filter((id: string) => !userMap[id]);
+    if (missingIds.length > 0) {
+      const { data: extraUsers } = await adminClient
+        .from('users')
+        .select('id, user_name, display_name')
+        .in('id', missingIds);
+      for (const u of extraUsers || []) {
+        userMap[u.id] = u.display_name || u.user_name || 'Someone';
+      }
+    }
+
+    const triviaCategories = ['Movies', 'TV', 'Music', 'Books', 'Sports'];
+
+    if (friendTriviaAnswers.length > 0) {
+      // Use real data — a friend actually played trivia
+      const seen = new Set<string>();
+      for (const ans of friendTriviaAnswers) {
+        if (seen.has(ans.user_id)) continue;
+        seen.add(ans.user_id);
+        const pool = (triviaPools || []).find((p: any) => p.id === ans.pool_id);
+        const category = pool?.category || triviaCategories[Math.floor(Math.random() * triviaCategories.length)];
+        const friendName = userMap[ans.user_id] || 'Someone';
+        items.push({
+          id: `trivia-friend-${ans.user_id}`,
+          icon: 'play',
+          text: `${friendName} just played ${category} Trivia — now it's your turn`,
+          link: '/play/trivia',
+        });
+        if (seen.size >= 2) break;
+      }
+    } else {
+      // No friend trivia data — use available categories with friend names as social nudge
+      const shuffledFriendIds = [...friendIds].sort(() => Math.random() - 0.5);
+      const categories = [...triviaCategories].sort(() => Math.random() - 0.5);
+
+      for (let i = 0; i < Math.min(2, categories.length); i++) {
+        const category = categories[i];
+        const friendId = shuffledFriendIds[i % shuffledFriendIds.length];
+        const friendName = friendId ? (userMap[friendId] || 'Someone in your circle') : 'Someone in your circle';
+        items.push({
+          id: `trivia-cta-${category}`,
+          icon: 'play',
+          text: `${friendName} hasn't tried ${category} Trivia yet — be the first to score`,
+          link: '/play/trivia',
+        });
+      }
     }
 
     // Pick up to 4 — enough to sprinkle throughout the feed without repeating
