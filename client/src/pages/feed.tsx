@@ -2078,55 +2078,25 @@ export default function Feed() {
   const { data: playActivity = [] } = useQuery({
     queryKey: ['play-activity', Array.from(friendIds).join(',')],
     queryFn: async () => {
-      if (!friendIds.size) return [];
-      const friendIdList = Array.from(friendIds) as string[];
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const results: any[] = [];
-
-      const getName = (userId: string) => {
-        const f = friendsData.find((f: any) => (f.friend?.id || f.id) === userId);
-        return f?.friend?.display_name || f?.friend?.user_name || f?.display_name || f?.user_name || 'Someone';
-      };
-
+      if (!session?.access_token) return [];
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
       try {
-        const { data: wins } = await supabase
-          .from('user_predictions')
-          .select('user_id, points_earned, created_at, pool_id')
-          .in('user_id', friendIdList)
-          .eq('is_winner', true)
-          .gte('created_at', sevenDaysAgo)
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        (wins || []).forEach((w: any) => {
-          results.push({
-            id: `win-${w.user_id}-${w.created_at}`,
-            type: 'prediction_win',
-            text: `${getName(w.user_id)} called it — prediction correct (+${w.points_earned || 20} pts)`,
-            icon: 'trophy',
-          });
+        const res = await fetch(`${supabaseUrl}/functions/v1/get-play-activity`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ friendIds: Array.from(friendIds) }),
         });
-
-        const milestones = [7, 14, 21, 30, 60, 100];
-        const { data: streaks } = await supabase
-          .from('login_streaks')
-          .select('user_id, current_streak')
-          .in('user_id', friendIdList)
-          .in('current_streak', milestones);
-
-        (streaks || []).forEach((s: any) => {
-          results.push({
-            id: `streak-${s.user_id}-${s.current_streak}`,
-            type: 'streak',
-            text: `${getName(s.user_id)} is on a ${s.current_streak}-day streak`,
-            icon: 'flame',
-          });
-        });
-      } catch (_) {}
-
-      return results.sort(() => Math.random() - 0.5).slice(0, 3);
+        if (!res.ok) return [];
+        const data = await res.json();
+        return data.items || [];
+      } catch (_) {
+        return [];
+      }
     },
-    enabled: friendIds.size > 0,
+    enabled: !!session?.access_token,
     staleTime: 5 * 60 * 1000,
   });
 
