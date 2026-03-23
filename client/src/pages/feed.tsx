@@ -2393,20 +2393,22 @@ export default function Feed() {
   // Compact play activity card — leaderboard nudges and friend activity
   const renderPlayActivityCard = (item: any) => {
     const iconConfig: Record<string, { Icon: any; iconColor: string; bgColor: string }> = {
-      trophy:      { Icon: Trophy,    iconColor: 'text-yellow-500', bgColor: 'bg-yellow-50' },
-      flame:       { Icon: Flame,     iconColor: 'text-orange-500', bgColor: 'bg-orange-50' },
-      'bar-chart': { Icon: BarChart,  iconColor: 'text-purple-600', bgColor: 'bg-purple-50' },
-      users:       { Icon: Users,     iconColor: 'text-blue-500',   bgColor: 'bg-blue-50'   },
+      trophy:      { Icon: Trophy,    iconColor: 'text-yellow-500', bgColor: 'bg-yellow-400/20' },
+      flame:       { Icon: Flame,     iconColor: 'text-orange-400', bgColor: 'bg-orange-400/20' },
+      'bar-chart': { Icon: BarChart,  iconColor: 'text-violet-500', bgColor: 'bg-violet-400/20' },
+      users:       { Icon: Users,     iconColor: 'text-indigo-500', bgColor: 'bg-indigo-400/20' },
+      play:        { Icon: Play,      iconColor: 'text-purple-500', bgColor: 'bg-purple-400/20' },
     };
     const { Icon, iconColor, bgColor } = iconConfig[item.icon] || iconConfig.trophy;
+    const dest = item.link || '/leaderboard?tab=engagement';
     return (
-      <Link key={item.id} to="/leaderboard">
-        <div className="flex items-center gap-3 px-4 py-3 bg-white rounded-2xl shadow-sm border border-gray-100 mb-2 active:opacity-70 transition-opacity">
+      <Link key={item.id} to={dest}>
+        <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-indigo-50/70 border border-indigo-100 mb-2 active:opacity-75 transition-opacity">
           <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${bgColor}`}>
-            <Icon size={16} className={iconColor} />
+            <Icon size={15} className={iconColor} />
           </div>
-          <p className="text-sm text-gray-700 flex-1 leading-snug">{item.text}</p>
-          <ChevronRight size={14} className="text-gray-300 shrink-0" />
+          <p className="text-sm text-indigo-900/80 flex-1 leading-snug">{item.text}</p>
+          <ChevronRight size={14} className="text-indigo-300 shrink-0" />
         </div>
       </Link>
     );
@@ -5148,9 +5150,9 @@ export default function Feed() {
 
               {renderPostBatchByIndex(2)}
 
-              {/* Play activity — sprinkle 1 friend win/streak card */}
+              {/* Play activity — sprinkle 1 leaderboard card */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 0 && (
-                renderPlayActivityCard(playActivity[0])
+                <div className="mt-4">{renderPlayActivityCard(playActivity[0])}</div>
               )}
 
               {/* TV Polls */}
@@ -5160,9 +5162,9 @@ export default function Feed() {
 
               {renderPostBatchByIndex(3)}
 
-              {/* Play activity — sprinkle remaining friend win/streak cards */}
+              {/* Play activity — sprinkle second leaderboard card */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 1 && (
-                <>{playActivity.slice(1).map(renderPlayActivityCard)}</>
+                <div className="mt-4">{renderPlayActivityCard(playActivity[1])}</div>
               )}
 
               {/* Seen It Game */}

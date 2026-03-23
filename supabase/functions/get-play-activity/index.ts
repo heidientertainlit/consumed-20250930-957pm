@@ -33,30 +33,30 @@ serve(async (req) => {
 
     const { friendIds = [] } = await req.json().catch(() => ({ friendIds: [] }));
 
-    // --- Build a mini leaderboard from social_posts engagement ---
+    // Build leaderboard from social_posts engagement
     // Points: 10 per post + 2 per like received + 3 per comment received
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    const { data: posts } = await adminClient
+    let { data: posts } = await adminClient
       .from('social_posts')
-      .select('user_id, likes_count, comments_count')
+      .select('user_id, likes_count, comments_count, created_at')
       .gte('created_at', weekAgo);
 
+    let isWeekly = true;
+    if (!posts || posts.length === 0) {
+      const result = await adminClient
+        .from('social_posts')
+        .select('user_id, likes_count, comments_count, created_at');
+      posts = result.data;
+      isWeekly = false;
+    }
+
     const scoreMap: Record<string, number> = {};
+    const postCountMap: Record<string, number> = {};
     for (const p of posts || []) {
       const uid = p.user_id;
       scoreMap[uid] = (scoreMap[uid] || 0) + 10 + (p.likes_count || 0) * 2 + (p.comments_count || 0) * 3;
-    }
-
-    // If no weekly data, try all-time
-    if (Object.keys(scoreMap).length === 0) {
-      const { data: allPosts } = await adminClient
-        .from('social_posts')
-        .select('user_id, likes_count, comments_count');
-      for (const p of allPosts || []) {
-        const uid = p.user_id;
-        scoreMap[uid] = (scoreMap[uid] || 0) + 10 + (p.likes_count || 0) * 2 + (p.comments_count || 0) * 3;
-      }
+      postCountMap[uid] = (postCountMap[uid] || 0) + 1;
     }
 
     const leaderboard = Object.entries(scoreMap)
@@ -69,8 +69,8 @@ serve(async (req) => {
       });
     }
 
-    // Fetch user display names for everyone on the leaderboard
-    const allUserIds = [...new Set([...leaderboard.map(e => e.userId)])];
+    // Fetch names
+    const allUserIds = leaderboard.map(e => e.userId);
     const { data: users } = await adminClient
       .from('users')
       .select('id, user_name, display_name')
@@ -81,64 +81,86 @@ serve(async (req) => {
       userMap[u.id] = u.display_name || u.user_name || 'Someone';
     }
 
+    const timeLabel = isWeekly ? 'this week' : 'overall';
     const items: any[] = [];
     const currentUserRank = leaderboard.findIndex(e => e.userId === user.id);
     const leader = leaderboard[0];
     const leaderName = userMap[leader.userId] || 'Someone';
     const leaderScore = leader.score;
 
-    // Card 1: Who's leading
+    // --- Card: Who is leading ---
     if (leader.userId !== user.id) {
       items.push({
         id: 'lb-leader',
-        type: 'leaderboard',
         icon: 'trophy',
-        text: `${leaderName} is leading this week with ${leaderScore} pts — play Trivia to take the top spot`,
+        text: `${leaderName} is leading the leaderboard ${timeLabel} with ${leaderScore} pts — play Trivia to compete`,
+        link: '/leaderboard?tab=engagement',
       });
     } else {
       items.push({
         id: 'lb-leader-you',
-        type: 'leaderboard',
         icon: 'trophy',
-        text: `You're leading the leaderboard this week — keep playing to stay at the top`,
+        text: `You're leading the leaderboard ${timeLabel} with ${leaderScore} pts — keep playing to hold your spot`,
+        link: '/leaderboard?tab=engagement',
       });
     }
 
-    // Card 2: Current user's rank vs the person just above them
-    if (currentUserRank > 1) {
+    // --- Card: Your rank vs person above ---
+    if (currentUserRank > 0) {
+      const myScore = scoreMap[user.id] || 0;
       const above = leaderboard[currentUserRank - 1];
       const aboveName = userMap[above.userId] || 'Someone';
-      const gap = above.score - (scoreMap[user.id] || 0);
+      const gap = above.score - myScore;
+      const rank = currentUserRank + 1;
       items.push({
-        id: 'lb-rank',
-        type: 'leaderboard',
+        id: 'lb-your-rank',
         icon: 'bar-chart',
-        text: `You're ranked #${currentUserRank + 1} — just ${gap} pts behind ${aboveName}. Play Trivia to climb`,
+        text: `You're ranked #${rank} ${timeLabel} — just ${gap} pts behind ${aboveName}. Play Trivia to move up`,
+        link: '/leaderboard?tab=engagement',
       });
-    } else if (currentUserRank === 1) {
+    } else if (currentUserRank === 0 && leaderboard.length > 1) {
+      // You're #1, show who's chasing you
+      const second = leaderboard[1];
+      const secondName = userMap[second.userId] || 'Someone';
+      const gap = leaderScore - second.score;
       items.push({
-        id: 'lb-rank-2',
-        type: 'leaderboard',
+        id: 'lb-chaser',
         icon: 'bar-chart',
-        text: `You're in 2nd place — just ${leaderScore - (scoreMap[user.id] || 0)} pts behind ${leaderName}. Play Trivia to take #1`,
+        text: `${secondName} is ${gap} pts behind you ${timeLabel} — stay active to hold #1`,
+        link: '/leaderboard?tab=engagement',
       });
     }
 
-    // Card 3: A friend's leaderboard position (most-engaged friend)
+    // --- Card: Top friend on leaderboard ---
     const friendOnBoard = leaderboard.find(e => friendIds.includes(e.userId) && e.userId !== user.id);
     if (friendOnBoard) {
       const friendRank = leaderboard.indexOf(friendOnBoard) + 1;
       const friendName = userMap[friendOnBoard.userId] || 'Someone';
+      const friendScore = friendOnBoard.score;
       items.push({
         id: `lb-friend-${friendOnBoard.userId}`,
-        type: 'leaderboard',
         icon: 'users',
-        text: `${friendName} is ranked #${friendRank} this week with ${friendOnBoard.score} pts`,
+        text: `${friendName} is ranked #${friendRank} ${timeLabel} with ${friendScore} pts — answer Trivia to pass them`,
+        link: '/leaderboard?tab=engagement',
       });
     }
 
-    // Shuffle lightly and return up to 3
-    const shuffled = items.sort(() => Math.random() - 0.5).slice(0, 3);
+    // --- Card: Trivia call-to-action using #2 or #3 as benchmark ---
+    if (leaderboard.length >= 2) {
+      const benchmark = leader.userId !== user.id ? leader : leaderboard[1];
+      const benchName = userMap[benchmark.userId] || 'Someone';
+      const triviaCategories = ['Movies', 'TV', 'Music', 'Books'];
+      const category = triviaCategories[Math.floor(Math.random() * triviaCategories.length)];
+      items.push({
+        id: 'lb-trivia-cta',
+        icon: 'play',
+        text: `${benchName} is winning ${timeLabel} — beat them with ${category} Trivia`,
+        link: '/play/trivia',
+      });
+    }
+
+    // Pick 2 at random (not all 3 — keeps it from feeling spammy)
+    const shuffled = items.sort(() => Math.random() - 0.5).slice(0, 2);
 
     return new Response(JSON.stringify({ items: shuffled }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
