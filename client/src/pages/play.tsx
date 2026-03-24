@@ -78,8 +78,23 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         <DailyChallengeCard />
       </div>
 
-      {/* Light section — game modes + leaderboard */}
+      {/* Light section — leaderboard + game modes */}
       <div className="bg-gray-50 px-4 pt-5 pb-28 space-y-5">
+        {/* Leaderboard shortcut */}
+        <button
+          onClick={() => setLocation("/leaderboard")}
+          className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border border-amber-200 bg-amber-50 active:scale-95 transition-transform"
+        >
+          <div className="flex items-center gap-3">
+            <Trophy size={20} className="text-amber-500" />
+            <div className="text-left">
+              <p className="text-gray-900 font-semibold text-sm">Leaderboard</p>
+              <p className="text-gray-500 text-xs">See where you rank</p>
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-gray-300" />
+        </button>
+
         {/* Game Modes */}
         <div>
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
@@ -103,21 +118,6 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
             })}
           </div>
         </div>
-
-        {/* Leaderboard shortcut */}
-        <button
-          onClick={() => setLocation("/leaderboard")}
-          className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border border-amber-200 bg-amber-50 active:scale-95 transition-transform"
-        >
-          <div className="flex items-center gap-3">
-            <Trophy size={20} className="text-amber-500" />
-            <div className="text-left">
-              <p className="text-gray-900 font-semibold text-sm">Leaderboard</p>
-              <p className="text-gray-500 text-xs">See where you rank</p>
-            </div>
-          </div>
-          <ChevronRight size={16} className="text-gray-300" />
-        </button>
       </div>
     </div>
   );
