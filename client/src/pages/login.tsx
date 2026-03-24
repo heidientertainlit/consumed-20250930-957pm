@@ -99,16 +99,28 @@ export default function LoginPage() {
       });
       setSubmitting(false);
     } else {
-      // Identify new user in Customer.io for email journey (fire-and-forget)
+      // Identify new user in Customer.io for email journey
+      console.log('Sign up data:', { userId: data?.user?.id, email: data?.user?.email });
       if (data?.user?.id && data?.user?.email) {
-        supabase.functions.invoke('customerio-identify', {
-          body: {
-            id: data.user.id,
-            email: data.user.email,
-            first_name: firstName.trim() || null,
-            username: username.trim() || null,
-          },
-        }).catch((err) => console.error('Customer.io identify failed:', err));
+        try {
+          const { error: fnError } = await supabase.functions.invoke('customerio-identify', {
+            body: {
+              id: data.user.id,
+              email: data.user.email,
+              first_name: firstName.trim() || null,
+              username: username.trim() || null,
+            },
+          });
+          if (fnError) {
+            console.error('Customer.io identify error:', fnError);
+          } else {
+            console.log('Customer.io identify success');
+          }
+        } catch (err) {
+          console.error('Customer.io identify exception:', err);
+        }
+      } else {
+        console.warn('Customer.io skipped — no user id/email in signup response', data);
       }
 
       const referrerId = localStorage.getItem('consumed_referrer');

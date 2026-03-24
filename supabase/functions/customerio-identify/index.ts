@@ -10,8 +10,11 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  console.log("customerio-identify hit", req.method);
+
   try {
     const { id, email, first_name, username } = await req.json();
+    console.log("customerio-identify payload:", { id, email, first_name, username });
 
     if (!id || !email) {
       return new Response("Missing id or email", { status: 400, headers: corsHeaders });
