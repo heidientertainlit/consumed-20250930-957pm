@@ -125,31 +125,28 @@ function PredictionCarouselSection({
                     )}
                   </div>
 
-                  {/* Media context: poster + title */}
-                  {game.media_external_id && (() => {
-                    const mediaInfo = mediaPosterMap[game.media_external_id];
+                  {/* Media context: poster + title (matches feed post style) */}
+                  {(() => {
+                    const mediaInfo = game.media_external_id ? mediaPosterMap[game.media_external_id] : null;
                     const displayTitle = game.media_title || mediaInfo?.title;
                     const posterUrl = mediaInfo?.image_url;
                     if (!displayTitle && !posterUrl) return null;
                     return (
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex gap-3 mb-3">
                         {posterUrl && (
                           <img
                             src={posterUrl}
                             alt={displayTitle || ''}
-                            className="w-8 h-11 object-cover rounded flex-shrink-0"
+                            className="w-16 h-24 rounded-xl object-cover flex-shrink-0 shadow-md"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
                         )}
-                        {displayTitle && (
-                          <span className="text-sm font-medium text-purple-600 truncate">{displayTitle}</span>
-                        )}
+                        <div className="flex flex-col justify-center min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 line-clamp-2">{displayTitle}</p>
+                        </div>
                       </div>
                     );
                   })()}
-                  {!game.media_external_id && game.media_title && (
-                    <div className="text-sm font-medium text-purple-600 mb-1">{game.media_title}</div>
-                  )}
                   <h3 className="font-semibold text-gray-900 text-base leading-snug mb-3">{game.title}</h3>
 
                   <div className="flex items-center gap-4 text-xs mb-4">
