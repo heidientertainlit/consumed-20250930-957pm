@@ -5093,24 +5093,21 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* 2026 Academy Awards - Featured at top! (hidden if user completed ballot, not shown in predictions filter to avoid duplicate) */}
-              {!hasCompletedOscarBallot && 
-               (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games') && 
-               (!selectedCategory || selectedCategory === 'movies') && (
-                <Link href="/play/awards/oscars-2026">
-                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 cursor-pointer hover:bg-gray-100 hover:border-gray-300 transition-all">
+              {/* Entertainment DNA Featured Card */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <Link href="/entertainment-dna">
+                  <div className="bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl p-3 border border-purple-100 cursor-pointer hover:border-purple-200 hover:from-purple-100 hover:to-violet-100 transition-all">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center flex-shrink-0">
-                        <Trophy className="w-4 h-4 text-white" />
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center flex-shrink-0">
+                        <Dna className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-gray-900 font-medium text-sm">2026 Oscars Ballot</h3>
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                          <h3 className="text-gray-900 font-medium text-sm">Discover your Entertainment DNA</h3>
                         </div>
-                        <p className="text-gray-500 text-xs">{oscarBallotCount} picks made - join the competition</p>
+                        <p className="text-purple-500 text-xs">Find out what your taste says about you</p>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                      <ChevronRight className="w-4 h-4 text-purple-400" />
                     </div>
                   </div>
                 </Link>
@@ -5236,10 +5233,7 @@ export default function Feed() {
                 <div className="mt-4">{renderPlayActivityCard(playActivity[3])}</div>
               )}
 
-              {/* Oscar Ballot Completions - only in All view */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <AwardsCompletionFeed />
-              )}
+              {/* Oscar Ballot Completions - removed post-ceremony */}
 
               {renderPostBatchByIndex(9)}
 
