@@ -2825,9 +2825,11 @@ export default function UserProfile() {
                     <span className="text-sm text-gray-500">
                       @{userProfileData?.user_name || user?.user_metadata?.user_name || (user?.email?.split('@')[0]) || 'user'}
                     </span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
-                      Insider
-                    </span>
+                    {userBadges.some((b: any) => b.slug === 'insider') && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
+                        Insider
+                      </span>
+                    )}
                   </div>
 
                   {/* Stats Grid - Condensed styling */}
