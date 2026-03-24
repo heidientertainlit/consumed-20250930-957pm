@@ -99,6 +99,18 @@ export default function LoginPage() {
       });
       setSubmitting(false);
     } else {
+      // Identify new user in Customer.io for email journey (fire-and-forget)
+      if (data?.user?.id && data?.user?.email) {
+        supabase.functions.invoke('customerio-identify', {
+          body: {
+            id: data.user.id,
+            email: data.user.email,
+            first_name: firstName.trim() || null,
+            username: username.trim() || null,
+          },
+        }).catch((err) => console.error('Customer.io identify failed:', err));
+      }
+
       const referrerId = localStorage.getItem('consumed_referrer');
       if (referrerId && data?.user?.id) {
         try {
