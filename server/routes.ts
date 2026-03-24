@@ -291,15 +291,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await Promise.all(ids.map(async (id) => {
         try {
-          const endpoint = type === 'tv'
+          // Try the requested type first
+          const firstEndpoint = type === 'tv'
             ? `https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_API_KEY}`
             : `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}`;
-          const r = await fetch(endpoint);
-          if (!r.ok) return;
-          const d = await r.json();
-          const title = d.title || d.name || '';
-          const poster = d.poster_path ? `https://image.tmdb.org/t/p/w200${d.poster_path}` : '';
-          results[id] = { title, image_url: poster };
+          const r = await fetch(firstEndpoint);
+          if (r.ok) {
+            const d = await r.json();
+            const title = d.title || d.name || '';
+            const poster = d.poster_path ? `https://image.tmdb.org/t/p/w342${d.poster_path}` : '';
+            if (poster) {
+              results[id] = { title, image_url: poster };
+              return;
+            }
+          }
+          // If no poster found, try the other type as fallback
+          const fallbackType = type === 'tv' ? 'movie' : 'tv';
+          const fallbackEndpoint = `https://api.themoviedb.org/3/${fallbackType}/${id}?api_key=${TMDB_API_KEY}`;
+          const r2 = await fetch(fallbackEndpoint);
+          if (!r2.ok) return;
+          const d2 = await r2.json();
+          const title2 = d2.title || d2.name || '';
+          const poster2 = d2.poster_path ? `https://image.tmdb.org/t/p/w342${d2.poster_path}` : '';
+          results[id] = { title: title2, image_url: poster2 };
         } catch {}
       }));
 

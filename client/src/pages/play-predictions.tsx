@@ -318,87 +318,41 @@ export default function PlayPredictionsPage() {
       .map((g: any) => g.media_external_id)
   )];
 
+  // Build a lookup of which IDs are TV vs movie
+  const tvIds = new Set(
+    games
+      .filter((g: any) => g.media_external_source === 'tmdb_tv' || g.category === 'tv')
+      .map((g: any) => g.media_external_id)
+      .filter(Boolean)
+  );
+
+  const movieIds = mediaExternalIds.filter((id: string) => !tvIds.has(id));
+  const tvIdList = mediaExternalIds.filter((id: string) => tvIds.has(id));
+
   const { data: mediaPosterMap = {} } = useQuery({
-    queryKey: ['/api/media/posters', mediaExternalIds],
+    queryKey: ['/api/media/posters/tmdb', mediaExternalIds],
     queryFn: async () => {
       if (mediaExternalIds.length === 0) return {};
-
-      // First try the local media_items cache
-      const { data } = await supabase
-        .from('media_items')
-        .select('external_id, external_source, title, image_url')
-        .in('external_id', mediaExternalIds);
-
       const map: Record<string, { title: string; image_url: string }> = {};
-      (data || []).forEach((m: any) => {
-        if (m.title || m.image_url) {
-          map[m.external_id] = { title: m.title, image_url: m.image_url };
-        }
-      });
 
-      // Find IDs that are still missing (not cached or have no image)
-      const missingIds = mediaExternalIds.filter(
-        (id: string) => !map[id]?.image_url
-      );
-
-      if (missingIds.length > 0) {
-        // For each missing ID, determine type from games data
-        const missingMovieIds = missingIds.filter((id: string) => {
-          const game = games.find((g: any) => g.media_external_id === id);
-          return !game?.media_external_source || game.media_external_source === 'tmdb';
-        });
-        const missingTvIds = missingIds.filter((id: string) => {
-          const game = games.find((g: any) => g.media_external_id === id);
-          return game?.media_external_source === 'tmdb_tv' || game?.category === 'tv';
-        });
-
-        const fetches: Promise<void>[] = [];
-
-        if (missingMovieIds.length > 0) {
-          fetches.push(
-            fetch(`/api/tmdb/media-details?ids=${missingMovieIds.join(',')}&type=movie`)
+      await Promise.all([
+        movieIds.length > 0
+          ? fetch(`/api/tmdb/media-details?ids=${movieIds.join(',')}&type=movie`)
               .then(r => r.ok ? r.json() : {})
-              .then((result: Record<string, { title: string; image_url: string }>) => {
-                Object.entries(result).forEach(([id, info]) => {
-                  if (!map[id]?.image_url) map[id] = info;
-                });
+              .then((res: Record<string, { title: string; image_url: string }>) => {
+                Object.assign(map, res);
               })
               .catch(() => {})
-          );
-        }
-
-        if (missingTvIds.length > 0) {
-          fetches.push(
-            fetch(`/api/tmdb/media-details?ids=${missingTvIds.join(',')}&type=tv`)
+          : Promise.resolve(),
+        tvIdList.length > 0
+          ? fetch(`/api/tmdb/media-details?ids=${tvIdList.join(',')}&type=tv`)
               .then(r => r.ok ? r.json() : {})
-              .then((result: Record<string, { title: string; image_url: string }>) => {
-                Object.entries(result).forEach(([id, info]) => {
-                  if (!map[id]?.image_url) map[id] = info;
-                });
+              .then((res: Record<string, { title: string; image_url: string }>) => {
+                Object.assign(map, res);
               })
               .catch(() => {})
-          );
-        }
-
-        // For truly ambiguous ones not caught above, try movie first
-        const ambiguousIds = missingIds.filter(
-          (id: string) => !missingMovieIds.includes(id) && !missingTvIds.includes(id)
-        );
-        if (ambiguousIds.length > 0) {
-          fetches.push(
-            fetch(`/api/tmdb/media-details?ids=${ambiguousIds.join(',')}&type=movie`)
-              .then(r => r.ok ? r.json() : {})
-              .then((result: Record<string, { title: string; image_url: string }>) => {
-                Object.entries(result).forEach(([id, info]) => {
-                  if (!map[id]?.image_url) map[id] = info;
-                });
-              })
-              .catch(() => {})
-          );
-        }
-
-        await Promise.all(fetches);
-      }
+          : Promise.resolve(),
+      ]);
 
       return map;
     },
