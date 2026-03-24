@@ -41,6 +41,15 @@ function PredictionCarouselSection({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [, setLocation] = useLocation();
+
+  const getMediaUrl = (game: any) => {
+    if (!game.media_external_id) return null;
+    const isTV = game.category === 'tv' || game.media_external_source === 'tmdb_tv';
+    const type = isTV ? 'tv' : 'movie';
+    const source = game.media_external_source || 'tmdb';
+    return `/media/${type}/${source}/${game.media_external_id}`;
+  };
 
   const scrollToNext = () => {
     if (scrollRef.current && currentIndex < games.length - 1) {
@@ -108,17 +117,23 @@ function PredictionCarouselSection({
                 <CardContent className="p-0">
                   <div className="flex gap-0">
                     {/* Poster column — left side */}
-                    {hasPoster && (
-                      <div className="flex-shrink-0 w-[88px]">
-                        <img
-                          src={posterUrl!}
-                          alt={displayTitle || ''}
-                          className="w-full h-full object-cover rounded-l-2xl"
-                          style={{ minHeight: '200px' }}
-                          onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
-                        />
-                      </div>
-                    )}
+                    {hasPoster && (() => {
+                      const mediaUrl = getMediaUrl(game);
+                      return (
+                        <div
+                          className={`flex-shrink-0 w-[88px] ${mediaUrl ? 'cursor-pointer active:opacity-75 transition-opacity' : ''}`}
+                          onClick={mediaUrl ? () => setLocation(mediaUrl) : undefined}
+                        >
+                          <img
+                            src={posterUrl!}
+                            alt={displayTitle || ''}
+                            className="w-full h-full object-cover rounded-l-2xl"
+                            style={{ minHeight: '200px' }}
+                            onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                          />
+                        </div>
+                      );
+                    })()}
 
                     {/* Right column — all interactive content */}
                     <div className="flex-1 min-w-0 p-4 flex flex-col gap-2.5">
