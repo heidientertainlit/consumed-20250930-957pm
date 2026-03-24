@@ -25,6 +25,7 @@ function PredictionCarouselSection({
   onOpenModal,
   isSubmitting,
   creatorNames = {},
+  mediaPosterMap = {},
 }: {
   label: string;
   games: any[];
@@ -36,6 +37,7 @@ function PredictionCarouselSection({
   onOpenModal: (game: any) => void;
   isSubmitting: boolean;
   creatorNames?: Record<string, string>;
+  mediaPosterMap?: Record<string, { title: string; image_url: string }>;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -123,7 +125,29 @@ function PredictionCarouselSection({
                     )}
                   </div>
 
-                  {game.media_title && (
+                  {/* Media context: poster + title */}
+                  {game.media_external_id && (() => {
+                    const mediaInfo = mediaPosterMap[game.media_external_id];
+                    const displayTitle = game.media_title || mediaInfo?.title;
+                    const posterUrl = mediaInfo?.image_url;
+                    if (!displayTitle && !posterUrl) return null;
+                    return (
+                      <div className="flex items-center gap-2 mb-2">
+                        {posterUrl && (
+                          <img
+                            src={posterUrl}
+                            alt={displayTitle || ''}
+                            className="w-8 h-11 object-cover rounded flex-shrink-0"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        )}
+                        {displayTitle && (
+                          <span className="text-sm font-medium text-purple-600 truncate">{displayTitle}</span>
+                        )}
+                      </div>
+                    );
+                  })()}
+                  {!game.media_external_id && game.media_title && (
                     <div className="text-sm font-medium text-purple-600 mb-1">{game.media_title}</div>
                   )}
                   <h3 className="font-semibold text-gray-900 text-base leading-snug mb-3">{game.title}</h3>
@@ -289,6 +313,31 @@ export default function PlayPredictionsPage() {
   });
 
   const allPredictions = userPredictionsData || {};
+
+  // Fetch media info (poster + title) for predictions that have an external media ID
+  const mediaExternalIds = [...new Set(
+    games
+      .filter((g: any) => g.media_external_id)
+      .map((g: any) => g.media_external_id)
+  )];
+
+  const { data: mediaPosterMap = {} } = useQuery({
+    queryKey: ['/api/media/posters', mediaExternalIds],
+    queryFn: async () => {
+      if (mediaExternalIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from('media_items')
+        .select('external_id, external_source, title, image_url')
+        .in('external_id', mediaExternalIds);
+      if (error || !data) return {};
+      const map: Record<string, { title: string; image_url: string }> = {};
+      data.forEach((m: any) => {
+        map[m.external_id] = { title: m.title, image_url: m.image_url };
+      });
+      return map;
+    },
+    enabled: mediaExternalIds.length > 0,
+  });
 
   // Fetch creator names for community predictions
   const communityUserIds = [...new Set(
@@ -620,6 +669,7 @@ export default function PlayPredictionsPage() {
               onOpenModal={(game) => setSelectedPredictionGame(game)}
               isSubmitting={submitPrediction.isPending}
               creatorNames={creatorNames as Record<string, string>}
+              mediaPosterMap={mediaPosterMap as Record<string, { title: string; image_url: string }>}
             />
           ));
         })()}

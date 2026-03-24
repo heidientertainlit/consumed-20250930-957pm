@@ -137,6 +137,22 @@ export default function AwardsPredictions() {
     },
   });
 
+  // Fetch user's ballot score (populated after resolution)
+  const { data: userBallotScore } = useQuery<{ total_correct: number; total_points: number } | null>({
+    queryKey: ['awards-ballot-score', userId, event?.id],
+    queryFn: async () => {
+      if (!userId || !event?.id) return null;
+      const { data } = await supabase
+        .from('awards_ballot_completions')
+        .select('total_correct, total_points')
+        .eq('user_id', userId)
+        .eq('event_id', event.id)
+        .maybeSingle();
+      return data || null;
+    },
+    enabled: !!userId && !!event?.id && event?.status === 'completed',
+  });
+
   // Fetch user picks
   const { data: userPicks } = useQuery<UserPick[]>({
     queryKey: ['awards-picks', userId],
@@ -738,6 +754,29 @@ export default function AwardsPredictions() {
           </div>
         </button>
 
+        {/* Score at a glance — shown after resolution */}
+        {event.status === 'completed' && userBallotScore && (
+          <div className="mb-4 bg-gradient-to-r from-purple-600 to-purple-800 rounded-2xl p-4 text-white">
+            <p className="text-xs font-bold uppercase tracking-wide text-purple-200 mb-2">Your Results</p>
+            <div className="flex items-center justify-between">
+              <div className="text-center">
+                <p className="text-3xl font-bold">{userBallotScore.total_correct}<span className="text-lg text-purple-300">/{totalCategories}</span></p>
+                <p className="text-xs text-purple-200 mt-0.5">correct</p>
+              </div>
+              <div className="w-px h-10 bg-purple-400/50" />
+              <div className="text-center">
+                <p className="text-3xl font-bold text-amber-300">+{userBallotScore.total_points}</p>
+                <p className="text-xs text-purple-200 mt-0.5">points earned</p>
+              </div>
+              <div className="w-px h-10 bg-purple-400/50" />
+              <div className="text-center">
+                <p className="text-3xl font-bold">{totalCategories > 0 ? Math.round((userBallotScore.total_correct / totalCategories) * 100) : 0}<span className="text-lg text-purple-300">%</span></p>
+                <p className="text-xs text-purple-200 mt-0.5">accuracy</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Admin: Resolve Winners button */}
         {ADMIN_USER_IDS.includes(userId || '') && event?.status !== 'completed' && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-3">
@@ -829,6 +868,54 @@ export default function AwardsPredictions() {
             </p>
           )}
         </div>
+
+        {/* Winners Results List — shown after resolution */}
+        {event.status === 'completed' && (
+          <div className="mb-4 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+              <Trophy size={16} className="text-amber-500" />
+              <h3 className="text-sm font-bold text-gray-900">Official Winners</h3>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {event.categories.map(category => {
+                const winner = category.nominees.find(n => n.id === category.winner_nominee_id);
+                const userPickId = localPicks.get(category.id);
+                const userWasCorrect = userPickId === category.winner_nominee_id;
+                return (
+                  <div key={category.id} className="flex items-center px-4 py-2.5 gap-3">
+                    {/* Correct/incorrect indicator */}
+                    {userPickId && (
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${userWasCorrect ? 'bg-green-100' : 'bg-red-50'}`}>
+                        {userWasCorrect
+                          ? <Check size={11} className="text-green-600" />
+                          : <X size={11} className="text-red-400" />
+                        }
+                      </div>
+                    )}
+                    {/* Winner poster */}
+                    {winner?.poster_url ? (
+                      <img src={winner.poster_url} alt="" className="w-7 h-9 rounded object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-7 h-9 bg-gray-100 rounded flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium leading-none mb-0.5">{category.short_name || category.name.replace('Best ', '')}</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {winner ? (winner.person_name || winner.title) : '—'}
+                      </p>
+                      {winner?.person_name && winner?.title && (
+                        <p className="text-xs text-gray-500 truncate">{winner.title}</p>
+                      )}
+                    </div>
+                    {userWasCorrect && (
+                      <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full flex-shrink-0">+{event.points_per_correct}pts</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Sticky Category Tabs */}
