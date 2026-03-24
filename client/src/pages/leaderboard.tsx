@@ -152,12 +152,76 @@ export default function Leaderboard() {
       const { data, error } = await supabase
         .from('awards_events')
         .select('id, name, year, slug, status')
-        .in('status', ['open', 'locked', 'resolved'])
+        .in('status', ['open', 'locked', 'resolved', 'completed'])
         .order('year', { ascending: false });
       
       if (error) throw error;
       return data || [];
     },
+  });
+
+  // Eager awards scores leaderboard from ballot completions (for completed events)
+  interface AwardsBallotEntry {
+    user_id: string;
+    display_name: string;
+    username: string;
+    total_correct: number;
+    total_points: number;
+    event_id: string;
+  }
+
+  const completedAwardsEvents = (awardsEvents || []).filter(e => e.status === 'completed');
+
+  const { data: awardsBallotLeaderboard } = useQuery<Record<string, AwardsBallotEntry[]>>({
+    queryKey: ['awards-ballot-leaderboard', completedAwardsEvents.map(e => e.id), scope],
+    queryFn: async () => {
+      if (completedAwardsEvents.length === 0) return {};
+      const results: Record<string, AwardsBallotEntry[]> = {};
+
+      for (const event of completedAwardsEvents) {
+        const { data: completions } = await supabase
+          .from('awards_ballot_completions')
+          .select('user_id, total_correct, total_points, event_id')
+          .eq('event_id', event.id)
+          .order('total_correct', { ascending: false });
+
+        if (!completions?.length) continue;
+
+        let filtered = completions;
+        if (scope === 'friends' && session?.user?.id) {
+          const { data: friendships } = await supabase
+            .from('friendships')
+            .select('friend_id, user_id')
+            .or(`user_id.eq.${session.user.id},friend_id.eq.${session.user.id}`)
+            .eq('status', 'accepted');
+          const friendIds = (friendships || []).map((f: any) =>
+            f.user_id === session.user.id ? f.friend_id : f.user_id
+          );
+          friendIds.push(session.user.id);
+          filtered = completions.filter((c: any) => friendIds.includes(c.user_id));
+        }
+
+        const userIds = filtered.map((c: any) => c.user_id);
+        const { data: users } = await supabase
+          .from('users')
+          .select('id, display_name, user_name')
+          .in('id', userIds);
+
+        results[event.id] = filtered.slice(0, 10).map((c: any) => {
+          const u = users?.find((u: any) => u.id === c.user_id);
+          return {
+            user_id: c.user_id,
+            display_name: u?.display_name || u?.user_name || 'Player',
+            username: u?.user_name || 'player',
+            total_correct: c.total_correct || 0,
+            total_points: c.total_points || 0,
+            event_id: c.event_id,
+          };
+        });
+      }
+      return results;
+    },
+    enabled: completedAwardsEvents.length > 0,
   });
 
   const [expandedAwards, setExpandedAwards] = useState<Set<string>>(new Set());
@@ -624,102 +688,119 @@ export default function Leaderboard() {
                   </div>
                 </div>
                 
-                {/* Awards Sub-section */}
-                {awardsEvents && awardsEvents.filter(e => e.name.toLowerCase().includes('academy') || e.name.toLowerCase().includes('oscar')).length > 0 && (
-                  <div className="border-b border-gray-100">
-                    <div className="px-4 py-2 bg-amber-50 border-b border-amber-100 flex items-center gap-2">
-                      <Award size={16} className="text-amber-600" />
-                      <span className="text-sm font-semibold text-amber-800">Awards Predictions</span>
-                    </div>
-                    <div className="divide-y divide-gray-100">
-                      {awardsEvents.filter(e => e.name.toLowerCase().includes('academy') || e.name.toLowerCase().includes('oscar')).map(event => {
-                        const isExpanded = expandedAwards.has(event.id);
-                        const leaders = awardsLeaderboards?.[event.id] || [];
-                        
-                        return (
-                          <div key={event.id}>
-                            <button
-                              onClick={() => toggleAwardsExpanded(event.id)}
-                              className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-                              data-testid={`button-expand-${event.slug}`}
-                            >
-                              <div className="flex items-center gap-3">
-                                <Trophy size={18} className="text-amber-500" />
-                                <span className="font-medium text-gray-900">{event.year} {event.name}{event.name.includes('Academy Awards') ? ' (Oscars)' : ''}</span>
-                                {event.status === 'open' && (
-                                  <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Open</span>
-                                )}
-                                {event.status === 'locked' && (
-                                  <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded-full">Locked</span>
-                                )}
-                              </div>
-                              {isExpanded ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
-                            </button>
-                            
-                            {isExpanded && (
-                              <div className="bg-gray-50 border-t border-gray-100">
-                                {leaders.length > 0 ? (
-                                  <div className="divide-y divide-gray-100">
-                                    {leaders.map((entry, index) => {
-                                      const isCurrentUser = entry.user_id === currentUserId;
-                                      const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
-                                      
-                                      return (
-                                        <div
-                                          key={entry.user_id}
-                                          className={`flex items-center gap-4 p-4 ${isCurrentUser ? 'bg-purple-50' : ''}`}
-                                        >
-                                          <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
-                                            {index < 3 ? (
-                                              <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
-                                                {index + 1}
-                                              </div>
-                                            ) : (
-                                              <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
-                                            )}
-                                          </div>
-                                          
-                                          <Link 
-                                            href={`/user/${entry.user_id}`}
-                                            className="flex-1 min-w-0"
-                                          >
-                                            <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
-                                              {entry.display_name}
-                                              {isCurrentUser && <span className="ml-2 text-xs text-purple-600">(You)</span>}
-                                            </p>
-                                            <p className="text-xs text-gray-500">@{entry.username}</p>
-                                          </Link>
-                                          
-                                          <div className="text-right">
-                                            <p className="font-bold text-amber-600">{entry.picks_count} picks</p>
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                ) : (
-                                  <div className="p-6 text-center text-gray-500 text-sm">
-                                    No ballots submitted yet. Be the first!
-                                  </div>
-                                )}
-                                
-                                <div className="p-3 border-t border-gray-100 bg-white">
-                                  <Link 
-                                    href={`/play/awards/${event.slug}`}
-                                    className="w-full block text-center py-2 text-sm text-amber-600 hover:text-amber-700 font-medium"
-                                    data-testid={`link-make-picks-${event.slug}`}
-                                  >
-                                    Make Your Picks →
-                                  </Link>
+                {/* Awards sub-sections — one per event */}
+                {(awardsEvents || []).map(event => {
+                  const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
+                  const isCompleted = event.status === 'completed';
+                  const completedEntries = isCompleted ? (awardsBallotLeaderboard?.[event.id] || []) : [];
+
+                  // For non-completed events: show collapsible picks count leaderboard
+                  const isExpanded = expandedAwards.has(event.id);
+                  const expandedEntries = awardsLeaderboards?.[event.id] || [];
+
+                  return (
+                    <div key={event.id} className="border-b border-gray-100 last:border-0">
+                      {/* Section header */}
+                      <div className="px-4 py-2 bg-amber-50 border-b border-amber-100 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Award size={15} className="text-amber-600" />
+                          <span className="text-sm font-semibold text-amber-800">
+                            {event.year} {event.name.includes('Academy') ? 'Oscars' : event.name}
+                          </span>
+                          {event.status === 'open' && <span className="px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] rounded-full font-bold">Open</span>}
+                          {event.status === 'completed' && <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] rounded-full font-bold">Final</span>}
+                        </div>
+                        <Link href={`/play/awards/${event.slug}`} className="text-xs text-amber-600 font-medium">
+                          View →
+                        </Link>
+                      </div>
+
+                      {/* Completed event: show real scores from ballot_completions */}
+                      {isCompleted && completedEntries.length > 0 && (
+                        <div className="divide-y divide-gray-50">
+                          {completedEntries.map((entry, index) => {
+                            const isCurrentUser = entry.user_id === currentUserId;
+                            return (
+                              <div
+                                key={entry.user_id}
+                                className={`flex items-center gap-3 px-4 py-3 ${isCurrentUser ? 'bg-purple-50' : ''}`}
+                              >
+                                <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                                  {index < 3 ? (
+                                    <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>
+                                      {index + 1}
+                                    </div>
+                                  ) : (
+                                    <span className={`font-semibold text-sm ${isCurrentUser ? 'text-purple-600' : 'text-gray-500'}`}>#{index + 1}</span>
+                                  )}
+                                </div>
+                                <Link href={`/user/${entry.user_id}`} className="flex-1 min-w-0">
+                                  <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
+                                    {entry.display_name}
+                                    {isCurrentUser && <span className="ml-1 text-xs text-purple-500">(You)</span>}
+                                  </p>
+                                  <p className="text-xs text-gray-400">@{entry.username}</p>
+                                </Link>
+                                <div className="text-right">
+                                  <p className="font-bold text-green-600 text-sm">{entry.total_correct} correct</p>
+                                  <p className="text-xs text-amber-600">+{entry.total_points} pts</p>
                                 </div>
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Completed but no data yet */}
+                      {isCompleted && completedEntries.length === 0 && (
+                        <div className="p-4 text-center text-sm text-gray-400">Results pending</div>
+                      )}
+
+                      {/* Non-completed event: collapsible picks count */}
+                      {!isCompleted && (
+                        <div>
+                          <button
+                            onClick={() => toggleAwardsExpanded(event.id)}
+                            className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                            data-testid={`button-expand-${event.slug}`}
+                          >
+                            <span className="text-sm text-gray-600">See who's playing</span>
+                            {isExpanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+                          </button>
+                          {isExpanded && expandedEntries.length > 0 && (
+                            <div className="divide-y divide-gray-50 border-t border-gray-100">
+                              {expandedEntries.map((entry, index) => {
+                                const isCurrentUser = entry.user_id === currentUserId;
+                                return (
+                                  <div key={entry.user_id} className={`flex items-center gap-3 px-4 py-3 ${isCurrentUser ? 'bg-purple-50' : ''}`}>
+                                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+                                      {index < 3 ? (
+                                        <div className={`w-8 h-8 rounded-full ${rankColors[index]} flex items-center justify-center text-white font-bold text-sm shadow-sm`}>{index + 1}</div>
+                                      ) : (
+                                        <span className="text-gray-500 font-semibold text-sm">#{index + 1}</span>
+                                      )}
+                                    </div>
+                                    <Link href={`/user/${entry.user_id}`} className="flex-1 min-w-0">
+                                      <p className={`font-semibold text-sm truncate ${isCurrentUser ? 'text-purple-700' : 'text-gray-900'}`}>
+                                        {entry.display_name}
+                                        {isCurrentUser && <span className="ml-1 text-xs text-purple-500">(You)</span>}
+                                      </p>
+                                      <p className="text-xs text-gray-400">@{entry.username}</p>
+                                    </Link>
+                                    <p className="font-bold text-amber-600 text-sm">{entry.picks_count} picks</p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {isExpanded && expandedEntries.length === 0 && (
+                            <div className="p-4 text-center text-sm text-gray-400 border-t border-gray-100">No ballots yet. Be the first!</div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })}
                 
                 {/* Regular Predictions Leaderboard */}
                 {leaderboardData?.categories?.predictions && leaderboardData.categories.predictions.length > 0 ? (
