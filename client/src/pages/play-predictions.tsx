@@ -325,15 +325,84 @@ export default function PlayPredictionsPage() {
     queryKey: ['/api/media/posters', mediaExternalIds],
     queryFn: async () => {
       if (mediaExternalIds.length === 0) return {};
-      const { data, error } = await supabase
+
+      // First try the local media_items cache
+      const { data } = await supabase
         .from('media_items')
         .select('external_id, external_source, title, image_url')
         .in('external_id', mediaExternalIds);
-      if (error || !data) return {};
+
       const map: Record<string, { title: string; image_url: string }> = {};
-      data.forEach((m: any) => {
-        map[m.external_id] = { title: m.title, image_url: m.image_url };
+      (data || []).forEach((m: any) => {
+        if (m.title || m.image_url) {
+          map[m.external_id] = { title: m.title, image_url: m.image_url };
+        }
       });
+
+      // Find IDs that are still missing (not cached or have no image)
+      const missingIds = mediaExternalIds.filter(
+        (id: string) => !map[id]?.image_url
+      );
+
+      if (missingIds.length > 0) {
+        // For each missing ID, determine type from games data
+        const missingMovieIds = missingIds.filter((id: string) => {
+          const game = games.find((g: any) => g.media_external_id === id);
+          return !game?.media_external_source || game.media_external_source === 'tmdb';
+        });
+        const missingTvIds = missingIds.filter((id: string) => {
+          const game = games.find((g: any) => g.media_external_id === id);
+          return game?.media_external_source === 'tmdb_tv' || game?.category === 'tv';
+        });
+
+        const fetches: Promise<void>[] = [];
+
+        if (missingMovieIds.length > 0) {
+          fetches.push(
+            fetch(`/api/tmdb/media-details?ids=${missingMovieIds.join(',')}&type=movie`)
+              .then(r => r.ok ? r.json() : {})
+              .then((result: Record<string, { title: string; image_url: string }>) => {
+                Object.entries(result).forEach(([id, info]) => {
+                  if (!map[id]?.image_url) map[id] = info;
+                });
+              })
+              .catch(() => {})
+          );
+        }
+
+        if (missingTvIds.length > 0) {
+          fetches.push(
+            fetch(`/api/tmdb/media-details?ids=${missingTvIds.join(',')}&type=tv`)
+              .then(r => r.ok ? r.json() : {})
+              .then((result: Record<string, { title: string; image_url: string }>) => {
+                Object.entries(result).forEach(([id, info]) => {
+                  if (!map[id]?.image_url) map[id] = info;
+                });
+              })
+              .catch(() => {})
+          );
+        }
+
+        // For truly ambiguous ones not caught above, try movie first
+        const ambiguousIds = missingIds.filter(
+          (id: string) => !missingMovieIds.includes(id) && !missingTvIds.includes(id)
+        );
+        if (ambiguousIds.length > 0) {
+          fetches.push(
+            fetch(`/api/tmdb/media-details?ids=${ambiguousIds.join(',')}&type=movie`)
+              .then(r => r.ok ? r.json() : {})
+              .then((result: Record<string, { title: string; image_url: string }>) => {
+                Object.entries(result).forEach(([id, info]) => {
+                  if (!map[id]?.image_url) map[id] = info;
+                });
+              })
+              .catch(() => {})
+          );
+        }
+
+        await Promise.all(fetches);
+      }
+
       return map;
     },
     enabled: mediaExternalIds.length > 0,

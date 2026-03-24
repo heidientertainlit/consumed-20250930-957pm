@@ -276,6 +276,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Batch-fetch TMDB media details by IDs (for prediction cards)
+  app.get("/api/tmdb/media-details", async (req, res) => {
+    try {
+      const TMDB_API_KEY = process.env.TMDB_API_KEY;
+      if (!TMDB_API_KEY) return res.status(500).json({ message: "TMDB API key not configured" });
+
+      const ids = String(req.query.ids || '').split(',').filter(Boolean).slice(0, 20);
+      const type = String(req.query.type || 'movie'); // 'movie' or 'tv'
+
+      if (ids.length === 0) return res.json({});
+
+      const results: Record<string, { title: string; image_url: string }> = {};
+
+      await Promise.all(ids.map(async (id) => {
+        try {
+          const endpoint = type === 'tv'
+            ? `https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_API_KEY}`
+            : `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}`;
+          const r = await fetch(endpoint);
+          if (!r.ok) return;
+          const d = await r.json();
+          const title = d.title || d.name || '';
+          const poster = d.poster_path ? `https://image.tmdb.org/t/p/w200${d.poster_path}` : '';
+          results[id] = { title, image_url: poster };
+        } catch {}
+      }));
+
+      res.json(results);
+    } catch (error) {
+      console.error('TMDB media-details error:', error);
+      res.status(500).json({ message: "Failed to fetch media details" });
+    }
+  });
+
   // Get trending podcasts from Spotify
   app.get("/api/spotify/trending/podcasts", async (req, res) => {
     try {
