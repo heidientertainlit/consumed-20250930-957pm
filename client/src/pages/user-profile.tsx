@@ -2892,36 +2892,6 @@ export default function UserProfile() {
                       </div>
                     )}
 
-                    {/* Badges Link */}
-                    <button
-                      onClick={() => setActiveSection('badges')}
-                      className="flex items-center space-x-1.5 hover:bg-gray-100 -ml-1.5 px-1.5 py-0.5 rounded transition-colors group"
-                      data-testid="badges-link"
-                    >
-                      <Medal className="text-rose-500" size={14} />
-                      <span className="text-xs text-gray-500 group-hover:text-purple-600">badges →</span>
-                    </button>
-
-                    {/* Badges */}
-                    {userBadges.length > 0 && (
-                      <div className="flex items-center space-x-1.5 flex-wrap gap-1 -ml-1.5 px-1.5 py-0.5">
-                        <Medal className="text-amber-500" size={14} />
-                        <span className="text-xs text-gray-500">Badges:</span>
-                        {userBadges.map((badge: any) => (
-                          <span 
-                            key={badge.id}
-                            className="text-xs font-medium px-1.5 py-0.5 rounded-full"
-                            style={{ 
-                              backgroundColor: `${badge.theme_color}15`,
-                              color: badge.theme_color 
-                            }}
-                            title={badge.description}
-                          >
-                            {badge.emoji} {badge.name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
 
