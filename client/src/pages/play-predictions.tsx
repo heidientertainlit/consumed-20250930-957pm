@@ -478,12 +478,6 @@ export default function PlayPredictionsPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/predictions/vote-counts'] });
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
       
-      toast({
-        title: "Prediction Submitted!",
-        description: data.game_type === 'predict' 
-          ? `You predicted "${data.prediction}" - points will be awarded when the result is known!`
-          : `You earned ${data.points_earned} points!`,
-      });
     },
     onError: () => {
       toast({
