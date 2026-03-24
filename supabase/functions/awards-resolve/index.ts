@@ -6,6 +6,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Admin user IDs allowed to trigger resolution
+const ADMIN_USER_IDS = [
+  "88bfb2a0-e8ce-4081-b731-2a49567ff093",
+];
+
 // 98th Academy Awards - Correct Winners
 // key = category_id, value = { name?: string, title?: string } to match nominee
 const OSCAR_WINNERS: Record<string, { name?: string; title?: string }> = {
@@ -31,7 +36,6 @@ function normalize(s: string): string {
 
 function findWinner(nominees: any[], winner: { name?: string; title?: string }): string | null {
   for (const nom of nominees) {
-    // Try name match (person_name or name field)
     if (winner.name) {
       const nomName = (nom.person_name || nom.name || "").toLowerCase();
       const winName = winner.name.toLowerCase();
@@ -39,7 +43,6 @@ function findWinner(nominees: any[], winner: { name?: string; title?: string }):
         return nom.id;
       }
     }
-    // Try title match
     if (winner.title) {
       const nomTitle = (nom.title || nom.name || "").toLowerCase();
       const winTitle = winner.title.toLowerCase();
@@ -56,11 +59,34 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Admin-only: require secret token
   const authHeader = req.headers.get("Authorization") || "";
   const token = authHeader.replace("Bearer ", "");
-  const adminSecret = Deno.env.get("AWARDS_RESOLVE_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-  if (!token || token !== adminSecret) {
+
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  const resolveSecret = Deno.env.get("AWARDS_RESOLVE_SECRET") || "";
+
+  // Check if it's a service role / secret token
+  const isServiceAuth = token && (token === serviceRoleKey || (resolveSecret && token === resolveSecret));
+
+  // Check if it's an admin user JWT
+  let isAdminUser = false;
+  if (!isServiceAuth && token) {
+    try {
+      const supabaseAnon = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      );
+      const { data: { user } } = await supabaseAnon.auth.getUser(token);
+      if (user && ADMIN_USER_IDS.includes(user.id)) {
+        isAdminUser = true;
+        console.log("Admin user authenticated:", user.id);
+      }
+    } catch (e) {
+      console.error("JWT verification failed:", e);
+    }
+  }
+
+  if (!isServiceAuth && !isAdminUser) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -191,7 +217,6 @@ serve(async (req) => {
     const scoreSummary: any[] = [];
 
     for (const [userId, score] of Object.entries(userScores)) {
-      // Upsert into awards_ballot_completions
       const { error: completionErr } = await supabase
         .from("awards_ballot_completions")
         .upsert({
@@ -207,9 +232,7 @@ serve(async (req) => {
         console.error(`Failed to save completion for ${userId}:`, completionErr);
       }
 
-      // Award points to user_points table (predictions category)
       if (score.points > 0) {
-        // Get current predictions points
         const { data: existing } = await supabase
           .from("user_points")
           .select("points")
@@ -223,7 +246,6 @@ serve(async (req) => {
           .from("user_points")
           .upsert({ user_id: userId, category: "predictions", points: newPoints }, { onConflict: "user_id,category" });
 
-        // Also store separately as 'awards' category so it isn't overwritten
         await supabase
           .from("user_points")
           .upsert({ user_id: userId, category: "awards", points: score.points }, { onConflict: "user_id,category" });
@@ -239,9 +261,9 @@ serve(async (req) => {
       event: event.name,
       categoriesResolved: Object.values(results).filter((r) => r.matched).length,
       categoriesUnmatched: Object.values(results).filter((r) => !r.matched).length,
+      unmatched: Object.entries(results).filter(([, r]) => !r.matched).map(([id, r]) => ({ id, name: r.categoryName })),
       usersScored: Object.keys(userScores).length,
       usersAwardedPoints: pointsAwarded,
-      categoryResults: results,
       scoreSummary,
     }), {
       status: 200,

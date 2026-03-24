@@ -68,6 +68,8 @@ export default function AwardsPredictions() {
 
   const eventSlug = paramsPlay?.slug || paramsAwards?.eventId || 'golden-globes-2026';
 
+  const ADMIN_USER_IDS = ["88bfb2a0-e8ce-4081-b731-2a49567ff093"];
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -402,6 +404,35 @@ export default function AwardsPredictions() {
     }
   });
 
+  // Admin: resolve Oscar winners
+  const resolveWinners = useMutation({
+    mutationFn: async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (!currentSession?.access_token) throw new Error("Not authenticated");
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const res = await fetch(`${supabaseUrl}/functions/v1/awards-resolve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentSession.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to resolve');
+      return json;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Winners resolved!",
+        description: `${data.categoriesResolved} categories matched, ${data.usersScored} users scored.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['awards-event', eventSlug] });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Failed to resolve", description: err.message, variant: "destructive" });
+    },
+  });
+
   const totalCategories = event?.categories?.length || 0;
   // Only count picks for categories that exist in this event
   const validCategoryIds = new Set(event?.categories?.map(c => c.id) || []);
@@ -706,6 +737,25 @@ export default function AwardsPredictions() {
             <p className="text-[10px] text-gray-400 mt-1">tap to view</p>
           </div>
         </button>
+
+        {/* Admin: Resolve Winners button */}
+        {ADMIN_USER_IDS.includes(userId || '') && event?.status !== 'completed' && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold text-amber-800">Admin</p>
+              <p className="text-xs text-amber-700">Score all ballots against the real winners</p>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => resolveWinners.mutate()}
+              disabled={resolveWinners.isPending}
+              className="bg-amber-600 hover:bg-amber-700 text-white text-xs shrink-0"
+            >
+              {resolveWinners.isPending ? <Loader2 size={14} className="animate-spin" /> : <Trophy size={14} />}
+              <span className="ml-1">{resolveWinners.isPending ? 'Resolving...' : 'Resolve Winners'}</span>
+            </Button>
+          </div>
+        )}
 
         {picksCount > 0 && (
           <button
