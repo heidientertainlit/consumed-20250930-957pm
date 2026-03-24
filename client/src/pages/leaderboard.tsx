@@ -47,11 +47,11 @@ export default function Leaderboard() {
   const eventParam = urlParams.get('event');
   
   const [scope, setScope] = useState<'global' | 'friends'>('global');
-  const [period, setPeriod] = useState<'weekly' | 'monthly' | 'all_time'>('weekly');
+  const [period, setPeriod] = useState<'weekly' | 'monthly' | 'all_time'>('all_time');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<string>(
     tabParam === 'games' || tabParam === 'consumption' || tabParam === 'predictions' ? 
-      (tabParam === 'predictions' ? 'games' : tabParam) : 'engagement'
+      (tabParam === 'predictions' ? 'games' : tabParam) : 'games'
   );
 
   const toggleExpanded = (categoryName: string) => {
