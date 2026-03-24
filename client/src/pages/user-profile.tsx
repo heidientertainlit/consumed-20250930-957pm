@@ -2821,9 +2821,12 @@ export default function UserProfile() {
                       <CornerUpRight size={20} />
                     </button>
                   </div>
-                  <div className="mb-1.5">
+                  <div className="flex items-center gap-2 mb-1.5">
                     <span className="text-sm text-gray-500">
                       @{userProfileData?.user_name || user?.user_metadata?.user_name || (user?.email?.split('@')[0]) || 'user'}
+                    </span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
+                      Insider
                     </span>
                   </div>
 
