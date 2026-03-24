@@ -288,12 +288,15 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
           media_external_id: media.externalId,
           media_external_source: media.externalSource || 'tmdb',
           media_title: media.title,
-          media_type: media.mediaType,
+          media_type: media.mediaType || 'movie',
+          media_image_url: media.imageUrl || '',
           rating: selectedRating,
         }),
       });
 
       if (!response.ok) {
+        const errText = await response.text().catch(() => '');
+        console.error('Rate media failed:', response.status, errText);
         throw new Error('Failed to submit rating');
       }
 
