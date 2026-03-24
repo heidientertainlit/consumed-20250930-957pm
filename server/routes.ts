@@ -287,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (ids.length === 0) return res.json({});
 
-      const results: Record<string, { title: string; image_url: string }> = {};
+      const results: Record<string, { title: string; image_url: string; detected_type: string }> = {};
 
       await Promise.all(ids.map(async (id) => {
         try {
@@ -301,7 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const title = d.title || d.name || '';
             const poster = d.poster_path ? `https://image.tmdb.org/t/p/w342${d.poster_path}` : '';
             if (poster) {
-              results[id] = { title, image_url: poster };
+              results[id] = { title, image_url: poster, detected_type: type };
               return;
             }
           }
@@ -313,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const d2 = await r2.json();
           const title2 = d2.title || d2.name || '';
           const poster2 = d2.poster_path ? `https://image.tmdb.org/t/p/w342${d2.poster_path}` : '';
-          results[id] = { title: title2, image_url: poster2 };
+          results[id] = { title: title2, image_url: poster2, detected_type: fallbackType };
         } catch {}
       }));
 

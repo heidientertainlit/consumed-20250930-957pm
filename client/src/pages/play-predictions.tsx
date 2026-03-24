@@ -37,7 +37,7 @@ function PredictionCarouselSection({
   onOpenModal: (game: any) => void;
   isSubmitting: boolean;
   creatorNames?: Record<string, string>;
-  mediaPosterMap?: Record<string, { title: string; image_url: string }>;
+  mediaPosterMap?: Record<string, { title: string; image_url: string; detected_type?: string }>;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -45,8 +45,12 @@ function PredictionCarouselSection({
 
   const getMediaUrl = (game: any) => {
     if (!game.media_external_id) return null;
-    const isTV = game.category === 'tv' || game.media_external_source === 'tmdb_tv';
+    const posterInfo = mediaPosterMap[game.media_external_id];
+    // Use the type TMDB actually returned a poster for — may differ from what was stored
+    const detectedType = posterInfo?.detected_type;
+    const isTV = detectedType === 'tv' || (!detectedType && (game.category === 'tv' || game.media_external_source === 'tmdb_tv'));
     const type = isTV ? 'tv' : 'movie';
+    // Keep the stored source value; type segment is what the detail page uses to call the correct TMDB endpoint
     const source = game.media_external_source || 'tmdb';
     return `/media/${type}/${source}/${game.media_external_id}`;
   };
