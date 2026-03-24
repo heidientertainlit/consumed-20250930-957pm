@@ -97,139 +97,152 @@ function PredictionCarouselSection({
         {games.map((game) => {
           const voted = allPredictions[game.id];
           const selected = selectedAnswers[game.id];
+          const mediaInfo = game.media_external_id ? mediaPosterMap[game.media_external_id] : null;
+          const displayTitle = game.media_title || mediaInfo?.title;
+          const posterUrl = mediaInfo?.image_url;
+          const hasPoster = !!(posterUrl);
+
           return (
             <div key={game.id} className="flex-shrink-0 w-full snap-center">
               <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs font-medium uppercase tracking-wide">
-                      Predict
-                    </Badge>
-                    {game.origin_type === 'consumed' ? (
-                      <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs flex items-center gap-1">
-                        <Trophy size={10} />
-                        Consumed
-                      </Badge>
-                    ) : (
-                      <div className="flex items-center gap-1.5">
-                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs flex items-center gap-1">
-                          <Users size={10} />
-                          Community
-                        </Badge>
-                        {game.origin_user_id && creatorNames[game.origin_user_id] && (
-                          <span className="text-xs text-gray-400">
-                            by {creatorNames[game.origin_user_id]}
-                          </span>
-                        )}
+                <CardContent className="p-0">
+                  <div className="flex gap-0">
+                    {/* Poster column — left side */}
+                    {hasPoster && (
+                      <div className="flex-shrink-0 w-[88px]">
+                        <img
+                          src={posterUrl!}
+                          alt={displayTitle || ''}
+                          className="w-full h-full object-cover rounded-l-2xl"
+                          style={{ minHeight: '200px' }}
+                          onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                        />
                       </div>
                     )}
-                  </div>
 
-                  {/* Media context: poster + title (matches feed post style) */}
-                  {(() => {
-                    const mediaInfo = game.media_external_id ? mediaPosterMap[game.media_external_id] : null;
-                    const displayTitle = game.media_title || mediaInfo?.title;
-                    const posterUrl = mediaInfo?.image_url;
-                    if (!displayTitle && !posterUrl) return null;
-                    return (
-                      <div className="flex gap-3 mb-3">
-                        {posterUrl && (
-                          <img
-                            src={posterUrl}
-                            alt={displayTitle || ''}
-                            className="w-16 h-24 rounded-xl object-cover flex-shrink-0 shadow-md"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
+                    {/* Right column — all interactive content */}
+                    <div className="flex-1 min-w-0 p-4 flex flex-col gap-2.5">
+                      {/* Badges row */}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs font-medium uppercase tracking-wide">
+                          Predict
+                        </Badge>
+                        {game.origin_type === 'consumed' ? (
+                          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs flex items-center gap-1">
+                            <Trophy size={10} />
+                            Consumed
+                          </Badge>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs flex items-center gap-1">
+                              <Users size={10} />
+                              Community
+                            </Badge>
+                            {game.origin_user_id && creatorNames[game.origin_user_id] && (
+                              <span className="text-xs text-gray-400">
+                                by {creatorNames[game.origin_user_id]}
+                              </span>
+                            )}
+                          </div>
                         )}
-                        <div className="flex flex-col justify-center min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 line-clamp-2">{displayTitle}</p>
+                      </div>
+
+                      {/* Media title (only text, poster is on the left) */}
+                      {displayTitle && (
+                        <p className="text-xs font-semibold text-purple-600 truncate">{displayTitle}</p>
+                      )}
+
+                      {/* Question */}
+                      <h3 className="font-semibold text-gray-900 text-sm leading-snug">{game.title}</h3>
+
+                      {/* Stats */}
+                      <div className="flex items-center gap-3 text-xs">
+                        <div className="flex items-center gap-1">
+                          <Star size={11} className="text-purple-600" />
+                          <span className="text-purple-600 font-medium">{game.points || 10} pts</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-gray-400">
+                          <Users size={11} />
+                          <span>{
+                            (() => {
+                              const counts = voteCounts[game.id] || {};
+                              const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
+                              return total || game.participants || (voted ? 1 : 0);
+                            })()
+                          } players</span>
                         </div>
                       </div>
-                    );
-                  })()}
-                  <h3 className="font-semibold text-gray-900 text-base leading-snug mb-3">{game.title}</h3>
 
-                  <div className="flex items-center gap-4 text-xs mb-4">
-                    <div className="flex items-center gap-1">
-                      <Star size={12} className="text-purple-600" />
-                      <span className="text-purple-600 font-medium">{game.points || 10} pts</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-gray-400">
-                      <Users size={12} />
-                      <span>{
-                        (() => {
-                          const counts = voteCounts[game.id] || {};
-                          const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
-                          const voted = allPredictions[game.id];
-                          return total || game.participants || (voted ? 1 : 0);
-                        })()
-                      } players</span>
+                      {/* Voting area */}
+                      {voted ? (
+                        <div className="flex flex-col gap-1.5">
+                          {(game.options || []).map((option: string, i: number) => {
+                            const rawCounts = voteCounts[game.id] || {};
+                            const counts = Object.keys(rawCounts).length === 0
+                              ? { [voted]: 1 }
+                              : rawCounts;
+                            const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
+                            const count = counts[option] || 0;
+                            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                            const isChosen = voted === option;
+                            return (
+                              <div
+                                key={i}
+                                className={`w-full rounded-full px-3 py-2 flex items-center justify-between transition-all duration-300 ${
+                                  isChosen
+                                    ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 ring-2 ring-blue-300'
+                                    : 'bg-gradient-to-r from-purple-950/60 via-purple-800/60 to-violet-500/60 opacity-70'
+                                }`}
+                              >
+                                <span className="text-xs font-medium text-white flex items-center gap-1.5">
+                                  {isChosen && <Check size={12} className="flex-shrink-0" />}
+                                  {option}
+                                </span>
+                                <span className="text-xs font-semibold text-white">{pct}%</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : game.isMultiCategory ? (
+                        <Button
+                          onClick={() => onOpenModal(game)}
+                          className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm"
+                        >
+                          Make Prediction
+                        </Button>
+                      ) : (
+                        <>
+                          <div className="flex flex-col gap-1.5">
+                            {(game.options || []).slice(0, 4).map((option: string, i: number) => (
+                              <button
+                                key={i}
+                                onClick={() => onOptionSelect(game.id, option)}
+                                className={`w-full py-2.5 px-4 rounded-full text-sm font-medium transition-all text-left flex items-center gap-2 ${
+                                  selected === option
+                                    ? 'bg-white border-2 border-purple-600 text-purple-700 shadow-sm'
+                                    : 'bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-700 hover:to-purple-600'
+                                }`}
+                              >
+                                {selected === option && (
+                                  <div className="w-4 h-4 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+                                    <Check size={10} className="text-white" />
+                                  </div>
+                                )}
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                          <Button
+                            onClick={() => onSubmit(game)}
+                            disabled={!selected || isSubmitting}
+                            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-500 disabled:opacity-40 rounded-full font-medium text-sm"
+                          >
+                            {isSubmitting ? 'Submitting...' : 'Submit'}
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
-
-                  {voted ? (
-                    <div className="flex flex-col gap-2">
-                      {(game.options || []).map((option: string, i: number) => {
-                        const rawCounts = voteCounts[game.id] || {};
-                        // Fallback: if RLS hides other votes, at least count the current user's vote
-                        const counts = Object.keys(rawCounts).length === 0
-                          ? { [voted]: 1 }
-                          : rawCounts;
-                        const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
-                        const count = counts[option] || 0;
-                        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                        const isChosen = voted === option;
-                        return (
-                          <div
-                            key={i}
-                            className={`w-full rounded-full px-4 py-3 flex items-center justify-between transition-all duration-300 ${
-                              isChosen
-                                ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 ring-2 ring-blue-300'
-                                : 'bg-gradient-to-r from-purple-950/60 via-purple-800/60 to-violet-500/60 opacity-70'
-                            }`}
-                          >
-                            <span className="text-sm font-medium text-white flex items-center gap-2">
-                              {isChosen && <Check size={14} className="flex-shrink-0" />}
-                              {option}
-                            </span>
-                            <span className="text-sm font-semibold text-white">{pct}%</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : game.isMultiCategory ? (
-                    <Button
-                      onClick={() => onOpenModal(game)}
-                      className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
-                    >
-                      Make Prediction
-                    </Button>
-                  ) : (
-                    <>
-                      <div className="flex flex-col gap-2 mb-3">
-                        {(game.options || []).slice(0, 4).map((option: string, i: number) => (
-                          <button
-                            key={i}
-                            onClick={() => onOptionSelect(game.id, option)}
-                            className={`w-full py-3 px-5 rounded-full text-sm font-medium transition-all text-left ${
-                              selected === option
-                                ? 'bg-gradient-to-r from-purple-700 to-purple-500 text-white shadow-md ring-2 ring-purple-300'
-                                : 'bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-700 hover:to-purple-600'
-                            }`}
-                          >
-                            {option}
-                          </button>
-                        ))}
-                      </div>
-                      <Button
-                        onClick={() => onSubmit(game)}
-                        disabled={!selected || isSubmitting}
-                        className="w-full bg-gray-200 hover:bg-gray-300 text-gray-600 disabled:opacity-40 rounded-full font-medium"
-                      >
-                        {isSubmitting ? 'Submitting...' : 'Submit'}
-                      </Button>
-                    </>
-                  )}
                 </CardContent>
               </Card>
             </div>
