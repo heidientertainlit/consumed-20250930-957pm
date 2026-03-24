@@ -24,6 +24,7 @@ function PredictionCarouselSection({
   onSubmit,
   onOpenModal,
   isSubmitting,
+  creatorNames = {},
 }: {
   label: string;
   games: any[];
@@ -34,6 +35,7 @@ function PredictionCarouselSection({
   onSubmit: (game: any) => void;
   onOpenModal: (game: any) => void;
   isSubmitting: boolean;
+  creatorNames?: Record<string, string>;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -107,10 +109,17 @@ function PredictionCarouselSection({
                         Consumed
                       </Badge>
                     ) : (
-                      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs flex items-center gap-1">
-                        <Users size={10} />
-                        Community
-                      </Badge>
+                      <div className="flex items-center gap-1.5">
+                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs flex items-center gap-1">
+                          <Users size={10} />
+                          Community
+                        </Badge>
+                        {game.origin_user_id && creatorNames[game.origin_user_id] && (
+                          <span className="text-xs text-gray-400">
+                            by {creatorNames[game.origin_user_id]}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
 
@@ -280,6 +289,31 @@ export default function PlayPredictionsPage() {
   });
 
   const allPredictions = userPredictionsData || {};
+
+  // Fetch creator names for community predictions
+  const communityUserIds = [...new Set(
+    games
+      .filter((g: any) => g.origin_type !== 'consumed' && g.origin_user_id)
+      .map((g: any) => g.origin_user_id)
+  )];
+
+  const { data: creatorNames = {} } = useQuery({
+    queryKey: ['/api/users/creator-names', communityUserIds],
+    queryFn: async () => {
+      if (communityUserIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, display_name, user_name')
+        .in('id', communityUserIds);
+      if (error || !data) return {};
+      const map: Record<string, string> = {};
+      data.forEach((u: any) => {
+        map[u.id] = u.display_name || u.user_name || 'someone';
+      });
+      return map;
+    },
+    enabled: communityUserIds.length > 0,
+  });
 
   // Fetch vote counts for all prediction pools
   const { data: voteCountsData = {} } = useQuery({
@@ -585,6 +619,7 @@ export default function PlayPredictionsPage() {
               onSubmit={handleSubmitAnswer}
               onOpenModal={(game) => setSelectedPredictionGame(game)}
               isSubmitting={submitPrediction.isPending}
+              creatorNames={creatorNames as Record<string, string>}
             />
           ));
         })()}
