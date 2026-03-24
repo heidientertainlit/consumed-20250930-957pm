@@ -688,8 +688,8 @@ export default function Leaderboard() {
                   </div>
                 </div>
                 
-                {/* Awards sub-sections — one per event */}
-                {(awardsEvents || []).map(event => {
+                {/* Awards sub-sections — Oscars only */}
+                {(awardsEvents || []).filter(e => e.name.toLowerCase().includes('academy') || e.name.toLowerCase().includes('oscar')).map(event => {
                   const rankColors = ['bg-yellow-400', 'bg-gray-300', 'bg-amber-600'];
                   const isCompleted = event.status === 'completed';
                   const completedEntries = isCompleted ? (awardsBallotLeaderboard?.[event.id] || []) : [];
