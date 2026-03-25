@@ -28,7 +28,11 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!loading && user && !justSignedUp) {
+    if (!loading && user) {
+      if (justSignedUp) {
+        setLocation('/onboarding');
+        return;
+      }
       const returnUrl = sessionStorage.getItem('returnUrl');
       if (returnUrl) {
         sessionStorage.removeItem('returnUrl');
@@ -208,7 +212,7 @@ export default function LoginPage() {
             CONNECT. TRACK. PLAY.
           </h1>
           <p className="text-gray-300 text-base mb-2">
-            Where entertainment lives.
+            The social layer of entertainment.
           </p>
         </div>
         

@@ -49,6 +49,7 @@ import CollectionsPage from "@/pages/collections";
 import LoginPage from "./pages/login";
 import ResetPasswordPage from "./pages/reset-password";
 import EntertainmentDNAPage from "./pages/entertainment-dna";
+import OnboardingPage from "./pages/onboarding";
 import NotFoundPage from "./pages/not-found";
 
 import MyLibrary from "@/pages/my-library";
@@ -163,7 +164,7 @@ function Router() {
           </Route>
 
           <Route path="/onboarding">
-            <RedirectTo to="/entertainment-dna" />
+            <OnboardingPage />
           </Route>
 
           <Route path="/entertainment-dna">
