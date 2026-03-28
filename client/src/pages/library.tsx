@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import MediaCarousel from "@/components/media-carousel";
+import TrendingCarousel from "@/components/trending-carousel";
 import Navigation from "@/components/navigation";
 import CreateListDialog from "@/components/create-list-dialog";
 import { useAuth } from "@/lib/auth";
@@ -67,6 +68,30 @@ export default function Library() {
   const [progressValues, setProgressValues] = useState<Record<string, number>>({});
   const [totalValues, setTotalValues] = useState<Record<string, number>>({});
   const [expandedLists, setExpandedLists] = useState<Record<string, boolean>>({});
+
+  // Fetch trending strip content (for carousel)
+  const { data: trendingContent = [] } = useQuery({
+    queryKey: ['trending-content'],
+    queryFn: async () => {
+      if (!session?.access_token) return [];
+      try {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-content`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+          },
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.items || [];
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!session?.access_token,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Fetch trending content
   const { data: netflixTVShows = [] } = useQuery({
@@ -497,6 +522,21 @@ export default function Library() {
                   </div>
                 )}
               </div>
+
+              {/* Trending Strip */}
+              {!searchResults && trendingContent.length > 0 && (
+                <div className="mt-5">
+                  <TrendingCarousel
+                    items={trendingContent}
+                    onItemClick={(item) => {
+                      const type = item.media_type || 'movie';
+                      const source = item.external_source || 'tmdb';
+                      const id = item.external_id || item.id;
+                      setLocation(`/media/${type}/${source}/${id}`);
+                    }}
+                  />
+                </div>
+              )}
 
               {/* Search Results */}
               {searchResults && (
