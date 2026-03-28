@@ -1,170 +1,108 @@
-import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ChevronRight } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { Dna, Users, Brain, ChevronRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
-const GENDER_OPTIONS = ["Man", "Woman", "Non-binary", "Prefer not to say"];
+const PATHS = [
+  {
+    icon: Dna,
+    title: "Find Your Entertainment DNA",
+    description: "Map your taste across books, shows, movies, music, and more.",
+    route: "/entertainment-dna",
+    gradient: "from-violet-600/20 to-purple-900/30",
+    border: "border-violet-500/30",
+    iconColor: "text-violet-400",
+    iconBg: "bg-violet-500/15",
+  },
+  {
+    icon: Users,
+    title: "See What Everyone's Into",
+    description: "Jump into the social feed and see what people are watching, reading, and listening to right now.",
+    route: "/activity",
+    gradient: "from-blue-600/20 to-indigo-900/30",
+    border: "border-blue-500/30",
+    iconColor: "text-blue-400",
+    iconBg: "bg-blue-500/15",
+  },
+  {
+    icon: Brain,
+    title: "Play Trivia",
+    description: "Test your knowledge and start your streak.",
+    route: "/play",
+    gradient: "from-emerald-600/20 to-teal-900/30",
+    border: "border-emerald-500/30",
+    iconColor: "text-emerald-400",
+    iconBg: "bg-emerald-500/15",
+  },
+];
 
 export default function OnboardingPage() {
   const [, setLocation] = useLocation();
   const { session } = useAuth();
-  const [gender, setGender] = useState<string | null>(null);
-  const [loveText, setLoveText] = useState("");
-  const [textQuestionId, setTextQuestionId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
 
-  // Fetch the "What do you love?" question ID from edna_questions
-  useEffect(() => {
-    const fetchQuestion = async () => {
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/edna_questions?question_type=eq.text&select=id&limit=1`,
-        {
-          headers: {
-            apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-        }
-      );
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.[0]?.id) setTextQuestionId(data[0].id);
-      }
-    };
-    fetchQuestion();
-  }, []);
-
-  const saveDNA = async () => {
-    if (!loveText.trim() || !textQuestionId || !session?.access_token) return;
-    await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/edna_responses`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-        apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-        "Content-Type": "application/json",
-        Prefer: "return=minimal",
-      },
-      body: JSON.stringify({
-        user_id: session.user?.id,
-        question_id: textQuestionId,
-        answer_text: loveText.trim(),
-      }),
-    });
-  };
-
-  const finish = async (toDNA = false) => {
-    setSaving(true);
-    try {
-      if (gender) {
-        await supabase.auth.updateUser({ data: { gender } });
-      }
-      await saveDNA();
-      localStorage.setItem("consumed_onboarded", "true");
-    } catch {}
-    setSaving(false);
-    setLocation(toDNA ? "/entertainment-dna" : "/activity");
-  };
-
-  const skipAll = () => {
+  const go = (route: string) => {
     localStorage.setItem("consumed_onboarded", "true");
-    setLocation("/activity");
+    setLocation(route);
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Purple app bar */}
-      <div
-        className="flex items-center justify-between px-5 py-4"
-        style={{ background: "linear-gradient(135deg, #1a0a2e 0%, #2d1f4e 100%)" }}
-      >
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: "linear-gradient(160deg, #0d0618 0%, #130d2a 40%, #0a1628 100%)" }}
+    >
+      {/* App bar */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
         <img src="/consumed-logo-new.png" alt="Consumed" className="h-8 w-auto" />
         <button
-          onClick={skipAll}
-          className="text-sm text-white/50 hover:text-white/80 transition-colors"
+          onClick={() => go("/activity")}
+          className="text-sm text-white/40 hover:text-white/70 transition-colors"
         >
-          Skip All
+          Skip
         </button>
       </div>
 
-      <div className="flex-1 flex flex-col px-5 pt-6 pb-10 max-w-md mx-auto w-full">
+      {/* Content */}
+      <div className="flex-1 flex flex-col px-5 pt-8 pb-10 max-w-md mx-auto w-full">
 
-        {/* Hook */}
-        <div className="mb-8">
+        {/* Headline */}
+        <div className="mb-10">
           <h1
-            className="text-2xl font-bold text-gray-900 leading-tight mb-3"
+            className="text-[1.75rem] font-bold text-white leading-tight mb-3"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
             Welcome to the social layer of entertainment.
           </h1>
-          <p className="text-gray-500 text-sm leading-relaxed">
-            Tell us a little about yourself so we can make it feel like home.
+          <p className="text-white/50 text-sm leading-relaxed">
+            Start where you want — discover your Entertainment DNA, see what everyone's into, or jump straight into trivia.
           </p>
         </div>
 
-        {/* Gender */}
-        <div className="mb-7">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-            I am
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {GENDER_OPTIONS.map(opt => (
-              <button
-                key={opt}
-                onClick={() => setGender(g => g === opt ? null : opt)}
-                className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
-                  gender === opt
-                    ? "bg-purple-600 border-purple-600 text-white"
-                    : "bg-white border-gray-200 text-gray-600 hover:border-purple-300"
-                }`}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
+        {/* Path cards */}
+        <div className="space-y-3">
+          {PATHS.map(({ icon: Icon, title, description, route, gradient, border, iconColor, iconBg }) => (
+            <button
+              key={route}
+              onClick={() => go(route)}
+              className={`w-full text-left rounded-2xl border bg-gradient-to-br ${gradient} ${border} p-4 flex items-start gap-4 hover:border-white/20 hover:bg-white/5 transition-all group active:scale-[0.98]`}
+            >
+              <div className={`flex-shrink-0 w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center mt-0.5`}>
+                <Icon size={22} className={iconColor} strokeWidth={1.75} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-semibold text-sm leading-tight mb-1">{title}</p>
+                <p className="text-white/45 text-xs leading-relaxed">{description}</p>
+              </div>
+              <ChevronRight
+                size={16}
+                className="flex-shrink-0 text-white/20 group-hover:text-white/40 transition-colors mt-1"
+              />
+            </button>
+          ))}
         </div>
 
-        {/* What do you love */}
-        <div className="mb-8">
-          <h3 className="text-base font-semibold text-gray-900 mb-1">What are you into?</h3>
-          <p className="text-gray-500 text-sm leading-snug mb-3">
-            This helps us build your Entertainment DNA — so Consumed feels like it was made for you from day one.
-          </p>
-          <textarea
-            value={loveText}
-            onChange={e => setLoveText(e.target.value)}
-            placeholder={"Friends reruns, true crime, Taylor Swift... no judgment"}
-            className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-purple-400 focus:ring-1 focus:ring-purple-400 outline-none min-h-[110px] resize-none text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed"
-          />
-        </div>
-
-        {/* Get Started */}
-        <button
-          onClick={() => finish(false)}
-          disabled={saving}
-          className="w-full py-3.5 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-base transition-colors disabled:opacity-60 mb-4"
-        >
-          {saving ? "Saving…" : "Get Started"}
-        </button>
-
-        {/* DNA Divider */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1 h-px bg-gray-100" />
-          <span className="text-xs text-gray-400">want to go deeper?</span>
-          <div className="flex-1 h-px bg-gray-100" />
-        </div>
-
-        {/* DNA CTA */}
-        <button
-          onClick={() => finish(true)}
-          disabled={saving}
-          className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl bg-gray-50 border border-gray-200 hover:border-purple-300 transition-colors group"
-        >
-          <div className="text-left">
-            <p className="text-sm font-semibold text-gray-900">Find your Entertainment DNA</p>
-            <p className="text-xs text-gray-400 mt-0.5">8 quick questions — map your full entertainment personality</p>
-          </div>
-          <ChevronRight size={16} className="text-gray-300 group-hover:text-purple-400 transition-colors flex-shrink-0" />
-        </button>
+        {/* Bottom hint */}
+        <p className="text-center text-white/25 text-xs mt-8">
+          You can always change your preferences later in your profile.
+        </p>
 
       </div>
     </div>
