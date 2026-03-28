@@ -101,7 +101,7 @@ export default function OnboardingPage() {
             onClick={() => go("/activity")}
             className="w-full text-center text-purple-600 text-sm font-medium pt-4 hover:text-purple-700 transition-colors"
           >
-            take me to the home page &rsaquo;&rsaquo;
+            Skip this, just take me to the home page &rsaquo;&rsaquo;
           </button>
         </div>
       </div>
