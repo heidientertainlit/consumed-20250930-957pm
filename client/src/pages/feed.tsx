@@ -5078,24 +5078,17 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* Entertainment DNA Featured Card */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <Link href="/entertainment-dna">
-                  <div className="bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl p-3 border border-purple-100 cursor-pointer hover:border-purple-200 hover:from-purple-100 hover:to-violet-100 transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center flex-shrink-0">
-                        <Dna className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-gray-900 font-medium text-sm">Discover your Entertainment DNA</h3>
-                        </div>
-                        <p className="text-purple-500 text-xs">Find out what your taste says about you</p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-purple-400" />
-                    </div>
-                  </div>
-                </Link>
+              {/* Trending Strip */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && trendingContent.length > 0 && (
+                <TrendingCarousel
+                  items={trendingContent}
+                  onItemClick={(item) => {
+                    const type = item.media_type || 'movie';
+                    const source = item.external_source || 'tmdb';
+                    const id = item.external_id || item.id;
+                    setLocation(`/media/${type}/${source}/${id}`);
+                  }}
+                />
               )}
 
               {renderPostBatchByIndex(0)}
@@ -5125,12 +5118,12 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
               )}
 
-              {/* Entertainment DNA Card #1 - in All or DNA filter */}
+              {renderPostBatchByIndex(2)}
+
+              {/* Entertainment DNA Card - in All or DNA filter */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <DnaMomentCard />
               )}
-
-              {renderPostBatchByIndex(2)}
 
               {/* Play activity — sprinkle 1 leaderboard card */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 0 && (

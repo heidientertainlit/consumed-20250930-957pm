@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Search as SearchIcon, Loader2, Film, Music, BookOpen, Tv, Mic, Gamepad2, Clock, Plus, Download, Share2, Lock, List, ChevronRight, Calendar, Play, Trophy, LayoutGrid, Activity, MessageSquarePlus, Star, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
-import TrendingCarousel from "@/components/trending-carousel";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -36,28 +35,6 @@ export default function MyLibrary() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: trendingContent = [] } = useQuery({
-    queryKey: ['trending-content'],
-    queryFn: async () => {
-      if (!session?.access_token) return [];
-      try {
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-content`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-          },
-        });
-        if (!response.ok) return [];
-        const data = await response.json();
-        return data.items || [];
-      } catch {
-        return [];
-      }
-    },
-    enabled: !!session?.access_token,
-    staleTime: 5 * 60 * 1000,
-  });
 
   const { data: librarySearchResults = [], isLoading: isSearching } = useQuery({
     queryKey: ['library-media-search', librarySearchQuery],
@@ -561,20 +538,6 @@ export default function MyLibrary() {
           </div>
         </div>
 
-        {/* Trending Strip */}
-        {!librarySearchQuery.trim() && trendingContent.length > 0 && (
-          <div className="px-4 pb-3">
-            <TrendingCarousel
-              items={trendingContent}
-              onItemClick={(item) => {
-                const type = item.media_type || 'movie';
-                const source = item.external_source || 'tmdb';
-                const id = item.external_id || item.id;
-                setLocation(`/media/${type}/${source}/${id}`);
-              }}
-            />
-          </div>
-        )}
 
         <div className="pb-2" />
       </div>

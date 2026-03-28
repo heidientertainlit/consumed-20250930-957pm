@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { TrendingUp, Film, Tv, BookOpen, Music, Headphones, Flame } from 'lucide-react';
 
 interface TrendingItem {
@@ -31,15 +30,6 @@ const SOURCE_COLORS: Record<string, string> = {
   'apple-podcasts':  'bg-orange-100 text-orange-700',
 };
 
-const FILTERS = [
-  { key: 'all',     label: 'All' },
-  { key: 'tv',      label: 'TV' },
-  { key: 'movie',   label: 'Movies' },
-  { key: 'book',    label: 'Books' },
-  { key: 'music',   label: 'Music' },
-  { key: 'podcast', label: 'Podcasts' },
-];
-
 const MEDIA_ICONS: Record<string, React.ReactNode> = {
   tv:      <Tv size={10} />,
   movie:   <Film size={10} />,
@@ -49,12 +39,6 @@ const MEDIA_ICONS: Record<string, React.ReactNode> = {
 };
 
 export default function TrendingCarousel({ items, onItemClick }: TrendingCarouselProps) {
-  const [activeFilter, setActiveFilter] = useState('all');
-
-  const filtered = activeFilter === 'all'
-    ? items
-    : items.filter(item => item.media_type === activeFilter);
-
   if (!items.length) return null;
 
   return (
@@ -64,26 +48,8 @@ export default function TrendingCarousel({ items, onItemClick }: TrendingCarouse
         <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Trending</p>
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-2 scrollbar-hide">
-        {FILTERS.map(f => (
-          <button
-            key={f.key}
-            onClick={() => setActiveFilter(f.key)}
-            className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
-              activeFilter === f.key
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Items */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {filtered.slice(0, 20).map((item, idx) => {
+        {items.slice(0, 20).map((item, idx) => {
           const colorClass = SOURCE_COLORS[item.source_key] || 'bg-gray-100 text-gray-600';
           const icon = MEDIA_ICONS[item.media_type] || <TrendingUp size={10} />;
 
