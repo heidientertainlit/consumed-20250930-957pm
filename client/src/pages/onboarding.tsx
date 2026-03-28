@@ -94,7 +94,7 @@ export default function OnboardingPage() {
             className="text-2xl font-bold text-gray-900 leading-tight mb-3"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
-            Welcome to Consumed, the social layer of entertainment. Where your entertainment is finally all in one place.
+            Welcome to the social layer of entertainment.
           </h1>
           <p className="text-gray-500 text-sm leading-relaxed">
             Tell us a little about yourself so we can make it feel like home.
@@ -104,7 +104,7 @@ export default function OnboardingPage() {
         {/* Gender */}
         <div className="mb-7">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
-            I identify as
+            I am
           </p>
           <div className="flex flex-wrap gap-2">
             {GENDER_OPTIONS.map(opt => (
