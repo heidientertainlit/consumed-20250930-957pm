@@ -17,7 +17,7 @@ import GameFirstFeed from "@/pages/game-first-feed";
 import QuickLog from "@/pages/quick-log";
 import BlendedFeed from "@/pages/blended-feed";
 import FriendsUpdates from "@/pages/friendsupdates";
-import Add from "@/pages/add";
+import AiSearch from "@/pages/ai-search";
 import Conversations from "@/pages/conversations";
 import Leaderboard from "@/pages/leaderboard";
 
@@ -198,7 +198,7 @@ function Router() {
           </Route>
 
           <Route path="/track">
-            <RedirectTo to="/add" />
+            <RedirectTo to="/my-library" />
           </Route>
 
           <Route path="/leaderboard">
@@ -220,19 +220,17 @@ function Router() {
           </Route>
 
           <Route path="/add">
-            <ProtectedRoute>
-              <Add />
-            </ProtectedRoute>
+            <RedirectTo to="/activity" />
           </Route>
 
           <Route path="/search">
-            <RedirectTo to="/add" />
+            <ProtectedRoute>
+              <AiSearch />
+            </ProtectedRoute>
           </Route>
 
           <Route path="/discover">
-            <ProtectedRoute>
-              <Add />
-            </ProtectedRoute>
+            <RedirectTo to="/activity" />
           </Route>
 
           <Route path="/conversations">
@@ -280,7 +278,9 @@ function Router() {
           </Route>
 
           <Route path="/collections">
-            <RedirectTo to="/add" />
+            <ProtectedRoute>
+              <CollectionsPage />
+            </ProtectedRoute>
           </Route>
 
           <Route path="/trivia">

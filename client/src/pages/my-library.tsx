@@ -477,7 +477,7 @@ export default function MyLibrary() {
                         className="flex items-center gap-3 px-3 py-2 hover:bg-white/5"
                       >
                         <div
-                          onClick={() => { setLibrarySearchQuery(''); setLocation(`/media/${media.external_source || 'tmdb'}/${media.external_id}`); }}
+                          onClick={() => { setLibrarySearchQuery(''); setLocation(`/media/${media.type || 'movie'}/${media.external_source || 'tmdb'}/${media.external_id}`); }}
                           className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
                         >
                           {media.image ? (
