@@ -94,10 +94,10 @@ export default function OnboardingPage() {
             className="text-2xl font-bold text-gray-900 leading-tight mb-3"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
-            Your entertainment is everywhere. That's the problem.
+            Welcome to Consumed, the social layer of entertainment. Where your entertainment is finally all in one place.
           </h1>
           <p className="text-gray-500 text-sm leading-relaxed">
-            Consumed brings it all into one place — so you can track what you love, play trivia, cast predictions, and connect with people who are into it too. Let's get started on your entertainment DNA:
+            Tell us a little about yourself so we can make it feel like home.
           </p>
         </div>
 
