@@ -72,22 +72,21 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Top bar */}
-      <div className="flex justify-end px-5 pt-5">
+      {/* Purple app bar */}
+      <div
+        className="flex items-center justify-between px-5 py-4"
+        style={{ background: "linear-gradient(135deg, #1a0a2e 0%, #2d1f4e 100%)" }}
+      >
+        <img src="/consumed-logo-new.png" alt="Consumed" className="h-8 w-auto" />
         <button
           onClick={skipAll}
-          className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+          className="text-sm text-white/50 hover:text-white/80 transition-colors"
         >
           Skip All
         </button>
       </div>
 
-      <div className="flex-1 flex flex-col px-5 pt-4 pb-10 max-w-md mx-auto w-full">
-
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
-          <img src="/consumed-logo-new.png" alt="Consumed" className="h-10 w-auto" />
-        </div>
+      <div className="flex-1 flex flex-col px-5 pt-6 pb-10 max-w-md mx-auto w-full">
 
         {/* Hook */}
         <div className="mb-8">
