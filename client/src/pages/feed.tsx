@@ -4895,21 +4895,6 @@ export default function Feed() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-4 pb-6" data-feed-content>
-        {/* Trending Strip */}
-        <TrendingCarousel
-          items={trendingContent}
-          onItemClick={(item) => {
-            setQuickAddMedia({
-              title: item.title,
-              mediaType: item.media_type || 'movie',
-              externalId: item.external_id || item.id,
-              externalSource: item.external_source || 'tmdb',
-              imageUrl: item.image_url || '',
-            });
-            setIsQuickAddOpen(true);
-          }}
-        />
-
         {/* Pending Friend Casts - You've Been Cast! - At top of white feed area */}
         {pendingCasts.length > 0 && (
           <div className="space-y-3 mb-4">
