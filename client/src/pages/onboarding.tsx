@@ -63,19 +63,19 @@ export default function OnboardingPage() {
 
         {/* Headline */}
         <h1
-          className="text-[1.75rem] font-bold text-white leading-tight mb-3"
+          className="text-[1.75rem] font-bold text-white leading-tight"
           style={{ fontFamily: "Poppins, sans-serif" }}
         >
           Welcome to the social layer of entertainment.
         </h1>
-        <p className="text-white/55 text-sm leading-relaxed">
-          Start where you want by discovering your Entertainment DNA, seeing what everyone's into, or jumping straight into games like trivia.
-        </p>
       </div>
 
       {/* Cards area — white */}
       <div className="flex-1 bg-white px-5 pt-6 pb-10">
         <div className="max-w-md mx-auto space-y-3">
+          <p className="text-gray-500 text-sm leading-relaxed mb-1">
+            Start where you want — discover your Entertainment DNA, see what everyone's into, or jump straight into games like trivia.
+          </p>
 
           {PATHS.map(({ icon: Icon, title, description, route, gradient, border, iconColor, iconBg }) => (
             <button
