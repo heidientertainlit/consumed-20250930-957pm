@@ -579,45 +579,31 @@ export default function MyLibrary() {
         <div className="pb-2" />
       </div>
 
-      <div className="bg-white max-w-7xl mx-auto px-4 pt-4 pb-6 space-y-4">
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            <button
-              onClick={() => setActiveTab('in-progress')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                activeTab === 'in-progress'
-                  ? 'bg-gray-700 text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              }`}
-            >
-              <Play size={14} />
-              In Progress
-            </button>
-            <button
-              onClick={() => setActiveTab('lists')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                activeTab === 'lists'
-                  ? 'bg-gray-700 text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              }`}
-            >
-              <List size={14} />
-              Lists
-            </button>
-            <button
-              onClick={() => setActiveTab('all-media')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                activeTab === 'all-media'
-                  ? 'bg-gray-700 text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              }`}
-            >
-              <Clock size={14} />
-              All My Media
-            </button>
+      <div className="bg-white max-w-7xl mx-auto pb-6 space-y-4">
+          {/* Tab bar */}
+          <div className="flex border-b border-gray-200">
+            {[
+              { key: 'in-progress', label: 'In Progress', icon: Play },
+              { key: 'lists',       label: 'Lists',       icon: List },
+              { key: 'all-media',   label: 'All My Media', icon: Clock },
+            ].map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key as typeof activeTab)}
+                className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2 -mb-px ${
+                  activeTab === key
+                    ? 'border-purple-600 text-purple-700'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Icon size={14} />
+                {label}
+              </button>
+            ))}
           </div>
 
           {activeTab === 'in-progress' && (
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 -mt-1">
+            <div className="px-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100 mx-4">
               {currentlyItems.length > 0 ? (
                 <div
                   className="flex gap-3 overflow-x-auto scrollbar-hide pb-1"
@@ -658,7 +644,7 @@ export default function MyLibrary() {
           )}
 
           {activeTab === 'lists' && (
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 -mt-1">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mx-4">
 
               <div className="flex items-center gap-2 mb-3">
                 <div className="relative flex-1">
@@ -750,7 +736,7 @@ export default function MyLibrary() {
           )}
 
           {activeTab === 'all-media' && (
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mx-4">
                   <div className="flex items-center gap-1 mb-3">
                     <div className="flex items-center bg-gray-100 rounded p-0.5">
                       <button
