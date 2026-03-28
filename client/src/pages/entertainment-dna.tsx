@@ -428,32 +428,43 @@ export default function EntertainmentDNAPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white px-6 pt-6 pb-8">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-gray-50">
+
+      {/* Dark purple gradient hero */}
+      <div
+        className="px-5 pt-5 pb-10"
+        style={{ background: "linear-gradient(135deg, #0a0a0f 0%, #12121f 50%, #2d1f4e 100%)" }}
+      >
         {/* Back Button */}
         <button
           onClick={() => window.history.back()}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+          className="flex items-center gap-2 text-white/50 hover:text-white/80 mb-6 transition-colors"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={18} />
           <span className="text-sm">Back</span>
         </button>
-        
-        {/* Header */}
-        <div className="mb-8">
-          <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 via-purple-500 to-purple-700 rounded-full flex items-center justify-center mb-4">
-            <Dna className="text-white" size={28} />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Your entertainment DNA starts here</h1>
-          <p className="text-gray-600 text-sm">Answer a few quick questions to shape your taste profile.</p>
-          <button
-            onClick={() => window.location.href = '/activity'}
-            className="text-xs text-purple-500 hover:text-purple-700 mt-3 underline"
-          >
-            Skip for now
-          </button>
-        </div>
 
+        {/* Header */}
+        <div className="w-12 h-12 bg-purple-600/30 border border-purple-500/40 rounded-2xl flex items-center justify-center mb-4">
+          <Dna className="text-purple-300" size={24} />
+        </div>
+        <h1
+          className="text-[1.6rem] font-bold text-white leading-tight mb-2"
+          style={{ fontFamily: "Poppins, sans-serif" }}
+        >
+          Your entertainment DNA starts here
+        </h1>
+        <p className="text-white/50 text-sm">Answer a few quick questions to shape your taste profile.</p>
+        <button
+          onClick={() => window.location.href = '/activity'}
+          className="text-xs text-purple-400 hover:text-purple-300 mt-3"
+        >
+          Skip for now
+        </button>
+      </div>
+
+      {/* Questions — white area */}
+      <div className="px-5 pt-6 pb-10 max-w-lg mx-auto">
         {/* DNA Questions */}
         <div className="space-y-6 mb-8">
           {questions.map((question) => {
@@ -496,8 +507,8 @@ export default function EntertainmentDNAPage() {
                           onClick={() => handleAnswer(question.id, option)}
                           className={`px-5 py-2.5 rounded-full transition-all text-sm flex items-center gap-2 text-left ${
                             isSelected
-                              ? 'bg-purple-500/20 border-2 border-cyan-400 text-white font-medium'
-                              : 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white shadow-lg shadow-purple-500/30'
+                              ? 'bg-purple-700 border-2 border-purple-400 text-white font-medium shadow-md shadow-purple-500/20'
+                              : 'bg-gradient-to-r from-violet-600 to-purple-700 text-white shadow-sm shadow-purple-500/20'
                           }`}
                           data-testid={`option-${question.id}-${option.replace(' (please specify)', '')}`}
                         >
@@ -528,8 +539,8 @@ export default function EntertainmentDNAPage() {
                           }}
                           className={`px-5 py-2.5 rounded-full transition-all text-sm flex items-center gap-2 text-left ${
                             isChecked
-                              ? 'bg-purple-500/20 border-2 border-cyan-400 text-white font-medium'
-                              : 'bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 text-white shadow-lg shadow-purple-500/30'
+                              ? 'bg-purple-700 border-2 border-purple-400 text-white font-medium shadow-md shadow-purple-500/20'
+                              : 'bg-gradient-to-r from-violet-600 to-purple-700 text-white shadow-sm shadow-purple-500/20'
                           }`}
                           data-testid={`multi-option-${question.id}-${cleanOption}`}
                         >
@@ -550,7 +561,7 @@ export default function EntertainmentDNAPage() {
         <Button
           onClick={generateDNA}
           disabled={!isComplete()}
-          className="w-full bg-gradient-to-r from-cyan-400 via-purple-500 to-purple-700 hover:from-cyan-300 hover:via-purple-400 hover:to-purple-600 text-white font-semibold rounded-full py-4 text-base shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 text-white font-semibold rounded-full py-4 text-base shadow-lg shadow-purple-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="get-dna-button"
         >
           Discover Your DNA
