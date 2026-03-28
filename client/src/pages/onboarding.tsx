@@ -74,7 +74,7 @@ export default function OnboardingPage() {
       </div>
 
       {/* Cards area — white */}
-      <div className="flex-1 bg-white px-5 pt-6 pb-10 -mt-4 rounded-t-3xl">
+      <div className="flex-1 bg-white px-5 pt-6 pb-10">
         <div className="max-w-md mx-auto space-y-3">
 
           {PATHS.map(({ icon: Icon, title, description, route, gradient, border, iconColor, iconBg }) => (
@@ -97,9 +97,12 @@ export default function OnboardingPage() {
             </button>
           ))}
 
-          <p className="text-center text-gray-400 text-xs pt-4">
-            You can always update your preferences in your profile.
-          </p>
+          <button
+            onClick={() => go("/activity")}
+            className="w-full text-center text-purple-600 text-sm font-medium pt-4 hover:text-purple-700 transition-colors"
+          >
+            take me to the home page &rsaquo;&rsaquo;
+          </button>
         </div>
       </div>
 
