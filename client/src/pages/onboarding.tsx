@@ -125,15 +125,14 @@ export default function OnboardingPage() {
 
         {/* What do you love */}
         <div className="mb-8">
-          <h3 className="text-base font-semibold text-gray-900 mb-1">What do you love?</h3>
+          <h3 className="text-base font-semibold text-gray-900 mb-1">What are you into?</h3>
           <p className="text-gray-500 text-sm leading-snug mb-3">
-            Drop anything you're into lately or always come back to — books, shows, teams, creators, comfort rewatches, guilty pleasures. Whatever feels you.{" "}
-            <span className="text-gray-400">(optional)</span>
+            This helps us build your Entertainment DNA — so Consumed feels like it was made for you from day one.
           </p>
           <textarea
             value={loveText}
             onChange={e => setLoveText(e.target.value)}
-            placeholder={"e.g. you watch Friends daily, love Pride & Prejudice, obsessed with Fast & Furious"}
+            placeholder={"Friends reruns, true crime, Taylor Swift... no judgment"}
             className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:border-purple-400 focus:ring-1 focus:ring-purple-400 outline-none min-h-[110px] resize-none text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed"
           />
         </div>
