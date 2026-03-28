@@ -72,8 +72,8 @@ export default function OnboardingPage() {
 
       {/* Cards area — white */}
       <div className="flex-1 bg-white px-5 pt-6 pb-10">
-        <div className="max-w-md mx-auto space-y-3">
-          <p className="text-gray-500 text-sm leading-relaxed mb-1">
+        <div className="max-w-md mx-auto space-y-4">
+          <p className="text-gray-500 text-sm leading-relaxed mb-5">
             Start where you want — discover your Entertainment DNA, see what everyone's into, or jump straight into games like trivia.
           </p>
 
@@ -99,9 +99,9 @@ export default function OnboardingPage() {
 
           <button
             onClick={() => go("/activity")}
-            className="w-full text-center text-purple-600 text-sm font-medium pt-4 hover:text-purple-700 transition-colors"
+            className="w-full text-center text-gray-400 text-sm pt-4 hover:text-gray-500 transition-colors"
           >
-            Skip this, just take me to the home page &rsaquo;&rsaquo;
+            Skip
           </button>
         </div>
       </div>
