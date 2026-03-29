@@ -122,6 +122,19 @@ serve(async (req) => {
     const searchQuery = cleanedQuery.length > 2 ? cleanedQuery : query;
     console.log('Original query:', query, '| Cleaned query:', searchQuery, '| Type hints:', { queryHasBook, queryHasMovie, queryHasMusic, queryHasTv, queryHasPodcast });
 
+    // If caller didn't pass an explicit type but query has an unambiguous type hint,
+    // narrow the search so we only call the relevant API and avoid category collisions.
+    if (!type) {
+      const hintCount = [queryHasBook, queryHasMovie, queryHasMusic, queryHasTv, queryHasPodcast].filter(Boolean).length;
+      if (hintCount === 1) {
+        if (queryHasTv)      type = 'tv';
+        else if (queryHasMovie)   type = 'movie';
+        else if (queryHasBook)    type = 'book';
+        else if (queryHasMusic)   type = 'music';
+        else if (queryHasPodcast) type = 'podcast';
+      }
+    }
+
     // Collect results by type first, then merge in desired order
     const bookResults: any[] = [];
     const movieTvResults: any[] = [];
@@ -603,8 +616,16 @@ serve(async (req) => {
       }
       
       // 1. Title vs query - strongest signal (use both normalized and raw comparisons)
+      // Compound-word matching: "flea bag" ↔ "fleabag"
+      const queryNoSpaces = queryLower.replace(/\s+/g, '');
+      const titleNoSpaces = title.replace(/\s+/g, '');
+      const normalizedQueryNoSpaces = normalizedQuery.replace(/\s+/g, '');
+      const normalizedTitleNoSpaces = normalizedTitle.replace(/\s+/g, '');
+
       if (title === queryLower || normalizedTitle === normalizedQuery) {
         score += 100;  // Exact match (with or without "The/A/An")
+      } else if (titleNoSpaces === queryNoSpaces || normalizedTitleNoSpaces === normalizedQueryNoSpaces) {
+        score += 95;   // Compound-word exact match (e.g. "fleabag" = "flea bag")
       } else if (title.startsWith(queryLower) || normalizedTitle.startsWith(normalizedQuery)) {
         score += 80;   // Title starts with query
       } else if ((queryLower.startsWith(title) && title.length > 0) || 
