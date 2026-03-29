@@ -654,6 +654,23 @@ serve(async (req) => {
           score += Math.min(15, matchingCreatorWords.length * 5);
         }
       }
+
+      // 2b. Artist/band search boost — when the query IS the artist name,
+      // music results should surface strongly even if album titles differ.
+      // e.g. searching "metallica" → "Master of Puppets" by Metallica scores high.
+      if (item.type === 'music' && creator && queryLower.length > 2) {
+        const creatorLower = creator.toLowerCase().trim();
+        if (creatorLower === queryLower || creatorLower.includes(queryLower) || queryLower.includes(creatorLower)) {
+          score += 75;  // Strong: user is searching for this artist by name
+        }
+      }
+      // Similar boost for podcasts searched by show host/creator name
+      if (item.type === 'podcast' && creator && queryLower.length > 2) {
+        const creatorLower = creator.toLowerCase().trim();
+        if (creatorLower === queryLower || creatorLower.includes(queryLower)) {
+          score += 40;
+        }
+      }
       
       // 3. Description matching - weakest signal
       if (description && queryLower.length > 2) {
