@@ -716,17 +716,19 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               >
                 <Star size={44} className="fill-yellow-400 text-yellow-400" />
               </div>
-              {/* Left 30% = half-star tap zone */}
+              {/* Left 50% = half-star tap zone */}
               <button
+                type="button"
                 className="absolute top-0 left-0 h-full z-10"
-                style={{ width: '30%' }}
+                style={{ width: '50%' }}
                 onClick={() => setRating(star - 0.5)}
                 aria-label={`Rate ${star - 0.5} stars`}
               />
-              {/* Right 70% = whole star tap zone */}
+              {/* Right 50% = whole star tap zone */}
               <button
+                type="button"
                 className="absolute top-0 right-0 h-full z-10"
-                style={{ width: '70%' }}
+                style={{ width: '50%' }}
                 onClick={() => setRating(star)}
                 aria-label={`Rate ${star} stars`}
               />
@@ -1186,36 +1188,60 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                     {renderStars()}
                   </div>
 
-              {/* Add to list — single dropdown */}
-              <div className="relative">
-                <select
-                  value={selectedListId}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === 'dnf') {
-                      setPendingDnfListId(val);
-                      setIsDnfDrawerOpen(true);
-                    } else {
-                      setSelectedListId(val);
-                    }
+              {/* Add to list — pill buttons */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: 'finished', label: 'Finished' },
+                  { id: 'currently', label: 'Currently' },
+                  { id: 'queue', label: 'Want To' },
+                  { id: 'favorites', label: 'Favorites' },
+                ].map((list) => (
+                  <button
+                    key={list.id}
+                    type="button"
+                    onClick={() => setSelectedListId(selectedListId === list.id ? '' : list.id)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedListId === list.id
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    data-testid={`list-pill-${list.id}`}
+                  >
+                    {list.label}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPendingDnfListId('dnf');
+                    setIsDnfDrawerOpen(true);
                   }}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white text-gray-700 appearance-none pr-8 focus:outline-none focus:border-purple-400"
-                  data-testid="add-to-list-select"
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    selectedListId === 'dnf'
+                      ? 'bg-red-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  data-testid="list-pill-dnf"
                 >
-                  <option value="">Add to list</option>
-                  <option value="finished">Finished</option>
-                  <option value="currently">Currently watching / reading</option>
-                  <option value="queue">Want To</option>
-                  <option value="favorites">Favorites</option>
-                  <option value="dnf">DNF</option>
-                  {userLists
-                    .filter((l: any) => !['finished', 'currently', 'queue', 'favorites', 'dnf'].includes(l.id))
-                    .map((l: any) => (
-                      <option key={l.id} value={l.id}>{l.title || l.name}</option>
-                    ))
-                  }
-                </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  DNF
+                </button>
+                {userLists.filter((l: any) => !['finished', 'currently', 'queue', 'favorites', 'dnf'].includes(l.id)).length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsListDrawerOpen(true)}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
+                      !['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    data-testid="list-pill-custom"
+                  >
+                    {!['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
+                      ? (userLists.find((l: any) => l.id === selectedListId)?.title || 'Custom')
+                      : 'More'}
+                    <ChevronDown size={12} />
+                  </button>
+                )}
               </div>
 
               {/* Spoilers checkbox */}
