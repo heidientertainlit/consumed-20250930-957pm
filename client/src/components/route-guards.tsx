@@ -7,10 +7,10 @@ interface RouteGuardProps {
 }
 
 const ONBOARDING_KEY = 'consumed_onboarding_completed';
+const NEW_USER_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 
 export function isOnboardingComplete(): boolean {
-  // Onboarding removed - always return true to skip it
-  return true;
+  return localStorage.getItem(ONBOARDING_KEY) === 'true';
 }
 
 export function markOnboardingComplete(): void {
@@ -35,12 +35,21 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
     if (!loading && user) {
       const currentPath = window.location.pathname;
       const onboardingDone = isOnboardingComplete();
-      
-      if (!onboardingDone && currentPath !== '/onboarding') {
-        setLocation('/onboarding');
-      } else {
-        setReady(true);
+
+      if (!onboardingDone) {
+        const createdAt = new Date(user.created_at).getTime();
+        const isNewUser = Date.now() - createdAt < NEW_USER_WINDOW_MS;
+
+        if (isNewUser && currentPath !== '/onboarding') {
+          setLocation('/onboarding');
+          return;
+        } else {
+          // Existing user without the key — mark complete silently
+          markOnboardingComplete();
+        }
       }
+
+      setReady(true);
     }
   }, [user, loading, setLocation]);
 
@@ -72,7 +81,14 @@ export function PublicOnlyRoute({ children }: RouteGuardProps) {
       if (onboardingDone) {
         setLocation('/activity');
       } else {
-        setLocation('/onboarding');
+        const createdAt = new Date(user.created_at).getTime();
+        const isNewUser = Date.now() - createdAt < NEW_USER_WINDOW_MS;
+        if (isNewUser) {
+          setLocation('/onboarding');
+        } else {
+          markOnboardingComplete();
+          setLocation('/activity');
+        }
       }
     }
   }, [user, loading, setLocation]);

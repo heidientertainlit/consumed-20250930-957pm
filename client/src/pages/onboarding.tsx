@@ -1,5 +1,6 @@
 import { useLocation } from "wouter";
 import { Dna, Users, Brain, ChevronRight } from "lucide-react";
+import { markOnboardingComplete } from "@/components/route-guards";
 
 const PATHS = [
   {
@@ -38,7 +39,7 @@ export default function OnboardingPage() {
   const [, setLocation] = useLocation();
 
   const go = (route: string) => {
-    localStorage.setItem("consumed_onboarded", "true");
+    markOnboardingComplete();
     setLocation(route);
   };
 
