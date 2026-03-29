@@ -43,6 +43,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   const [isAdding, setIsAdding] = useState<string | null>(null);
   const [step, setStep] = useState<SheetStep>('select-list');
   const [addedListName, setAddedListName] = useState<string>('');
+  const [addedItemId, setAddedItemId] = useState<string | null>(null);
   const [selectedRating, setSelectedRating] = useState<number>(0);
   const [hoveredRating, setHoveredRating] = useState<number>(0);
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
@@ -93,6 +94,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   const handleClose = () => {
     setStep('select-list');
     setAddedListName('');
+    setAddedItemId(null);
     setSelectedRating(0);
     setHoveredRating(0);
     setTriviaQuestion(null);
@@ -243,6 +245,9 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to add to list');
       }
+
+      const responseData = await response.json().catch(() => ({}));
+      if (responseData?.data?.id) setAddedItemId(responseData.data.id);
 
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
@@ -729,6 +734,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
           isOpen={step === 'progress' && isOpen}
           onOpenChange={(open) => { if (!open) handleClose(); }}
           item={{
+            id: addedItemId || undefined,
             title: media.title || '',
             image_url: media.imageUrl,
             media_type: media.mediaType || '',

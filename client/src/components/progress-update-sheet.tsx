@@ -87,7 +87,7 @@ export function ProgressUpdateSheet({
     let attempts = 0;
     const tryResolve = async () => {
       const { data } = await supabase
-        .from('library_items')
+        .from('list_items')
         .select('id')
         .eq('external_id', item.external_id!)
         .limit(1);
