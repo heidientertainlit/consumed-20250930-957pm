@@ -26,6 +26,7 @@ const SOURCE_COLORS: Record<string, string> = {
   'trending-tv':     'bg-indigo-100 text-indigo-700',
   'trending-movies': 'bg-indigo-100 text-indigo-700',
   'nyt':             'bg-gray-100 text-gray-700',
+  'open-library':    'bg-emerald-100 text-emerald-700',
   'apple-music':     'bg-pink-100 text-pink-700',
   'apple-podcasts':  'bg-orange-100 text-orange-700',
 };

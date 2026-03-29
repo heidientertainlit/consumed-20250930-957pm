@@ -218,6 +218,41 @@ async function getNytTrending(): Promise<TrendingItem[]> {
   }
 }
 
+async function getOpenLibraryTrending(): Promise<TrendingItem[]> {
+  try {
+    const res = await fetch('https://openlibrary.org/trending/weekly.json?limit=12', {
+      headers: { 'User-Agent': 'Consumed-App/1.0 (contact@consumed.app)' },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const works: any[] = data.works || [];
+    return works
+      .filter((w: any) => w.title)
+      .slice(0, 10)
+      .map((w: any, i: number) => {
+        const coverId = w.cover_i || w.cover_id;
+        const image_url = coverId
+          ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg`
+          : '';
+        const key = (w.key || '').replace('/works/', '');
+        return {
+          id: `ol-${i}`,
+          title: w.title,
+          image_url,
+          media_type: 'book',
+          source_label: 'Open Library',
+          source_key: 'open-library',
+          external_id: key || String(i),
+          external_source: 'openlibrary',
+          rank: i + 1,
+        };
+      });
+  } catch (e) {
+    console.error('Open Library trending error:', e);
+    return [];
+  }
+}
+
 async function getAppleTrending(): Promise<TrendingItem[]> {
   try {
     const results: TrendingItem[] = [];
@@ -282,19 +317,31 @@ serve(async (req) => {
     );
     const tmdbKey = Deno.env.get('TMDB_API_KEY') || '';
 
-    const [appWide, streaming, nyt, apple] = await Promise.allSettled([
+    const [appWide, streaming, nyt, openLib, apple] = await Promise.allSettled([
       getAppWideTrending(supabaseAdmin),
       getFlixPatrolTrending(tmdbKey),
       getNytTrending(),
+      getOpenLibraryTrending(),
       getAppleTrending(),
     ]);
 
-    const allItems: TrendingItem[] = [
-      ...(appWide.status === 'fulfilled' ? appWide.value : []),
-      ...(streaming.status === 'fulfilled' ? streaming.value : []),
-      ...(nyt.status === 'fulfilled' ? nyt.value : []),
-      ...(apple.status === 'fulfilled' ? apple.value : []),
-    ];
+    // Interleave sources round-robin so the carousel shows true mixed media
+    // instead of all TV shows, then all books, then all music in sequence
+    const buckets: TrendingItem[][] = [
+      appWide.status === 'fulfilled' ? appWide.value : [],
+      streaming.status === 'fulfilled' ? streaming.value : [],
+      nyt.status === 'fulfilled' ? nyt.value : [],
+      openLib.status === 'fulfilled' ? openLib.value : [],
+      apple.status === 'fulfilled' ? apple.value : [],
+    ].filter(b => b.length > 0);
+
+    const allItems: TrendingItem[] = [];
+    const maxLen = Math.max(...buckets.map(b => b.length), 0);
+    for (let i = 0; i < maxLen; i++) {
+      for (const bucket of buckets) {
+        if (i < bucket.length) allItems.push(bucket[i]);
+      }
+    }
 
     return new Response(JSON.stringify({ items: allItems }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
