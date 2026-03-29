@@ -2704,7 +2704,16 @@ export default function Feed() {
     return renderFeedItem(item, `batch-${batchIndex}`);
   };
 
-  const renderRemainingPosts = () => null;
+  const renderRemainingPosts = () => {
+    if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
+    const remaining = standaloneUGCPosts.slice(33);
+    if (remaining.length === 0) return null;
+    return (
+      <>
+        {remaining.map((item, i) => renderFeedItem(item, `remaining-${i}`))}
+      </>
+    );
+  };
 
 
   const roomItems = useMemo(() => {
