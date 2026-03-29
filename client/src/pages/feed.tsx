@@ -934,8 +934,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}>
                     <Star size={34} className="fill-yellow-400 text-yellow-400" />
                   </div>
-                  <button className="absolute top-0 left-0 h-full z-10" style={{ width: '30%' }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5} stars`} />
-                  <button className="absolute top-0 right-0 h-full z-10" style={{ width: '70%' }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star} stars`} />
+                  <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5} stars`} />
+                  <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star} stars`} />
                 </div>
               ))}
               {ratingSubmitted ? (
