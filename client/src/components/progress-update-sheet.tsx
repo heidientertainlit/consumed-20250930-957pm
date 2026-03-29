@@ -174,6 +174,7 @@ export function ProgressUpdateSheet({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      toast({ title: 'Progress updated' });
       onProgressSaved?.();
       onOpenChange(false);
     },

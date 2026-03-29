@@ -295,7 +295,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
           media_title: media.title,
           media_type: media.mediaType || 'movie',
           media_image_url: media.imageUrl || '',
-          rating: selectedRating,
+          rating: Math.round(selectedRating),
         }),
       });
 
