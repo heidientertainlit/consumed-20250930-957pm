@@ -2698,10 +2698,8 @@ export default function Feed() {
   const renderPostBatchByIndex = (batchIndex: number) => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
     const len = standaloneUGCPosts.length;
-    if (len === 0) return null;
-    // Cycle through posts using modulo so lower feed sections always have content
-    const effectiveIndex = batchIndex < len ? batchIndex : batchIndex % len;
-    const item = slotAssignments.get(effectiveIndex);
+    if (len === 0 || batchIndex >= len) return null;
+    const item = slotAssignments.get(batchIndex);
     if (!item) return null;
     return renderFeedItem(item, `batch-${batchIndex}`);
   };
