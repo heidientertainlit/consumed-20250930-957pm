@@ -184,7 +184,7 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
     throw new Error('No authentication token available');
   }
 
-  const limit = 50; // Posts per page — higher limit pulls in more diverse users' posts
+  const limit = 200; // Posts per page — higher limit pulls in more diverse users' posts
   const offset = pageParam * limit;
 
   console.log('🔄 FETCHING FEED - page:', pageParam, 'offset:', offset);

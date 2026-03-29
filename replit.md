@@ -96,7 +96,7 @@ Preferred communication style: Simple, everyday language.
 - **Media Data Requirements**: `image_url` (full HTTPS URL), `external_id`, `external_source`, `title` are REQUIRED for all media. Edge functions must capture `image_url` and convert relative TMDB paths.
 - **Media Search Display Requirements**: `media-search` edge function MUST return `poster_url`, `image`, `creator`, `title`, `type`, `year`, `external_id`, `external_source`.
 - **Social Feed Architecture**:
-    - Feed fetch limit: `limit = 50;` in `fetchSocialFeed` function (`client/src/pages/feed.tsx`). Never lower this.
+    - Feed fetch limit: `limit = 200;` in `fetchSocialFeed` function (`client/src/pages/feed.tsx`). Never lower this.
     - Infinite scroll: Implemented via `IntersectionObserver` on `loadMoreRef` div. No hard cap on total posts.
     - UGC post rendering pipeline: Filters `socialPosts` into `ugcSlots`, deduplicates/groups into `standaloneUGCPosts`, assigns to `slotAssignments`. `renderPostBatchByIndex(N)` renders items interleaved with other cards.
     - Two rendering paths in `feed.tsx`: `renderPostBatchByIndex` (top of feed, interleaved) and `feedData.map()` (bottom of feed, social posts section). These must remain separated.
