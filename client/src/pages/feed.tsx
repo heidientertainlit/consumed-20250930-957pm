@@ -4,6 +4,7 @@ import { Link, useLocation, useSearch } from "wouter";
 import Navigation from "@/components/navigation";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
+import { MediaSearchBar } from "@/components/media-search-bar";
 import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
 import InlineGameCard from "@/components/inline-game-card";
@@ -1950,12 +1951,6 @@ export default function Feed() {
 
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [trackModalPreSelectedMedia, setTrackModalPreSelectedMedia] = useState<any>(null);
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [composerInitialType, setComposerInitialType] = useState<"react" | "predict" | "rank">("react");
-  const [feedSearchQuery, setFeedSearchQuery] = useState("");
-  const [feedSearchResults, setFeedSearchResults] = useState<any[]>([]);
-  const [feedIsSearching, setFeedIsSearching] = useState(false);
-  const [feedSearchMedia, setFeedSearchMedia] = useState<any>(null);
   const [reportCommentData, setReportCommentData] = useState<{ commentId: string; userId: string; userName: string } | null>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
@@ -4155,44 +4150,6 @@ export default function Feed() {
   };
 
 
-  const handleFeedSearch = async (query: string) => {
-    if (!session?.access_token) return;
-    setFeedIsSearching(true);
-    try {
-      const response = await fetch(
-        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/media-search',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ query: query.trim() }),
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setFeedSearchResults(data.results || []);
-      } else {
-        setFeedSearchResults([]);
-      }
-    } catch {
-      setFeedSearchResults([]);
-    } finally {
-      setFeedIsSearching(false);
-    }
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (feedSearchQuery.trim()) {
-        handleFeedSearch(feedSearchQuery);
-      } else {
-        setFeedSearchResults([]);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [feedSearchQuery, session?.access_token]);
 
   const handleReportComment = (commentId: string, userId: string, userName: string) => {
     setReportCommentData({ commentId, userId, userName });
@@ -4816,78 +4773,7 @@ export default function Feed() {
               Activity
             </h1>
 
-            <div className="relative">
-              <div className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-white/[0.12] border border-white/20 focus-within:border-purple-400/60 transition-colors">
-                {feedIsSearching
-                  ? <div className="w-[18px] h-[18px] border-2 border-purple-300/60 border-t-transparent rounded-full animate-spin shrink-0" />
-                  : <SearchIcon size={18} className="text-purple-300/80 shrink-0" />
-                }
-                <input
-                  type="text"
-                  value={feedSearchQuery}
-                  onChange={(e) => setFeedSearchQuery(e.target.value)}
-                  placeholder="Search something to track, rate, or talk about"
-                  className="flex-1 bg-transparent text-white placeholder-white/50 text-sm outline-none"
-                />
-                {feedSearchQuery && (
-                  <button onClick={() => { setFeedSearchQuery(""); setFeedSearchResults([]); }} className="shrink-0">
-                    <X size={16} className="text-white/40" />
-                  </button>
-                )}
-              </div>
-
-              {feedSearchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl bg-[#1a1a2e] border border-white/10 shadow-2xl z-50 overflow-hidden max-h-80 overflow-y-auto">
-                  <p className="text-xs font-semibold text-white/40 uppercase tracking-wider px-4 pt-3 pb-2">Media</p>
-                  {feedSearchResults.slice(0, 6).map((result, index) => {
-                    const poster = result.poster_url || result.image_url || result.poster_path || result.image;
-                    return (
-                      <div key={`${result.external_id || result.id}-${index}`} className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.05] transition-colors">
-                        <Link
-                          href={`/media/${normalizeMediaType(result.type)}/${result.external_source || 'tmdb'}/${result.external_id || result.id}`}
-                          className="flex items-center gap-3 flex-1 min-w-0"
-                          onClick={() => { setFeedSearchQuery(""); setFeedSearchResults([]); }}
-                        >
-                          {poster
-                            ? <img src={poster} alt={result.title} className="w-12 h-16 object-cover rounded-lg shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                            : <div className="w-12 h-16 bg-white/10 rounded-lg shrink-0 flex items-center justify-center"><Film size={16} className="text-white/30" /></div>
-                          }
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-white text-sm truncate">{result.title}</p>
-                            <p className="text-xs text-white/50 capitalize">{result.type}{result.year ? ` • ${result.year}` : ''}</p>
-                          </div>
-                        </Link>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            onClick={() => {
-                              setFeedSearchQuery("");
-                              setFeedSearchResults([]);
-                              setQuickAddMedia({ title: result.title, mediaType: result.type || 'movie', externalId: result.external_id || result.id, externalSource: result.external_source || 'tmdb', imageUrl: poster || '' });
-                              setIsQuickAddOpen(true);
-                            }}
-                            className="w-10 h-10 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
-                          >
-                            <Plus size={20} className="text-white" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setFeedSearchQuery("");
-                              setFeedSearchResults([]);
-                              setFeedSearchMedia({ title: result.title, mediaType: result.type || 'movie', externalId: result.external_id || result.id, externalSource: result.external_source || 'tmdb', imageUrl: poster || '' });
-                              setComposerOpen(true);
-                            }}
-                            className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
-                          >
-                            <MessageSquarePlus size={16} className="text-white" />
-                            <Star size={10} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            <MediaSearchBar session={session} />
 
           </div>
           
@@ -7165,15 +7051,6 @@ export default function Feed() {
           setTrackModalPreSelectedMedia(null);
         }}
         preSelectedMedia={trackModalPreSelectedMedia}
-      />
-
-      <QuickAddModal
-        isOpen={composerOpen}
-        onClose={() => { setComposerOpen(false); setFeedSearchMedia(null); }}
-        initialPostType={composerInitialType}
-        preSelectedMedia={feedSearchMedia}
-        skipToComposer={!!feedSearchMedia}
-        searchToCompose={!feedSearchMedia}
       />
 
       <QuickAddListSheet
