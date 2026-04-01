@@ -14,7 +14,6 @@ import {
   User, Loader2
 } from "lucide-react";
 
-const ADMIN_USER_ID = "88bfb2a0-e8ce-4081-b731-2a49567ff093";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -87,11 +86,25 @@ export default function AdminPage() {
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<"drafts" | "scheduled">("drafts");
 
+  const { data: currentProfile, isLoading: profileLoading } = useQuery({
+    queryKey: ["admin-profile-check", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from("users")
+        .select("id, user_name, is_admin")
+        .eq("id", user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
   useEffect(() => {
-    if (user && user.id !== ADMIN_USER_ID) {
+    if (!profileLoading && currentProfile && !currentProfile.is_admin) {
       setLocation("/");
     }
-  }, [user]);
+  }, [currentProfile, profileLoading]);
 
   const { data: personas = [] } = useQuery<Persona[]>({
     queryKey: ["admin-personas"],
@@ -253,7 +266,15 @@ export default function AdminPage() {
     approveMutation.mutate({ id: draft.id, scheduledFor: editSchedule || new Date(Date.now() + 86400000).toISOString() });
   };
 
-  if (!user || user.id !== ADMIN_USER_ID) {
+  if (profileLoading || !user) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <Loader2 size={24} className="animate-spin text-purple-400" />
+      </div>
+    );
+  }
+
+  if (!currentProfile?.is_admin) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <p className="text-gray-400">Access restricted</p>
