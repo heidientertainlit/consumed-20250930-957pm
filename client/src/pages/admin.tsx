@@ -77,11 +77,16 @@ function getStaggeredLabel(index: number): string {
   return `${days[targetDay.getDay()]} ${displayHour}${ampm}`;
 }
 
-// Build ISO string from a local date string (YYYY-MM-DD) + hour
-function buildScheduleISO(dateStr: string, hour: number): string {
+// Build ISO string from a local date string (YYYY-MM-DD) + time string (HH:MM)
+function buildScheduleISO(dateStr: string, time: string): string {
+  const [h, m] = time.split(":").map(Number);
   const d = new Date(dateStr + "T00:00:00");
-  d.setHours(hour, 0, 0, 0);
+  d.setHours(h, m || 0, 0, 0);
   return d.toISOString();
+}
+
+function hourToTimeStr(hour: number): string {
+  return `${String(hour).padStart(2, "0")}:00`;
 }
 
 // Get local YYYY-MM-DD from a Date
@@ -134,7 +139,7 @@ export default function AdminPage() {
   const [editContent, setEditContent] = useState("");
   const [editRating, setEditRating] = useState<string>("");
   const [editDate, setEditDate] = useState<string>("");
-  const [editHour, setEditHour] = useState<number>(11);
+  const [editTime, setEditTime] = useState<string>("11:00");
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<"drafts" | "scheduled">("drafts");
 
@@ -310,7 +315,7 @@ export default function AdminPage() {
     setEditRating(draft.rating?.toString() || "");
     const defaultDate = getStaggeredTime(draftIndex);
     setEditDate(toLocalDateStr(defaultDate));
-    setEditHour(DAILY_SLOTS[draftIndex % DAILY_SLOTS.length]);
+    setEditTime(hourToTimeStr(DAILY_SLOTS[draftIndex % DAILY_SLOTS.length]));
   };
 
   if (profileLoading || !user) {
@@ -498,13 +503,13 @@ export default function AdminPage() {
                         <p className="text-xs text-gray-400 mb-1.5">
                           Time <span className="text-gray-600">({getTimezoneAbbr()})</span>
                         </p>
-                        <div className="flex gap-2 flex-wrap">
+                        <div className="flex gap-2 flex-wrap items-center">
                           {DAILY_SLOTS.map((hour, i) => (
                             <button
                               key={hour}
-                              onClick={() => setEditHour(hour)}
+                              onClick={() => setEditTime(hourToTimeStr(hour))}
                               className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                                editHour === hour
+                                editTime === hourToTimeStr(hour)
                                   ? "bg-purple-600 text-white"
                                   : "bg-gray-800 text-gray-400 hover:bg-gray-700"
                               }`}
@@ -512,6 +517,12 @@ export default function AdminPage() {
                               {TIME_SLOT_LABELS[i]}
                             </button>
                           ))}
+                          <input
+                            type="time"
+                            value={editTime}
+                            onChange={e => setEditTime(e.target.value)}
+                            className="bg-gray-800 border border-gray-700 text-white text-xs rounded-lg px-2 py-1 h-7 w-28 focus:outline-none focus:border-purple-500"
+                          />
                         </div>
                       </div>
                       <div className="flex gap-2 flex-wrap">
@@ -519,7 +530,7 @@ export default function AdminPage() {
                           size="sm"
                           onClick={() => approveMutation.mutate({
                             id: draft.id,
-                            scheduledFor: editDate ? buildScheduleISO(editDate, editHour) : staggeredTime.toISOString(),
+                            scheduledFor: editDate ? buildScheduleISO(editDate, editTime) : staggeredTime.toISOString(),
                             overrideContent: editContent,
                             overrideRating: editRating ? parseFloat(editRating) : null,
                           })}
