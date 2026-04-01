@@ -75,13 +75,19 @@ ${styleExamples}`;
 
       const userPrompt = `Generate ${postsPerPersona} distinct social posts this person would authentically write right now. Posts should be about specific real media (movies, TV shows, books, podcasts, music, or games) that fit their taste.
 
+IMPORTANT RULES:
+- Write entirely in this person's authentic voice — do NOT copy or paraphrase any existing reviews, Reddit posts, or published criticism
+- Reference factually accurate details: correct actor names, real plot points, actual directors/authors/artists
+- Each post should feel like a genuine personal reaction, not a summary or generic opinion
+- Vary the topics across posts — don't repeat the same show or movie
+
 For each post return a JSON object with these exact fields:
 - post_type: one of "thought", "hot_take", "review" (use "review" when there's a rating)
-- content: the post text (no hashtags, no emojis unless they fit the persona's style naturally, match their voice exactly)
-- rating: a number 1-10 with one decimal (e.g. 8.5) if the post is a review/rating, otherwise null
+- content: the post text (no hashtags, match their voice exactly)
+- rating: a number from 0.5 to 5 in 0.5 increments (e.g. 4.5) if the post is a review/rating, otherwise null. This is a 5-star scale.
 - media_title: exact title of the media being discussed
 - media_type: one of "movie", "tv", "book", "podcast", "music", "game"
-- media_creator: director, author, artist, or show creator (if known)
+- media_creator: director, author, artist, or show creator name (if known)
 - ai_notes: one sentence explaining why this fits the persona
 
 Return ONLY a JSON array of ${postsPerPersona} post objects. No other text.`;

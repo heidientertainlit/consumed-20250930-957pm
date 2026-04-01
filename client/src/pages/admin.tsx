@@ -41,10 +41,51 @@ type Persona = {
   persona_config: any;
 };
 
-function postTypeIcon(type: string) {
-  if (type === "hot_take") return <Flame size={14} className="text-orange-400" />;
-  if (type === "review") return <Star size={14} className="text-yellow-400" />;
-  return <MessageSquare size={14} className="text-purple-400" />;
+// Stagger times: 4 slots per day — 8am, 11am, 2pm, 7pm
+const DAILY_SLOTS = [8, 11, 14, 19];
+
+function getStaggeredTime(draftIndex: number): Date {
+  const dayOffset = Math.floor(draftIndex / DAILY_SLOTS.length) + 1;
+  const slotIndex = draftIndex % DAILY_SLOTS.length;
+  const d = new Date();
+  d.setDate(d.getDate() + dayOffset);
+  d.setHours(DAILY_SLOTS[slotIndex], 0, 0, 0);
+  return d;
+}
+
+function formatScheduleLabel(d: Date): string {
+  const today = new Date();
+  const dayDiff = Math.round((d.setHours(0,0,0,0) - today.setHours(0,0,0,0)) / 86400000);
+  const slotDate = new Date(d);
+  slotDate.setHours(DAILY_SLOTS[0]);
+  const timeStr = new Date(slotDate.setHours(DAILY_SLOTS[0]));
+  const hrs = DAILY_SLOTS[0];
+
+  // Restore original date
+  const result = new Date();
+  result.setDate(result.getDate() + dayDiff);
+  result.setHours(getStaggeredTime(0).getHours(), 0, 0, 0);
+
+  if (dayDiff === 1) return `tomorrow`;
+  if (dayDiff <= 7) {
+    const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    return days[new Date().getDay() + dayDiff <= 6 ? new Date().getDay() + dayDiff : (new Date().getDay() + dayDiff) % 7];
+  }
+  return `in ${dayDiff} days`;
+}
+
+function getStaggeredLabel(index: number): string {
+  const d = getStaggeredTime(index);
+  const dayOffset = Math.floor(index / DAILY_SLOTS.length) + 1;
+  const slotHour = DAILY_SLOTS[index % DAILY_SLOTS.length];
+  const ampm = slotHour >= 12 ? "pm" : "am";
+  const displayHour = slotHour > 12 ? slotHour - 12 : slotHour;
+
+  if (dayOffset === 1) return `tomorrow ${displayHour}${ampm}`;
+  const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const targetDay = new Date();
+  targetDay.setDate(targetDay.getDate() + dayOffset);
+  return `${days[targetDay.getDay()]} ${displayHour}${ampm}`;
 }
 
 function postTypeBadge(type: string) {
@@ -67,6 +108,15 @@ function mediaTypeBadge(type: string | null) {
     <Badge className={`${colors[type] || "bg-gray-500/20 text-gray-300"} border-0 text-xs capitalize`}>
       {type}
     </Badge>
+  );
+}
+
+function StarRating({ rating }: { rating: number }) {
+  const stars = Math.round(rating * 2) / 2;
+  return (
+    <span className="text-yellow-400 text-xs ml-1">
+      {stars.toFixed(1)}★
+    </span>
   );
 }
 
@@ -148,17 +198,34 @@ export default function AdminPage() {
   });
 
   const approveMutation = useMutation({
-    mutationFn: async ({ id, scheduledFor }: { id: string; scheduledFor: string }) => {
+    mutationFn: async ({ id, scheduledFor, overrideContent, overrideRating }: {
+      id: string;
+      scheduledFor: string;
+      overrideContent?: string;
+      overrideRating?: number | null;
+    }) => {
       const draft = drafts.find(d => d.id === id);
       if (!draft) throw new Error("Draft not found");
+
+      const content = overrideContent ?? draft.content;
+      const rating = overrideRating !== undefined ? overrideRating : draft.rating;
+
+      // Save any edits back to draft first
+      if (overrideContent !== undefined || overrideRating !== undefined) {
+        const { error: editError } = await supabase
+          .from("persona_post_drafts")
+          .update({ content, rating })
+          .eq("id", id);
+        if (editError) throw editError;
+      }
 
       const { error: scheduleError } = await supabase
         .from("scheduled_persona_posts")
         .insert({
           persona_user_id: draft.persona_user_id,
           post_type: draft.post_type,
-          content: draft.content,
-          rating: draft.rating,
+          content,
+          rating,
           media_title: draft.media_title,
           media_type: draft.media_type,
           media_creator: draft.media_creator,
@@ -176,6 +243,7 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       toast({ title: "Post approved and scheduled" });
+      setEditingDraft(null);
       queryClient.invalidateQueries({ queryKey: ["admin-drafts"] });
     },
     onError: (err: any) => {
@@ -193,21 +261,6 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       toast({ title: "Draft rejected" });
-      queryClient.invalidateQueries({ queryKey: ["admin-drafts"] });
-    },
-  });
-
-  const editMutation = useMutation({
-    mutationFn: async ({ id, content, rating }: { id: string; content: string; rating: number | null }) => {
-      const { error } = await supabase
-        .from("persona_post_drafts")
-        .update({ content, rating })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: "Draft saved" });
-      setEditingDraft(null);
       queryClient.invalidateQueries({ queryKey: ["admin-drafts"] });
     },
   });
@@ -230,6 +283,9 @@ export default function AdminPage() {
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Generation failed");
+      if (result.errors?.length) {
+        console.warn("Generation warnings:", result.errors);
+      }
       toast({ title: `Generated ${result.generated} drafts`, description: "Review them below" });
       queryClient.invalidateQueries({ queryKey: ["admin-drafts"] });
       setActiveTab("drafts");
@@ -246,24 +302,12 @@ export default function AdminPage() {
     );
   };
 
-  const startEdit = (draft: Draft) => {
+  const startEdit = (draft: Draft, draftIndex: number) => {
     setEditingDraft(draft.id);
     setEditContent(draft.content);
     setEditRating(draft.rating?.toString() || "");
-    const defaultDate = new Date();
-    defaultDate.setDate(defaultDate.getDate() + 1);
-    defaultDate.setHours(10, 0, 0, 0);
+    const defaultDate = getStaggeredTime(draftIndex);
     setEditSchedule(defaultDate.toISOString().slice(0, 16));
-  };
-
-  const handleApprove = (draft: Draft) => {
-    if (!editSchedule) {
-      const d = new Date();
-      d.setDate(d.getDate() + 1);
-      d.setHours(10, 0, 0, 0);
-      setEditSchedule(d.toISOString().slice(0, 16));
-    }
-    approveMutation.mutate({ id: draft.id, scheduledFor: editSchedule || new Date(Date.now() + 86400000).toISOString() });
   };
 
   if (profileLoading || !user) {
@@ -347,7 +391,7 @@ export default function AdminPage() {
             className="bg-purple-600 hover:bg-purple-700 text-white"
           >
             {generating ? (
-              <><Loader2 size={15} className="animate-spin mr-2" />Generating with Claude...</>
+              <><Loader2 size={15} className="animate-spin mr-2" />Generating...</>
             ) : (
               <><Sparkles size={15} className="mr-2" />Generate {selectedPersonaIds.length > 0 ? `${selectedPersonaIds.length * postsPerPersona} drafts` : "drafts"}</>
             )}
@@ -386,9 +430,11 @@ export default function AdminPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {drafts.map(draft => {
+            {drafts.map((draft, index) => {
               const isEditing = editingDraft === draft.id;
               const showNotes = expandedNotes.has(draft.id);
+              const staggeredTime = getStaggeredTime(index);
+              const staggerLabel = getStaggeredLabel(index);
               return (
                 <div key={draft.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
                   <div className="flex items-start justify-between gap-3 mb-3">
@@ -409,9 +455,10 @@ export default function AdminPage() {
 
                   {draft.media_title && (
                     <p className="text-xs text-gray-400 mb-2">
-                      <span className="text-gray-500">Re:</span> <span className="text-gray-300 font-medium">{draft.media_title}</span>
+                      <span className="text-gray-500">Re:</span>{" "}
+                      <span className="text-gray-300 font-medium">{draft.media_title}</span>
                       {draft.media_creator && <span className="text-gray-500"> · {draft.media_creator}</span>}
-                      {draft.rating && <span className="text-yellow-400 ml-1">{draft.rating}/10</span>}
+                      {draft.rating && <StarRating rating={draft.rating} />}
                     </p>
                   )}
 
@@ -424,13 +471,13 @@ export default function AdminPage() {
                       />
                       <div className="flex items-center gap-3">
                         <div className="flex-1">
-                          <p className="text-xs text-gray-400 mb-1">Rating (optional)</p>
+                          <p className="text-xs text-gray-400 mb-1">Rating out of 5 (optional)</p>
                           <Input
                             type="number"
-                            min="1" max="10" step="0.5"
+                            min="0.5" max="5" step="0.5"
                             value={editRating}
                             onChange={e => setEditRating(e.target.value)}
-                            placeholder="e.g. 8.5"
+                            placeholder="e.g. 4.5"
                             className="bg-gray-800 border-gray-700 text-white text-sm h-8"
                           />
                         </div>
@@ -444,19 +491,16 @@ export default function AdminPage() {
                           />
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <Button
                           size="sm"
-                          onClick={() => editMutation.mutate({ id: draft.id, content: editContent, rating: editRating ? parseFloat(editRating) : null })}
-                          disabled={editMutation.isPending}
-                          className="bg-gray-700 hover:bg-gray-600 text-white text-xs"
-                        >
-                          Save edits
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => approveMutation.mutate({ id: draft.id, scheduledFor: editSchedule || new Date(Date.now() + 86400000).toISOString() })}
-                          disabled={approveMutation.isPending || !editSchedule}
+                          onClick={() => approveMutation.mutate({
+                            id: draft.id,
+                            scheduledFor: editSchedule || staggeredTime.toISOString(),
+                            overrideContent: editContent,
+                            overrideRating: editRating ? parseFloat(editRating) : null,
+                          })}
+                          disabled={approveMutation.isPending}
                           className="bg-green-700 hover:bg-green-600 text-white text-xs"
                         >
                           <Check size={12} className="mr-1" />
@@ -486,7 +530,7 @@ export default function AdminPage() {
                             className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-400"
                           >
                             {showNotes ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                            Claude's note
+                            AI note
                           </button>
                           {showNotes && (
                             <p className="mt-1.5 text-xs text-gray-500 italic pl-2 border-l border-gray-700">{draft.ai_notes}</p>
@@ -494,27 +538,22 @@ export default function AdminPage() {
                         </div>
                       )}
                       {activeTab === "drafts" && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <Button
                             size="sm"
-                            onClick={() => startEdit(draft)}
+                            onClick={() => startEdit(draft, index)}
                             className="bg-gray-800 hover:bg-gray-700 text-white text-xs border border-gray-700"
                           >
                             Edit & Schedule
                           </Button>
                           <Button
                             size="sm"
-                            onClick={() => {
-                              const d = new Date();
-                              d.setDate(d.getDate() + 1);
-                              d.setHours(10, 0, 0, 0);
-                              approveMutation.mutate({ id: draft.id, scheduledFor: d.toISOString() });
-                            }}
+                            onClick={() => approveMutation.mutate({ id: draft.id, scheduledFor: staggeredTime.toISOString() })}
                             disabled={approveMutation.isPending}
                             className="bg-green-700 hover:bg-green-600 text-white text-xs"
                           >
                             <Check size={12} className="mr-1" />
-                            Approve (tomorrow 10am)
+                            Approve ({staggerLabel})
                           </Button>
                           <Button
                             size="sm"
