@@ -2294,13 +2294,7 @@ export default function Feed() {
     const DEDUP_EXEMPT = new Set(['predict', 'prediction', 'poll', 'cast_approved']);
     const dedupMap = new Map<string, UGCPost>();
     for (const post of allUGC) {
-      // Exempt prediction/poll types AND add-to-list/rewatch types.
-      // add-to-list posts are a different activity (tracking) from a review and must never
-      // compete with a review about the same media — both should appear independently.
-      const rawType = (post._rawPost as any)?.type || (post._rawPost as any)?.post_type || '';
-      const isListActivity = rawType === 'add-to-list' || rawType === 'rewatch';
-      if (DEDUP_EXEMPT.has(post.type) || isListActivity) {
-        // Give exempt posts a unique key so they are never deduplicated
+      if (DEDUP_EXEMPT.has(post.type)) {
         dedupMap.set(`exempt-${post.id}`, post);
         continue;
       }
@@ -2309,9 +2303,20 @@ export default function Feed() {
       // compete with each other or anyone else — only same user + same media deduplicates.
       const userKey = post.user?.id || `orphan-${post.id}`;
       const key = `${userKey}-${mediaKey}`;
-      if (!dedupMap.has(key)) {
-        // Posts are iterated newest-first — first occurrence is always the newest, keep it.
+      const existing = dedupMap.get(key);
+      if (!existing) {
         dedupMap.set(key, post);
+      } else {
+        // Posts are iterated newest-first, so 'existing' is the newer post, 'post' is older.
+        // Rule: newer always wins UNLESS the newer post has no substance (no rating, no real
+        // content) and the older post does. A bare tracking card must never bury a rich review.
+        const hasSubstance = (p: UGCPost) =>
+          (p.rating && p.rating > 0) || (p.content?.trim()?.length || 0) > 20;
+        if (!hasSubstance(existing) && hasSubstance(post)) {
+          // Newer post is empty, older has substance — keep the older one
+          dedupMap.set(key, post);
+        }
+        // Otherwise keep existing (newer wins)
       }
     }
     const deduped = Array.from(dedupMap.values());
