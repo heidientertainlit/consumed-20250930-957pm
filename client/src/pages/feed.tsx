@@ -2307,7 +2307,12 @@ export default function Feed() {
       // Use the post's own ID as fallback so posts with missing user IDs never
       // compete with each other or anyone else — only same user + same media deduplicates.
       const userKey = post.user?.id || `orphan-${post.id}`;
-      const key = `${userKey}-${mediaKey}`;
+      // Separate dedup buckets by activity type: a "Want to" addition and a review are
+      // different social actions and should each get their own feed slot.
+      // 'tracking' = add-to-list / rewatch / general list moves
+      // 'opinion'  = review / thought / rating / hot_take / finished
+      const typeCategory = (post.type === 'general' || post.type === 'rewatch') ? 'tracking' : 'opinion';
+      const key = `${userKey}-${mediaKey}-${typeCategory}`;
       const existing = dedupMap.get(key);
       if (!existing) {
         dedupMap.set(key, post);
