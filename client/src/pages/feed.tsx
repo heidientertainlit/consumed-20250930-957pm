@@ -2239,7 +2239,13 @@ export default function Feed() {
         else if (p.type === 'poll' && ((p as any).question || (p as any).options)) postType = 'poll';
         else if (p.type === 'cast_approved') postType = 'cast_approved';
         else if (p.type === 'rank' || p.type === 'shared_rank') postType = 'rank';
-        else if (p.type === 'add-to-list' || p.post_type === 'add-to-list' || p.type === 'rewatch' || p.post_type === 'rewatch') postType = 'general';
+        else if (p.type === 'add-to-list' || p.post_type === 'add-to-list' || p.type === 'rewatch' || p.post_type === 'rewatch') {
+          // If the tracking post carries a rating or written content, surface it properly
+          // instead of showing a bare "Added to Finished" card.
+          if (content.length > 20) postType = 'review';
+          else if (p.rating && p.rating > 0) postType = 'rating';
+          else postType = 'general';
+        }
         else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
         else if ((p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review') && content) postType = p.rating && p.rating > 0 ? 'review' : 'thought';
         else if (p.type === 'thought' || p.post_type === 'thought') postType = 'thought';
