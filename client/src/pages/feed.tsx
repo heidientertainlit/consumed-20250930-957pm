@@ -2209,7 +2209,9 @@ export default function Feed() {
     const isAutoGen = (text: string) => !text || text.startsWith('Added ') || text.startsWith('"Added ') || /^"?Added .+ to .+"?$/i.test(text);
     const pool: UGCPost[] = filterByCategory(socialPosts || [])
       .filter((p: any) => {
-        const hasUser = p.user?.id && p.user?.username && p.user.username !== 'Unknown';
+        // Only require a valid user ID — username may be missing for some users and
+        // that should not silently drop their posts from the feed.
+        const hasUser = !!(p.user?.id);
         const hasCreator = p.creator?.id && p.creator?.username && p.creator.username !== 'Unknown';
         if (!hasUser && !hasCreator) return false;
         if (p.type === 'cast_approved') return true;
@@ -2219,6 +2221,9 @@ export default function Feed() {
         if (p.type === 'rank' || p.type === 'shared_rank') return true;
         if (p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review') return true;
         if (p.type === 'thought' || p.post_type === 'thought') return true;
+        // add-to-list posts (e.g. "Currently", "Finished") always show — the media card is the content
+        if (p.type === 'add-to-list' || p.post_type === 'add-to-list') return true;
+        if (p.type === 'rewatch' || p.post_type === 'rewatch') return true;
         const content = (p.content || '').trim();
         if (p.rating && p.rating > 0) return true;
         if (content.length > 20 && !isAutoGen(content)) return true;
@@ -2234,6 +2239,7 @@ export default function Feed() {
         else if (p.type === 'poll' && ((p as any).question || (p as any).options)) postType = 'poll';
         else if (p.type === 'cast_approved') postType = 'cast_approved';
         else if (p.type === 'rank' || p.type === 'shared_rank') postType = 'rank';
+        else if (p.type === 'add-to-list' || p.post_type === 'add-to-list' || p.type === 'rewatch' || p.post_type === 'rewatch') postType = 'general';
         else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
         else if ((p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review') && content) postType = p.rating && p.rating > 0 ? 'review' : 'thought';
         else if (p.type === 'thought' || p.post_type === 'thought') postType = 'thought';
