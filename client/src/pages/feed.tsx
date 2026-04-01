@@ -2332,12 +2332,24 @@ export default function Feed() {
     }
     // Cleanup pass: if a user has both a tracking post (add-to-list/rewatch) AND
     // an opinion post (review/thought/rating) for the same media, drop the tracking
-    // one — the review tells the full story and the bare card is redundant.
+    // one ONLY if it is not newer than the opinion post.
+    // Rationale: if the tracking action happened in the same session as the review
+    // (same time or older), the review tells the full story and the bare card is
+    // redundant. But if the tracking action is MORE RECENT than the review (e.g.
+    // Randy reviewed Rooster months ago and just added it to "Want to" today), it
+    // is fresh activity and should remain in the feed.
     for (const key of dedupMap.keys()) {
       if (key.endsWith('-tracking')) {
         const opinionKey = key.replace(/-tracking$/, '-opinion');
         if (dedupMap.has(opinionKey)) {
-          dedupMap.delete(key);
+          const trackingPost = dedupMap.get(key)!;
+          const opinionPost = dedupMap.get(opinionKey)!;
+          const trackingTime = new Date(trackingPost.timestamp || 0).getTime();
+          const opinionTime = new Date(opinionPost.timestamp || 0).getTime();
+          // Only drop if tracking post is NOT newer than the opinion post
+          if (trackingTime <= opinionTime) {
+            dedupMap.delete(key);
+          }
         }
       }
     }
