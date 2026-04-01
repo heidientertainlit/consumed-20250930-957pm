@@ -2294,7 +2294,12 @@ export default function Feed() {
     const DEDUP_EXEMPT = new Set(['predict', 'prediction', 'poll', 'cast_approved']);
     const dedupMap = new Map<string, UGCPost>();
     for (const post of allUGC) {
-      if (DEDUP_EXEMPT.has(post.type)) {
+      // Exempt prediction/poll types AND add-to-list/rewatch types.
+      // add-to-list posts are a different activity (tracking) from a review and must never
+      // compete with a review about the same media — both should appear independently.
+      const rawType = (post._rawPost as any)?.type || (post._rawPost as any)?.post_type || '';
+      const isListActivity = rawType === 'add-to-list' || rawType === 'rewatch';
+      if (DEDUP_EXEMPT.has(post.type) || isListActivity) {
         // Give exempt posts a unique key so they are never deduplicated
         dedupMap.set(`exempt-${post.id}`, post);
         continue;
