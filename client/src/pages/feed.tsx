@@ -2330,6 +2330,17 @@ export default function Feed() {
         // Otherwise keep existing (newer wins)
       }
     }
+    // Cleanup pass: if a user has both a tracking post (add-to-list/rewatch) AND
+    // an opinion post (review/thought/rating) for the same media, drop the tracking
+    // one — the review tells the full story and the bare card is redundant.
+    for (const key of dedupMap.keys()) {
+      if (key.endsWith('-tracking')) {
+        const opinionKey = key.replace(/-tracking$/, '-opinion');
+        if (dedupMap.has(opinionKey)) {
+          dedupMap.delete(key);
+        }
+      }
+    }
     const deduped = Array.from(dedupMap.values());
 
     // Step 2: Group posts per user — if a user has multiple posts within 1 hour,
