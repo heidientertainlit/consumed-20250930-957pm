@@ -2298,7 +2298,12 @@ export default function Feed() {
         dedupMap.set(`exempt-${post.id}`, post);
         continue;
       }
-      const mediaKey = post.externalId || post.mediaTitle || `no-media-${post.id}`;
+      // Normalize title as the primary dedup dimension — more reliable than externalId
+      // because add-to-list posts written by track-media sometimes have null media_external_id
+      // while the matching review has a real TMDB ID, causing them to get different keys and
+      // both slip through as if they're unrelated content.
+      const normalizedTitle = (post.mediaTitle || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const mediaKey = normalizedTitle || post.externalId || `no-media-${post.id}`;
       // Use the post's own ID as fallback so posts with missing user IDs never
       // compete with each other or anyone else — only same user + same media deduplicates.
       const userKey = post.user?.id || `orphan-${post.id}`;
@@ -2308,12 +2313,13 @@ export default function Feed() {
         dedupMap.set(key, post);
       } else {
         // Posts are iterated newest-first, so 'existing' is the newer post, 'post' is older.
-        // Rule: newer always wins UNLESS the newer post has no substance (no rating, no real
-        // content) and the older post does. A bare tracking card must never bury a rich review.
-        const hasSubstance = (p: UGCPost) =>
-          (p.rating && p.rating > 0) || (p.content?.trim()?.length || 0) > 20;
+        // Rule: newer wins UNLESS the newer post has no written content and the older does.
+        // A bare tracking card (rating only, no text) must never bury a rich review.
+        // Note: rating alone does NOT count as substance — a bare 4.5-star add-to-list post
+        // must not defeat a 4.5-star review with actual written content.
+        const hasSubstance = (p: UGCPost) => (p.content?.trim()?.length || 0) > 20;
         if (!hasSubstance(existing) && hasSubstance(post)) {
-          // Newer post is empty, older has substance — keep the older one
+          // Newer post lacks written content, older has it — keep the older one
           dedupMap.set(key, post);
         }
         // Otherwise keep existing (newer wins)

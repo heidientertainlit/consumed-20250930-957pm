@@ -1319,7 +1319,9 @@ export default function MediaDetail() {
             {!showReviews && socialActivity.length > 0 && (
               <div className="mt-2 space-y-1">
                 {socialActivity.slice(0, 3).map((post: any) => {
-                  const name = post.users?.display_name || post.users?.user_name || 'Someone';
+                  const rawName = post.users?.display_name || post.users?.user_name || '';
+                  // Strip email-style prefixes (e.g. "thinkhp+riner1428" → "riner1428")
+                  const name = rawName.includes('+') ? (rawName.split('+').pop() || rawName) : (rawName || 'Someone');
                   return (
                     <div key={post.id} className="flex items-center gap-1.5 text-sm text-gray-500 py-0.5">
                       <span className="font-medium text-gray-700">{name}</span>
