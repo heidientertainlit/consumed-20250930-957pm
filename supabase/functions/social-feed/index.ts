@@ -887,8 +887,13 @@ serve(async (req) => {
         // Match posts with list_id OR 'add-to-list' type (covers both old and new posts)
         if (post.list_id || post.post_type === 'add-to-list') {
           listPostsCount++;
-          // Group by user_id + list_id for more precise consolidation
-          const groupKey = `${post.user_id}-${post.list_id || 'unknown'}`;
+          // Group by user_id + list_id for more precise consolidation.
+          // If list_id is null, use a per-post unique key so the post is never
+          // collapsed into the same bucket as other null-list_id posts from the
+          // same user (which would silently discard all but the newest one).
+          const groupKey = post.list_id
+            ? `${post.user_id}-${post.list_id}`
+            : `${post.user_id}-solo-${post.id}`;
           if (!listAdditionGroups.has(groupKey)) {
             listAdditionGroups.set(groupKey, []);
           }
