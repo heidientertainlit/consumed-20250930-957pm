@@ -2344,10 +2344,13 @@ export default function Feed() {
         if (dedupMap.has(opinionKey)) {
           const trackingPost = dedupMap.get(key)!;
           const opinionPost = dedupMap.get(opinionKey)!;
-          const trackingTime = new Date(trackingPost.timestamp || 0).getTime();
-          const opinionTime = new Date(opinionPost.timestamp || 0).getTime();
-          // Only drop if tracking post is NOT newer than the opinion post
-          if (trackingTime <= opinionTime) {
+          const trackingTime = trackingPost.timestamp ? new Date(trackingPost.timestamp).getTime() : 0;
+          const opinionTime = opinionPost.timestamp ? new Date(opinionPost.timestamp).getTime() : 0;
+          const ONE_HOUR = 60 * 60 * 1000;
+          // Drop the tracking post unless it's more than 1 hour newer than the review.
+          // Within 1 hour = same session (e.g. added to list while writing review) → review wins.
+          // More than 1 hour newer = genuinely new activity (e.g. added to Want To today, reviewed months ago) → keep both.
+          if (trackingTime - opinionTime < ONE_HOUR) {
             dedupMap.delete(key);
           }
         }
