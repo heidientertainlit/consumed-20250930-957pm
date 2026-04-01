@@ -2299,9 +2299,15 @@ export default function Feed() {
       if (!existing) {
         dedupMap.set(key, post);
       } else {
-        const existingScore = (existing.rating ? 100 : 0) + (existing.content?.length || 0);
-        const newScore = (post.rating ? 100 : 0) + (post.content?.length || 0);
-        if (newScore > existingScore) dedupMap.set(key, post);
+        // Posts are iterated newest-first, so 'existing' is the newer post.
+        // Only replace with the older post if the newer post has no content AND no rating
+        // (e.g. a bare add-to-list that somehow passed the pool filter) and the older
+        // one actually has substance. Otherwise always keep the newer post.
+        const newerHasSubstance = (existing.rating && existing.rating > 0) || (existing.content?.trim()?.length || 0) > 20;
+        if (!newerHasSubstance) {
+          const olderScore = (post.rating ? 100 : 0) + (post.content?.length || 0);
+          if (olderScore > 0) dedupMap.set(key, post);
+        }
       }
     }
     const deduped = Array.from(dedupMap.values());
