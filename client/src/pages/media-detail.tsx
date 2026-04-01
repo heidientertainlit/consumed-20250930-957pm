@@ -713,7 +713,7 @@ export default function MediaDetail() {
 
   // Mutation for adding current media to lists
   const addMediaToListMutation = useMutation({
-    mutationFn: async ({ listType, isCustom }: { listType: string; isCustom?: boolean }) => {
+    mutationFn: async ({ listType, isCustom, skipSocialPost }: { listType: string; isCustom?: boolean; skipSocialPost?: boolean }) => {
       if (!session?.access_token || !mediaItem) {
         throw new Error("Authentication required");
       }
@@ -743,7 +743,8 @@ export default function MediaDetail() {
             },
             rating: null,
             review: null,
-            listType: listType
+            listType: listType,
+            skip_social_post: skipSocialPost ?? false
           };
 
       const response = await fetch(endpoint, {
@@ -832,7 +833,8 @@ export default function MediaDetail() {
       if (composeSelectedList) {
         addMediaToListMutation.mutate({ 
           listType: composeSelectedList.isCustom ? composeSelectedList.id! : composeSelectedList.name, 
-          isCustom: composeSelectedList.isCustom 
+          isCustom: composeSelectedList.isCustom,
+          skipSocialPost: true  // compose handler already created its own social post above
         });
       }
 
