@@ -2295,19 +2295,9 @@ export default function Feed() {
       }
       const mediaKey = post.externalId || post.mediaTitle || `no-media-${post.id}`;
       const key = `${post.user?.id || 'anon'}-${mediaKey}`;
-      const existing = dedupMap.get(key);
-      if (!existing) {
+      if (!dedupMap.has(key)) {
+        // Posts are iterated newest-first — first occurrence is always the newest, keep it.
         dedupMap.set(key, post);
-      } else {
-        // Posts are iterated newest-first, so 'existing' is the newer post.
-        // Only replace with the older post if the newer post has no content AND no rating
-        // (e.g. a bare add-to-list that somehow passed the pool filter) and the older
-        // one actually has substance. Otherwise always keep the newer post.
-        const newerHasSubstance = (existing.rating && existing.rating > 0) || (existing.content?.trim()?.length || 0) > 20;
-        if (!newerHasSubstance) {
-          const olderScore = (post.rating ? 100 : 0) + (post.content?.length || 0);
-          if (olderScore > 0) dedupMap.set(key, post);
-        }
       }
     }
     const deduped = Array.from(dedupMap.values());
