@@ -60,6 +60,15 @@ Preferred communication style: Simple, everyday language.
   - **Edge Function**: `daily-challenge` with actions: `getToday`, `checkResponse`, `submit`.
   - **Client sends `localDate`**: Format `new Date().toLocaleDateString('en-CA')` for timezone.
   - **DO NOT use or create `daily_runs` table**.
+- **Bot Persona System**: 20 AI-powered persona users that post authentic entertainment content via a Claude-driven admin workflow.
+  - **Personas**: 20 users with `is_persona = true` and `persona_config` jsonb in `public.users`. Auth accounts at `persona_*@consumedapp.com`.
+  - **Persona usernames**: alexmoreno402, emily27, sarah13, lenahoff, mike101, brooksj, marylou, ryanoc, jordanmatthews, avaj, katkat, tina808, jessiebee, emma_rod, rinnie, marcusdelacroix, nick, kei, alex_thompson, reedreads
+  - **Tables**: `persona_post_drafts` (status: draft/approved/rejected), `scheduled_persona_posts` (publisher picks up `posted=false`).
+  - **Edge Functions**: `generate-persona-content` (calls Anthropic claude-3-5-sonnet, saves drafts); `post-scheduled-content` (existing publisher); `setup-personas` (one-time setup, redeployable).
+  - **Admin page**: `/admin` — select personas, pick post count, generate → review drafts → edit inline → approve with schedule → auto-publishes.
+  - **Secrets**: `ANTHROPIC_API_KEY` set in both Replit and Supabase secrets.
+  - **persona_config shape**: `{ bio, tone, interests[], media_types[], favorite_media[], posting_style, activity_level, style_examples: [{type, content}] }`
+
 - **Pools System**: Structured, round-based group competition engine for any entertainment event.
   - Architecture: Pool → Rounds → Prompts → Answers → Leaderboard
   - Pool is host-controlled: host creates rounds, adds MC prompts, marks correct answers after the fact.

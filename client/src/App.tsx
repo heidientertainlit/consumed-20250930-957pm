@@ -12,6 +12,7 @@ import { AuthProvider } from "./lib/auth";
 import { ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
 
 // Pages
+import AdminPage from "@/pages/admin";
 import Feed from "@/pages/feed";
 import GameFirstFeed from "@/pages/game-first-feed";
 import QuickLog from "@/pages/quick-log";
@@ -445,6 +446,12 @@ function Router() {
 
           <Route path="/edna/:id">
             <EdnaSharePage />
+          </Route>
+
+          <Route path="/admin">
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
           </Route>
 
           <Route path="/ctv">
