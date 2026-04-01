@@ -43,6 +43,18 @@ type Persona = {
 
 // Stagger times: 4 slots per day — 8am, 11am, 2pm, 7pm
 const DAILY_SLOTS = [8, 11, 14, 19];
+const TIME_SLOT_LABELS = ["8:00 AM", "11:00 AM", "2:00 PM", "7:00 PM"];
+
+function getUserTimezone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+function getTimezoneAbbr(): string {
+  const tz = getUserTimezone();
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-US", { timeZoneName: "short", timeZone: tz }).formatToParts(now);
+  return parts.find(p => p.type === "timeZoneName")?.value || tz;
+}
 
 function getStaggeredTime(draftIndex: number): Date {
   const dayOffset = Math.floor(draftIndex / DAILY_SLOTS.length) + 1;
@@ -53,39 +65,28 @@ function getStaggeredTime(draftIndex: number): Date {
   return d;
 }
 
-function formatScheduleLabel(d: Date): string {
-  const today = new Date();
-  const dayDiff = Math.round((d.setHours(0,0,0,0) - today.setHours(0,0,0,0)) / 86400000);
-  const slotDate = new Date(d);
-  slotDate.setHours(DAILY_SLOTS[0]);
-  const timeStr = new Date(slotDate.setHours(DAILY_SLOTS[0]));
-  const hrs = DAILY_SLOTS[0];
-
-  // Restore original date
-  const result = new Date();
-  result.setDate(result.getDate() + dayDiff);
-  result.setHours(getStaggeredTime(0).getHours(), 0, 0, 0);
-
-  if (dayDiff === 1) return `tomorrow`;
-  if (dayDiff <= 7) {
-    const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-    return days[new Date().getDay() + dayDiff <= 6 ? new Date().getDay() + dayDiff : (new Date().getDay() + dayDiff) % 7];
-  }
-  return `in ${dayDiff} days`;
-}
-
 function getStaggeredLabel(index: number): string {
-  const d = getStaggeredTime(index);
   const dayOffset = Math.floor(index / DAILY_SLOTS.length) + 1;
   const slotHour = DAILY_SLOTS[index % DAILY_SLOTS.length];
   const ampm = slotHour >= 12 ? "pm" : "am";
   const displayHour = slotHour > 12 ? slotHour - 12 : slotHour;
-
   if (dayOffset === 1) return `tomorrow ${displayHour}${ampm}`;
   const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const targetDay = new Date();
   targetDay.setDate(targetDay.getDate() + dayOffset);
   return `${days[targetDay.getDay()]} ${displayHour}${ampm}`;
+}
+
+// Build ISO string from a local date string (YYYY-MM-DD) + hour
+function buildScheduleISO(dateStr: string, hour: number): string {
+  const d = new Date(dateStr + "T00:00:00");
+  d.setHours(hour, 0, 0, 0);
+  return d.toISOString();
+}
+
+// Get local YYYY-MM-DD from a Date
+function toLocalDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 function postTypeBadge(type: string) {
@@ -132,7 +133,8 @@ export default function AdminPage() {
   const [editingDraft, setEditingDraft] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [editRating, setEditRating] = useState<string>("");
-  const [editSchedule, setEditSchedule] = useState<string>("");
+  const [editDate, setEditDate] = useState<string>("");
+  const [editHour, setEditHour] = useState<number>(11);
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<"drafts" | "scheduled">("drafts");
 
@@ -307,7 +309,8 @@ export default function AdminPage() {
     setEditContent(draft.content);
     setEditRating(draft.rating?.toString() || "");
     const defaultDate = getStaggeredTime(draftIndex);
-    setEditSchedule(defaultDate.toISOString().slice(0, 16));
+    setEditDate(toLocalDateStr(defaultDate));
+    setEditHour(DAILY_SLOTS[draftIndex % DAILY_SLOTS.length]);
   };
 
   if (profileLoading || !user) {
@@ -470,25 +473,45 @@ export default function AdminPage() {
                         className="bg-gray-800 border-gray-700 text-white resize-none text-sm min-h-[100px]"
                       />
                       <div className="flex items-center gap-3">
-                        <div className="flex-1">
-                          <p className="text-xs text-gray-400 mb-1">Rating out of 5 (optional)</p>
+                        <div className="w-28">
+                          <p className="text-xs text-gray-400 mb-1">Rating /5 (optional)</p>
                           <Input
                             type="number"
                             min="0.5" max="5" step="0.5"
                             value={editRating}
                             onChange={e => setEditRating(e.target.value)}
-                            placeholder="e.g. 4.5"
+                            placeholder="4.5"
                             className="bg-gray-800 border-gray-700 text-white text-sm h-8"
                           />
                         </div>
                         <div className="flex-1">
-                          <p className="text-xs text-gray-400 mb-1">Schedule for</p>
+                          <p className="text-xs text-gray-400 mb-1">Date</p>
                           <Input
-                            type="datetime-local"
-                            value={editSchedule}
-                            onChange={e => setEditSchedule(e.target.value)}
+                            type="date"
+                            value={editDate}
+                            onChange={e => setEditDate(e.target.value)}
                             className="bg-gray-800 border-gray-700 text-white text-sm h-8"
                           />
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1.5">
+                          Time <span className="text-gray-600">({getTimezoneAbbr()})</span>
+                        </p>
+                        <div className="flex gap-2 flex-wrap">
+                          {DAILY_SLOTS.map((hour, i) => (
+                            <button
+                              key={hour}
+                              onClick={() => setEditHour(hour)}
+                              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+                                editHour === hour
+                                  ? "bg-purple-600 text-white"
+                                  : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                              }`}
+                            >
+                              {TIME_SLOT_LABELS[i]}
+                            </button>
+                          ))}
                         </div>
                       </div>
                       <div className="flex gap-2 flex-wrap">
@@ -496,11 +519,11 @@ export default function AdminPage() {
                           size="sm"
                           onClick={() => approveMutation.mutate({
                             id: draft.id,
-                            scheduledFor: editSchedule || staggeredTime.toISOString(),
+                            scheduledFor: editDate ? buildScheduleISO(editDate, editHour) : staggeredTime.toISOString(),
                             overrideContent: editContent,
                             overrideRating: editRating ? parseFloat(editRating) : null,
                           })}
-                          disabled={approveMutation.isPending}
+                          disabled={approveMutation.isPending || !editDate}
                           className="bg-green-700 hover:bg-green-600 text-white text-xs"
                         >
                           <Check size={12} className="mr-1" />
