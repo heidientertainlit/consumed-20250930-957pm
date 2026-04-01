@@ -2294,7 +2294,10 @@ export default function Feed() {
         continue;
       }
       const mediaKey = post.externalId || post.mediaTitle || `no-media-${post.id}`;
-      const key = `${post.user?.id || 'anon'}-${mediaKey}`;
+      // Use the post's own ID as fallback so posts with missing user IDs never
+      // compete with each other or anyone else — only same user + same media deduplicates.
+      const userKey = post.user?.id || `orphan-${post.id}`;
+      const key = `${userKey}-${mediaKey}`;
       if (!dedupMap.has(key)) {
         // Posts are iterated newest-first — first occurrence is always the newest, keep it.
         dedupMap.set(key, post);
