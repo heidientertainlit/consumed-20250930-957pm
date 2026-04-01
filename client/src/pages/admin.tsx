@@ -135,6 +135,7 @@ export default function AdminPage() {
   const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>([]);
   const [postsPerPersona, setPostsPerPersona] = useState(2);
   const [generating, setGenerating] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [editingDraft, setEditingDraft] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [editRating, setEditRating] = useState<string>("");
@@ -272,6 +273,32 @@ export default function AdminPage() {
     },
   });
 
+  const handlePublish = async () => {
+    setPublishing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${supabaseUrl}/functions/v1/post-scheduled-content`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session?.access_token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Publish failed");
+      if (result.processed === 0) {
+        toast({ title: "Nothing to publish yet", description: "No approved posts are due yet — check their scheduled times." });
+      } else {
+        toast({ title: `Published ${result.successful} of ${result.processed} posts`, description: "Check the feed to see them live." });
+        queryClient.invalidateQueries({ queryKey: ["admin-drafts"] });
+      }
+    } catch (err: any) {
+      toast({ title: "Publish failed", description: err.message, variant: "destructive" });
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const handleGenerate = async () => {
     if (selectedPersonaIds.length === 0) {
       toast({ title: "Select at least one persona", variant: "destructive" });
@@ -337,9 +364,22 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white mb-1">Admin</h1>
-          <p className="text-gray-400 text-sm">Persona content generation and scheduling</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-1">Admin</h1>
+            <p className="text-gray-400 text-sm">Persona content generation and scheduling</p>
+          </div>
+          <Button
+            onClick={handlePublish}
+            disabled={publishing}
+            className="bg-green-700 hover:bg-green-600 text-white text-sm"
+          >
+            {publishing ? (
+              <><Loader2 size={14} className="animate-spin mr-2" />Publishing...</>
+            ) : (
+              <><Check size={14} className="mr-2" />Publish Now</>
+            )}
+          </Button>
         </div>
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
