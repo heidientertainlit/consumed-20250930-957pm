@@ -50,6 +50,10 @@ serve(async (req) => {
       query = query.eq('target_friend_id', userId);
       if (pendingOnly) {
         query = query.eq('status', 'pending');
+        // Only show pending casts from the last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        query = query.gte('created_at', thirtyDaysAgo.toISOString());
       }
     } else {
       query = query.eq('is_public', true).eq('status', 'approved');

@@ -77,10 +77,15 @@ export default function CastApprovalCard({ cast, onRespond }: CastApprovalCardPr
         body: JSON.stringify(body)
       });
 
-      const result = await response.json();
+      let result: any = {};
+      try {
+        result = await response.json();
+      } catch {
+        // non-JSON response
+      }
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to respond');
+        throw new Error(result.error || result.message || 'Failed to respond');
       }
 
       if (action !== 'decline') {
