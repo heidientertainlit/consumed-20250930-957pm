@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth";
 import {
   Sparkles, Check, X, Clock, ChevronDown, ChevronUp,
   RefreshCw, Calendar, Star, MessageSquare, Flame,
-  User, Loader2
+  User, Loader2, Trash2, Pencil
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -31,6 +31,21 @@ type Draft = {
   status: string;
   scheduled_for: string | null;
   created_at: string;
+  persona?: { user_name: string; display_name: string };
+};
+
+type ScheduledPost = {
+  id: string;
+  persona_user_id: string;
+  post_type: string;
+  content: string;
+  rating: number | null;
+  media_title: string | null;
+  media_type: string | null;
+  media_creator: string | null;
+  scheduled_for: string;
+  posted: boolean;
+  resulting_post_id: string | null;
   persona?: { user_name: string; display_name: string };
 };
 
@@ -137,6 +152,7 @@ export default function AdminPage() {
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [editingDraft, setEditingDraft] = useState<string | null>(null);
+  const [editingScheduled, setEditingScheduled] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const [editRating, setEditRating] = useState<string>("");
   const [editDate, setEditDate] = useState<string>("");
@@ -178,13 +194,12 @@ export default function AdminPage() {
   });
 
   const { data: drafts = [], isLoading: draftsLoading, refetch: refetchDrafts } = useQuery<Draft[]>({
-    queryKey: ["admin-drafts", activeTab],
+    queryKey: ["admin-drafts"],
     queryFn: async () => {
-      const statusFilter = activeTab === "drafts" ? ["draft"] : ["approved"];
       const { data, error } = await supabase
         .from("persona_post_drafts")
         .select("*")
-        .in("status", statusFilter)
+        .eq("status", "draft")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -203,6 +218,34 @@ export default function AdminPage() {
         persona: userMap.get(d.persona_user_id),
       }));
     },
+    enabled: activeTab === "drafts",
+  });
+
+  const { data: scheduledPosts = [], isLoading: scheduledLoading, refetch: refetchScheduled } = useQuery<ScheduledPost[]>({
+    queryKey: ["admin-scheduled"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("scheduled_persona_posts")
+        .select("*")
+        .order("scheduled_for", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+
+      const userIds = [...new Set((data || []).map((d: any) => d.persona_user_id))];
+      if (userIds.length === 0) return [];
+
+      const { data: users } = await supabase
+        .from("users")
+        .select("id, user_name, display_name")
+        .in("id", userIds);
+
+      const userMap = new Map((users || []).map((u: any) => [u.id, u]));
+      return (data || []).map((d: any) => ({
+        ...d,
+        persona: userMap.get(d.persona_user_id),
+      }));
+    },
+    enabled: activeTab === "scheduled",
   });
 
   const approveMutation = useMutation({
@@ -272,6 +315,52 @@ export default function AdminPage() {
       queryClient.invalidateQueries({ queryKey: ["admin-drafts"] });
     },
   });
+
+  const deleteScheduledMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("scheduled_persona_posts")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Scheduled post deleted" });
+      queryClient.invalidateQueries({ queryKey: ["admin-scheduled"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const editScheduledMutation = useMutation({
+    mutationFn: async ({ id, content, rating, scheduledFor }: {
+      id: string; content: string; rating: number | null; scheduledFor: string;
+    }) => {
+      const { error } = await supabase
+        .from("scheduled_persona_posts")
+        .update({ content, rating, scheduled_for: scheduledFor })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Post updated" });
+      setEditingScheduled(null);
+      queryClient.invalidateQueries({ queryKey: ["admin-scheduled"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const startEditScheduled = (post: ScheduledPost) => {
+    setEditingScheduled(post.id);
+    setEditContent(post.content);
+    setEditRating(post.rating?.toString() || "");
+    const d = new Date(post.scheduled_for);
+    setEditDate(toLocalDateStr(d));
+    setEditTime(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+  };
 
   const handlePublish = async () => {
     setPublishing(true);
@@ -458,166 +547,145 @@ export default function AdminPage() {
               }`}
             >
               {tab === "drafts" ? "Pending Drafts" : "Approved & Scheduled"}
-              {tab === "drafts" && drafts.length > 0 && activeTab === "drafts" && (
+              {tab === "drafts" && drafts.length > 0 && (
                 <span className="ml-2 bg-purple-600 text-white text-xs rounded-full px-1.5 py-0.5">{drafts.length}</span>
               )}
             </button>
           ))}
-          <button onClick={() => refetchDrafts()} className="ml-auto text-gray-500 hover:text-gray-300">
+          <button
+            onClick={() => activeTab === "drafts" ? refetchDrafts() : refetchScheduled()}
+            className="ml-auto text-gray-500 hover:text-gray-300"
+          >
             <RefreshCw size={14} />
           </button>
         </div>
 
-        {draftsLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 size={24} className="animate-spin text-purple-400" />
-          </div>
-        ) : drafts.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <p className="text-sm">{activeTab === "drafts" ? "No pending drafts. Generate some above." : "No approved posts yet."}</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {drafts.map((draft, index) => {
-              const isEditing = editingDraft === draft.id;
-              const showNotes = expandedNotes.has(draft.id);
-              const staggeredTime = getStaggeredTime(index);
-              const staggerLabel = getStaggeredLabel(index);
-              return (
-                <div key={draft.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
-                        <User size={13} className="text-white" />
+        {/* Pending Drafts Tab */}
+        {activeTab === "drafts" && (
+          draftsLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 size={24} className="animate-spin text-purple-400" />
+            </div>
+          ) : drafts.length === 0 ? (
+            <div className="text-center py-16 text-gray-500">
+              <p className="text-sm">No pending drafts. Generate some above.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {drafts.map((draft, index) => {
+                const isEditing = editingDraft === draft.id;
+                const showNotes = expandedNotes.has(draft.id);
+                const staggeredTime = getStaggeredTime(index);
+                const staggerLabel = getStaggeredLabel(index);
+                return (
+                  <div key={draft.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+                          <User size={13} className="text-white" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-white truncate">{draft.persona?.display_name}</p>
+                          <p className="text-xs text-gray-500">@{draft.persona?.user_name}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{draft.persona?.display_name}</p>
-                        <p className="text-xs text-gray-500">@{draft.persona?.user_name}</p>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {postTypeBadge(draft.post_type)}
+                        {mediaTypeBadge(draft.media_type)}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {postTypeBadge(draft.post_type)}
-                      {mediaTypeBadge(draft.media_type)}
-                    </div>
-                  </div>
 
-                  {draft.media_title && (
-                    <p className="text-xs text-gray-400 mb-2">
-                      <span className="text-gray-500">Re:</span>{" "}
-                      <span className="text-gray-300 font-medium">{draft.media_title}</span>
-                      {draft.media_creator && <span className="text-gray-500"> · {draft.media_creator}</span>}
-                      {draft.rating && <StarRating rating={draft.rating} />}
-                    </p>
-                  )}
+                    {draft.media_title && (
+                      <p className="text-xs text-gray-400 mb-2">
+                        <span className="text-gray-500">Re:</span>{" "}
+                        <span className="text-gray-300 font-medium">{draft.media_title}</span>
+                        {draft.media_creator && <span className="text-gray-500"> · {draft.media_creator}</span>}
+                        {draft.rating && <StarRating rating={draft.rating} />}
+                      </p>
+                    )}
 
-                  {isEditing ? (
-                    <div className="space-y-3">
-                      <Textarea
-                        value={editContent}
-                        onChange={e => setEditContent(e.target.value)}
-                        className="bg-gray-800 border-gray-700 text-white resize-none text-sm min-h-[100px]"
-                      />
-                      <div className="flex items-center gap-3">
-                        <div className="w-28">
-                          <p className="text-xs text-gray-400 mb-1">Rating /5 (optional)</p>
-                          <Input
-                            type="number"
-                            min="0.5" max="5" step="0.5"
-                            value={editRating}
-                            onChange={e => setEditRating(e.target.value)}
-                            placeholder="4.5"
-                            className="bg-gray-800 border-gray-700 text-white text-sm h-8"
-                          />
+                    {isEditing ? (
+                      <div className="space-y-3">
+                        <Textarea
+                          value={editContent}
+                          onChange={e => setEditContent(e.target.value)}
+                          className="bg-gray-800 border-gray-700 text-white resize-none text-sm min-h-[100px]"
+                        />
+                        <div className="flex items-center gap-3">
+                          <div className="w-28">
+                            <p className="text-xs text-gray-400 mb-1">Rating /5 (optional)</p>
+                            <Input
+                              type="number" min="0.5" max="5" step="0.5"
+                              value={editRating}
+                              onChange={e => setEditRating(e.target.value)}
+                              placeholder="4.5"
+                              className="bg-gray-800 border-gray-700 text-white text-sm h-8"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs text-gray-400 mb-1">Date</p>
+                            <Input
+                              type="date" value={editDate}
+                              onChange={e => setEditDate(e.target.value)}
+                              className="bg-gray-800 border-gray-700 text-white text-sm h-8"
+                            />
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <p className="text-xs text-gray-400 mb-1">Date</p>
-                          <Input
-                            type="date"
-                            value={editDate}
-                            onChange={e => setEditDate(e.target.value)}
-                            className="bg-gray-800 border-gray-700 text-white text-sm h-8"
-                          />
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1.5">Time <span className="text-gray-600">({getTimezoneAbbr()})</span></p>
+                          <div className="flex gap-2 flex-wrap items-center">
+                            {DAILY_SLOTS.map((hour, i) => (
+                              <button
+                                key={hour}
+                                onClick={() => setEditTime(hourToTimeStr(hour))}
+                                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${editTime === hourToTimeStr(hour) ? "bg-purple-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
+                              >
+                                {TIME_SLOT_LABELS[i]}
+                              </button>
+                            ))}
+                            <input
+                              type="time" value={editTime}
+                              onChange={e => setEditTime(e.target.value)}
+                              className="bg-gray-800 border border-gray-700 text-white text-xs rounded-lg px-2 py-1 h-7 w-28 focus:outline-none focus:border-purple-500"
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-400 mb-1.5">
-                          Time <span className="text-gray-600">({getTimezoneAbbr()})</span>
-                        </p>
-                        <div className="flex gap-2 flex-wrap items-center">
-                          {DAILY_SLOTS.map((hour, i) => (
-                            <button
-                              key={hour}
-                              onClick={() => setEditTime(hourToTimeStr(hour))}
-                              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                                editTime === hourToTimeStr(hour)
-                                  ? "bg-purple-600 text-white"
-                                  : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                              }`}
-                            >
-                              {TIME_SLOT_LABELS[i]}
-                            </button>
-                          ))}
-                          <input
-                            type="time"
-                            value={editTime}
-                            onChange={e => setEditTime(e.target.value)}
-                            className="bg-gray-800 border border-gray-700 text-white text-xs rounded-lg px-2 py-1 h-7 w-28 focus:outline-none focus:border-purple-500"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
-                        <Button
-                          size="sm"
-                          onClick={() => approveMutation.mutate({
-                            id: draft.id,
-                            scheduledFor: editDate ? buildScheduleISO(editDate, editTime) : staggeredTime.toISOString(),
-                            overrideContent: editContent,
-                            overrideRating: editRating ? parseFloat(editRating) : null,
-                          })}
-                          disabled={approveMutation.isPending || !editDate}
-                          className="bg-green-700 hover:bg-green-600 text-white text-xs"
-                        >
-                          <Check size={12} className="mr-1" />
-                          Approve & Schedule
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setEditingDraft(null)}
-                          className="text-gray-400 text-xs"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-sm text-gray-200 leading-relaxed mb-3 whitespace-pre-wrap">{draft.content}</p>
-                      {draft.ai_notes && (
-                        <div className="mb-3">
-                          <button
-                            onClick={() => setExpandedNotes(prev => {
-                              const next = new Set(prev);
-                              if (next.has(draft.id)) next.delete(draft.id); else next.add(draft.id);
-                              return next;
-                            })}
-                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-400"
-                          >
-                            {showNotes ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                            AI note
-                          </button>
-                          {showNotes && (
-                            <p className="mt-1.5 text-xs text-gray-500 italic pl-2 border-l border-gray-700">{draft.ai_notes}</p>
-                          )}
-                        </div>
-                      )}
-                      {activeTab === "drafts" && (
-                        <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex gap-2 flex-wrap">
                           <Button
                             size="sm"
-                            onClick={() => startEdit(draft, index)}
-                            className="bg-gray-800 hover:bg-gray-700 text-white text-xs border border-gray-700"
+                            onClick={() => approveMutation.mutate({
+                              id: draft.id,
+                              scheduledFor: editDate ? buildScheduleISO(editDate, editTime) : staggeredTime.toISOString(),
+                              overrideContent: editContent,
+                              overrideRating: editRating ? parseFloat(editRating) : null,
+                            })}
+                            disabled={approveMutation.isPending || !editDate}
+                            className="bg-green-700 hover:bg-green-600 text-white text-xs"
                           >
+                            <Check size={12} className="mr-1" />Approve & Schedule
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingDraft(null)} className="text-gray-400 text-xs">
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm text-gray-200 leading-relaxed mb-3 whitespace-pre-wrap">{draft.content}</p>
+                        {draft.ai_notes && (
+                          <div className="mb-3">
+                            <button
+                              onClick={() => setExpandedNotes(prev => { const next = new Set(prev); if (next.has(draft.id)) next.delete(draft.id); else next.add(draft.id); return next; })}
+                              className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-400"
+                            >
+                              {showNotes ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                              AI note
+                            </button>
+                            {showNotes && <p className="mt-1.5 text-xs text-gray-500 italic pl-2 border-l border-gray-700">{draft.ai_notes}</p>}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Button size="sm" onClick={() => startEdit(draft, index)} className="bg-gray-800 hover:bg-gray-700 text-white text-xs border border-gray-700">
                             Edit & Schedule
                           </Button>
                           <Button
@@ -626,33 +694,172 @@ export default function AdminPage() {
                             disabled={approveMutation.isPending}
                             className="bg-green-700 hover:bg-green-600 text-white text-xs"
                           >
-                            <Check size={12} className="mr-1" />
-                            Approve ({staggerLabel})
+                            <Check size={12} className="mr-1" />Approve ({staggerLabel})
                           </Button>
                           <Button
-                            size="sm"
-                            variant="ghost"
+                            size="sm" variant="ghost"
                             onClick={() => rejectMutation.mutate(draft.id)}
                             disabled={rejectMutation.isPending}
                             className="text-red-400 hover:text-red-300 hover:bg-red-900/20 text-xs"
                           >
-                            <X size={12} className="mr-1" />
-                            Reject
+                            <X size={12} className="mr-1" />Reject
                           </Button>
                         </div>
-                      )}
-                      {activeTab === "scheduled" && draft.scheduled_for && (
-                        <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                          <Calendar size={12} />
-                          <span>Scheduled for {new Date(draft.scheduled_for).toLocaleString()}</span>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
+        )}
+
+        {/* Approved & Scheduled Tab */}
+        {activeTab === "scheduled" && (
+          scheduledLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 size={24} className="animate-spin text-purple-400" />
+            </div>
+          ) : scheduledPosts.length === 0 ? (
+            <div className="text-center py-16 text-gray-500">
+              <p className="text-sm">No approved posts yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {scheduledPosts.map((post) => {
+                const isEditing = editingScheduled === post.id;
+                return (
+                  <div key={post.id} className={`bg-gray-900 border rounded-2xl p-5 ${post.posted ? "border-green-800/50" : "border-gray-800"}`}>
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+                          <User size={13} className="text-white" />
                         </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-white truncate">{post.persona?.display_name}</p>
+                          <p className="text-xs text-gray-500">@{post.persona?.user_name}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {post.posted ? (
+                          <Badge className="bg-green-800/50 text-green-300 border-0 text-xs">Published</Badge>
+                        ) : (
+                          <Badge className="bg-yellow-800/40 text-yellow-300 border-0 text-xs">Pending</Badge>
+                        )}
+                        {postTypeBadge(post.post_type)}
+                        {mediaTypeBadge(post.media_type)}
+                      </div>
+                    </div>
+
+                    {post.media_title && (
+                      <p className="text-xs text-gray-400 mb-2">
+                        <span className="text-gray-500">Re:</span>{" "}
+                        <span className="text-gray-300 font-medium">{post.media_title}</span>
+                        {post.media_creator && <span className="text-gray-500"> · {post.media_creator}</span>}
+                        {post.rating && <StarRating rating={post.rating} />}
+                      </p>
+                    )}
+
+                    {isEditing ? (
+                      <div className="space-y-3">
+                        <Textarea
+                          value={editContent}
+                          onChange={e => setEditContent(e.target.value)}
+                          className="bg-gray-800 border-gray-700 text-white resize-none text-sm min-h-[100px]"
+                        />
+                        <div className="flex items-center gap-3">
+                          <div className="w-28">
+                            <p className="text-xs text-gray-400 mb-1">Rating /5 (optional)</p>
+                            <Input
+                              type="number" min="0.5" max="5" step="0.5"
+                              value={editRating}
+                              onChange={e => setEditRating(e.target.value)}
+                              placeholder="4.5"
+                              className="bg-gray-800 border-gray-700 text-white text-sm h-8"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-xs text-gray-400 mb-1">Date</p>
+                            <Input
+                              type="date" value={editDate}
+                              onChange={e => setEditDate(e.target.value)}
+                              className="bg-gray-800 border-gray-700 text-white text-sm h-8"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1.5">Time <span className="text-gray-600">({getTimezoneAbbr()})</span></p>
+                          <div className="flex gap-2 flex-wrap items-center">
+                            {DAILY_SLOTS.map((hour, i) => (
+                              <button
+                                key={hour}
+                                onClick={() => setEditTime(hourToTimeStr(hour))}
+                                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${editTime === hourToTimeStr(hour) ? "bg-purple-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
+                              >
+                                {TIME_SLOT_LABELS[i]}
+                              </button>
+                            ))}
+                            <input
+                              type="time" value={editTime}
+                              onChange={e => setEditTime(e.target.value)}
+                              className="bg-gray-800 border border-gray-700 text-white text-xs rounded-lg px-2 py-1 h-7 w-28 focus:outline-none focus:border-purple-500"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          <Button
+                            size="sm"
+                            onClick={() => editScheduledMutation.mutate({
+                              id: post.id,
+                              content: editContent,
+                              rating: editRating ? parseFloat(editRating) : null,
+                              scheduledFor: editDate ? buildScheduleISO(editDate, editTime) : post.scheduled_for,
+                            })}
+                            disabled={editScheduledMutation.isPending}
+                            className="bg-purple-700 hover:bg-purple-600 text-white text-xs"
+                          >
+                            <Check size={12} className="mr-1" />Save Changes
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingScheduled(null)} className="text-gray-400 text-xs">
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm text-gray-200 leading-relaxed mb-3 whitespace-pre-wrap">{post.content}</p>
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                            <Calendar size={12} />
+                            <span>{post.posted ? "Published" : "Scheduled for"} {new Date(post.scheduled_for).toLocaleString()}</span>
+                          </div>
+                          {!post.posted && (
+                            <div className="flex items-center gap-1.5">
+                              <Button
+                                size="sm" variant="ghost"
+                                onClick={() => startEditScheduled(post)}
+                                className="text-gray-400 hover:text-white hover:bg-gray-800 text-xs h-7 px-2"
+                              >
+                                <Pencil size={11} className="mr-1" />Edit
+                              </Button>
+                              <Button
+                                size="sm" variant="ghost"
+                                onClick={() => deleteScheduledMutation.mutate(post.id)}
+                                disabled={deleteScheduledMutation.isPending}
+                                className="text-red-400 hover:text-red-300 hover:bg-red-900/20 text-xs h-7 px-2"
+                              >
+                                <Trash2 size={11} className="mr-1" />Delete
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
         )}
       </div>
     </div>
