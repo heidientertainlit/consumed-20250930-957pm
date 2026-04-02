@@ -105,16 +105,17 @@ serve(async (req) => {
     }
 
     // Detect media type hints in query BEFORE stripping them
+    // NOTE: avoid generic words like "watch"/"show" that appear in titles
     const queryHasBook = /\b(book|novel|read)\b/i.test(query);
-    const queryHasMovie = /\b(movie|film|watch)\b/i.test(query);
+    const queryHasMovie = /\b(movie|film)\b/i.test(query);
     const queryHasMusic = /\b(song|album|music|listen)\b/i.test(query);
-    const queryHasTv = /\b(show|series|tv)\b/i.test(query);
+    const queryHasTv = /\b(series|tv show|television)\b/i.test(query);
     const queryHasPodcast = /\b(podcast|podcasts)\b/i.test(query);
     
     // Strip type keywords from query for cleaner API searches
     // e.g., "anne of green gables book" → "anne of green gables"
     const cleanedQuery = query
-      .replace(/\b(book|novel|read|movie|film|watch|song|album|music|listen|show|series|tv|podcast|podcasts)\b/gi, '')
+      .replace(/\b(book|novel|read|movie|film|song|album|music|listen|tv show|series|television|podcast|podcasts)\b/gi, '')
       .replace(/\s+/g, ' ')
       .trim();
     
