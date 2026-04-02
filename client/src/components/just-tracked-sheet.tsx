@@ -77,6 +77,40 @@ function TriviaMorePrompt({ onClose }: { onClose: () => void }) {
   );
 }
 
+function WantToPlayTrivia({ mediaType, onClose }: { mediaType?: string; onClose: () => void }) {
+  const [, navigate] = useLocation();
+
+  const categoryMap: Record<string, string> = {
+    movie: 'movie',
+    tv: 'tv',
+    music: 'music',
+    book: 'book',
+    podcast: 'podcast',
+  };
+  const category = categoryMap[mediaType?.toLowerCase() || ''] || 'movie';
+
+  const handlePlay = () => {
+    onClose();
+    navigate(`/play/trivia?category=${category}`);
+  };
+
+  return (
+    <button
+      onClick={handlePlay}
+      className="w-full p-4 text-left rounded-xl bg-gradient-to-r from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100 flex items-center gap-3 transition-colors border border-purple-100"
+    >
+      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+        <HelpCircle className="text-white" size={20} />
+      </div>
+      <div className="flex-1">
+        <p className="font-semibold text-gray-900">Test Your Knowledge</p>
+        <p className="text-sm text-gray-500">Play trivia while you wait to watch it</p>
+      </div>
+      <ChevronRight className="text-gray-400" size={18} />
+    </button>
+  );
+}
+
 export function JustTrackedSheet({ 
   isOpen, 
   onClose, 
@@ -433,6 +467,8 @@ export function JustTrackedSheet({
                 <TriviaMorePrompt onClose={onClose} />
               )}
               </>
+            ) : isWantToList ? (
+              <WantToPlayTrivia mediaType={media.mediaType} onClose={onClose} />
             ) : showRateOption && onRateIt ? (
               <button
                 onClick={isLoadingRateIt ? undefined : onRateIt}
