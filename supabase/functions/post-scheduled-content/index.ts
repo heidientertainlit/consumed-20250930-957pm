@@ -21,17 +21,19 @@ serve(async (req) => {
     const now = new Date().toISOString();
     console.log('Checking for scheduled posts due at:', now);
 
-    const { data: duePosts, error: fetchError } = await supabaseAdmin
+    // Atomic claim: mark as posted in the same operation we read them.
+    // Only rows still posted=false are updated; the RETURNING gives us
+    // exactly the rows THIS invocation claimed — no duplicates possible.
+    const { data: duePosts, error: claimError } = await supabaseAdmin
       .from('scheduled_persona_posts')
-      .select('*')
+      .update({ posted: true, posted_at: now })
       .eq('posted', false)
       .lte('scheduled_for', now)
-      .order('scheduled_for', { ascending: true })
-      .limit(50);
+      .select('*');
 
-    if (fetchError) {
-      console.error('Error fetching scheduled posts:', fetchError);
-      return new Response(JSON.stringify({ error: fetchError.message }), {
+    if (claimError) {
+      console.error('Error claiming scheduled posts:', claimError);
+      return new Response(JSON.stringify({ error: claimError.message }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -48,7 +50,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('Found', duePosts.length, 'posts to publish');
+    console.log('Claimed', duePosts.length, 'posts to publish');
 
     const results: { id: string; success: boolean; postId?: string; error?: string }[] = [];
 
@@ -78,28 +80,31 @@ serve(async (req) => {
 
         if (insertError) {
           console.error('Error inserting post:', insertError);
+          // Roll back the claim so it can be retried
+          await supabaseAdmin
+            .from('scheduled_persona_posts')
+            .update({ posted: false, posted_at: null })
+            .eq('id', scheduledPost.id);
           results.push({ id: scheduledPost.id, success: false, error: insertError.message });
           continue;
         }
 
-        const { error: updateError } = await supabaseAdmin
+        // Store the resulting post ID
+        await supabaseAdmin
           .from('scheduled_persona_posts')
-          .update({
-            posted: true,
-            posted_at: now,
-            resulting_post_id: newPost.id,
-          })
+          .update({ resulting_post_id: newPost.id })
           .eq('id', scheduledPost.id);
 
-        if (updateError) {
-          console.error('Error updating scheduled post:', updateError);
-          results.push({ id: scheduledPost.id, success: false, error: updateError.message });
-        } else {
-          console.log('Successfully posted:', scheduledPost.id, '→', newPost.id);
-          results.push({ id: scheduledPost.id, success: true, postId: newPost.id });
-        }
+        console.log('Successfully posted:', scheduledPost.id, '→', newPost.id);
+        results.push({ id: scheduledPost.id, success: true, postId: newPost.id });
+
       } catch (err) {
         console.error('Unexpected error processing post:', err);
+        // Roll back the claim
+        await supabaseAdmin
+          .from('scheduled_persona_posts')
+          .update({ posted: false, posted_at: null })
+          .eq('id', scheduledPost.id);
         results.push({ id: scheduledPost.id, success: false, error: String(err) });
       }
     }

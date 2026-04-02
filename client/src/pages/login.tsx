@@ -148,6 +148,8 @@ export default function LoginPage() {
         localStorage.removeItem('consumed_referrer');
       }
       
+      // Clear any stale onboarding flag so new users always see onboarding
+      localStorage.removeItem('consumed_onboarding_completed');
       setJustSignedUp(true);
       setSubmitting(false);
     }
