@@ -2325,7 +2325,7 @@ export default function Feed() {
       // different social actions and should each get their own feed slot.
       // 'tracking' = add-to-list / rewatch / general list moves
       // 'opinion'  = review / thought / rating / hot_take / finished
-      const typeCategory = (post.type === 'general' || post.type === 'rewatch') ? 'tracking' : 'opinion';
+      const typeCategory = (post.type === 'general' || post.type === 'rewatch' || post.type === 'add-to-list') ? 'tracking' : 'opinion';
       const key = `${userKey}-${mediaKey}-${typeCategory}`;
       const existing = dedupMap.get(key);
       if (!existing) {
