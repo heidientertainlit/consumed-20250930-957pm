@@ -539,25 +539,12 @@ export default function AdminPersonasPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <button onClick={() => setLocation("/admin")} className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm mb-2 transition-colors">
-              <ArrowLeft size={14} />Back to Admin
-            </button>
-            <h1 className="text-2xl font-bold text-white mb-1">Generate Persona Posts</h1>
-            <p className="text-gray-400 text-sm">AI-powered persona content generation and scheduling</p>
-          </div>
-          <Button
-            onClick={handlePublish}
-            disabled={publishing}
-            className="bg-green-700 hover:bg-green-600 text-white text-sm"
-          >
-            {publishing ? (
-              <><Loader2 size={14} className="animate-spin mr-2" />Publishing...</>
-            ) : (
-              <><Check size={14} className="mr-2" />Publish Now</>
-            )}
-          </Button>
+        <div className="mb-8">
+          <button onClick={() => setLocation("/admin")} className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm mb-2 transition-colors">
+            <ArrowLeft size={14} />Back to Admin
+          </button>
+          <h1 className="text-2xl font-bold text-white mb-1">Generate Persona Posts</h1>
+          <p className="text-gray-400 text-sm">AI-powered persona content generation and scheduling</p>
         </div>
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-6">
