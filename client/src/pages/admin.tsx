@@ -271,47 +271,22 @@ export default function AdminPage() {
       overrideContent?: string;
       overrideRating?: number | null;
     }) => {
-      const draft = drafts.find(d => d.id === id);
-      if (!draft) throw new Error("Draft not found");
-
-      const content = overrideContent ?? draft.content;
-      const rating = overrideRating !== undefined ? overrideRating : draft.rating;
-
-      // Save any edits back to draft first
-      if (overrideContent !== undefined || overrideRating !== undefined) {
-        const { error: editError } = await supabase
-          .from("persona_post_drafts")
-          .update({ content, rating })
-          .eq("id", id);
-        if (editError) throw editError;
-      }
-
-      const { error: scheduleError } = await supabase
-        .from("scheduled_persona_posts")
-        .insert({
-          persona_user_id: draft.persona_user_id,
-          post_type: draft.post_type,
-          content,
-          rating,
-          media_title: draft.media_title,
-          media_type: draft.media_type,
-          media_creator: draft.media_creator,
-          contains_spoilers: false,
+      const { data, error } = await supabase.functions.invoke("admin-approve-draft", {
+        body: {
+          draft_id: id,
           scheduled_for: scheduledFor,
-          posted: false,
-        });
-      if (scheduleError) throw scheduleError;
-
-      const { error: updateError } = await supabase
-        .from("persona_post_drafts")
-        .update({ status: "approved", scheduled_for: scheduledFor, approved_at: new Date().toISOString() })
-        .eq("id", id);
-      if (updateError) throw updateError;
+          content_override: overrideContent,
+          rating_override: overrideRating,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
     },
     onSuccess: () => {
       toast({ title: "Post approved and scheduled" });
       setEditingDraft(null);
       queryClient.invalidateQueries({ queryKey: ["admin-drafts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-scheduled"] });
     },
     onError: (err: any) => {
       toast({ title: "Failed to approve", description: err.message, variant: "destructive" });
