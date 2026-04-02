@@ -65,7 +65,7 @@ Preferred communication style: Simple, everyday language.
   - **Persona usernames**: alexmoreno402, emily27, sarah13, lenahoff, mike101, brooksj, marylou, ryanoc, jordanmatthews, avaj, katkat, tina808, jessiebee, emma_rod, rinnie, marcusdelacroix, nick, kei, alex_thompson, reedreads
   - **Tables**: `persona_post_drafts` (status: draft/approved/rejected), `scheduled_persona_posts` (publisher picks up `posted=false`).
   - **Edge Functions**: `generate-persona-content` (calls Anthropic claude-3-5-sonnet, saves drafts); `post-scheduled-content` (existing publisher); `setup-personas` (one-time setup, redeployable).
-  - **Admin page**: `/admin` — select personas, pick post count, generate → review drafts → edit inline → approve with schedule → auto-publishes.
+  - **Admin hub**: `/admin` — landing page with tool cards. Routes: `/admin/personas` (persona generation), `/admin/trivia-polls` (trivia & polls AI generation, placeholder).
   - **Secrets**: `ANTHROPIC_API_KEY` set in both Replit and Supabase secrets.
   - **persona_config shape**: `{ bio, tone, interests[], media_types[], favorite_media[], posting_style, activity_level, style_examples: [{type, content}] }`
 

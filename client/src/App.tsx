@@ -13,6 +13,8 @@ import { ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
 
 // Pages
 import AdminPage from "@/pages/admin";
+import AdminPersonasPage from "@/pages/admin-personas";
+import AdminTriviaPage from "@/pages/admin-trivia";
 import Feed from "@/pages/feed";
 import GameFirstFeed from "@/pages/game-first-feed";
 import QuickLog from "@/pages/quick-log";
@@ -451,6 +453,18 @@ function Router() {
           <Route path="/admin">
             <ProtectedRoute>
               <AdminPage />
+            </ProtectedRoute>
+          </Route>
+
+          <Route path="/admin/personas">
+            <ProtectedRoute>
+              <AdminPersonasPage />
+            </ProtectedRoute>
+          </Route>
+
+          <Route path="/admin/trivia-polls">
+            <ProtectedRoute>
+              <AdminTriviaPage />
             </ProtectedRoute>
           </Route>
 
