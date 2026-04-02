@@ -351,6 +351,55 @@ serve(async (req) => {
             data.subjects = bookData.subjects || [];
           }
         }
+
+        // If Open Library didn't return data, try Google Books by ISBN as fallback
+        if (!data) {
+          const googleBooksKey = Deno.env.get('GOOGLE_BOOKS_API_KEY') || '';
+          const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${externalId}${googleBooksKey ? `&key=${googleBooksKey}` : ''}`;
+          const gbResp = await fetch(gbUrl);
+          if (gbResp.ok) {
+            const gbData = await gbResp.json();
+            const vol = gbData.items?.[0];
+            if (vol) {
+              const vi = vol.volumeInfo;
+              const coverUrl = vi.imageLinks?.thumbnail
+                ? vi.imageLinks.thumbnail.replace('http://', 'https://').replace('&zoom=1', '&zoom=2')
+                : `https://covers.openlibrary.org/b/isbn/${externalId}-L.jpg`;
+              mediaDetails = {
+                title: vi.title,
+                type: 'Book',
+                creator: vi.authors?.[0] || 'Unknown Author',
+                artwork: coverUrl,
+                description: stripHtml(vi.description),
+                rating: vi.averageRating ? String(vi.averageRating) : '4.0',
+                releaseDate: vi.publishedDate,
+                category: vi.categories?.[0] || 'Fiction',
+                language: vi.language || 'English',
+                totalEpisodes: 0,
+                subscribers: '0',
+                averageLength: vi.pageCount ? `${vi.pageCount} pages` : 'N/A',
+                subjects: vi.categories?.slice(0, 5) || [],
+                platforms: [
+                  {
+                    name: 'Amazon',
+                    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/200px-Amazon_logo.svg.png',
+                    url: `https://www.amazon.com/s?k=${encodeURIComponent(vi.title || '')}`
+                  },
+                  {
+                    name: 'Google Books',
+                    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_Books_logo_2015.svg/200px-Google_Books_logo_2015.svg.png',
+                    url: vi.infoLink || `https://books.google.com/books?isbn=${externalId}`
+                  },
+                  {
+                    name: 'Goodreads',
+                    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Goodreads_logo.svg/200px-Goodreads_logo.svg.png',
+                    url: `https://www.goodreads.com/search?q=${encodeURIComponent(vi.title || '')}`
+                  }
+                ]
+              };
+            }
+          }
+        }
       } else {
         // Standard work ID lookup - use cleanId to avoid double 'works/' prefix
         response = await fetch(`https://openlibrary.org/works/${cleanId}.json`);
