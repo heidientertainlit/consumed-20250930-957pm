@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -10,32 +11,51 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [recoveryReady, setRecoveryReady] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { user, loading, updatePassword } = useAuth();
+  const { updatePassword } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const openApp = () => {
     window.location.href = 'app.consumed.entertainment://';
   };
 
   useEffect(() => {
-    // If there's a recovery token in the URL hash, Supabase is still processing it.
-    // Don't redirect yet — wait for it to create the session.
-    const hasRecoveryToken = window.location.hash.includes('type=recovery') || 
-                             window.location.search.includes('type=recovery');
-    if (hasRecoveryToken) return;
+    // Listen directly for Supabase's PASSWORD_RECOVERY event.
+    // This fires when the user arrives from a reset email — it's the only
+    // reliable signal that we have a valid recovery session, because Supabase
+    // strips the token from the URL before our code can read it.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecoveryReady(true);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      }
+    });
 
-    if (!loading && !user) {
-      toast({
-        title: "Invalid reset link",
-        description: "Please request a new password reset link.",
-        variant: "destructive",
-      });
-      setLocation('/login');
-    }
-  }, [user, loading, setLocation, toast]);
+    // Give Supabase 3 seconds to fire PASSWORD_RECOVERY.
+    // If it never fires, the link is invalid — redirect to login.
+    timeoutRef.current = setTimeout(async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Invalid or expired reset link",
+          description: "Please request a new password reset link.",
+          variant: "destructive",
+        });
+        setLocation('/login');
+      } else {
+        setRecoveryReady(true);
+      }
+    }, 3000);
+
+    return () => {
+      subscription.unsubscribe();
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [setLocation, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,21 +95,6 @@ export default function ResetPasswordPage() {
     setSubmitting(false);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <div className="text-white text-sm mt-4">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user && !success) {
-    return null;
-  }
-
   if (success) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] flex items-center justify-center p-4">
@@ -120,6 +125,17 @@ export default function ResetPasswordPage() {
               Login on web instead
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!recoveryReady) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="text-white text-sm mt-4">Verifying reset link...</div>
         </div>
       </div>
     );
