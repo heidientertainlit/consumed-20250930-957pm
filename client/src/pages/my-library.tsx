@@ -409,7 +409,7 @@ export default function MyLibrary() {
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] -mt-px">
         <div className="pt-8 pb-8 px-4 flex flex-col items-center gap-7">
           <h2 className="text-white text-2xl font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>My Library</h2>
-          <div className="w-full max-w-sm">
+          <div className="w-full">
             <MediaSearchBar session={session} placeholder="Search to add media..." />
           </div>
         </div>
