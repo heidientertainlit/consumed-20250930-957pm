@@ -59,6 +59,23 @@ serve(async (req) => {
         .map((ex: any) => `[${ex.type}]: ${ex.content}`)
         .join('\n\n');
 
+      // Fetch recent rejected drafts for this persona that have feedback
+      const { data: recentRejections } = await supabaseAdmin
+        .from('persona_post_drafts')
+        .select('content, rejection_reason')
+        .eq('persona_user_id', persona.id)
+        .eq('status', 'rejected')
+        .not('rejection_reason', 'is', null)
+        .order('rejected_at', { ascending: false })
+        .limit(5);
+
+      const rejectionBlock = recentRejections && recentRejections.length > 0
+        ? `\n\nRECENT REJECTIONS — learn from these and do NOT repeat these mistakes:\n` +
+          recentRejections.map((r: any, i: number) =>
+            `Rejected post ${i + 1}: "${r.content.slice(0, 120)}..."\nFeedback: ${r.rejection_reason}`
+          ).join('\n\n')
+        : '';
+
       const systemPrompt = `You are ${persona.display_name} (@${persona.user_name}), a real person posting on a social entertainment platform called Consumed.
 
 PERSONALITY:
@@ -71,15 +88,21 @@ PERSONALITY:
 - Activity level: ${config.activity_level}
 
 WRITING STYLE EXAMPLES (match this voice exactly):
-${styleExamples}`;
+${styleExamples}${rejectionBlock}`;
 
       const userPrompt = `Generate ${postsPerPersona} distinct social posts this person would authentically write right now. Posts should be about specific real media (movies, TV shows, books, podcasts, music, or games) that fit their taste.
 
-IMPORTANT RULES:
+CRITICAL STYLE RULES — read carefully:
+- Write HUMAN REACTIONS, not descriptions. Posts must be personal opinions, feelings, or takes — never a plot summary or factual overview.
+- BAD example (NEVER do this): "The Witcher 3: Wild Hunt is an open-world RPG developed by CD Projekt Red. The game features a rich storyline and detailed world."
+- GOOD example: "Still thinking about the Bloody Baron quest three years later. That game wrecked me."
+- BAD example: "Oppenheimer is a biographical thriller about J. Robert Oppenheimer and the Manhattan Project directed by Christopher Nolan."
+- GOOD example: "Nolan somehow made a 3-hour physics lecture the most stressful thing I've watched all year."
+- Posts must feel like something you'd type in 30 seconds — impulsive, opinionated, conversational
+- First-person voice only. Use "I", "me", "my" naturally
+- Vary the topics across posts — don't repeat the same show or movie
 - Write entirely in this person's authentic voice — do NOT copy or paraphrase any existing reviews, Reddit posts, or published criticism
 - Reference factually accurate details: correct actor names, real plot points, actual directors/authors/artists
-- Each post should feel like a genuine personal reaction, not a summary or generic opinion
-- Vary the topics across posts — don't repeat the same show or movie
 - NEVER include ratings like "8/10", "9.5/10", "10/10" or any "X/10" format in the content text — the rating is stored separately as a 5-star value
 
 For each post return a JSON object with these exact fields:

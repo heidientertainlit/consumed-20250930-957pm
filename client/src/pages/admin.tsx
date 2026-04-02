@@ -56,9 +56,16 @@ type Persona = {
   persona_config: any;
 };
 
-// Stagger times: 4 slots per day — 8am, 11am, 2pm, 7pm
-const DAILY_SLOTS = [8, 11, 14, 19];
-const TIME_SLOT_LABELS = ["8:00 AM", "11:00 AM", "2:00 PM", "7:00 PM"];
+// Stagger times: 4 slots per day with natural-looking random minutes
+const DAILY_SLOTS = [
+  { hour: 8,  minute: 23, label: "8:23 AM"  },
+  { hour: 11, minute: 7,  label: "11:07 AM" },
+  { hour: 14, minute: 41, label: "2:41 PM"  },
+  { hour: 19, minute: 15, label: "7:15 PM"  },
+];
+
+// Extra per-draft minute jitter so no two drafts land at the same second
+const JITTER_MINS = [0, 3, 7, 11, 14, 18, 22, 25, 29, 33, 37, 40, 44, 48, 51, 55];
 
 function getUserTimezone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -73,23 +80,25 @@ function getTimezoneAbbr(): string {
 
 function getStaggeredTime(draftIndex: number): Date {
   const dayOffset = Math.floor(draftIndex / DAILY_SLOTS.length) + 1;
-  const slotIndex = draftIndex % DAILY_SLOTS.length;
+  const slot = DAILY_SLOTS[draftIndex % DAILY_SLOTS.length];
+  const jitter = JITTER_MINS[draftIndex % JITTER_MINS.length];
   const d = new Date();
   d.setDate(d.getDate() + dayOffset);
-  d.setHours(DAILY_SLOTS[slotIndex], 0, 0, 0);
+  d.setHours(slot.hour, slot.minute + jitter, 0, 0);
   return d;
 }
 
 function getStaggeredLabel(index: number): string {
   const dayOffset = Math.floor(index / DAILY_SLOTS.length) + 1;
-  const slotHour = DAILY_SLOTS[index % DAILY_SLOTS.length];
-  const ampm = slotHour >= 12 ? "pm" : "am";
-  const displayHour = slotHour > 12 ? slotHour - 12 : slotHour;
-  if (dayOffset === 1) return `tomorrow ${displayHour}${ampm}`;
+  const slot = DAILY_SLOTS[index % DAILY_SLOTS.length];
+  const hour = slot.hour;
+  const ampm = hour >= 12 ? "pm" : "am";
+  const displayHour = hour > 12 ? hour - 12 : hour;
+  if (dayOffset === 1) return `tomorrow ${displayHour}:${String(slot.minute).padStart(2,"0")}${ampm}`;
   const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const targetDay = new Date();
   targetDay.setDate(targetDay.getDate() + dayOffset);
-  return `${days[targetDay.getDay()]} ${displayHour}${ampm}`;
+  return `${days[targetDay.getDay()]} ${displayHour}:${String(slot.minute).padStart(2,"0")}${ampm}`;
 }
 
 // Build ISO string from a local date string (YYYY-MM-DD) + time string (HH:MM)
@@ -100,6 +109,11 @@ function buildScheduleISO(dateStr: string, time: string): string {
   return d.toISOString();
 }
 
+function slotToTimeStr(slot: { hour: number; minute: number }): string {
+  return `${String(slot.hour).padStart(2, "0")}:${String(slot.minute).padStart(2, "0")}`;
+}
+
+// Keep backward compat for the time input default
 function hourToTimeStr(hour: number): string {
   return `${String(hour).padStart(2, "0")}:00`;
 }
@@ -153,6 +167,8 @@ export default function AdminPage() {
   const [publishing, setPublishing] = useState(false);
   const [editingDraft, setEditingDraft] = useState<string | null>(null);
   const [editingScheduled, setEditingScheduled] = useState<string | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [rejectFeedback, setRejectFeedback] = useState<string>("");
   const [editContent, setEditContent] = useState("");
   const [editRating, setEditRating] = useState<string>("");
   const [editDate, setEditDate] = useState<string>("");
@@ -303,15 +319,21 @@ export default function AdminPage() {
   });
 
   const rejectMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
       const { error } = await supabase
         .from("persona_post_drafts")
-        .update({ status: "rejected", rejected_at: new Date().toISOString() })
+        .update({
+          status: "rejected",
+          rejected_at: new Date().toISOString(),
+          rejection_reason: reason || null,
+        })
         .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast({ title: "Draft rejected" });
+      setRejectingId(null);
+      setRejectFeedback("");
       queryClient.invalidateQueries({ queryKey: ["admin-drafts"] });
     },
   });
@@ -481,7 +503,7 @@ export default function AdminPage() {
     setEditRating(draft.rating?.toString() || "");
     const defaultDate = getStaggeredTime(draftIndex);
     setEditDate(toLocalDateStr(defaultDate));
-    setEditTime(hourToTimeStr(DAILY_SLOTS[draftIndex % DAILY_SLOTS.length]));
+    setEditTime(slotToTimeStr(DAILY_SLOTS[draftIndex % DAILY_SLOTS.length]));
   };
 
   if (profileLoading || !user) {
@@ -688,13 +710,13 @@ export default function AdminPage() {
                         <div>
                           <p className="text-xs text-gray-400 mb-1.5">Time <span className="text-gray-600">({getTimezoneAbbr()})</span></p>
                           <div className="flex gap-2 flex-wrap items-center">
-                            {DAILY_SLOTS.map((hour, i) => (
+                            {DAILY_SLOTS.map((slot) => (
                               <button
-                                key={hour}
-                                onClick={() => setEditTime(hourToTimeStr(hour))}
-                                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${editTime === hourToTimeStr(hour) ? "bg-purple-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
+                                key={slot.label}
+                                onClick={() => setEditTime(slotToTimeStr(slot))}
+                                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${editTime === slotToTimeStr(slot) ? "bg-purple-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
                               >
-                                {TIME_SLOT_LABELS[i]}
+                                {slot.label}
                               </button>
                             ))}
                             <input
@@ -738,27 +760,52 @@ export default function AdminPage() {
                             {showNotes && <p className="mt-1.5 text-xs text-gray-500 italic pl-2 border-l border-gray-700">{draft.ai_notes}</p>}
                           </div>
                         )}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Button size="sm" onClick={() => startEdit(draft, index)} className="bg-gray-800 hover:bg-gray-700 text-white text-xs border border-gray-700">
-                            Edit & Schedule
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => approveMutation.mutate({ id: draft.id, scheduledFor: staggeredTime.toISOString() })}
-                            disabled={approveMutation.isPending}
-                            className="bg-green-700 hover:bg-green-600 text-white text-xs"
-                          >
-                            <Check size={12} className="mr-1" />Approve ({staggerLabel})
-                          </Button>
-                          <Button
-                            size="sm" variant="ghost"
-                            onClick={() => rejectMutation.mutate(draft.id)}
-                            disabled={rejectMutation.isPending}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-900/20 text-xs"
-                          >
-                            <X size={12} className="mr-1" />Reject
-                          </Button>
-                        </div>
+                        {rejectingId === draft.id ? (
+                          <div className="space-y-2">
+                            <p className="text-xs text-gray-400">Why are you rejecting this? (optional — helps improve future posts)</p>
+                            <Textarea
+                              value={rejectFeedback}
+                              onChange={e => setRejectFeedback(e.target.value)}
+                              placeholder="e.g. Too descriptive — reads like a synopsis, not a reaction. We want opinions, not summaries."
+                              className="bg-gray-800 border-gray-700 text-white resize-none text-xs min-h-[72px]"
+                              autoFocus
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => rejectMutation.mutate({ id: draft.id, reason: rejectFeedback })}
+                                disabled={rejectMutation.isPending}
+                                className="bg-red-800 hover:bg-red-700 text-white text-xs"
+                              >
+                                <X size={11} className="mr-1" />Confirm reject
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => { setRejectingId(null); setRejectFeedback(""); }} className="text-gray-400 text-xs">
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Button size="sm" onClick={() => startEdit(draft, index)} className="bg-gray-800 hover:bg-gray-700 text-white text-xs border border-gray-700">
+                              Edit & Schedule
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => approveMutation.mutate({ id: draft.id, scheduledFor: staggeredTime.toISOString() })}
+                              disabled={approveMutation.isPending}
+                              className="bg-green-700 hover:bg-green-600 text-white text-xs"
+                            >
+                              <Check size={12} className="mr-1" />Approve ({staggerLabel})
+                            </Button>
+                            <Button
+                              size="sm" variant="ghost"
+                              onClick={() => { setRejectingId(draft.id); setRejectFeedback(""); }}
+                              className="text-red-400 hover:text-red-300 hover:bg-red-900/20 text-xs"
+                            >
+                              <X size={12} className="mr-1" />Reject
+                            </Button>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -844,13 +891,13 @@ export default function AdminPage() {
                         <div>
                           <p className="text-xs text-gray-400 mb-1.5">Time <span className="text-gray-600">({getTimezoneAbbr()})</span></p>
                           <div className="flex gap-2 flex-wrap items-center">
-                            {DAILY_SLOTS.map((hour, i) => (
+                            {DAILY_SLOTS.map((slot) => (
                               <button
-                                key={hour}
-                                onClick={() => setEditTime(hourToTimeStr(hour))}
-                                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${editTime === hourToTimeStr(hour) ? "bg-purple-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
+                                key={slot.label}
+                                onClick={() => setEditTime(slotToTimeStr(slot))}
+                                className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${editTime === slotToTimeStr(slot) ? "bg-purple-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
                               >
-                                {TIME_SLOT_LABELS[i]}
+                                {slot.label}
                               </button>
                             ))}
                             <input
