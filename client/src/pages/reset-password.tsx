@@ -24,19 +24,27 @@ export default function ResetPasswordPage() {
   };
 
   useEffect(() => {
-    // Listen directly for Supabase's PASSWORD_RECOVERY event.
-    // This fires when the user arrives from a reset email — it's the only
-    // reliable signal that we have a valid recovery session, because Supabase
-    // strips the token from the URL before our code can read it.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+    // On iOS Safari, Supabase processes the recovery token from the URL hash
+    // immediately when the JS client initialises — BEFORE our listener registers.
+    // So we check for an existing session right away first, then also listen for
+    // the event as a backup (covers slower connections where processing is still
+    // in-flight when the listener is set up).
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
         setRecoveryReady(true);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
       }
     });
 
-    // Give Supabase 3 seconds to fire PASSWORD_RECOVERY.
-    // If it never fires, the link is invalid — redirect to login.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        setRecoveryReady(true);
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      }
+    });
+
+    // Give Supabase up to 10 seconds — iOS Safari on a slow connection
+    // needs more time than desktop. Only redirect if there's truly no session.
     timeoutRef.current = setTimeout(async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -49,7 +57,7 @@ export default function ResetPasswordPage() {
       } else {
         setRecoveryReady(true);
       }
-    }, 3000);
+    }, 10000);
 
     return () => {
       subscription.unsubscribe();
