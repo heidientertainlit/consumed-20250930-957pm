@@ -117,7 +117,7 @@ export default function ResetPasswordPage() {
               onClick={() => setLocation('/login')}
               className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
             >
-              Go to login page instead
+              Login on web instead
             </button>
           </div>
         </div>
