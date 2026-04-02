@@ -382,8 +382,17 @@ export default function AdminPage() {
 
   const deletePostMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("social_posts").delete().eq("id", id);
-      if (error) throw error;
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${supabaseUrl}/functions/v1/admin-delete-post`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session?.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ postId: id }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Delete failed");
     },
     onSuccess: () => {
       toast({ title: "Post deleted from feed" });
