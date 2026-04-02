@@ -200,8 +200,8 @@ export default function LoginPage() {
   const labelClasses = "text-sm font-medium text-gray-600 ml-1";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] overflow-y-auto p-4 flex flex-col justify-center">
+      <div className="max-w-md w-full mx-auto">
         <div className="text-center mb-8 mt-8">
           <div className="flex justify-center mb-3">
             <img 

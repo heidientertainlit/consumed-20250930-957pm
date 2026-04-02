@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --keyboard-height: 0px;
+}
+
+/* Keyboard-safe padding: add this to any full-height container
+   that has inputs near the bottom to avoid keyboard overlap */
+.keyboard-safe-pb {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), var(--keyboard-height));
+}
+
 /* Hide scrollbar for carousel */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* IE and Edge */

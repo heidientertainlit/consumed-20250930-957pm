@@ -1,5 +1,6 @@
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
+import { useKeyboardAdjust } from "@/hooks/use-keyboard-adjust";
 
 import { sessionTracker } from "./lib/sessionTracker";
 import { initPostHog, trackPageView } from "./lib/posthog";
@@ -116,6 +117,8 @@ function PendingRouteHandler() {
 }
 
 function Router() {
+  useKeyboardAdjust();
+
   return (
     <AuthProvider>
       <PageTracker>

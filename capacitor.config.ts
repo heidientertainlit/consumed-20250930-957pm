@@ -20,7 +20,8 @@ const config: CapacitorConfig = {
     },
     Keyboard: {
       accessoryBarVisible: false,
-      resize: 'none',
+      resize: 'body',
+      resizeOnFullScreen: true,
     },
   },
   ios: {
