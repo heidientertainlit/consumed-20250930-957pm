@@ -16,6 +16,12 @@ export default function ResetPasswordPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // If there's a recovery token in the URL hash, Supabase is still processing it.
+    // Don't redirect yet — wait for it to create the session.
+    const hasRecoveryToken = window.location.hash.includes('type=recovery') || 
+                             window.location.search.includes('type=recovery');
+    if (hasRecoveryToken) return;
+
     if (!loading && !user) {
       toast({
         title: "Invalid reset link",
