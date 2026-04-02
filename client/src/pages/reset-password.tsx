@@ -9,11 +9,16 @@ export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { user, loading, updatePassword } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  const openApp = () => {
+    window.location.href = 'app.consumed.entertainment://';
+  };
 
   useEffect(() => {
     // If there's a recovery token in the URL hash, Supabase is still processing it.
@@ -64,11 +69,7 @@ export default function ResetPasswordPage() {
         variant: "destructive",
       });
     } else {
-      toast({
-        title: "Password updated!",
-        description: "Your password has been successfully reset.",
-      });
-      setLocation('/activity');
+      setSuccess(true);
     }
     
     setSubmitting(false);
@@ -85,8 +86,43 @@ export default function ResetPasswordPage() {
     );
   }
 
-  if (!user) {
+  if (!user && !success) {
     return null;
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-4">
+              <img src="/consumed-logo-new.png" alt="consumed" className="h-16 w-auto" />
+            </div>
+          </div>
+          <div className="bg-white rounded-3xl p-8 shadow-2xl text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock className="h-8 w-8 text-green-600" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Password Updated</h2>
+            <p className="text-gray-500 text-sm mb-6">
+              Your password has been successfully reset. You can now log in to Consumed with your new password.
+            </p>
+            <Button
+              onClick={openApp}
+              className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white rounded-full text-sm font-semibold shadow-lg shadow-purple-500/25 transition-all mb-3"
+            >
+              Open Consumed App
+            </Button>
+            <button
+              onClick={() => setLocation('/login')}
+              className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              Go to login page instead
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const inputClasses = "w-full h-12 bg-gray-100/80 border-0 rounded-full px-12 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400/50 focus:bg-white transition-all";
