@@ -158,7 +158,7 @@ export default function AdminPage() {
   const [editDate, setEditDate] = useState<string>("");
   const [editTime, setEditTime] = useState<string>("11:00");
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState<"drafts" | "scheduled">("drafts");
+  const [activeTab, setActiveTab] = useState<"drafts" | "scheduled" | "published">("drafts");
 
   const { data: currentProfile, isLoading: profileLoading } = useQuery({
     queryKey: ["admin-profile-check", user?.id],
@@ -353,6 +353,47 @@ export default function AdminPage() {
     },
   });
 
+  const { data: publishedPosts = [], isLoading: publishedLoading, refetch: refetchPublished } = useQuery<any[]>({
+    queryKey: ["admin-published"],
+    queryFn: async () => {
+      // Get all persona user IDs first
+      const { data: personaUsers } = await supabase
+        .from("users")
+        .select("id, user_name, display_name")
+        .eq("is_persona", true);
+
+      if (!personaUsers || personaUsers.length === 0) return [];
+
+      const personaIds = personaUsers.map((u: any) => u.id);
+      const userMap = new Map(personaUsers.map((u: any) => [u.id, u]));
+
+      const { data, error } = await supabase
+        .from("social_posts")
+        .select("id, user_id, post_type, content, rating, media_title, media_type, media_creator, created_at")
+        .in("user_id", personaIds)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+      return (data || []).map((p: any) => ({ ...p, persona: userMap.get(p.user_id) }));
+    },
+    enabled: activeTab === "published",
+  });
+
+  const deletePostMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("social_posts").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: "Post deleted from feed" });
+      queryClient.invalidateQueries({ queryKey: ["admin-published"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const startEditScheduled = (post: ScheduledPost) => {
     setEditingScheduled(post.id);
     setEditContent(post.content);
@@ -535,26 +576,30 @@ export default function AdminPage() {
           </Button>
         </div>
 
-        <div className="flex items-center gap-1 mb-4">
-          {(["drafts", "scheduled"] as const).map(tab => (
+        <div className="flex items-center gap-1 mb-4 overflow-x-auto">
+          {([
+            { key: "drafts", label: "Pending Drafts" },
+            { key: "scheduled", label: "Scheduled" },
+            { key: "published", label: "Published" },
+          ] as const).map(({ key, label }) => (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all capitalize ${
-                activeTab === tab
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                activeTab === key
                   ? "bg-gray-800 text-white"
                   : "text-gray-400 hover:text-gray-300"
               }`}
             >
-              {tab === "drafts" ? "Pending Drafts" : "Approved & Scheduled"}
-              {tab === "drafts" && drafts.length > 0 && (
+              {label}
+              {key === "drafts" && drafts.length > 0 && (
                 <span className="ml-2 bg-purple-600 text-white text-xs rounded-full px-1.5 py-0.5">{drafts.length}</span>
               )}
             </button>
           ))}
           <button
-            onClick={() => activeTab === "drafts" ? refetchDrafts() : refetchScheduled()}
-            className="ml-auto text-gray-500 hover:text-gray-300"
+            onClick={() => activeTab === "drafts" ? refetchDrafts() : activeTab === "scheduled" ? refetchScheduled() : refetchPublished()}
+            className="ml-auto text-gray-500 hover:text-gray-300 flex-shrink-0"
           >
             <RefreshCw size={14} />
           </button>
@@ -858,6 +903,66 @@ export default function AdminPage() {
                   </div>
                 );
               })}
+            </div>
+          )
+        )}
+        {/* Published Posts Tab */}
+        {activeTab === "published" && (
+          publishedLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 size={24} className="animate-spin text-purple-400" />
+            </div>
+          ) : publishedPosts.length === 0 ? (
+            <div className="text-center py-16 text-gray-500">
+              <p className="text-sm">No published bot posts found.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {publishedPosts.map((post: any) => (
+                <div key={post.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+                        <User size={13} className="text-white" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-white truncate">{post.persona?.display_name}</p>
+                        <p className="text-xs text-gray-500">@{post.persona?.user_name}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {postTypeBadge(post.post_type)}
+                      {mediaTypeBadge(post.media_type)}
+                    </div>
+                  </div>
+
+                  {post.media_title && (
+                    <p className="text-xs text-gray-400 mb-2">
+                      <span className="text-gray-500">Re:</span>{" "}
+                      <span className="text-gray-300 font-medium">{post.media_title}</span>
+                      {post.media_creator && <span className="text-gray-500"> · {post.media_creator}</span>}
+                      {post.rating && <StarRating rating={post.rating} />}
+                    </p>
+                  )}
+
+                  <p className="text-sm text-gray-200 leading-relaxed mb-3 whitespace-pre-wrap">{post.content}</p>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                      <Calendar size={12} />
+                      <span>{new Date(post.created_at).toLocaleString()}</span>
+                    </div>
+                    <Button
+                      size="sm" variant="ghost"
+                      onClick={() => deletePostMutation.mutate(post.id)}
+                      disabled={deletePostMutation.isPending}
+                      className="text-red-400 hover:text-red-300 hover:bg-red-900/20 text-xs h-7 px-2"
+                    >
+                      <Trash2 size={11} className="mr-1" />Delete from feed
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           )
         )}

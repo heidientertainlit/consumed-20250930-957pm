@@ -83,7 +83,7 @@ IMPORTANT RULES:
 - NEVER include ratings like "8/10", "9.5/10", "10/10" or any "X/10" format in the content text — the rating is stored separately as a 5-star value
 
 For each post return a JSON object with these exact fields:
-- post_type: one of "thought", "hot_take", "review" (use "review" when there's a rating)
+- post_type: one of "thought", "review" — use "review" when there's a star rating, "thought" for everything else. NEVER use "hot_take".
 - content: the post text (no hashtags, no X/10 scores, match their voice exactly)
 - rating: a number from 0.5 to 5 in 0.5 increments (e.g. 4.5) if the post is a review/rating, otherwise null. This is a 5-star scale.
 - media_title: exact title of the media being discussed
