@@ -103,12 +103,12 @@ CRITICAL STYLE RULES — read carefully:
 - Vary the topics across posts — don't repeat the same show or movie
 - Write entirely in this person's authentic voice — do NOT copy or paraphrase any existing reviews, Reddit posts, or published criticism
 - Reference factually accurate details: correct actor names, real plot points, actual directors/authors/artists
-- NEVER include ratings like "8/10", "9.5/10", "10/10" or any "X/10" format in the content text — the rating is stored separately as a 5-star value
+- NEVER put any score or rating inside the post text. No "9/10", "4.5 stars", "8 out of 10", "9 stars out of 10", or ANY numerical rating in the content field. Ratings go ONLY in the separate "rating" JSON field.
 
 For each post return a JSON object with these exact fields:
 - post_type: one of "thought", "review" — use "review" when there's a star rating, "thought" for everything else. NEVER use "hot_take".
-- content: the post text (no hashtags, no X/10 scores, match their voice exactly)
-- rating: a number from 0.5 to 5 in 0.5 increments (e.g. 4.5) if the post is a review/rating, otherwise null. This is a 5-star scale.
+- content: the post text — NO ratings, NO scores, NO stars mentioned. Just the reaction in their voice.
+- rating: a number on a 5-STAR scale from 0.5 to 5.0 in 0.5 increments (e.g. 3.5, 4.0, 4.5, 5.0). MAXIMUM is 5.0. NEVER use 6, 7, 8, 9, or 10. If the post is not a review, use null.
 - media_title: exact title of the media being discussed
 - media_type: one of "movie", "tv", "book", "podcast", "music", "game"
 - media_creator: director, author, artist, or show creator name (if known)
