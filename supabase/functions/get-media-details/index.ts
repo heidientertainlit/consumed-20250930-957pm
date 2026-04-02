@@ -57,19 +57,29 @@ serve(async (req) => {
         });
       }
       
-      // Use media_type if provided, otherwise try movie first then TV
+      // Use media_type if provided, but always cross-check the other type if the first returns 404
       let response;
       let apiUrl;
       if (mediaType === 'tv') {
         apiUrl = `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
         console.log('Fetching TV show:', externalId);
         response = await fetch(apiUrl);
+        if (!response.ok) {
+          console.log('TV not found, falling back to movie endpoint');
+          apiUrl = `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
+          response = await fetch(apiUrl);
+        }
       } else if (mediaType === 'movie') {
         apiUrl = `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
         console.log('Fetching movie:', externalId);
         response = await fetch(apiUrl);
+        if (!response.ok) {
+          console.log('Movie not found, falling back to TV endpoint');
+          apiUrl = `https://api.themoviedb.org/3/tv/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
+          response = await fetch(apiUrl);
+        }
       } else {
-        // Fallback: try movie first, then TV
+        // No type provided: try movie first, then TV
         apiUrl = `https://api.themoviedb.org/3/movie/${externalId}?api_key=${tmdbKey}&append_to_response=credits,videos,watch/providers`;
         console.log('Fallback - trying movie first:', externalId);
         response = await fetch(apiUrl);

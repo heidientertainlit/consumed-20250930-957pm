@@ -933,14 +933,17 @@ export default function MediaDetail() {
   const resolvedImageUrl = (() => {
     const src = params?.source || mediaItem?.external_source;
     const eid = params?.id || mediaItem?.external_id;
+    // Prefer the artwork returned directly by the API (already validated/HTTPS-corrected)
+    const apiArtwork = mediaItem?.artwork || mediaItem?.image_url || mediaItem?.poster_url || '';
+    if (apiArtwork) return apiArtwork;
+    // Fallback: construct cover URL from external ID for book sources
     if (src === 'googlebooks' && eid) {
       return getBooksCoverUrl(eid);
     }
     if ((src === 'openlibrary' || src === 'open_library') && eid) {
       return getOpenLibraryCoverUrl(eid);
     }
-    const img = mediaItem?.artwork || mediaItem?.image_url || mediaItem?.poster_url || '';
-    return img;
+    return '';
   })();
 
   const mediaData = mediaItem || {
