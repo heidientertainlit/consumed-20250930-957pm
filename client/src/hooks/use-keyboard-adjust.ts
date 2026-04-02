@@ -8,7 +8,7 @@ export function useKeyboardAdjust() {
 
     // Set resize mode programmatically at runtime — this works with the
     // current iOS build without requiring a native rebuild.
-    Keyboard.setResizeMode({ mode: KeyboardResize.Body }).catch(() => {
+    Keyboard.setResizeMode({ mode: KeyboardResize.Native }).catch(() => {
       // Silently ignore if plugin unavailable
     });
 
