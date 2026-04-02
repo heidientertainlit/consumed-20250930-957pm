@@ -765,6 +765,7 @@ export default function MediaDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
+      setTimeout(() => queryClient.refetchQueries({ queryKey: ['social-feed'] }), 800);
     },
     onError: (error) => {
       toast({

@@ -2360,11 +2360,13 @@ export default function Feed() {
           const opinionPost = dedupMap.get(opinionKey)!;
           const trackingTime = trackingPost.timestamp ? new Date(trackingPost.timestamp).getTime() : 0;
           const opinionTime = opinionPost.timestamp ? new Date(opinionPost.timestamp).getTime() : 0;
-          const ONE_HOUR = 60 * 60 * 1000;
-          // Drop the tracking post unless it's more than 1 hour newer than the review.
-          // Within 1 hour = same session (e.g. added to list while writing review) → review wins.
-          // More than 1 hour newer = genuinely new activity (e.g. added to Want To today, reviewed months ago) → keep both.
-          if (trackingTime - opinionTime < ONE_HOUR) {
+          const TEN_MINUTES = 10 * 60 * 1000;
+          // Drop the tracking post only if it happened within 10 minutes of the review
+          // (same session — e.g. wrote review and immediately added to Finished).
+          // Any tracking action more than 10 minutes newer than the review is fresh
+          // independent activity and should always appear (e.g. "Want To" added today,
+          // reviewed months ago).
+          if (trackingTime - opinionTime < TEN_MINUTES) {
             dedupMap.delete(key);
           }
         }
