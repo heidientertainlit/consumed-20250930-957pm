@@ -401,12 +401,14 @@ serve(async (req) => {
             media_external_id: externalId,
             media_external_source: externalSource,
             rating: rating || null,
-            contains_spoilers: containsSpoilers || false
+            contains_spoilers: containsSpoilers || false,
+            visibility: 'public',
+            fire_votes: 0,
+            ice_votes: 0
           });
         
         if (postError) {
-          console.error('Failed to create social post:', postError);
-          // Don't fail the whole request if post creation fails
+          console.error('Failed to create social post:', JSON.stringify(postError));
         } else {
           console.log('Created social post for list addition with post_type:', postType, 'content:', content ? 'yes' : 'no');
         }
