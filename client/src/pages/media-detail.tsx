@@ -928,6 +928,10 @@ export default function MediaDetail() {
   const getBooksCoverUrl = (id: string) => `https://books.google.com/books/content?id=${id}&printsec=frontcover&img=1&zoom=1`;
   const getOpenLibraryCoverUrl = (id: string) => {
     const cleanId = id.replace(/^works\//, '');
+    // ISBNs are all digits (possibly with hyphens) — use isbn endpoint
+    if (/^[\d-]+$/.test(cleanId)) {
+      return `https://covers.openlibrary.org/b/isbn/${cleanId}-L.jpg`;
+    }
     return `https://covers.openlibrary.org/b/olid/${cleanId}-L.jpg`;
   };
   const resolvedImageUrl = (() => {

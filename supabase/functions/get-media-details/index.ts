@@ -340,9 +340,12 @@ serve(async (req) => {
           const vol = gbData.items?.[0];
           if (vol) {
             const vi = vol.volumeInfo;
-            const coverUrl = vi.imageLinks?.thumbnail
-              ? vi.imageLinks.thumbnail.replace('http://', 'https://').replace('zoom=1', 'zoom=2')
-              : `https://covers.openlibrary.org/b/isbn/${externalId}-L.jpg`;
+            // Build cover URL: prefer the volume-ID-based URL (most reliable), fall back to thumbnail, then Open Library ISBN
+            const coverUrl = vol.id
+              ? `https://books.google.com/books/content?id=${vol.id}&printsec=frontcover&img=1&zoom=2&source=gbs_api`
+              : vi.imageLinks?.thumbnail
+                ? vi.imageLinks.thumbnail.replace('http://', 'https://')
+                : `https://covers.openlibrary.org/b/isbn/${externalId}-L.jpg`;
             mediaDetails = {
               title: vi.title,
               type: 'Book',
