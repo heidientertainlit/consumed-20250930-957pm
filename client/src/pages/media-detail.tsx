@@ -284,6 +284,7 @@ export default function MediaDetail() {
   // Fetch media details from edge function with fallback to cached data
   const { data: mediaItem, isLoading } = useQuery({
     queryKey: ['media-detail', params?.type, params?.source, params?.id],
+    gcTime: 0,
     queryFn: async () => {
       // First try the main API
       const response = await fetch(
@@ -939,6 +940,7 @@ export default function MediaDetail() {
     const eid = params?.id || mediaItem?.external_id;
     // Prefer the artwork returned directly by the API (already validated/HTTPS-corrected)
     const apiArtwork = mediaItem?.artwork || mediaItem?.image_url || mediaItem?.poster_url || '';
+    console.log('[media-detail] resolvedImageUrl debug:', { src, eid, artwork: mediaItem?.artwork, image_url: mediaItem?.image_url, poster_url: mediaItem?.poster_url });
     if (apiArtwork) return apiArtwork;
     // Fallback: construct cover URL from external ID for book sources
     if (src === 'googlebooks' && eid) {

@@ -340,12 +340,30 @@ serve(async (req) => {
           const vol = gbData.items?.[0];
           if (vol) {
             const vi = vol.volumeInfo;
-            // Build cover URL: prefer the volume-ID-based URL (most reliable), fall back to thumbnail, then Open Library ISBN
-            const coverUrl = vol.id
-              ? `https://books.google.com/books/content?id=${vol.id}&printsec=frontcover&img=1&zoom=2&source=gbs_api`
-              : vi.imageLinks?.thumbnail
-                ? vi.imageLinks.thumbnail.replace('http://', 'https://')
-                : `https://covers.openlibrary.org/b/isbn/${externalId}-L.jpg`;
+            // Only use Google Books thumbnail URL if imageLinks.thumbnail exists.
+            // If not, do a title+author search to find any edition that HAS a cover.
+            let coverUrl = vi.imageLinks?.thumbnail
+              ? vi.imageLinks.thumbnail.replace('http://', 'https://')
+              : null;
+            if (!coverUrl && vi.title) {
+              const titleAuthor = encodeURIComponent(
+                vi.authors?.[0] ? `${vi.title} ${vi.authors[0]}` : vi.title
+              );
+              const searchUrl = `https://www.googleapis.com/books/v1/volumes?q=${titleAuthor}&orderBy=relevance&maxResults=5${googleBooksKey ? `&key=${googleBooksKey}` : ''}`;
+              const searchResp = await fetch(searchUrl);
+              if (searchResp.ok) {
+                const searchData = await searchResp.json();
+                const withCover = (searchData.items || []).find(
+                  (item: any) => item.volumeInfo?.imageLinks?.thumbnail
+                );
+                if (withCover) {
+                  coverUrl = withCover.volumeInfo.imageLinks.thumbnail.replace('http://', 'https://');
+                }
+              }
+            }
+            if (!coverUrl) {
+              coverUrl = `https://covers.openlibrary.org/b/isbn/${externalId}-L.jpg`;
+            }
             mediaDetails = {
               title: vi.title,
               type: 'Book',
