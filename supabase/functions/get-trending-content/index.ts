@@ -205,7 +205,7 @@ async function getNytTrending(): Promise<TrendingItem[]> {
             source_label: list.label,
             source_key: 'nyt',
             external_id: book.primary_isbn13 || book.primary_isbn10,
-            external_source: 'open_library',
+            external_source: 'openlibrary',
             rank: book.rank,
           });
         });

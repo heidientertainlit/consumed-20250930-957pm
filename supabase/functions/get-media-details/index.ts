@@ -320,7 +320,7 @@ serve(async (req) => {
           ]
         };
       }
-    } else if (source === 'openlibrary') {
+    } else if (source === 'openlibrary' || source === 'open_library') {
       let response;
       let data;
       

@@ -275,8 +275,12 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
             if (src === 'googlebooks' && eid) {
               return { ...m, imageUrl: `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`, image_url: `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1` };
             }
-            if (src === 'open_library' && eid) {
-              return { ...m, imageUrl: `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`, image_url: `https://covers.openlibrary.org/b/olid/${eid}-L.jpg` };
+            if ((src === 'open_library' || src === 'openlibrary') && eid) {
+              const isISBN = /^[\d-]+$/.test(eid);
+              const coverUrl = isISBN
+                ? `https://covers.openlibrary.org/b/isbn/${eid}-L.jpg`
+                : `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`;
+              return { ...m, imageUrl: m.imageUrl || m.image_url || coverUrl, image_url: m.image_url || coverUrl };
             }
             return m;
           })
@@ -1626,8 +1630,12 @@ function CurrentlyConsumingFeedCard({
     if (src === 'googlebooks' && eid) {
       return { ...rawMedia, imageUrl: `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1` };
     }
-    if (src === 'open_library' && eid) {
-      return { ...rawMedia, imageUrl: `https://covers.openlibrary.org/b/olid/${eid}-L.jpg` };
+    if ((src === 'open_library' || src === 'openlibrary') && eid) {
+      const isISBN = /^[\d-]+$/.test(eid);
+      const coverUrl = isISBN
+        ? `https://covers.openlibrary.org/b/isbn/${eid}-L.jpg`
+        : `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`;
+      return { ...rawMedia, imageUrl: rawMedia.imageUrl || coverUrl };
     }
     return rawMedia;
   })();

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, X, Film, Plus, MessageSquarePlus, Star } from "lucide-react";
 import { Link } from "wouter";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
@@ -6,10 +6,10 @@ import { QuickAddModal } from "@/components/quick-add-modal";
 
 const normalizeMediaType = (type: string | undefined | null): string => {
   const t = (type || "").toLowerCase().trim();
-  if (
-    t === "tv" || t === "tv show" || t === "tv_show" ||
-    t === "tvshow" || t === "series" || t === "television"
-  ) return "tv";
+  if (t === "tv" || t === "tv show" || t === "tv_show" || t === "tvshow" || t === "series" || t === "television") return "tv";
+  if (t === "book") return "book";
+  if (t === "podcast") return "podcast";
+  if (t === "music" || t === "album" || t === "song") return "music";
   return "movie";
 };
 
@@ -32,9 +32,12 @@ export function MediaSearchBar({
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerMedia, setComposerMedia] = useState<any>(null);
 
+  const searchIdRef = useRef(0);
+
   const clear = () => { setQuery(""); setResults([]); };
 
   useEffect(() => {
+    const currentId = ++searchIdRef.current;
     const timer = setTimeout(async () => {
       if (!query.trim() || !session?.access_token) {
         setResults([]);
@@ -53,6 +56,7 @@ export function MediaSearchBar({
             body: JSON.stringify({ query: query.trim() }),
           }
         );
+        if (currentId !== searchIdRef.current) return;
         if (res.ok) {
           const data = await res.json();
           setResults(data.results || []);
@@ -60,9 +64,10 @@ export function MediaSearchBar({
           setResults([]);
         }
       } catch {
+        if (currentId !== searchIdRef.current) return;
         setResults([]);
       } finally {
-        setIsSearching(false);
+        if (currentId === searchIdRef.current) setIsSearching(false);
       }
     }, 300);
     return () => clearTimeout(timer);
