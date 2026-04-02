@@ -1,9 +1,16 @@
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
+import { Keyboard, KeyboardResize } from "@capacitor/keyboard";
 
 export function useKeyboardAdjust() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
+
+    // Set resize mode programmatically at runtime — this works with the
+    // current iOS build without requiring a native rebuild.
+    Keyboard.setResizeMode({ mode: KeyboardResize.Body }).catch(() => {
+      // Silently ignore if plugin unavailable
+    });
 
     const scrollFocusedIntoView = () => {
       const el = document.activeElement as HTMLElement | null;
