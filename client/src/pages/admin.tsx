@@ -400,6 +400,45 @@ export default function AdminPage() {
     },
   });
 
+  // Delete a published post from the Scheduled tab (looks up social_posts by content match)
+  const deletePublishedScheduledMutation = useMutation({
+    mutationFn: async (scheduledPost: ScheduledPost) => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      // Find the matching social_post by user + content
+      const { data: matches } = await supabase
+        .from("social_posts")
+        .select("id")
+        .eq("user_id", scheduledPost.persona_user_id)
+        .eq("content", scheduledPost.content)
+        .limit(1);
+
+      if (matches && matches.length > 0) {
+        const res = await fetch(`${supabaseUrl}/functions/v1/admin-delete-post`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session?.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ postId: matches[0].id }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || "Delete failed");
+      }
+
+      // Also remove from scheduled_persona_posts
+      await supabase.from("scheduled_persona_posts").delete().eq("id", scheduledPost.id);
+    },
+    onSuccess: () => {
+      toast({ title: "Post deleted from feed" });
+      queryClient.invalidateQueries({ queryKey: ["admin-scheduled"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-published"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+    },
+  });
+
   const startEditScheduled = (post: ScheduledPost) => {
     setEditingScheduled(post.id);
     setEditContent(post.content);
@@ -909,7 +948,16 @@ export default function AdminPage() {
                             <Calendar size={12} />
                             <span>{post.posted ? "Published" : "Scheduled for"} {new Date(post.scheduled_for).toLocaleString()}</span>
                           </div>
-                          {!post.posted && (
+                          {post.posted ? (
+                            <Button
+                              size="sm" variant="ghost"
+                              onClick={() => deletePublishedScheduledMutation.mutate(post)}
+                              disabled={deletePublishedScheduledMutation.isPending}
+                              className="text-red-400 hover:text-red-300 hover:bg-red-900/20 text-xs h-7 px-2"
+                            >
+                              <Trash2 size={11} className="mr-1" />Delete from feed
+                            </Button>
+                          ) : (
                             <div className="flex items-center gap-1.5">
                               <Button
                                 size="sm" variant="ghost"
