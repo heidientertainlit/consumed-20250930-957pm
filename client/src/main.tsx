@@ -4,8 +4,37 @@ import "./index.css";
 
 import { initPostHog } from "./lib/posthog";
 import { Capacitor } from "@capacitor/core";
+import { App as CapApp } from "@capacitor/app";
 
 initPostHog();
+
+// Register the appUrlOpen listener HERE — before React renders — so we never
+// miss the event when the app cold-starts from a Universal Link.
+// The CapacitorDeepLinkHandler component in App.tsx handles the "app already
+// running in background" case. This covers the cold-start case.
+if (Capacitor.isNativePlatform()) {
+  CapApp.addListener("appUrlOpen", ({ url }) => {
+    const hashIndex = url.indexOf("#");
+    if (hashIndex === -1) return;
+
+    const hash = url.substring(hashIndex + 1);
+    const params = new URLSearchParams(hash);
+    const type = params.get("type");
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+
+    if (type === "recovery" && accessToken && refreshToken) {
+      // Stash tokens so reset-password.tsx can pick them up on mount,
+      // even if this event fired before the component existed.
+      localStorage.setItem(
+        "pendingRecovery",
+        JSON.stringify({ accessToken, refreshToken })
+      );
+      // Also signal the router to navigate there (same pattern as push notifications)
+      localStorage.setItem("pendingRoute", "/reset-password");
+    }
+  });
+}
 
 // Register service worker for PWA — TEMPORARILY DISABLED FOR DEBUGGING
 if ("serviceWorker" in navigator) {

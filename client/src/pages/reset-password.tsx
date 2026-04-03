@@ -24,11 +24,26 @@ export default function ResetPasswordPage() {
   };
 
   useEffect(() => {
-    // On iOS Safari, Supabase processes the recovery token from the URL hash
-    // immediately when the JS client initialises — BEFORE our listener registers.
-    // So we check for an existing session right away first, then also listen for
-    // the event as a backup (covers slower connections where processing is still
-    // in-flight when the listener is set up).
+    // --- Path 1: Capacitor cold-start via Universal Link ---
+    // main.tsx registers appUrlOpen BEFORE React renders and stashes the recovery
+    // tokens in localStorage. We read them here and call setSession() directly,
+    // bypassing the URL hash which Capacitor strips during routing.
+    const pendingRaw = localStorage.getItem("pendingRecovery");
+    if (pendingRaw) {
+      localStorage.removeItem("pendingRecovery");
+      try {
+        const { accessToken, refreshToken } = JSON.parse(pendingRaw);
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+          .then(() => {
+            setRecoveryReady(true);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          });
+      } catch {}
+    }
+
+    // --- Path 2: Web browser (Safari / desktop) ---
+    // Supabase processes the token from window.location.hash automatically when
+    // the client initialises. We just need to wait for the session to be ready.
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setRecoveryReady(true);
@@ -36,6 +51,7 @@ export default function ResetPasswordPage() {
       }
     });
 
+    // Also listen for the auth event — backup for slow connections
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
         setRecoveryReady(true);
@@ -43,8 +59,7 @@ export default function ResetPasswordPage() {
       }
     });
 
-    // Give Supabase up to 10 seconds — iOS Safari on a slow connection
-    // needs more time than desktop. Only redirect if there's truly no session.
+    // Final fallback: if nothing worked after 10 seconds, the link is invalid
     timeoutRef.current = setTimeout(async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
