@@ -13,9 +13,15 @@ initPostHog();
 // The CapacitorDeepLinkHandler component in App.tsx handles the "app already
 // running in background" case. This covers the cold-start case.
 if (Capacitor.isNativePlatform()) {
+  console.log("[RESET-DEBUG] main.tsx: isNativePlatform = true, registering appUrlOpen listener");
   CapApp.addListener("appUrlOpen", ({ url }) => {
+    console.log("[RESET-DEBUG] appUrlOpen fired! Full URL:", url);
+
     const hashIndex = url.indexOf("#");
-    if (hashIndex === -1) return;
+    if (hashIndex === -1) {
+      console.log("[RESET-DEBUG] No hash in URL — not a Supabase auth callback, ignoring");
+      return;
+    }
 
     const hash = url.substring(hashIndex + 1);
     const params = new URLSearchParams(hash);
@@ -23,17 +29,22 @@ if (Capacitor.isNativePlatform()) {
     const accessToken = params.get("access_token");
     const refreshToken = params.get("refresh_token");
 
+    console.log("[RESET-DEBUG] Parsed hash params — type:", type, "| has access_token:", !!accessToken, "| has refresh_token:", !!refreshToken);
+
     if (type === "recovery" && accessToken && refreshToken) {
-      // Stash tokens so reset-password.tsx can pick them up on mount,
-      // even if this event fired before the component existed.
+      console.log("[RESET-DEBUG] Recovery URL confirmed — saving to localStorage");
       localStorage.setItem(
         "pendingRecovery",
         JSON.stringify({ accessToken, refreshToken })
       );
-      // Also signal the router to navigate there (same pattern as push notifications)
       localStorage.setItem("pendingRoute", "/reset-password");
+      console.log("[RESET-DEBUG] localStorage written: pendingRecovery + pendingRoute=/reset-password");
+    } else {
+      console.log("[RESET-DEBUG] Not a recovery URL (type was not 'recovery' or tokens missing), skipping");
     }
   });
+} else {
+  console.log("[RESET-DEBUG] main.tsx: not native platform, skipping appUrlOpen registration");
 }
 
 // Register service worker for PWA — TEMPORARILY DISABLED FOR DEBUGGING

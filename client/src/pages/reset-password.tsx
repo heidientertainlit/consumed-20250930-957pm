@@ -24,45 +24,61 @@ export default function ResetPasswordPage() {
   };
 
   useEffect(() => {
+    console.log("[RESET-DEBUG] reset-password mounted");
+    console.log("[RESET-DEBUG] window.location.href:", window.location.href);
+    console.log("[RESET-DEBUG] window.location.hash:", window.location.hash);
+
     // --- Path 1: Capacitor cold-start via Universal Link ---
-    // main.tsx registers appUrlOpen BEFORE React renders and stashes the recovery
-    // tokens in localStorage. We read them here and call setSession() directly,
-    // bypassing the URL hash which Capacitor strips during routing.
     const pendingRaw = localStorage.getItem("pendingRecovery");
+    console.log("[RESET-DEBUG] localStorage pendingRecovery:", pendingRaw ? "EXISTS" : "not found");
+
     if (pendingRaw) {
       localStorage.removeItem("pendingRecovery");
       try {
         const { accessToken, refreshToken } = JSON.parse(pendingRaw);
+        console.log("[RESET-DEBUG] Calling setSession() with tokens from localStorage");
         supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
-          .then(() => {
-            setRecoveryReady(true);
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          .then(({ data, error }) => {
+            console.log("[RESET-DEBUG] setSession() result — error:", error, "| session user:", data?.session?.user?.email ?? "none");
+            if (error) {
+              console.log("[RESET-DEBUG] setSession FAILED:", error.message);
+            } else {
+              console.log("[RESET-DEBUG] setSession SUCCESS — setting recoveryReady=true");
+              setRecoveryReady(true);
+              if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            }
           });
-      } catch {}
+      } catch (e) {
+        console.log("[RESET-DEBUG] Failed to parse pendingRecovery JSON:", e);
+      }
     }
 
     // --- Path 2: Web browser (Safari / desktop) ---
-    // Supabase processes the token from window.location.hash automatically when
-    // the client initialises. We just need to wait for the session to be ready.
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("[RESET-DEBUG] getSession() result — session:", session ? `active (${session.user?.email})` : "null");
       if (session) {
+        console.log("[RESET-DEBUG] getSession found session — setting recoveryReady=true");
         setRecoveryReady(true);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
       }
     });
 
-    // Also listen for the auth event — backup for slow connections
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[RESET-DEBUG] onAuthStateChange event:", event, "| session:", session ? session.user?.email : "null");
       if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+        console.log("[RESET-DEBUG] Auth event triggered recoveryReady=true");
         setRecoveryReady(true);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
       }
     });
 
-    // Final fallback: if nothing worked after 10 seconds, the link is invalid
+    // Final fallback
     timeoutRef.current = setTimeout(async () => {
+      console.log("[RESET-DEBUG] 10s timeout fired — checking session one last time");
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("[RESET-DEBUG] Timeout getSession():", session ? `active (${session.user?.email})` : "null");
       if (!session) {
+        console.log("[RESET-DEBUG] No session found — redirecting to /login");
         toast({
           title: "Invalid or expired reset link",
           description: "Please request a new password reset link.",
@@ -70,6 +86,7 @@ export default function ResetPasswordPage() {
         });
         setLocation('/login');
       } else {
+        console.log("[RESET-DEBUG] Session found at timeout — setting recoveryReady=true");
         setRecoveryReady(true);
       }
     }, 10000);

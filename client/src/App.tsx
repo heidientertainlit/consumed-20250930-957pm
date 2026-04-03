@@ -137,25 +137,31 @@ function CapacitorDeepLinkHandler() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
+    if (!Capacitor.isNativePlatform()) {
+      console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: not native, skipping");
+      return;
+    }
+    console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: mounted, registering appUrlOpen listener (warm-start backup)");
 
     const handleAppUrlOpen = async ({ url }: { url: string }) => {
-      // Only handle Supabase auth callback URLs (password recovery)
+      console.log("[RESET-DEBUG] CapacitorDeepLinkHandler appUrlOpen fired! URL:", url);
       const hashIndex = url.indexOf('#');
-      if (hashIndex === -1) return;
+      if (hashIndex === -1) {
+        console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: no hash, ignoring");
+        return;
+      }
 
       const hash = url.substring(hashIndex + 1);
       const params = new URLSearchParams(hash);
       const type = params.get('type');
       const accessToken = params.get('access_token');
       const refreshToken = params.get('refresh_token');
+      console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: type:", type, "has tokens:", !!accessToken, !!refreshToken);
 
       if (type === 'recovery' && accessToken && refreshToken) {
-        // Give Supabase the tokens directly — bypasses the broken URL hash flow
-        await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
+        console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: calling setSession()");
+        const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        console.log("[RESET-DEBUG] CapacitorDeepLinkHandler: setSession result — error:", error);
         setLocation('/reset-password');
       }
     };
