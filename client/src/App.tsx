@@ -1,6 +1,9 @@
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 import { useKeyboardAdjust } from "@/hooks/use-keyboard-adjust";
+import { Capacitor } from "@capacitor/core";
+import { App as CapApp } from "@capacitor/app";
+import { supabase } from "@/lib/supabase";
 
 import { sessionTracker } from "./lib/sessionTracker";
 import { initPostHog, trackPageView } from "./lib/posthog";
@@ -116,6 +119,54 @@ function PendingRouteHandler() {
   return null;
 }
 
+/**
+ * Handles Supabase auth deep links on iOS (Capacitor Universal Links).
+ *
+ * Problem: iOS intercepts every app.consumedapp.com link and opens it inside the
+ * WKWebView via Universal Links. When Capacitor routes the app to /reset-password,
+ * it strips the URL hash — so the #access_token=xxx&type=recovery that Supabase
+ * needs never reaches window.location. Supabase never fires PASSWORD_RECOVERY,
+ * and the page times out to login.
+ *
+ * Fix: @capacitor/app fires `appUrlOpen` with the FULL original URL (including
+ * hash) before any routing happens. We read the hash here, extract the tokens,
+ * and call supabase.auth.setSession() directly. By the time reset-password.tsx
+ * mounts and calls getSession(), the session is already set.
+ */
+function CapacitorDeepLinkHandler() {
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const handleAppUrlOpen = async ({ url }: { url: string }) => {
+      // Only handle Supabase auth callback URLs (password recovery)
+      const hashIndex = url.indexOf('#');
+      if (hashIndex === -1) return;
+
+      const hash = url.substring(hashIndex + 1);
+      const params = new URLSearchParams(hash);
+      const type = params.get('type');
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+
+      if (type === 'recovery' && accessToken && refreshToken) {
+        // Give Supabase the tokens directly — bypasses the broken URL hash flow
+        await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        setLocation('/reset-password');
+      }
+    };
+
+    CapApp.addListener('appUrlOpen', handleAppUrlOpen);
+    return () => { CapApp.removeAllListeners(); };
+  }, [setLocation]);
+
+  return null;
+}
+
 function Router() {
   useKeyboardAdjust();
 
@@ -123,6 +174,7 @@ function Router() {
     <AuthProvider>
       <PageTracker>
         <PendingRouteHandler />
+        <CapacitorDeepLinkHandler />
 
         <Switch>
           <Route path="/login">
