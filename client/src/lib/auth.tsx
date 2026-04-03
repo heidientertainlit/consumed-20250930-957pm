@@ -107,8 +107,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           trackEvent('user_signed_in')
 
-          await requestPushPermissionIfNative()
-          await linkOneSignalUser(session.user.id)
+          // Skip push permission during password recovery — setSession() fires SIGNED_IN
+          // but the user is mid-recovery, not completing a normal login. The prompt would
+          // appear before the Reset Your Password screen, which is jarring and wrong.
+          const isRecoveryFlow = window.location.pathname === '/reset-password';
+          if (!isRecoveryFlow) {
+            await requestPushPermissionIfNative()
+            await linkOneSignalUser(session.user.id)
+          }
+
+        } else if (event === 'PASSWORD_RECOVERY') {
+          // Recovery session established — do nothing here. The reset-password page
+          // handles everything. Push permission will be requested after normal login.
 
         } else if (event === 'SIGNED_OUT') {
           try { await OneSignal.logout() } catch (_) {}

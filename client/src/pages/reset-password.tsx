@@ -5,6 +5,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Lock } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
 
 export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
@@ -20,7 +21,14 @@ export default function ResetPasswordPage() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const openApp = () => {
-    window.location.href = 'app.consumed.entertainment://';
+    if (Capacitor.isNativePlatform()) {
+      // Already inside the iOS app — just navigate to the main feed.
+      // The user's session is now fully active after updateUser() succeeded.
+      setLocation('/activity');
+    } else {
+      // Web browser (Safari) — try to hand off to the native app via custom scheme.
+      window.location.href = 'app.consumed.entertainment://';
+    }
   };
 
   useEffect(() => {
