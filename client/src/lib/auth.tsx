@@ -158,9 +158,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const resetPassword = async (email: string) => {
-    const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+    // IMPORTANT: Never use window.location.origin as fallback here.
+    // On iOS Capacitor the origin is 'https://localhost', which Supabase
+    // rejects as an unauthorized redirect URL and silently falls back to
+    // the Site URL (https://app.consumedapp.com), stripping the /reset-password path.
+    // Always resolve to the known production URL.
+    const appUrl = (import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com').replace(/\/$/, '');
+    const redirectTo = `${appUrl}/reset-password`;
+    console.log("[RESET-DEBUG] resetPassword: redirectTo =", redirectTo);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${baseUrl}/reset-password`,
+      redirectTo,
     })
     return { error }
   }
