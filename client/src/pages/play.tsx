@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
-
-import { Target, HelpCircle, Vote, BarChart2, UserPlus, Trophy, ChevronRight } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { Target, HelpCircle, Vote, BarChart2, UserPlus, Trophy, ChevronRight, ArrowRight } from "lucide-react";
 
 const gameModes = [
   {
@@ -51,6 +52,87 @@ const gameModes = [
   },
 ];
 
+interface RankEntry {
+  user_id: string;
+  username: string;
+  display_name: string;
+  score: number;
+  rank: number;
+}
+
+function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
+  const [entries, setEntries] = useState<RankEntry[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setLoading(false); return; }
+      setCurrentUserId(session.user.id);
+
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=overall&scope=global&period=all&limit=200`,
+          { headers: { Authorization: `Bearer ${session.access_token}`, apikey: import.meta.env.VITE_SUPABASE_ANON_KEY } }
+        );
+        const data = await res.json();
+        const board: RankEntry[] = data?.overall || [];
+        setEntries(board);
+      } catch {
+        // silently fail — widget just won't show
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="mt-5 rounded-2xl bg-white/5 border border-white/10 p-4 animate-pulse h-[88px]" />
+    );
+  }
+
+  const myIndex = entries.findIndex(e => e.user_id === currentUserId);
+  if (myIndex === -1 || entries.length === 0) return null;
+
+  const me = entries[myIndex];
+  const above = myIndex > 0 ? entries[myIndex - 1] : null;
+  const below = myIndex < entries.length - 1 ? entries[myIndex + 1] : null;
+
+  const Row = ({ entry, isMe }: { entry: RankEntry; isMe?: boolean }) => (
+    <div className={`flex items-center gap-3 py-1.5 px-3 rounded-xl ${isMe ? 'bg-purple-600/20 border border-purple-500/30' : ''}`}>
+      <span className={`text-xs font-bold w-7 text-right shrink-0 ${isMe ? 'text-purple-300' : 'text-white/40'}`}>
+        #{entry.rank}
+      </span>
+      <span className={`flex-1 text-sm font-medium truncate ${isMe ? 'text-white' : 'text-white/60'}`}>
+        {isMe ? 'You' : (entry.display_name || entry.username)}
+      </span>
+      <span className={`text-xs font-semibold shrink-0 ${isMe ? 'text-purple-300' : 'text-white/40'}`}>
+        {entry.score.toLocaleString()} pts
+      </span>
+    </div>
+  );
+
+  return (
+    <button
+      onClick={() => onNavigate('/leaderboard')}
+      className="w-full mt-5 rounded-2xl bg-white/5 border border-white/10 p-3 text-left active:scale-95 transition-transform"
+    >
+      <div className="space-y-0.5">
+        {above && <Row entry={above} />}
+        <Row entry={me} isMe />
+        {below && <Row entry={below} />}
+      </div>
+      <div className="flex items-center justify-end gap-1 mt-2.5 pr-1">
+        <span className="text-[11px] text-white/30">Full leaderboard</span>
+        <ArrowRight size={11} className="text-white/30" />
+      </div>
+    </button>
+  );
+}
+
 export default function PlayPage({ initialTab }: { initialTab?: string }) {
   const [, setLocation] = useLocation();
 
@@ -58,7 +140,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0f' }}>
       <Navigation />
 
-      {/* Purple hero — heading */}
+      {/* Dark hero — heading + rank widget */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] px-4 pt-6 pb-6">
         <h1
           className="text-2xl font-bold text-white text-center"
@@ -66,25 +148,11 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         >
           Play
         </h1>
+        <RankWidget onNavigate={setLocation} />
       </div>
 
-      {/* Light section — leaderboard + game modes */}
+      {/* Light section — game modes */}
       <div className="bg-gray-50 px-4 pt-5 pb-28 space-y-5">
-        {/* Leaderboard shortcut */}
-        <button
-          onClick={() => setLocation("/leaderboard")}
-          className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border border-amber-200 bg-amber-50 active:scale-95 transition-transform"
-        >
-          <div className="flex items-center gap-3">
-            <Trophy size={20} className="text-amber-500" />
-            <div className="text-left">
-              <p className="text-gray-900 font-semibold text-sm">Leaderboard</p>
-              <p className="text-gray-500 text-xs">See where you rank</p>
-            </div>
-          </div>
-          <ChevronRight size={16} className="text-gray-300" />
-        </button>
-
         {/* Game Modes */}
         <div>
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
