@@ -2184,9 +2184,6 @@ export default function Feed() {
         if (p.type === 'rank' || p.type === 'shared_rank') return true;
         if (p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review') return true;
         if (p.type === 'thought' || p.post_type === 'thought') return true;
-        // add-to-list posts (e.g. "Currently", "Finished") always show — the media card is the content
-        if (p.type === 'add-to-list' || p.post_type === 'add-to-list') return true;
-        if (p.type === 'rewatch' || p.post_type === 'rewatch') return true;
         const content = (p.content || '').trim();
         if (p.rating && p.rating > 0) return true;
         if (content.length > 20 && !isAutoGen(content)) return true;
@@ -2202,13 +2199,6 @@ export default function Feed() {
         else if (p.type === 'poll' && ((p as any).question || (p as any).options)) postType = 'poll';
         else if (p.type === 'cast_approved') postType = 'cast_approved';
         else if (p.type === 'rank' || p.type === 'shared_rank') postType = 'rank';
-        else if (p.type === 'add-to-list' || p.post_type === 'add-to-list' || p.type === 'rewatch' || p.post_type === 'rewatch') {
-          // If the tracking post carries a rating or written content, surface it properly
-          // instead of showing a bare "Added to Finished" card.
-          if (content.length > 20) postType = 'review';
-          else if (p.rating && p.rating > 0) postType = 'rating';
-          else postType = 'general';
-        }
         else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
         else if ((p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review') && content) postType = p.rating && p.rating > 0 ? 'review' : 'thought';
         else if (p.type === 'thought' || p.post_type === 'thought') postType = 'thought';
@@ -2253,87 +2243,48 @@ export default function Feed() {
 
   const standaloneUGCPosts: any[] = (() => {
     const allUGC = ugcSlots.flat().filter(p => {
-      return p.type === 'review' || p.type === 'thought' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment';
+      return p.type === 'review' || p.type === 'thought' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment';
     });
 
-    // Step 1: Deduplicate — same user + same media keeps only the best post.
-    // Predictions, polls, and cast_approved are EXEMPT from dedup — they are distinct
-    // content types that must coexist with thoughts/reviews about the same media.
-    // Including them in the same dedup key would silently erase thoughts/reviews.
-    const DEDUP_EXEMPT = new Set(['predict', 'prediction', 'poll', 'cast_approved', 'game_moment']);
-    const dedupMap = new Map<string, UGCPost>();
+    // Group posts by user within 24-hour rolling windows.
+    // If a user posts 2+ things within 24 hours they appear as a swipeable carousel.
+    // Single posts appear as individual cards.
+    // All items (carousels and solo posts) are sorted by most-recent timestamp.
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+    const byUser = new Map<string, UGCPost[]>();
     for (const post of allUGC) {
-      if (DEDUP_EXEMPT.has(post.type)) {
-        dedupMap.set(`exempt-${post.id}`, post);
-        continue;
-      }
-      // Normalize title as the primary dedup dimension — more reliable than externalId
-      // because add-to-list posts written by track-media sometimes have null media_external_id
-      // while the matching review has a real TMDB ID, causing them to get different keys and
-      // both slip through as if they're unrelated content.
-      const normalizedTitle = (post.mediaTitle || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-      const mediaKey = normalizedTitle || post.externalId || `no-media-${post.id}`;
-      // Use the post's own ID as fallback so posts with missing user IDs never
-      // compete with each other or anyone else — only same user + same media deduplicates.
-      const userKey = post.user?.id || `orphan-${post.id}`;
-      // Separate dedup buckets by activity type: a "Want to" addition and a review are
-      // different social actions and should each get their own feed slot.
-      // 'tracking' = add-to-list / rewatch / general list moves
-      // 'opinion'  = review / thought / rating / finished
-      const typeCategory = (post.type === 'general' || post.type === 'rewatch' || post.type === 'add-to-list') ? 'tracking' : 'opinion';
-      const key = `${userKey}-${mediaKey}-${typeCategory}`;
-      const existing = dedupMap.get(key);
-      if (!existing) {
-        dedupMap.set(key, post);
-      } else {
-        // Posts are iterated newest-first, so 'existing' is the newer post, 'post' is older.
-        // Rule: newer wins UNLESS the newer post has no written content and the older does.
-        // A bare tracking card (rating only, no text) must never bury a rich review.
-        // Note: rating alone does NOT count as substance — a bare 4.5-star add-to-list post
-        // must not defeat a 4.5-star review with actual written content.
-        const hasSubstance = (p: UGCPost) => (p.content?.trim()?.length || 0) > 20;
-        if (!hasSubstance(existing) && hasSubstance(post)) {
-          // Newer post lacks written content, older has it — keep the older one
-          dedupMap.set(key, post);
-        }
-        // Otherwise keep existing (newer wins)
-      }
+      const uid = post.user?.id || 'anon';
+      if (!byUser.has(uid)) byUser.set(uid, []);
+      byUser.get(uid)!.push(post);
     }
-    // Cleanup pass: if a user has both a tracking post (add-to-list/rewatch) AND
-    // an opinion post (review/thought/rating) for the same media, drop the tracking
-    // one ONLY if it is not newer than the opinion post.
-    // Rationale: if the tracking action happened in the same session as the review
-    // (same time or older), the review tells the full story and the bare card is
-    // redundant. But if the tracking action is MORE RECENT than the review (e.g.
-    // Randy reviewed Rooster months ago and just added it to "Want to" today), it
-    // is fresh activity and should remain in the feed.
-    for (const key of dedupMap.keys()) {
-      if (key.endsWith('-tracking')) {
-        const opinionKey = key.replace(/-tracking$/, '-opinion');
-        if (dedupMap.has(opinionKey)) {
-          const trackingPost = dedupMap.get(key)!;
-          const opinionPost = dedupMap.get(opinionKey)!;
-          const trackingTime = trackingPost.timestamp ? new Date(trackingPost.timestamp).getTime() : 0;
-          const opinionTime = opinionPost.timestamp ? new Date(opinionPost.timestamp).getTime() : 0;
-          const TEN_MINUTES = 10 * 60 * 1000;
-          // Drop the tracking post only if it happened within 10 minutes of the review
-          // (same session — e.g. wrote review and immediately added to Finished).
-          // Any tracking action more than 10 minutes newer than the review is fresh
-          // independent activity and should always appear (e.g. "Want To" added today,
-          // reviewed months ago).
-          if (trackingTime - opinionTime < TEN_MINUTES) {
-            dedupMap.delete(key);
-          }
-        }
-      }
-    }
-    // Sort strictly by timestamp descending — pure chronological order, no grouping, no shuffling
-    const deduped = Array.from(dedupMap.values());
-    deduped.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
-    return deduped;
-  })();
 
-  const TOTAL_BATCH_SLOTS_COUNT = 22;
+    const feedItems: any[] = [];
+    for (const [, userPosts] of byUser) {
+      userPosts.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
+      let window: UGCPost[] = [userPosts[0]];
+      const flushWindow = (w: UGCPost[]) => {
+        if (w.length >= 2) {
+          feedItems.push({ id: `ugc-group-${w[0].id}`, type: 'ugc_group', user: w[0].user, posts: w, timestamp: w[0].timestamp });
+        } else {
+          feedItems.push(w[0]);
+        }
+      };
+      for (let i = 1; i < userPosts.length; i++) {
+        const windowTop = new Date(window[0].timestamp || 0).getTime();
+        const cur = new Date(userPosts[i].timestamp || 0).getTime();
+        if (windowTop - cur < ONE_DAY_MS) {
+          window.push(userPosts[i]);
+        } else {
+          flushWindow(window);
+          window = [userPosts[i]];
+        }
+      }
+      flushWindow(window);
+    }
+
+    feedItems.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
+    return feedItems;
+  })();
   // Map each post/group to a sequential slot index so item 0 appears at slot 0,
   // item 1 at slot 1, etc. — interleaved between game cards in the feed.
   const slotAssignments = useMemo(() => {
