@@ -84,16 +84,33 @@ serve(async (req) => {
       });
     }
 
-    // Fetch names
+    // Fetch names from public.users
     const allUserIds = leaderboard.map(e => e.userId);
     const { data: users } = await adminClient
       .from('users')
       .select('id, user_name, display_name')
       .in('id', allUserIds);
 
+    // Also fetch auth metadata — this has real names from OAuth (Google etc.)
+    // Supabase admin API returns raw_user_meta_data with full_name, name, etc.
+    let authMetaMap: Record<string, string> = {};
+    try {
+      const { data: { users: authUsers } } = await adminClient.auth.admin.listUsers({ perPage: 1000 });
+      for (const au of authUsers || []) {
+        const meta = (au as any).user_metadata || (au as any).raw_user_meta_data || {};
+        const realName = meta.full_name || meta.name || meta.display_name || '';
+        if (realName && allUserIds.includes(au.id)) {
+          authMetaMap[au.id] = realName;
+        }
+      }
+    } catch (_) {
+      // auth admin API unavailable — fall back to public.users only
+    }
+
     const userMap: Record<string, string> = {};
     for (const u of users || []) {
-      userMap[u.id] = cleanName(u.display_name, u.user_name);
+      // Prefer auth metadata real name; fall back to cleaned public.users name
+      userMap[u.id] = authMetaMap[u.id] || cleanName(u.display_name, u.user_name);
     }
 
     const timeLabel = isWeekly ? 'this week' : 'overall';
