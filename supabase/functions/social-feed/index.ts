@@ -116,8 +116,9 @@ serve(async (req) => {
         ...(blockedMe?.map((r: any) => r.blocker_id) || []),
       ];
 
-      // Build the base query
-      let query = supabase
+      // Build the base query — use admin client to bypass RLS so ALL posts appear
+      // chronologically regardless of follow relationships (small user base, no friend filtering)
+      let query = supabaseAdmin
         .from('social_posts')
         .select(`
           id, 
@@ -184,35 +185,7 @@ serve(async (req) => {
       const castApprovedPosts = posts?.filter(p => p.post_type === 'cast_approved') || [];
       console.log('Cast approved posts found:', castApprovedPosts.length, castApprovedPosts.map(p => ({ id: p.id, media_title: p.media_title })));
 
-      // Boost persona posts: always include recent persona posts regardless of follow status
-      // This ensures persona content appears in the feed even if the user doesn't follow each persona
-      if (!specificPostId) {
-        const { data: personaUsers } = await supabaseAdmin
-          .from('users')
-          .select('id')
-          .eq('is_persona', true)
-          .limit(30);
-
-        if (personaUsers && personaUsers.length > 0) {
-          const personaUserIds = personaUsers.map((u: any) => u.id);
-          const { data: personaPosts } = await supabaseAdmin
-            .from('social_posts')
-            .select(`id, user_id, content, post_type, rating, progress, created_at, updated_at, likes_count, comments_count, media_title, media_type, media_creator, image_url, media_external_id, media_external_source, media_description, contains_spoilers, fire_votes, ice_votes, prediction_pool_id, list_id, rank_id, rec_category`)
-            .in('user_id', personaUserIds)
-            .not('post_type', 'in', '("added_to_list","add-to-list","friend_list_group","media_group")')
-            .order('created_at', { ascending: false })
-            .limit(10);
-
-          if (personaPosts && personaPosts.length > 0) {
-            const existingIds = new Set((posts || []).map((p: any) => p.id));
-            const newPersonaPosts = personaPosts.filter((p: any) => !existingIds.has(p.id));
-            if (newPersonaPosts.length > 0) {
-              console.log('Boosting', newPersonaPosts.length, 'persona posts into feed');
-              (posts as any[]).unshift(...newPersonaPosts);
-            }
-          }
-        }
-      }
+      // Persona posts now appear naturally — admin client returns ALL posts chronologically
 
       // Fetch prediction pools for posts with prediction_pool_id
       let predictionPoolMap = new Map<string, any>();
