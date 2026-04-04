@@ -74,11 +74,11 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
               {(card.user.displayName || card.user.username || '?')[0].toUpperCase()}
             </div>
           )}
-          <span className="text-sm font-medium text-white">
+          <span className="text-sm font-medium text-gray-900">
             {card.user.displayName || card.user.username}
           </span>
           {card.timestamp && (
-            <span className="text-xs text-gray-500 ml-auto">{timeAgo(card.timestamp)}</span>
+            <span className="text-xs text-gray-400 ml-auto">{timeAgo(card.timestamp)}</span>
           )}
         </div>
       )}
@@ -87,11 +87,11 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
         <div className={`w-7 h-7 rounded-lg ${iconBg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
           <Icon size={14} className={iconColor} />
         </div>
-        <p className="text-white font-semibold text-sm leading-snug pt-1">{card.headline}</p>
+        <p className="text-gray-900 font-semibold text-sm leading-snug pt-1">{card.headline}</p>
       </div>
 
       {card.detail && (
-        <p className="text-gray-400 text-sm italic mb-3 pl-10">
+        <p className="text-gray-600 text-sm italic mb-3 pl-10">
           &ldquo;{card.detail}&rdquo;
         </p>
       )}
@@ -101,7 +101,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           {card.userAnswer && (
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-gray-500">They said:</span>
-              <span className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
                 {card.userAnswer}
               </span>
             </div>
@@ -109,7 +109,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           {card.correctAnswer && (
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-gray-500">Right answer:</span>
-              <span className="text-xs bg-green-900/50 text-green-300 px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
                 {card.correctAnswer}
               </span>
             </div>
@@ -119,9 +119,9 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
 
       {card.highlight && (
         <div className="pl-10 mb-3">
-          <p className="text-xs text-gray-400 mb-1">{card.highlight}</p>
+          <p className="text-xs text-gray-600 mb-1">{card.highlight}</p>
           {card.highlightValue !== undefined && (
-            <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+            <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
               <div
                 className="h-full bg-purple-500 rounded-full transition-all"
                 style={{ width: `${Math.min(100, Math.max(0, card.highlightValue))}%` }}
