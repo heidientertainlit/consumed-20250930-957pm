@@ -39,7 +39,6 @@ import ConsolidatedActivityCard, { ConsolidatedActivity } from "@/components/con
 import GroupedActivityCard from "@/components/grouped-activity-card";
 import RecommendationCard from "@/components/recommendation-card";
 import ConsumptionCarousel from "@/components/consumption-carousel";
-import TrendingCarousel from "@/components/trending-carousel";
 import SwipeableRatingCards from "@/components/swipeable-rating-cards";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1968,7 +1967,6 @@ export default function Feed() {
     mediaType?: string;
   } | null>(null); // Bet modal state
   const [isPlacingBet, setIsPlacingBet] = useState(false);
-  const [suggestedRotation, setSuggestedRotation] = useState(0);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
@@ -2081,29 +2079,6 @@ export default function Feed() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: trendingContent = [] } = useQuery({
-    queryKey: ['trending-content'],
-    queryFn: async () => {
-      if (!session?.access_token) return [];
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      try {
-        const response = await fetch(`${supabaseUrl}/functions/v1/get-trending-content`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-          },
-        });
-        if (!response.ok) return [];
-        const data = await response.json();
-        return data.items || [];
-      } catch {
-        return [];
-      }
-    },
-    enabled: !!session?.access_token,
-    staleTime: 5 * 60 * 1000,
-  });
 
   const { 
     data: infinitePosts, 
@@ -4500,124 +4475,6 @@ export default function Feed() {
     });
   };
 
-  // Fetch trending TV shows
-  const { data: trendingTVShows = [] } = useQuery({
-    queryKey: ['trending-tv-shows'],
-    queryFn: async () => {
-      try {
-        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-tv`, {
-          headers: {
-            'Authorization': `Bearer ${anonKey}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) {
-          console.error('Failed to fetch trending TV shows');
-          return [];
-        }
-        const data = await response.json();
-        return data.map((item: any) => ({
-          ...item,
-          externalId: item.id,
-          externalSource: 'tmdb',
-          mediaType: 'tv'
-        }));
-      } catch (error) {
-        console.error('Error fetching trending TV shows:', error);
-        return [];
-      }
-    },
-    staleTime: 1000 * 60 * 60,
-  });
-
-  // Fetch NY Times bestseller books
-  const { data: bestsellerBooks = [] } = useQuery({
-    queryKey: ['bestseller-books'],
-    queryFn: async () => {
-      try {
-        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-bestseller-books`, {
-          headers: {
-            'Authorization': `Bearer ${anonKey}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) {
-          console.error('Failed to fetch bestseller books');
-          return [];
-        }
-        const data = await response.json();
-        // Add externalId and externalSource for MediaCarousel compatibility
-        return data.map((item: any) => ({
-          ...item,
-          externalId: item.id,
-          externalSource: 'openlibrary',
-          mediaType: 'book'
-        }));
-      } catch (error) {
-        console.error('Error fetching bestseller books:', error);
-        return [];
-      }
-    },
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
-  });
-
-  // Trending queries disabled - only showing Recommended for you
-  // const { data: trendingMovies = [] } = useQuery({
-  //   queryKey: ['trending-movies'],
-  //   queryFn: async () => {
-  //     try {
-  //       const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  //       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-movies`, {
-  //         headers: {
-  //           'Authorization': `Bearer ${anonKey}`,
-  //           'Content-Type': 'application/json',
-  //         },
-  //       });
-  //       if (!response.ok) return [];
-  //       const data = await response.json();
-  //       // Add externalId and externalSource for MediaCarousel compatibility
-  //       return data.map((item: any) => ({
-  //         ...item,
-  //         externalId: item.id,
-  //         externalSource: 'tmdb'
-  //       }));
-  //     } catch (error) {
-  //       console.error('Error fetching trending movies:', error);
-  //       return [];
-  //     }
-  //   },
-  //   staleTime: 1000 * 60 * 60,
-  // });
-
-  // Fetch trending podcasts
-  const { data: trendingPodcasts = [] } = useQuery({
-    queryKey: ['trending-podcasts'],
-    queryFn: async () => {
-      try {
-        const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/get-trending-podcasts`, {
-          headers: {
-            'Authorization': `Bearer ${anonKey}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) return [];
-        const data = await response.json();
-        return data.map((item: any) => ({
-          ...item,
-          externalId: item.id,
-          externalSource: 'spotify',
-          mediaType: 'podcast'
-        }));
-      } catch (error) {
-        console.error('Error fetching trending podcasts:', error);
-        return [];
-      }
-    },
-    staleTime: 1000 * 60 * 60,
-  });
 
   // Fetch DNA-based personalized recommendations (cached, instant <1s load!)
   const fetchRecommendations = async () => {
@@ -4731,32 +4588,6 @@ export default function Feed() {
     staleTime: 60000,
   });
 
-  // Suggested quick adds - personalized from recommendations or trending
-  // TODO: Add friend-activity sourcing as top priority (requires new backend query)
-  // Priority should be: 1. Friends' recent activity → 2. DNA recommendations → 3. Trending content
-  const suggestedQuickAdds = useMemo(() => {
-    // Priority 1 (future): Source from friends' recent tracked items
-    // Priority 2: Use personalized DNA recommendations if available
-    if (recommendedContent && recommendedContent.length >= 2) {
-      const startIdx = (suggestedRotation * 2) % Math.max(recommendedContent.length - 1, 1);
-      return recommendedContent.slice(startIdx, startIdx + 2);
-    }
-    // Priority 3: Mix trending TV and books
-    const allTrending = [...(trendingTVShows || []), ...(bestsellerBooks || [])];
-    if (allTrending.length >= 2) {
-      const startIdx = (suggestedRotation * 2) % Math.max(allTrending.length - 1, 1);
-      return allTrending.slice(startIdx, startIdx + 2);
-    }
-    return [];
-  }, [recommendedContent, trendingTVShows, bestsellerBooks, suggestedRotation]);
-
-  // Rotate suggestions every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSuggestedRotation(prev => prev + 1);
-    }, 30000);
-    return () => clearInterval(interval);
-  }, []);
 
   const handleMediaClick = (item: any) => {
     console.log("Clicked media item:", item);
@@ -4989,18 +4820,6 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* Trending Strip */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && trendingContent.length > 0 && (
-                <TrendingCarousel
-                  items={trendingContent}
-                  onItemClick={(item) => {
-                    const type = item.media_type || 'movie';
-                    const source = item.external_source || 'tmdb';
-                    const id = item.external_id || item.id;
-                    setLocation(`/media/${type}/${source}/${id}`);
-                  }}
-                />
-              )}
 
               {renderPostBatchByIndex(0)}
 
@@ -5336,64 +5155,13 @@ export default function Feed() {
                 
                 // Points achievement at positions 5, 17, 29... (every 12 posts starting at 5)
                 const shouldShowPointsAchievements = postIndex === 5 || (postIndex > 5 && (postIndex - 5) % 12 === 0);
-                // Media carousel at positions 9, 21, 33... (every 12 posts starting at 9)
-                const shouldShowMediaCarousel = postIndex === 9 || (postIndex > 9 && (postIndex - 9) % 12 === 0);
-                const shouldShowRecommendations = false;
-                
-                // Rotate through different carousel types
-                const carouselTypes = [
-                  { type: 'tv', title: 'Trending in TV', items: trendingTVShows },
-                  { type: 'podcast', title: 'Trending in Podcasts', items: trendingPodcasts },
-                  { type: 'book', title: 'Trending in Books', items: bestsellerBooks },
-                ];
-                const carouselIndex = Math.floor((postIndex + 1) / 15) - 1;
-                const currentCarousel = carouselTypes[carouselIndex % carouselTypes.length] || carouselTypes[0];
                 
                 // Carousel elements to prepend to any post type
                 const carouselElements = (
                   <>
-                    {shouldShowRecommendations && (
-                      <div className="mb-4 bg-gradient-to-r from-[#1a1a2e] via-[#2d1f4e] to-[#1a1a2e] rounded-2xl border border-purple-900/50 p-4 shadow-lg" data-testid="recommendations-feed-card">
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-lg">✨</span>
-                          <h3 className="font-semibold text-white">Recommended for you</h3>
-                        </div>
-                        <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
-                          {recommendedContent.slice(0, 6).map((item: any, idx: number) => (
-                            <RecommendationCard
-                              key={item.id || idx}
-                              item={item}
-                              idx={idx}
-                              onMediaClick={handleMediaClick}
-                              onAddClick={(mediaItem) => {
-                                setQuickAddMedia({
-                                  title: mediaItem.title,
-                                  mediaType: mediaItem.type || mediaItem.mediaType || 'movie',
-                                  imageUrl: mediaItem.imageUrl || mediaItem.posterPath,
-                                  externalId: mediaItem.externalId || mediaItem.id,
-                                  externalSource: mediaItem.externalSource || 'tmdb',
-                                  creator: mediaItem.creator || mediaItem.author,
-                                });
-                                setIsQuickAddOpen(true);
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
                     {shouldShowPointsAchievements && !isFilterActive && (
                       <div className="mb-4">
                         <PointsAchievementCard cardIndex={Math.floor((postIndex - 3) / 8)} />
-                      </div>
-                    )}
-                    {shouldShowMediaCarousel && currentCarousel.items.length > 0 && (
-                      <div className="mb-4">
-                        <MediaCarousel
-                          title={currentCarousel.title}
-                          mediaType={currentCarousel.type}
-                          items={currentCarousel.items}
-                          onItemClick={handleMediaClick}
-                        />
                       </div>
                     )}
                   </>
