@@ -2327,74 +2327,10 @@ export default function Feed() {
         }
       }
     }
+    // Sort strictly by timestamp descending — pure chronological order, no grouping, no shuffling
     const deduped = Array.from(dedupMap.values());
-
-    // Step 2: Group posts per user — if a user has multiple posts within 1 hour,
-    // bundle them into a swipeable group card instead of individual cards.
-    // Cap groups at 3 posts so busy users don't collapse the whole feed into one card.
-    // We preserve the original API order (firstIndex) for inter-user ordering so
-    // that users without timestamps don't sink to the bottom.
-    const ONE_HOUR_MS = 60 * 60 * 1000;
-    const MAX_GROUP_SIZE = 3;
-    const byUser = new Map<string, { posts: UGCPost[]; firstIndex: number }>();
-    deduped.forEach((post, idx) => {
-      const uid = post.user?.id || 'anon';
-      if (!byUser.has(uid)) byUser.set(uid, { posts: [], firstIndex: idx });
-      byUser.get(uid)!.posts.push(post);
-    });
-
-    const feedItems: any[] = [];
-    for (const [, { posts, firstIndex }] of byUser) {
-      // Sort newest first within each user's posts
-      posts.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
-      // Group into 1-hour windows, max 3 per group
-      let grp: UGCPost[] = [posts[0]];
-      const flushGrp = (g: UGCPost[]) => {
-        if (g.length >= 2) {
-          feedItems.push({
-            id: `ugc-group-${g[0].id}`,
-            type: 'ugc_group',
-            user: g[0].user,
-            posts: g,
-            timestamp: g[0].timestamp,
-            _sortIndex: firstIndex,
-          });
-        } else {
-          feedItems.push({ ...g[0], _sortIndex: firstIndex });
-        }
-      };
-      for (let i = 1; i < posts.length; i++) {
-        const grpTop = new Date(grp[0].timestamp || 0).getTime();
-        const cur = new Date(posts[i].timestamp || 0).getTime();
-        if (grpTop - cur < ONE_HOUR_MS && grp.length < MAX_GROUP_SIZE) {
-          grp.push(posts[i]);
-        } else {
-          flushGrp(grp);
-          grp = [posts[i]];
-        }
-      }
-      flushGrp(grp);
-    }
-
-    // Sort by original API position (not timestamp) so users without timestamps stay visible
-    feedItems.sort((a, b) => (a._sortIndex || 0) - (b._sortIndex || 0));
-
-    // Step 3: Spread — prevent consecutive same-user items
-    const result: any[] = [];
-    const remaining = [...feedItems];
-    let lastUserId = '';
-    while (remaining.length > 0) {
-      const lookAhead = Math.min(remaining.length, 5);
-      let chosen = 0;
-      for (let i = 0; i < lookAhead; i++) {
-        if ((remaining[i].user?.id || '') !== lastUserId) { chosen = i; break; }
-      }
-      const item = remaining.splice(chosen, 1)[0];
-      result.push(item);
-      lastUserId = item.user?.id || '';
-    }
-
-    return result;
+    deduped.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
+    return deduped;
   })();
 
   const TOTAL_BATCH_SLOTS_COUNT = 22;
