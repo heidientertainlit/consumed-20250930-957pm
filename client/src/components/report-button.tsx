@@ -17,7 +17,7 @@ import { useAuth } from '@/lib/auth';
 import { useMutation } from '@tanstack/react-query';
 
 interface ReportButtonProps {
-  contentType: 'post' | 'comment' | 'hot_take' | 'list' | 'review';
+  contentType: 'post' | 'comment' | 'list' | 'review';
   contentId: string;
   className?: string;
   iconOnly?: boolean;

@@ -15,7 +15,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 
 type ComposerStage = "open" | "media-search";
-type PostType = "thought" | "review" | "prediction" | "hot_take";
+type PostType = "thought" | "review" | "prediction";
 
 interface InlineComposerProps {
   defaultType?: PostType;
@@ -562,31 +562,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
           queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
         }, 800);
         return;
-      } else if (postType === "hot_take") {
-        if (!contentText.trim()) {
-          toast({
-            title: "Hot Take Required",
-            description: "Please drop your spicy take.",
-            variant: "destructive",
-          });
-          setIsPosting(false);
-          return;
-        }
-        payload = {
-          content: contentText.trim(),
-          type: "hot_take",
-          visibility: "public",
-          contains_spoilers: containsSpoilers,
-          // Media is optional for hot takes
-          ...(selectedMedia && {
-            media_title: selectedMedia.title,
-            media_type: selectedMedia.type || selectedMedia.mediaType,
-            media_creator: selectedMedia.creator || selectedMedia.author || selectedMedia.artist,
-            media_image_url: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.imageUrl || selectedMedia.image || selectedMedia.thumbnail,
-            media_external_id: selectedMedia.external_id || selectedMedia.id,
-            media_external_source: selectedMedia.external_source || selectedMedia.source || 'tmdb',
-          }),
-        };
+
       }
 
       // Handle add to list (if selected)
@@ -685,7 +661,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
       const successMessages: Record<string, string> = {
         thought: "Thought shared!",
         review: "Review posted!",
-        hot_take: "Hot take dropped!",
+
       };
       toast({ title: successMessages[postType] || "Post shared!" });
       resetComposer();
@@ -712,7 +688,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
       case "thought": return "What are you watching, reading, or listening to?";
       case "review": return "Write your review (optional)...";
       case "prediction": return "What do you predict will happen?";
-      case "hot_take": return "Drop your spiciest take...";
+
       default: return "Share what you're consuming...";
     }
   };
@@ -736,8 +712,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
         return selectedMedia && (ratingValue > 0 || contentText.trim().length > 0);
       case "prediction":
         return contentText.trim().length > 0 && predictionOptions[0]?.trim() && predictionOptions[1]?.trim();
-      case "hot_take":
-        return contentText.trim().length > 0;
+
       default:
         return false;
     }

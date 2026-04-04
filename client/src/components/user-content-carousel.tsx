@@ -8,7 +8,7 @@ import {
 
 export interface UGCPost {
   id: string;
-  type: 'hot_take' | 'ask_for_rec' | 'ask_for_recs' | 'poll' | 'predict' | 'rating' | 'review' | 'thought' | 'cast_approved' | 'rank' | 'finished' | 'general';
+  type: 'ask_for_rec' | 'ask_for_recs' | 'poll' | 'predict' | 'rating' | 'review' | 'thought' | 'cast_approved' | 'rank' | 'finished' | 'general';
   user?: {
     id: string;
     username: string;
@@ -56,8 +56,7 @@ interface UserContentCarouselProps {
 
 function getTypeLabel(type: string): { label: string; iconColor: string; icon: any } {
   switch (type) {
-    case 'hot_take':
-      return { label: 'Hot Take', iconColor: 'text-orange-500', icon: Flame };
+
     case 'ask_for_rec':
     case 'ask_for_recs':
       return { label: 'Asking for Recs', iconColor: 'text-purple-500', icon: HelpCircle };
@@ -426,26 +425,6 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, onVot
 
         {!isCommentsActive && (
           <div className="flex items-center gap-3 pt-2.5 mt-auto border-t border-gray-50 flex-shrink-0" style={{ touchAction: 'manipulation' }}>
-            {post.type === 'hot_take' ? (
-              <>
-                <button
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onFireVote?.(post.id); }}
-                  onTouchEnd={(e) => { e.stopPropagation(); }}
-                  className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 active:scale-110 transition-transform py-1 px-1 -ml-1 min-h-[32px]"
-                  style={{ touchAction: 'manipulation' }}
-                >
-                  <Flame size={14} /> {post.fire_votes || 0}
-                </button>
-                <button
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); onIceVote?.(post.id); }}
-                  onTouchEnd={(e) => { e.stopPropagation(); }}
-                  className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-500 active:scale-110 transition-transform py-1 px-1 min-h-[32px]"
-                  style={{ touchAction: 'manipulation' }}
-                >
-                  <Snowflake size={14} /> {post.ice_votes || 0}
-                </button>
-              </>
-            ) : (
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onLike?.(post.id); }}
                 onTouchEnd={(e) => { e.stopPropagation(); }}
@@ -455,7 +434,6 @@ function UserContentCard({ post, onLike, onComment, onFireVote, onIceVote, onVot
                 <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
                 <span>{post.likes || 0}</span>
               </button>
-            )}
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onComment?.(post.id); }}
               onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); onComment?.(post.id); }}

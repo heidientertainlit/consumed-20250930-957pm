@@ -140,7 +140,7 @@ export function QuickReactCard({ onPost, preselectedMedia }: QuickReactCardProps
       const { error } = await supabase.from('social_posts').insert({
         user_id: user.id,
         content: reactText,
-        post_type: 'hot_take',
+        post_type: 'thought',
         visibility: 'public',
         media_title: selectedMedia.title,
         media_type: selectedMedia.type?.toLowerCase() || 'movie',

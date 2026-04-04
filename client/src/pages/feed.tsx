@@ -24,7 +24,7 @@ import { RanksCarousel } from "@/components/ranks-carousel";
 import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
-import { HotTakeFeedCard } from "@/components/hot-take-feed-card";
+
 import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
@@ -235,10 +235,7 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
     const castApprovedAfter = filteredPosts.filter((p: any) => p.type === 'cast_approved');
     console.log('🎬 Cast_approved posts AFTER filter:', castApprovedAfter.length);
     
-    // Debug: Check for hot_take posts
-    const hotTakePosts = data.posts.filter((p: any) => p.type === 'hot_take');
-    console.log('🔥 Hot take posts in feed:', hotTakePosts.length, hotTakePosts.map((p: any) => ({ id: p.id, type: p.type, content: p.content })));
-    
+
     // Debug: Log posts with missing or problematic imageUrls
     filteredPosts.forEach((post: any, idx: number) => {
       if (post.mediaItems?.length > 0) {
@@ -789,7 +786,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   };
 
   const getTypeInfo = () => {
-    if (post.type === 'hot_take') return { label: 'Hot Take', color: 'text-orange-500', bg: 'bg-orange-50' };
+
     if (post.type === 'review') return { label: 'Review', color: 'text-yellow-500', bg: 'bg-yellow-50' };
     if (post.type === 'rating') return { label: 'Rating', color: 'text-yellow-500', bg: 'bg-yellow-50' };
     if (post.type === 'finished') return { label: 'Finished', color: 'text-green-500', bg: 'bg-green-50' };
@@ -1000,12 +997,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   );
 }
 
-function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLiked, isCommentsActive, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, currentUserId, onDeleteComment, onDeletePost, onLikeComment, onAddToList }: {
+function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, onCloseComments, fetchComments, onSubmitComment, isSubmitting, session, currentUserId, onDeleteComment, onDeletePost, onLikeComment, onAddToList }: {
   post: UGCPost;
   onLike?: (id: string) => void;
   onComment?: (id: string) => void;
-  onFireVote?: (id: string) => void;
-  onIceVote?: (id: string) => void;
   isLiked?: boolean;
   isCommentsActive?: boolean;
   onCloseComments?: () => void;
@@ -1125,7 +1120,7 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
 
   const getTypeInfo = (type: string) => {
     switch (type) {
-      case 'hot_take': return { label: 'Hot Take', color: 'text-orange-500', bg: 'bg-orange-50', icon: Flame };
+
       case 'review': return { label: 'Review', color: 'text-yellow-500', bg: 'bg-yellow-50', icon: Star };
       case 'rating': return { label: 'Rating', color: 'text-yellow-500', bg: 'bg-yellow-50', icon: Star };
       case 'thought': return { label: 'Thought', color: 'text-blue-400', bg: 'bg-blue-50', icon: MessageCircle };
@@ -1344,30 +1339,13 @@ function StandalonePost({ post, onLike, onComment, onFireVote, onIceVote, isLike
         )}
 
         <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
-          {post.type === 'hot_take' ? (
-            <>
-              <button
-                onClick={() => onFireVote?.(post.id)}
-                className="flex items-center gap-1.5 text-sm text-orange-500 hover:text-orange-600 active:scale-110 transition-transform"
-              >
-                <Flame size={16} /> <span className="text-xs">{post.fire_votes || 0}</span>
-              </button>
-              <button
-                onClick={() => onIceVote?.(post.id)}
-                className="flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-500 active:scale-110 transition-transform"
-              >
-                <Snowflake size={16} /> <span className="text-xs">{post.ice_votes || 0}</span>
-              </button>
-            </>
-          ) : (
-            <button
+          <button
               onClick={() => onLike?.(post.id)}
               className={`flex items-center gap-1.5 text-sm ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} active:scale-110 transition-transform`}
             >
               <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
               <span className="text-xs">{post.likes || 0}</span>
             </button>
-          )}
           <button
             onClick={() => onComment?.(post.id)}
             className={`flex items-center gap-1.5 text-sm ${isCommentsActive ? 'text-purple-500' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
@@ -2223,7 +2201,7 @@ export default function Feed() {
         const hasCreator = p.creator?.id && p.creator?.username && p.creator.username !== 'Unknown';
         if (!hasUser && !hasCreator) return false;
         if (p.type === 'cast_approved') return true;
-        if (p.type === 'hot_take' || p.post_type === 'hot_take') return true;
+
         if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
         if ((p.type === 'poll' || p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) return true;
         if (p.type === 'rank' || p.type === 'shared_rank') return true;
@@ -2241,8 +2219,7 @@ export default function Feed() {
       .map((p: any): UGCPost => {
         let postType: UGCPost['type'] = 'general';
         const content = (p.content || '').trim();
-        if (p.type === 'hot_take' || p.post_type === 'hot_take') postType = 'hot_take';
-        else if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') postType = 'ask_for_rec';
+        if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') postType = 'ask_for_rec';
         else if ((p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) postType = 'predict';
         else if (p.type === 'poll' && ((p as any).question || (p as any).options)) postType = 'poll';
         else if (p.type === 'cast_approved') postType = 'cast_approved';
@@ -2298,7 +2275,7 @@ export default function Feed() {
 
   const standaloneUGCPosts: any[] = (() => {
     const allUGC = ugcSlots.flat().filter(p => {
-      return p.type === 'review' || p.type === 'thought' || p.type === 'hot_take' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved';
+      return p.type === 'review' || p.type === 'thought' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved';
     });
 
     // Step 1: Deduplicate — same user + same media keeps only the best post.
@@ -2324,7 +2301,7 @@ export default function Feed() {
       // Separate dedup buckets by activity type: a "Want to" addition and a review are
       // different social actions and should each get their own feed slot.
       // 'tracking' = add-to-list / rewatch / general list moves
-      // 'opinion'  = review / thought / rating / hot_take / finished
+      // 'opinion'  = review / thought / rating / finished
       const typeCategory = (post.type === 'general' || post.type === 'rewatch' || post.type === 'add-to-list') ? 'tracking' : 'opinion';
       const key = `${userKey}-${mediaKey}-${typeCategory}`;
       const existing = dedupMap.get(key);
@@ -2744,8 +2721,7 @@ export default function Feed() {
         post={post}
         onLike={handleLike}
         onComment={(id) => setActiveCommentPostId(prev => prev === id ? null : id)}
-        onFireVote={(id) => handleHotTakeVote(id, 'fire')}
-        onIceVote={(id) => handleHotTakeVote(id, 'ice')}
+
         isLiked={likedPosts.has(post.id)}
         isCommentsActive={activeCommentPostId === post.id}
         onCloseComments={() => setActiveCommentPostId(null)}
@@ -3184,7 +3160,7 @@ export default function Feed() {
     
     // These types always show as standalone feed cards — never treat as consumption
     const alwaysStandaloneTypes = [
-      'thought', 'rate-review', 'review', 'reviewed', 'hot_take',
+      'thought', 'rate-review', 'review', 'reviewed',
       'trivia', 'poll', 'prediction', 'predict', 'vote',
       'ask_for_recs', 'ask_for_rec', 'rank_share', 'media_group', 'cast_approved'
     ];
@@ -3413,7 +3389,7 @@ export default function Feed() {
     // Hide truly empty/malformed posts: no content at all, no media, no rating, no list/rank data,
     // and not a special post type (prediction/poll/trivia/rank_share)
     // Note: 'add-to-list' (from track-media) is also a valid type
-    const specialTypes = ['prediction', 'predict', 'poll', 'vote', 'trivia', 'rank_share', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'ask_for_rec', 'friend_list_group', 'cast_approved', 'hot_take'];
+    const specialTypes = ['prediction', 'predict', 'poll', 'vote', 'trivia', 'rank_share', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'ask_for_rec', 'friend_list_group', 'cast_approved'];
     const isSpecialType = specialTypes.includes(post.type || '');
     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
     const hasListData = !!(post as any).listData;
@@ -3447,7 +3423,7 @@ export default function Feed() {
     // Apply media category pill filter (Movies, TV, Music, Books, etc.)
     // Only filter regular media posts - skip special types that are rendered separately
     if (selectedCategory) {
-      const skipFilterTypes = ['cast_approved', 'hot_take', 'prediction', 'predict', 'poll', 'vote', 'trivia', 'rank_share', 'ask_for_recs', 'ask_for_rec', 'friend_list_group'];
+      const skipFilterTypes = ['cast_approved', 'prediction', 'predict', 'poll', 'vote', 'trivia', 'rank_share', 'ask_for_recs', 'ask_for_rec', 'friend_list_group'];
       const postType = post.type?.toLowerCase() || '';
       if (!skipFilterTypes.includes(postType)) {
         const allowedTypes = categoryToMediaTypeMap[selectedCategory] || [];
@@ -4235,31 +4211,6 @@ export default function Feed() {
     likeMutation.mutate({ postId, wasLiked });
   };
 
-  const handleHotTakeVote = async (postId: string, voteType: 'fire' | 'ice') => {
-    console.log('🔥🧊 handleHotTakeVote called:', { postId, voteType, hasSession: !!session?.access_token });
-    if (!session?.access_token) {
-      console.log('❌ No session for hot take vote');
-      return;
-    }
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/hot-take-vote`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ postId, voteType }),
-      });
-      const result = await response.json();
-      console.log('🔥🧊 Hot take vote response:', response.status, result);
-      if (response.ok) {
-        queryClient.invalidateQueries({ queryKey: ["social-feed"] });
-      }
-    } catch (error) {
-      console.error('Hot take vote error:', error);
-    }
-  };
 
   const handleComment = (postId: string, parentCommentId?: string, replyContent?: string) => {
     // For replies, use the provided replyContent; for top-level comments, use commentInputs
@@ -6744,26 +6695,6 @@ export default function Feed() {
                   <div className="pt-2 border-t border-gray-100 mt-2 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-6">
-                        {(post.type === 'hot_take' || post.postType === 'hot_take') ? (
-                          <>
-                            <button 
-                              onClick={() => handleHotTakeVote(realPostId, 'fire')}
-                              className="flex items-center space-x-1.5 text-orange-500 hover:text-orange-600 transition-colors"
-                              style={{ touchAction: 'manipulation' }}
-                            >
-                              <Flame size={18} />
-                              <span className="text-sm">{post.fire_votes || 0}</span>
-                            </button>
-                            <button 
-                              onClick={() => handleHotTakeVote(realPostId, 'ice')}
-                              className="flex items-center space-x-1.5 text-blue-400 hover:text-blue-500 transition-colors"
-                              style={{ touchAction: 'manipulation' }}
-                            >
-                              <Snowflake size={18} />
-                              <span className="text-sm">{post.ice_votes || 0}</span>
-                            </button>
-                          </>
-                        ) : (
                           <button 
                             onClick={() => handleLike(realPostId)}
                             disabled={likeMutation.isPending}
@@ -6780,7 +6711,6 @@ export default function Feed() {
                             />
                             <span className="text-sm">{post.likes}</span>
                           </button>
-                        )}
                         <button 
                           onClick={() => toggleComments(realPostId)}
                           className={`flex items-center space-x-2 transition-colors ${activeCommentPostId === realPostId ? 'text-purple-600' : 'text-gray-500 hover:text-blue-500'}`}

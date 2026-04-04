@@ -32,7 +32,6 @@ import PlayPage from "@/pages/play";
 import PlayTrivia from "@/pages/play-trivia";
 import PlayPolls from "@/pages/play-polls";
 import PlayPredictions from "@/pages/play-predictions";
-import PlayHotTakes from "@/pages/play-hot-takes";
 import PlayAskRecs from "@/pages/play-ask-recs";
 import PlayHighStakes from "@/pages/play-high-stakes";
 import PlayRanks from "@/pages/play-ranks";
@@ -415,7 +414,7 @@ function Router() {
 
           <Route path="/play/hot-takes">
             <ProtectedRoute>
-              <PlayHotTakes />
+              <PlayPage />
             </ProtectedRoute>
           </Route>
 

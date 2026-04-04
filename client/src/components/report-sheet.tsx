@@ -18,7 +18,7 @@ const REPORT_REASONS = [
 interface ReportSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  contentType: "post" | "comment" | "hot_take" | "user";
+  contentType: "post" | "comment" | "user";
   contentId: string;
   reportedUserId?: string;
   reportedUserName?: string;
