@@ -1225,23 +1225,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
                 >
                   DNF
                 </button>
-                {userLists.filter((l: any) => !['finished', 'currently', 'queue', 'favorites', 'dnf'].includes(l.id)).length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsListDrawerOpen(true)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
-                      !['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    data-testid="list-pill-custom"
-                  >
-                    {!['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
-                      ? (userLists.find((l: any) => l.id === selectedListId)?.title || 'Custom')
-                      : 'More'}
-                    <ChevronDown size={12} />
-                  </button>
-                )}
               </div>
 
               {/* Spoilers checkbox */}
@@ -1320,7 +1303,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               <Check size={20} className="text-purple-600" />
             )}
           </button>
-          {userLists.map((list: any) => {
+          {userLists.filter((list: any) => list.is_default).map((list: any) => {
             const getListStyle = (title: string) => {
               const lower = title.toLowerCase();
               if (lower.includes('currently') || lower.includes('watching') || lower.includes('reading')) {

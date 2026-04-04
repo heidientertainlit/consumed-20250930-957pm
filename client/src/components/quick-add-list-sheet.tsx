@@ -178,7 +178,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     return title;
   };
 
-  const sortedLists = [...userLists].sort((a, b) => {
+  const sortedLists = [...userLists].filter((list: any) => list.is_default).sort((a, b) => {
     const aStyle = getListStyle(a.title || a.name);
     const bStyle = getListStyle(b.title || b.name);
     return aStyle.priority - bStyle.priority;
