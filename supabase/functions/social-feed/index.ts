@@ -1312,8 +1312,127 @@ serve(async (req) => {
         };
       }) || [];
 
+      // === SYNTHETIC GAME MOMENT CARDS ===
+      // If there are no game_moment social_posts in the DB, synthesize them directly from
+      // user_predictions (past votes/answers) so social proof cards always appear in the feed.
+      const hasRealGameMoments = transformedNonMediaPosts.some(p => p.type === 'game_moment');
+      const syntheticGameMoments: any[] = [];
+
+      if (!hasRealGameMoments) {
+        try {
+          // Fetch recent votes from any user (not current user), last 30 days
+          const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+          const { data: recentVotes } = await supabaseAdmin
+            .from('user_predictions')
+            .select('pool_id, prediction, user_id, created_at')
+            .neq('user_id', appUser.id)
+            .gte('created_at', thirtyDaysAgo)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+          if (recentVotes && recentVotes.length > 0) {
+            // Deduplicate: one vote per pool (the most recent)
+            const seenPools = new Set<string>();
+            const dedupedVotes: any[] = [];
+            for (const v of recentVotes) {
+              if (!seenPools.has(v.pool_id)) {
+                seenPools.add(v.pool_id);
+                dedupedVotes.push(v);
+                if (dedupedVotes.length >= 10) break;
+              }
+            }
+
+            // Fetch pool data for any pools not already in predictionPoolMap
+            const missingPoolIds = dedupedVotes
+              .map(v => v.pool_id)
+              .filter(id => !predictionPoolMap.has(id));
+            if (missingPoolIds.length > 0) {
+              const { data: extraPools } = await supabaseAdmin
+                .from('prediction_pools')
+                .select('id, title, options, status, type, correct_answer')
+                .in('id', missingPoolIds);
+              extraPools?.forEach(p => predictionPoolMap.set(p.id, p));
+            }
+
+            // Fetch vote counts for these pools (so agreement % works)
+            const { data: poolVotesData } = await supabaseAdmin
+              .from('user_predictions')
+              .select('pool_id, prediction')
+              .in('pool_id', dedupedVotes.map(v => v.pool_id));
+            const syntheticVoteCounts: { [poolId: string]: { [opt: string]: number } } = {};
+            poolVotesData?.forEach((v: any) => {
+              if (!syntheticVoteCounts[v.pool_id]) syntheticVoteCounts[v.pool_id] = {};
+              syntheticVoteCounts[v.pool_id][v.prediction] = (syntheticVoteCounts[v.pool_id][v.prediction] || 0) + 1;
+            });
+
+            // Fetch any voter users that aren't already in userMap
+            const missingVoterIds = dedupedVotes.map(v => v.user_id).filter(id => !userMap.has(id));
+            if (missingVoterIds.length > 0) {
+              const { data: extraUsers } = await supabaseAdmin
+                .from('users')
+                .select('id, user_name, display_name, email, avatar')
+                .in('id', missingVoterIds);
+              extraUsers?.forEach(u => userMap.set(u.id, u));
+            }
+
+            const now = Date.now();
+            dedupedVotes.forEach((vote, idx) => {
+              const voter = userMap.get(vote.user_id);
+              if (!voter) return;
+              const pool = predictionPoolMap.get(vote.pool_id);
+              if (!pool) return;
+
+              const poolVoteCounts = syntheticVoteCounts[vote.pool_id] || {};
+              const totalVotes = Object.values(poolVoteCounts).reduce((s: number, c: any) => s + Number(c), 0);
+              const agreementCount = poolVoteCounts[vote.prediction] || 0;
+              const agreementPct = totalVotes > 0 ? Math.round((agreementCount / totalVotes) * 100) : null;
+
+              // Map pool type to gameType
+              const gameTypeMap: Record<string, string> = { predict: 'prediction', trivia: 'trivia', poll: 'poll' };
+              const gameType = gameTypeMap[pool.type] || 'prediction';
+              const isCorrect = pool.correct_answer ? (vote.prediction === pool.correct_answer) : undefined;
+
+              // Spread synthetic items across the last 48h so they interleave with real posts
+              const syntheticTs = new Date(now - idx * 4 * 60 * 60 * 1000).toISOString();
+
+              syntheticGameMoments.push({
+                id: `synthetic-${vote.user_id}-${vote.pool_id}`,
+                type: 'game_moment',
+                user: {
+                  id: vote.user_id,
+                  username: voter.user_name || 'Unknown',
+                  displayName: voter.display_name || voter.user_name || 'Unknown',
+                  avatar: voter.avatar || '',
+                },
+                content: JSON.stringify({ answer: vote.prediction, gameType, isCorrect }),
+                timestamp: syntheticTs,
+                likes: 0, comments: 0, shares: 0,
+                likedByCurrentUser: false,
+                containsSpoilers: false,
+                fire_votes: 0, ice_votes: 0,
+                rating: null, progress: null,
+                rankId: null, rankData: null,
+                mediaItems: [],
+                listId: null, listData: null,
+                recCategory: null,
+                gameMoment: {
+                  prediction_pool_id: vote.pool_id,
+                  pool_title: pool.title || null,
+                  agreement_pct: agreementPct,
+                  total_votes: totalVotes,
+                  correct_answer: pool.correct_answer || null,
+                  options: pool.options || [],
+                },
+              });
+            });
+          }
+        } catch (e) {
+          console.error('Error building synthetic game moments:', e);
+        }
+      }
+
       // Combine all items (grouped media, non-media posts, and predictions) and sort by timestamp
-      const allItems = [...groupedItems, ...transformedNonMediaPosts, ...transformedPredictions].sort((a, b) => {
+      const allItems = [...groupedItems, ...transformedNonMediaPosts, ...transformedPredictions, ...syntheticGameMoments].sort((a, b) => {
         const aTime = new Date(a.timestamp).getTime();
         const bTime = new Date(b.timestamp).getTime();
         return bTime - aTime; // Most recent first
