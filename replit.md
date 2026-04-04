@@ -12,6 +12,9 @@ Preferred communication style: Simple, everyday language.
 - **NEVER add, seed, or modify data in Supabase without explicit user approval first.** Always double-check with the user before inserting, updating, or seeding any content (trivia, polls, predictions, etc.) to the production database.
 - All content data comes from user's spreadsheets - do not create fake/placeholder content.
 
+### Version Checkpoints
+- **v1-activity-baseline** — git tag `a6bd2379`, commit "Adjust feed filtering to show shorter posts with content". Pre-repositioning state: full tracking + activity feed. social-feed edge function unfiltered. Revert with `git checkout v1-activity-baseline` if needed.
+
 ## System Architecture
 
 ### UI/UX Decisions

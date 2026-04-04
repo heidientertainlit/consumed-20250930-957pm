@@ -157,6 +157,16 @@ serve(async (req) => {
       if (blockedUserIds.length > 0) {
         query = query.not('user_id', 'in', `(${blockedUserIds.join(',')})`);
       }
+
+      // === PLAY-FIRST FEED FILTER ===
+      // Only surface meaningful participatory content. Exclude low-value tracking
+      // events so the feed shows what people think/played, not what they filed away.
+      // Track 1 (personal takes): ratings, thoughts, hot_takes, reviews
+      // Track 2 (game moments): predictions, polls, votes, trivia, rank_shares, cast_approved
+      // Excluded: list adds, grouped list events — these live in Library, not the feed.
+      if (!specificPostId) {
+        query = query.not('post_type', 'in', '("added_to_list","add-to-list","friend_list_group","media_group")');
+      }
       
       const { data: posts, error } = await query;
 
