@@ -6,6 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Clean up usernames that look like email aliases (e.g. thinkhp+riner1428 → thinkhp)
+function cleanName(displayName: string | null, userName: string | null): string {
+  if (displayName) return displayName;
+  if (!userName) return 'Someone';
+  // Strip email alias part (everything after +)
+  if (userName.includes('+')) return userName.split('+')[0];
+  // Strip email domain if present
+  if (userName.includes('@')) return userName.split('@')[0];
+  return userName;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -78,7 +89,7 @@ serve(async (req) => {
 
     const userMap: Record<string, string> = {};
     for (const u of users || []) {
-      userMap[u.id] = u.display_name || u.user_name || 'Someone';
+      userMap[u.id] = cleanName(u.display_name, u.user_name);
     }
 
     const timeLabel = isWeekly ? 'this week' : 'overall';
@@ -176,7 +187,7 @@ serve(async (req) => {
         .select('id, user_name, display_name')
         .in('id', missingIds);
       for (const u of extraUsers || []) {
-        userMap[u.id] = u.display_name || u.user_name || 'Someone';
+        userMap[u.id] = cleanName(u.display_name, u.user_name);
       }
     }
 
@@ -214,6 +225,104 @@ serve(async (req) => {
           text: `${friendName} hasn't tried ${category} Trivia yet — be the first to score`,
           link: '/play/trivia',
         });
+      }
+    }
+
+    // --- Rating comparison cards ---
+    // Find media rated by the current user, compare with friends who rated the same media
+    if (friendIds.length > 0) {
+      const { data: myRatedPosts } = await adminClient
+        .from('social_posts')
+        .select('media_external_id, media_title, rating, media_type')
+        .eq('user_id', user.id)
+        .not('rating', 'is', null)
+        .not('media_external_id', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      if (myRatedPosts && myRatedPosts.length > 0) {
+        const myRatingMap: Record<string, { rating: number; title: string; mediaType: string }> = {};
+        for (const p of myRatedPosts) {
+          if (!myRatingMap[p.media_external_id]) {
+            myRatingMap[p.media_external_id] = { rating: p.rating, title: p.media_title, mediaType: p.media_type || '' };
+          }
+        }
+
+        const myExternalIds = Object.keys(myRatingMap);
+        const { data: friendRatedPosts } = await adminClient
+          .from('social_posts')
+          .select('user_id, media_external_id, media_title, rating')
+          .in('user_id', friendIds)
+          .in('media_external_id', myExternalIds)
+          .not('rating', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (friendRatedPosts && friendRatedPosts.length > 0) {
+          // Find disagreements (rating difference >= 1 star)
+          const disagreements: Array<{ friendId: string; friendName: string; mediaTitle: string; friendRating: number; myRating: number; mediaId: string }> = [];
+          const agreements: Array<{ friendId: string; friendName: string; mediaTitle: string; rating: number; mediaId: string }> = [];
+          const seenMedia = new Set<string>();
+
+          for (const fp of friendRatedPosts) {
+            const myData = myRatingMap[fp.media_external_id];
+            if (!myData) continue;
+            const key = `${fp.user_id}-${fp.media_external_id}`;
+            if (seenMedia.has(key)) continue;
+            seenMedia.add(key);
+
+            const diff = Math.abs(fp.rating - myData.rating);
+            const friendName = userMap[fp.user_id] || 'Someone';
+            const mediaTitle = myData.title || fp.media_title || 'this';
+
+            if (diff >= 1.5) {
+              // Big disagreement — great for engagement
+              disagreements.push({
+                friendId: fp.user_id,
+                friendName,
+                mediaTitle,
+                friendRating: fp.rating,
+                myRating: myData.rating,
+                mediaId: fp.media_external_id,
+              });
+            } else if (diff === 0 && fp.rating >= 4) {
+              // Strong agreement on a high-rated title
+              agreements.push({
+                friendId: fp.user_id,
+                friendName,
+                mediaTitle,
+                rating: fp.rating,
+                mediaId: fp.media_external_id,
+              });
+            }
+          }
+
+          // Add up to 2 disagreement cards
+          const shuffledDisagreements = disagreements.sort(() => Math.random() - 0.5);
+          for (const d of shuffledDisagreements.slice(0, 2)) {
+            const theyHigher = d.friendRating > d.myRating;
+            const friendStars = d.friendRating % 1 === 0 ? d.friendRating.toFixed(0) : d.friendRating.toFixed(1);
+            const myStars = d.myRating % 1 === 0 ? d.myRating.toFixed(0) : d.myRating.toFixed(1);
+            items.push({
+              id: `rating-clash-${d.friendId}-${d.mediaId}`,
+              icon: 'flame',
+              text: `${d.friendName} rated ${d.mediaTitle} ${friendStars} stars — you gave it ${myStars}. Who's right?`,
+              link: '/play/polls',
+            });
+          }
+
+          // Add up to 1 agreement card
+          const shuffledAgreements = agreements.sort(() => Math.random() - 0.5);
+          for (const a of shuffledAgreements.slice(0, 1)) {
+            const stars = a.rating % 1 === 0 ? a.rating.toFixed(0) : a.rating.toFixed(1);
+            items.push({
+              id: `rating-agree-${a.friendId}-${a.mediaId}`,
+              icon: 'users',
+              text: `You and ${a.friendName} both gave ${a.mediaTitle} ${stars} stars — great taste`,
+              link: '/leaderboard',
+            });
+          }
+        }
       }
     }
 
