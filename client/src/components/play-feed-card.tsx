@@ -194,7 +194,7 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
       const isTriviaCompletion = answer.startsWith('Completed with score:');
       const displayAnswer = isTriviaCompletion ? `Score: ${score ?? 0}` : answer;
       const gameType = isTriviaCompletion ? 'trivia' : (game.type === 'trivia' ? 'trivia' : (game.type === 'predict' ? 'predict' : 'poll'));
-      await supabase.from('social_posts').insert({
+      const { error: gmError } = await supabase.from('social_posts').insert({
         user_id: user.id,
         post_type: 'game_moment',
         content: JSON.stringify({ answer: displayAnswer, gameType, isCorrect: null }),
@@ -204,6 +204,11 @@ export default function PlayFeedCard({ variant, className }: PlayFeedCardProps) 
         fire_votes: 0,
         ice_votes: 0,
       });
+      if (gmError) {
+        console.error('[game_moment] insert failed:', gmError.message, gmError.details, gmError.code);
+      } else {
+        console.log('[game_moment] post created for pool:', poolId);
+      }
 
       return { pointsEarned };
     },
