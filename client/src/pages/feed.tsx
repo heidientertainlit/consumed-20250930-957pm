@@ -52,6 +52,7 @@ import { renderMentions } from "@/lib/mentions";
 import { copyLink } from "@/lib/share";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { GameMomentCard } from "@/components/game-moment-card";
+import { SocialProofCard, buildGameMomentSocialProof } from "@/components/social-proof-card";
 
 interface SocialPost {
   id: string;
@@ -2340,9 +2341,10 @@ export default function Feed() {
     }
     // Game moment posts — poll votes, predictions, trivia answers
     if (item?.type === 'game_moment') {
+      const spCard = buildGameMomentSocialProof(item);
       return (
         <div key={`${keyPrefix}-game-moment-${item.id}`} id={`post-${item.id}`}>
-          <GameMomentCard post={item._rawPost || item} />
+          <SocialProofCard card={spCard} />
         </div>
       );
     }
