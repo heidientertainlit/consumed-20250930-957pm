@@ -3410,7 +3410,7 @@ export default function Feed() {
     
     const postType = post.type?.toLowerCase() || '';
     
-    // Hide malformed posts: short content (looks like just a title), no media items, 
+    // Hide truly empty/malformed posts: no content at all, no media, no rating, no list/rank data,
     // and not a special post type (prediction/poll/trivia/rank_share)
     // Note: 'add-to-list' (from track-media) is also a valid type
     const specialTypes = ['prediction', 'predict', 'poll', 'vote', 'trivia', 'rank_share', 'media_group', 'added_to_list', 'add-to-list', 'rewatch', 'ask_for_recs', 'ask_for_rec', 'friend_list_group', 'cast_approved', 'hot_take'];
@@ -3418,12 +3418,11 @@ export default function Feed() {
     const hasMediaItems = post.mediaItems && post.mediaItems.length > 0;
     const hasListData = !!(post as any).listData;
     const hasRankData = !!(post as any).rankData;
-    const isShortContent = post.content && post.content.length < 80 && !post.content.includes('\n');
+    const hasNoContent = !post.content || post.content.trim().length === 0;
     const hasRating = post.rating && post.rating > 0;
     
-    // If post has short content, no media, no list/rank data, not a special type, and no rating - hide it
-    // Posts with ratings should always be shown
-    if (isShortContent && !hasMediaItems && !hasListData && !hasRankData && !isSpecialType && !hasRating) {
+    // Only hide posts with zero content AND no media, list, rank data, special type, or rating
+    if (hasNoContent && !hasMediaItems && !hasListData && !hasRankData && !isSpecialType && !hasRating) {
       return false;
     }
     
