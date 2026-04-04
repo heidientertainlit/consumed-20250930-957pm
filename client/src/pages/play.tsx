@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
-import { DailyChallengeCard } from "@/components/daily-challenge-card";
+
 import { Target, HelpCircle, Vote, BarChart2, UserPlus, Users, Trophy, ChevronRight } from "lucide-react";
 
 const gameModes = [
@@ -67,15 +67,14 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
     <div className="min-h-screen" style={{ backgroundColor: '#0a0a0f' }}>
       <Navigation />
 
-      {/* Purple hero — heading + Daily Call */}
+      {/* Purple hero — heading */}
       <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] px-4 pt-6 pb-6">
         <h1
-          className="text-2xl font-bold text-white text-center mb-4"
+          className="text-2xl font-bold text-white text-center"
           style={{ fontFamily: "Poppins, sans-serif" }}
         >
           Play
         </h1>
-        <DailyChallengeCard />
       </div>
 
       {/* Light section — leaderboard + game modes */}

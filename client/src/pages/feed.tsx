@@ -4,7 +4,7 @@ import { Link, useLocation, useSearch } from "wouter";
 import Navigation from "@/components/navigation";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
-import { MediaSearchBar } from "@/components/media-search-bar";
+
 import PlayCard from "@/components/play-card";
 import GameCarousel from "@/components/game-carousel";
 import InlineGameCard from "@/components/inline-game-card";
@@ -4798,7 +4798,7 @@ export default function Feed() {
               Activity
             </h1>
 
-            <MediaSearchBar session={session} />
+            <DailyChallengeCard />
 
           </div>
           
