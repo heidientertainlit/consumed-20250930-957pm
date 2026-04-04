@@ -513,7 +513,7 @@ export function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, i
           </div>
         </div>
 
-        <h4 className="text-[11px] font-medium text-white truncate px-0.5 mt-0.5">{item.title}</h4>
+        <h4 className="text-[11px] font-medium text-gray-900 truncate px-0.5 mt-0.5">{item.title}</h4>
       </div>
 
       <ProgressUpdateSheet
