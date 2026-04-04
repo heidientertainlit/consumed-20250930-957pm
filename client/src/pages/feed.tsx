@@ -4890,9 +4890,9 @@ export default function Feed() {
               )}
 
               {renderPostBatchByIndex(4)}
-              {renderPostBatchByIndex(25)}
-              {renderPostBatchByIndex(26)}
-              {renderPostBatchByIndex(27)}
+              {renderPostBatchByIndex(5)}
+              {renderPostBatchByIndex(6)}
+              {renderPostBatchByIndex(7)}
 
               {/* TRIVIA - Books (All feed only; books category-selected view handled above) */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && 
@@ -4923,7 +4923,7 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Games" />
               )}
 
-              {renderPostBatchByIndex(5)}
+              {renderPostBatchByIndex(8)}
 
               {/* Play activity — card 3 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 2 && (
@@ -4935,27 +4935,25 @@ export default function Feed() {
                 <PointsGlimpse />
               )}
 
-              {renderPostBatchByIndex(6)}
+              {renderPostBatchByIndex(9)}
 
               {/* Consumed Rankings Carousel - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <RanksCarousel offset={0} />
               )}
 
-              {renderPostBatchByIndex(7)}
+              {renderPostBatchByIndex(10)}
 
               {renderRoomCarousel(1, "Quick Glimpse")}
 
-              {renderPostBatchByIndex(8)}
+              {renderPostBatchByIndex(11)}
 
               {/* Play activity — card 4 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 3 && (
                 <div className="mt-4">{renderPlayActivityCard(playActivity[3])}</div>
               )}
 
-              {/* Oscar Ballot Completions - removed post-ceremony */}
-
-              {renderPostBatchByIndex(9)}
+              {renderPostBatchByIndex(12)}
 
               {/* TRIVIA filter - TV category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && 
@@ -4963,25 +4961,25 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
               )}
 
-              {renderPostBatchByIndex(10)}
+              {renderPostBatchByIndex(13)}
 
               {/* Read It? - Books */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
-              {renderPostBatchByIndex(11)}
+              {renderPostBatchByIndex(14)}
 
               {renderRoomCarousel(2, "Quick Glimpse")}
 
-              {renderPostBatchByIndex(12)}
+              {renderPostBatchByIndex(15)}
 
               {/* Entertainment DNA Card #2 - second instance deeper in feed */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <DnaMomentCard />
               )}
 
-              {renderPostBatchByIndex(13)}
+              {renderPostBatchByIndex(16)}
 
               {/* POLLS filter - TV category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
@@ -4989,56 +4987,56 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
               )}
 
-              {renderPostBatchByIndex(14)}
+              {renderPostBatchByIndex(17)}
 
               {/* More Ranks */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <RanksCarousel offset={1} />
               )}
 
-              {renderPostBatchByIndex(15)}
+              {renderPostBatchByIndex(18)}
 
               {/* Listened to It? - Music & Podcasts */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
               )}
 
-              {renderPostBatchByIndex(16)}
+              {renderPostBatchByIndex(19)}
+              {renderPostBatchByIndex(20)}
+              {renderPostBatchByIndex(21)}
               {renderPostBatchByIndex(22)}
-              {renderPostBatchByIndex(23)}
-              {renderPostBatchByIndex(24)}
 
               {renderRoomCarousel(3, "Quick Glimpse")}
 
-              {renderPostBatchByIndex(17)}
+              {renderPostBatchByIndex(23)}
 
-              {renderPostBatchByIndex(18)}
+              {renderPostBatchByIndex(24)}
 
               {/* TRIVIA - Podcasts category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Podcasts" />
               )}
 
-              {renderPostBatchByIndex(19)}
+              {renderPostBatchByIndex(25)}
+              {renderPostBatchByIndex(26)}
+              {renderPostBatchByIndex(27)}
               {renderPostBatchByIndex(28)}
-              {renderPostBatchByIndex(29)}
-              {renderPostBatchByIndex(30)}
 
               {/* TRIVIA - Gaming category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
               )}
 
-              {renderPostBatchByIndex(20)}
+              {renderPostBatchByIndex(29)}
+              {renderPostBatchByIndex(30)}
               {renderPostBatchByIndex(31)}
-              {renderPostBatchByIndex(32)}
 
               {/* TRIVIA - Sports category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Sports" />
               )}
 
-              {renderPostBatchByIndex(21)}
+              {renderPostBatchByIndex(32)}
 
               {renderRemainingPosts()}
 
