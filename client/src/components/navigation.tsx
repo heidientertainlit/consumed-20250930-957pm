@@ -587,7 +587,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                 <Dna className="text-white absolute -bottom-1 -right-1.5" size={11} />
               </div>
             </div>
-            <span className="text-white text-[10px] mt-0.5">Me</span>
+            <span className="text-white text-[10px] mt-0.5">Profile</span>
           </Link>
         </div>
       </nav>
