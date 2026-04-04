@@ -6,15 +6,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Clean up usernames that look like email aliases (e.g. thinkhp+riner1428 → thinkhp)
+// Clean up names that look like email aliases (e.g. thinkhp+riner1428 → thinkhp)
+// Applies to BOTH display_name and user_name since either can be polluted with email alias values
+function stripEmailAlias(name: string): string {
+  let n = name.trim();
+  if (n.includes('@')) n = n.split('@')[0];
+  if (n.includes('+')) n = n.split('+')[0];
+  return n;
+}
+
 function cleanName(displayName: string | null, userName: string | null): string {
-  if (displayName) return displayName;
+  if (displayName) return stripEmailAlias(displayName);
   if (!userName) return 'Someone';
-  // Strip email alias part (everything after +)
-  if (userName.includes('+')) return userName.split('+')[0];
-  // Strip email domain if present
-  if (userName.includes('@')) return userName.split('@')[0];
-  return userName;
+  return stripEmailAlias(userName);
 }
 
 serve(async (req) => {
