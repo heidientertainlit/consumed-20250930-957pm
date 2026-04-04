@@ -6,8 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Clean up names that look like email aliases (e.g. thinkhp+riner1428 → thinkhp)
-// Applies to BOTH display_name and user_name since either can be polluted with email alias values
+// Clean an email-derived username (strips alias and domain parts)
 function stripEmailAlias(name: string): string {
   let n = name.trim();
   if (n.includes('@')) n = n.split('@')[0];
@@ -15,10 +14,16 @@ function stripEmailAlias(name: string): string {
   return n;
 }
 
+// Return the best human-readable name for a user.
+// Logic: if display_name is a real name (no + or @ in it), use it as-is.
+// If display_name is polluted with email alias characters, skip it and use user_name instead.
+// user_name is always cleaned of email alias characters before use.
 function cleanName(displayName: string | null, userName: string | null): string {
-  if (displayName) return stripEmailAlias(displayName);
-  if (!userName) return 'Someone';
-  return stripEmailAlias(userName);
+  if (displayName && !displayName.includes('+') && !displayName.includes('@')) {
+    return displayName.trim();
+  }
+  if (userName) return stripEmailAlias(userName);
+  return 'Someone';
 }
 
 serve(async (req) => {
