@@ -1,18 +1,9 @@
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 
-import { Target, HelpCircle, Vote, BarChart2, UserPlus, Users, Trophy, ChevronRight } from "lucide-react";
+import { Target, HelpCircle, Vote, BarChart2, UserPlus, Trophy, ChevronRight } from "lucide-react";
 
 const gameModes = [
-  {
-    id: "nightin",
-    label: "Rooms",
-    description: "Host a group experience",
-    icon: Users,
-    color: "bg-fuchsia-50 border-fuchsia-100",
-    iconColor: "text-fuchsia-500",
-    href: "/rooms",
-  },
   {
     id: "trivia",
     label: "Trivia",
