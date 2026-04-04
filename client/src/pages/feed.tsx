@@ -2167,7 +2167,7 @@ export default function Feed() {
     });
   };
 
-  const ugcSlots: UGCPost[][] = (() => {
+  const ugcPosts: UGCPost[] = (() => {
     const isAutoGen = (text: string) => !text || text.startsWith('Added ') || text.startsWith('"Added ') || /^"?Added .+ to .+"?$/i.test(text);
     const pool: UGCPost[] = filterByCategory(socialPosts || [])
       .filter((p: any) => {
@@ -2229,20 +2229,13 @@ export default function Feed() {
       });
 
     const seen = new Set<string>();
-    const unique = pool.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
-
-    const sizes = [4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2];
-    const slots: UGCPost[][] = [];
-    let cur = 0;
-    for (const s of sizes) { slots.push(unique.slice(cur, cur + s)); cur += s; }
-    if (cur < unique.length) slots.push(unique.slice(cur));
-    return slots;
+    return pool.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
   })();
 
-  const ugcUsedIds = new Set(ugcSlots.flat().map(p => p.id));
+  const ugcUsedIds = new Set(ugcPosts.map(p => p.id));
 
   const standaloneUGCPosts: any[] = (() => {
-    const allUGC = ugcSlots.flat().filter(p => {
+    const allUGC = ugcPosts.filter(p => {
       return p.type === 'review' || p.type === 'thought' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment';
     });
 
