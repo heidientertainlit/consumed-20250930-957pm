@@ -908,7 +908,11 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
                           data-testid="select-list"
                         >
                           <option value="">Select a list...</option>
-                          {userLists.map((list: any) => (
+                          {userLists.filter((list: any) => {
+                            const lower = (list.title || '').toLowerCase();
+                            return list.is_default && (lower.includes('currently') || lower.includes('want') ||
+                              lower.includes('finished') || lower.includes('not finish') || lower.includes('favorite'));
+                          }).map((list: any) => (
                             <option key={list.id} value={list.id}>
                               {list.title}
                             </option>

@@ -1303,7 +1303,11 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               <Check size={20} className="text-purple-600" />
             )}
           </button>
-          {userLists.filter((list: any) => list.is_default).map((list: any) => {
+          {userLists.filter((list: any) => {
+            const lower = (list.title || '').toLowerCase();
+            return list.is_default && (lower.includes('currently') || lower.includes('want') ||
+              lower.includes('finished') || lower.includes('not finish') || lower.includes('favorite'));
+          }).map((list: any) => {
             const getListStyle = (title: string) => {
               const lower = title.toLowerCase();
               if (lower.includes('currently') || lower.includes('watching') || lower.includes('reading')) {

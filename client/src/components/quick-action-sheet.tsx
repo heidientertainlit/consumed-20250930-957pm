@@ -703,24 +703,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
                     {list.label}
                   </button>
                 ))}
-                {/* Custom lists pill - opens bottom drawer */}
-                {userLists.filter((l: any) => !l.is_default).length > 0 && (
-                  <button
-                    onClick={() => setIsListDrawerOpen(true)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors inline-flex items-center gap-1 ${
-                      !['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId)
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    data-testid="custom-list-dropdown"
-                  >
-                    {!['finished', 'currently', 'queue', 'favorites', 'dnf', ''].includes(selectedListId) 
-                      ? userLists.find((l: any) => l.id === selectedListId)?.title || 'Custom'
-                      : 'Custom'
-                    }
-                    <ChevronDown size={14} />
-                  </button>
-                )}
               </div>
               
               {/* More options toggle */}
@@ -1380,7 +1362,11 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
               <p className="text-sm text-gray-500">Go back</p>
             </div>
           </button>
-          {userLists.map((list: any) => {
+          {userLists.filter((list: any) => {
+            const lower = (list.title || '').toLowerCase();
+            return list.is_default && (lower.includes('currently') || lower.includes('want') ||
+              lower.includes('finished') || lower.includes('not finish') || lower.includes('favorite'));
+          }).map((list: any) => {
             const getListStyle = (title: string) => {
               const lower = title.toLowerCase();
               if (lower.includes('currently') || lower.includes('watching') || lower.includes('reading')) {

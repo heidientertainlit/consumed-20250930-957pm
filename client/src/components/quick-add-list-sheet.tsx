@@ -178,7 +178,14 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     return title;
   };
 
-  const sortedLists = [...userLists].filter((list: any) => list.is_default).sort((a, b) => {
+  const isKnownDefaultList = (title: string) => {
+    const lower = (title || '').toLowerCase();
+    return lower.includes('currently') || lower.includes('want') ||
+           lower.includes('finished') || lower.includes('not finish') ||
+           lower.includes('favorite');
+  };
+
+  const sortedLists = [...userLists].filter((list: any) => list.is_default && isKnownDefaultList(list.title || list.name)).sort((a, b) => {
     const aStyle = getListStyle(a.title || a.name);
     const bStyle = getListStyle(b.title || b.name);
     return aStyle.priority - bStyle.priority;
