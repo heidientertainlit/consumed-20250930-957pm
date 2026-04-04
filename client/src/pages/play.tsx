@@ -73,14 +73,18 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
 
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=overall&scope=global&period=all&limit=200`,
-          { headers: { Authorization: `Bearer ${session.access_token}`, apikey: import.meta.env.VITE_SUPABASE_ANON_KEY } }
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-leaderboards?category=all&scope=global&period=all_time&limit=200`,
+          { headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' } }
         );
         const data = await res.json();
-        const board: RankEntry[] = data?.overall || [];
+        console.log('[RankWidget] categories:', Object.keys(data?.categories || {}));
+        // Use total_consumption — that's the user_points-based leaderboard matching profile points
+        const board: RankEntry[] = data?.categories?.total_consumption || data?.categories?.overall || [];
+        console.log('[RankWidget] board length:', board.length, '| my id:', session.user.id);
+        console.log('[RankWidget] my entry:', board.find((e: RankEntry) => e.user_id === session.user.id));
         setEntries(board);
-      } catch {
-        // silently fail — widget just won't show
+      } catch (err) {
+        console.log('[RankWidget] error:', err);
       } finally {
         setLoading(false);
       }
