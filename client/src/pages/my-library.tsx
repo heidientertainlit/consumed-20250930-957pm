@@ -1,18 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Loader2, Film, Music, BookOpen, Tv, Mic, Gamepad2, Clock, Plus, Download, Share2, Lock, List, ChevronRight, Calendar, Play, Trophy, LayoutGrid, Activity, X } from "lucide-react";
+import { Search as SearchIcon, Loader2, Film, Music, BookOpen, Tv, Mic, Gamepad2, Clock, Download, Share2, List, ChevronRight, Calendar, Play, Trophy, LayoutGrid, Activity, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import CreateListDialog from "@/components/create-list-dialog";
 import { supabase } from "@/lib/supabase";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
 import { MediaSearchBar } from "@/components/media-search-bar";
 
 export default function MyLibrary() {
-  const [isCreateListOpen, setIsCreateListOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'in-progress' | 'lists' | 'all-media'>('in-progress');
   const [listSearch, setListSearch] = useState('');
   const [mediaHistorySearch, setMediaHistorySearch] = useState('');
@@ -495,13 +493,6 @@ export default function MyLibrary() {
                     className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
                   />
                 </div>
-                <button
-                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-[34px] px-3 rounded-lg flex items-center gap-1 font-medium flex-shrink-0"
-                  onClick={() => setIsCreateListOpen(true)}
-                >
-                  <Plus size={12} />
-                  New
-                </button>
               </div>
 
               {isLoadingLists ? (
@@ -516,13 +507,12 @@ export default function MyLibrary() {
               ) : userLists.length === 0 ? (
                 <div className="text-center py-6">
                   <List className="mx-auto mb-2 text-gray-300" size={28} />
-                  <p className="text-sm text-gray-600">No lists yet</p>
-                  <p className="text-xs text-gray-500">Create your first list to start tracking</p>
+                  <p className="text-sm text-gray-600">Your lists are loading</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {userLists
-                    .filter((list: any) => list.title.toLowerCase().includes(listSearch.toLowerCase()))
+                    .filter((list: any) => list.is_default && list.title.toLowerCase().includes(listSearch.toLowerCase()))
                     .map((list: any) => (
                     <div
                       key={list.id}
@@ -547,9 +537,6 @@ export default function MyLibrary() {
                           <div className="flex-1">
                             <div className="flex items-center gap-1.5">
                               <h4 className="font-medium text-gray-900 text-sm">{getDisplayTitle(list.title)}</h4>
-                              {!list.is_default && list.visibility === 'private' && (
-                                <Lock size={10} className="text-gray-400" />
-                              )}
                             </div>
                             <p className="text-xs text-gray-500">{list.items?.length || 0} items</p>
                           </div>

@@ -3,7 +3,7 @@ import Navigation from "@/components/navigation";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Globe, Lock, X, Share2, Calendar, Check, Users, UserMinus, Trash2, MoreVertical, LayoutGrid, List, Search, Film, Tv, BookOpen, Music, ChevronRight, Star, GripVertical, Download, ArrowRightLeft } from "lucide-react";
+import { ArrowLeft, Plus, Lock, X, Share2, Calendar, Check, Trash2, MoreVertical, LayoutGrid, List, Search, Film, Tv, BookOpen, Music, ChevronRight, Star, GripVertical, Download, ArrowRightLeft } from "lucide-react";
 import { ShareImageSheet } from "@/components/share-image-sheet";
 import { Switch } from "@/components/ui/switch";
 import { useLocation, Link } from "wouter";
@@ -994,25 +994,6 @@ export default function ListDetail() {
           <div className="flex items-center justify-between pl-7">
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <span>{listData?.totalItems} items</span>
-              <span className="text-gray-300">·</span>
-              {/* Privacy toggle */}
-              {!sharedUserId && session ? (
-                <button 
-                  onClick={() => listData && privacyMutation.mutate(!listData.isPublic)}
-                  className="inline-flex items-center gap-1 hover:text-gray-700 transition-colors"
-                  data-testid="toggle-list-privacy"
-                >
-                  {listData?.isPublic ? (
-                    <><Globe size={12} className="text-purple-500" /> Public</>
-                  ) : (
-                    <><Lock size={12} /> Private</>
-                  )}
-                </button>
-              ) : (
-                <span className="inline-flex items-center gap-1">
-                  <Globe size={12} /> Public
-                </span>
-              )}
             </div>
             
             {/* Right side actions */}
@@ -1056,35 +1037,6 @@ export default function ListDetail() {
                 <Download size={16} className={isGeneratingImage ? 'animate-pulse' : ''} />
               </button>
               
-              {!sharedUserId && session && !sharedListData?.is_default && (
-                <>
-                  <button
-                    onClick={() => setIsCollaboratorsDialogOpen(true)}
-                    className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors"
-                    data-testid="button-manage-collaborators"
-                    aria-label="Collaborators"
-                  >
-                    <Users size={16} />
-                  </button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors">
-                        <MoreVertical size={16} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-36">
-                      <DropdownMenuItem 
-                        onClick={handleDeleteList}
-                        disabled={deleteListMutation.isPending}
-                        className="text-red-600 focus:text-red-600"
-                      >
-                        <Trash2 size={14} className="mr-2" />
-                        {deleteListMutation.isPending ? 'Deleting...' : 'Delete'}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </>
-              )}
             </div>
           </div>
         </div>
@@ -1386,81 +1338,6 @@ export default function ListDetail() {
         defaultListId={listData?.id}
       />
 
-      {/* Manage Collaborators Dialog */}
-      <Dialog open={isCollaboratorsDialogOpen} onOpenChange={setIsCollaboratorsDialogOpen}>
-        <DialogContent className="max-w-md bg-white" data-testid="dialog-manage-collaborators">
-          <DialogHeader>
-            <DialogTitle className="text-gray-900">Manage Collaborators</DialogTitle>
-            <DialogDescription className="text-gray-600">
-              Add friends to collaborate on "{listData?.name ? getDisplayTitle(listData.name) : ''}". They'll be able to add and remove items.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6 py-4">
-            {/* User Search */}
-            <div>
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Add Collaborators</h3>
-              <UserSearch
-                onSelectUser={(user) => addCollaboratorMutation.mutate(user.id)}
-                excludeUserIds={[session?.user?.id || '', ...collaborators.map(c => c.userId)]}
-                placeholder="Search by username or name..."
-              />
-            </div>
-
-            {/* Current Collaborators */}
-            {collaborators.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium text-gray-900 mb-3">
-                  Current Collaborators ({collaborators.length})
-                </h3>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {collaborators.map((collaborator: any) => (
-                    <div
-                      key={collaborator.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                      data-testid={`collaborator-${collaborator.userId}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback className="bg-purple-600 text-white">
-                            {collaborator.displayName.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-gray-900" data-testid={`text-collaborator-name-${collaborator.userId}`}>
-                            {collaborator.displayName}
-                          </p>
-                          <p className="text-sm text-gray-600" data-testid={`text-collaborator-username-${collaborator.userId}`}>
-                            @{collaborator.userName}
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => removeCollaboratorMutation.mutate(collaborator.userId)}
-                        disabled={removeCollaboratorMutation.isPending}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        data-testid={`button-remove-collaborator-${collaborator.userId}`}
-                      >
-                        <UserMinus size={16} />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {collaborators.length === 0 && (
-              <div className="text-center py-6">
-                <Users className="mx-auto text-gray-400 mb-2" size={32} />
-                <p className="text-sm text-gray-500">No collaborators yet</p>
-                <p className="text-xs text-gray-400 mt-1">Search above to add friends</p>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Drawer open={!!moveItem} onOpenChange={(open) => !open && setMoveItem(null)}>
         <DrawerContent className="bg-white rounded-t-2xl">
