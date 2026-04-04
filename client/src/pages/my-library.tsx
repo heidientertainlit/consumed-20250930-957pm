@@ -791,7 +791,6 @@ export default function MyLibrary() {
           )}
         </div>
 
-      <CreateListDialog open={isCreateListOpen} onOpenChange={setIsCreateListOpen} />
     </div>
   );
 }
