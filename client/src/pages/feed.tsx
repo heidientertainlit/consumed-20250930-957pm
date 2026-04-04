@@ -51,6 +51,7 @@ import { apiRequest, queryClient as globalQueryClient } from "@/lib/queryClient"
 import { renderMentions } from "@/lib/mentions";
 import { copyLink } from "@/lib/share";
 import { FeedbackDialog } from "@/components/feedback-dialog";
+import { GameMomentCard } from "@/components/game-moment-card";
 
 interface SocialPost {
   id: string;
@@ -2176,6 +2177,7 @@ export default function Feed() {
         const hasCreator = p.creator?.id && p.creator?.username && p.creator.username !== 'Unknown';
         if (!hasUser && !hasCreator) return false;
         if (p.type === 'cast_approved') return true;
+        if (p.type === 'game_moment') return true;
 
         if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
         if ((p.type === 'poll' || p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) return true;
@@ -2194,7 +2196,8 @@ export default function Feed() {
       .map((p: any): UGCPost => {
         let postType: UGCPost['type'] = 'general';
         const content = (p.content || '').trim();
-        if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') postType = 'ask_for_rec';
+        if (p.type === 'game_moment') postType = 'game_moment';
+        else if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') postType = 'ask_for_rec';
         else if ((p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) postType = 'predict';
         else if (p.type === 'poll' && ((p as any).question || (p as any).options)) postType = 'poll';
         else if (p.type === 'cast_approved') postType = 'cast_approved';
@@ -2250,14 +2253,14 @@ export default function Feed() {
 
   const standaloneUGCPosts: any[] = (() => {
     const allUGC = ugcSlots.flat().filter(p => {
-      return p.type === 'review' || p.type === 'thought' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved';
+      return p.type === 'review' || p.type === 'thought' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'general' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment';
     });
 
     // Step 1: Deduplicate — same user + same media keeps only the best post.
     // Predictions, polls, and cast_approved are EXEMPT from dedup — they are distinct
     // content types that must coexist with thoughts/reviews about the same media.
     // Including them in the same dedup key would silently erase thoughts/reviews.
-    const DEDUP_EXEMPT = new Set(['predict', 'prediction', 'poll', 'cast_approved']);
+    const DEDUP_EXEMPT = new Set(['predict', 'prediction', 'poll', 'cast_approved', 'game_moment']);
     const dedupMap = new Map<string, UGCPost>();
     for (const post of allUGC) {
       if (DEDUP_EXEMPT.has(post.type)) {
@@ -2455,6 +2458,15 @@ export default function Feed() {
         </div>
       );
     }
+    // Game moment posts — poll votes, predictions, trivia answers
+    if (item?.type === 'game_moment') {
+      return (
+        <div key={`${keyPrefix}-game-moment-${item.id}`} id={`post-${item.id}`}>
+          <GameMomentCard post={item._rawPost || item} />
+        </div>
+      );
+    }
+
     // Cast approved posts — render as proper celebrity cast card
     if (item?.type === 'cast_approved') {
       const raw = item._rawPost || item;

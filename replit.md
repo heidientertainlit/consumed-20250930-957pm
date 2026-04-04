@@ -57,6 +57,7 @@ Preferred communication style: Simple, everyday language.
 - AI Builder (`/library-ai`): Customization of lists and tracking via visual builder and AI chat.
 - DNA Levels System: Two-tier "Entertainment DNA" (survey-based) with friend comparison and unified insights.
 - DNA Moments: Quick binary questions in the feed that build Entertainment DNA. Data stored in `dna_moments` and `dna_moment_responses` tables. Edge functions: `get-dna-moment`, `answer-dna-moment`.
+- Game Moment Activity Posts: When users vote on polls/predictions or answer trivia, a `social_posts` entry with `post_type: 'game_moment'` is auto-created. Content field stores `{ answer, gameType, isCorrect }` JSON; `media_title` = game title; `prediction_pool_id` = pool id. Rendered via `GameMomentCard` component. DEDUP_EXEMPT. Feed auto-refreshes 800ms after vote/answer. Activity created in `play-feed-card.tsx` and `trivia-carousel.tsx`.
 - **Daily Call System**: Featured daily game driving engagement.
   - **Content**: `prediction_pools` table where `featured_date` = today's date.
   - **Responses**: `user_predictions` table.

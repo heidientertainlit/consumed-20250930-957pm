@@ -326,7 +326,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   }, [data, user?.id]);
 
   const answerMutation = useMutation({
-    mutationFn: async ({ itemId, poolId, answer, pointsReward, correctAnswer, options }: { itemId: string; poolId: string; answer: string; pointsReward: number; correctAnswer?: string; options: string[] }) => {
+    mutationFn: async ({ itemId, poolId, answer, pointsReward, correctAnswer, options, questionTitle }: { itemId: string; poolId: string; answer: string; pointsReward: number; correctAnswer?: string; options: string[]; questionTitle?: string }) => {
       if (!user?.id) throw new Error('Not logged in');
       const { data: existingAnswer, error: existingError } = await supabase
         .from('user_predictions')
@@ -359,6 +359,17 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       }
       
       await supabase.rpc('increment_user_points', { user_id_param: user.id, points_to_add: points });
+
+      await supabase.from('social_posts').insert({
+        user_id: user.id,
+        post_type: 'game_moment',
+        content: JSON.stringify({ answer, gameType: 'trivia', isCorrect }),
+        media_title: questionTitle || 'Trivia',
+        prediction_pool_id: poolId,
+        visibility: 'public',
+        fire_votes: 0,
+        ice_votes: 0,
+      });
       
       const { data: allPredictions } = await supabase
         .from('user_predictions')
@@ -439,6 +450,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       }));
       
       incrementActivityCount();
+      setTimeout(() => queryClient.refetchQueries({ queryKey: ['social-feed'] }), 800);
     },
     onError: (error: Error, variables) => {
       if (error.message === 'You already answered this question') {
@@ -495,7 +507,8 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       answer: option,
       pointsReward: item.pointsReward,
       correctAnswer: item.correctAnswer,
-      options: item.options
+      options: item.options,
+      questionTitle: item.question,
     });
   };
 
