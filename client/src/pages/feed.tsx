@@ -52,7 +52,7 @@ import { renderMentions } from "@/lib/mentions";
 import { copyLink } from "@/lib/share";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { GameMomentCard } from "@/components/game-moment-card";
-import { SocialProofCard, buildGameMomentSocialProof } from "@/components/social-proof-card";
+import { SocialProofCard, buildGameMomentSocialProof, buildLeaderboardSocialProof } from "@/components/social-proof-card";
 
 interface SocialPost {
   id: string;
@@ -4751,7 +4751,9 @@ export default function Feed() {
 
               {/* Play activity — sprinkle 1 leaderboard card */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 0 && (
-                <div className="mt-4">{renderPlayActivityCard(playActivity[0])}</div>
+                <div className="mt-4">
+                  <SocialProofCard card={buildLeaderboardSocialProof(playActivity[0], 0)} />
+                </div>
               )}
 
               {/* TV Polls */}
@@ -4763,7 +4765,9 @@ export default function Feed() {
 
               {/* Play activity — sprinkle second leaderboard card */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 1 && (
-                <div className="mt-4">{renderPlayActivityCard(playActivity[1])}</div>
+                <div className="mt-4">
+                  <SocialProofCard card={buildLeaderboardSocialProof(playActivity[1], 1)} />
+                </div>
               )}
 
               {/* Seen It Game */}
@@ -4809,7 +4813,9 @@ export default function Feed() {
 
               {/* Play activity — card 3 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 2 && (
-                <div className="mt-4">{renderPlayActivityCard(playActivity[2])}</div>
+                <div className="mt-4">
+                  <SocialProofCard card={buildLeaderboardSocialProof(playActivity[2], 2)} />
+                </div>
               )}
 
               {/* Points Glimpse - only in All view */}
@@ -4832,7 +4838,9 @@ export default function Feed() {
 
               {/* Play activity — card 4 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 3 && (
-                <div className="mt-4">{renderPlayActivityCard(playActivity[3])}</div>
+                <div className="mt-4">
+                  <SocialProofCard card={buildLeaderboardSocialProof(playActivity[3], 3)} />
+                </div>
               )}
 
               {renderPostBatchByIndex(12)}

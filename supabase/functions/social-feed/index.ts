@@ -195,7 +195,7 @@ serve(async (req) => {
         // Use admin client to bypass RLS on prediction_pools
         const { data: pools, error: poolsError } = await supabaseAdmin
           .from('prediction_pools')
-          .select('id, title, options, status, type, origin_type, origin_user_id, created_at, likes_count, comments_count, media_external_id, media_external_source, media_title')
+          .select('id, title, options, status, type, origin_type, origin_user_id, created_at, likes_count, comments_count, media_external_id, media_external_source, media_title, correct_answer')
           .in('id', predictionPoolIds);
         
         if (pools) {
@@ -493,8 +493,11 @@ serve(async (req) => {
       
       // Fetch votes for predictions first
       let votes: any[] = [];
-      if (predictions && predictions.length > 0) {
-        const predictionIds = predictions.map(p => p.id);
+      // Combine prediction pool IDs + game_moment pool IDs so vote counts cover both
+      const gameMomentPoolIds = posts?.filter(p => p.post_type === 'game_moment' && p.prediction_pool_id).map(p => p.prediction_pool_id) || [];
+      const allVotePoolIds = [...new Set([...(predictions || []).map((p: any) => p.id), ...gameMomentPoolIds])];
+      if (allVotePoolIds.length > 0) {
+        const predictionIds = allVotePoolIds;
         console.log('DEBUG: predictionIds for vote lookup:', predictionIds);
         
         const { data: votesData, error: votesError } = await supabaseAdmin
@@ -1150,7 +1153,28 @@ serve(async (req) => {
         // Get list data if post has list_id - use stored list_id or inferred from content
         const effectiveListId = post.list_id || postToListIdMap.get(post.id);
         const listData = effectiveListId ? listDataMap.get(effectiveListId) : null;
-        
+
+        // For game_moment posts: enrich with vote agreement % and correct answer
+        let gameMomentEnrichment: any = null;
+        if (post.post_type === 'game_moment' && post.prediction_pool_id) {
+          const pool = predictionPoolMap.get(post.prediction_pool_id);
+          const poolVoteCounts = voteCounts[post.prediction_pool_id] || {};
+          const totalVotes = Object.values(poolVoteCounts).reduce((sum: number, c: any) => sum + Number(c), 0);
+          let contentParsed: any = {};
+          try { contentParsed = JSON.parse(post.content || '{}'); } catch {}
+          const userAnswer = contentParsed.answer;
+          const agreementCount = userAnswer ? (poolVoteCounts[userAnswer] || 0) : 0;
+          const agreementPct = totalVotes > 0 ? Math.round((agreementCount / totalVotes) * 100) : null;
+          gameMomentEnrichment = {
+            prediction_pool_id: post.prediction_pool_id,
+            pool_title: pool?.title || null,
+            agreement_pct: agreementPct,
+            total_votes: totalVotes,
+            correct_answer: pool?.correct_answer || null,
+            options: pool?.options || [],
+          };
+        }
+
         return {
           id: post.id,
           type: post.post_type || 'update',
@@ -1209,7 +1233,8 @@ serve(async (req) => {
             externalId: post.media_external_id || '',
             externalSource: post.media_external_source || '',
             description: post.media_description || ''
-          }] : []
+          }] : [],
+          gameMoment: gameMomentEnrichment,
         };
       }) || [];
 

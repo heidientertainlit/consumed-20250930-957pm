@@ -147,19 +147,36 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
   try { parsed = JSON.parse(rawContent); } catch {}
 
   const { answer, gameType, isCorrect } = parsed;
-  const gameTitle = post.mediaTitle || post._rawPost?.media_title || '';
+  // Enriched data added by the social-feed edge function
+  const gm = post._rawPost?.gameMoment || post.gameMoment || null;
+  const agreementPct: number | null = gm?.agreement_pct ?? null;
+  const totalVotes: number = gm?.total_votes ?? 0;
+  const correctAnswer: string | null = gm?.correct_answer || null;
+  const poolTitle: string = gm?.pool_title || post.mediaTitle || post._rawPost?.media_title || '';
+
   const user = post.user;
   const name = user?.displayName || user?.username || 'Someone';
 
+  // Agreement % copy — shown when we have vote data
+  const agreementText = (agreementPct !== null && totalVotes > 0)
+    ? `${agreementPct}% of players agree · ${totalVotes} vote${totalVotes !== 1 ? 's' : ''}`
+    : undefined;
+
   if (gameType === 'trivia') {
     if (isCorrect === false) {
+      const pctRight = (agreementPct !== null && totalVotes > 0)
+        ? `${100 - agreementPct}% of players got it right`
+        : undefined;
       return {
         id: `sp-${post.id}`,
         variant: 'wrong_answer',
         user,
         headline: `${name} got this wrong`,
-        detail: gameTitle || undefined,
+        detail: poolTitle || undefined,
         userAnswer: answer || undefined,
+        correctAnswer: correctAnswer || undefined,
+        highlight: pctRight,
+        highlightValue: pctRight ? (100 - agreementPct!) : undefined,
         ctaLabel: 'Think you know it?',
         ctaHref: '/play/trivia',
         timestamp: post.timestamp,
@@ -169,9 +186,11 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
       id: `sp-${post.id}`,
       variant: 'trivia_score',
       user,
-      headline: `${name} answered a trivia question`,
-      detail: gameTitle || undefined,
+      headline: `${name} got one right`,
+      detail: poolTitle || undefined,
       userAnswer: answer || undefined,
+      highlight: agreementText,
+      highlightValue: agreementPct ?? undefined,
       ctaLabel: 'Play trivia',
       ctaHref: '/play/trivia',
       timestamp: post.timestamp,
@@ -184,8 +203,10 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
       variant: 'prediction_made',
       user,
       headline: `${name} made a prediction`,
-      detail: gameTitle || undefined,
+      detail: poolTitle || undefined,
       userAnswer: answer || undefined,
+      highlight: agreementText,
+      highlightValue: agreementPct ?? undefined,
       ctaLabel: 'Make your pick',
       ctaHref: '/play/predictions',
       timestamp: post.timestamp,
@@ -198,8 +219,10 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
       variant: 'vote_cast',
       user,
       headline: `${name} voted`,
-      detail: gameTitle || undefined,
+      detail: poolTitle || undefined,
       userAnswer: answer || undefined,
+      highlight: agreementText,
+      highlightValue: agreementPct ?? undefined,
       ctaLabel: 'Vote',
       ctaHref: '/play/polls',
       timestamp: post.timestamp,
@@ -211,7 +234,7 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
     variant: 'vote_cast',
     user,
     headline: `${name} played`,
-    detail: gameTitle || undefined,
+    detail: poolTitle || undefined,
     ctaLabel: 'Play',
     ctaHref: '/play',
     timestamp: post.timestamp,
