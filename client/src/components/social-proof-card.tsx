@@ -148,7 +148,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-blue-700 leading-none">Trivia</p>
-              <p className="text-xs text-gray-400 mt-0.5">{card.user.displayName || card.user.username} answered</p>
+              <p className="text-xs text-gray-400 mt-0.5 truncate">{card.headline}</p>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700 shrink-0">
               +{pts} pts
@@ -188,10 +188,12 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           </div>
         )}
 
-        {/* Headline — lighter subtitle style for trivia, bold for others */}
-        <p className={`leading-snug mb-1 ${hasInlineTrivia ? 'text-sm text-gray-500 font-normal' : 'font-semibold text-gray-900'}`}>
-          {card.headline}
-        </p>
+        {/* Headline — only shown for non-trivia cards */}
+        {!hasInlineTrivia && (
+          <p className="font-semibold text-gray-900 leading-snug mb-1">
+            {card.headline}
+          </p>
+        )}
 
         {/* Question — large bold for trivia, italic for others */}
         {card.detail && (
