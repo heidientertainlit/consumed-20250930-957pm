@@ -178,7 +178,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
 
         {/* Question in italic */}
         {card.detail && (
-          <p className="text-sm text-gray-800 italic font-medium mb-3">
+          <p className="text-base text-gray-800 italic font-medium mb-3">
             &ldquo;{card.detail}&rdquo;
           </p>
         )}
