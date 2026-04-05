@@ -85,9 +85,15 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
   const handleAnswer = async (option: string) => {
     if (selectedAnswer || isSubmitting) return;
     setSelectedAnswer(option);
-    setIsSubmitting(true);
+    // Show feedback immediately — don't wait for server
+    if (hasInlineTrivia) {
+      setResult(option === card.correctAnswer ? 'correct' : 'wrong');
+    } else {
+      setSubmitted(true);
+    }
+    // Fire-and-forget to persist the answer
     try {
-      const response = await fetch(`${supabaseUrl}/functions/v1/predictions`, {
+      fetch(`${supabaseUrl}/functions/v1/predictions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,17 +106,8 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           score: hasInlineTrivia ? (option === card.correctAnswer ? 1 : 0) : 0,
         }),
       });
-      if (response.ok) {
-        if (hasInlineTrivia) {
-          setResult(option === card.correctAnswer ? 'correct' : 'wrong');
-        } else {
-          setSubmitted(true);
-        }
-      }
     } catch {
-      // silent fail
-    } finally {
-      setIsSubmitting(false);
+      // silent fail — feedback already shown
     }
   };
 
