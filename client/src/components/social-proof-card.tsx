@@ -31,6 +31,7 @@ export interface SocialProofCardData {
   options?: string[];
   predictionPoolId?: string;
   pointsReward?: number;
+  voteCounts?: Record<string, number>;
 }
 
 const VARIANT_LABEL: Record<SocialProofVariant, string | null> = {
@@ -214,16 +215,20 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           <div className="space-y-2.5">
             {/* Trivia: percentage bars after answering */}
             {hasInlineTrivia && result !== null ? (() => {
-              const correctPct = Math.round(card.highlightValue ?? 50);
-              const wrongCount = (card.options?.length ?? 1) - 1;
-              const wrongPct = wrongCount > 0 ? Math.round((100 - correctPct) / wrongCount) : 0;
+              const vcTotal = Object.values(card.voteCounts || {}).reduce((s: number, c: number) => s + c, 0);
+              const fallbackCorrectPct = Math.round(card.highlightValue ?? 50);
+              const fallbackWrongPct = (card.options?.length ?? 1) > 1
+                ? Math.round((100 - fallbackCorrectPct) / ((card.options?.length ?? 1) - 1))
+                : 0;
               return (
                 <>
                   <div className="flex flex-col gap-2">
                     {card.options!.map((option) => {
                       const isUserAnswer = selectedAnswer === option;
                       const isCorrect = option === card.correctAnswer;
-                      const pct = isCorrect ? correctPct : wrongPct;
+                      const pct = vcTotal > 0
+                        ? Math.round(((card.voteCounts?.[option] || 0) / vcTotal) * 100)
+                        : (isCorrect ? fallbackCorrectPct : fallbackWrongPct);
                       return (
                         <div
                           key={option}
@@ -340,6 +345,7 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
   const poolTitle: string = gm?.pool_title || post.mediaTitle || post._rawPost?.media_title || '';
   const options: string[] = gm?.options || [];
   const predictionPoolId: string | undefined = gm?.prediction_pool_id;
+  const voteCounts: Record<string, number> | undefined = gm?.vote_counts;
 
   const user = post.user;
   const name = user?.displayName || user?.username || 'Someone';
@@ -370,6 +376,7 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
         timestamp: post.timestamp,
         options,
         predictionPoolId,
+        voteCounts: voteCounts || undefined,
         pointsReward: 10,
       };
     }
@@ -387,6 +394,7 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
       options,
       predictionPoolId,
       correctAnswer: correctAnswer || undefined,
+      voteCounts: voteCounts || undefined,
       pointsReward: 10,
     };
   }

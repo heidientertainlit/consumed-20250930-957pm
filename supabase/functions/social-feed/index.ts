@@ -1116,7 +1116,9 @@ serve(async (req) => {
       // Filter out ALL polls/predictions regardless of prediction_pool_id to avoid duplicates
       // But KEEP rank_share posts - they need special handling
       const transformedNonMediaPosts = nonMediaPosts
-        .filter(post => post.post_type !== 'prediction' && post.post_type !== 'predict' && post.post_type !== 'poll' && post.post_type !== 'trivia')
+        .filter(post => post.post_type !== 'prediction' && post.post_type !== 'predict' && post.post_type !== 'poll' && post.post_type !== 'trivia' &&
+          !(post.post_type === 'game_moment' && post.prediction_pool_id && userVotedPoolIds.has(post.prediction_pool_id))
+        )
         .map(post => {
         const postUser = userMap.get(post.user_id) || { user_name: 'Unknown', display_name: 'Unknown', email: '', avatar: '' };
         
@@ -1172,6 +1174,7 @@ serve(async (req) => {
             total_votes: totalVotes,
             correct_answer: pool?.correct_answer || null,
             options: pool?.options || [],
+            vote_counts: poolVoteCounts,
           };
         }
 
@@ -1380,6 +1383,8 @@ serve(async (req) => {
 
             const now = Date.now();
             dedupedVotes.forEach((vote, idx) => {
+              // Skip pools the current user has already answered
+              if (userVotedPoolIds.has(vote.pool_id)) return;
               const voter = userMap.get(vote.user_id);
               if (!voter) return;
               const pool = predictionPoolMap.get(vote.pool_id);
@@ -1425,6 +1430,7 @@ serve(async (req) => {
                   total_votes: totalVotes,
                   correct_answer: pool.correct_answer || null,
                   options: pool.options || [],
+                  vote_counts: poolVoteCounts,
                 },
               });
             });
