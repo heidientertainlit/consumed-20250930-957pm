@@ -2486,7 +2486,7 @@ export default function Feed() {
         type: raw.poolType || 'predict',
       };
       return (
-        <div key={`${keyPrefix}-pred-${item.id}`} className="mb-4">
+        <div key={`${keyPrefix}-pred-${item.id}`} className="mb-3">
           <CollaborativePredictionCard prediction={predictionCardData as any} currentUserId={currentAppUserId || undefined} />
         </div>
       );

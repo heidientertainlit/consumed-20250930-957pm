@@ -527,7 +527,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
 
   if (isLoading || !answeredLoaded) {
     return (
-      <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+      <Card className="bg-white border border-gray-100 rounded-2xl p-5">
         <div className="flex items-center justify-center py-6">
           <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
         </div>
@@ -548,7 +548,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
 
   return (
     <>
-      <Card className="bg-white border border-gray-200 rounded-2xl p-4 pb-2 shadow-sm overflow-hidden relative">
+      <Card className="bg-white border border-gray-100 rounded-2xl p-4 pb-2 overflow-hidden relative">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             {category ? (
