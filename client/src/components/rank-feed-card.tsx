@@ -265,12 +265,12 @@ export default function RankFeedCard({
   const hasMoreItems = localItems.length > 3;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden" data-testid={`rank-feed-card-${rank.id}`}>
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden" data-testid={`rank-feed-card-${rank.id}`}>
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Link href={`/user/${author.id}`}>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm cursor-pointer">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-sm cursor-pointer flex-shrink-0">
               {author.profile_image_url ? (
                 <img src={author.profile_image_url} alt="" className="w-full h-full rounded-full object-cover" />
               ) : (
@@ -279,23 +279,24 @@ export default function RankFeedCard({
             </div>
           </Link>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Link href={`/user/${author.id}`}>
-                <span className="font-semibold text-gray-900 hover:underline cursor-pointer">
-                  @{author.user_name}
+                <span className="font-medium text-sm text-gray-900 hover:text-purple-600 cursor-pointer">
+                  {author.display_name || author.user_name}
                 </span>
               </Link>
-              {createdAt && <span className="text-gray-400 text-sm">· {formatTimeAgo(createdAt)}</span>}
+              {createdAt && <span className="text-gray-400 text-xs">· {formatTimeAgo(createdAt)}</span>}
             </div>
-            <p className="text-xs text-gray-500">shared a ranked list</p>
+            <p className="text-xs text-gray-400">shared a ranked list</p>
           </div>
+          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 flex-shrink-0">Rank</span>
           {isOwner && (
             <button 
               onClick={() => setShowDeleteDialog(true)}
-              className="p-1.5 hover:bg-red-50 rounded-full transition-colors"
+              className="p-1.5 hover:bg-red-50 rounded-full transition-colors ml-1"
               data-testid={`delete-rank-${rank.id}`}
             >
-              <Trash2 size={17} className="text-gray-400 hover:text-red-500 transition-colors" />
+              <Trash2 size={15} className="text-gray-400 hover:text-red-500 transition-colors" />
             </button>
           )}
         </div>
@@ -436,7 +437,7 @@ export default function RankFeedCard({
           data-testid="toggle-show-all"
         >
           <span className="text-sm text-purple-600 font-medium">
-            {showAll ? 'Show less' : `Show all ${localItems.length} items`}
+            {showAll ? 'Show less' : `See all ${localItems.length} items ›`}
           </span>
         </button>
       )}

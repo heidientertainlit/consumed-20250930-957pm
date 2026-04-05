@@ -35,6 +35,7 @@ import { type UGCPost } from "@/components/user-content-carousel";
 import ConversationsPanel from "@/components/conversations-panel";
 import FeedFiltersDialog, { FeedFilters } from "@/components/feed-filters-dialog";
 import RankFeedCard from "@/components/rank-feed-card";
+import { MediaSearchBar } from "@/components/media-search-bar";
 import ConsolidatedActivityCard, { ConsolidatedActivity } from "@/components/consolidated-activity-card";
 import GroupedActivityCard from "@/components/grouped-activity-card";
 import RecommendationCard from "@/components/recommendation-card";
@@ -2544,16 +2545,12 @@ export default function Feed() {
       })();
       return (
         <div key={`${keyPrefix}-rank-stub-${item.id}`} id={`post-${item.id}`} className="mb-4">
-          <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-700 to-indigo-700 px-4 py-2.5 flex items-center gap-2">
-              <Trophy size={14} className="text-white" />
-              <p className="text-sm text-white font-medium">Ranked List</p>
-            </div>
-            <div className="p-4">
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="px-4 pt-4 pb-3">
               {rawPost.user && (
                 <div className="flex items-center gap-2 mb-3">
                   <Link href={`/user/${rawPost.user.id}`}>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer flex-shrink-0">
                       {rawPost.user.avatar ? (
                         <img src={rawPost.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                       ) : (
@@ -2561,22 +2558,30 @@ export default function Feed() {
                       )}
                     </div>
                   </Link>
-                  <Link href={`/user/${rawPost.user.id}`}>
-                    <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">
-                      {rawPost.user.displayName || rawPost.user.username}
-                    </span>
-                  </Link>
+                  <div className="flex-1 min-w-0">
+                    <Link href={`/user/${rawPost.user.id}`}>
+                      <span className="text-sm font-medium text-gray-900 hover:text-purple-600 cursor-pointer">
+                        {rawPost.user.displayName || rawPost.user.username}
+                      </span>
+                    </Link>
+                    <p className="text-xs text-gray-400">shared a ranked list</p>
+                  </div>
+                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 flex-shrink-0">Rank</span>
                 </div>
               )}
-              <p className="font-semibold text-gray-900 mb-3">{rankTitle}</p>
+              {rankId ? (
+                <Link href={`/ranks/${rankId}`}>
+                  <p className="font-semibold text-gray-900 text-sm mb-1.5 hover:text-purple-600 cursor-pointer leading-snug">{rankTitle}</p>
+                </Link>
+              ) : (
+                <p className="font-semibold text-gray-900 text-sm mb-1.5 leading-snug">{rankTitle}</p>
+              )}
               {rankId && (
                 <Link href={`/ranks/${rankId}`}>
-                  <button className="w-full py-2 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors">
-                    View Ranked List
-                  </button>
+                  <span className="text-xs text-purple-600 font-medium">See full rank ›</span>
                 </Link>
               )}
-              <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-gray-50">
                 <button
                   onClick={() => handleLike(item.id)}
                   className={`flex items-center gap-1.5 text-sm ${likedPosts.has(item.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
@@ -4546,6 +4551,10 @@ export default function Feed() {
 
             <DailyChallengeCard />
 
+            <div className="mt-4">
+              <MediaSearchBar session={session} placeholder="Search to add media..." />
+            </div>
+
           </div>
           
         </div>
@@ -4849,8 +4858,6 @@ export default function Feed() {
 
               {renderPostBatchByIndex(10)}
 
-              {renderRoomCarousel(1, "Quick Glimpse")}
-
               {renderPostBatchByIndex(11)}
 
               {/* Play activity — card 4 */}
@@ -4872,8 +4879,6 @@ export default function Feed() {
 
 
               {renderPostBatchByIndex(14)}
-
-              {renderRoomCarousel(2, "Quick Glimpse")}
 
               {renderPostBatchByIndex(15)}
 
@@ -4904,8 +4909,6 @@ export default function Feed() {
               {renderPostBatchByIndex(20)}
               {renderPostBatchByIndex(21)}
               {renderPostBatchByIndex(22)}
-
-              {renderRoomCarousel(3, "Quick Glimpse")}
 
               {renderPostBatchByIndex(23)}
 
@@ -4952,8 +4955,12 @@ export default function Feed() {
                 return !(post.mediaItems?.length > 0 && post.mediaItems[0]?.title?.toLowerCase().includes("does mary leave"));
               }) : [];
               return feedData.map((item: any, postIndex: number) => {
-                // Handle Quick Glimpse cards (scrolling Tier 2 grouped activities)
+                // Quick Glimpse cards removed from feed
                 if ((item as any).type === 'friend_activity_block') {
+                  return null;
+                }
+
+                if (false && (item as any).type === '__disabled_friend_activity_block') {
                   const block = item as any;
                   
                   const activities = block.activities || [];
@@ -5171,16 +5178,12 @@ export default function Feed() {
                     <div key={`rank-stub-${post.id}`} id={`post-${post.id}`}>
                       {carouselElements}
                       <div className="mb-4">
-                        <div className="rounded-2xl border border-gray-200 shadow-sm bg-white overflow-hidden">
-                          <div className="bg-gradient-to-r from-purple-700 to-indigo-700 px-4 py-2.5 flex items-center gap-2">
-                            <Trophy size={14} className="text-white" />
-                            <p className="text-sm text-white font-medium">Ranked List</p>
-                          </div>
-                          <div className="p-4">
+                        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                          <div className="px-4 pt-4 pb-3">
                             {post.user && (
                               <div className="flex items-center gap-2 mb-3">
                                 <Link href={`/user/${post.user.id}`}>
-                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer">
+                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer flex-shrink-0">
                                     {post.user.avatar ? (
                                       <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
                                     ) : (
@@ -5188,22 +5191,30 @@ export default function Feed() {
                                     )}
                                   </div>
                                 </Link>
-                                <Link href={`/user/${post.user.id}`}>
-                                  <span className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer">
-                                    {post.user.displayName || post.user.username}
-                                  </span>
-                                </Link>
+                                <div className="flex-1 min-w-0">
+                                  <Link href={`/user/${post.user.id}`}>
+                                    <span className="text-sm font-medium text-gray-900 hover:text-purple-600 cursor-pointer">
+                                      {post.user.displayName || post.user.username}
+                                    </span>
+                                  </Link>
+                                  <p className="text-xs text-gray-400">shared a ranked list</p>
+                                </div>
+                                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 flex-shrink-0">Rank</span>
                               </div>
                             )}
-                            <p className="font-semibold text-gray-900 mb-3">{rankTitle}</p>
+                            {rankId ? (
+                              <Link href={`/ranks/${rankId}`}>
+                                <p className="font-semibold text-gray-900 text-sm mb-1.5 hover:text-purple-600 cursor-pointer leading-snug">{rankTitle}</p>
+                              </Link>
+                            ) : (
+                              <p className="font-semibold text-gray-900 text-sm mb-1.5 leading-snug">{rankTitle}</p>
+                            )}
                             {rankId && (
                               <Link href={`/ranks/${rankId}`}>
-                                <button className="w-full py-2 rounded-xl bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 transition-colors">
-                                  View Ranked List
-                                </button>
+                                <span className="text-xs text-purple-600 font-medium">See full rank ›</span>
                               </Link>
                             )}
-                            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
+                            <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-gray-50">
                               <button
                                 onClick={() => handleLike(post.id)}
                                 className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
