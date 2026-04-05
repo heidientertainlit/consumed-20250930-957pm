@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link } from 'wouter';
-import { ChevronRight, Play } from 'lucide-react';
+import { ChevronRight, Play, Check, X } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
 
 export type SocialProofVariant =
   | 'wrong_answer'
@@ -25,6 +27,10 @@ export interface SocialProofCardData {
   ctaLabel: string;
   ctaHref: string;
   timestamp?: string;
+  // Inline trivia fields
+  options?: string[];
+  predictionPoolId?: string;
+  pointsReward?: number;
 }
 
 const TYPE_PILL: Record<SocialProofVariant, { label: string } | null> = {
@@ -51,6 +57,51 @@ function timeAgo(ts?: string) {
 
 export function SocialProofCard({ card }: { card: SocialProofCardData }) {
   const pill = TYPE_PILL[card.variant];
+  const { session } = useAuth();
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  const hasInlineTrivia = !!(
+    (card.variant === 'trivia_score' || card.variant === 'wrong_answer') &&
+    card.options && card.options.length > 0 &&
+    card.predictionPoolId
+  );
+
+  const [expanded, setExpanded] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [result, setResult] = useState<'correct' | 'wrong' | null>(null);
+
+  const handleAnswer = async (option: string) => {
+    if (selectedAnswer || isSubmitting) return;
+    setSelectedAnswer(option);
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/predictions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || ''}`,
+          'apikey': supabaseAnonKey,
+        },
+        body: JSON.stringify({
+          pool_id: card.predictionPoolId,
+          prediction: option,
+          score: option === card.correctAnswer ? 1 : 0,
+        }),
+      });
+
+      if (response.ok) {
+        setResult(option === card.correctAnswer ? 'correct' : 'wrong');
+      }
+    } catch {
+      // silent fail — result stays null
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Leaderboard / system cards (no user) — compact purple notification strip
   if (!card.user) {
@@ -66,6 +117,8 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
       </Link>
     );
   }
+
+  const pts = card.pointsReward ?? 10;
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden mb-3">
@@ -111,8 +164,8 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           </p>
         )}
 
-        {/* Their answer + correct answer chips */}
-        {(card.userAnswer || card.correctAnswer) && (
+        {/* Their answer + correct answer chips (wrong_answer variant, not expanded) */}
+        {!expanded && (card.userAnswer || card.correctAnswer) && (
           <div className="flex flex-wrap gap-2 mb-2.5">
             {card.userAnswer && (
               <div className="flex items-center gap-1.5">
@@ -133,19 +186,91 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           </div>
         )}
 
+        {/* Inline trivia options (expanded) */}
+        {expanded && hasInlineTrivia && (
+          <div className="mt-2.5 space-y-2">
+            {card.options!.map((option) => {
+              const isSelected = selectedAnswer === option;
+              const isCorrect = option === card.correctAnswer;
+              const showResult = result !== null && isSelected;
+              const showCorrectHighlight = result !== null && isCorrect;
+
+              let optionStyle = 'border border-gray-200 bg-white text-gray-900';
+              if (showResult && result === 'correct') {
+                optionStyle = 'border border-green-500 bg-green-50 text-green-800';
+              } else if (showResult && result === 'wrong') {
+                optionStyle = 'border border-red-400 bg-red-50 text-red-800';
+              } else if (showCorrectHighlight && selectedAnswer && !isSelected) {
+                optionStyle = 'border border-green-400 bg-green-50 text-green-700';
+              } else if (isSelected && !result) {
+                optionStyle = 'border border-purple-400 bg-purple-50 text-purple-900';
+              }
+
+              return (
+                <button
+                  key={option}
+                  onClick={() => handleAnswer(option)}
+                  disabled={!!selectedAnswer || isSubmitting}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-between ${optionStyle} ${!selectedAnswer ? 'active:bg-gray-50' : ''}`}
+                >
+                  <span>{option}</span>
+                  {showResult && result === 'correct' && isSelected && (
+                    <Check size={15} className="text-green-600 shrink-0" />
+                  )}
+                  {showResult && result === 'wrong' && isSelected && (
+                    <X size={15} className="text-red-500 shrink-0" />
+                  )}
+                  {showCorrectHighlight && selectedAnswer && !isSelected && (
+                    <Check size={15} className="text-green-500 shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Result message */}
+            {result && (
+              <p className={`text-xs font-medium mt-1 ${result === 'correct' ? 'text-green-600' : 'text-red-500'}`}>
+                {result === 'correct'
+                  ? `Correct! +${pts} pts`
+                  : `Not quite — the answer was "${card.correctAnswer}"`}
+              </p>
+            )}
+
+            {!result && (
+              <p className="text-xs text-gray-400 mt-1">Tap to answer · +{pts} pts</p>
+            )}
+          </div>
+        )}
+
         {/* Vote stat + CTA on same row */}
-        <div className="flex items-center justify-between mt-2.5">
-          {card.highlight ? (
-            <p className="text-[11px] text-gray-400">{card.highlight}</p>
-          ) : (
-            <span />
-          )}
-          <Link to={card.ctaHref}>
-            <span className="text-xs font-medium text-purple-600 active:opacity-70 transition-opacity">
-              {card.ctaLabel} ›
-            </span>
-          </Link>
-        </div>
+        {!expanded && (
+          <div className="flex items-center justify-between mt-2.5">
+            {card.highlight ? (
+              <p className="text-[11px] text-gray-400">{card.highlight}</p>
+            ) : (
+              <span />
+            )}
+            {hasInlineTrivia ? (
+              <button
+                onClick={() => setExpanded(true)}
+                className="text-xs font-medium text-purple-600 active:opacity-70 transition-opacity"
+              >
+                {card.ctaLabel} ›
+              </button>
+            ) : (
+              <Link to={card.ctaHref}>
+                <span className="text-xs font-medium text-purple-600 active:opacity-70 transition-opacity">
+                  {card.ctaLabel} ›
+                </span>
+              </Link>
+            )}
+          </div>
+        )}
+
+        {/* When expanded but no answer yet — show vote stat */}
+        {expanded && card.highlight && !result && (
+          <p className="text-[11px] text-gray-400 mt-2.5">{card.highlight}</p>
+        )}
       </div>
     </div>
   );
@@ -163,6 +288,8 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
   const totalVotes: number = gm?.total_votes ?? 0;
   const correctAnswer: string | null = gm?.correct_answer || null;
   const poolTitle: string = gm?.pool_title || post.mediaTitle || post._rawPost?.media_title || '';
+  const options: string[] = gm?.options || [];
+  const predictionPoolId: string | undefined = gm?.prediction_pool_id;
 
   const user = post.user;
   const name = user?.displayName || user?.username || 'Someone';
@@ -193,6 +320,9 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
         ctaLabel: 'Try it yourself',
         ctaHref: '/play/trivia',
         timestamp: post.timestamp,
+        options,
+        predictionPoolId,
+        pointsReward: 10,
       };
     }
     return {
@@ -206,6 +336,9 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
       ctaLabel: 'Play trivia',
       ctaHref: '/play/trivia',
       timestamp: post.timestamp,
+      options,
+      predictionPoolId,
+      pointsReward: 10,
     };
   }
 
