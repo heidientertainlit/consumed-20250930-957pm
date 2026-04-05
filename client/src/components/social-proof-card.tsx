@@ -158,8 +158,8 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           </p>
         )}
 
-        {/* Headline — soft subtitle with name bolded */}
-        <p className="text-sm text-gray-400 leading-snug mb-3">
+        {/* Headline — soft subtitle */}
+        <p className="text-sm text-gray-500 font-medium leading-snug mb-3">
           {renderHeadline()}
         </p>
 
@@ -194,7 +194,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
         {hasInlineTrivia && !showOptions && (
           <button
             onClick={() => setShowOptions(true)}
-            className="w-full py-3.5 border border-gray-200 rounded-2xl text-center text-purple-600 font-medium text-sm bg-gray-50 active:bg-gray-100 transition-colors"
+            className="w-full py-3.5 rounded-2xl text-center text-purple-600 font-medium text-sm bg-gray-100 active:bg-gray-200 transition-colors"
           >
             Answer to earn +{pts} pts
           </button>
@@ -250,7 +250,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
         {/* Non-trivia CTA — full-width button */}
         {!hasInlineTrivia && (
           <Link to={card.ctaHref}>
-            <div className="w-full py-3.5 border border-gray-200 rounded-2xl text-center text-purple-600 font-medium text-sm bg-gray-50 active:bg-gray-100 transition-colors">
+            <div className="w-full py-3.5 rounded-2xl text-center text-purple-600 font-medium text-sm bg-gray-100 active:bg-gray-200 transition-colors">
               {card.ctaLabel}
             </div>
           </Link>
