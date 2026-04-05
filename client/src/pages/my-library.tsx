@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { CurrentlyConsumingCard } from "@/components/currently-consuming-card";
 import { MediaSearchBar } from "@/components/media-search-bar";
+import SeenItGame from "@/components/seen-it-game";
+import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 
 export default function MyLibrary() {
   const [activeTab, setActiveTab] = useState<'in-progress' | 'lists' | 'all-media'>('in-progress');
@@ -19,6 +21,8 @@ export default function MyLibrary() {
   const [mediaHistoryRating, setMediaHistoryRating] = useState('all');
   const [openFilter, setOpenFilter] = useState<string | null>(null);
   const [historyViewMode, setHistoryViewMode] = useState<'list' | 'grid'>('list');
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [isGeneratingHistoryImage, setIsGeneratingHistoryImage] = useState(false);
   const { session, user } = useAuth();
   const [, setLocation] = useLocation();
@@ -479,6 +483,29 @@ export default function MyLibrary() {
             </div>
           )}
 
+          {activeTab === 'in-progress' && (
+            <div className="mx-4">
+              <div className="flex items-center gap-3 my-2">
+                <div className="flex-1 h-px bg-gray-100" />
+                <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">What have you seen?</span>
+                <div className="flex-1 h-px bg-gray-100" />
+              </div>
+              <SeenItGame onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
+              <div className="flex items-center gap-3 my-2">
+                <div className="flex-1 h-px bg-gray-100" />
+                <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">What have you read?</span>
+                <div className="flex-1 h-px bg-gray-100" />
+              </div>
+              <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
+              <div className="flex items-center gap-3 my-2">
+                <div className="flex-1 h-px bg-gray-100" />
+                <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">What have you listened to?</span>
+                <div className="flex-1 h-px bg-gray-100" />
+              </div>
+              <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
+            </div>
+          )}
+
           {activeTab === 'lists' && (
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mx-4">
 
@@ -791,6 +818,12 @@ export default function MyLibrary() {
           )}
         </div>
 
+      <QuickAddListSheet
+        isOpen={isQuickAddOpen}
+        onClose={() => { setIsQuickAddOpen(false); setQuickAddMedia(null); }}
+        media={quickAddMedia}
+        session={session}
+      />
     </div>
   );
 }

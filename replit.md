@@ -1,7 +1,7 @@
 # Consumed - Where Fans Come to Play
 
 ## Overview
-Consumed is a mobile-first platform transforming entertainment consumption into an interactive, game-like experience. It enables users to "play" with entertainment through ranking, voting, predicting, and testing knowledge, fostering engagement and social comparison. The platform aims to shift users from passive consumption to active participation, making them feel part of the entertainment they love, with personalization driven by background tracking.
+Consumed is a mobile-first platform that transforms entertainment consumption into an interactive, game-like experience. It enables users to actively engage with entertainment through ranking, voting, predicting, and knowledge testing. The platform aims to foster engagement, social comparison, and personalization, moving users from passive consumption to active participation in the entertainment they love. The project envisions significant market potential by creating a dynamic and engaging space for entertainment enthusiasts.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -12,28 +12,31 @@ Preferred communication style: Simple, everyday language.
 - **NEVER add, seed, or modify data in Supabase without explicit user approval first.** Always double-check with the user before inserting, updating, or seeding any content (trivia, polls, predictions, etc.) to the production database.
 - All content data comes from user's spreadsheets - do not create fake/placeholder content.
 
-### Version Checkpoints
-- **v1-activity-baseline** — git tag `a6bd2379`, commit "Adjust feed filtering to show shorter posts with content". Pre-repositioning state: full tracking + activity feed. social-feed edge function unfiltered. Revert with `git checkout v1-activity-baseline` if needed.
+### Feed UI Redesign Plan (COSMETIC ONLY — no functional changes)
+All changes are styling/layout only. No voting logic, point systems, interaction handlers, or data pipelines may change.
+**Next steps (in order):**
+1. **Game Moments (SocialProofCard)** — redesign to compact card style: avatar + name + timestamp + type pill, italic question, thin progress bar, "Play ›" footer. Completely standalone component.
+2. **Individual post cards** (reviews, ratings, thoughts) — tighten to compact card shell with type pill in top-right, subtle bottom bar with likes/comments.
+3. **Trivia/poll cards** — same card shell, keep all answer options + voting logic untouched, only tighten wrapper styling.
+
+**Design reference:** `attached_assets/consumed_branded_cards_*.html` and `consumed_feed_v2_*.html`
+**Card shell spec:** white bg, `border: 0.5px solid border-tertiary`, `border-radius-lg`, compact 14px padding, type pill top-right, subtle off-white footer bar for actions.
 
 ## System Architecture
 
 ### UI/UX Decisions
-- Mobile-first design with a dark gradient theme.
-- Bottom Navigation: Activity, Play, Library, Leaders (+ floating center Plus button → /add). DNA removed from nav; replaced with "Play" linking to /play/predictions.
-- Top Navigation: Search (🔍), Notifications, Profile.
-- Profile Section Navigation: Sticky pills for Friends, DNA, Media History (own profile); Overview, DNA (friend profiles). DNA tab on own profile has "My DNA" and "Compare" sub-tabs.
-- Component Library: shadcn/ui (Radix UI, Tailwind CSS).
-- Button Theme: Default purple (`bg-purple-600`) with white text; outline buttons have purple border and white background. No black buttons.
+- Mobile-first design with a dark gradient theme utilizing shadcn/ui (Radix UI, Tailwind CSS).
+- Bottom Navigation: Activity, Play, Library, Leaders, with a floating center Plus button for adding content. "Play" links to `/play/predictions`.
+- Top Navigation: Search, Notifications, Profile.
+- Profile Section Navigation: Sticky pills for Friends, DNA, Media History (own profile); Overview, DNA (friend profiles). DNA tab includes "My DNA" and "Compare" sub-tabs.
+- Button Theme: Default purple (`bg-purple-600`) with white text; outline buttons have purple border and white background.
 - Composer: Simplified inline with quick action buttons and dynamic forms.
 - **Game Components Distinction**:
-  - **The Daily Call** (`DailyChallengeCard`): Purple card at top of feed. Single featured daily game that expands when tapped. Uses command language ("PLAY NOW"), has urgency signal ("LIVE" badge). Whole card is tap target.
-  - **Quick Trivia** (`TriviaCarousel`): Dark purple carousel below. Contains 62+ trivia questions users can swipe through.
-  - These are SEPARATE components and must remain distinct.
-- **Track Page Design**: User loves the Track page design with blue gradient "Track Media" and purple gradient "Import History" buttons, stats cards showing Items Logged and Points Earned. This page is kept as a backpage (accessible via direct URL `/track`) but removed from bottom navigation. Features can be integrated into other areas of the app.
-- **Rooms (hidden, restore later)**: Removed from Play page gameModes array pending feature polish. Route `/rooms` and all backend logic remain intact. To restore, add back to `gameModes` in `client/src/pages/play.tsx`: `{ id: "nightin", label: "Rooms", description: "Host a group experience", icon: Users, color: "bg-fuchsia-50 border-fuchsia-100", iconColor: "text-fuchsia-500", href: "/rooms" }` and re-add `Users` to the lucide-react import.
-
-- **Add Nav Icon - Previous Design (library stack)**: Custom SVG icon code: `<svg width="24" height="22" viewBox="0 0 24 22" fill="none"><line x1="2" y1="7" x2="22" y2="2" stroke="white" strokeWidth="2.5" strokeLinecap="round" /><line x1="1" y1="13" x2="23" y2="13" stroke="white" strokeWidth="2.5" strokeLinecap="round" /><line x1="1" y1="19" x2="23" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round" /></svg>` with `<Plus size={14} strokeWidth={2.5} />` above it.
-- **Navigation**: Bottom navigation includes 4 items: Activity, DNA, Library, and Leaders. The floating Plus button in the center ALWAYS links to `/add`. Play page combines game tiles (Predictions, Polls, Trivia, Leaderboard) with embedded leaderboard content. Collections page at `/collections` has 3 tabs: Lists, Ranks, and History. Leaderboard, Discover, and Track pages exist as backpages. Creator profile at `/creator-profile` shows Follow/Inner Circle buttons and external links.
+  - **The Daily Call** (`DailyChallengeCard`): A distinct, purple card at the top of the feed for a single featured daily game.
+  - **Quick Trivia** (`TriviaCarousel`): A dark purple carousel below the Daily Call, featuring multiple trivia questions.
+- **Track Page Design**: Accessible via `/track`, featuring "Track Media" and "Import History" buttons, and stats cards.
+- **Rooms**: Feature is hidden but fully implemented, accessible via `/rooms`.
+- **Navigation**: Bottom navigation includes 4 items: Activity, DNA, Library, and Leaders. The floating Plus button always links to `/add`. Play page combines game tiles with embedded leaderboard content. Collections page at `/collections` has 3 tabs: Lists, Ranks, and History. Leaderboard, Discover, and Track pages exist as backpages. Creator profile at `/creator-profile` shows Follow/Inner Circle buttons and external links.
 - **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Friends, Collections, History).
 - **Collections System**: Collections tab contains sub-navigation for Lists and Ranks. Ranks feature supports drag-and-drop ordering, position-based ranking, and collaboration.
 - **Search Page**: AI-powered search at `/search` with unified results showing Conversations, AI Recommendations, and Media Results. Uses custom AI icon in navigation.
@@ -56,33 +59,11 @@ Preferred communication style: Simple, everyday language.
 - Prediction Resolution: Supports timed/open-ended predictions with scoring.
 - AI Builder (`/library-ai`): Customization of lists and tracking via visual builder and AI chat.
 - DNA Levels System: Two-tier "Entertainment DNA" (survey-based) with friend comparison and unified insights.
-- DNA Moments: Quick binary questions in the feed that build Entertainment DNA. Data stored in `dna_moments` and `dna_moment_responses` tables. Edge functions: `get-dna-moment`, `answer-dna-moment`.
-- Game Moment Activity Posts: When users vote on polls/predictions or answer trivia, a `social_posts` entry with `post_type: 'game_moment'` is auto-created. Content field stores `{ answer, gameType, isCorrect }` JSON; `media_title` = game title; `prediction_pool_id` = pool id. Rendered via `GameMomentCard` component. DEDUP_EXEMPT. Feed auto-refreshes 800ms after vote/answer. Activity created in `play-feed-card.tsx` and `trivia-carousel.tsx`.
-- **Daily Call System**: Featured daily game driving engagement.
-  - **Content**: `prediction_pools` table where `featured_date` = today's date.
-  - **Responses**: `user_predictions` table.
-  - **Streak Tracking**: `login_streaks` table.
-  - **Edge Function**: `daily-challenge` with actions: `getToday`, `checkResponse`, `submit`.
-  - **Client sends `localDate`**: Format `new Date().toLocaleDateString('en-CA')` for timezone.
-  - **DO NOT use or create `daily_runs` table**.
-- **Bot Persona System**: 20 AI-powered persona users that post authentic entertainment content via a Claude-driven admin workflow.
-  - **Personas**: 20 users with `is_persona = true` and `persona_config` jsonb in `public.users`. Auth accounts at `persona_*@consumedapp.com`.
-  - **Persona usernames**: alexmoreno402, emily27, sarah13, lenahoff, mike101, brooksj, marylou, ryanoc, jordanmatthews, avaj, katkat, tina808, jessiebee, emma_rod, rinnie, marcusdelacroix, nick, kei, alex_thompson, reedreads
-  - **Tables**: `persona_post_drafts` (status: draft/approved/rejected), `scheduled_persona_posts` (publisher picks up `posted=false`).
-  - **Edge Functions**: `generate-persona-content` (calls Anthropic claude-3-5-sonnet, saves drafts); `post-scheduled-content` (existing publisher); `setup-personas` (one-time setup, redeployable).
-  - **Admin hub**: `/admin` — landing page with tool cards. Routes: `/admin/personas` (persona generation), `/admin/trivia-polls` (trivia & polls AI generation, placeholder).
-  - **Secrets**: `ANTHROPIC_API_KEY` set in both Replit and Supabase secrets.
-  - **persona_config shape**: `{ bio, tone, interests[], media_types[], favorite_media[], posting_style, activity_level, style_examples: [{type, content}] }`
-
-- **Pools System**: Structured, round-based group competition engine for any entertainment event.
-  - Architecture: Pool → Rounds → Prompts → Answers → Leaderboard
-  - Pool is host-controlled: host creates rounds, adds MC prompts, marks correct answers after the fact.
-  - Invite-only always (no public/private toggle). Members join via shared link (no code typing).
-  - Share link format: `{APP_URL}/pool/join/{invite_code}`
-  - Scoring: 1 point per correct answer, cumulative across rounds.
-  - Tables: `pools`, `pool_members`, `pool_rounds` (NEW), `pool_prompts` (has `round_id` column), `pool_answers`.
-  - Edge functions: `create-pool`, `create-pool-round` (NEW), `join-pool`, `add-pool-prompt`, `submit-pool-answer`, `resolve-pool-prompt`, `get-pool-details`, `get-pool-leaderboard`, `get-user-pools`.
-  - Routes: `/pools`, `/pool/:id`, `/pool/join/:code`.
+- DNA Moments: Quick binary questions in the feed that build Entertainment DNA, stored in `dna_moments` and `dna_moment_responses` tables.
+- Game Moment Activity Posts: Auto-creation of `social_posts` entries with `post_type: 'game_moment'` when users interact with games.
+- **Daily Call System**: Featured daily game. Content from `prediction_pools` (where `featured_date` = today's date), user responses in `user_predictions`, and streak tracking in `login_streaks`. Managed by `daily-challenge` edge function.
+- **Bot Persona System**: 20 AI-powered persona users (`is_persona = true` in `public.users`) that post authentic entertainment content via Claude-driven admin workflow. Content generation and scheduling managed through `persona_post_drafts` and `scheduled_persona_posts` tables and related edge functions. Admin hub at `/admin`.
+- **Pools System**: Structured, round-based group competition engine. Architecture: Pool → Rounds → Prompts → Answers → Leaderboard. Host-controlled, invite-only. Tables: `pools`, `pool_members`, `pool_rounds`, `pool_prompts`, `pool_answers`. Several associated edge functions and routes.
 
 ### Feature Specifications
 - Friend Profile Viewing: Access to Stats, DNA, Collections.
@@ -103,22 +84,18 @@ Preferred communication style: Simple, everyday language.
 - Analytics Dashboard: Admin dashboard (`/admin`) for engagement, retention, activation, partnership, and behavioral analytics.
 
 ### System Design Choices
-- Database Schema: Strict naming conventions, synced dev/prod.
+- Database Schema: Strict naming conventions and synced dev/prod environments.
 - Row Level Security (RLS): Strict RLS for data privacy.
 - Edge Functions: Adhere to schema, handle user auto-creation, accept `user_id`.
 - Privacy Toggle System: Controls list visibility.
-- **Media Data Requirements**: `image_url` (full HTTPS URL), `external_id`, `external_source`, `title` are REQUIRED for all media. Edge functions must capture `image_url` and convert relative TMDB paths.
+- **Media Data Requirements**: `image_url` (full HTTPS URL), `external_id`, `external_source`, `title` are REQUIRED for all media. Edge functions convert relative TMDB paths.
 - **Media Search Display Requirements**: `media-search` edge function MUST return `poster_url`, `image`, `creator`, `title`, `type`, `year`, `external_id`, `external_source`.
 - **Social Feed Architecture**:
-    - Feed fetch limit: `limit = 200;` in `fetchSocialFeed` function (`client/src/pages/feed.tsx`). Never lower this.
-    - Infinite scroll: Implemented via `IntersectionObserver` on `loadMoreRef` div. No hard cap on total posts.
-    - UGC post rendering pipeline: Filters `socialPosts` into `ugcSlots`, deduplicates/groups into `standaloneUGCPosts`, assigns to `slotAssignments`. `renderPostBatchByIndex(N)` renders items interleaved with other cards.
-    - Two rendering paths in `feed.tsx`: `renderPostBatchByIndex` (top of feed, interleaved) and `feedData.map()` (bottom of feed, social posts section). These must remain separated.
-    - `_rawPost` pattern: `ugcSlots` attaches the full original `SocialPost` as `_rawPost` for `renderFeedItem`.
-    - `feedData.map()` MUST skip `cast_approved` and `prediction`/`predict` when `selectedFilter !== 'predictions'`.
-    - Feed refresh: Use `setTimeout(() => queryClient.refetchQueries({ queryKey: ['social-feed'] }), 800)` after posting.
-    - Dedup exemption: `predict`, `prediction`, `poll`, and `cast_approved` are EXEMPT from dedup in `standaloneUGCPosts`. They use key `exempt-${postId}` so they never compete with thoughts/reviews about the same media. Removing this exemption silently erases thoughts when a prediction exists for the same media.
-    - `rate-review` type: social-feed returns `type: 'rate-review'` for review posts. ugcSlots filter and map must check for this explicitly alongside `'review'`. Do not remove this check.
+    - Feed fetch limit: `limit = 200;` in `fetchSocialFeed`.
+    - Infinite scroll via `IntersectionObserver`.
+    - UGC post rendering pipeline: Filters `socialPosts` into `ugcSlots`, deduplicates/groups, and assigns to `slotAssignments` for interleaved rendering.
+    - `predict`, `prediction`, `poll`, and `cast_approved` are EXEMPT from deduplication in `standaloneUGCPosts` to prevent silent erasure of thoughts/reviews.
+    - `rate-review` type: `social-feed` returns `type: 'rate-review'` for review posts, which must be explicitly checked.
 
 ## External Dependencies
 
@@ -129,6 +106,7 @@ Preferred communication style: Simple, everyday language.
     -   YouTube
     -   Open Library
     -   OpenAI (GPT-4o)
+    -   Anthropic (Claude-3-5-sonnet)
 -   **Frontend Libraries**:
     -   `@supabase/supabase-js`
     -   `@tanstack/react-query`

@@ -15,7 +15,7 @@ import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import CastApprovalCard from "@/components/cast-approval-card";
-import SeenItGame from "@/components/seen-it-game";
+
 import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
@@ -4783,10 +4783,6 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* Seen It Game */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <SeenItGame onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
-              )}
 
               {renderPostBatchByIndex(4)}
               {renderPostBatchByIndex(5)}
@@ -4866,10 +4862,6 @@ export default function Feed() {
 
               {renderPostBatchByIndex(13)}
 
-              {/* Read It? - Books */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
-              )}
 
               {renderPostBatchByIndex(14)}
 
@@ -4899,10 +4891,6 @@ export default function Feed() {
 
               {renderPostBatchByIndex(18)}
 
-              {/* Listened to It? - Music & Podcasts */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }} />
-              )}
 
               {renderPostBatchByIndex(19)}
               {renderPostBatchByIndex(20)}
