@@ -2256,7 +2256,11 @@ export default function Feed() {
     const ONE_DAY_MS = 24 * 60 * 60 * 1000;
     const byUser = new Map<string, UGCPost[]>();
     for (const post of allUGC) {
-      const uid = post.user?.id || 'anon';
+      // game_moment and cast_approved posts must always be solo cards — never grouped into
+      // the 24h carousel because UGCGroupCard doesn't know how to render them
+      const uid = (post.type === 'game_moment' || post.type === 'cast_approved')
+        ? `solo-${post.id}`
+        : post.user?.id || 'anon';
       if (!byUser.has(uid)) byUser.set(uid, []);
       byUser.get(uid)!.push(post);
     }
