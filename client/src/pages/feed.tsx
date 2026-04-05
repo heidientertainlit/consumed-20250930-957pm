@@ -4804,14 +4804,15 @@ export default function Feed() {
 
               {renderPostBatchByIndex(4)}
               {renderPostBatchByIndex(5)}
-              {renderPostBatchByIndex(6)}
-              {renderPostBatchByIndex(7)}
 
               {/* TRIVIA - Books (All feed only; books category-selected view handled above) */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && 
                !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
               )}
+
+              {/* Always put posts between carousels — never two carousels back-to-back */}
+              {renderPostBatchByIndex(6)}
 
               {/* POLLS filter - Movies category */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
@@ -4835,6 +4836,8 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'games' && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Games" />
               )}
+
+              {renderPostBatchByIndex(7)}
 
               {renderPostBatchByIndex(8)}
 
