@@ -2178,9 +2178,13 @@ export default function Feed() {
         const hasCreator = p.creator?.id && p.creator?.username && p.creator.username !== 'Unknown';
         if (!hasUser && !hasCreator) return false;
 
-        // Skip posts whose content is raw game moment JSON (wrong post_type saved by game activity)
-        const postRawContent = (p.content || '').trim();
-        if (postRawContent.startsWith('{"answer":') || postRawContent.startsWith('{"gameType":')) return false;
+        // Skip NON-game_moment posts whose content is raw game moment JSON
+        // (these were saved with the wrong post_type and should not show as text posts)
+        // game_moment type posts with JSON content are intentional — let them through
+        if (p.type !== 'game_moment') {
+          const postRawContent = (p.content || '').trim();
+          if (postRawContent.startsWith('{"answer":') || postRawContent.startsWith('{"gameType":')) return false;
+        }
 
         if (p.type === 'cast_approved') return true;
         if (p.type === 'game_moment') return true;
