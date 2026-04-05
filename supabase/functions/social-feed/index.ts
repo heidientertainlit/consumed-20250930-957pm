@@ -1316,12 +1316,14 @@ serve(async (req) => {
       }) || [];
 
       // === SYNTHETIC GAME MOMENT CARDS ===
-      // If there are no game_moment social_posts in the DB, synthesize them directly from
-      // user_predictions (past votes/answers) so social proof cards always appear in the feed.
-      const hasRealGameMoments = transformedNonMediaPosts.some(p => p.type === 'game_moment');
+      // Always supplement with synthetic game moments so the feed has at least 8 game moment cards.
+      // Real game_moment posts are generated when users actually vote; synthetic ones are built from
+      // user_predictions so there are always enough social proof cards in the feed.
+      const TARGET_GAME_MOMENTS = 8;
+      const realGameMomentCount = transformedNonMediaPosts.filter(p => p.type === 'game_moment').length;
       const syntheticGameMoments: any[] = [];
 
-      if (!hasRealGameMoments) {
+      if (realGameMomentCount < TARGET_GAME_MOMENTS) {
         try {
           // Fetch recent votes from any user (not current user), last 30 days
           const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -1336,6 +1338,7 @@ serve(async (req) => {
           if (recentVotes && recentVotes.length > 0) {
             // Deduplicate: one vote per pool AND one vote per user (most recent only)
             // This prevents the same user appearing multiple times in a row
+            const neededCount = TARGET_GAME_MOMENTS - realGameMomentCount;
             const seenPools = new Set<string>();
             const seenUsers = new Set<string>();
             const dedupedVotes: any[] = [];
@@ -1344,7 +1347,7 @@ serve(async (req) => {
                 seenPools.add(v.pool_id);
                 seenUsers.add(v.user_id);
                 dedupedVotes.push(v);
-                if (dedupedVotes.length >= 8) break;
+                if (dedupedVotes.length >= neededCount) break;
               }
             }
 
@@ -1381,10 +1384,19 @@ serve(async (req) => {
               extraUsers?.forEach(u => userMap.set(u.id, u));
             }
 
+            // Build set of pool IDs that already have real game_moment cards so we don't duplicate them
+            const realGameMomentPoolIds = new Set(
+              transformedNonMediaPosts
+                .filter(p => p.type === 'game_moment' && p.gameMoment?.prediction_pool_id)
+                .map(p => p.gameMoment.prediction_pool_id)
+            );
+
             const now = Date.now();
             dedupedVotes.forEach((vote, idx) => {
               // Skip pools the current user has already answered
               if (userVotedPoolIds.has(vote.pool_id)) return;
+              // Skip pools that already have a real game_moment card in the feed
+              if (realGameMomentPoolIds.has(vote.pool_id)) return;
               const voter = userMap.get(vote.user_id);
               if (!voter) return;
               const pool = predictionPoolMap.get(vote.pool_id);
