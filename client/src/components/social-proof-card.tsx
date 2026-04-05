@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
-import { ChevronRight, Play, Check, X } from 'lucide-react';
+import { ChevronRight, Play, Check, X, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 export type SocialProofVariant =
@@ -212,67 +212,103 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
         {/* Inline options */}
         {hasInline && showOptions && (
           <div className="space-y-2.5">
-            {card.options!.map((option) => {
-              const isSelected = selectedAnswer === option;
-
-              // Trivia styling
-              if (hasInlineTrivia) {
-                const isCorrect = option === card.correctAnswer;
-                const showResult = result !== null && isSelected;
-                const showCorrectHighlight = result !== null && isCorrect && !isSelected;
-
-                let rowStyle = 'border border-gray-200 bg-white text-gray-900';
-                if (showResult && result === 'correct') rowStyle = 'border border-green-500 bg-green-50 text-green-800';
-                else if (showResult && result === 'wrong') rowStyle = 'border border-red-400 bg-red-50 text-red-800';
-                else if (showCorrectHighlight) rowStyle = 'border border-green-400 bg-green-50 text-green-700';
-                else if (isSelected && !result) rowStyle = 'border border-purple-400 bg-purple-50 text-purple-900';
-
-                return (
-                  <button
-                    key={option}
-                    onClick={() => handleAnswer(option)}
-                    disabled={!!selectedAnswer || isSubmitting}
-                    className={`w-full text-left px-4 py-3.5 rounded-xl text-sm font-normal transition-colors flex items-center justify-between ${rowStyle} ${!selectedAnswer ? 'active:bg-gray-50' : ''}`}
-                  >
-                    <span>{option}</span>
-                    {showResult && result === 'correct' && isSelected && <Check size={15} className="text-green-600 shrink-0" />}
-                    {showResult && result === 'wrong' && isSelected && <X size={15} className="text-red-500 shrink-0" />}
-                    {showCorrectHighlight && <Check size={15} className="text-green-500 shrink-0" />}
-                  </button>
-                );
-              }
-
-              // Prediction styling
-              let rowStyle = 'border border-gray-200 bg-white text-gray-900';
-              if (isSelected && submitted) rowStyle = 'border border-purple-500 bg-purple-50 text-purple-900';
-              else if (isSelected) rowStyle = 'border border-purple-400 bg-purple-50 text-purple-900';
-
+            {/* Trivia: percentage bars after answering */}
+            {hasInlineTrivia && result !== null ? (() => {
+              const correctPct = Math.round(card.highlightValue ?? 50);
+              const wrongCount = (card.options?.length ?? 1) - 1;
+              const wrongPct = wrongCount > 0 ? Math.round((100 - correctPct) / wrongCount) : 0;
               return (
-                <button
-                  key={option}
-                  onClick={() => handleAnswer(option)}
-                  disabled={!!selectedAnswer || isSubmitting}
-                  className={`w-full text-left px-4 py-3.5 rounded-xl text-sm font-normal transition-colors flex items-center justify-between ${rowStyle} ${!selectedAnswer ? 'active:bg-gray-50' : ''}`}
-                >
-                  <span>{option}</span>
-                  {isSelected && submitted && <Check size={15} className="text-purple-600 shrink-0" />}
-                </button>
+                <>
+                  <div className="flex flex-col gap-2">
+                    {card.options!.map((option) => {
+                      const isUserAnswer = selectedAnswer === option;
+                      const isCorrect = option === card.correctAnswer;
+                      const pct = isCorrect ? correctPct : wrongPct;
+                      return (
+                        <div
+                          key={option}
+                          className={`relative py-3 px-4 rounded-full overflow-hidden ${
+                            isCorrect ? 'bg-green-100' : isUserAnswer ? 'bg-red-100' : 'bg-gray-100'
+                          }`}
+                        >
+                          <div
+                            className={`absolute inset-0 transition-all duration-1000 ease-out ${
+                              isCorrect ? 'bg-green-200/60' : 'bg-gray-200/40'
+                            }`}
+                            style={{ width: `${pct}%` }}
+                          />
+                          <div className="relative flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              {isCorrect && <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />}
+                              {isUserAnswer && !isCorrect && <XCircle className="w-4 h-4 text-red-500 shrink-0" />}
+                              <span className={`text-sm font-medium ${isCorrect ? 'text-green-800' : isUserAnswer ? 'text-red-800' : 'text-gray-800'}`}>
+                                {option}
+                              </span>
+                              {isUserAnswer && (
+                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                  isCorrect ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'
+                                }`}>You</span>
+                              )}
+                            </div>
+                            <span className="text-xs font-medium text-gray-600">{pct}%</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <Link to="/play/trivia">
+                    <button className="w-full mt-2 py-2.5 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 active:opacity-90">
+                      Play more trivia
+                    </button>
+                  </Link>
+                </>
               );
-            })}
-
-            {/* Feedback line */}
-            {hasInlineTrivia && result ? (
-              <p className={`text-xs font-medium pt-1 ${result === 'correct' ? 'text-green-600' : 'text-red-500'}`}>
-                {result === 'correct'
-                  ? `Correct! +${pts} pts`
-                  : `Not quite — the answer was "${card.correctAnswer}"`}
-              </p>
-            ) : hasInlineTrivia ? (
-              <p className="text-xs text-gray-400 pt-1">Tap to answer · +{pts} pts</p>
-            ) : submitted ? (
-              <p className="text-xs font-medium text-purple-600 pt-1">Prediction locked in! +{pts} pts when results drop</p>
+            })() : hasInlineTrivia ? (
+              /* Trivia: plain buttons before answering */
+              <>
+                {card.options!.map((option) => {
+                  const isSelected = selectedAnswer === option;
+                  let rowStyle = 'border border-gray-200 bg-white text-gray-900';
+                  if (isSelected) rowStyle = 'border border-purple-400 bg-purple-50 text-purple-900';
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => handleAnswer(option)}
+                      disabled={!!selectedAnswer}
+                      className={`w-full text-left px-4 py-3.5 rounded-xl text-sm font-normal transition-colors flex items-center justify-between ${rowStyle} ${!selectedAnswer ? 'active:bg-gray-50' : ''}`}
+                    >
+                      <span>{option}</span>
+                    </button>
+                  );
+                })}
+                <p className="text-xs text-gray-400 pt-1">Tap to answer · +{pts} pts</p>
+              </>
             ) : (
-              <p className="text-xs text-gray-400 pt-1">Tap to make your pick · +{pts} pts</p>
+              /* Prediction options */
+              <>
+                {card.options!.map((option) => {
+                  const isSelected = selectedAnswer === option;
+                  let rowStyle = 'border border-gray-200 bg-white text-gray-900';
+                  if (isSelected && submitted) rowStyle = 'border border-purple-500 bg-purple-50 text-purple-900';
+                  else if (isSelected) rowStyle = 'border border-purple-400 bg-purple-50 text-purple-900';
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => handleAnswer(option)}
+                      disabled={!!selectedAnswer}
+                      className={`w-full text-left px-4 py-3.5 rounded-xl text-sm font-normal transition-colors flex items-center justify-between ${rowStyle} ${!selectedAnswer ? 'active:bg-gray-50' : ''}`}
+                    >
+                      <span>{option}</span>
+                      {isSelected && submitted && <Check size={15} className="text-purple-600 shrink-0" />}
+                    </button>
+                  );
+                })}
+                {submitted ? (
+                  <p className="text-xs font-medium text-purple-600 pt-1">Prediction locked in! +{pts} pts when results drop</p>
+                ) : (
+                  <p className="text-xs text-gray-400 pt-1">Tap to make your pick · +{pts} pts</p>
+                )}
+              </>
             )}
           </div>
         )}
