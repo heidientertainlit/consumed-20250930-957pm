@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
-import { ChevronRight, Play, Check, X, Brain, Target, BarChart2 } from 'lucide-react';
+import { ChevronRight, Play, Check, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 export type SocialProofVariant =
@@ -33,19 +33,13 @@ export interface SocialProofCardData {
   pointsReward?: number;
 }
 
-// Config per variant: icon component, icon bg, label text, label color
-const VARIANT_CONFIG: Record<SocialProofVariant, {
-  label: string | null;
-  icon: React.ElementType | null;
-  iconBg: string;
-  labelColor: string;
-} | null> = {
-  trivia_score:     { label: 'Trivia',     icon: Brain,     iconBg: 'bg-purple-600', labelColor: 'text-blue-700' },
-  wrong_answer:     { label: 'Trivia',     icon: Brain,     iconBg: 'bg-purple-600', labelColor: 'text-blue-700' },
-  prediction_made:  { label: 'Prediction', icon: Target,    iconBg: 'bg-purple-600', labelColor: 'text-purple-700' },
-  vote_cast:        { label: 'Poll',       icon: BarChart2, iconBg: 'bg-purple-600', labelColor: 'text-purple-700' },
-  hot_take:         { label: 'Poll',       icon: BarChart2, iconBg: 'bg-purple-600', labelColor: 'text-purple-700' },
-  divided_house:    { label: 'Poll',       icon: BarChart2, iconBg: 'bg-purple-600', labelColor: 'text-purple-700' },
+const VARIANT_LABEL: Record<SocialProofVariant, string | null> = {
+  trivia_score:     'Trivia',
+  wrong_answer:     'Trivia',
+  prediction_made:  'Prediction',
+  vote_cast:        'Poll',
+  hot_take:         'Poll',
+  divided_house:    'Poll',
   leaderboard_move: null,
   rival_alert:      null,
   streak_callout:   null,
@@ -61,32 +55,8 @@ function timeAgo(ts?: string) {
   return `${m}m`;
 }
 
-// Parse "X% of players agree · N votes" into {pct, votes}
-function parseHighlight(highlight?: string): { pct: string | null; votes: string | null } {
-  if (!highlight) return { pct: null, votes: null };
-  const pctMatch = highlight.match(/^(\d+)%/);
-  const votesMatch = highlight.match(/(\d+)\s+vote/);
-  return {
-    pct: pctMatch ? `${pctMatch[1]}% agreed` : null,
-    votes: votesMatch ? `${votesMatch[1]} votes` : null,
-  };
-}
-
-// Render headline with the user's name bolded
-function HeadlineWithBoldName({ headline, displayName }: { headline: string; displayName: string }) {
-  const idx = displayName ? headline.indexOf(displayName) : -1;
-  if (idx === -1) return <>{headline}</>;
-  return (
-    <>
-      {headline.slice(0, idx)}
-      <span className="font-bold text-gray-800">{displayName}</span>
-      {headline.slice(idx + displayName.length)}
-    </>
-  );
-}
-
 export function SocialProofCard({ card }: { card: SocialProofCardData }) {
-  const config = VARIANT_CONFIG[card.variant];
+  const label = VARIANT_LABEL[card.variant];
   const { session } = useAuth();
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -107,7 +77,6 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
     if (selectedAnswer || isSubmitting) return;
     setSelectedAnswer(option);
     setIsSubmitting(true);
-
     try {
       const response = await fetch(`${supabaseUrl}/functions/v1/predictions`, {
         method: 'POST',
@@ -122,7 +91,6 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           score: option === card.correctAnswer ? 1 : 0,
         }),
       });
-
       if (response.ok) {
         setResult(option === card.correctAnswer ? 'correct' : 'wrong');
       }
@@ -134,10 +102,9 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
   };
 
   const pts = card.pointsReward ?? 10;
-  const { pct, votes } = parseHighlight(card.highlight);
 
-  // Leaderboard / system cards (no user) — compact purple notification strip
-  if (!card.user || !config) {
+  // Leaderboard / system cards (no user) — compact purple strip
+  if (!card.user || !label) {
     return (
       <Link to={card.ctaHref}>
         <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-purple-50 border border-purple-100 mb-3 active:opacity-75 transition-opacity">
@@ -151,55 +118,54 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
     );
   }
 
-  const IconComponent = config.icon!;
   const displayName = card.user.displayName || card.user.username || '';
+
+  // Bold the friend's name within the headline
+  const renderHeadline = () => {
+    const idx = displayName ? card.headline.indexOf(displayName) : -1;
+    if (idx === -1) return <>{card.headline}</>;
+    return (
+      <>
+        {card.headline.slice(0, idx)}
+        <span className="font-semibold text-gray-700">{displayName}</span>
+        {card.headline.slice(idx + displayName.length)}
+      </>
+    );
+  };
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden mb-3">
       <div className="px-4 pt-4 pb-4">
 
-        {/* Header: icon + type label + headline subtitle + optional pts badge */}
-        <div className="flex items-start gap-3 mb-3">
-          <div className={`w-10 h-10 rounded-full ${config.iconBg} flex items-center justify-center shrink-0`}>
-            <IconComponent size={20} className="text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className={`text-sm font-bold leading-none ${config.labelColor}`}>{config.label}</p>
-            <p className="text-sm text-gray-600 mt-0.5 leading-snug">
-              <HeadlineWithBoldName headline={card.headline} displayName={displayName} />
-            </p>
-          </div>
-          {hasInlineTrivia && (
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700 shrink-0">
+        {/* Top row: type pill left, pts badge or timestamp right */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-purple-100 text-purple-700">
+            {label}
+          </span>
+          {hasInlineTrivia ? (
+            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-green-100 text-green-700">
               +{pts} pts
             </span>
-          )}
-          {!hasInlineTrivia && card.timestamp && (
-            <span className="text-xs text-gray-400 shrink-0 mt-0.5">{timeAgo(card.timestamp)}</span>
-          )}
+          ) : card.timestamp ? (
+            <span className="text-xs text-gray-400">{timeAgo(card.timestamp)}</span>
+          ) : null}
         </div>
 
-        {/* Question / detail — large bold for all types */}
+        {/* Question — big bold */}
         {card.detail && (
-          <p className="text-lg font-bold text-gray-900 leading-snug mb-3">
+          <p className="text-lg font-bold text-gray-900 leading-snug mb-1">
             {card.detail}
           </p>
         )}
 
-        {/* Stats pills */}
-        {(pct || votes) && (
-          <div className="flex items-center gap-2 mb-4">
-            {pct && (
-              <span className="text-sm font-medium px-3 py-1 rounded-full bg-blue-100 text-blue-700">
-                {pct}
-              </span>
-            )}
-            {votes && (
-              <span className="text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-500">
-                {votes}
-              </span>
-            )}
-          </div>
+        {/* Headline — soft subtitle with name bolded */}
+        <p className="text-sm text-gray-400 leading-snug mb-3">
+          {renderHeadline()}
+        </p>
+
+        {/* Stats — plain text */}
+        {card.highlight && (
+          <p className="text-sm text-gray-400 mb-4">{card.highlight}</p>
         )}
 
         {/* Wrong answer chips */}
@@ -228,7 +194,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
         {hasInlineTrivia && !showOptions && (
           <button
             onClick={() => setShowOptions(true)}
-            className="w-full py-3.5 border border-gray-200 rounded-2xl text-center text-gray-500 font-medium text-sm bg-gray-50 active:bg-gray-100 transition-colors"
+            className="w-full py-3.5 border border-gray-200 rounded-2xl text-center text-purple-600 font-medium text-sm bg-white active:bg-gray-50 transition-colors"
           >
             Answer to earn +{pts} pts
           </button>
@@ -281,9 +247,9 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           </div>
         )}
 
-        {/* Non-trivia CTA link */}
+        {/* Non-trivia CTA */}
         {!hasInlineTrivia && (
-          <div className="flex justify-end mt-1">
+          <div className="flex justify-end">
             <Link to={card.ctaHref}>
               <span className="text-xs font-medium text-purple-600 active:opacity-70 transition-opacity">
                 {card.ctaLabel} ›
