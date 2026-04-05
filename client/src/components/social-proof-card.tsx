@@ -161,7 +161,11 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
             )}
           </div>
           {pill && (
-            <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 shrink-0">
+            <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full shrink-0 ${
+              pill.label === 'Trivia'
+                ? 'bg-blue-100 text-blue-700'
+                : 'bg-purple-100 text-purple-700'
+            }`}>
               {pill.label}
             </span>
           )}
@@ -187,7 +191,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
         {card.highlight && expanded && (pct || votes) && (
           <div className="flex items-center gap-2 mb-4">
             {pct && (
-              <span className="text-sm font-medium px-3 py-1 rounded-full bg-purple-100 text-purple-700">
+              <span className="text-sm font-medium px-3 py-1 rounded-full bg-blue-100 text-blue-700">
                 {pct}
               </span>
             )}
