@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Card } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -527,11 +526,11 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
 
   if (isLoading || !answeredLoaded) {
     return (
-      <Card className="bg-white border border-gray-100 rounded-2xl p-5">
+      <div className="bg-white rounded-2xl p-5">
         <div className="flex items-center justify-center py-6">
           <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
         </div>
-      </Card>
+      </div>
     );
   }
 

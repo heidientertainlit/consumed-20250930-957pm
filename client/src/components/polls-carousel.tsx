@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { Link } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
@@ -391,11 +390,11 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   if (!session) return null;
   if (isLoading || !votedLoaded) {
     return (
-      <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm mb-4">
+      <div className="bg-white rounded-2xl p-5 mb-4">
         <div className="flex items-center justify-center py-6">
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
         </div>
-      </Card>
+      </div>
     );
   }
   if (isError || !data || data.length === 0) return null;
@@ -406,7 +405,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   if (filteredData.length === 0) return null;
 
   return (
-    <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm mb-4 overflow-hidden relative">
+    <div className="bg-white rounded-2xl p-4 mb-4 overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
@@ -540,6 +539,6 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
           <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
         </div>
       )}
-    </Card>
+    </div>
   );
 }
