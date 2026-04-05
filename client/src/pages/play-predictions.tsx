@@ -549,11 +549,11 @@ export default function PlayPredictionsPage() {
     return processedGames.filter((game: any) => game.type === 'predict');
   }, [processedGames]);
   
-  // Auto-open prediction if gameId is in URL hash
+  // Auto-open prediction if gameId is in URL hash — only for multi-category predictions
   React.useEffect(() => {
     if (gameIdFromUrl && !selectedPredictionGame && predictionGames.length > 0) {
       const gameToOpen = predictionGames.find((g: any) => g.id === gameIdFromUrl);
-      if (gameToOpen) {
+      if (gameToOpen && gameToOpen.isMultiCategory) {
         setSelectedPredictionGame(gameToOpen);
       }
     }
