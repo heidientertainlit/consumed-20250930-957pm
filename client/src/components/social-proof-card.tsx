@@ -350,6 +350,7 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
       timestamp: post.timestamp,
       options,
       predictionPoolId,
+      correctAnswer: correctAnswer || undefined,
       pointsReward: 10,
     };
   }
