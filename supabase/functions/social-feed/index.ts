@@ -1331,14 +1331,17 @@ serve(async (req) => {
             .limit(50);
 
           if (recentVotes && recentVotes.length > 0) {
-            // Deduplicate: one vote per pool (the most recent)
+            // Deduplicate: one vote per pool AND one vote per user (most recent only)
+            // This prevents the same user appearing multiple times in a row
             const seenPools = new Set<string>();
+            const seenUsers = new Set<string>();
             const dedupedVotes: any[] = [];
             for (const v of recentVotes) {
-              if (!seenPools.has(v.pool_id)) {
+              if (!seenPools.has(v.pool_id) && !seenUsers.has(v.user_id)) {
                 seenPools.add(v.pool_id);
+                seenUsers.add(v.user_id);
                 dedupedVotes.push(v);
-                if (dedupedVotes.length >= 10) break;
+                if (dedupedVotes.length >= 8) break;
               }
             }
 

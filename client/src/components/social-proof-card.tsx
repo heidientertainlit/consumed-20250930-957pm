@@ -133,29 +133,19 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           </div>
         )}
 
-        {/* Thin progress bar + vote stat */}
-        {card.highlight && (
-          <div>
-            {card.highlightValue !== undefined && (
-              <div className="h-[3px] bg-gray-100 rounded-full overflow-hidden mb-1.5">
-                <div
-                  className="h-full bg-purple-500 rounded-full transition-all"
-                  style={{ width: `${Math.min(100, Math.max(0, card.highlightValue))}%` }}
-                />
-              </div>
-            )}
+        {/* Vote stat + CTA on same row */}
+        <div className="flex items-center justify-between mt-2.5">
+          {card.highlight ? (
             <p className="text-[11px] text-gray-400">{card.highlight}</p>
-          </div>
-        )}
-      </div>
-
-      {/* Footer CTA bar */}
-      <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50">
-        <Link to={card.ctaHref}>
-          <span className="text-xs font-medium text-purple-600 active:opacity-70 transition-opacity">
-            {card.ctaLabel} ›
-          </span>
-        </Link>
+          ) : (
+            <span />
+          )}
+          <Link to={card.ctaHref}>
+            <span className="text-xs font-medium text-purple-600 active:opacity-70 transition-opacity">
+              {card.ctaLabel} ›
+            </span>
+          </Link>
+        </div>
       </div>
     </div>
   );
