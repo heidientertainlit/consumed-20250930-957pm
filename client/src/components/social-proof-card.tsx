@@ -148,7 +148,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-blue-700 leading-none">Trivia</p>
-              <p className="text-xs text-gray-400 mt-0.5 truncate">{card.headline}</p>
+              <p className="text-xs text-gray-400 mt-0.5 leading-snug">{card.headline}</p>
             </div>
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700 shrink-0">
               +{pts} pts
