@@ -251,6 +251,16 @@ serve(async (req) => {
         { auth: { persistSession: false } }
       );
 
+      // Check if user has already voted on this pool (to avoid double-counting points)
+      const { data: existingVote } = await supabaseAdmin
+        .from('user_predictions')
+        .select('id')
+        .eq('user_id', appUser.id)
+        .eq('pool_id', pool_id)
+        .maybeSingle();
+
+      const isFirstVote = !existingVote;
+
       // Insert or update user prediction using admin client to bypass RLS
       const { data: upsertResult, error: insertError } = await supabaseAdmin
         .from('user_predictions')
@@ -274,6 +284,20 @@ serve(async (req) => {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
+
+      // Award points to user balance for trivia (immediate scoring) and polls (participation)
+      // Only on first vote — never double-count if they change their answer
+      if (isFirstVote && pointsEarned > 0) {
+        const { error: pointsError } = await supabaseAdmin.rpc('increment_user_points', {
+          user_id_param: appUser.id,
+          points_to_add: pointsEarned,
+        });
+        if (pointsError) {
+          console.error('DEBUG /predict: Failed to increment user points', pointsError);
+        } else {
+          console.log('DEBUG /predict: Points awarded', { user_id: appUser.id, pointsEarned });
+        }
       }
 
       return new Response(JSON.stringify({ 
