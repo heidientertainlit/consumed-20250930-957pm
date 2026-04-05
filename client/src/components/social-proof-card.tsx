@@ -55,6 +55,17 @@ function timeAgo(ts?: string) {
   return `${m}m`;
 }
 
+// Parse "X% of players agree · N votes" into {pct, votes}
+function parseHighlight(highlight?: string): { pct: string | null; votes: string | null } {
+  if (!highlight) return { pct: null, votes: null };
+  const pctMatch = highlight.match(/^(\d+)%/);
+  const votesMatch = highlight.match(/(\d+)\s+vote/);
+  return {
+    pct: pctMatch ? `${pctMatch[1]}% agreed` : null,
+    votes: votesMatch ? `${votesMatch[1]} votes` : null,
+  };
+}
+
 export function SocialProofCard({ card }: { card: SocialProofCardData }) {
   const pill = TYPE_PILL[card.variant];
   const { session } = useAuth();
@@ -68,7 +79,10 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
     card.predictionPoolId
   );
 
+  // expand: false = default, true = showing "Answer to earn" button
+  // showOptions: true = showing actual answer rows
   const [expanded, setExpanded] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<'correct' | 'wrong' | null>(null);
@@ -97,11 +111,14 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
         setResult(option === card.correctAnswer ? 'correct' : 'wrong');
       }
     } catch {
-      // silent fail — result stays null
+      // silent fail
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const pts = card.pointsReward ?? 10;
+  const { pct, votes } = parseHighlight(card.highlight);
 
   // Leaderboard / system cards (no user) — compact purple notification strip
   if (!card.user) {
@@ -118,14 +135,12 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
     );
   }
 
-  const pts = card.pointsReward ?? 10;
-
   return (
     <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden mb-3">
-      {/* Header row + content */}
-      <div className="px-4 pt-4 pb-3">
+      <div className="px-4 pt-4 pb-4">
+
         {/* Avatar · name · timestamp · type pill */}
-        <div className="flex items-center gap-2 mb-2.5">
+        <div className="flex items-center gap-2 mb-3">
           {card.user.avatar ? (
             <img
               src={card.user.avatar}
@@ -146,27 +161,47 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
             )}
           </div>
           {pill && (
-            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 shrink-0">
+            <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 shrink-0">
               {pill.label}
             </span>
           )}
         </div>
 
         {/* Challenge headline */}
-        <p className="text-sm font-medium text-gray-900 leading-snug mb-2">
+        <p className="font-semibold text-gray-900 leading-snug mb-1">
           {card.headline}
         </p>
 
-        {/* Question/pool title in italic */}
+        {/* Question in italic */}
         {card.detail && (
-          <p className="text-xs text-gray-500 italic mb-2.5">
+          <p className="text-sm text-gray-600 italic mb-3">
             &ldquo;{card.detail}&rdquo;
           </p>
         )}
 
-        {/* Their answer + correct answer chips (wrong_answer variant, not expanded) */}
+        {/* Stats: plain text when collapsed, pill badges when expanded */}
+        {card.highlight && !expanded && (
+          <p className="text-xs text-gray-400 mb-3">{card.highlight}</p>
+        )}
+
+        {card.highlight && expanded && (pct || votes) && (
+          <div className="flex items-center gap-2 mb-4">
+            {pct && (
+              <span className="text-sm font-medium px-3 py-1 rounded-full bg-purple-100 text-purple-700">
+                {pct}
+              </span>
+            )}
+            {votes && (
+              <span className="text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-500">
+                {votes}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Wrong answer chips (non-expanded only) */}
         {!expanded && (card.userAnswer || card.correctAnswer) && (
-          <div className="flex flex-wrap gap-2 mb-2.5">
+          <div className="flex flex-wrap gap-2 mb-3">
             {card.userAnswer && (
               <div className="flex items-center gap-1.5">
                 <span className="text-xs text-gray-400">They said:</span>
@@ -186,70 +221,10 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           </div>
         )}
 
-        {/* Inline trivia options (expanded) */}
-        {expanded && hasInlineTrivia && (
-          <div className="mt-2.5 space-y-2">
-            {card.options!.map((option) => {
-              const isSelected = selectedAnswer === option;
-              const isCorrect = option === card.correctAnswer;
-              const showResult = result !== null && isSelected;
-              const showCorrectHighlight = result !== null && isCorrect;
-
-              let optionStyle = 'border border-gray-200 bg-white text-gray-900';
-              if (showResult && result === 'correct') {
-                optionStyle = 'border border-green-500 bg-green-50 text-green-800';
-              } else if (showResult && result === 'wrong') {
-                optionStyle = 'border border-red-400 bg-red-50 text-red-800';
-              } else if (showCorrectHighlight && selectedAnswer && !isSelected) {
-                optionStyle = 'border border-green-400 bg-green-50 text-green-700';
-              } else if (isSelected && !result) {
-                optionStyle = 'border border-purple-400 bg-purple-50 text-purple-900';
-              }
-
-              return (
-                <button
-                  key={option}
-                  onClick={() => handleAnswer(option)}
-                  disabled={!!selectedAnswer || isSubmitting}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-between ${optionStyle} ${!selectedAnswer ? 'active:bg-gray-50' : ''}`}
-                >
-                  <span>{option}</span>
-                  {showResult && result === 'correct' && isSelected && (
-                    <Check size={15} className="text-green-600 shrink-0" />
-                  )}
-                  {showResult && result === 'wrong' && isSelected && (
-                    <X size={15} className="text-red-500 shrink-0" />
-                  )}
-                  {showCorrectHighlight && selectedAnswer && !isSelected && (
-                    <Check size={15} className="text-green-500 shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Result message */}
-            {result && (
-              <p className={`text-xs font-medium mt-1 ${result === 'correct' ? 'text-green-600' : 'text-red-500'}`}>
-                {result === 'correct'
-                  ? `Correct! +${pts} pts`
-                  : `Not quite — the answer was "${card.correctAnswer}"`}
-              </p>
-            )}
-
-            {!result && (
-              <p className="text-xs text-gray-400 mt-1">Tap to answer · +{pts} pts</p>
-            )}
-          </div>
-        )}
-
-        {/* Vote stat + CTA on same row */}
+        {/* Default (not expanded): stat text + CTA */}
         {!expanded && (
-          <div className="flex items-center justify-between mt-2.5">
-            {card.highlight ? (
-              <p className="text-[11px] text-gray-400">{card.highlight}</p>
-            ) : (
-              <span />
-            )}
+          <div className="flex items-center justify-between">
+            <span />
             {hasInlineTrivia ? (
               <button
                 onClick={() => setExpanded(true)}
@@ -267,10 +242,65 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           </div>
         )}
 
-        {/* When expanded but no answer yet — show vote stat */}
-        {expanded && card.highlight && !result && (
-          <p className="text-[11px] text-gray-400 mt-2.5">{card.highlight}</p>
+        {/* Intermediate state: "Answer to earn +N pts" button */}
+        {expanded && !showOptions && hasInlineTrivia && (
+          <button
+            onClick={() => setShowOptions(true)}
+            className="w-full py-3.5 border border-gray-200 rounded-2xl text-center text-purple-600 font-medium text-sm active:bg-gray-50 transition-colors"
+          >
+            Answer to earn +{pts} pts
+          </button>
         )}
+
+        {/* Options state */}
+        {expanded && showOptions && hasInlineTrivia && (
+          <div className="space-y-2.5">
+            {card.options!.map((option) => {
+              const isSelected = selectedAnswer === option;
+              const isCorrect = option === card.correctAnswer;
+              const showResult = result !== null && isSelected;
+              const showCorrectHighlight = result !== null && isCorrect && !isSelected;
+
+              let rowStyle = 'border border-gray-200 bg-white text-gray-900';
+              if (showResult && result === 'correct') rowStyle = 'border border-green-500 bg-green-50 text-green-800';
+              else if (showResult && result === 'wrong') rowStyle = 'border border-red-400 bg-red-50 text-red-800';
+              else if (showCorrectHighlight) rowStyle = 'border border-green-400 bg-green-50 text-green-700';
+              else if (isSelected && !result) rowStyle = 'border border-purple-400 bg-purple-50 text-purple-900';
+
+              return (
+                <button
+                  key={option}
+                  onClick={() => handleAnswer(option)}
+                  disabled={!!selectedAnswer || isSubmitting}
+                  className={`w-full text-left px-4 py-3.5 rounded-xl text-sm font-normal transition-colors flex items-center justify-between ${rowStyle} ${!selectedAnswer ? 'active:bg-gray-50' : ''}`}
+                >
+                  <span>{option}</span>
+                  {showResult && result === 'correct' && isSelected && (
+                    <Check size={15} className="text-green-600 shrink-0" />
+                  )}
+                  {showResult && result === 'wrong' && isSelected && (
+                    <X size={15} className="text-red-500 shrink-0" />
+                  )}
+                  {showCorrectHighlight && (
+                    <Check size={15} className="text-green-500 shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Footer */}
+            {result ? (
+              <p className={`text-xs font-medium pt-1 ${result === 'correct' ? 'text-green-600' : 'text-red-500'}`}>
+                {result === 'correct'
+                  ? `Correct! +${pts} pts`
+                  : `Not quite — the answer was "${card.correctAnswer}"`}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-400 pt-1">Tap to answer · +{pts} pts</p>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );
@@ -282,7 +312,6 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
   try { parsed = JSON.parse(rawContent); } catch {}
 
   const { answer, gameType, isCorrect } = parsed;
-  // Enriched data added by the social-feed edge function
   const gm = post._rawPost?.gameMoment || post.gameMoment || null;
   const agreementPct: number | null = gm?.agreement_pct ?? null;
   const totalVotes: number = gm?.total_votes ?? 0;
@@ -294,12 +323,10 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
   const user = post.user;
   const name = user?.displayName || user?.username || 'Someone';
 
-  // Agreement % copy — shown when we have vote data
   const agreementText = (agreementPct !== null && totalVotes > 0)
     ? `${agreementPct}% of players agree · ${totalVotes} vote${totalVotes !== 1 ? 's' : ''}`
     : undefined;
 
-  // Truncate long answers so they fit in headline copy
   const shortAnswer = answer && answer.length > 30 ? answer.slice(0, 27) + '…' : answer;
 
   if (gameType === 'trivia') {
