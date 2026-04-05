@@ -250,7 +250,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
         {expanded && !showOptions && hasInlineTrivia && (
           <button
             onClick={() => setShowOptions(true)}
-            className="w-full py-3.5 border border-blue-200 rounded-2xl text-center text-blue-600 font-medium text-sm bg-blue-50 active:bg-blue-100 transition-colors"
+            className="w-full py-3.5 border border-gray-200 rounded-2xl text-center text-gray-500 font-medium text-sm bg-gray-50 active:bg-gray-100 transition-colors"
           >
             Answer to earn +{pts} pts
           </button>
