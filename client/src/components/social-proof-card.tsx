@@ -79,9 +79,9 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
     card.predictionPoolId
   );
 
-  // expand: false = default, true = showing "Answer to earn" button
+  // Trivia cards open in expanded state by default (show pills + "Answer to earn" button)
   // showOptions: true = showing actual answer rows
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(hasInlineTrivia);
   const [showOptions, setShowOptions] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
