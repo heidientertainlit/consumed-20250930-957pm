@@ -15,7 +15,7 @@ Preferred communication style: Simple, everyday language.
 ### Feed UI Redesign Plan (COSMETIC ONLY — no functional changes)
 All changes are styling/layout only. No voting logic, point systems, interaction handlers, or data pipelines may change.
 **Next steps (in order):**
-1. **Game Moments (SocialProofCard)** — redesign to compact card style: avatar + name + timestamp + type pill, italic question, thin progress bar, "Play ›" footer. Completely standalone component.
+1. ~~Game Moments (SocialProofCard)~~ — DONE. White card, type pill top-right, italic question, 3px progress bar, gray-50 footer. Leaderboard cards → purple strip. Zero functional changes.
 2. **Individual post cards** (reviews, ratings, thoughts) — tighten to compact card shell with type pill in top-right, subtle bottom bar with likes/comments.
 3. **Trivia/poll cards** — same card shell, keep all answer options + voting logic untouched, only tighten wrapper styling.
 

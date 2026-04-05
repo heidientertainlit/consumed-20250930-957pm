@@ -1,5 +1,5 @@
 import { Link } from 'wouter';
-import { ChevronRight, Trophy, Zap, Target, Users, TrendingUp, ThumbsUp, Brain } from 'lucide-react';
+import { ChevronRight, Play } from 'lucide-react';
 
 export type SocialProofVariant =
   | 'wrong_answer'
@@ -27,22 +27,16 @@ export interface SocialProofCardData {
   timestamp?: string;
 }
 
-const VARIANT_CONFIG: Record<SocialProofVariant, {
-  Icon: any;
-  borderColor: string;
-  bgColor: string;
-  iconColor: string;
-  iconBg: string;
-}> = {
-  wrong_answer:     { Icon: Brain,       borderColor: 'border-orange-500/25', bgColor: 'bg-orange-500/5',  iconColor: 'text-orange-400',  iconBg: 'bg-orange-500/15' },
-  prediction_made:  { Icon: Target,      borderColor: 'border-purple-500/25', bgColor: 'bg-purple-500/5',  iconColor: 'text-purple-400',  iconBg: 'bg-purple-500/15' },
-  vote_cast:        { Icon: ThumbsUp,    borderColor: 'border-violet-500/25', bgColor: 'bg-violet-500/5',  iconColor: 'text-violet-400',  iconBg: 'bg-violet-500/15' },
-  trivia_score:     { Icon: Zap,         borderColor: 'border-yellow-500/25', bgColor: 'bg-yellow-500/5',  iconColor: 'text-yellow-400',  iconBg: 'bg-yellow-500/15' },
-  leaderboard_move: { Icon: Trophy,      borderColor: 'border-yellow-500/25', bgColor: 'bg-yellow-500/5',  iconColor: 'text-yellow-400',  iconBg: 'bg-yellow-500/15' },
-  hot_take:         { Icon: ThumbsUp,    borderColor: 'border-red-500/25',    bgColor: 'bg-red-500/5',     iconColor: 'text-red-400',     iconBg: 'bg-red-500/15'    },
-  streak_callout:   { Icon: Zap,         borderColor: 'border-orange-500/25', bgColor: 'bg-orange-500/5',  iconColor: 'text-orange-400',  iconBg: 'bg-orange-500/15' },
-  divided_house:    { Icon: Users,       borderColor: 'border-indigo-500/25', bgColor: 'bg-indigo-500/5',  iconColor: 'text-indigo-400',  iconBg: 'bg-indigo-500/15' },
-  rival_alert:      { Icon: TrendingUp,  borderColor: 'border-purple-500/25', bgColor: 'bg-purple-500/5',  iconColor: 'text-purple-400',  iconBg: 'bg-purple-500/15' },
+const TYPE_PILL: Record<SocialProofVariant, { label: string } | null> = {
+  trivia_score:     { label: 'Trivia' },
+  wrong_answer:     { label: 'Trivia' },
+  prediction_made:  { label: 'Prediction' },
+  vote_cast:        { label: 'Poll' },
+  hot_take:         { label: 'Poll' },
+  divided_house:    { label: 'Poll' },
+  leaderboard_move: null,
+  rival_alert:      null,
+  streak_callout:   null,
 };
 
 function timeAgo(ts?: string) {
@@ -56,87 +50,113 @@ function timeAgo(ts?: string) {
 }
 
 export function SocialProofCard({ card }: { card: SocialProofCardData }) {
-  const { Icon, borderColor, bgColor, iconColor, iconBg } = VARIANT_CONFIG[card.variant];
+  const pill = TYPE_PILL[card.variant];
+
+  // Leaderboard / system cards (no user) — compact purple notification strip
+  if (!card.user) {
+    return (
+      <Link to={card.ctaHref}>
+        <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-purple-50 border border-purple-100 mb-3 active:opacity-75 transition-opacity">
+          <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center shrink-0">
+            <Play size={10} className="text-white ml-0.5" />
+          </div>
+          <p className="text-sm text-purple-900 flex-1 leading-snug">{card.headline}</p>
+          <ChevronRight size={14} className="text-purple-400 shrink-0" />
+        </div>
+      </Link>
+    );
+  }
 
   return (
-    <div className={`rounded-2xl border ${borderColor} ${bgColor} p-4 mb-3`}>
-
-      {card.user && (
-        <div className="flex items-center gap-2 mb-3">
+    <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden mb-3">
+      {/* Header row + content */}
+      <div className="px-4 pt-4 pb-3">
+        {/* Avatar · name · timestamp · type pill */}
+        <div className="flex items-center gap-2 mb-2.5">
           {card.user.avatar ? (
             <img
               src={card.user.avatar}
-              alt={card.user.username}
-              className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+              alt=""
+              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
             />
           ) : (
-            <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs text-white font-semibold flex-shrink-0">
               {(card.user.displayName || card.user.username || '?')[0].toUpperCase()}
             </div>
           )}
-          <span className="text-sm font-medium text-gray-900">
-            {card.user.displayName || card.user.username}
-          </span>
-          {card.timestamp && (
-            <span className="text-xs text-gray-400 ml-auto">{timeAgo(card.timestamp)}</span>
+          <div className="flex-1 min-w-0">
+            <span className="text-sm font-medium text-gray-900">
+              {card.user.displayName || card.user.username}
+            </span>
+            {card.timestamp && (
+              <span className="text-xs text-gray-400"> · {timeAgo(card.timestamp)}</span>
+            )}
+          </div>
+          {pill && (
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 shrink-0">
+              {pill.label}
+            </span>
           )}
         </div>
-      )}
 
-      <div className="flex items-start gap-3 mb-3">
-        <div className={`w-7 h-7 rounded-lg ${iconBg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-          <Icon size={14} className={iconColor} />
-        </div>
-        <p className="text-gray-900 font-semibold text-sm leading-snug pt-1">{card.headline}</p>
+        {/* Challenge headline */}
+        <p className="text-sm font-medium text-gray-900 leading-snug mb-2">
+          {card.headline}
+        </p>
+
+        {/* Question/pool title in italic */}
+        {card.detail && (
+          <p className="text-xs text-gray-500 italic mb-2.5">
+            &ldquo;{card.detail}&rdquo;
+          </p>
+        )}
+
+        {/* Their answer + correct answer chips */}
+        {(card.userAnswer || card.correctAnswer) && (
+          <div className="flex flex-wrap gap-2 mb-2.5">
+            {card.userAnswer && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-400">They said:</span>
+                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                  {card.userAnswer}
+                </span>
+              </div>
+            )}
+            {card.correctAnswer && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-400">Right answer:</span>
+                <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                  {card.correctAnswer}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Thin progress bar + vote stat */}
+        {card.highlight && (
+          <div>
+            {card.highlightValue !== undefined && (
+              <div className="h-[3px] bg-gray-100 rounded-full overflow-hidden mb-1.5">
+                <div
+                  className="h-full bg-purple-500 rounded-full transition-all"
+                  style={{ width: `${Math.min(100, Math.max(0, card.highlightValue))}%` }}
+                />
+              </div>
+            )}
+            <p className="text-[11px] text-gray-400">{card.highlight}</p>
+          </div>
+        )}
       </div>
 
-      {card.detail && (
-        <p className="text-gray-600 text-sm italic mb-3 pl-10">
-          &ldquo;{card.detail}&rdquo;
-        </p>
-      )}
-
-      {(card.userAnswer || card.correctAnswer) && (
-        <div className="pl-10 mb-3 flex flex-wrap gap-2">
-          {card.userAnswer && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-500">They said:</span>
-              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
-                {card.userAnswer}
-              </span>
-            </div>
-          )}
-          {card.correctAnswer && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-500">Right answer:</span>
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                {card.correctAnswer}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {card.highlight && (
-        <div className="pl-10 mb-3">
-          <p className="text-xs text-gray-600 mb-1">{card.highlight}</p>
-          {card.highlightValue !== undefined && (
-            <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-purple-500 rounded-full transition-all"
-                style={{ width: `${Math.min(100, Math.max(0, card.highlightValue))}%` }}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      <Link to={card.ctaHref}>
-        <span className="inline-flex items-center gap-1 text-sm font-medium text-purple-600 hover:text-purple-700 active:opacity-70 transition-colors">
-          {card.ctaLabel}
-          <ChevronRight size={13} />
-        </span>
-      </Link>
+      {/* Footer CTA bar */}
+      <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50">
+        <Link to={card.ctaHref}>
+          <span className="text-xs font-medium text-purple-600 active:opacity-70 transition-opacity">
+            {card.ctaLabel} ›
+          </span>
+        </Link>
+      </div>
     </div>
   );
 }
