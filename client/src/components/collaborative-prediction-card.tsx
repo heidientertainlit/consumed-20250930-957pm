@@ -424,7 +424,7 @@ export default function CollaborativePredictionCard({
       : null;
   
   return (
-    <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white'} rounded-2xl p-4`}>
+    <Card className={`${isConsumedPrediction ? 'bg-gradient-to-br from-purple-50 via-white to-blue-50 border-2 border-purple-300' : 'bg-white border-0 shadow-none'} rounded-2xl p-4`}>
       {/* Header: Avatar + Username action + Media Title */}
       <div className="flex items-start gap-3 mb-2">
         {/* Avatar */}
