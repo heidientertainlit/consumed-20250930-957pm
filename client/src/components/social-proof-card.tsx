@@ -132,10 +132,10 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
       )}
 
       <Link to={card.ctaHref}>
-        <button className="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold py-2 rounded-xl flex items-center justify-center gap-1 active:opacity-80 transition-colors">
+        <span className="inline-flex items-center gap-1 text-sm font-medium text-purple-600 hover:text-purple-700 active:opacity-70 transition-colors">
           {card.ctaLabel}
-          <ChevronRight size={14} />
-        </button>
+          <ChevronRight size={13} />
+        </span>
       </Link>
     </div>
   );

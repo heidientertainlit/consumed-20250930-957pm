@@ -5417,8 +5417,14 @@ export default function Feed() {
                   );
                 }
 
-                // cast_approved posts are rendered inline via renderPostBatchByIndex — skip here to avoid duplicates
-                if (post.type === 'cast_approved') {
+                // cast_approved and game_moment posts are rendered inline via renderPostBatchByIndex — skip here to avoid duplicates
+                if (post.type === 'cast_approved' || post.type === 'game_moment') {
+                  return null;
+                }
+
+                // Also skip posts whose content looks like raw game moment JSON — they leaked through with wrong post_type
+                const rawContent = (post as any).content || '';
+                if (rawContent.startsWith('{"answer":') || rawContent.startsWith('{"gameType":')) {
                   return null;
                 }
 
