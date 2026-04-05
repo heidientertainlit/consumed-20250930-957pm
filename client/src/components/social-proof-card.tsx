@@ -27,7 +27,7 @@ export interface SocialProofCardData {
   ctaLabel: string;
   ctaHref: string;
   timestamp?: string;
-  // Inline trivia fields
+  // Inline trivia / prediction fields
   options?: string[];
   predictionPoolId?: string;
   pointsReward?: number;
@@ -68,9 +68,18 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
     card.predictionPoolId
   );
 
+  const hasInlinePrediction = !!(
+    card.variant === 'prediction_made' &&
+    card.options && card.options.length > 0 &&
+    card.predictionPoolId
+  );
+
+  const hasInline = hasInlineTrivia || hasInlinePrediction;
+
   const [showOptions, setShowOptions] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<'correct' | 'wrong' | null>(null);
 
   const handleAnswer = async (option: string) => {
@@ -88,11 +97,15 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
         body: JSON.stringify({
           pool_id: card.predictionPoolId,
           prediction: option,
-          score: option === card.correctAnswer ? 1 : 0,
+          score: hasInlineTrivia ? (option === card.correctAnswer ? 1 : 0) : 0,
         }),
       });
       if (response.ok) {
-        setResult(option === card.correctAnswer ? 'correct' : 'wrong');
+        if (hasInlineTrivia) {
+          setResult(option === card.correctAnswer ? 'correct' : 'wrong');
+        } else {
+          setSubmitted(true);
+        }
       }
     } catch {
       // silent fail
@@ -120,7 +133,6 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
 
   const displayName = card.user.displayName || card.user.username || '';
 
-  // Bold the friend's name within the headline
   const renderHeadline = () => {
     const idx = displayName ? card.headline.indexOf(displayName) : -1;
     if (idx === -1) return <>{card.headline}</>;
@@ -142,7 +154,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           <span className="text-xs font-semibold px-3 py-1 rounded-full bg-purple-100 text-purple-700">
             {label}
           </span>
-          {hasInlineTrivia ? (
+          {hasInline ? (
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-green-100 text-green-700">
               +{pts} pts
             </span>
@@ -168,7 +180,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           <p className="text-sm text-gray-400 mb-4">{card.highlight}</p>
         )}
 
-        {/* Wrong answer chips */}
+        {/* Wrong answer chips (trivia only) */}
         {(card.userAnswer || card.correctAnswer) && !showOptions && (
           <div className="flex flex-wrap gap-2 mb-3">
             {card.userAnswer && (
@@ -190,29 +202,53 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           </div>
         )}
 
-        {/* Trivia: "Answer to earn" button → options */}
-        {hasInlineTrivia && !showOptions && (
+        {/* Inline expand button */}
+        {hasInline && !showOptions && (
           <button
             onClick={() => setShowOptions(true)}
             className="w-full py-3.5 rounded-2xl text-center text-purple-600 font-medium text-sm bg-gray-100 active:bg-gray-200 transition-colors"
           >
-            Answer to earn +{pts} pts
+            {hasInlinePrediction ? `Make your pick · +${pts} pts` : `Answer to earn +${pts} pts`}
           </button>
         )}
 
-        {hasInlineTrivia && showOptions && (
+        {/* Inline options */}
+        {hasInline && showOptions && (
           <div className="space-y-2.5">
             {card.options!.map((option) => {
               const isSelected = selectedAnswer === option;
-              const isCorrect = option === card.correctAnswer;
-              const showResult = result !== null && isSelected;
-              const showCorrectHighlight = result !== null && isCorrect && !isSelected;
 
+              // Trivia styling
+              if (hasInlineTrivia) {
+                const isCorrect = option === card.correctAnswer;
+                const showResult = result !== null && isSelected;
+                const showCorrectHighlight = result !== null && isCorrect && !isSelected;
+
+                let rowStyle = 'border border-gray-200 bg-white text-gray-900';
+                if (showResult && result === 'correct') rowStyle = 'border border-green-500 bg-green-50 text-green-800';
+                else if (showResult && result === 'wrong') rowStyle = 'border border-red-400 bg-red-50 text-red-800';
+                else if (showCorrectHighlight) rowStyle = 'border border-green-400 bg-green-50 text-green-700';
+                else if (isSelected && !result) rowStyle = 'border border-purple-400 bg-purple-50 text-purple-900';
+
+                return (
+                  <button
+                    key={option}
+                    onClick={() => handleAnswer(option)}
+                    disabled={!!selectedAnswer || isSubmitting}
+                    className={`w-full text-left px-4 py-3.5 rounded-xl text-sm font-normal transition-colors flex items-center justify-between ${rowStyle} ${!selectedAnswer ? 'active:bg-gray-50' : ''}`}
+                  >
+                    <span>{option}</span>
+                    {showResult && result === 'correct' && isSelected && <Check size={15} className="text-green-600 shrink-0" />}
+                    {showResult && result === 'wrong' && isSelected && <X size={15} className="text-red-500 shrink-0" />}
+                    {showCorrectHighlight && <Check size={15} className="text-green-500 shrink-0" />}
+                  </button>
+                );
+              }
+
+              // Prediction styling
               let rowStyle = 'border border-gray-200 bg-white text-gray-900';
-              if (showResult && result === 'correct') rowStyle = 'border border-green-500 bg-green-50 text-green-800';
-              else if (showResult && result === 'wrong') rowStyle = 'border border-red-400 bg-red-50 text-red-800';
-              else if (showCorrectHighlight) rowStyle = 'border border-green-400 bg-green-50 text-green-700';
-              else if (isSelected && !result) rowStyle = 'border border-purple-400 bg-purple-50 text-purple-900';
+              if (isSelected && submitted) rowStyle = 'border border-purple-500 bg-purple-50 text-purple-900';
+              else if (isSelected) rowStyle = 'border border-purple-400 bg-purple-50 text-purple-900';
 
               return (
                 <button
@@ -222,33 +258,30 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
                   className={`w-full text-left px-4 py-3.5 rounded-xl text-sm font-normal transition-colors flex items-center justify-between ${rowStyle} ${!selectedAnswer ? 'active:bg-gray-50' : ''}`}
                 >
                   <span>{option}</span>
-                  {showResult && result === 'correct' && isSelected && (
-                    <Check size={15} className="text-green-600 shrink-0" />
-                  )}
-                  {showResult && result === 'wrong' && isSelected && (
-                    <X size={15} className="text-red-500 shrink-0" />
-                  )}
-                  {showCorrectHighlight && (
-                    <Check size={15} className="text-green-500 shrink-0" />
-                  )}
+                  {isSelected && submitted && <Check size={15} className="text-purple-600 shrink-0" />}
                 </button>
               );
             })}
 
-            {result ? (
+            {/* Feedback line */}
+            {hasInlineTrivia && result ? (
               <p className={`text-xs font-medium pt-1 ${result === 'correct' ? 'text-green-600' : 'text-red-500'}`}>
                 {result === 'correct'
                   ? `Correct! +${pts} pts`
                   : `Not quite — the answer was "${card.correctAnswer}"`}
               </p>
-            ) : (
+            ) : hasInlineTrivia ? (
               <p className="text-xs text-gray-400 pt-1">Tap to answer · +{pts} pts</p>
+            ) : submitted ? (
+              <p className="text-xs font-medium text-purple-600 pt-1">Prediction locked in! +{pts} pts when results drop</p>
+            ) : (
+              <p className="text-xs text-gray-400 pt-1">Tap to make your pick · +{pts} pts</p>
             )}
           </div>
         )}
 
-        {/* Non-trivia CTA — full-width button */}
-        {!hasInlineTrivia && (
+        {/* Non-inline CTA */}
+        {!hasInline && (
           <Link to={card.ctaHref}>
             <div className="w-full py-3.5 rounded-2xl text-center text-purple-600 font-medium text-sm bg-gray-100 active:bg-gray-200 transition-colors">
               {card.ctaLabel}
@@ -338,6 +371,9 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
       ctaLabel: 'Make your pick',
       ctaHref: predictionPoolId ? `/play/predictions#${predictionPoolId}` : '/play/predictions',
       timestamp: post.timestamp,
+      options,
+      predictionPoolId,
+      pointsReward: gm?.points_reward || 20,
     };
   }
 
