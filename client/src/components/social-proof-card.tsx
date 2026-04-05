@@ -336,7 +336,7 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
       highlight: agreementText,
       highlightValue: agreementPct ?? undefined,
       ctaLabel: 'Make your pick',
-      ctaHref: '/play/predictions',
+      ctaHref: predictionPoolId ? `/play/predictions#${predictionPoolId}` : '/play/predictions',
       timestamp: post.timestamp,
     };
   }
