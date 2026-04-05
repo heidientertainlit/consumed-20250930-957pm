@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
-import { ChevronRight, Play, Check, X } from 'lucide-react';
+import { ChevronRight, Play, Check, X, HelpCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 export type SocialProofVariant =
@@ -139,48 +139,71 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
     <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden mb-3">
       <div className="px-4 pt-4 pb-4">
 
-        {/* Avatar · name · timestamp · type pill */}
-        <div className="flex items-center gap-2 mb-3">
-          {card.user.avatar ? (
-            <img
-              src={card.user.avatar}
-              alt=""
-              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs text-white font-semibold flex-shrink-0">
-              {(card.user.displayName || card.user.username || '?')[0].toUpperCase()}
+        {/* Header row */}
+        {hasInlineTrivia ? (
+          /* Trivia card: icon + "Trivia" title + pts badge */
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+              <HelpCircle size={20} className="text-blue-500" />
             </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <span className="text-sm font-medium text-gray-900">
-              {card.user.displayName || card.user.username}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-blue-700 leading-none">Trivia</p>
+              <p className="text-xs text-gray-400 mt-0.5">{card.user.displayName || card.user.username} answered</p>
+            </div>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700 shrink-0">
+              +{pts} pts
             </span>
-            {card.timestamp && (
-              <span className="text-xs text-gray-400"> · {timeAgo(card.timestamp)}</span>
+          </div>
+        ) : (
+          /* Normal user card: avatar · name · timestamp · type pill */
+          <div className="flex items-center gap-2 mb-3">
+            {card.user.avatar ? (
+              <img
+                src={card.user.avatar}
+                alt=""
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs text-white font-semibold flex-shrink-0">
+                {(card.user.displayName || card.user.username || '?')[0].toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-medium text-gray-900">
+                {card.user.displayName || card.user.username}
+              </span>
+              {card.timestamp && (
+                <span className="text-xs text-gray-400"> · {timeAgo(card.timestamp)}</span>
+              )}
+            </div>
+            {pill && (
+              <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full shrink-0 ${
+                pill.label === 'Trivia'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-purple-100 text-purple-700'
+              }`}>
+                {pill.label}
+              </span>
             )}
           </div>
-          {pill && (
-            <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full shrink-0 ${
-              pill.label === 'Trivia'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-purple-100 text-purple-700'
-            }`}>
-              {pill.label}
-            </span>
-          )}
-        </div>
+        )}
 
-        {/* Challenge headline */}
-        <p className="font-semibold text-gray-900 leading-snug mb-1">
+        {/* Headline — lighter subtitle style for trivia, bold for others */}
+        <p className={`leading-snug mb-1 ${hasInlineTrivia ? 'text-sm text-gray-500 font-normal' : 'font-semibold text-gray-900'}`}>
           {card.headline}
         </p>
 
-        {/* Question in italic */}
+        {/* Question — large bold for trivia, italic for others */}
         {card.detail && (
-          <p className="text-base text-gray-800 italic font-medium mb-3">
-            &ldquo;{card.detail}&rdquo;
-          </p>
+          hasInlineTrivia ? (
+            <p className="text-lg font-bold text-gray-900 leading-snug mb-3">
+              {card.detail}
+            </p>
+          ) : (
+            <p className="text-base text-gray-800 italic font-medium mb-3">
+              &ldquo;{card.detail}&rdquo;
+            </p>
+          )
         )}
 
         {/* Stats: plain text when collapsed, pill badges when expanded */}
