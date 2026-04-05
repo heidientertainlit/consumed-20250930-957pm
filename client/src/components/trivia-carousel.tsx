@@ -69,6 +69,8 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const { session, user } = useAuth();
   const { toast } = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [containerHeight, setContainerHeight] = useState<number | undefined>(undefined);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<Record<string, string>>({});
   const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, { answer: string; isCorrect: boolean; points?: number; stats: any; friendAnswers?: FriendAnswer[] }>>({});
@@ -522,6 +524,20 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     return today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
   }, []);
 
+  // Dynamically size the scroll container to the current slide's height only
+  useEffect(() => {
+    const updateHeight = () => {
+      const el = slideRefs.current[currentIndex];
+      if (el) setContainerHeight(el.offsetHeight);
+    };
+    updateHeight();
+    const el = slideRefs.current[currentIndex];
+    if (!el) return;
+    const ro = new ResizeObserver(updateHeight);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [currentIndex, answeredQuestions]);
+
   if (!session) return null;
 
   if (isLoading || !answeredLoaded) {
@@ -599,14 +615,15 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1 items-start"
+          style={{ height: containerHeight ? `${containerHeight}px` : undefined }}
+          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1 items-start transition-[height] duration-300"
         >
-          {filteredData.map((item) => {
+          {filteredData.map((item, idx) => {
             const answered = answeredQuestions[item.id];
             const selected = selectedAnswer[item.id];
             
             return (
-              <div key={item.id} className="flex-shrink-0 w-full snap-center h-auto relative">
+              <div key={item.id} ref={(el) => { slideRefs.current[idx] = el; }} className="flex-shrink-0 w-full snap-center h-auto relative">
                 {item.mediaTitle && (
                   <div className="mb-2">
                     <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200">
