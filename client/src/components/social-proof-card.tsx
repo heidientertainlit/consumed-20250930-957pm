@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'wouter';
-import { ChevronRight, Play, Check, X, HelpCircle } from 'lucide-react';
+import { ChevronRight, Play, Check, X, Brain } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 
 export type SocialProofVariant =
@@ -143,8 +143,8 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
         {hasInlineTrivia ? (
           /* Trivia card: icon + "Trivia" title + pts badge */
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-              <HelpCircle size={20} className="text-blue-500" />
+            <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center shrink-0">
+              <Brain size={20} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-blue-700 leading-none">Trivia</p>
