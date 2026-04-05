@@ -4549,11 +4549,7 @@ export default function Feed() {
               Activity
             </h1>
 
-            <DailyChallengeCard />
-
-            <div className="mt-4">
-              <MediaSearchBar session={session} placeholder="Search to add media..." />
-            </div>
+            <MediaSearchBar session={session} placeholder="Search to add media..." />
 
           </div>
           
@@ -4573,6 +4569,11 @@ export default function Feed() {
             ))}
           </div>
         )}
+        {/* Today's Play - Daily Challenge at top of light feed area */}
+        <div className="mb-4">
+          <DailyChallengeCard />
+        </div>
+
         {/* Activity Stream */}
         <div className="space-y-6">
 
