@@ -116,7 +116,7 @@ function PredictionCarouselSection({
           const hasPoster = !!(posterUrl);
 
           return (
-            <div key={game.id} className="flex-shrink-0 w-full snap-center">
+            <div key={game.id} id={`prediction-${game.id}`} className="flex-shrink-0 w-full snap-center">
               <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
                 <CardContent className="p-0">
                   <div className="flex gap-0">
@@ -549,15 +549,27 @@ export default function PlayPredictionsPage() {
     return processedGames.filter((game: any) => game.type === 'predict');
   }, [processedGames]);
   
-  // Auto-open prediction if gameId is in URL hash — only for multi-category predictions
+  // Auto-open or scroll-to prediction from URL hash
   React.useEffect(() => {
-    if (gameIdFromUrl && !selectedPredictionGame && predictionGames.length > 0) {
-      const gameToOpen = predictionGames.find((g: any) => g.id === gameIdFromUrl);
-      if (gameToOpen && gameToOpen.isMultiCategory) {
-        setSelectedPredictionGame(gameToOpen);
+    if (!gameIdFromUrl || predictionGames.length === 0) return;
+    const gameToOpen = predictionGames.find((g: any) => g.id === gameIdFromUrl);
+    if (!gameToOpen) return;
+
+    if (gameToOpen.isMultiCategory && !selectedPredictionGame) {
+      setSelectedPredictionGame(gameToOpen);
+    } else {
+      // For simple predictions, scroll to the card and briefly highlight it
+      const el = document.getElementById(`prediction-${gameIdFromUrl}`);
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.style.transition = 'box-shadow 0.3s ease';
+          el.style.boxShadow = '0 0 0 3px #7c3aed';
+          setTimeout(() => { el.style.boxShadow = ''; }, 1800);
+        }, 400);
       }
     }
-  }, [gameIdFromUrl, predictionGames, selectedPredictionGame]);
+  }, [gameIdFromUrl, predictionGames]);
 
   if (isLoading) {
     return (
