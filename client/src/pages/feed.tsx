@@ -2177,6 +2177,11 @@ export default function Feed() {
         const hasUser = !!(p.user?.id);
         const hasCreator = p.creator?.id && p.creator?.username && p.creator.username !== 'Unknown';
         if (!hasUser && !hasCreator) return false;
+
+        // Skip posts whose content is raw game moment JSON (wrong post_type saved by game activity)
+        const postRawContent = (p.content || '').trim();
+        if (postRawContent.startsWith('{"answer":') || postRawContent.startsWith('{"gameType":')) return false;
+
         if (p.type === 'cast_approved') return true;
         if (p.type === 'game_moment') return true;
 
