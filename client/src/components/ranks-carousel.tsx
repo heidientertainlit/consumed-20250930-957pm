@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabase';
@@ -8,7 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
-import { BarChart3, ChevronLeft, ChevronRight, Loader2, ArrowUp, ArrowDown, Plus, X, MessageCircle, Send } from 'lucide-react';
+import { BarChart3, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Loader2, ArrowUp, ArrowDown, Plus, X, MessageCircle, Send } from 'lucide-react';
 
 interface RankItem {
   id: string;
@@ -110,6 +109,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
   const [addingToRank, setAddingToRank] = useState<string | null>(null);
   const [customAddInput, setCustomAddInput] = useState('');
   const [userVotes, setUserVotes] = useState<Record<string, 'up' | 'down' | null>>({});
+  const [expandedVoting, setExpandedVoting] = useState<Record<string, boolean>>({});
   const [showComments, setShowComments] = useState<Record<string, boolean>>({});
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [rankComments, setRankComments] = useState<Record<string, RankComment[]>>({});
@@ -578,11 +578,11 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
 
   if (isLoading) {
     return (
-      <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+      <div className="bg-white border border-gray-100 rounded-2xl p-5">
         <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-6 h-6 animate-spin text-teal-500" />
+          <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
         </div>
-      </Card>
+      </div>
     );
   }
 
@@ -591,38 +591,30 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
   }
 
   return (
-    <Card className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm overflow-hidden relative">
-      <div className="flex items-center justify-between mb-3">
+    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
             <BarChart3 className="w-3.5 h-3.5 text-white" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-900">Debate the Rank</p>
-            <p className="text-[10px] text-gray-500">Vote to rank</p>
+            <p className="text-sm font-semibold text-gray-900 leading-none">Debate the Rank</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">ranked list</p>
           </div>
         </div>
-        
         <div className="flex items-center gap-1">
           {currentIndex > 0 && (
-            <button
-              onClick={scrollToPrev}
-              className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4 text-gray-600" />
+            <button onClick={scrollToPrev} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+              <ChevronLeft className="w-3.5 h-3.5 text-gray-600" />
             </button>
           )}
           {currentIndex < ranks.length - 1 && (
-            <button
-              onClick={scrollToNext}
-              className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
-            >
-              <ChevronRight className="w-4 h-4 text-gray-600" />
+            <button onClick={scrollToNext} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+              <ChevronRight className="w-3.5 h-3.5 text-gray-600" />
             </button>
           )}
-          <span className="text-xs text-gray-500 ml-1">
-            {currentIndex + 1}/{ranks.length}
-          </span>
+          <span className="text-xs text-gray-400 ml-1">{currentIndex + 1}/{ranks.length}</span>
         </div>
       </div>
 
@@ -632,49 +624,85 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
         className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory -mx-1 px-1"
       >
         {ranks.map((rank) => {
+          const isVotingExpanded = expandedVoting[rank.id];
           const isExpanded = expandedRanks[rank.id];
           const currentItems = localRankings[rank.id] || rank.items;
           const displayItems = isExpanded ? currentItems : currentItems.slice(0, 5);
-          const isSubmitted = submittedRanks[rank.id];
-          
+          const previewItems = currentItems.slice(0, 2);
+          const hiddenCount = currentItems.length - previewItems.length;
+
           return (
-            <div key={rank.id} className="flex-shrink-0 w-full snap-center">
-              <h3 className="text-gray-900 font-semibold text-base mb-3">
-                {rank.title}
-              </h3>
-
-              <div className="space-y-2 mb-3">
-                {displayItems.map((item, index) => (
-                  <VoteItem 
-                    key={item.id} 
-                    item={item} 
-                    index={index}
-                    userVote={userVotes[item.id] || null}
-                    onVote={(itemId, direction) => handleVote(itemId, direction, rank.id)}
-                    isVoting={voteMutation.isPending}
-                  />
-                ))}
+            <div key={rank.id} className="flex-shrink-0 w-full snap-center pb-3">
+              {/* Rank title */}
+              <div className="px-3 pb-2">
+                <h3 className="text-gray-900 font-bold text-base leading-snug">{rank.title}</h3>
               </div>
 
-              <div className="flex items-center gap-3 mt-3">
-                {rank.items.length > 5 && (
-                  <button
-                    onClick={() => toggleExpanded(rank.id)}
-                    className="text-teal-600 text-sm hover:underline"
-                  >
-                    {isExpanded ? 'Show less' : `Show all ${rank.items.length}`}
-                  </button>
-                )}
-                <button
-                  onClick={() => toggleComments(rank.id)}
-                  className="flex items-center gap-1 text-gray-500 hover:text-teal-600 text-sm transition-colors"
-                >
-                  <MessageCircle size={14} />
-                  <span>Debate</span>
+              {/* ── COLLAPSED GLIMPSE ── */}
+              {!isVotingExpanded && (
+                <button className="w-full text-left" onClick={() => setExpandedVoting(prev => ({ ...prev, [rank.id]: true }))}>
+                  <div className="px-3 space-y-1.5 mb-2">
+                    {previewItems.map((item, index) => (
+                      <div key={item.id} className="flex items-center gap-2.5">
+                        <span className={`w-5 h-5 flex items-center justify-center text-[11px] font-bold text-white rounded flex-shrink-0 ${
+                          index === 0 ? 'bg-purple-600' : index === 1 ? 'bg-purple-400' : 'bg-purple-300'
+                        }`}>{item.position}</span>
+                        {item.image_url && <img src={item.image_url} alt={item.title} className="w-7 h-7 rounded object-cover flex-shrink-0" />}
+                        <span className="text-sm text-gray-800 font-medium truncate">{item.title}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mx-3 flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
+                    <span className="text-xs text-gray-500">
+                      {hiddenCount > 0 ? `+${hiddenCount} more · ` : ''}Vote to rank
+                    </span>
+                    <ChevronDown size={14} className="text-purple-500" />
+                  </div>
                 </button>
-              </div>
+              )}
 
-              {showComments[rank.id] && (
+              {/* ── EXPANDED VOTING ── */}
+              {isVotingExpanded && (
+                <>
+                  <div className="px-3 space-y-2 mb-2">
+                    {displayItems.map((item, index) => (
+                      <VoteItem
+                        key={item.id}
+                        item={item}
+                        index={index}
+                        userVote={userVotes[item.id] || null}
+                        onVote={(itemId, direction) => handleVote(itemId, direction, rank.id)}
+                        isVoting={voteMutation.isPending}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="px-3 flex items-center gap-3">
+                    {rank.items.length > 5 && (
+                      <button onClick={() => toggleExpanded(rank.id)} className="text-purple-600 text-xs hover:underline">
+                        {isExpanded ? 'Show less' : `Show all ${rank.items.length}`}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => toggleComments(rank.id)}
+                      className="flex items-center gap-1 text-gray-400 hover:text-purple-600 text-xs transition-colors"
+                    >
+                      <MessageCircle size={13} />
+                      <span>Debate</span>
+                    </button>
+                    <button
+                      onClick={() => setExpandedVoting(prev => ({ ...prev, [rank.id]: false }))}
+                      className="ml-auto flex items-center gap-0.5 text-xs text-gray-400 hover:text-purple-500 transition-colors"
+                    >
+                      <ChevronUp size={13} />
+                      Show less
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* Comments */}
+              {isVotingExpanded && showComments[rank.id] && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <div className="flex items-center gap-2 mb-3">
                     <Input
@@ -735,17 +763,17 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
       </div>
 
       {ranks.length > 1 && (
-        <div className="flex justify-center gap-1.5 mt-3">
+        <div className="flex justify-center gap-1.5 py-3">
           {ranks.map((_, idx) => (
             <div
               key={idx}
               className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                idx === currentIndex ? 'bg-teal-500' : 'bg-gray-300'
+                idx === currentIndex ? 'bg-purple-500' : 'bg-gray-200'
               }`}
             />
           ))}
         </div>
       )}
-    </Card>
+    </div>
   );
 }
