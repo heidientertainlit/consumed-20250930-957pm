@@ -1177,59 +1177,55 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
 
   return (
     <>
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="p-4">
-        <div className="flex items-start gap-3">
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3">
+      <div className="px-4 pt-4 pb-3">
+        {/* Header: avatar · name · timestamp · type pill · actions */}
+        <div className="flex items-center gap-2 mb-2.5">
           <Link href={`/user/${post.user?.id || ''}`}>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-semibold cursor-pointer flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer flex-shrink-0">
               {post.user?.avatar ? (
                 <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
               ) : avatarLetter}
             </div>
           </Link>
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <Link href={`/user/${post.user?.id || ''}`}>
-                  <span className="font-semibold text-gray-900 hover:text-purple-600 cursor-pointer text-sm">{displayName}</span>
-                </Link>
-                {rawUsername && rawUsername !== displayName && (
-                  <p className="text-xs text-gray-400 leading-tight">@{rawUsername}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-0.5 flex-shrink-0">
-                {currentUserId && post.user?.id === currentUserId && onDeletePost && (
-                  <button onClick={() => onDeletePost(post.id)} className="text-gray-300 hover:text-red-500 p-1">
-                    <Trash2 size={14} />
-                  </button>
-                )}
-                {currentUserId && post.user?.id !== currentUserId && (
-                  <button
-                    onClick={() => setIsReportOpen(true)}
-                    className="text-gray-300 hover:text-orange-400 p-1 transition-colors"
-                  >
-                    <Flag size={13} />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {!post.mediaTitle && post.rating && post.rating > 0 && (
-              <div className="flex items-center gap-0.5 mt-2">
-                {[1, 2, 3, 4, 5].map(s => {
-                  const r = post.rating!;
-                  if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
-                  if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                  return <Star key={s} size={13} className="text-gray-200" />;
-                })}
-              </div>
-            )}
-
-            {displayContent && !post.mediaTitle && (
-              <p className="text-gray-800 text-sm leading-relaxed mt-2">{displayContent}</p>
-            )}
+            <Link href={`/user/${post.user?.id || ''}`}>
+              <span className="font-medium text-sm text-gray-900 hover:text-purple-600 cursor-pointer">{displayName}</span>
+            </Link>
+            <span className="text-xs text-gray-400"> · {timeAgo(post.timestamp)}</span>
           </div>
+          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 ${typeInfo.bg} ${typeInfo.color}`}>
+            {typeInfo.label}
+          </span>
+          {currentUserId && post.user?.id === currentUserId && onDeletePost && (
+            <button onClick={() => onDeletePost(post.id)} className="text-gray-300 hover:text-red-500 p-1 shrink-0">
+              <Trash2 size={14} />
+            </button>
+          )}
+          {currentUserId && post.user?.id !== currentUserId && (
+            <button
+              onClick={() => setIsReportOpen(true)}
+              className="text-gray-300 hover:text-orange-400 p-1 shrink-0 transition-colors"
+            >
+              <Flag size={13} />
+            </button>
+          )}
         </div>
+
+        {!post.mediaTitle && post.rating && post.rating > 0 && (
+          <div className="flex items-center gap-0.5 mb-1">
+            {[1, 2, 3, 4, 5].map(s => {
+              const r = post.rating!;
+              if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
+              if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
+              return <Star key={s} size={13} className="text-gray-200" />;
+            })}
+          </div>
+        )}
+
+        {displayContent && !post.mediaTitle && (
+          <p className="text-gray-800 text-sm leading-relaxed">{displayContent}</p>
+        )}
 
         {post.mediaTitle && (
           <div className="flex gap-3 mt-2">
@@ -1339,19 +1335,19 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
           )
         )}
 
-        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
+        <div className="flex items-center gap-4 mt-2.5 pt-2.5 border-t border-gray-50">
           <button
-              onClick={() => onLike?.(post.id)}
-              className={`flex items-center gap-1.5 text-sm ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} active:scale-110 transition-transform`}
-            >
-              <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
-              <span className="text-xs">{post.likes || 0}</span>
-            </button>
+            onClick={() => onLike?.(post.id)}
+            className={`flex items-center gap-1.5 text-sm ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} active:scale-110 transition-transform`}
+          >
+            <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
+            <span className="text-xs">{post.likes || 0}</span>
+          </button>
           <button
             onClick={() => onComment?.(post.id)}
             className={`flex items-center gap-1.5 text-sm ${isCommentsActive ? 'text-purple-500' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
           >
-            <MessageCircle size={16} />
+            <MessageCircle size={15} />
             <span className="text-xs">{post.comments || 0}</span>
           </button>
           {(post.externalId || post.mediaItems?.[0]?.externalId || post.mediaTitle) && (() => {
@@ -1370,7 +1366,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                     className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
                     title="Add to list"
                   >
-                    <Plus size={16} />
+                    <Plus size={15} />
                   </button>
                 )}
                 <button
@@ -1378,7 +1374,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                   className={`flex items-center gap-1 text-sm active:scale-110 transition-all ${showRating || ratingSubmitted ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'}`}
                   title="Rate"
                 >
-                  <Star size={16} fill={ratingSubmitted ? 'currentColor' : 'none'} />
+                  <Star size={15} fill={ratingSubmitted ? 'currentColor' : 'none'} />
                   {communityRating !== null && (
                     <span className={`text-[11px] font-medium ${showRating || ratingSubmitted ? 'text-yellow-500' : 'text-gray-400'}`}>
                       {communityRating}
@@ -1388,13 +1384,6 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
               </>
             );
           })()}
-          <div className="ml-auto flex items-center gap-1.5">
-            <span className={`text-[11px] font-medium ${typeInfo.color} flex items-center gap-1 ${typeInfo.bg} px-2 py-0.5 rounded-full`}>
-              <TypeIcon size={11} />
-              {typeInfo.label}
-            </span>
-            <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
-          </div>
         </div>
 
         {showRating && (
