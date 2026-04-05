@@ -247,15 +247,13 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           </div>
         )}
 
-        {/* Non-trivia CTA */}
+        {/* Non-trivia CTA — full-width button */}
         {!hasInlineTrivia && (
-          <div className="flex justify-end">
-            <Link to={card.ctaHref}>
-              <span className="text-xs font-medium text-purple-600 active:opacity-70 transition-opacity">
-                {card.ctaLabel} ›
-              </span>
-            </Link>
-          </div>
+          <Link to={card.ctaHref}>
+            <div className="w-full py-3.5 border border-gray-200 rounded-2xl text-center text-purple-600 font-medium text-sm bg-white active:bg-gray-50 transition-colors">
+              {card.ctaLabel}
+            </div>
+          </Link>
         )}
 
       </div>
