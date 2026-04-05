@@ -2290,7 +2290,26 @@ export default function Feed() {
     }
 
     feedItems.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
-    return feedItems;
+
+    // Interleave game_moment cards so they never stack consecutively.
+    // Insert at most 1 game_moment for every 2 other posts, starting after the first post.
+    const gameMomentItems = feedItems.filter(item => item.type === 'game_moment');
+    const otherItems = feedItems.filter(item => item.type !== 'game_moment');
+    if (gameMomentItems.length === 0) return feedItems;
+    const interleaved: any[] = [];
+    let gmIdx = 0;
+    for (let i = 0; i < otherItems.length; i++) {
+      interleaved.push(otherItems[i]);
+      // Drop in a game_moment after every 2nd other post
+      if ((i + 1) % 2 === 0 && gmIdx < gameMomentItems.length) {
+        interleaved.push(gameMomentItems[gmIdx++]);
+      }
+    }
+    // Append any remaining game_moments after all other content
+    while (gmIdx < gameMomentItems.length) {
+      interleaved.push(gameMomentItems[gmIdx++]);
+    }
+    return interleaved;
   })();
   // Map each post/group to a sequential slot index so item 0 appears at slot 0,
   // item 1 at slot 1, etc. — interleaved between game cards in the feed.
