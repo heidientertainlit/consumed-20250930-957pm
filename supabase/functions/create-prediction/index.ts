@@ -115,7 +115,8 @@ serve(async (req) => {
     // Use database-compatible type values: 'vote' for polls, 'predict' for predictions
     const isPoll = type === 'vote';
     const poolType = isPoll ? 'vote' : 'predict';
-    const poolCategory = 'movie'; // Use a valid existing category
+    // Derive category from actual media type — never hardcode 'movie'
+    const poolCategory = media_type || 'general';
     const poolIcon = isPoll ? '🗳️' : '🎯';
     const poolPoints = isPoll ? 10 : points_reward;
 
@@ -124,7 +125,7 @@ serve(async (req) => {
     
     console.log('DEBUG: Creating pool with id:', poolId, 'type:', poolType, 'category:', poolCategory);
 
-    // Insert into prediction_pools with CORRECT values matching existing data
+    // Insert into prediction_pools — always include media_image_url and media_title
     const { data: pool, error: poolError } = await adminClient
       .from('prediction_pools')
       .insert({
@@ -139,8 +140,11 @@ serve(async (req) => {
         origin_type: 'user',
         origin_user_id: appUser.id,
         invited_user_id: invited_user_id || null,
+        media_title: media_title || null,
+        media_type: media_type || null,
         media_external_id: media_external_id || null,
         media_external_source: media_external_source || null,
+        media_image_url: media_image_url || null,
         deadline: deadline || null,
         likes_count: 0,
         comments_count: 0,

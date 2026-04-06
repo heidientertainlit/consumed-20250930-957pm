@@ -528,10 +528,10 @@ export default function CollaborativePredictionCard({
                   disabled={answered || voteMutation.isPending}
                   className={`w-full rounded-full px-4 py-3 transition-all duration-300 flex items-center justify-between ${
                     answered && isMyVote
-                      ? "bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 ring-2 ring-blue-300 cursor-default"
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-500 ring-2 ring-blue-200 cursor-default"
                       : answered
-                      ? "bg-gradient-to-r from-purple-950/60 via-purple-800/60 to-violet-500/60 cursor-default opacity-70"
-                      : "bg-gradient-to-r from-purple-950 via-purple-800 to-violet-500 hover:from-purple-900 hover:via-purple-700 hover:to-violet-400 cursor-pointer"
+                      ? "bg-gradient-to-r from-purple-400/50 to-violet-400/50 cursor-default opacity-60"
+                      : "bg-gradient-to-r from-purple-600 to-indigo-500 hover:from-purple-500 hover:to-indigo-400 cursor-pointer"
                   }`}
                   data-testid={`button-vote-option-${index}`}
                 >

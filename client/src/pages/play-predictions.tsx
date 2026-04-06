@@ -190,8 +190,8 @@ function PredictionCarouselSection({
                                   key={i}
                                   className={`w-full rounded-full px-3 py-2 flex items-center justify-between transition-all duration-300 ${
                                     isChosen
-                                      ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 ring-2 ring-blue-300'
-                                      : 'bg-gradient-to-r from-purple-950/60 via-purple-800/60 to-violet-500/60 opacity-70'
+                                      ? 'bg-gradient-to-r from-blue-600 to-indigo-500 ring-2 ring-blue-200'
+                                      : 'bg-gradient-to-r from-purple-400/50 to-violet-400/50 opacity-60'
                                   }`}
                                 >
                                   <span className="text-xs font-medium text-white flex items-center gap-1.5">
