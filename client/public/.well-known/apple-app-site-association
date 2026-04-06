@@ -5,6 +5,8 @@
       {
         "appID": "V3JP2V3NNG.com.entertainlit.consumed",
         "paths": [
+          "NOT /reset-password",
+          "NOT /reset-password*",
           "*"
         ]
       }
