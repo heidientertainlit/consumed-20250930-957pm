@@ -1384,14 +1384,14 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
               ) : avatarLetter}
             </div>
           </Link>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 flex items-center gap-1 flex-wrap">
             <Link href={`/user/${post.user?.id || ''}`}>
               <span className="font-medium text-sm text-gray-900 hover:text-purple-600 cursor-pointer">{displayName}</span>
             </Link>
             {isRatingType ? (
-              <p className="text-xs text-gray-500 font-medium">{displayName}'s Take:</p>
+              <span className="text-xs text-gray-400">· Take</span>
             ) : (
-              <span className="text-xs text-gray-400"> · {timeAgo(post.timestamp)}</span>
+              <span className="text-xs text-gray-400">· {timeAgo(post.timestamp)}</span>
             )}
           </div>
           <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 ${typeInfo.bg} ${typeInfo.color}`}>

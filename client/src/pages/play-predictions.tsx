@@ -142,19 +142,19 @@ function PredictionCarouselSection({
                   </div>
 
                   <div className="flex gap-0">
-                    {/* Poster column — left side, wider */}
+                    {/* Poster column — left side */}
                     {hasPoster && (() => {
                       const mediaUrl = getMediaUrl(game);
                       return (
                         <div
-                          className={`flex-shrink-0 w-[120px] ${mediaUrl ? 'cursor-pointer active:opacity-75 transition-opacity' : ''}`}
+                          className={`flex-shrink-0 w-[96px] self-stretch ${mediaUrl ? 'cursor-pointer active:opacity-75 transition-opacity' : ''}`}
                           onClick={mediaUrl ? () => setLocation(mediaUrl) : undefined}
                         >
                           <img
                             src={posterUrl!}
                             alt={displayTitle || ''}
                             className="w-full h-full object-cover rounded-bl-2xl"
-                            style={{ minHeight: '240px' }}
+                            style={{ minHeight: '200px' }}
                             onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                           />
                         </div>
