@@ -26,7 +26,7 @@ function PredictionCarouselSection({
   isSubmitting,
   creatorNames = {},
   mediaPosterMap = {},
-  socialPostImageMap = {},
+  socialPostMediaMap = {},
 }: {
   label: string;
   games: any[];
@@ -39,22 +39,24 @@ function PredictionCarouselSection({
   isSubmitting: boolean;
   creatorNames?: Record<string, string>;
   mediaPosterMap?: Record<string, { title: string; image_url: string; detected_type?: string }>;
-  socialPostImageMap?: Record<string, string>;
+  socialPostMediaMap?: Record<string, { image?: string; title?: string; externalId?: string; externalSource?: string }>;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [, setLocation] = useLocation();
 
   const getMediaUrl = (game: any) => {
-    if (!game.media_external_id) return null;
-    const posterInfo = mediaPosterMap[game.media_external_id];
-    // Use the type TMDB actually returned a poster for — may differ from what was stored
+    // Prefer social post's external ID — it was captured directly from search results
+    const social = socialPostMediaMap[game.id];
+    const extId = game.media_external_id || social?.externalId;
+    if (!extId) return null;
+    const extSource = game.media_external_source || social?.externalSource;
+    const posterInfo = mediaPosterMap[extId];
     const detectedType = posterInfo?.detected_type;
-    const isTV = detectedType === 'tv' || (!detectedType && (game.category === 'tv' || game.media_external_source === 'tmdb_tv'));
+    const isTV = detectedType === 'tv' || extSource === 'tmdb_tv' || game.category === 'tv';
     const type = isTV ? 'tv' : 'movie';
-    // Keep the stored source value; type segment is what the detail page uses to call the correct TMDB endpoint
-    const source = game.media_external_source || 'tmdb';
-    return `/media/${type}/${source}/${game.media_external_id}`;
+    const source = extSource || 'tmdb';
+    return `/media/${type}/${source}/${extId}`;
   };
 
   const scrollToNext = () => {
@@ -112,10 +114,11 @@ function PredictionCarouselSection({
         {games.map((game) => {
           const voted = allPredictions[game.id];
           const selected = selectedAnswers[game.id];
+          const socialMedia = socialPostMediaMap[game.id];
           const mediaInfo = game.media_external_id ? mediaPosterMap[game.media_external_id] : null;
-          const displayTitle = game.media_title || mediaInfo?.title;
-          // Priority: stored URL → social post image (saved at creation) → TMDB lookup (title-validated)
-          const posterUrl = game.media_image_url || socialPostImageMap[game.id] || mediaInfo?.image_url;
+          // Priority: stored on pool → social post (saved at creation time) → TMDB lookup (title-validated)
+          const displayTitle = game.media_title || socialMedia?.title || mediaInfo?.title;
+          const posterUrl = game.media_image_url || socialMedia?.image || mediaInfo?.image_url;
           const hasPoster = !!(posterUrl);
 
           return (
@@ -190,15 +193,15 @@ function PredictionCarouselSection({
                                   key={i}
                                   className={`w-full rounded-full px-3 py-2 flex items-center justify-between transition-all duration-300 ${
                                     isChosen
-                                      ? 'bg-gradient-to-r from-blue-600 to-indigo-500 ring-2 ring-blue-200'
-                                      : 'bg-gradient-to-r from-purple-400/50 to-violet-400/50 opacity-60'
+                                      ? 'bg-purple-600 ring-2 ring-purple-200'
+                                      : 'bg-gray-100 opacity-70'
                                   }`}
                                 >
-                                  <span className="text-xs font-medium text-white flex items-center gap-1.5">
+                                  <span className={`text-xs font-medium flex items-center gap-1.5 ${isChosen ? 'text-white' : 'text-gray-700'}`}>
                                     {isChosen && <Check size={12} className="flex-shrink-0" />}
                                     {option}
                                   </span>
-                                  <span className="text-xs font-semibold text-white">{pct}%</span>
+                                  <span className={`text-xs font-semibold ${isChosen ? 'text-white' : 'text-gray-500'}`}>{pct}%</span>
                                 </div>
                               );
                             })}
@@ -247,8 +250,8 @@ function PredictionCarouselSection({
                                 onClick={() => onOptionSelect(game.id, option)}
                                 className={`w-full py-2.5 px-4 rounded-full text-sm font-medium transition-all text-left flex items-center gap-2 ${
                                   selected === option
-                                    ? 'bg-white border-2 border-purple-600 text-purple-700 shadow-sm'
-                                    : 'bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-700 hover:to-purple-600'
+                                    ? 'bg-gray-200 border border-gray-300 text-gray-900 shadow-sm'
+                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                                 }`}
                               >
                                 {selected === option && (
@@ -396,21 +399,25 @@ export default function PlayPredictionsPage() {
     enabled: mediaExternalIds.length > 0,
   });
 
-  // Fetch social_posts images as reliable fallback (images saved at prediction-creation time)
-  const poolIds = games.filter((g: any) => !g.media_image_url).map((g: any) => g.id);
-  const { data: socialPostImageMap = {} } = useQuery({
-    queryKey: ['/api/social-posts/pool-images', poolIds],
+  // Fetch social_posts as reliable fallback — image + title saved at prediction-creation time
+  const poolIds = games.filter((g: any) => !g.media_image_url || !g.media_title).map((g: any) => g.id);
+  const { data: socialPostMediaMap = {} } = useQuery({
+    queryKey: ['/api/social-posts/pool-media', poolIds],
     queryFn: async () => {
       if (poolIds.length === 0) return {};
       const { data } = await supabase
         .from('social_posts')
-        .select('prediction_pool_id, image_url')
-        .in('prediction_pool_id', poolIds)
-        .not('image_url', 'is', null);
-      const map: Record<string, string> = {};
+        .select('prediction_pool_id, image_url, media_title, media_external_id, media_external_source')
+        .in('prediction_pool_id', poolIds);
+      const map: Record<string, { image?: string; title?: string; externalId?: string; externalSource?: string }> = {};
       for (const row of data || []) {
-        if (row.prediction_pool_id && row.image_url && !map[row.prediction_pool_id]) {
-          map[row.prediction_pool_id] = row.image_url;
+        if (row.prediction_pool_id && !map[row.prediction_pool_id]) {
+          map[row.prediction_pool_id] = {
+            image: row.image_url || undefined,
+            title: row.media_title || undefined,
+            externalId: row.media_external_id || undefined,
+            externalSource: row.media_external_source || undefined,
+          };
         }
       }
       return map;
@@ -800,7 +807,7 @@ export default function PlayPredictionsPage() {
               isSubmitting={submitPrediction.isPending}
               creatorNames={creatorNames as Record<string, string>}
               mediaPosterMap={mediaPosterMap as Record<string, { title: string; image_url: string }>}
-              socialPostImageMap={socialPostImageMap as Record<string, string>}
+              socialPostMediaMap={socialPostMediaMap}
             />
           ));
         })()}

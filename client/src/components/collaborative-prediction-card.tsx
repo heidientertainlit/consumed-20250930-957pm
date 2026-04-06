@@ -528,19 +528,19 @@ export default function CollaborativePredictionCard({
                   disabled={answered || voteMutation.isPending}
                   className={`w-full rounded-full px-4 py-3 transition-all duration-300 flex items-center justify-between ${
                     answered && isMyVote
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-500 ring-2 ring-blue-200 cursor-default"
+                      ? "bg-purple-600 ring-2 ring-purple-200 cursor-default"
                       : answered
-                      ? "bg-gradient-to-r from-purple-400/50 to-violet-400/50 cursor-default opacity-60"
-                      : "bg-gradient-to-r from-purple-600 to-indigo-500 hover:from-purple-500 hover:to-indigo-400 cursor-pointer"
+                      ? "bg-gray-100 cursor-default opacity-70"
+                      : "bg-gray-100 hover:bg-gray-200 cursor-pointer"
                   }`}
                   data-testid={`button-vote-option-${index}`}
                 >
-                  <span className="text-sm font-medium text-white flex items-center gap-2">
+                  <span className={`text-sm font-medium flex items-center gap-2 ${answered && isMyVote ? 'text-white' : 'text-gray-800'}`}>
                     {answered && isMyVote && <Check className="w-4 h-4" />}
                     {option}
                   </span>
                   {answered && (
-                    <span className="text-sm font-semibold text-white">
+                    <span className={`text-sm font-semibold ${answered && isMyVote ? 'text-white' : 'text-gray-500'}`}>
                       {userHasAnswered ? `${percentage}%` : ''}
                     </span>
                   )}
