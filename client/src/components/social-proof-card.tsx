@@ -304,7 +304,6 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
                     </button>
                   );
                 })}
-                <p className="text-xs text-gray-400 pt-1">Tap to answer · +{pts} pts</p>
               </>
             ) : hasInlinePoll ? (
               /* Poll options */
@@ -326,14 +325,12 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
                     </button>
                   );
                 })}
-                {submitted ? (
-                  <p className="text-xs font-medium text-purple-600 pt-1">Vote cast! +{pts} pts</p>
-                ) : (
-                  <p className="text-xs text-gray-400 pt-1">Tap to cast your vote · +{pts} pts</p>
+                {submitted && (
+                  <p className="text-xs font-medium text-purple-600 pt-1">Vote cast!</p>
                 )}
                 {/* Attribution footnote — expanded state */}
                 {card.user && (
-                  <p className="text-xs text-gray-400 text-center pt-1 leading-snug">
+                  <p className="text-xs text-gray-400 pt-1 leading-snug">
                     {card.user.displayName?.split(' ')[0] || card.user.username}
                     {card.userAnswer ? ` picked "${card.userAnswer}"` : ' already voted'}
                     {card.highlight ? ` · ${card.highlight}` : ''}
@@ -360,10 +357,8 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
                     </button>
                   );
                 })}
-                {submitted ? (
-                  <p className="text-xs font-medium text-purple-600 pt-1">Prediction locked in! +{pts} pts when results drop</p>
-                ) : (
-                  <p className="text-xs text-gray-400 pt-1">Tap to make your pick · +{pts} pts</p>
+                {submitted && (
+                  <p className="text-xs font-medium text-purple-600 pt-1">Prediction locked in!</p>
                 )}
               </>
             )}
@@ -380,7 +375,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
             </Link>
             {/* Poll: attribution footnote below the button */}
             {card.variant === 'vote_cast' && card.user && (
-              <p className="text-xs text-gray-400 text-center mt-2.5 leading-snug">
+              <p className="text-xs text-gray-400 mt-2.5 leading-snug">
                 {card.user.displayName?.split(' ')[0] || card.user.username}
                 {card.userAnswer ? ` picked "${card.userAnswer}"` : ' already voted'}
                 {card.highlight ? ` · ${card.highlight}` : ''}
