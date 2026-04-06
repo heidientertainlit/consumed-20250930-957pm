@@ -279,6 +279,7 @@ export default function PlayPredictionsPage() {
   const [selectedPredictionGame, setSelectedPredictionGame] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [showComposer, setShowComposer] = useState(false);
+  const [activeTab, setActiveTab] = useState<'awards' | 'predictions'>('awards');
 
 
   // Extract game ID from URL hash if present (format: /play/predictions#game-id)
@@ -588,112 +589,157 @@ export default function PlayPredictionsPage() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
-      {/* Header Section with Gradient */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
-        <div className="max-w-4xl mx-auto px-4 pt-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => window.history.back()}
-                className="flex items-center text-gray-400 hover:text-white transition-colors"
-                data-testid="back-button"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <h1 className="text-2xl font-semibold text-white" data-testid="predictions-title">Predictions</h1>
-            </div>
+      {/* Hero Section */}
+      <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1e1040] -mt-px">
+        <div className="max-w-4xl mx-auto px-4 pt-6 pb-8 relative">
+          {/* Back button — left-anchored */}
+          <button
+            onClick={() => window.history.back()}
+            className="absolute left-4 top-6 flex items-center text-gray-400 hover:text-white transition-colors"
+            data-testid="back-button"
+          >
+            <ChevronLeft size={20} />
+          </button>
+
+          {/* Centered title */}
+          <div className="flex flex-col items-center gap-4 pt-1">
+            <h1 className="text-2xl font-semibold text-white tracking-tight" data-testid="predictions-title">
+              Predictions
+            </h1>
+
+            {/* Create Prediction — centered below title */}
             <Button
               onClick={() => setShowComposer(true)}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-blue-500 to-green-400 hover:from-blue-600 hover:to-green-500 text-white rounded-full px-3 py-1.5 text-xs font-semibold shadow-md border-0"
+              className="flex items-center gap-1.5 bg-gradient-to-r from-blue-500 to-green-400 hover:from-blue-600 hover:to-green-500 text-white rounded-full px-5 py-2 text-sm font-semibold shadow-lg border-0"
               data-testid="create-prediction-btn"
             >
-              <Plus size={13} />
+              <Plus size={14} />
               Create Prediction
             </Button>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <button
+              onClick={() => setActiveTab('awards')}
+              className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+                activeTab === 'awards'
+                  ? 'bg-amber-500 text-white shadow-md'
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
+              }`}
+            >
+              <Trophy size={13} />
+              Awards
+            </button>
+            <button
+              onClick={() => setActiveTab('predictions')}
+              className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-semibold transition-all ${
+                activeTab === 'predictions'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
+              }`}
+            >
+              <Target size={13} />
+              Community &amp; Consumed
+            </button>
           </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-4">
 
-        {/* Awards Events Section */}
-        {(() => {
+        {/* Awards Tab */}
+        {activeTab === 'awards' && (() => {
           const visibleAwards = awardsEvents.filter((e: any) =>
             !['gg-2026', 'sag-awards-2026'].includes(e.id)
           );
-          if (visibleAwards.length === 0) return null;
+          if (visibleAwards.length === 0) return (
+            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+              <Trophy className="mx-auto mb-4 text-gray-300" size={40} />
+              <p className="text-gray-500 text-sm">No awards events right now.</p>
+            </div>
+          );
           return (
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <Trophy size={16} className="text-amber-500" />
-                <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Awards</h2>
-              </div>
-              <div className="space-y-3">
-                {visibleAwards.map((event: any) => {
-                  const isOpen = event.status === 'open';
-                  const isCompleted = event.status === 'completed';
-                  return (
-                    <button
-                      key={event.id}
-                      onClick={() => setLocation(`/play/awards/${event.id}`)}
-                      className="w-full text-left"
-                    >
-                      <Card className={`border shadow-sm rounded-2xl overflow-hidden transition-all hover:shadow-md ${
-                        isOpen
-                          ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200'
-                          : isCompleted
-                            ? 'bg-gray-50 border-gray-200'
-                            : 'bg-white border-gray-200'
-                      }`}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                                isOpen ? 'bg-amber-100' : 'bg-gray-100'
-                              }`}>
-                                <Trophy size={20} className={isOpen ? 'text-amber-600' : 'text-gray-400'} />
-                              </div>
-                              <div>
-                                <div className="font-semibold text-gray-900 text-sm">{event.name} {event.year}</div>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  {isOpen && (
-                                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs px-2 py-0">
-                                      Open
-                                    </Badge>
-                                  )}
-                                  {event.status === 'locked' && (
-                                    <Badge className="bg-gray-100 text-gray-500 hover:bg-gray-100 text-xs px-2 py-0 flex items-center gap-1">
-                                      <Lock size={10} />
-                                      Locked
-                                    </Badge>
-                                  )}
-                                  {isCompleted && (
-                                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs px-2 py-0">
-                                      Results In
-                                    </Badge>
-                                  )}
-                                  {event.deadline && isOpen && (
-                                    <span className="text-xs text-gray-400">
-                                      Closes {new Date(event.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                    </span>
-                                  )}
-                                </div>
+            <div className="space-y-3">
+              {visibleAwards.map((event: any) => {
+                const isOpen = event.status === 'open';
+                const isCompleted = event.status === 'completed';
+                return (
+                  <button
+                    key={event.id}
+                    onClick={() => setLocation(`/play/awards/${event.id}`)}
+                    className="w-full text-left"
+                  >
+                    <Card className={`border shadow-sm rounded-2xl overflow-hidden transition-all hover:shadow-md ${
+                      isOpen
+                        ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200'
+                        : isCompleted
+                          ? 'bg-gray-50 border-gray-200'
+                          : 'bg-white border-gray-200'
+                    }`}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                              isOpen ? 'bg-amber-100' : 'bg-gray-100'
+                            }`}>
+                              <Trophy size={20} className={isOpen ? 'text-amber-600' : 'text-gray-400'} />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-900 text-sm">{event.name} {event.year}</div>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                {isOpen && (
+                                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs px-2 py-0">
+                                    Open
+                                  </Badge>
+                                )}
+                                {event.status === 'locked' && (
+                                  <Badge className="bg-gray-100 text-gray-500 hover:bg-gray-100 text-xs px-2 py-0 flex items-center gap-1">
+                                    <Lock size={10} />
+                                    Locked
+                                  </Badge>
+                                )}
+                                {isCompleted && (
+                                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs px-2 py-0">
+                                    Results In
+                                  </Badge>
+                                )}
+                                {event.deadline && isOpen && (
+                                  <span className="text-xs text-gray-400">
+                                    Closes {new Date(event.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                  </span>
+                                )}
                               </div>
                             </div>
-                            <ChevronRight size={18} className="text-gray-400 flex-shrink-0" />
                           </div>
-                        </CardContent>
-                      </Card>
-                    </button>
-                  );
-                })}
-              </div>
+                          <ChevronRight size={18} className="text-gray-400 flex-shrink-0" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </button>
+                );
+              })}
             </div>
           );
         })()}
 
-        {/* Predictions grouped by media type */}
-        {predictionGames.length > 0 && (() => {
+        {/* Community & Consumed Tab */}
+        {activeTab === 'predictions' && (() => {
+          if (predictionGames.length === 0) return (
+            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+              <Target className="mx-auto mb-4 text-gray-300" size={40} />
+              <h3 className="text-base font-medium text-gray-900 mb-2">No predictions yet</h3>
+              <p className="text-gray-500 text-sm mb-4">Be the first — create a prediction for others to weigh in on.</p>
+              <Button
+                onClick={() => setShowComposer(true)}
+                className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
+              >
+                <Plus size={16} className="mr-2" />
+                Create Prediction
+              </Button>
+            </div>
+          );
+
           const CATEGORY_ORDER = ['movie', 'movies', 'tv', 'music', 'books', 'podcast', 'podcasts', 'sports', 'games'];
           const LABEL_MAP: Record<string, string> = {
             movie: 'Movies', movies: 'Movies', tv: 'TV', music: 'Music',
@@ -732,20 +778,6 @@ export default function PlayPredictionsPage() {
           ));
         })()}
 
-        {predictionGames.length === 0 && awardsEvents.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-            <Trophy className="mx-auto mb-4 text-gray-400" size={48} />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No predictions available</h3>
-            <p className="text-gray-600 mb-4">Be the first — create a prediction for others to weigh in on.</p>
-            <Button
-              onClick={() => setShowComposer(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
-            >
-              <Plus size={16} className="mr-2" />
-              Create Prediction
-            </Button>
-          </div>
-        )}
       </div>
 
       <ConsumptionTracker
