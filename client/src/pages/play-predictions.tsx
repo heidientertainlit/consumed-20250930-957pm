@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +16,7 @@ import { supabase } from '@/lib/supabase';
 
 function PredictionCarouselSection({
   label,
+  icon: IconComponent,
   games,
   allPredictions,
   voteCounts,
@@ -29,6 +30,7 @@ function PredictionCarouselSection({
   socialPostMediaMap = {},
 }: {
   label: string;
+  icon?: React.ElementType;
   games: any[];
   allPredictions: Record<string, string>;
   voteCounts: Record<string, Record<string, number>>;
@@ -41,177 +43,140 @@ function PredictionCarouselSection({
   mediaPosterMap?: Record<string, { title: string; image_url: string; detected_type?: string }>;
   socialPostMediaMap?: Record<string, { image?: string; title?: string; externalId?: string; externalSource?: string }>;
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [, setLocation] = useLocation();
 
-  const getMediaUrl = (game: any) => {
-    // Prefer social post's external ID — it was captured directly from search results
-    const social = socialPostMediaMap[game.id];
-    const extId = game.media_external_id || social?.externalId;
-    if (!extId) return null;
-    const extSource = game.media_external_source || social?.externalSource;
-    const posterInfo = mediaPosterMap[extId];
-    const detectedType = posterInfo?.detected_type;
-    const isTV = detectedType === 'tv' || extSource === 'tmdb_tv' || game.category === 'tv';
-    const type = isTV ? 'tv' : 'movie';
-    const source = extSource || 'tmdb';
-    return `/media/${type}/${source}/${extId}`;
-  };
+  if (games.length === 0) return null;
 
-  const scrollToNext = () => {
-    if (scrollRef.current && currentIndex < games.length - 1) {
-      const cardWidth = scrollRef.current.children[0]?.clientWidth || 280;
-      scrollRef.current.scrollBy({ left: cardWidth + 12, behavior: 'smooth' });
-    }
-  };
-  const scrollToPrev = () => {
-    if (scrollRef.current && currentIndex > 0) {
-      const cardWidth = scrollRef.current.children[0]?.clientWidth || 280;
-      scrollRef.current.scrollBy({ left: -(cardWidth + 12), behavior: 'smooth' });
-    }
-  };
-  const handleScroll = () => {
-    if (scrollRef.current && games.length > 0) {
-      const cardWidth = scrollRef.current.children[0]?.clientWidth || 280;
-      const newIndex = Math.round(scrollRef.current.scrollLeft / (cardWidth + 12));
-      setCurrentIndex(newIndex);
-    }
-  };
+  const game = games[Math.min(currentIndex, games.length - 1)];
+  const voted = allPredictions[game.id];
+  const selected = selectedAnswers[game.id];
+  const socialMedia = socialPostMediaMap[game.id];
+  const mediaInfo = game.media_external_id ? mediaPosterMap[game.media_external_id] : null;
+  const displayTitle = game.media_title || socialMedia?.title || mediaInfo?.title;
+  const posterUrl = game.media_image_url || socialMedia?.image || mediaInfo?.image_url;
+  const hasPoster = !!(posterUrl);
+  const Icon = IconComponent || Target;
 
   return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
-            <Target className="w-3.5 h-3.5 text-white" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-900">{label} Predictions</p>
-            <p className="text-[10px] text-gray-500">Tap to predict</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          {currentIndex > 0 && (
-            <button onClick={scrollToPrev} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">
-              <ChevronLeft className="w-4 h-4 text-gray-600" />
-            </button>
-          )}
-          {currentIndex < games.length - 1 && (
-            <button onClick={scrollToNext} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">
-              <ChevronRight className="w-4 h-4 text-gray-600" />
-            </button>
-          )}
-          <span className="text-xs text-gray-500 ml-1">{currentIndex + 1}/{games.length}</span>
-        </div>
-      </div>
-
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
-      >
-        {games.map((game) => {
-          const voted = allPredictions[game.id];
-          const selected = selectedAnswers[game.id];
-          const socialMedia = socialPostMediaMap[game.id];
-          const mediaInfo = game.media_external_id ? mediaPosterMap[game.media_external_id] : null;
-          // Priority: stored on pool → social post (saved at creation time) → TMDB lookup (title-validated)
-          const displayTitle = game.media_title || socialMedia?.title || mediaInfo?.title;
-          const posterUrl = game.media_image_url || socialMedia?.image || mediaInfo?.image_url;
-          const hasPoster = !!(posterUrl);
-
-          return (
-            <div key={game.id} id={`prediction-${game.id}`} className="flex-shrink-0 w-full snap-center">
-              <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
-                <CardContent className="p-4 flex flex-col gap-3">
-                  {/* Subtitle: creator + media title */}
-                  {(displayTitle || creatorNames[game.origin_user_id]) && (
-                    <p className="text-xs text-gray-400 leading-snug">
-                      {game.origin_type === 'consumed'
-                        ? <span className="text-amber-600 font-medium">Consumed</span>
-                        : creatorNames[game.origin_user_id]
-                          ? <>{creatorNames[game.origin_user_id]} posted a prediction</>
-                          : 'Community prediction'}
-                      {displayTitle ? <> about <span className="font-medium text-gray-600">{displayTitle}</span></> : null}
-                    </p>
-                  )}
-
-                  {/* Question — bold, prominent */}
-                  <h3 className="font-bold text-gray-900 text-base leading-snug">{game.title}</h3>
-
-                  {/* Poster + options row — same layout as feed */}
-                  <div className="flex gap-3 items-start">
-                    {/* Small poster */}
-                    {hasPoster && (
-                      <img
-                        src={posterUrl!}
-                        alt={displayTitle || ''}
-                        className="w-[88px] rounded-xl object-cover flex-shrink-0 shadow-sm"
-                        style={{ aspectRatio: '2/3' }}
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      />
-                    )}
-
-                    {/* Options column */}
-                    <div className="flex-1 flex flex-col gap-2">
-                      {voted ? (
-                        (game.options || []).map((option: string, i: number) => {
-                          const rawCounts = voteCounts[game.id] || {};
-                          const counts = Object.keys(rawCounts).length === 0 ? { [voted]: 1 } : rawCounts;
-                          const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
-                          const pct = total > 0 ? Math.round(((counts[option] || 0) / total) * 100) : 0;
-                          const isChosen = voted === option;
-                          return (
-                            <div key={i} className={`w-full rounded-full px-3 py-2.5 flex items-center justify-between ${isChosen ? 'bg-purple-600' : 'bg-gray-100 opacity-70'}`}>
-                              <span className={`text-sm font-medium flex items-center gap-1.5 ${isChosen ? 'text-white' : 'text-gray-700'}`}>
-                                {isChosen && <Check size={12} />}{option}
-                              </span>
-                              <span className={`text-sm font-semibold ${isChosen ? 'text-white' : 'text-gray-500'}`}>{pct}%</span>
-                            </div>
-                          );
-                        })
-                      ) : game.isMultiCategory ? (
-                        <Button onClick={() => onOpenModal(game)} className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm">
-                          Make Prediction
-                        </Button>
-                      ) : (
-                        (game.options || []).slice(0, 4).map((option: string, i: number) => (
-                          <button
-                            key={i}
-                            onClick={() => onOptionSelect(game.id, option)}
-                            className={`w-full py-2.5 px-4 rounded-full text-sm font-medium transition-all text-left flex items-center gap-2 ${
-                              selected === option ? 'bg-gray-200 border border-gray-300 text-gray-900' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                            }`}
-                          >
-                            {selected === option && <div className="w-4 h-4 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0"><Check size={10} className="text-white" /></div>}
-                            {option}
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Submit + stats row */}
-                  {!voted && !game.isMultiCategory && (
-                    <Button
-                      onClick={() => onSubmit(game)}
-                      disabled={!selected || isSubmitting}
-                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-500 disabled:opacity-40 rounded-full font-medium text-sm"
-                    >
-                      {isSubmitting ? 'Submitting...' : 'Submit'}
-                    </Button>
-                  )}
-                  <div className="flex items-center gap-3 text-xs text-gray-400">
-                    <span className="text-purple-600 font-medium flex items-center gap-1"><Star size={11} />{game.points || 10} pts</span>
-                    <span className="flex items-center gap-1"><Users size={11} />{(() => { const c = voteCounts[game.id] || {}; const t = Object.values(c).reduce((s: number, n: any) => s + n, 0); return t || game.participants || 0; })()} players</span>
-                  </div>
-                </CardContent>
-              </Card>
+    <div className="mb-4">
+      <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+        {/* Section header — inside the card */}
+        <div className="flex items-center justify-between px-4 pt-3.5 pb-3 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
+              <Icon className="w-3 h-3 text-white" />
             </div>
-          );
-        })}
-      </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{label}</p>
+              <p className="text-[10px] text-gray-400 leading-none mt-0.5">Tap to predict</p>
+            </div>
+          </div>
+          {games.length > 1 && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentIndex(i => Math.max(0, i - 1))}
+                disabled={currentIndex === 0}
+                className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 transition-colors"
+              >
+                <ChevronLeft className="w-3.5 h-3.5 text-gray-600" />
+              </button>
+              <span className="text-xs text-gray-500 min-w-[32px] text-center">{currentIndex + 1}/{games.length}</span>
+              <button
+                onClick={() => setCurrentIndex(i => Math.min(games.length - 1, i + 1))}
+                disabled={currentIndex === games.length - 1}
+                className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 transition-colors"
+              >
+                <ChevronRight className="w-3.5 h-3.5 text-gray-600" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Card body for current prediction */}
+        <CardContent className="p-4 flex flex-col gap-3" id={`prediction-${game.id}`}>
+          {/* Creator line */}
+          {(creatorNames[game.origin_user_id] || game.origin_type === 'consumed') && (
+            <p className="text-xs text-gray-400">
+              {game.origin_type === 'consumed'
+                ? <span className="text-amber-600 font-medium">Consumed</span>
+                : creatorNames[game.origin_user_id]
+                  ? <>{creatorNames[game.origin_user_id]} posted a prediction</>
+                  : 'Community prediction'}
+            </p>
+          )}
+
+          {/* Media title — own line, same weight as creator text */}
+          {displayTitle && (
+            <p className="text-xs text-gray-600 -mt-2">{displayTitle}</p>
+          )}
+
+          {/* Question */}
+          <h3 className="font-bold text-gray-900 text-base leading-snug">{game.title}</h3>
+
+          {/* Poster + options */}
+          <div className="flex gap-3 items-start">
+            {hasPoster && (
+              <img
+                src={posterUrl!}
+                alt={displayTitle || ''}
+                className="w-[88px] rounded-xl object-cover flex-shrink-0 shadow-sm"
+                style={{ aspectRatio: '2/3' }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            )}
+            <div className="flex-1 flex flex-col gap-2">
+              {voted ? (
+                (game.options || []).map((option: string, i: number) => {
+                  const rawCounts = voteCounts[game.id] || {};
+                  const counts = Object.keys(rawCounts).length === 0 ? { [voted]: 1 } : rawCounts;
+                  const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
+                  const pct = total > 0 ? Math.round(((counts[option] || 0) / total) * 100) : 0;
+                  const isChosen = voted === option;
+                  return (
+                    <div key={i} className={`w-full rounded-full px-3 py-2.5 flex items-center justify-between ${isChosen ? 'bg-purple-600' : 'bg-gray-100 opacity-70'}`}>
+                      <span className={`text-sm font-medium flex items-center gap-1.5 ${isChosen ? 'text-white' : 'text-gray-700'}`}>
+                        {isChosen && <Check size={12} />}{option}
+                      </span>
+                      <span className={`text-sm font-semibold ${isChosen ? 'text-white' : 'text-gray-500'}`}>{pct}%</span>
+                    </div>
+                  );
+                })
+              ) : game.isMultiCategory ? (
+                <Button onClick={() => onOpenModal(game)} className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm">
+                  Make Prediction
+                </Button>
+              ) : (
+                (game.options || []).slice(0, 4).map((option: string, i: number) => (
+                  <button
+                    key={i}
+                    onClick={() => onOptionSelect(game.id, option)}
+                    className={`w-full py-2.5 px-4 rounded-full text-sm font-medium transition-all text-left flex items-center gap-2 ${
+                      selected === option ? 'bg-gray-200 border border-gray-300 text-gray-900' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                    }`}
+                  >
+                    {selected === option && <div className="w-4 h-4 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0"><Check size={10} className="text-white" /></div>}
+                    {option}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+
+          {!voted && !game.isMultiCategory && (
+            <Button
+              onClick={() => onSubmit(game)}
+              disabled={!selected || isSubmitting}
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-500 disabled:opacity-40 rounded-full font-medium text-sm"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit'}
+            </Button>
+          )}
+          <div className="flex items-center gap-3 text-xs text-gray-400">
+            <span className="text-purple-600 font-medium flex items-center gap-1"><Star size={11} />{game.points || 10} pts</span>
+            <span className="flex items-center gap-1"><Users size={11} />{(() => { const c = voteCounts[game.id] || {}; const t = Object.values(c).reduce((s: number, n: any) => s + n, 0); return t || game.participants || 0; })()} players</span>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -223,7 +188,7 @@ export default function PlayPredictionsPage() {
   const [selectedPredictionGame, setSelectedPredictionGame] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [showComposer, setShowComposer] = useState(false);
-  const [activeTab, setActiveTab] = useState<'awards' | 'predictions'>('predictions');
+  const [activeTab, setActiveTab] = useState<'awards' | 'predictions'>('predictions'); // kept for URL compat
 
 
   // Extract game ID from URL hash if present (format: /play/predictions#game-id)
@@ -572,149 +537,14 @@ export default function PlayPredictionsPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-4">
 
-        {/* Tabs */}
-        <div className="flex items-center gap-2 mb-4">
-          <button
-            onClick={() => setActiveTab('predictions')}
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
-              activeTab === 'predictions'
-                ? 'bg-purple-600 text-white shadow-sm'
-                : 'bg-white text-gray-500 border border-gray-200 hover:border-purple-300'
-            }`}
-          >
-            <Target size={13} />
-            Predictions
-          </button>
-          <button
-            onClick={() => setActiveTab('awards')}
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
-              activeTab === 'awards'
-                ? 'bg-amber-500 text-white shadow-sm'
-                : 'bg-white text-gray-500 border border-gray-200 hover:border-amber-300'
-            }`}
-          >
-            <Trophy size={13} />
-            Awards
-          </button>
-        </div>
-
-        {/* Awards Tab */}
-        {activeTab === 'awards' && (() => {
-          const visibleAwards = awardsEvents.filter((e: any) =>
-            !['gg-2026', 'sag-awards-2026'].includes(e.id)
-          );
-          if (visibleAwards.length === 0) return (
-            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-              <Trophy className="mx-auto mb-4 text-gray-300" size={40} />
-              <p className="text-gray-500 text-sm">No awards events right now.</p>
-            </div>
-          );
-          return (
-            <div className="space-y-3">
-              {visibleAwards.map((event: any) => {
-                const isOpen = event.status === 'open';
-                const isCompleted = event.status === 'completed';
-                return (
-                  <button
-                    key={event.id}
-                    onClick={() => setLocation(`/play/awards/${event.id}`)}
-                    className="w-full text-left"
-                  >
-                    <Card className={`border shadow-sm rounded-2xl overflow-hidden transition-all hover:shadow-md ${
-                      isOpen
-                        ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200'
-                        : isCompleted
-                          ? 'bg-gray-50 border-gray-200'
-                          : 'bg-white border-gray-200'
-                    }`}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                              isOpen ? 'bg-amber-100' : 'bg-gray-100'
-                            }`}>
-                              <Trophy size={20} className={isOpen ? 'text-amber-600' : 'text-gray-400'} />
-                            </div>
-                            <div>
-                              <div className="font-semibold text-gray-900 text-sm">{event.name} {event.year}</div>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                {isOpen && (
-                                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs px-2 py-0">
-                                    Open
-                                  </Badge>
-                                )}
-                                {event.status === 'locked' && (
-                                  <Badge className="bg-gray-100 text-gray-500 hover:bg-gray-100 text-xs px-2 py-0 flex items-center gap-1">
-                                    <Lock size={10} />
-                                    Locked
-                                  </Badge>
-                                )}
-                                {isCompleted && (
-                                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs px-2 py-0">
-                                    Results In
-                                  </Badge>
-                                )}
-                                {event.deadline && isOpen && (
-                                  <span className="text-xs text-gray-400">
-                                    Closes {new Date(event.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <ChevronRight size={18} className="text-gray-400 flex-shrink-0" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </button>
-                );
-              })}
-            </div>
-          );
-        })()}
-
-        {/* Community & Consumed Tab */}
-        {activeTab === 'predictions' && (() => {
-          if (predictionGames.length === 0) return (
-            <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-              <Target className="mx-auto mb-4 text-gray-300" size={40} />
-              <h3 className="text-base font-medium text-gray-900 mb-2">No predictions yet</h3>
-              <p className="text-gray-500 text-sm mb-4">Be the first — create a prediction for others to weigh in on.</p>
-              <Button
-                onClick={() => setShowComposer(true)}
-                className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
-              >
-                <Plus size={16} className="mr-2" />
-                Create Prediction
-              </Button>
-            </div>
-          );
-
-          const CATEGORY_ORDER = ['movie', 'movies', 'tv', 'music', 'books', 'podcast', 'podcasts', 'sports', 'games'];
-          const LABEL_MAP: Record<string, string> = {
-            movie: 'Movies', movies: 'Movies', tv: 'TV', music: 'Music',
-            books: 'Books', podcast: 'Podcasts', podcasts: 'Podcasts',
-            sports: 'Sports', games: 'Gaming',
-          };
-          const grouped: Record<string, any[]> = {};
-          predictionGames.forEach((g: any) => {
-            const cat = (g.category || 'other').toLowerCase().trim();
-            if (!grouped[cat]) grouped[cat] = [];
-            grouped[cat].push(g);
-          });
-          const sortedCats = Object.keys(grouped).sort((a, b) => {
-            const ai = CATEGORY_ORDER.indexOf(a);
-            const bi = CATEGORY_ORDER.indexOf(b);
-            if (ai === -1 && bi === -1) return 0;
-            if (ai === -1) return 1;
-            if (bi === -1) return -1;
-            return ai - bi;
-          });
-          return sortedCats.map(cat => (
+        {/* Community Predictions */}
+        {(() => {
+          const communityGames = predictionGames.filter((g: any) => g.origin_type !== 'consumed');
+          if (communityGames.length > 0) return (
             <PredictionCarouselSection
-              key={cat}
-              label={LABEL_MAP[cat] || cat.charAt(0).toUpperCase() + cat.slice(1)}
-              games={grouped[cat]}
+              label="Community Predictions"
+              icon={Users}
+              games={communityGames}
               allPredictions={allPredictions}
               voteCounts={voteCountsData as Record<string, Record<string, number>>}
               selectedAnswers={selectedAnswers}
@@ -726,7 +556,89 @@ export default function PlayPredictionsPage() {
               mediaPosterMap={mediaPosterMap as Record<string, { title: string; image_url: string }>}
               socialPostMediaMap={socialPostMediaMap}
             />
-          ));
+          );
+          return null;
+        })()}
+
+        {/* Consumed Predictions */}
+        {(() => {
+          const consumedGames = predictionGames.filter((g: any) => g.origin_type === 'consumed');
+          if (consumedGames.length > 0) return (
+            <PredictionCarouselSection
+              label="Consumed Predictions"
+              icon={Trophy}
+              games={consumedGames}
+              allPredictions={allPredictions}
+              voteCounts={voteCountsData as Record<string, Record<string, number>>}
+              selectedAnswers={selectedAnswers}
+              onOptionSelect={handleOptionSelect}
+              onSubmit={handleSubmitAnswer}
+              onOpenModal={(game) => setSelectedPredictionGame(game)}
+              isSubmitting={submitPrediction.isPending}
+              creatorNames={creatorNames as Record<string, string>}
+              mediaPosterMap={mediaPosterMap as Record<string, { title: string; image_url: string }>}
+              socialPostMediaMap={socialPostMediaMap}
+            />
+          );
+          return null;
+        })()}
+
+        {predictionGames.length === 0 && (
+          <div className="text-center py-10 bg-white rounded-xl border border-gray-200 mb-4">
+            <Target className="mx-auto mb-3 text-gray-300" size={36} />
+            <p className="text-sm font-medium text-gray-700 mb-1">No predictions yet</p>
+            <p className="text-xs text-gray-400 mb-4">Be the first — create one for others to weigh in on.</p>
+            <Button onClick={() => setShowComposer(true)} className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm">
+              <Plus size={14} className="mr-1.5" />Create Prediction
+            </Button>
+          </div>
+        )}
+
+        {/* Awards — stacked rows */}
+        {(() => {
+          const visibleAwards = awardsEvents.filter((e: any) => !['gg-2026', 'sag-awards-2026'].includes(e.id));
+          if (visibleAwards.length === 0) return null;
+          return (
+            <div>
+              <p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-1.5">
+                <Trophy size={14} className="text-amber-500" />Awards
+              </p>
+              <div className="space-y-2">
+                {visibleAwards.map((event: any) => {
+                  const isOpen = event.status === 'open';
+                  const isCompleted = event.status === 'completed';
+                  return (
+                    <button key={event.id} onClick={() => setLocation(`/play/awards/${event.id}`)} className="w-full text-left">
+                      <Card className={`border shadow-sm rounded-2xl overflow-hidden transition-all hover:shadow-md ${
+                        isOpen ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200'
+                          : isCompleted ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200'
+                      }`}>
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isOpen ? 'bg-amber-100' : 'bg-gray-100'}`}>
+                                <Trophy size={20} className={isOpen ? 'text-amber-600' : 'text-gray-400'} />
+                              </div>
+                              <div>
+                                <div className="font-semibold text-gray-900 text-sm">{event.name} {event.year}</div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  {isOpen && <Badge className="bg-green-100 text-green-700 hover:bg-green-100 text-xs px-2 py-0">Open</Badge>}
+                                  {event.status === 'locked' && <Badge className="bg-gray-100 text-gray-500 hover:bg-gray-100 text-xs px-2 py-0 flex items-center gap-1"><Lock size={10} />Locked</Badge>}
+                                  {isCompleted && <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs px-2 py-0">Results In</Badge>}
+                                  {event.deadline && isOpen && <span className="text-xs text-gray-400">Closes {new Date(event.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                                </div>
+                              </div>
+                            </div>
+                            <ChevronRight size={18} className="text-gray-400 flex-shrink-0" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
         })()}
 
       </div>
