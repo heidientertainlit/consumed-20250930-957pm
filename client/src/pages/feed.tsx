@@ -1139,6 +1139,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     ? { label: 'Leaderboard', color: 'text-purple-500', bg: 'bg-purple-50', icon: Trophy }
     : getTypeInfo(post.type);
   const TypeIcon = typeInfo.icon;
+  const isRatingType = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review';
 
   const timeAgo = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -1193,7 +1194,11 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
             <Link href={`/user/${post.user?.id || ''}`}>
               <span className="font-medium text-sm text-gray-900 hover:text-purple-600 cursor-pointer">{displayName}</span>
             </Link>
-            <span className="text-xs text-gray-400"> · {timeAgo(post.timestamp)}</span>
+            {isRatingType ? (
+              <p className="text-xs text-gray-400">played a rating · {timeAgo(post.timestamp)}</p>
+            ) : (
+              <span className="text-xs text-gray-400"> · {timeAgo(post.timestamp)}</span>
+            )}
           </div>
           <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 ${typeInfo.bg} ${typeInfo.color}`}>
             {typeInfo.label}
@@ -1291,6 +1296,12 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                   })}
                 </div>
               )}
+              {communityRating !== null && post.rating && post.rating > 0 && (() => {
+                const diff = post.rating - communityRating;
+                if (Math.abs(diff) <= 0.3) return <p className="text-[11px] text-gray-400 mt-0.5">On par with community avg ({communityRating}/5)</p>;
+                if (diff > 0) return <p className="text-[11px] text-green-600 mt-0.5">↑ {diff.toFixed(1)} above community avg ({communityRating}/5)</p>;
+                return <p className="text-[11px] text-orange-500 mt-0.5">↓ {Math.abs(diff).toFixed(1)} below community avg ({communityRating}/5)</p>;
+              })()}
               {displayContent && (
                 post.containsSpoilers && !isSpoilerRevealed ? (
                   <div className="relative mt-1.5">
@@ -1336,14 +1347,37 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
           )
         )}
 
+        {/* Your Turn — inline star rating for rating/review posts */}
+        {isRatingType && post.mediaTitle && post.externalId && currentUserId && post.user?.id !== currentUserId && (
+          <div className="border-t border-gray-100 mt-3 pt-3">
+            {!ratingSubmitted ? (
+              <>
+                <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">Your Turn</p>
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <div key={star} className="relative" style={{ width: 30, height: 30 }}>
+                      <Star size={30} className="absolute inset-0 text-gray-200" />
+                      <div className="absolute inset-0 overflow-hidden pointer-events-none"
+                           style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}>
+                        <Star size={30} className="fill-yellow-400 text-yellow-400" />
+                      </div>
+                      <button className="absolute top-0 left-0 h-full z-10" style={{ width: '30%' }}
+                              onClick={() => handleSubmitRating(star - 0.5)} aria-label={`Rate ${star - 0.5}`} />
+                      <button className="absolute top-0 right-0 h-full z-10" style={{ width: '70%' }}
+                              onClick={() => handleSubmitRating(star)} aria-label={`Rate ${star}`} />
+                    </div>
+                  ))}
+                  {ratingValue > 0 && <span className="ml-2 text-xs text-gray-400">{ratingValue}/5</span>}
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-green-600 font-medium">Rated! ★ {ratingValue}/5</p>
+            )}
+          </div>
+        )}
+
+        {/* Action bar — Comment | Add | Seen it */}
         <div className="flex items-center gap-4 mt-2.5 pt-2.5 border-t border-gray-50">
-          <button
-            onClick={() => onLike?.(post.id)}
-            className={`flex items-center gap-1.5 text-sm ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} active:scale-110 transition-transform`}
-          >
-            <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
-            <span className="text-xs">{post.likes || 0}</span>
-          </button>
           <button
             onClick={() => onComment?.(post.id)}
             className={`flex items-center gap-1.5 text-sm ${isCommentsActive ? 'text-purple-500' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
@@ -1371,57 +1405,21 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                   </button>
                 )}
                 <button
-                  onClick={() => setShowRating(r => !r)}
-                  className={`flex items-center gap-1 text-sm active:scale-110 transition-all ${showRating || ratingSubmitted ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'}`}
-                  title="Rate"
+                  onClick={() => onAddToList?.(media)}
+                  className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-green-500 active:scale-110 transition-all"
+                  title="Seen it"
                 >
-                  <Star size={15} fill={ratingSubmitted ? 'currentColor' : 'none'} />
-                  {communityRating !== null && (
-                    <span className={`text-[11px] font-medium ${showRating || ratingSubmitted ? 'text-yellow-500' : 'text-gray-400'}`}>
-                      {communityRating}
-                    </span>
-                  )}
+                  <Check size={15} />
+                  <span className="text-xs">Seen it</span>
                 </button>
               </>
             );
           })()}
         </div>
 
-        {showRating && (
-          <div className="mt-2 pt-2 border-t border-gray-50">
-            <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map(star => (
-                <div key={star} className="relative" style={{ width: 34, height: 34 }}>
-                  <Star size={34} className="absolute inset-0 text-gray-200" />
-                  <div
-                    className="absolute inset-0 overflow-hidden pointer-events-none"
-                    style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}
-                  >
-                    <Star size={34} className="fill-yellow-400 text-yellow-400" />
-                  </div>
-                  <button
-                    className="absolute top-0 left-0 h-full z-10"
-                    style={{ width: '30%' }}
-                    onClick={() => handleSubmitRating(star - 0.5)}
-                    aria-label={`Rate ${star - 0.5} stars`}
-                  />
-                  <button
-                    className="absolute top-0 right-0 h-full z-10"
-                    style={{ width: '70%' }}
-                    onClick={() => handleSubmitRating(star)}
-                    aria-label={`Rate ${star} stars`}
-                  />
-                </div>
-              ))}
-              {ratingSubmitted ? (
-                <span className="ml-2 text-xs text-green-600 font-medium">Saved!</span>
-              ) : ratingValue > 0 ? (
-                <span className="ml-2 text-xs text-gray-500">{ratingValue}/5</span>
-              ) : (
-                <span className="ml-2 text-xs text-gray-400">Tap to rate</span>
-              )}
-            </div>
-          </div>
+        {/* DNA footer */}
+        {isRatingType && (
+          <p className="text-[10px] text-gray-400 text-center mt-2">Counts toward your entertainment DNA</p>
         )}
 
         {isCommentsActive && (
