@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Search as SearchIcon, Loader2, Film, Music, BookOpen, Tv, Mic, Gamepad2, Clock, Download, Share2, List, ChevronRight, Calendar, Play, Trophy, LayoutGrid, Activity, X } from "lucide-react";
+import { Loader2, Film, Music, BookOpen, Tv, Mic, Gamepad2, Clock, Download, Share2, List, ChevronRight, Calendar, Play, Trophy, LayoutGrid, Activity, X } from "lucide-react";
+import { SearchPlusIcon } from "@/components/ui/search-plus-icon";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
@@ -511,7 +512,7 @@ export default function MyLibrary() {
 
               <div className="flex items-center gap-2 mb-3">
                 <div className="relative flex-1">
-                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                  <SearchPlusIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                   <input
                     type="text"
                     placeholder="Search lists..."
@@ -729,7 +730,7 @@ export default function MyLibrary() {
                   </div>
 
                   <div className="relative mb-3">
-                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                    <SearchPlusIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                     <input
                       type="text"
                       placeholder="Filter media history..."

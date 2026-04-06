@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, X, Film, Plus, MessageSquarePlus, Star } from "lucide-react";
+import { X, Film, Plus, MessageSquarePlus, Star } from "lucide-react";
+import { SearchPlusIcon } from "@/components/ui/search-plus-icon";
 import { Link } from "wouter";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { QuickAddModal } from "@/components/quick-add-modal";
@@ -79,7 +80,7 @@ export function MediaSearchBar({
         <div className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-white/[0.12] border border-white/20 focus-within:border-purple-400/60 transition-colors">
           {isSearching
             ? <div className="w-[18px] h-[18px] border-2 border-purple-300/60 border-t-transparent rounded-full animate-spin shrink-0" />
-            : <Search size={18} className="text-purple-300/80 shrink-0" />
+            : <SearchPlusIcon size={18} className="text-purple-300/80 shrink-0" />
           }
           <input
             type="text"
