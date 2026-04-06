@@ -200,40 +200,39 @@ export default function PlayPollsPage() {
           <button onClick={() => window.history.back()} className="absolute left-4 top-6 flex items-center text-gray-400 hover:text-white transition-colors">
             <ChevronLeft size={20} />
           </button>
-          <h1 className="text-2xl font-semibold text-white text-center tracking-tight mb-4">Polls</h1>
-
-          {/* Pill category filters inside gradient — same as trivia */}
-          {pollsByCategory.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1" style={{ scrollbarWidth: 'none' }}>
-              <button
-                onClick={() => setSelectedCategory(null)}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  !selectedCategory
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-white/10 border border-white/20 text-gray-300 hover:bg-white/20'
-                }`}
-              >
-                All
-              </button>
-              {pollsByCategory.map(([cat]) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-white/10 border border-white/20 text-gray-300 hover:bg-white/20'
-                  }`}
-                >
-                  {categoryInfo[cat]?.label || cat}
-                </button>
-              ))}
-            </div>
-          )}
+          <h1 className="text-2xl font-semibold text-white text-center tracking-tight">Polls</h1>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-4">
+        {/* Pill category filters */}
+        {pollsByCategory.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-3" style={{ scrollbarWidth: 'none' }}>
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                !selectedCategory
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:border-purple-300'
+              }`}
+            >
+              All
+            </button>
+            {pollsByCategory.map(([cat]) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  selectedCategory === cat
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-purple-300'
+                }`}
+              >
+                {categoryInfo[cat]?.label || cat}
+              </button>
+            ))}
+          </div>
+        )}
         {pollsByCategory.length > 0 ? (
           <div className="space-y-5">
             {pollsByCategory
