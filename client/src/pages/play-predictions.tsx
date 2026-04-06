@@ -26,6 +26,7 @@ function PredictionCarouselSection({
   isSubmitting,
   creatorNames = {},
   mediaPosterMap = {},
+  socialPostImageMap = {},
 }: {
   label: string;
   games: any[];
@@ -38,6 +39,7 @@ function PredictionCarouselSection({
   isSubmitting: boolean;
   creatorNames?: Record<string, string>;
   mediaPosterMap?: Record<string, { title: string; image_url: string; detected_type?: string }>;
+  socialPostImageMap?: Record<string, string>;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -112,7 +114,8 @@ function PredictionCarouselSection({
           const selected = selectedAnswers[game.id];
           const mediaInfo = game.media_external_id ? mediaPosterMap[game.media_external_id] : null;
           const displayTitle = game.media_title || mediaInfo?.title;
-          const posterUrl = game.media_image_url || mediaInfo?.image_url;
+          // Priority: stored URL → social post image (saved at creation) → TMDB lookup (title-validated)
+          const posterUrl = game.media_image_url || socialPostImageMap[game.id] || mediaInfo?.image_url;
           const hasPoster = !!(posterUrl);
 
           return (
@@ -365,52 +368,54 @@ export default function PlayPredictionsPage() {
 
   const allPredictions = userPredictionsData || {};
 
-  // Fetch media info (poster + title) for predictions that have an external media ID
-  const mediaExternalIds = [...new Set(
-    games
-      .filter((g: any) => g.media_external_id)
-      .map((g: any) => g.media_external_id)
-  )];
+  // Fetch media info (poster + title) for predictions that need TMDB lookup
+  // Only look up IDs where media_image_url is not already stored
+  const gamesNeedingLookup = games.filter((g: any) => g.media_external_id && !g.media_image_url);
+  const mediaExternalIds = [...new Set(gamesNeedingLookup.map((g: any) => g.media_external_id))];
 
-  // Build a lookup of which IDs are TV vs movie
-  const tvIds = new Set(
-    games
-      .filter((g: any) => g.media_external_source === 'tmdb_tv' || g.category === 'tv')
-      .map((g: any) => g.media_external_id)
-      .filter(Boolean)
-  );
-
-  const movieIds = mediaExternalIds.filter((id: string) => !tvIds.has(id));
-  const tvIdList = mediaExternalIds.filter((id: string) => tvIds.has(id));
+  // Build expected titles map so the backend can validate the right movie/TV type
+  const expectedTitlesMap: Record<string, string> = {};
+  for (const g of gamesNeedingLookup) {
+    if (g.media_external_id && g.media_title) {
+      expectedTitlesMap[g.media_external_id] = g.media_title;
+    }
+  }
 
   const { data: mediaPosterMap = {} } = useQuery({
-    queryKey: ['/api/media/posters/tmdb', mediaExternalIds],
+    queryKey: ['/api/media/posters/tmdb', mediaExternalIds, expectedTitlesMap],
     queryFn: async () => {
       if (mediaExternalIds.length === 0) return {};
-      const map: Record<string, { title: string; image_url: string }> = {};
-
-      await Promise.all([
-        movieIds.length > 0
-          ? fetch(`/api/tmdb/media-details?ids=${movieIds.join(',')}&type=movie`)
-              .then(r => r.ok ? r.json() : {})
-              .then((res: Record<string, { title: string; image_url: string }>) => {
-                Object.assign(map, res);
-              })
-              .catch(() => {})
-          : Promise.resolve(),
-        tvIdList.length > 0
-          ? fetch(`/api/tmdb/media-details?ids=${tvIdList.join(',')}&type=tv`)
-              .then(r => r.ok ? r.json() : {})
-              .then((res: Record<string, { title: string; image_url: string }>) => {
-                Object.assign(map, res);
-              })
-              .catch(() => {})
-          : Promise.resolve(),
-      ]);
-
-      return map;
+      // Send all IDs in one request; backend now fetches both movie+TV and uses title to pick
+      const params = new URLSearchParams({
+        ids: mediaExternalIds.join(','),
+        expectedTitles: JSON.stringify(expectedTitlesMap),
+      });
+      const res = await fetch(`/api/tmdb/media-details?${params}`).then(r => r.ok ? r.json() : {}).catch(() => ({}));
+      return res as Record<string, { title: string; image_url: string; detected_type: string }>;
     },
     enabled: mediaExternalIds.length > 0,
+  });
+
+  // Fetch social_posts images as reliable fallback (images saved at prediction-creation time)
+  const poolIds = games.filter((g: any) => !g.media_image_url).map((g: any) => g.id);
+  const { data: socialPostImageMap = {} } = useQuery({
+    queryKey: ['/api/social-posts/pool-images', poolIds],
+    queryFn: async () => {
+      if (poolIds.length === 0) return {};
+      const { data } = await supabase
+        .from('social_posts')
+        .select('prediction_pool_id, image_url')
+        .in('prediction_pool_id', poolIds)
+        .not('image_url', 'is', null);
+      const map: Record<string, string> = {};
+      for (const row of data || []) {
+        if (row.prediction_pool_id && row.image_url && !map[row.prediction_pool_id]) {
+          map[row.prediction_pool_id] = row.image_url;
+        }
+      }
+      return map;
+    },
+    enabled: poolIds.length > 0,
   });
 
   // Fetch creator names for community predictions
@@ -795,6 +800,7 @@ export default function PlayPredictionsPage() {
               isSubmitting={submitPrediction.isPending}
               creatorNames={creatorNames as Record<string, string>}
               mediaPosterMap={mediaPosterMap as Record<string, { title: string; image_url: string }>}
+              socialPostImageMap={socialPostImageMap as Record<string, string>}
             />
           ));
         })()}

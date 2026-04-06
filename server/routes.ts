@@ -283,37 +283,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!TMDB_API_KEY) return res.status(500).json({ message: "TMDB API key not configured" });
 
       const ids = String(req.query.ids || '').split(',').filter(Boolean).slice(0, 20);
-      const type = String(req.query.type || 'movie'); // 'movie' or 'tv'
+      const hintType = String(req.query.type || 'movie'); // caller hint: 'movie' or 'tv'
+      // Optional JSON map of { [tmdbId]: expectedTitle } for title-based validation
+      let expectedTitles: Record<string, string> = {};
+      try { expectedTitles = JSON.parse(String(req.query.expectedTitles || '{}')); } catch {}
 
       if (ids.length === 0) return res.json({});
+
+      const titleSim = (a: string, b: string) => {
+        if (!a || !b) return 0;
+        const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const na = norm(a), nb = norm(b);
+        if (na === nb) return 1;
+        if (na.includes(nb) || nb.includes(na)) return 0.8;
+        return 0;
+      };
 
       const results: Record<string, { title: string; image_url: string; detected_type: string }> = {};
 
       await Promise.all(ids.map(async (id) => {
         try {
-          // Try the requested type first
-          const firstEndpoint = type === 'tv'
-            ? `https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_API_KEY}`
-            : `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}`;
-          const r = await fetch(firstEndpoint);
-          if (r.ok) {
-            const d = await r.json();
-            const title = d.title || d.name || '';
-            const poster = d.poster_path ? `https://image.tmdb.org/t/p/w342${d.poster_path}` : '';
-            if (poster) {
-              results[id] = { title, image_url: poster, detected_type: type };
+          // Always fetch BOTH types in parallel — never trust just one
+          const [rMovie, rTV] = await Promise.all([
+            fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_API_KEY}`).then(r => r.ok ? r.json() : null).catch(() => null),
+            fetch(`https://api.themoviedb.org/3/tv/${id}?api_key=${TMDB_API_KEY}`).then(r => r.ok ? r.json() : null).catch(() => null),
+          ]);
+
+          const movieTitle = rMovie?.title || '';
+          const moviePoster = rMovie?.poster_path ? `https://image.tmdb.org/t/p/w342${rMovie.poster_path}` : '';
+          const tvTitle = rTV?.name || '';
+          const tvPoster = rTV?.poster_path ? `https://image.tmdb.org/t/p/w342${rTV.poster_path}` : '';
+
+          const expected = expectedTitles[id] || '';
+
+          // If we have an expected title, pick whichever type matches it best
+          if (expected) {
+            const movieScore = titleSim(movieTitle, expected);
+            const tvScore = titleSim(tvTitle, expected);
+            if (tvScore > movieScore && tvPoster) {
+              results[id] = { title: tvTitle, image_url: tvPoster, detected_type: 'tv' };
+              return;
+            }
+            if (movieScore > tvScore && moviePoster) {
+              results[id] = { title: movieTitle, image_url: moviePoster, detected_type: 'movie' };
               return;
             }
           }
-          // If no poster found, try the other type as fallback
-          const fallbackType = type === 'tv' ? 'movie' : 'tv';
-          const fallbackEndpoint = `https://api.themoviedb.org/3/${fallbackType}/${id}?api_key=${TMDB_API_KEY}`;
-          const r2 = await fetch(fallbackEndpoint);
-          if (!r2.ok) return;
-          const d2 = await r2.json();
-          const title2 = d2.title || d2.name || '';
-          const poster2 = d2.poster_path ? `https://image.tmdb.org/t/p/w342${d2.poster_path}` : '';
-          results[id] = { title: title2, image_url: poster2, detected_type: fallbackType };
+
+          // No expected title — use hint type, fall back to the other type if no poster
+          if (hintType === 'tv') {
+            if (tvPoster) { results[id] = { title: tvTitle, image_url: tvPoster, detected_type: 'tv' }; return; }
+            if (moviePoster) { results[id] = { title: movieTitle, image_url: moviePoster, detected_type: 'movie' }; }
+          } else {
+            if (moviePoster) { results[id] = { title: movieTitle, image_url: moviePoster, detected_type: 'movie' }; return; }
+            if (tvPoster) { results[id] = { title: tvTitle, image_url: tvPoster, detected_type: 'tv' }; }
+          }
         } catch {}
       }));
 
