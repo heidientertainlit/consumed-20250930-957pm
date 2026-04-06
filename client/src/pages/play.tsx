@@ -130,8 +130,8 @@ function RankWidget({ onNavigate }: { onNavigate: (path: string) => void }) {
         {below && <Row entry={below} />}
       </div>
       <div className="flex items-center justify-end gap-1 mt-2.5 pr-1">
-        <span className="text-[11px] text-white/30">Full leaderboard</span>
-        <ArrowRight size={11} className="text-white/30" />
+        <span className="text-[11px] text-white/60">Full leaderboard</span>
+        <ArrowRight size={11} className="text-white/60" />
       </div>
     </button>
   );
