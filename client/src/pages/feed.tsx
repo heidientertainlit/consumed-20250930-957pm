@@ -1249,7 +1249,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
               <span className="font-medium text-sm text-gray-900 hover:text-purple-600 cursor-pointer">{displayName}</span>
             </Link>
             {isRatingType ? (
-              <p className="text-xs text-gray-400">played a rating · {timeAgo(post.timestamp)}</p>
+              <p className="text-xs text-gray-500 font-medium">{displayName}'s Take:</p>
             ) : (
               <span className="text-xs text-gray-400"> · {timeAgo(post.timestamp)}</span>
             )}
@@ -1352,12 +1352,11 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
               )}
               {post.rating && post.rating > 0 && (() => {
                 const refRating = externalRating ?? communityRating;
-                const ratingLabel = externalRating !== null ? `${externalRatingLabel} avg` : 'community avg';
                 if (refRating === null) return null;
                 const ratingDiff = post.rating - refRating;
-                if (Math.abs(ratingDiff) <= 0.3) return <p className="text-[11px] text-gray-400 mt-0.5">On par with {ratingLabel} ({refRating}/5)</p>;
-                if (ratingDiff > 0) return <p className="text-[11px] text-green-600 mt-0.5">↑ {ratingDiff.toFixed(1)} above {ratingLabel} ({refRating}/5)</p>;
-                return <p className="text-[11px] text-orange-500 mt-0.5">↓ {Math.abs(ratingDiff).toFixed(1)} below {ratingLabel} ({refRating}/5)</p>;
+                if (Math.abs(ratingDiff) <= 0.3) return <p className="text-[11px] text-gray-400 mt-0.5">On par with average</p>;
+                if (ratingDiff > 0) return <p className="text-[11px] text-green-600 mt-0.5">↑ {ratingDiff.toFixed(1)} above average</p>;
+                return <p className="text-[11px] text-orange-500 mt-0.5">↓ {Math.abs(ratingDiff).toFixed(1)} below average</p>;
               })()}
               {tasteAlignment !== null && post.user?.id !== currentUserId && (
                 <p className="text-[11px] text-purple-500 mt-0.5">
