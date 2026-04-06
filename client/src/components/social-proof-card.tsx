@@ -75,7 +75,13 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
     card.predictionPoolId
   );
 
-  const hasInline = hasInlineTrivia || hasInlinePrediction;
+  const hasInlinePoll = !!(
+    card.variant === 'vote_cast' &&
+    card.options && card.options.length > 0 &&
+    card.predictionPoolId
+  );
+
+  const hasInline = hasInlineTrivia || hasInlinePrediction || hasInlinePoll;
 
   const [showOptions, setShowOptions] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -204,12 +210,26 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
 
         {/* Inline expand button */}
         {hasInline && !showOptions && (
-          <button
-            onClick={() => setShowOptions(true)}
-            className="w-full py-3.5 rounded-2xl text-center text-purple-600 font-medium text-sm bg-gray-100 active:bg-gray-200 transition-colors"
-          >
-            {hasInlinePrediction ? `Make your pick · +${pts} pts` : `Answer to earn +${pts} pts`}
-          </button>
+          <>
+            <button
+              onClick={() => setShowOptions(true)}
+              className="w-full py-3.5 rounded-2xl text-center text-purple-600 font-medium text-sm bg-gray-100 active:bg-gray-200 transition-colors"
+            >
+              {hasInlinePoll
+                ? `Cast your vote · +${pts} pts`
+                : hasInlinePrediction
+                  ? `Make your pick · +${pts} pts`
+                  : `Answer to earn +${pts} pts`}
+            </button>
+            {/* Poll attribution footnote — collapsed state */}
+            {hasInlinePoll && card.user && (
+              <p className="text-xs text-gray-400 text-center mt-2.5 leading-snug">
+                {card.user.displayName?.split(' ')[0] || card.user.username}
+                {card.userAnswer ? ` picked "${card.userAnswer}"` : ' already voted'}
+                {card.highlight ? ` · ${card.highlight}` : ''}
+              </p>
+            )}
+          </>
         )}
 
         {/* Inline options */}
@@ -289,6 +309,40 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
                   );
                 })}
                 <p className="text-xs text-gray-400 pt-1">Tap to answer · +{pts} pts</p>
+              </>
+            ) : hasInlinePoll ? (
+              /* Poll options */
+              <>
+                {card.options!.map((option) => {
+                  const isSelected = selectedAnswer === option;
+                  let rowStyle = 'border border-gray-200 bg-white text-gray-900';
+                  if (isSelected && submitted) rowStyle = 'border border-purple-500 bg-purple-50 text-purple-900';
+                  else if (isSelected) rowStyle = 'border border-purple-400 bg-purple-50 text-purple-900';
+                  return (
+                    <button
+                      key={option}
+                      onClick={() => handleAnswer(option)}
+                      disabled={!!selectedAnswer}
+                      className={`w-full text-left px-4 py-3.5 rounded-xl text-sm font-normal transition-colors flex items-center justify-between ${rowStyle} ${!selectedAnswer ? 'active:bg-gray-50' : ''}`}
+                    >
+                      <span>{option}</span>
+                      {isSelected && submitted && <Check size={15} className="text-purple-600 shrink-0" />}
+                    </button>
+                  );
+                })}
+                {submitted ? (
+                  <p className="text-xs font-medium text-purple-600 pt-1">Vote cast! +{pts} pts</p>
+                ) : (
+                  <p className="text-xs text-gray-400 pt-1">Tap to cast your vote · +{pts} pts</p>
+                )}
+                {/* Attribution footnote — expanded state */}
+                {card.user && (
+                  <p className="text-xs text-gray-400 text-center pt-1 leading-snug">
+                    {card.user.displayName?.split(' ')[0] || card.user.username}
+                    {card.userAnswer ? ` picked "${card.userAnswer}"` : ' already voted'}
+                    {card.highlight ? ` · ${card.highlight}` : ''}
+                  </p>
+                )}
               </>
             ) : (
               /* Prediction options */
@@ -446,6 +500,9 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
       ctaLabel: 'Cast your vote',
       ctaHref: '/play/polls',
       timestamp: post.timestamp,
+      options,
+      predictionPoolId,
+      pointsReward: gm?.points_reward || 10,
     };
   }
 
