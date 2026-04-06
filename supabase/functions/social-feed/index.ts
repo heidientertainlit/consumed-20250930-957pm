@@ -1408,7 +1408,7 @@ serve(async (req) => {
               const agreementPct = totalVotes > 0 ? Math.round((agreementCount / totalVotes) * 100) : null;
 
               // Map pool type to gameType
-              const gameTypeMap: Record<string, string> = { predict: 'prediction', trivia: 'trivia', poll: 'poll' };
+              const gameTypeMap: Record<string, string> = { predict: 'prediction', trivia: 'trivia', poll: 'poll', vote: 'poll' };
               const gameType = gameTypeMap[pool.type] || 'prediction';
               const isCorrect = pool.correct_answer ? (vote.prediction === pool.correct_answer) : undefined;
 
