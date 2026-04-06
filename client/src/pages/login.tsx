@@ -211,10 +211,10 @@ export default function LoginPage() {
             />
           </div>
           <h1 className="text-white text-base font-bold tracking-widest">
-            CONNECT. TRACK. PLAY.
+            PLAY. CONNECT. DISCOVER.
           </h1>
           <p className="text-gray-300 text-base mb-2">
-            The social layer of entertainment.
+            Where entertainment gets played.
           </p>
         </div>
         
@@ -390,6 +390,10 @@ export default function LoginPage() {
             </TabsContent>
           </Tabs>
         </div>
+
+        <p className="text-gray-400 text-sm text-center mt-4">
+          The social layer of entertainment.
+        </p>
         
       </div>
 
