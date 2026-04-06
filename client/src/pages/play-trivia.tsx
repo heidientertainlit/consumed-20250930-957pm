@@ -365,39 +365,40 @@ export default function PlayTriviaPage() {
           >
             <ChevronLeft size={20} />
           </button>
-          <h1 className="text-2xl font-semibold text-white text-center tracking-tight" data-testid="trivia-title">Trivia</h1>
+          <h1 className="text-2xl font-semibold text-white text-center tracking-tight mb-5" data-testid="trivia-title">Trivia</h1>
+
+          {/* Pill category filters */}
+          {gamesByCategory.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-6" style={{ scrollbarWidth: 'none' }}>
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  !selectedCategory
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-white/10 border border-white/20 text-gray-300 hover:bg-white/20'
+                }`}
+              >
+                All
+              </button>
+              {gamesByCategory.map(([cat]) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    selectedCategory === cat
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-white/10 border border-white/20 text-gray-300 hover:bg-white/20'
+                  }`}
+                >
+                  {categoryInfo[cat]?.label || cat}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-4">
-        {/* Pill category filters */}
-        {gamesByCategory.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-3" style={{ scrollbarWidth: 'none' }}>
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                !selectedCategory
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:border-purple-300'
-              }`}
-            >
-              All
-            </button>
-            {gamesByCategory.map(([cat]) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  selectedCategory === cat
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-purple-300'
-                }`}
-              >
-                {categoryInfo[cat]?.label || cat}
-              </button>
-            ))}
-          </div>
-        )}
 
         {/* Trivia Games by Category */}
         {gamesByCategory.length > 0 ? (
