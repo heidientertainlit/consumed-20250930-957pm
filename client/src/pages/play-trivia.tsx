@@ -365,11 +365,11 @@ export default function PlayTriviaPage() {
           >
             <ChevronLeft size={20} />
           </button>
-          <h1 className="text-2xl font-semibold text-white text-center tracking-tight mb-5" data-testid="trivia-title">Trivia</h1>
+          <h1 className="text-2xl font-semibold text-white text-center tracking-tight mb-7" data-testid="trivia-title">Trivia</h1>
 
           {/* Pill category filters */}
           {gamesByCategory.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-6" style={{ scrollbarWidth: 'none' }}>
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-3" style={{ scrollbarWidth: 'none' }}>
               <button
                 onClick={() => setSelectedCategory(null)}
                 className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${

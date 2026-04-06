@@ -200,11 +200,11 @@ export default function PlayPollsPage() {
           <button onClick={() => window.history.back()} className="absolute left-4 top-6 flex items-center text-gray-400 hover:text-white transition-colors">
             <ChevronLeft size={20} />
           </button>
-          <h1 className="text-2xl font-semibold text-white text-center tracking-tight mb-5">Polls</h1>
+          <h1 className="text-2xl font-semibold text-white text-center tracking-tight mb-7">Polls</h1>
 
           {/* Pill category filters */}
           {pollsByCategory.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-6" style={{ scrollbarWidth: 'none' }}>
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-3" style={{ scrollbarWidth: 'none' }}>
               <button
                 onClick={() => setSelectedCategory(null)}
                 className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
