@@ -182,8 +182,8 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           <p className="text-sm text-gray-400 mb-4">{card.highlight}</p>
         )}
 
-        {/* Wrong answer chips (trivia only — not polls) */}
-        {card.variant !== 'vote_cast' && (card.userAnswer || card.correctAnswer) && !showOptions && (
+        {/* Wrong answer chips (trivia only — not polls, only after user has answered) */}
+        {card.variant !== 'vote_cast' && card.userAnswer && !showOptions && (
           <div className="flex flex-wrap gap-2 mb-3">
             {card.userAnswer && (
               <div className="flex items-center gap-1.5">
