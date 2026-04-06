@@ -170,18 +170,6 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           </p>
         )}
 
-        {/* Non-poll: soft subtitle headline */}
-        {card.variant !== 'vote_cast' && (
-          <p className="text-sm text-gray-500 font-medium leading-snug mb-3">
-            {renderHeadline()}
-          </p>
-        )}
-
-        {/* Non-poll: stats */}
-        {card.variant !== 'vote_cast' && card.highlight && (
-          <p className="text-sm text-gray-400 mb-4">{card.highlight}</p>
-        )}
-
         {/* Wrong answer chips (trivia only — not polls, only after user has answered) */}
         {card.variant !== 'vote_cast' && card.userAnswer && !showOptions && (
           <div className="flex flex-wrap gap-2 mb-3">
@@ -217,6 +205,15 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
                   ? 'Make your pick'
                   : 'Answer to earn points'}
             </button>
+            {/* Attribution footnote — below the button */}
+            {card.variant !== 'vote_cast' && (
+              <p className="text-sm text-gray-500 font-medium leading-snug mt-3">
+                {renderHeadline()}
+              </p>
+            )}
+            {card.variant !== 'vote_cast' && card.highlight && (
+              <p className="text-xs text-gray-400 mt-1">{card.highlight}</p>
+            )}
             {/* Poll attribution footnote — collapsed state */}
             {hasInlinePoll && card.user && (
               <p className="text-xs text-gray-400 text-center mt-2.5 leading-snug">
@@ -373,6 +370,15 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
                 {card.ctaLabel}
               </div>
             </Link>
+            {/* Attribution below the button for non-poll variants */}
+            {card.variant !== 'vote_cast' && (
+              <p className="text-sm text-gray-500 font-medium leading-snug mt-3">
+                {renderHeadline()}
+              </p>
+            )}
+            {card.variant !== 'vote_cast' && card.highlight && (
+              <p className="text-xs text-gray-400 mt-1">{card.highlight}</p>
+            )}
             {/* Poll: attribution footnote below the button */}
             {card.variant === 'vote_cast' && card.user && (
               <p className="text-xs text-gray-400 mt-2.5 leading-snug">
@@ -421,10 +427,10 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
   const shortAnswer = answer && answer.length > 30 ? answer.slice(0, 27) + '…' : answer;
 
   if (gameType === 'trivia') {
+    const pctRight = (agreementPct !== null && totalVotes > 0)
+      ? `${100 - agreementPct}% got it right · ${totalVotes} vote${totalVotes !== 1 ? 's' : ''}`
+      : undefined;
     if (isCorrect === false) {
-      const pctRight = (agreementPct !== null && totalVotes > 0)
-        ? `${100 - agreementPct}% of players got it right`
-        : undefined;
       return {
         id: `sp-${post.id}`,
         variant: 'wrong_answer',
@@ -450,8 +456,8 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
       user,
       headline: `${name} nailed it — think you can too?`,
       detail: poolTitle || undefined,
-      highlight: agreementText,
-      highlightValue: agreementPct ?? undefined,
+      highlight: pctRight,
+      highlightValue: pctRight ? (100 - agreementPct!) : undefined,
       ctaLabel: 'Play trivia',
       ctaHref: '/play/trivia',
       timestamp: post.timestamp,

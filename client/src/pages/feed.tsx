@@ -1051,6 +1051,36 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const [externalRating, setExternalRating] = useState<number | null>(null);
   const [externalRatingLabel, setExternalRatingLabel] = useState<string>('');
   const [tasteAlignment, setTasteAlignment] = useState<number | null>(null);
+  const [seenItDone, setSeenItDone] = useState(false);
+
+  const handleSeenIt = async (media: { title: string; externalId: string; externalSource: string; imageUrl: string; type: string }) => {
+    if (seenItDone || !session?.access_token) return;
+    setSeenItDone(true);
+    const url = `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/track-media`;
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+        },
+        body: JSON.stringify({
+          media: {
+            title: media.title,
+            mediaType: media.type,
+            imageUrl: media.imageUrl,
+            externalId: media.externalId,
+            externalSource: media.externalSource,
+          },
+          listType: 'completed',
+          skip_social_post: true,
+        }),
+      });
+    } catch {
+      // silent fail — UI already updated
+    }
+  };
 
   useEffect(() => {
     const externalId = post.externalId || post.mediaItems?.[0]?.externalId;
@@ -1466,12 +1496,13 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                   </button>
                 )}
                 <button
-                  onClick={() => onAddToList?.(media)}
-                  className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-green-500 active:scale-110 transition-all"
+                  onClick={() => handleSeenIt(media)}
+                  className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`}
                   title="Seen it"
+                  disabled={seenItDone}
                 >
                   <Check size={15} />
-                  <span className="text-xs">Seen it</span>
+                  <span className="text-xs">{seenItDone ? 'Saved!' : 'Seen it'}</span>
                 </button>
               </>
             );
