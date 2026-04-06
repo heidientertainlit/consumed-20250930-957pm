@@ -1048,6 +1048,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
   const [communityRating, setCommunityRating] = useState<number | null>(null);
+  const [tasteAlignment, setTasteAlignment] = useState<number | null>(null);
 
   useEffect(() => {
     const externalId = post.externalId || post.mediaItems?.[0]?.externalId;
@@ -1065,6 +1066,31 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
         }
       });
   }, [post.externalId, post.externalSource]);
+
+  useEffect(() => {
+    const postUserId = post.user?.id;
+    if (!postUserId || !currentUserId || postUserId === currentUserId) return;
+    if (!isRatingType) return;
+    supabase
+      .from('media_ratings')
+      .select('user_id, media_external_id, media_external_source, rating')
+      .in('user_id', [currentUserId, postUserId])
+      .then(({ data }) => {
+        if (!data || data.length < 2) return;
+        const myRatings: Record<string, number> = {};
+        const theirRatings: Record<string, number> = {};
+        data.forEach((r: any) => {
+          const key = `${r.media_external_id}__${r.media_external_source}`;
+          if (r.user_id === currentUserId) myRatings[key] = Number(r.rating);
+          else theirRatings[key] = Number(r.rating);
+        });
+        const sharedKeys = Object.keys(myRatings).filter(k => k in theirRatings);
+        if (sharedKeys.length < 2) return;
+        const avgDiff = sharedKeys.reduce((sum, k) => sum + Math.abs(myRatings[k] - theirRatings[k]), 0) / sharedKeys.length;
+        const alignment = Math.round((1 - avgDiff / 4) * 100);
+        setTasteAlignment(Math.max(0, Math.min(100, alignment)));
+      });
+  }, [post.user?.id, currentUserId, isRatingType]);
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
@@ -1302,6 +1328,11 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                 if (diff > 0) return <p className="text-[11px] text-green-600 mt-0.5">↑ {diff.toFixed(1)} above community avg ({communityRating}/5)</p>;
                 return <p className="text-[11px] text-orange-500 mt-0.5">↓ {Math.abs(diff).toFixed(1)} below community avg ({communityRating}/5)</p>;
               })()}
+              {tasteAlignment !== null && post.user?.id !== currentUserId && (
+                <p className="text-[11px] text-purple-500 mt-0.5">
+                  You're {tasteAlignment}% aligned with {displayName}'s taste overall
+                </p>
+              )}
               {displayContent && (
                 post.containsSpoilers && !isSpoilerRevealed ? (
                   <div className="relative mt-1.5">
@@ -1419,7 +1450,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
 
         {/* DNA footer */}
         {isRatingType && (
-          <p className="text-[10px] text-gray-400 text-center mt-2">Counts toward your entertainment DNA</p>
+          <p className="text-[10px] text-gray-400 mt-2">Counts toward your entertainment DNA</p>
         )}
 
         {isCommentsActive && (
