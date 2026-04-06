@@ -112,7 +112,7 @@ function PredictionCarouselSection({
           const selected = selectedAnswers[game.id];
           const mediaInfo = game.media_external_id ? mediaPosterMap[game.media_external_id] : null;
           const displayTitle = game.media_title || mediaInfo?.title;
-          const posterUrl = mediaInfo?.image_url;
+          const posterUrl = game.media_image_url || mediaInfo?.image_url;
           const hasPoster = !!(posterUrl);
 
           return (
