@@ -163,23 +163,50 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
 
         {/* Question — big bold */}
         {card.detail && (
-          <p className="text-lg font-bold text-gray-900 leading-snug mb-1">
+          <p className="text-lg font-bold text-gray-900 leading-snug mb-2">
             {card.detail}
           </p>
         )}
 
-        {/* Headline — soft subtitle */}
-        <p className="text-sm text-gray-500 font-medium leading-snug mb-3">
-          {renderHeadline()}
-        </p>
+        {/* Poll: compact avatar + answer chip instead of a full sentence */}
+        {card.variant === 'vote_cast' && card.user && card.userAnswer ? (
+          <div className="flex items-center gap-2 mb-3">
+            {card.user.avatar ? (
+              <img src={card.user.avatar} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-purple-200 flex items-center justify-center shrink-0">
+                <span className="text-xs font-semibold text-purple-700 leading-none">
+                  {(card.user.displayName || card.user.username || '?')[0].toUpperCase()}
+                </span>
+              </div>
+            )}
+            <span className="text-xs text-gray-500 truncate max-w-[90px]">
+              {card.user.displayName?.split(' ')[0] || card.user.username}
+            </span>
+            <span className="text-xs text-gray-400">picked</span>
+            <span className="text-xs font-semibold bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full truncate max-w-[140px]">
+              {card.userAnswer}
+            </span>
+          </div>
+        ) : card.variant !== 'vote_cast' ? (
+          /* Headline — soft subtitle for non-poll variants */
+          <p className="text-sm text-gray-500 font-medium leading-snug mb-3">
+            {renderHeadline()}
+          </p>
+        ) : (
+          /* Poll fallback when no userAnswer */
+          <p className="text-sm text-gray-500 font-medium leading-snug mb-3">
+            {renderHeadline()}
+          </p>
+        )}
 
         {/* Stats — plain text */}
         {card.highlight && (
           <p className="text-sm text-gray-400 mb-4">{card.highlight}</p>
         )}
 
-        {/* Wrong answer chips (trivia only) */}
-        {(card.userAnswer || card.correctAnswer) && !showOptions && (
+        {/* Wrong answer chips (trivia only — not polls) */}
+        {card.variant !== 'vote_cast' && (card.userAnswer || card.correctAnswer) && !showOptions && (
           <div className="flex flex-wrap gap-2 mb-3">
             {card.userAnswer && (
               <div className="flex items-center gap-1.5">
@@ -428,6 +455,7 @@ export function buildGameMomentSocialProof(post: any): SocialProofCardData {
         ? `${name} voted "${shortAnswer}" — do you agree?`
         : `${name} voted — cast yours`,
       detail: poolTitle || undefined,
+      userAnswer: answer || undefined,
       highlight: agreementText,
       highlightValue: agreementPct ?? undefined,
       ctaLabel: 'Cast your vote',
