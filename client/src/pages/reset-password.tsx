@@ -62,21 +62,33 @@ export default function ResetPasswordPage() {
     }
 
     // --- Path 2: Web browser (Safari / desktop) ---
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("[RESET-DEBUG] getSession() result — session:", session ? `active (${session.user?.email})` : "null");
-      if (session) {
-        console.log("[RESET-DEBUG] getSession found session — setting recoveryReady=true");
-        setRecoveryReady(true);
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      }
-    });
+    // IMPORTANT: Do NOT use getSession() here to set recoveryReady.
+    // A stale old session from a previous login would fire recoveryReady=true
+    // before the recovery token in the URL is processed, causing updateUser()
+    // to run against the wrong session and silently fail to update the password.
+    // We must wait for the actual PASSWORD_RECOVERY event from the recovery link.
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("[RESET-DEBUG] onAuthStateChange event:", event, "| session:", session ? session.user?.email : "null");
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
-        console.log("[RESET-DEBUG] Auth event triggered recoveryReady=true");
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log("[RESET-DEBUG] PASSWORD_RECOVERY event — setting recoveryReady=true");
         setRecoveryReady(true);
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      }
+      // PKCE flow fires SIGNED_IN instead of PASSWORD_RECOVERY in some Supabase configs.
+      // Only trust SIGNED_IN if the URL contains recovery-related params.
+      if (event === 'SIGNED_IN' && session) {
+        const hasRecoveryParams =
+          window.location.hash.includes('type=recovery') ||
+          window.location.search.includes('code=') ||
+          !!localStorage.getItem("pendingRecovery");
+        if (hasRecoveryParams) {
+          console.log("[RESET-DEBUG] SIGNED_IN with recovery params — setting recoveryReady=true");
+          setRecoveryReady(true);
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        } else {
+          console.log("[RESET-DEBUG] SIGNED_IN ignored — no recovery params in URL");
+        }
       }
     });
 
