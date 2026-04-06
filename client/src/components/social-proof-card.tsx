@@ -150,7 +150,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
   };
 
   return (
-    <div className="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden mb-3">
+    <div className="rounded-2xl bg-white border border-gray-100 shadow overflow-hidden mb-3">
       <div className="px-4 pt-4 pb-4">
 
         {/* Top row: type pill left, pts badge or timestamp right */}

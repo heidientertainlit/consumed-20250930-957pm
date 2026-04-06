@@ -405,7 +405,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   if (filteredData.length === 0) return null;
 
   return (
-    <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-4 mb-4 overflow-hidden relative">
+    <div className="bg-white border border-gray-100 shadow rounded-2xl p-4 mb-4 overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">

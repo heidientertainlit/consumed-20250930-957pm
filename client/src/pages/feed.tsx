@@ -1178,7 +1178,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
 
   return (
     <>
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-3">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow overflow-hidden mb-3">
       <div className="px-4 pt-4 pb-3">
         {/* Header: avatar · name · timestamp · type pill · actions */}
         <div className="flex items-center gap-2 mb-2.5">
@@ -4534,7 +4534,7 @@ export default function Feed() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-screen bg-gray-100 pb-32">
       <div id="feed-page">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 

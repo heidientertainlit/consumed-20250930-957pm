@@ -578,7 +578,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-gray-100 shadow-sm rounded-2xl p-5">
+      <div className="bg-white border border-gray-100 shadow rounded-2xl p-5">
         <div className="flex items-center justify-center py-6">
           <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
         </div>
@@ -591,7 +591,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
   }
 
   return (
-    <div className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden">
+    <div className="bg-white border border-gray-100 shadow rounded-2xl overflow-hidden">
       {/* Header */}
       <div className="px-4 pt-3 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
