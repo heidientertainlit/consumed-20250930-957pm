@@ -735,6 +735,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     const externalId = post.externalId;
     const externalSource = post.externalSource;
     if (!externalId || !externalSource) return;
+
+    // Community average rating
     supabase
       .from('media_ratings')
       .select('rating')
@@ -746,7 +748,25 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           setCommunityRating(Math.round(avg * 10) / 10);
         }
       });
-  }, [post.externalId, post.externalSource]);
+
+    // User's own existing rating (so "Your Turn" shows already-rated state)
+    const userId = session?.user?.id;
+    if (userId) {
+      supabase
+        .from('media_ratings')
+        .select('rating')
+        .eq('media_external_id', externalId)
+        .eq('media_external_source', externalSource)
+        .eq('user_id', userId)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.rating) {
+            setRatingValue(Number(data.rating));
+            setRatingSubmitted(true);
+          }
+        });
+    }
+  }, [post.externalId, post.externalSource, session?.user?.id]);
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
@@ -1157,6 +1177,8 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     const externalId = post.externalId || post.mediaItems?.[0]?.externalId;
     const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource;
     if (!externalId || !externalSource) return;
+
+    // Community average rating
     supabase
       .from('media_ratings')
       .select('rating')
@@ -1168,7 +1190,24 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
           setCommunityRating(Math.round(avg * 10) / 10);
         }
       });
-  }, [post.externalId, post.externalSource]);
+
+    // User's own existing rating — pre-populate "Your Turn"
+    if (currentUserId) {
+      supabase
+        .from('media_ratings')
+        .select('rating')
+        .eq('media_external_id', externalId)
+        .eq('media_external_source', externalSource)
+        .eq('user_id', currentUserId)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.rating) {
+            setRatingValue(Number(data.rating));
+            setRatingSubmitted(true);
+          }
+        });
+    }
+  }, [post.externalId, post.externalSource, currentUserId]);
 
   useEffect(() => {
     const isRating = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review';
@@ -1862,6 +1901,26 @@ function CurrentlyConsumingFeedCard({
       // silent fail
     }
   };
+
+  // Pre-populate "Your Turn" if the user has already rated this media
+  useEffect(() => {
+    const userId = session?.user?.id;
+    const externalId = media.externalId;
+    const externalSource = media.externalSource;
+    if (!userId || !externalId || !externalSource || isOwnPost) return;
+    supabase
+      .from('media_ratings')
+      .select('rating')
+      .eq('media_external_id', externalId)
+      .eq('media_external_source', externalSource)
+      .eq('user_id', userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.rating) {
+          setSelectedRating(Number(data.rating));
+        }
+      });
+  }, [media.externalId, media.externalSource, session?.user?.id, isOwnPost]);
   
   const displayName = post.user?.displayName || post.user?.username;
   

@@ -589,9 +589,9 @@ export default function PlayPredictionsPage() {
     <div className="min-h-screen bg-gray-50 pb-20">
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
-      {/* Hero Section */}
-      <div className="bg-gradient-to-b from-[#0a0a0f] via-[#12121f] to-[#1e1040] -mt-px">
-        <div className="max-w-4xl mx-auto px-4 pt-6 pb-8 relative">
+      {/* Hero Section — same gradient as nav bar for seamless look */}
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] -mt-px">
+        <div className="max-w-4xl mx-auto px-4 pt-10 pb-8 relative">
           {/* Back button — left-anchored */}
           <button
             onClick={() => window.history.back()}
