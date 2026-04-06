@@ -141,11 +141,8 @@ function PredictionCarouselSection({
 
                     {/* Right column — all interactive content */}
                     <div className="flex-1 min-w-0 p-4 flex flex-col gap-2.5">
-                      {/* Badges row */}
+                      {/* Badges row — origin only, no Predict pill */}
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100 text-xs font-medium uppercase tracking-wide">
-                          Predict
-                        </Badge>
                         {game.origin_type === 'consumed' ? (
                           <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs flex items-center gap-1">
                             <Trophy size={10} />
@@ -166,69 +163,80 @@ function PredictionCarouselSection({
                         )}
                       </div>
 
-                      {/* Media title (only text, poster is on the left) */}
+                      {/* Media title — larger */}
                       {displayTitle && (
-                        <p className="text-xs font-semibold text-purple-600 truncate">{displayTitle}</p>
+                        <p className="text-sm font-bold text-purple-600 truncate">{displayTitle}</p>
                       )}
 
                       {/* Question */}
                       <h3 className="font-semibold text-gray-900 text-sm leading-snug">{game.title}</h3>
 
-                      {/* Stats */}
-                      <div className="flex items-center gap-3 text-xs">
-                        <div className="flex items-center gap-1">
-                          <Star size={11} className="text-purple-600" />
-                          <span className="text-purple-600 font-medium">{game.points || 10} pts</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-gray-400">
-                          <Users size={11} />
-                          <span>{
-                            (() => {
-                              const counts = voteCounts[game.id] || {};
-                              const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
-                              return total || game.participants || (voted ? 1 : 0);
-                            })()
-                          } players</span>
-                        </div>
-                      </div>
-
                       {/* Voting area */}
                       {voted ? (
-                        <div className="flex flex-col gap-1.5">
-                          {(game.options || []).map((option: string, i: number) => {
-                            const rawCounts = voteCounts[game.id] || {};
-                            const counts = Object.keys(rawCounts).length === 0
-                              ? { [voted]: 1 }
-                              : rawCounts;
-                            const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
-                            const count = counts[option] || 0;
-                            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                            const isChosen = voted === option;
-                            return (
-                              <div
-                                key={i}
-                                className={`w-full rounded-full px-3 py-2 flex items-center justify-between transition-all duration-300 ${
-                                  isChosen
-                                    ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 ring-2 ring-blue-300'
-                                    : 'bg-gradient-to-r from-purple-950/60 via-purple-800/60 to-violet-500/60 opacity-70'
-                                }`}
-                              >
-                                <span className="text-xs font-medium text-white flex items-center gap-1.5">
-                                  {isChosen && <Check size={12} className="flex-shrink-0" />}
-                                  {option}
-                                </span>
-                                <span className="text-xs font-semibold text-white">{pct}%</span>
-                              </div>
-                            );
-                          })}
-                        </div>
+                        <>
+                          <div className="flex flex-col gap-1.5">
+                            {(game.options || []).map((option: string, i: number) => {
+                              const rawCounts = voteCounts[game.id] || {};
+                              const counts = Object.keys(rawCounts).length === 0
+                                ? { [voted]: 1 }
+                                : rawCounts;
+                              const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
+                              const count = counts[option] || 0;
+                              const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                              const isChosen = voted === option;
+                              return (
+                                <div
+                                  key={i}
+                                  className={`w-full rounded-full px-3 py-2 flex items-center justify-between transition-all duration-300 ${
+                                    isChosen
+                                      ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-500 ring-2 ring-blue-300'
+                                      : 'bg-gradient-to-r from-purple-950/60 via-purple-800/60 to-violet-500/60 opacity-70'
+                                  }`}
+                                >
+                                  <span className="text-xs font-medium text-white flex items-center gap-1.5">
+                                    {isChosen && <Check size={12} className="flex-shrink-0" />}
+                                    {option}
+                                  </span>
+                                  <span className="text-xs font-semibold text-white">{pct}%</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {/* Stats below results */}
+                          <div className="flex items-center gap-3 text-xs pt-0.5">
+                            <div className="flex items-center gap-1">
+                              <Star size={11} className="text-purple-600" />
+                              <span className="text-purple-600 font-medium">{game.points || 10} pts</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-gray-400">
+                              <Users size={11} />
+                              <span>{(() => {
+                                const counts = voteCounts[game.id] || {};
+                                const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
+                                return total || game.participants || 1;
+                              })()} players</span>
+                            </div>
+                          </div>
+                        </>
                       ) : game.isMultiCategory ? (
-                        <Button
-                          onClick={() => onOpenModal(game)}
-                          className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm"
-                        >
-                          Make Prediction
-                        </Button>
+                        <>
+                          <Button
+                            onClick={() => onOpenModal(game)}
+                            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm"
+                          >
+                            Make Prediction
+                          </Button>
+                          <div className="flex items-center gap-3 text-xs">
+                            <div className="flex items-center gap-1">
+                              <Star size={11} className="text-purple-600" />
+                              <span className="text-purple-600 font-medium">{game.points || 10} pts</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-gray-400">
+                              <Users size={11} />
+                              <span>{game.participants || 0} players</span>
+                            </div>
+                          </div>
+                        </>
                       ) : (
                         <>
                           <div className="flex flex-col gap-1.5">
@@ -258,6 +266,21 @@ function PredictionCarouselSection({
                           >
                             {isSubmitting ? 'Submitting...' : 'Submit'}
                           </Button>
+                          {/* Stats below Submit */}
+                          <div className="flex items-center gap-3 text-xs">
+                            <div className="flex items-center gap-1">
+                              <Star size={11} className="text-purple-600" />
+                              <span className="text-purple-600 font-medium">{game.points || 10} pts</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-gray-400">
+                              <Users size={11} />
+                              <span>{(() => {
+                                const counts = voteCounts[game.id] || {};
+                                const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
+                                return total || game.participants || 0;
+                              })()} players</span>
+                            </div>
+                          </div>
                         </>
                       )}
                     </div>
