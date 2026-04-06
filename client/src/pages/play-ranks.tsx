@@ -269,29 +269,25 @@ export default function PlayRanks() {
       <Navigation />
 
       {/* Header Section with Gradient */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-6 -mt-px">
-        <div className="max-w-4xl mx-auto px-4 pt-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => window.history.back()}
-                className="flex items-center text-gray-400 hover:text-white transition-colors"
-                data-testid="back-button"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <h1 className="text-2xl font-semibold text-white" data-testid="ranks-title">Ranks</h1>
-            </div>
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] -mt-px">
+        <div className="max-w-4xl mx-auto px-4 pt-10 pb-8 relative">
+          <button
+            onClick={() => window.history.back()}
+            className="absolute left-4 top-6 flex items-center text-gray-400 hover:text-white transition-colors"
+            data-testid="back-button"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <div className="flex flex-col items-center gap-4 pt-1">
+            <h1 className="text-2xl font-semibold text-white tracking-tight" data-testid="ranks-title">Ranks</h1>
             <button
               onClick={() => setIsCreateRankOpen(true)}
-              className="flex items-center gap-1.5 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-opacity hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg, #7c3aed, #db2777)' }}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-blue-500 to-green-400 hover:from-blue-600 hover:to-green-500 text-white rounded-full px-5 py-2 text-sm font-semibold shadow-lg"
             >
-              <Plus size={13} />
+              <Plus size={14} />
               Create Rank
             </button>
           </div>
-
         </div>
       </div>
 
