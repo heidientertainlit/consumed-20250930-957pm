@@ -119,53 +119,53 @@ function PredictionCarouselSection({
             <div key={game.id} id={`prediction-${game.id}`} className="flex-shrink-0 w-full snap-center">
               <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
                 <CardContent className="p-0">
+                  {/* Badge row — full width above poster */}
+                  <div className="flex items-center gap-1.5 px-4 pt-3 pb-0">
+                    {game.origin_type === 'consumed' ? (
+                      <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs flex items-center gap-1">
+                        <Trophy size={10} />
+                        Consumed
+                      </Badge>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs flex items-center gap-1">
+                          <Users size={10} />
+                          Community
+                        </Badge>
+                        {game.origin_user_id && creatorNames[game.origin_user_id] && (
+                          <span className="text-xs text-gray-400">
+                            by {creatorNames[game.origin_user_id]}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex gap-0">
-                    {/* Poster column — left side */}
+                    {/* Poster column — left side, wider */}
                     {hasPoster && (() => {
                       const mediaUrl = getMediaUrl(game);
                       return (
                         <div
-                          className={`flex-shrink-0 w-[88px] ${mediaUrl ? 'cursor-pointer active:opacity-75 transition-opacity' : ''}`}
+                          className={`flex-shrink-0 w-[120px] ${mediaUrl ? 'cursor-pointer active:opacity-75 transition-opacity' : ''}`}
                           onClick={mediaUrl ? () => setLocation(mediaUrl) : undefined}
                         >
                           <img
                             src={posterUrl!}
                             alt={displayTitle || ''}
-                            className="w-full h-full object-cover rounded-l-2xl"
-                            style={{ minHeight: '200px' }}
+                            className="w-full h-full object-cover rounded-bl-2xl"
+                            style={{ minHeight: '240px' }}
                             onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                           />
                         </div>
                       );
                     })()}
 
-                    {/* Right column — all interactive content */}
+                    {/* Right column — content only (badge moved above) */}
                     <div className="flex-1 min-w-0 p-4 flex flex-col gap-2.5">
-                      {/* Badges row — origin only, no Predict pill */}
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {game.origin_type === 'consumed' ? (
-                          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs flex items-center gap-1">
-                            <Trophy size={10} />
-                            Consumed
-                          </Badge>
-                        ) : (
-                          <div className="flex items-center gap-1.5">
-                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs flex items-center gap-1">
-                              <Users size={10} />
-                              Community
-                            </Badge>
-                            {game.origin_user_id && creatorNames[game.origin_user_id] && (
-                              <span className="text-xs text-gray-400">
-                                by {creatorNames[game.origin_user_id]}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Media title — larger */}
+                      {/* Media title — black */}
                       {displayTitle && (
-                        <p className="text-sm font-bold text-purple-600 truncate">{displayTitle}</p>
+                        <p className="text-sm font-bold text-gray-900 truncate">{displayTitle}</p>
                       )}
 
                       {/* Question */}
