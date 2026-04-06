@@ -94,20 +94,16 @@ function PredictionCarouselSection({
 
         {/* Card body for current prediction */}
         <CardContent className="p-4 flex flex-col gap-3" id={`prediction-${game.id}`}>
-          {/* Creator line */}
-          {(creatorNames[game.origin_user_id] || game.origin_type === 'consumed') && (
-            <p className="text-xs text-gray-400">
+          {/* Creator + title — one fluid line */}
+          {(creatorNames[game.origin_user_id] || game.origin_type === 'consumed' || displayTitle) && (
+            <p className="text-xs text-gray-500 leading-snug">
               {game.origin_type === 'consumed'
                 ? <span className="text-amber-600 font-medium">Consumed</span>
                 : creatorNames[game.origin_user_id]
                   ? <>{creatorNames[game.origin_user_id]} posted a prediction</>
                   : 'Community prediction'}
+              {displayTitle ? <> about {displayTitle}</> : null}
             </p>
-          )}
-
-          {/* Media title — own line, same weight as creator text */}
-          {displayTitle && (
-            <p className="text-xs text-gray-600 -mt-2">{displayTitle}</p>
           )}
 
           {/* Question */}
