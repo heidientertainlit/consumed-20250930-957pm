@@ -1077,7 +1077,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     const mediaType = post.mediaType || post.mediaItems?.[0]?.type;
     if (!externalId || !externalSource) return;
     const sourceLabels: Record<string, string> = {
-      tmdb: 'TMDB', google_books: 'Google Books', openlibrary: 'Open Library', spotify: 'Spotify',
+      tmdb: 'TMDB', google_books: 'Google Books', googlebooks: 'Google Books', openlibrary: 'Open Library', open_library: 'Open Library', spotify: 'Spotify',
     };
     const label = sourceLabels[externalSource] || externalSource;
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
