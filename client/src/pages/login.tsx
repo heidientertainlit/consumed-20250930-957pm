@@ -213,7 +213,7 @@ export default function LoginPage() {
           <h1 className="text-white text-lg font-medium mb-2">
             Where entertainment gets played.
           </h1>
-          <p className="text-gray-400 text-[10px] tracking-widest font-medium">
+          <p className="text-gray-400 text-[10px] tracking-widest font-medium pl-3">
             PLAY. CONNECT. DISCOVER.
           </p>
         </div>
