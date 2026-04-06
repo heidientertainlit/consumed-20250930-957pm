@@ -203,16 +203,16 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] overflow-y-auto p-4 flex flex-col justify-center">
       <div className="max-w-md w-full mx-auto">
         <div className="text-center mb-8 mt-24">
-          <div className="flex justify-center mb-0">
+          <h1 className="text-white text-lg font-medium mb-2">
+            Where entertainment gets played.
+          </h1>
+          <div className="flex justify-center mb-3">
             <img 
               src="/consumed-logo-new.png" 
               alt="Consumed" 
-              className="h-20 w-auto"
+              className="h-14 w-auto"
             />
           </div>
-          <h1 className="text-white text-base font-medium mb-3">
-            Where entertainment gets played.
-          </h1>
           <p className="text-gray-400 text-[10px] tracking-widest font-medium">
             PLAY. CONNECT. DISCOVER.
           </p>
