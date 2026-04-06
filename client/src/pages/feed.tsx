@@ -1048,6 +1048,8 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
   const [communityRating, setCommunityRating] = useState<number | null>(null);
+  const [externalRating, setExternalRating] = useState<number | null>(null);
+  const [externalRatingLabel, setExternalRatingLabel] = useState<string>('');
   const [tasteAlignment, setTasteAlignment] = useState<number | null>(null);
 
   useEffect(() => {
@@ -1068,9 +1070,35 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   }, [post.externalId, post.externalSource]);
 
   useEffect(() => {
+    const isRating = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review';
+    if (!isRating) return;
+    const externalId = post.externalId || post.mediaItems?.[0]?.externalId;
+    const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource;
+    const mediaType = post.mediaType || post.mediaItems?.[0]?.type;
+    if (!externalId || !externalSource) return;
+    const sourceLabels: Record<string, string> = {
+      tmdb: 'TMDB', google_books: 'Google Books', openlibrary: 'Open Library', spotify: 'Spotify',
+    };
+    const label = sourceLabels[externalSource] || externalSource;
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    const url = `${supabaseUrl}/functions/v1/get-media-details?source=${externalSource}&external_id=${externalId}${mediaType ? `&media_type=${mediaType}` : ''}`;
+    fetch(url, { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.rating) {
+          const val = parseFloat(data.rating);
+          if (val > 0) { setExternalRating(Math.round(val * 10) / 10); setExternalRatingLabel(label); }
+        }
+      })
+      .catch(() => {});
+  }, [post.externalId, post.externalSource, post.type]);
+
+  useEffect(() => {
     const postUserId = post.user?.id;
     if (!postUserId || !currentUserId || postUserId === currentUserId) return;
-    if (!isRatingType) return;
+    const isRating = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review';
+    if (!isRating) return;
     supabase
       .from('media_ratings')
       .select('user_id, media_external_id, media_external_source, rating')
@@ -1090,7 +1118,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
         const alignment = Math.round((1 - avgDiff / 4) * 100);
         setTasteAlignment(Math.max(0, Math.min(100, alignment)));
       });
-  }, [post.user?.id, currentUserId, isRatingType]);
+  }, [post.user?.id, currentUserId, post.type]);
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
@@ -1322,11 +1350,14 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                   })}
                 </div>
               )}
-              {communityRating !== null && post.rating && post.rating > 0 && (() => {
-                const diff = post.rating - communityRating;
-                if (Math.abs(diff) <= 0.3) return <p className="text-[11px] text-gray-400 mt-0.5">On par with community avg ({communityRating}/5)</p>;
-                if (diff > 0) return <p className="text-[11px] text-green-600 mt-0.5">↑ {diff.toFixed(1)} above community avg ({communityRating}/5)</p>;
-                return <p className="text-[11px] text-orange-500 mt-0.5">↓ {Math.abs(diff).toFixed(1)} below community avg ({communityRating}/5)</p>;
+              {post.rating && post.rating > 0 && (() => {
+                const refRating = externalRating ?? communityRating;
+                const ratingLabel = externalRating !== null ? `${externalRatingLabel} avg` : 'community avg';
+                if (refRating === null) return null;
+                const ratingDiff = post.rating - refRating;
+                if (Math.abs(ratingDiff) <= 0.3) return <p className="text-[11px] text-gray-400 mt-0.5">On par with {ratingLabel} ({refRating}/5)</p>;
+                if (ratingDiff > 0) return <p className="text-[11px] text-green-600 mt-0.5">↑ {ratingDiff.toFixed(1)} above {ratingLabel} ({refRating}/5)</p>;
+                return <p className="text-[11px] text-orange-500 mt-0.5">↓ {Math.abs(ratingDiff).toFixed(1)} below {ratingLabel} ({refRating}/5)</p>;
               })()}
               {tasteAlignment !== null && post.user?.id !== currentUserId && (
                 <p className="text-[11px] text-purple-500 mt-0.5">
