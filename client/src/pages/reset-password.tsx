@@ -26,8 +26,8 @@ export default function ResetPasswordPage() {
       // The user's session is now fully active after updateUser() succeeded.
       setLocation('/activity');
     } else {
-      // Web browser (Safari) — try to hand off to the native app via custom scheme.
-      window.location.href = 'app.consumed.entertainment://';
+      // Web browser (Safari) — open the app via universal link.
+      window.location.href = 'https://app.consumedapp.com';
     }
   };
 
