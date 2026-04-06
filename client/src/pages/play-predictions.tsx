@@ -128,7 +128,11 @@ function PredictionCarouselSection({
                   <div className="flex">
                     {/* Poster column — left, natural movie poster shape */}
                     {hasPoster && (() => {
-                      const mediaUrl = getMediaUrl(game);
+                      // Suppress link if TMDB returned a different title — external ID is wrong for this record
+                      const tmdbTitle = mediaInfo?.title || '';
+                      const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+                      const titleMismatch = tmdbTitle && displayTitle && norm(tmdbTitle) !== norm(displayTitle) && !norm(displayTitle).includes(norm(tmdbTitle)) && !norm(tmdbTitle).includes(norm(displayTitle));
+                      const mediaUrl = titleMismatch ? null : getMediaUrl(game);
                       return (
                         <div
                           className={`flex-shrink-0 w-[140px] self-stretch ${mediaUrl ? 'cursor-pointer active:opacity-75 transition-opacity' : ''}`}
