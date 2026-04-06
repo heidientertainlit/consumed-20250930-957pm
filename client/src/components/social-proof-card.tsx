@@ -168,40 +168,15 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           </p>
         )}
 
-        {/* Poll: compact avatar + answer chip instead of a full sentence */}
-        {card.variant === 'vote_cast' && card.user && card.userAnswer ? (
-          <div className="flex items-center gap-2 mb-3">
-            {card.user.avatar ? (
-              <img src={card.user.avatar} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-purple-200 flex items-center justify-center shrink-0">
-                <span className="text-xs font-semibold text-purple-700 leading-none">
-                  {(card.user.displayName || card.user.username || '?')[0].toUpperCase()}
-                </span>
-              </div>
-            )}
-            <span className="text-xs text-gray-500 truncate max-w-[90px]">
-              {card.user.displayName?.split(' ')[0] || card.user.username}
-            </span>
-            <span className="text-xs text-gray-400">picked</span>
-            <span className="text-xs font-semibold bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full truncate max-w-[140px]">
-              {card.userAnswer}
-            </span>
-          </div>
-        ) : card.variant !== 'vote_cast' ? (
-          /* Headline — soft subtitle for non-poll variants */
-          <p className="text-sm text-gray-500 font-medium leading-snug mb-3">
-            {renderHeadline()}
-          </p>
-        ) : (
-          /* Poll fallback when no userAnswer */
+        {/* Non-poll: soft subtitle headline */}
+        {card.variant !== 'vote_cast' && (
           <p className="text-sm text-gray-500 font-medium leading-snug mb-3">
             {renderHeadline()}
           </p>
         )}
 
-        {/* Stats — plain text */}
-        {card.highlight && (
+        {/* Non-poll: stats */}
+        {card.variant !== 'vote_cast' && card.highlight && (
           <p className="text-sm text-gray-400 mb-4">{card.highlight}</p>
         )}
 
@@ -347,11 +322,21 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
 
         {/* Non-inline CTA */}
         {!hasInline && (
-          <Link to={card.ctaHref}>
-            <div className="w-full py-3.5 rounded-2xl text-center text-purple-600 font-medium text-sm bg-gray-100 active:bg-gray-200 transition-colors">
-              {card.ctaLabel}
-            </div>
-          </Link>
+          <>
+            <Link to={card.ctaHref}>
+              <div className="w-full py-3.5 rounded-2xl text-center text-purple-600 font-medium text-sm bg-gray-100 active:bg-gray-200 transition-colors">
+                {card.ctaLabel}
+              </div>
+            </Link>
+            {/* Poll: attribution footnote below the button */}
+            {card.variant === 'vote_cast' && card.user && (
+              <p className="text-xs text-gray-400 text-center mt-2.5 leading-snug">
+                {card.user.displayName?.split(' ')[0] || card.user.username}
+                {card.userAnswer ? ` picked "${card.userAnswer}"` : ' already voted'}
+                {card.highlight ? ` · ${card.highlight}` : ''}
+              </p>
+            )}
+          </>
         )}
 
       </div>
