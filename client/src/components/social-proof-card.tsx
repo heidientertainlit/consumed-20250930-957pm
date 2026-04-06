@@ -153,16 +153,12 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
     <div className="rounded-2xl bg-white border border-gray-100 shadow overflow-hidden mb-3">
       <div className="px-4 pt-4 pb-4">
 
-        {/* Top row: type pill left, pts badge or timestamp right */}
+        {/* Top row: type pill left, timestamp right */}
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-semibold px-3 py-1 rounded-full bg-purple-100 text-purple-700">
             {label}
           </span>
-          {hasInline ? (
-            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-green-100 text-green-700">
-              +{pts} pts
-            </span>
-          ) : card.timestamp ? (
+          {card.timestamp ? (
             <span className="text-xs text-gray-400">{timeAgo(card.timestamp)}</span>
           ) : null}
         </div>
@@ -392,6 +388,13 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
             )}
           </>
         )}
+
+        {/* Pts badge — bottom right */}
+        <div className="flex items-center justify-end mt-3">
+          <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold">
+            +{pts} pts
+          </div>
+        </div>
 
       </div>
     </div>
