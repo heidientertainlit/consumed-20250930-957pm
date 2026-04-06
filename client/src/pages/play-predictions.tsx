@@ -279,7 +279,7 @@ export default function PlayPredictionsPage() {
   const [selectedPredictionGame, setSelectedPredictionGame] = useState<any>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [showComposer, setShowComposer] = useState(false);
-  const [activeTab, setActiveTab] = useState<'awards' | 'predictions'>('awards');
+  const [activeTab, setActiveTab] = useState<'awards' | 'predictions'>('predictions');
 
 
   // Extract game ID from URL hash if present (format: /play/predictions#game-id)
@@ -617,36 +617,36 @@ export default function PlayPredictionsPage() {
               Create Prediction
             </Button>
           </div>
-
-          {/* Tabs */}
-          <div className="flex items-center justify-center gap-2 mt-6">
-            <button
-              onClick={() => setActiveTab('awards')}
-              className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-semibold transition-all ${
-                activeTab === 'awards'
-                  ? 'bg-amber-500 text-white shadow-md'
-                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
-              }`}
-            >
-              <Trophy size={13} />
-              Awards
-            </button>
-            <button
-              onClick={() => setActiveTab('predictions')}
-              className={`flex items-center gap-1.5 px-5 py-2 rounded-full text-sm font-semibold transition-all ${
-                activeTab === 'predictions'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'bg-white/10 text-gray-300 hover:bg-white/20'
-              }`}
-            >
-              <Target size={13} />
-              Community &amp; Consumed
-            </button>
-          </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-4">
+
+        {/* Tabs */}
+        <div className="flex items-center gap-2 mb-4">
+          <button
+            onClick={() => setActiveTab('predictions')}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
+              activeTab === 'predictions'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'bg-white text-gray-500 border border-gray-200 hover:border-purple-300'
+            }`}
+          >
+            <Target size={13} />
+            Predictions
+          </button>
+          <button
+            onClick={() => setActiveTab('awards')}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${
+              activeTab === 'awards'
+                ? 'bg-amber-500 text-white shadow-sm'
+                : 'bg-white text-gray-500 border border-gray-200 hover:border-amber-300'
+            }`}
+          >
+            <Trophy size={13} />
+            Awards
+          </button>
+        </div>
 
         {/* Awards Tab */}
         {activeTab === 'awards' && (() => {
