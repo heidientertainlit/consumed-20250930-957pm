@@ -1178,7 +1178,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
 
   return (
     <>
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-3">
       <div className="px-4 pt-4 pb-3">
         {/* Header: avatar · name · timestamp · type pill · actions */}
         <div className="flex items-center gap-2 mb-2.5">
@@ -1225,7 +1225,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
         )}
 
         {displayContent && !post.mediaTitle && (
-          <p className="text-gray-800 text-sm leading-relaxed">{displayContent}</p>
+          <p className="text-gray-700 text-sm leading-relaxed">{displayContent}</p>
         )}
 
         {post.mediaTitle && (
@@ -4556,7 +4556,7 @@ export default function Feed() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 pt-4 pb-6" data-feed-content>
+      <div className="max-w-4xl mx-auto px-4 pt-6 pb-6" data-feed-content>
         {/* Pending Friend Casts - You've Been Cast! - At top of white feed area */}
         {pendingCasts.length > 0 && (
           <div className="space-y-3 mb-4">
@@ -4575,7 +4575,7 @@ export default function Feed() {
         </div>
 
         {/* Activity Stream */}
-        <div className="space-y-6">
+        <div className="space-y-3">
 
           {isLoading ? (
             <div className="space-y-4">
