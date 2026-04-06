@@ -124,174 +124,87 @@ function PredictionCarouselSection({
           return (
             <div key={game.id} id={`prediction-${game.id}`} className="flex-shrink-0 w-full snap-center">
               <Card className="bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
-                <CardContent className="p-0">
-                  <div className="flex">
-                    {/* Poster column — left, natural movie poster shape */}
-                    {hasPoster && (() => {
-                      // Suppress link if TMDB returned a different title — external ID is wrong for this record
-                      const tmdbTitle = mediaInfo?.title || '';
-                      const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-                      const titleMismatch = tmdbTitle && displayTitle && norm(tmdbTitle) !== norm(displayTitle) && !norm(displayTitle).includes(norm(tmdbTitle)) && !norm(tmdbTitle).includes(norm(displayTitle));
-                      const mediaUrl = titleMismatch ? null : getMediaUrl(game);
-                      return (
-                        <div
-                          className={`flex-shrink-0 w-[140px] self-stretch ${mediaUrl ? 'cursor-pointer active:opacity-75 transition-opacity' : ''}`}
-                          onClick={mediaUrl ? () => setLocation(mediaUrl) : undefined}
-                        >
-                          <img
-                            src={posterUrl!}
-                            alt={displayTitle || ''}
-                            className="w-full h-full object-cover rounded-bl-2xl rounded-tl-2xl"
-                            style={{ minHeight: '220px' }}
-                            onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
-                          />
-                        </div>
-                      );
-                    })()}
+                <CardContent className="p-4 flex flex-col gap-3">
+                  {/* Subtitle: creator + media title */}
+                  {(displayTitle || creatorNames[game.origin_user_id]) && (
+                    <p className="text-xs text-gray-400 leading-snug">
+                      {game.origin_type === 'consumed'
+                        ? <span className="text-amber-600 font-medium">Consumed</span>
+                        : creatorNames[game.origin_user_id]
+                          ? <>{creatorNames[game.origin_user_id]} posted a prediction</>
+                          : 'Community prediction'}
+                      {displayTitle ? <> about <span className="font-medium text-gray-600">{displayTitle}</span></> : null}
+                    </p>
+                  )}
 
-                    {/* Right column — badge + title + question + voting */}
-                    <div className="flex-1 min-w-0 p-4 flex flex-col gap-2.5">
-                      {/* Badge inline at top of right column */}
-                      <div className="flex items-center gap-1.5">
-                        {game.origin_type === 'consumed' ? (
-                          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs flex items-center gap-1">
-                            <Trophy size={10} />
-                            Consumed
-                          </Badge>
-                        ) : (
-                          <>
-                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs flex items-center gap-1">
-                              <Users size={10} />
-                              Community
-                            </Badge>
-                            {game.origin_user_id && creatorNames[game.origin_user_id] && (
-                              <span className="text-xs text-gray-400">by {creatorNames[game.origin_user_id]}</span>
-                            )}
-                          </>
-                        )}
-                      </div>
+                  {/* Question — bold, prominent */}
+                  <h3 className="font-bold text-gray-900 text-base leading-snug">{game.title}</h3>
 
-                      {/* Media title — black */}
-                      {displayTitle && (
-                        <p className="text-sm font-bold text-gray-900 truncate">{displayTitle}</p>
-                      )}
+                  {/* Poster + options row — same layout as feed */}
+                  <div className="flex gap-3 items-start">
+                    {/* Small poster */}
+                    {hasPoster && (
+                      <img
+                        src={posterUrl!}
+                        alt={displayTitle || ''}
+                        className="w-[88px] rounded-xl object-cover flex-shrink-0 shadow-sm"
+                        style={{ aspectRatio: '2/3' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    )}
 
-                      {/* Question */}
-                      <h3 className="font-semibold text-gray-900 text-sm leading-snug">{game.title}</h3>
-
-                      {/* Voting area */}
+                    {/* Options column */}
+                    <div className="flex-1 flex flex-col gap-2">
                       {voted ? (
-                        <>
-                          <div className="flex flex-col gap-1.5">
-                            {(game.options || []).map((option: string, i: number) => {
-                              const rawCounts = voteCounts[game.id] || {};
-                              const counts = Object.keys(rawCounts).length === 0
-                                ? { [voted]: 1 }
-                                : rawCounts;
-                              const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
-                              const count = counts[option] || 0;
-                              const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                              const isChosen = voted === option;
-                              return (
-                                <div
-                                  key={i}
-                                  className={`w-full rounded-full px-3 py-2 flex items-center justify-between transition-all duration-300 ${
-                                    isChosen
-                                      ? 'bg-purple-600 ring-2 ring-purple-200'
-                                      : 'bg-gray-100 opacity-70'
-                                  }`}
-                                >
-                                  <span className={`text-xs font-medium flex items-center gap-1.5 ${isChosen ? 'text-white' : 'text-gray-700'}`}>
-                                    {isChosen && <Check size={12} className="flex-shrink-0" />}
-                                    {option}
-                                  </span>
-                                  <span className={`text-xs font-semibold ${isChosen ? 'text-white' : 'text-gray-500'}`}>{pct}%</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          {/* Stats below results */}
-                          <div className="flex items-center gap-3 text-xs pt-0.5">
-                            <div className="flex items-center gap-1">
-                              <Star size={11} className="text-purple-600" />
-                              <span className="text-purple-600 font-medium">{game.points || 10} pts</span>
+                        (game.options || []).map((option: string, i: number) => {
+                          const rawCounts = voteCounts[game.id] || {};
+                          const counts = Object.keys(rawCounts).length === 0 ? { [voted]: 1 } : rawCounts;
+                          const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
+                          const pct = total > 0 ? Math.round(((counts[option] || 0) / total) * 100) : 0;
+                          const isChosen = voted === option;
+                          return (
+                            <div key={i} className={`w-full rounded-full px-3 py-2.5 flex items-center justify-between ${isChosen ? 'bg-purple-600' : 'bg-gray-100 opacity-70'}`}>
+                              <span className={`text-sm font-medium flex items-center gap-1.5 ${isChosen ? 'text-white' : 'text-gray-700'}`}>
+                                {isChosen && <Check size={12} />}{option}
+                              </span>
+                              <span className={`text-sm font-semibold ${isChosen ? 'text-white' : 'text-gray-500'}`}>{pct}%</span>
                             </div>
-                            <div className="flex items-center gap-1 text-gray-400">
-                              <Users size={11} />
-                              <span>{(() => {
-                                const counts = voteCounts[game.id] || {};
-                                const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
-                                return total || game.participants || 1;
-                              })()} players</span>
-                            </div>
-                          </div>
-                        </>
+                          );
+                        })
                       ) : game.isMultiCategory ? (
-                        <>
-                          <Button
-                            onClick={() => onOpenModal(game)}
-                            className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm"
-                          >
-                            Make Prediction
-                          </Button>
-                          <div className="flex items-center gap-3 text-xs">
-                            <div className="flex items-center gap-1">
-                              <Star size={11} className="text-purple-600" />
-                              <span className="text-purple-600 font-medium">{game.points || 10} pts</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-gray-400">
-                              <Users size={11} />
-                              <span>{game.participants || 0} players</span>
-                            </div>
-                          </div>
-                        </>
+                        <Button onClick={() => onOpenModal(game)} className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm">
+                          Make Prediction
+                        </Button>
                       ) : (
-                        <>
-                          <div className="flex flex-col gap-1.5">
-                            {(game.options || []).slice(0, 4).map((option: string, i: number) => (
-                              <button
-                                key={i}
-                                onClick={() => onOptionSelect(game.id, option)}
-                                className={`w-full py-2.5 px-4 rounded-full text-sm font-medium transition-all text-left flex items-center gap-2 ${
-                                  selected === option
-                                    ? 'bg-gray-200 border border-gray-300 text-gray-900 shadow-sm'
-                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                                }`}
-                              >
-                                {selected === option && (
-                                  <div className="w-4 h-4 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
-                                    <Check size={10} className="text-white" />
-                                  </div>
-                                )}
-                                {option}
-                              </button>
-                            ))}
-                          </div>
-                          <Button
-                            onClick={() => onSubmit(game)}
-                            disabled={!selected || isSubmitting}
-                            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-500 disabled:opacity-40 rounded-full font-medium text-sm"
+                        (game.options || []).slice(0, 4).map((option: string, i: number) => (
+                          <button
+                            key={i}
+                            onClick={() => onOptionSelect(game.id, option)}
+                            className={`w-full py-2.5 px-4 rounded-full text-sm font-medium transition-all text-left flex items-center gap-2 ${
+                              selected === option ? 'bg-gray-200 border border-gray-300 text-gray-900' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                            }`}
                           >
-                            {isSubmitting ? 'Submitting...' : 'Submit'}
-                          </Button>
-                          {/* Stats below Submit */}
-                          <div className="flex items-center gap-3 text-xs">
-                            <div className="flex items-center gap-1">
-                              <Star size={11} className="text-purple-600" />
-                              <span className="text-purple-600 font-medium">{game.points || 10} pts</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-gray-400">
-                              <Users size={11} />
-                              <span>{(() => {
-                                const counts = voteCounts[game.id] || {};
-                                const total = Object.values(counts).reduce((s: number, n: any) => s + n, 0);
-                                return total || game.participants || 0;
-                              })()} players</span>
-                            </div>
-                          </div>
-                        </>
+                            {selected === option && <div className="w-4 h-4 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0"><Check size={10} className="text-white" /></div>}
+                            {option}
+                          </button>
+                        ))
                       )}
                     </div>
+                  </div>
+
+                  {/* Submit + stats row */}
+                  {!voted && !game.isMultiCategory && (
+                    <Button
+                      onClick={() => onSubmit(game)}
+                      disabled={!selected || isSubmitting}
+                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-500 disabled:opacity-40 rounded-full font-medium text-sm"
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Submit'}
+                    </Button>
+                  )}
+                  <div className="flex items-center gap-3 text-xs text-gray-400">
+                    <span className="text-purple-600 font-medium flex items-center gap-1"><Star size={11} />{game.points || 10} pts</span>
+                    <span className="flex items-center gap-1"><Users size={11} />{(() => { const c = voteCounts[game.id] || {}; const t = Object.values(c).reduce((s: number, n: any) => s + n, 0); return t || game.participants || 0; })()} players</span>
                   </div>
                 </CardContent>
               </Card>
