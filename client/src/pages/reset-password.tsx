@@ -170,7 +170,7 @@ export default function ResetPasswordPage() {
             </div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Password Updated</h2>
             <p className="text-gray-500 text-sm mb-6">
-              Your password has been successfully reset. You can now log in to Consumed with your new password.
+              Open the Consumed app and sign in with your new password.
             </p>
             <Button
               onClick={openApp}
@@ -182,7 +182,7 @@ export default function ResetPasswordPage() {
               onClick={() => setLocation('/login')}
               className="w-full py-3 text-sm text-gray-400 hover:text-gray-600 transition-colors"
             >
-              {Capacitor.isNativePlatform() ? "Go to sign in instead" : "Login on web instead"}
+              {Capacitor.isNativePlatform() ? "Go to sign in instead" : "Sign in on web instead"}
             </button>
           </div>
         </div>
