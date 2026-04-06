@@ -210,7 +210,7 @@ export default function LoginPage() {
               className="h-20 w-auto"
             />
           </div>
-          <h1 className="text-white text-2xl font-bold mb-1">
+          <h1 className="text-white text-2xl font-medium mb-1 whitespace-nowrap">
             Where entertainment gets played.
           </h1>
           <p className="text-purple-400 text-xs tracking-widest font-medium">
@@ -391,9 +391,6 @@ export default function LoginPage() {
           </Tabs>
         </div>
 
-        <p className="text-gray-400 text-sm text-center mt-4">
-          The social layer of entertainment.
-        </p>
         
       </div>
 
