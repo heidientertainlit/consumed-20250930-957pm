@@ -32,15 +32,8 @@ const gameModes = [
     iconColor: "text-amber-500",
     href: "/play/ranks",
   },
-  {
-    id: "cast",
-    label: "Cast a Friend",
-    description: "Who would play who?",
-    icon: UserPlus,
-    color: "bg-teal-50 border-teal-100",
-    iconColor: "text-teal-500",
-    href: "/play/cast",
-  },
+  // HIDDEN: Cast a Friend — temporarily hidden while redesigning
+  // { id: "cast", label: "Cast a Friend", description: "Who would play who?", icon: UserPlus, color: "bg-teal-50 border-teal-100", iconColor: "text-teal-500", href: "/play/cast" },
   {
     id: "predictions",
     label: "Predictions",

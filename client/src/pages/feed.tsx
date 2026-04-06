@@ -2690,11 +2690,8 @@ export default function Feed() {
                   <p className="text-xs text-gray-500">would play @{targetUserName} in a movie</p>
                 </div>
               </div>
-              <Link href="/cast">
-                <button className="mt-3 w-full py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white text-sm font-medium rounded-xl hover:opacity-90 transition-opacity">
-                  Cast Your Friends
-                </button>
-              </Link>
+              {/* HIDDEN: Cast Your Friends CTA — temporarily hidden while redesigning */}
+              {false && <Link href="/cast"><button className="mt-3 w-full py-2 bg-gradient-to-r from-purple-600 to-blue-500 text-white text-sm font-medium rounded-xl hover:opacity-90 transition-opacity">Cast Your Friends</button></Link>}
             </div>
             <div className="flex items-center gap-4 px-4 py-3 border-t border-gray-100">
               <button
