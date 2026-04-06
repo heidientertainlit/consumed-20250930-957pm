@@ -209,13 +209,13 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
           <>
             <button
               onClick={() => setShowOptions(true)}
-              className="w-full py-3.5 rounded-2xl text-center text-purple-600 font-medium text-sm bg-gray-100 active:bg-gray-200 transition-colors"
+              className="w-full py-3 px-4 rounded-full border border-gray-200 text-center text-gray-700 font-medium text-sm bg-gray-100 hover:bg-gray-200 hover:border-gray-300 active:bg-gray-200 transition-colors"
             >
               {hasInlinePoll
-                ? `Cast your vote · +${pts} pts`
+                ? 'Cast your vote'
                 : hasInlinePrediction
-                  ? `Make your pick · +${pts} pts`
-                  : `Answer to earn +${pts} pts`}
+                  ? 'Make your pick'
+                  : 'Answer to earn points'}
             </button>
             {/* Poll attribution footnote — collapsed state */}
             {hasInlinePoll && card.user && (
@@ -374,7 +374,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
         {!hasInline && (
           <>
             <Link to={card.ctaHref}>
-              <div className="w-full py-3.5 rounded-2xl text-center text-purple-600 font-medium text-sm bg-gray-100 active:bg-gray-200 transition-colors">
+              <div className="w-full py-3 px-4 rounded-full border border-gray-200 text-center text-gray-700 font-medium text-sm bg-gray-100 hover:bg-gray-200 hover:border-gray-300 active:bg-gray-200 transition-colors">
                 {card.ctaLabel}
               </div>
             </Link>
