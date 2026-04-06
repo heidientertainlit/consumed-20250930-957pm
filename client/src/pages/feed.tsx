@@ -845,7 +845,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     if (post.type === 'rating') return { label: 'Rating', color: 'text-yellow-500', bg: 'bg-yellow-50' };
     if (post.type === 'finished') return { label: 'Finished', color: 'text-green-500', bg: 'bg-green-50' };
     if (post.type === 'predict' || post.type === 'prediction') return { label: 'Prediction', color: 'text-purple-500', bg: 'bg-purple-50' };
-    if (post.type === 'poll') return { label: 'Poll', color: 'text-purple-500', bg: 'bg-purple-50' };
+    if (post.type === 'poll') return { label: 'Cast your vote', color: 'text-purple-500', bg: 'bg-purple-50' };
     return { label: 'Post', color: 'text-gray-400', bg: 'bg-gray-50' };
   };
 
