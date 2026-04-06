@@ -697,8 +697,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
   const [communityRating, setCommunityRating] = useState<number | null>(null);
   const [seenItDone, setSeenItDone] = useState(false);
+  const [hoverRating, setHoverRating] = useState(0);
   const hasFetched = useRef(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+  const starsRef = useRef<HTMLDivElement>(null);
 
   const handleSeenIt = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -764,7 +766,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       });
       setRatingValue(rating);
       setRatingSubmitted(true);
-      setTimeout(() => setShowRating(false), 800);
+      setHoverRating(0);
     } catch (err) {
       console.error('Rating failed', err);
     }
@@ -948,27 +950,74 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         </div>
 
-        {showRating && (
-          <div className="mt-2 pt-2 border-t border-gray-50">
-            <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map(star => (
-                <div key={star} className="relative" style={{ width: 34, height: 34 }}>
-                  <Star size={34} className="absolute inset-0 text-gray-200" />
-                  <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}>
-                    <Star size={34} className="fill-yellow-400 text-yellow-400" />
-                  </div>
-                  <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5} stars`} />
-                  <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star} stars`} />
+        {/* Your Turn — always-visible rating for rating/review posts */}
+        {(post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && post.externalId && session?.access_token && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            {ratingSubmitted ? (
+              <p className="text-xs text-green-600 font-medium">Rated! ★ {ratingValue}/5</p>
+            ) : (
+              <>
+                <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">Your Turn</p>
+                <div
+                  ref={starsRef}
+                  className="flex items-center gap-0.5 touch-none select-none"
+                  onMouseLeave={() => setHoverRating(0)}
+                  onTouchMove={(e) => {
+                    e.stopPropagation();
+                    if (!starsRef.current) return;
+                    const touch = e.touches[0];
+                    const rect = starsRef.current.getBoundingClientRect();
+                    const x = touch.clientX - rect.left;
+                    const starWidth = rect.width / 5;
+                    const starIndex = Math.floor(x / starWidth);
+                    const withinStar = (x % starWidth) / starWidth;
+                    const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
+                    setHoverRating(Math.round(val * 2) / 2);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation();
+                    if (hoverRating > 0) handleSubmitRating(hoverRating);
+                    setHoverRating(0);
+                  }}
+                >
+                  {[1, 2, 3, 4, 5].map(star => {
+                    const displayVal = hoverRating || ratingValue;
+                    return (
+                      <div
+                        key={star}
+                        className="relative"
+                        style={{ width: 30, height: 30 }}
+                      >
+                        <Star size={30} className="absolute inset-0 text-gray-200" />
+                        <div
+                          className="absolute inset-0 overflow-hidden pointer-events-none"
+                          style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}
+                        >
+                          <Star size={30} className={`${hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'}`} />
+                        </div>
+                        <button
+                          className="absolute top-0 left-0 h-full z-10"
+                          style={{ width: '50%' }}
+                          onMouseEnter={() => setHoverRating(star - 0.5)}
+                          onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }}
+                          aria-label={`Rate ${star - 0.5}`}
+                        />
+                        <button
+                          className="absolute top-0 right-0 h-full z-10"
+                          style={{ width: '50%' }}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }}
+                          aria-label={`Rate ${star}`}
+                        />
+                      </div>
+                    );
+                  })}
+                  <span className="ml-2 text-xs text-gray-400">
+                    {hoverRating > 0 ? `${hoverRating}/5` : ratingValue > 0 ? `${ratingValue}/5` : ''}
+                  </span>
                 </div>
-              ))}
-              {ratingSubmitted ? (
-                <span className="ml-2 text-xs text-green-600 font-medium">Saved!</span>
-              ) : ratingValue > 0 ? (
-                <span className="ml-2 text-xs text-gray-500">{ratingValue}/5</span>
-              ) : (
-                <span className="ml-2 text-xs text-gray-400">Tap to rate</span>
-              )}
-            </div>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -1071,6 +1120,8 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const [externalRating, setExternalRating] = useState<number | null>(null);
   const [externalRatingLabel, setExternalRatingLabel] = useState<string>('');
   const [tasteAlignment, setTasteAlignment] = useState<number | null>(null);
+  const [hoverRating, setHoverRating] = useState(0);
+  const starsRef = useRef<HTMLDivElement>(null);
   const [seenItDone, setSeenItDone] = useState(false);
 
   const handleSeenIt = async (media: { title: string; externalId: string; externalSource: string; imageUrl: string; type: string }) => {
@@ -1461,28 +1512,56 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
         {/* Your Turn — inline star rating for rating/review posts */}
         {isRatingType && post.mediaTitle && post.externalId && currentUserId && post.user?.id !== currentUserId && (
           <div className="border-t border-gray-100 mt-3 pt-3">
-            {!ratingSubmitted ? (
+            {ratingSubmitted ? (
+              <p className="text-xs text-green-600 font-medium">Rated! ★ {ratingValue}/5</p>
+            ) : (
               <>
                 <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">Your Turn</p>
-                <div className="flex items-center gap-0.5">
-                  {[1, 2, 3, 4, 5].map(star => (
-                    <div key={star} className="relative" style={{ width: 30, height: 30 }}>
-                      <Star size={30} className="absolute inset-0 text-gray-200" />
-                      <div className="absolute inset-0 overflow-hidden pointer-events-none"
-                           style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}>
-                        <Star size={30} className="fill-yellow-400 text-yellow-400" />
+                <div
+                  ref={starsRef}
+                  className="flex items-center gap-0.5 touch-none select-none"
+                  onMouseLeave={() => setHoverRating(0)}
+                  onTouchMove={(e) => {
+                    e.stopPropagation();
+                    if (!starsRef.current) return;
+                    const touch = e.touches[0];
+                    const rect = starsRef.current.getBoundingClientRect();
+                    const x = touch.clientX - rect.left;
+                    const starWidth = rect.width / 5;
+                    const starIndex = Math.floor(x / starWidth);
+                    const withinStar = (x % starWidth) / starWidth;
+                    const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
+                    setHoverRating(Math.round(val * 2) / 2);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation();
+                    if (hoverRating > 0) handleSubmitRating(hoverRating);
+                    setHoverRating(0);
+                  }}
+                >
+                  {[1, 2, 3, 4, 5].map(star => {
+                    const displayVal = hoverRating || ratingValue;
+                    return (
+                      <div key={star} className="relative" style={{ width: 30, height: 30 }}>
+                        <Star size={30} className="absolute inset-0 text-gray-200" />
+                        <div className="absolute inset-0 overflow-hidden pointer-events-none"
+                             style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
+                          <Star size={30} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
+                        </div>
+                        <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }}
+                                onMouseEnter={() => setHoverRating(star - 0.5)}
+                                onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
+                        <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }}
+                                onMouseEnter={() => setHoverRating(star)}
+                                onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
                       </div>
-                      <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }}
-                              onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
-                      <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }}
-                              onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
-                    </div>
-                  ))}
-                  {ratingValue > 0 && <span className="ml-2 text-xs text-gray-400">{ratingValue}/5</span>}
+                    );
+                  })}
+                  <span className="ml-2 text-xs text-gray-400">
+                    {hoverRating > 0 ? `${hoverRating}/5` : ratingValue > 0 ? `${ratingValue}/5` : ''}
+                  </span>
                 </div>
               </>
-            ) : (
-              <p className="text-xs text-green-600 font-medium">Rated! ★ {ratingValue}/5</p>
             )}
           </div>
         )}
@@ -1703,6 +1782,7 @@ function CurrentlyConsumingFeedCard({
   const [hoverRating, setHoverRating] = useState(0);
   const [selectedRating, setSelectedRating] = useState(0);
   const [seenItDone, setSeenItDone] = useState(false);
+  const starsRef = useRef<HTMLDivElement>(null);
   
   const rawMedia = post.mediaItems![0];
   const media = (() => {
@@ -1942,27 +2022,56 @@ function CurrentlyConsumingFeedCard({
           {/* Your Turn — inline star rating */}
           {media.externalId && !isOwnPost && session?.access_token && (
             <div className="border-t border-gray-100 mt-3 pt-3">
-              {selectedRating === 0 ? (
+              {selectedRating > 0 ? (
+                <p className="text-xs text-green-600 font-medium">Rated! ★ {selectedRating}/5</p>
+              ) : (
                 <>
                   <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">Your Turn</p>
-                  <div className="flex items-center gap-0.5">
-                    {[1, 2, 3, 4, 5].map(star => (
-                      <div key={star} className="relative" style={{ width: 28, height: 28 }}>
-                        <Star size={28} className="absolute inset-0 text-gray-200" />
-                        <div className="absolute inset-0 overflow-hidden pointer-events-none"
-                             style={{ width: selectedRating >= star ? '100%' : selectedRating >= star - 0.5 ? '50%' : '0%' }}>
-                          <Star size={28} className="fill-yellow-400 text-yellow-400" />
+                  <div
+                    ref={starsRef}
+                    className="flex items-center gap-0.5 touch-none select-none"
+                    onMouseLeave={() => setHoverRating(0)}
+                    onTouchMove={(e) => {
+                      e.stopPropagation();
+                      if (!starsRef.current) return;
+                      const touch = e.touches[0];
+                      const rect = starsRef.current.getBoundingClientRect();
+                      const x = touch.clientX - rect.left;
+                      const starWidth = rect.width / 5;
+                      const starIndex = Math.floor(x / starWidth);
+                      const withinStar = (x % starWidth) / starWidth;
+                      const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
+                      setHoverRating(Math.round(val * 2) / 2);
+                    }}
+                    onTouchEnd={(e) => {
+                      e.stopPropagation();
+                      if (hoverRating > 0) handleSubmitRating(hoverRating);
+                      setHoverRating(0);
+                    }}
+                  >
+                    {[1, 2, 3, 4, 5].map(star => {
+                      const displayVal = hoverRating || selectedRating;
+                      return (
+                        <div key={star} className="relative" style={{ width: 28, height: 28 }}>
+                          <Star size={28} className="absolute inset-0 text-gray-200" />
+                          <div className="absolute inset-0 overflow-hidden pointer-events-none"
+                               style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
+                            <Star size={28} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
+                          </div>
+                          <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }}
+                                  onMouseEnter={() => setHoverRating(star - 0.5)}
+                                  onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
+                          <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }}
+                                  onMouseEnter={() => setHoverRating(star)}
+                                  onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
                         </div>
-                        <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }}
-                                onClick={() => handleSubmitRating(star - 0.5)} aria-label={`Rate ${star - 0.5}`} />
-                        <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }}
-                                onClick={() => handleSubmitRating(star)} aria-label={`Rate ${star}`} />
-                      </div>
-                    ))}
+                      );
+                    })}
+                    <span className="ml-2 text-xs text-gray-400">
+                      {hoverRating > 0 ? `${hoverRating}/5` : selectedRating > 0 ? `${selectedRating}/5` : ''}
+                    </span>
                   </div>
                 </>
-              ) : (
-                <p className="text-xs text-green-600 font-medium">Rated! ★ {selectedRating}/5</p>
               )}
             </div>
           )}
