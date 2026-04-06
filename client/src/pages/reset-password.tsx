@@ -174,16 +174,10 @@ export default function ResetPasswordPage() {
             </p>
             <Button
               onClick={openApp}
-              className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white rounded-full text-sm font-semibold shadow-lg shadow-purple-500/25 transition-all mb-6"
+              className="w-full h-12 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white rounded-full text-sm font-semibold shadow-lg shadow-purple-500/25 transition-all"
             >
               {Capacitor.isNativePlatform() ? "Go to Consumed" : "Open Consumed App"}
             </Button>
-            <button
-              onClick={() => setLocation('/login')}
-              className="w-full py-3 text-sm text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              {Capacitor.isNativePlatform() ? "Go to sign in instead" : "Sign in on web instead"}
-            </button>
           </div>
         </div>
       </div>
