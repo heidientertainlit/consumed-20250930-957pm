@@ -439,9 +439,6 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
           
           return (
             <div key={poll.id} className="flex-shrink-0 w-full snap-center">
-              <div className="inline-flex items-center gap-1 mb-3 px-2 py-0.5 rounded-full bg-green-100 border border-green-200">
-                <span className="text-xs text-green-700 font-medium">+{poll.pointsReward} pts</span>
-              </div>
               <h3 className="text-gray-900 font-semibold text-base mb-3">{poll.title}</h3>
               
               {!voted ? (
@@ -520,6 +517,11 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                   )}
                 </div>
               )}
+              <div className="flex items-center justify-end mt-4">
+                <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold">
+                  +{poll.pointsReward} pts
+                </div>
+              </div>
             </div>
           );
         })}
