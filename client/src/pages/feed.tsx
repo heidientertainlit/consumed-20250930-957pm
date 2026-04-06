@@ -1152,6 +1152,9 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
+    // Optimistic update — show stars immediately
+    setRatingValue(rating);
+    setRatingSubmitted(true);
     const media = {
       title: post.mediaTitle || post.mediaItems?.[0]?.title || '',
       externalId: post.externalId || post.mediaItems?.[0]?.externalId || '',
@@ -1176,9 +1179,6 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
           }),
         }
       );
-      setRatingValue(rating);
-      setRatingSubmitted(true);
-      setTimeout(() => setShowRating(false), 800);
     } catch (err) {
       console.error('Rating failed', err);
     }
@@ -1452,10 +1452,10 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                            style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}>
                         <Star size={30} className="fill-yellow-400 text-yellow-400" />
                       </div>
-                      <button className="absolute top-0 left-0 h-full z-10" style={{ width: '30%' }}
-                              onClick={() => handleSubmitRating(star - 0.5)} aria-label={`Rate ${star - 0.5}`} />
-                      <button className="absolute top-0 right-0 h-full z-10" style={{ width: '70%' }}
-                              onClick={() => handleSubmitRating(star)} aria-label={`Rate ${star}`} />
+                      <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }}
+                              onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
+                      <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }}
+                              onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
                     </div>
                   ))}
                   {ratingValue > 0 && <span className="ml-2 text-xs text-gray-400">{ratingValue}/5</span>}
