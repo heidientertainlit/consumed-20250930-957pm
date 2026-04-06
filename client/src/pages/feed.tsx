@@ -864,7 +864,15 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 : (post.user?.displayName || post.user?.username || '?')[0]?.toUpperCase()}
             </div>
             <div>
-              <p className="text-xs font-semibold text-gray-900 leading-tight hover:text-purple-600">{post.user?.displayName || post.user?.username || 'Someone'}</p>
+              {(() => {
+                const cardDisplayName = post.user?.displayName || post.user?.username || 'Someone';
+                const cardIsRatingType = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review' || post.type === 'thought';
+                return (
+                  <p className="text-xs font-semibold text-gray-900 leading-tight hover:text-purple-600">
+                    {cardIsRatingType ? `${cardDisplayName}'s Take` : cardDisplayName}
+                  </p>
+                );
+              })()}
               {post.user?.username && post.user.username !== post.user?.displayName && (
                 <p className="text-[10px] text-gray-400 leading-tight">@{post.user.username}</p>
               )}
