@@ -696,8 +696,38 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
   const [communityRating, setCommunityRating] = useState<number | null>(null);
+  const [seenItDone, setSeenItDone] = useState(false);
   const hasFetched = useRef(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+
+  const handleSeenIt = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (seenItDone || !session?.access_token) return;
+    setSeenItDone(true);
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/track-media`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+        },
+        body: JSON.stringify({
+          media: {
+            title: post.mediaTitle,
+            mediaType: post.mediaType || 'movie',
+            imageUrl: post.mediaImage || '',
+            externalId: post.externalId || '',
+            externalSource: post.externalSource || 'tmdb',
+          },
+          listType: 'completed',
+          skip_social_post: true,
+        }),
+      });
+    } catch {
+      // silent fail
+    }
+  };
 
   useEffect(() => {
     const externalId = post.externalId;
@@ -884,17 +914,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
         <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
           <button
-            onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
-            className={`flex items-center gap-1.5 text-sm ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'} active:scale-110 transition-transform`}
-          >
-            <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
-            <span className="text-xs">{post.likes || 0}</span>
-          </button>
-          <button
             onClick={handleCommentToggle}
             className={`flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
           >
-            <MessageCircle size={16} />
+            <MessageCircle size={15} />
             <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
           </button>
           {(post.externalId || post.mediaTitle) && (
@@ -905,20 +928,17 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
                   title="Add to list"
                 >
-                  <Plus size={16} />
+                  <Plus size={15} />
                 </button>
               )}
               <button
-                onClick={(e) => { e.stopPropagation(); setShowRating(r => !r); }}
-                className={`flex items-center gap-1 text-sm active:scale-110 transition-all ${showRating || ratingSubmitted ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'}`}
-                title="Rate"
+                onClick={handleSeenIt}
+                className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`}
+                title="Seen it"
+                disabled={seenItDone}
               >
-                <Star size={16} fill={ratingSubmitted ? 'currentColor' : 'none'} />
-                {communityRating !== null && (
-                  <span className={`text-[11px] font-medium ${showRating || ratingSubmitted ? 'text-yellow-500' : 'text-gray-400'}`}>
-                    {communityRating}
-                  </span>
-                )}
+                <Check size={15} />
+                <span className="text-xs">{seenItDone ? 'Saved!' : 'Seen it'}</span>
               </button>
             </>
           )}
