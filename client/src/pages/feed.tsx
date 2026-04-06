@@ -1693,6 +1693,7 @@ function CurrentlyConsumingFeedCard({
   likedComments: Set<string>;
   commentVotes: Map<string, 'up' | 'down'>;
   onBet?: (postId: string, mediaTitle: string, userName: string, targetUserId: string, externalId?: string, externalSource?: string, mediaType?: string) => void;
+  onAddToList?: (media: any) => void;
 }) {
   const [reportCommentDataLocal, setReportCommentDataLocal] = useState<{ commentId: string; userId: string; userName: string } | null>(null);
   const handleReportComment = (commentId: string, userId: string, userName: string) => {
@@ -1701,6 +1702,7 @@ function CurrentlyConsumingFeedCard({
   const [showRating, setShowRating] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
   const [selectedRating, setSelectedRating] = useState(0);
+  const [seenItDone, setSeenItDone] = useState(false);
   
   const rawMedia = post.mediaItems![0];
   const media = (() => {
@@ -1722,8 +1724,10 @@ function CurrentlyConsumingFeedCard({
   
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
+    setSelectedRating(rating);
+    setShowRating(false);
     try {
-      const response = await fetch(
+      await fetch(
         `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/rate-media`,
         {
           method: 'POST',
@@ -1743,12 +1747,39 @@ function CurrentlyConsumingFeedCard({
           }),
         }
       );
-      if (response.ok) {
-        setShowRating(false);
-        setSelectedRating(rating);
-      }
     } catch (error) {
       console.error('Failed to submit rating:', error);
+    }
+  };
+
+  const handleSeenIt = async () => {
+    if (seenItDone || !session?.access_token) return;
+    setSeenItDone(true);
+    try {
+      await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/track-media`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+          },
+          body: JSON.stringify({
+            media: {
+              title: media.title,
+              mediaType: media.mediaType || 'movie',
+              imageUrl: media.imageUrl || '',
+              externalId: media.externalId || '',
+              externalSource: media.externalSource || 'tmdb',
+            },
+            listType: 'completed',
+            skip_social_post: true,
+          }),
+        }
+      );
+    } catch {
+      // silent fail
     }
   };
   
@@ -1850,17 +1881,9 @@ function CurrentlyConsumingFeedCard({
             </p>
           </Link>
           
-          {/* Like/Comment/Rate actions */}
+          {/* Action bar — Comment | Add | Seen it */}
           <div className="flex items-center justify-between pt-3 mt-2 border-t border-gray-100">
             <div className="flex items-center gap-4">
-            <button
-              onClick={() => handleLike(post.id)}
-              className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
-              data-testid={`button-like-currently-${post.id}`}
-            >
-              <Heart size={16} fill={likedPosts.has(post.id) ? 'currentColor' : 'none'} />
-              <span>{post.likes || 0}</span>
-            </button>
             <button
               onClick={() => setExpandedComments(prev => {
                 const newSet = new Set(prev);
@@ -1868,96 +1891,30 @@ function CurrentlyConsumingFeedCard({
                 else newSet.add(post.id);
                 return newSet;
               })}
-              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
+              className={`flex items-center gap-1.5 text-sm ${expandedComments.has(post.id) ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
               data-testid={`button-comment-currently-${post.id}`}
             >
-              <MessageCircle size={16} />
-              <span>{post.comments || 0}</span>
+              <MessageCircle size={15} />
+              <span className="text-xs">{post.comments || 0}</span>
             </button>
-            {/* Star rating - show existing rating from post, or button to add rating */}
-            {(post as any).rating ? (
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    size={14}
-                    className={star <= (post as any).rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
-                  />
-                ))}
-              </div>
-            ) : !showRating && !selectedRating && (
+            {onAddToList && (
               <button
-                onClick={() => setShowRating(true)}
-                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-yellow-500"
-                data-testid={`button-rate-currently-${post.id}`}
+                onClick={() => onAddToList({ title: media.title, externalId: media.externalId || '', externalSource: media.externalSource || 'tmdb', imageUrl: media.imageUrl || '', type: media.mediaType || 'movie' })}
+                className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
+                title="Add to list"
               >
-                <Star size={16} />
+                <Plus size={15} />
               </button>
             )}
-            {showRating && (
-              <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((star) => {
-                  const currentValue = hoverRating || selectedRating;
-                  const isFullFilled = currentValue >= star;
-                  const isHalfFilled = currentValue >= star - 0.5 && currentValue < star;
-                  return (
-                    <div
-                      key={star}
-                      className="relative p-0.5 cursor-pointer"
-                      onMouseLeave={() => setHoverRating(0)}
-                      data-testid={`star-${star}-${post.id}`}
-                    >
-                      <Star size={16} className="text-gray-300" />
-                      {/* Half fill overlay */}
-                      <div 
-                        className="absolute inset-0 overflow-hidden p-0.5"
-                        style={{ width: isFullFilled ? '100%' : isHalfFilled ? '50%' : '0%' }}
-                      >
-                        <Star size={16} className="text-yellow-400 fill-yellow-400" />
-                      </div>
-                      {/* Left half click zone for .5 */}
-                      <div 
-                        className="absolute inset-y-0 left-0 w-1/2"
-                        onMouseEnter={() => setHoverRating(star - 0.5)}
-                        onClick={() => handleSubmitRating(star - 0.5)}
-                      />
-                      {/* Right half click zone for whole number */}
-                      <div 
-                        className="absolute inset-y-0 right-0 w-1/2"
-                        onMouseEnter={() => setHoverRating(star)}
-                        onClick={() => handleSubmitRating(star)}
-                      />
-                    </div>
-                  );
-                })}
-                <button
-                  onClick={() => setShowRating(false)}
-                  className="ml-1 text-xs text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-            {selectedRating > 0 && (
-              <div className="flex items-center gap-0.5">
-                {[1, 2, 3, 4, 5].map((star) => {
-                  const isFullFilled = selectedRating >= star;
-                  const isHalfFilled = selectedRating >= star - 0.5 && selectedRating < star;
-                  return (
-                    <span key={star} className="relative inline-block w-3.5 h-3.5">
-                      <Star size={14} className="absolute text-gray-300" />
-                      <span 
-                        className="absolute inset-0 overflow-hidden" 
-                        style={{ width: isFullFilled ? '100%' : isHalfFilled ? '50%' : '0%' }}
-                      >
-                        <Star size={14} className="fill-yellow-400 text-yellow-400" />
-                      </span>
-                    </span>
-                  );
-                })}
-                <span className="ml-1 text-xs text-gray-600">{selectedRating}/5</span>
-              </div>
-            )}
+            <button
+              onClick={handleSeenIt}
+              className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`}
+              disabled={seenItDone}
+              title="Seen it"
+            >
+              <Check size={15} />
+              <span className="text-xs">{seenItDone ? 'Saved!' : 'Seen it'}</span>
+            </button>
             {/* Bet button - only for other users' Currently posts */}
             {!isOwnPost && onBet && (
               <button
@@ -1981,7 +1938,35 @@ function CurrentlyConsumingFeedCard({
             {/* Timestamp on the right */}
             <span className="text-sm text-gray-400">{post.timestamp ? formatDate(post.timestamp) : 'Today'}</span>
           </div>
-          
+
+          {/* Your Turn — inline star rating */}
+          {media.externalId && !isOwnPost && session?.access_token && (
+            <div className="border-t border-gray-100 mt-3 pt-3">
+              {selectedRating === 0 ? (
+                <>
+                  <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">Your Turn</p>
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <div key={star} className="relative" style={{ width: 28, height: 28 }}>
+                        <Star size={28} className="absolute inset-0 text-gray-200" />
+                        <div className="absolute inset-0 overflow-hidden pointer-events-none"
+                             style={{ width: selectedRating >= star ? '100%' : selectedRating >= star - 0.5 ? '50%' : '0%' }}>
+                          <Star size={28} className="fill-yellow-400 text-yellow-400" />
+                        </div>
+                        <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }}
+                                onClick={() => handleSubmitRating(star - 0.5)} aria-label={`Rate ${star - 0.5}`} />
+                        <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }}
+                                onClick={() => handleSubmitRating(star)} aria-label={`Rate ${star}`} />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs text-green-600 font-medium">Rated! ★ {selectedRating}/5</p>
+              )}
+            </div>
+          )}
+
           {/* Comments Section */}
           {expandedComments.has(post.id) && (
             <div className="pt-3 mt-2 border-t border-gray-100">
@@ -2537,18 +2522,11 @@ export default function Feed() {
             </div>
             <div className="flex items-center gap-4 px-4 py-3 border-t border-gray-100">
               <button
-                onClick={() => handleLike(postId)}
-                className={`flex items-center gap-1.5 text-sm ${likedPosts.has(postId) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
-              >
-                <Heart size={16} fill={likedPosts.has(postId) ? 'currentColor' : 'none'} />
-                <span>{raw.likes || item.likes || 0}</span>
-              </button>
-              <button
                 onClick={() => setExpandedComments(prev => { const s = new Set(prev); s.has(postId) ? s.delete(postId) : s.add(postId); return s; })}
-                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
+                className={`flex items-center gap-1.5 text-sm ${expandedComments.has(postId) ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
               >
-                <MessageCircle size={16} />
-                <span>{raw.comments || item.comments || 0}</span>
+                <MessageCircle size={15} />
+                <span className="text-xs">{raw.comments || item.comments || 0}</span>
               </button>
             </div>
             {expandedComments.has(postId) && (
@@ -2693,23 +2671,16 @@ export default function Feed() {
               )}
               <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-gray-50">
                 <button
-                  onClick={() => handleLike(item.id)}
-                  className={`flex items-center gap-1.5 text-sm ${likedPosts.has(item.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
-                >
-                  <Heart size={16} fill={likedPosts.has(item.id) ? 'currentColor' : 'none'} />
-                  <span>{rawPost.likes || 0}</span>
-                </button>
-                <button
                   onClick={() => setExpandedComments(prev => {
                     const newSet = new Set(prev);
                     if (newSet.has(item.id)) newSet.delete(item.id);
                     else newSet.add(item.id);
                     return newSet;
                   })}
-                  className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
+                  className={`flex items-center gap-1.5 text-sm ${expandedComments.has(item.id) ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
                 >
-                  <MessageCircle size={16} />
-                  <span>{rawPost.comments || 0}</span>
+                  <MessageCircle size={15} />
+                  <span className="text-xs">{rawPost.comments || 0}</span>
                 </button>
               </div>
             </div>
@@ -4823,16 +4794,9 @@ export default function Feed() {
                     )}
 
                     <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
-                      <button
-                        onClick={() => handleLike(highlightedPost.id)}
-                        className={`flex items-center gap-1.5 text-sm ${likedPosts.has(highlightedPost.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
-                      >
-                        <Heart size={16} fill={likedPosts.has(highlightedPost.id) ? 'currentColor' : 'none'} />
-                        <span>{highlightedPost.likes || 0}</span>
-                      </button>
                       <div className="flex items-center gap-1.5 text-sm text-purple-500">
-                        <MessageCircle size={16} />
-                        <span>{highlightedPost.comments || 0}</span>
+                        <MessageCircle size={15} />
+                        <span className="text-xs">{highlightedPost.comments || 0}</span>
                       </div>
                     </div>
                   </div>
@@ -5547,6 +5511,7 @@ export default function Feed() {
                       onBet={(postId, mediaTitle, userName, targetUserId, externalId, externalSource, mediaType) => 
                         setActiveBetPost({ postId, mediaTitle, userName, targetUserId, externalId, externalSource, mediaType })
                       }
+                      onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
                     />
                   );
                 }
