@@ -1,7 +1,6 @@
 -- ============================================================
--- CONSUMED - Supabase Security Fixes (v2 - type-cast safe)
+-- CONSUMED - Supabase Security Fixes (v3 - schema verified)
 -- Run this in: Supabase Dashboard > SQL Editor
--- auth.uid()::text handles both uuid and varchar user_id columns
 -- ============================================================
 
 -- ============================================================
@@ -38,6 +37,11 @@ ALTER TABLE public.trivia_questions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read" ON public.trivia_questions;
 CREATE POLICY "Public read" ON public.trivia_questions FOR SELECT USING (true);
 
+-- friends_trivia is content data with no user column — public read only
+ALTER TABLE public.friends_trivia ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public read" ON public.friends_trivia;
+CREATE POLICY "Public read" ON public.friends_trivia FOR SELECT USING (true);
+
 ALTER TABLE public.beta_survey_questions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read" ON public.beta_survey_questions;
 CREATE POLICY "Public read" ON public.beta_survey_questions FOR SELECT USING (true);
@@ -54,16 +58,14 @@ ALTER TABLE public.seen_it_items ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read" ON public.seen_it_items;
 CREATE POLICY "Public read" ON public.seen_it_items FOR SELECT USING (true);
 
+-- polls are admin-created content (created_by is text, not a user FK)
 ALTER TABLE public.polls ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read" ON public.polls;
-DROP POLICY IF EXISTS "Authenticated insert" ON public.polls;
 CREATE POLICY "Public read" ON public.polls FOR SELECT USING (true);
-CREATE POLICY "Authenticated insert" ON public.polls FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
 
 -- ============================================================
 -- PART 3: Social Content (public read, users manage their own)
--- auth.uid()::text handles varchar user_id columns
 -- ============================================================
 
 ALTER TABLE public.social_post_comments ENABLE ROW LEVEL SECURITY;
@@ -114,12 +116,14 @@ DROP POLICY IF EXISTS "Users manage own" ON public.prediction_comment_votes;
 CREATE POLICY "Public read" ON public.prediction_comment_votes FOR SELECT USING (true);
 CREATE POLICY "Users manage own" ON public.prediction_comment_votes FOR ALL USING (auth.uid()::text = user_id::text);
 
+-- strands: user_id confirmed
 ALTER TABLE public.strands ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read" ON public.strands;
-DROP POLICY IF EXISTS "Authenticated write" ON public.strands;
+DROP POLICY IF EXISTS "Users manage own" ON public.strands;
 CREATE POLICY "Public read" ON public.strands FOR SELECT USING (true);
-CREATE POLICY "Authenticated write" ON public.strands FOR ALL WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "Users manage own" ON public.strands FOR ALL USING (auth.uid()::text = user_id::text);
 
+-- strand_media: no user column, linked via strand_id — authenticated write only
 ALTER TABLE public.strand_media ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read" ON public.strand_media;
 DROP POLICY IF EXISTS "Authenticated write" ON public.strand_media;
@@ -138,23 +142,18 @@ DROP POLICY IF EXISTS "Users manage own" ON public.strand_comments;
 CREATE POLICY "Public read" ON public.strand_comments FOR SELECT USING (true);
 CREATE POLICY "Users manage own" ON public.strand_comments FOR ALL USING (auth.uid()::text = user_id::text);
 
-ALTER TABLE public.friends_trivia ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Public read" ON public.friends_trivia;
-DROP POLICY IF EXISTS "Authenticated write" ON public.friends_trivia;
-CREATE POLICY "Public read" ON public.friends_trivia FOR SELECT USING (true);
-CREATE POLICY "Authenticated write" ON public.friends_trivia FOR ALL WITH CHECK (auth.uid() IS NOT NULL);
-
 ALTER TABLE public.ratings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read" ON public.ratings;
 DROP POLICY IF EXISTS "Users manage own" ON public.ratings;
 CREATE POLICY "Public read" ON public.ratings FOR SELECT USING (true);
 CREATE POLICY "Users manage own" ON public.ratings FOR ALL USING (auth.uid()::text = user_id::text);
 
+-- profiles: primary key column is user_id (not id)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read" ON public.profiles;
 DROP POLICY IF EXISTS "Users manage own" ON public.profiles;
 CREATE POLICY "Public read" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Users manage own" ON public.profiles FOR ALL USING (auth.uid()::text = id::text);
+CREATE POLICY "Users manage own" ON public.profiles FOR ALL USING (auth.uid()::text = user_id::text);
 
 
 -- ============================================================
@@ -181,13 +180,16 @@ DROP POLICY IF EXISTS "Users manage own" ON public.trivia_results;
 CREATE POLICY "Public read" ON public.trivia_results FOR SELECT USING (true);
 CREATE POLICY "Users manage own" ON public.trivia_results FOR ALL USING (auth.uid()::text = user_id::text);
 
+-- trivia_sessions: user_id confirmed
 ALTER TABLE public.trivia_sessions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users manage own" ON public.trivia_sessions;
 CREATE POLICY "Users manage own" ON public.trivia_sessions FOR ALL USING (auth.uid()::text = user_id::text);
 
+-- trivia_answers: no user_id column — linked via session_id — authenticated write only
 ALTER TABLE public.trivia_answers ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users manage own" ON public.trivia_answers;
-CREATE POLICY "Users manage own" ON public.trivia_answers FOR ALL USING (auth.uid()::text = user_id::text);
+DROP POLICY IF EXISTS "Authenticated write" ON public.trivia_answers;
+CREATE POLICY "Authenticated write" ON public.trivia_answers FOR ALL WITH CHECK (auth.uid() IS NOT NULL);
 
 ALTER TABLE public.media_ratings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public read" ON public.media_ratings;
@@ -205,12 +207,14 @@ ALTER TABLE public.user_prediction_stats ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users manage own" ON public.user_prediction_stats;
 CREATE POLICY "Users manage own" ON public.user_prediction_stats FOR ALL USING (auth.uid()::text = user_id::text);
 
+-- points_log: user_id is uuid, auth.uid() is uuid — cast to text for safety
 ALTER TABLE public.points_log ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users read own" ON public.points_log;
 DROP POLICY IF EXISTS "Authenticated insert" ON public.points_log;
 CREATE POLICY "Users read own" ON public.points_log FOR SELECT USING (auth.uid()::text = user_id::text);
 CREATE POLICY "Authenticated insert" ON public.points_log FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
+-- activity_logs: user_id is uuid
 ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users read own" ON public.activity_logs;
 DROP POLICY IF EXISTS "Authenticated insert" ON public.activity_logs;
@@ -249,7 +253,6 @@ CREATE POLICY "Authenticated insert" ON public.beta_feedback FOR INSERT WITH CHE
 -- ============================================================
 -- PART 5: Admin-only tables
 -- No policies = only service role (edge functions) can access.
--- Direct API calls from the app are blocked.
 -- ============================================================
 
 ALTER TABLE public.scheduled_persona_posts ENABLE ROW LEVEL SECURITY;
