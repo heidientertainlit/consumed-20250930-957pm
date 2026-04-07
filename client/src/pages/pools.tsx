@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Plus, Trophy, Crown, Trash2, Users, Globe, Lock } from "lucide-react";
+import { Plus, Trophy, Crown, Trash2, Users, Globe, Lock, BadgeCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,9 +87,6 @@ export default function PoolsPage() {
     <div className="min-h-screen pb-24" style={{ backgroundColor: '#0a0a0f' }}>
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
         <div className="px-4 pt-4 pb-8">
-          <button onClick={() => setLocation('/play')} className="text-white/70 hover:text-white transition-colors mb-3 block">
-            <ChevronLeft size={24} />
-          </button>
           <h1 className="text-2xl font-semibold text-white mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>Rooms</h1>
 
           {!showCreate ? (
@@ -219,35 +216,50 @@ export default function PoolsPage() {
         {!isLoading && publicRooms.length > 0 && (
           <>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider pt-3">Discover</p>
-            {publicRooms.map((pool) => (
-              <div key={pool.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-3 p-4">
-                  <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
-                    <Globe size={18} className="text-emerald-500" />
-                  </div>
-
-                  <button onClick={() => setLocation(`/room/${pool.id}`)} className="flex-1 min-w-0 text-left">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <h3 className="text-gray-900 font-semibold text-base truncate">{pool.name}</h3>
-                      <span className="text-[10px] text-emerald-600 font-medium bg-emerald-50 rounded-full px-2 py-0.5 shrink-0">Public</span>
+            {publicRooms.map((pool) => {
+              const isOfficial = pool.host?.user_name === 'HeidiIsConsumed' || pool.invite_code === 'REELZ2026';
+              return (
+                <div key={pool.id} className={`bg-white rounded-2xl shadow-sm overflow-hidden ${isOfficial ? 'border border-purple-200' : 'border border-gray-100'}`}>
+                  {isOfficial && (
+                    <div className="flex items-center gap-1.5 px-4 py-2 border-b border-purple-100" style={{ background: 'linear-gradient(to right, #f5f3ff, #ede9fe)' }}>
+                      <BadgeCheck size={13} className="text-purple-600 shrink-0" />
+                      <span className="text-[11px] font-semibold text-purple-700 tracking-wide uppercase">Official Partner Room</span>
                     </div>
-                    <p className="text-gray-400 text-xs">
-                      {pool.member_count} {pool.member_count === 1 ? 'member' : 'members'}
-                      {pool.host?.display_name ? ` · by ${pool.host.display_name}` : pool.host?.user_name ? ` · by ${pool.host.user_name}` : ''}
-                    </p>
-                  </button>
+                  )}
+                  <div className="flex items-center gap-3 p-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isOfficial ? 'bg-purple-50' : 'bg-emerald-50'}`}>
+                      {isOfficial
+                        ? <BadgeCheck size={18} className="text-purple-500" />
+                        : <Globe size={18} className="text-emerald-500" />
+                      }
+                    </div>
 
-                  <button
-                    onClick={() => handleJoin(pool.id)}
-                    disabled={joiningId === pool.id}
-                    className="shrink-0 text-xs font-semibold px-4 py-1.5 rounded-full text-white disabled:opacity-50"
-                    style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
-                  >
-                    {joiningId === pool.id ? '...' : 'Join'}
-                  </button>
+                    <button onClick={() => setLocation(`/room/${pool.id}`)} className="flex-1 min-w-0 text-left">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <h3 className="text-gray-900 font-semibold text-base truncate">{pool.name}</h3>
+                        {!isOfficial && <span className="text-[10px] text-emerald-600 font-medium bg-emerald-50 rounded-full px-2 py-0.5 shrink-0">Public</span>}
+                      </div>
+                      {pool.description && (
+                        <p className="text-gray-500 text-xs mb-1 line-clamp-1">{pool.description}</p>
+                      )}
+                      <p className="text-gray-400 text-xs">
+                        {pool.member_count} {pool.member_count === 1 ? 'member' : 'members'}
+                        {!isOfficial && (pool.host?.display_name ? ` · by ${pool.host.display_name}` : pool.host?.user_name ? ` · by ${pool.host.user_name}` : '')}
+                      </p>
+                    </button>
+
+                    <button
+                      onClick={() => handleJoin(pool.id)}
+                      disabled={joiningId === pool.id}
+                      className="shrink-0 text-xs font-semibold px-4 py-1.5 rounded-full text-white disabled:opacity-50"
+                      style={{ background: isOfficial ? 'linear-gradient(to right, #7c3aed, #6d28d9)' : 'linear-gradient(to right, #7c3aed, #2563eb)' }}
+                    >
+                      {joiningId === pool.id ? '...' : 'Join'}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
 
