@@ -243,7 +243,7 @@ export default function AdminPersonasPage() {
       const { data, error } = await supabase
         .from("scheduled_persona_posts")
         .select("*")
-        .order("scheduled_for", { ascending: false })
+        .order("scheduled_for", { ascending: true })
         .limit(100);
       if (error) throw error;
 
