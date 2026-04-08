@@ -595,7 +595,8 @@ export default function PoolDetailPage() {
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<'discussion' | 'picks' | 'leaderboard' | 'members'>('discussion');
+  const [tab, setTab] = useState<'feed' | 'picks' | 'leaderboard' | 'members'>('feed');
+  const [feedPickIndex, setFeedPickIndex] = useState(0);
   const [managingId, setManagingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
@@ -681,16 +682,16 @@ export default function PoolDetailPage() {
   const picks = posts.filter(p => p.prompt_type === 'pick' || p.prompt_type === 'call_it');
   const comments = posts.filter(p => p.prompt_type === 'commentary');
 
-  // Featured pick = latest OPEN pick shown at top of Discussion (both poll-style and call-it)
-  const featuredPick = picks.find(p => p.status !== 'resolved') || null;
-
-
   const myName = (data?.members?.find((m: any) => m.user_id === session?.user?.id)?.users as any)?.display_name
     || (data?.members?.find((m: any) => m.user_id === session?.user?.id)?.users as any)?.user_name
     || 'Me';
 
+  const openPicks = picks.filter(p => p.status !== 'resolved');
+  const safePickIndex = Math.min(feedPickIndex, Math.max(0, openPicks.length - 1));
+  const currentFeedPick = openPicks[safePickIndex] || null;
+
   const TABS = [
-    { key: 'discussion', label: 'Discussion' },
+    { key: 'feed', label: 'Feed' },
     { key: 'picks', label: 'Picks' },
     { key: 'leaderboard', label: 'Scores' },
     { key: 'members', label: 'Members' },
@@ -724,43 +725,32 @@ export default function PoolDetailPage() {
           )}
         </div>
 
-        {/* Room name */}
-        <div className="px-4 pb-4">
+        {/* Room name + meta */}
+        <div className="px-4 pb-3">
           <p className="text-white/40 text-[10px] font-medium uppercase tracking-widest mb-1">Room</p>
-          <h1 className="text-white text-2xl font-semibold leading-tight mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-white text-[22px] font-medium leading-tight mb-2.5" style={{ fontFamily: 'Poppins, sans-serif' }}>
             {isLoading ? '...' : pool?.name || 'Room'}
           </h1>
-
-          {/* About — white-tinted card on gradient */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3.5 mb-0">
-            <AboutSection pool={pool} members={members} isLoading={isLoading} />
-          </div>
-
-          {/* Visibility toggle — host only */}
-          {!isLoading && isHost && (
-            <div className="flex items-center justify-between mt-3 px-1">
-              <div className="flex items-center gap-1.5">
-                {isPublic
-                  ? <Globe size={13} className="text-emerald-300" />
-                  : <Lock size={13} className="text-white/40" />
-                }
-                <span className="text-white/50 text-xs font-medium">
-                  {isPublic ? 'Public — anyone can join' : 'Private — invite only'}
-                </span>
-              </div>
-              <button
-                onClick={() => handleToggleVisibility(!isPublic)}
-                disabled={togglingVisibility}
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-50 overflow-hidden shrink-0 ${isPublic ? 'bg-emerald-500' : 'bg-white/20'}`}
-              >
-                <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${isPublic ? 'translate-x-5' : 'translate-x-0'}`} />
-              </button>
+          {/* Member count + visibility */}
+          {!isLoading && (
+            <div className="flex items-center gap-2">
+              {members.slice(0, 1).map((m: any) => {
+                const name = (m.users as any)?.display_name || (m.users as any)?.user_name || 'U';
+                return <AvatarCircle key={m.user_id} name={name} size="sm" />;
+              })}
+              <span className="text-white/55 text-xs">
+                {members.length} {members.length === 1 ? 'member' : 'members'}
+              </span>
+              <span className="text-white/30 text-xs">·</span>
+              <span className={`text-xs font-medium ${isPublic ? 'text-emerald-400' : 'text-white/40'}`}>
+                {isPublic ? 'Public' : 'Private'}
+              </span>
             </div>
           )}
 
           {/* Non-member join banner — public rooms */}
           {!isLoading && !isMember && isPublic && (
-            <div className="mt-3 px-1">
+            <div className="mt-3">
               <button
                 onClick={handleJoinRoom}
                 disabled={joiningRoom}
@@ -772,44 +762,6 @@ export default function PoolDetailPage() {
             </div>
           )}
         </div>
-
-        {/* Overlapping member bubbles — between About and tabs */}
-        {!isLoading && members.length > 0 && (
-          <div className="overflow-x-auto scrollbar-none px-4 pt-2 pb-2">
-            <div className="flex" style={{ marginLeft: '0' }}>
-              {members.map((m: any, i: number) => {
-                const name = (m.users as any)?.display_name || (m.users as any)?.user_name || (m.users as any)?.email || 'U';
-                const words = name.trim().split(/\s+/);
-                const initials = words.length >= 2
-                  ? (words[0][0] + words[1][0]).toUpperCase()
-                  : (name[0] || 'U').toUpperCase();
-                return (
-                  <div
-                    key={m.user_id}
-                    className="relative shrink-0"
-                    style={{ marginLeft: i === 0 ? 0 : '-10px', zIndex: members.length - i }}
-                  >
-                    <div className={`w-12 h-12 rounded-full ${avatarColor(name)} flex items-center justify-center text-xs font-bold text-white ring-2 ring-[#1a1035]`}>
-                      {initials}
-                    </div>
-                    {m.role === 'host' && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center ring-1 ring-[#1a1035]">
-                        <Crown size={7} className="text-yellow-900" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              {members.length > 0 && (
-                <div className="shrink-0 flex items-center pl-4">
-                  <span className="text-white/50 text-xs font-medium">
-                    {members.length} {members.length === 1 ? 'member' : 'members'}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Tabs at bottom of gradient */}
         <div className="flex px-4 border-b border-white/10">
@@ -835,18 +787,36 @@ export default function PoolDetailPage() {
           </div>
         )}
 
-        {/* ── DISCUSSION ── */}
-        {!isLoading && tab === 'discussion' && (
-          <div className="space-y-3">
-            {/* Featured pick banner — any open pick (poll or call it) */}
-            {featuredPick && (
-              <FeaturedPickBanner key={featuredPick.id} post={featuredPick} isHost={isHost} token={token} onRefresh={refresh} />
+        {/* ── FEED ── */}
+        {!isLoading && tab === 'feed' && (
+          <div>
+            {/* ── Polls carousel section ── */}
+            {currentFeedPick && (
+              <div className="mb-2">
+                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest px-1 pb-2">This week's polls</p>
+                <FeaturedPickBanner key={currentFeedPick.id} post={currentFeedPick} isHost={isHost} token={token} onRefresh={refresh} />
+                {openPicks.length > 1 && (
+                  <div className="flex items-center gap-1.5 px-1 pb-3">
+                    {openPicks.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setFeedPickIndex(i)}
+                        className="h-1 rounded-full transition-all duration-200 flex-1"
+                        style={{ background: i === safePickIndex ? '#00c896' : 'rgba(0,0,0,0.12)' }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
+
+            {/* ── Discussion section ── */}
+            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest px-1 pb-2 pt-1">Discussion</p>
 
             {/* Composer — members only */}
             {isMember && <PostComposer poolId={params.id} token={token} currentUserName={myName} onPosted={refresh} />}
             {!isMember && (
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-4 px-4 text-center">
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-4 px-4 text-center mb-3">
                 <p className="text-gray-400 text-sm">Join this room to participate</p>
               </div>
             )}
@@ -858,7 +828,6 @@ export default function PoolDetailPage() {
                   <p className="text-gray-400 text-sm">No posts yet. Start the conversation.</p>
                 </div>
               )}
-              {/* Top-level threads only (no parent_id), newest first */}
               {[...comments]
                 .filter(c => !c.parent_id)
                 .reverse()
@@ -996,6 +965,31 @@ export default function PoolDetailPage() {
         {/* ── MEMBERS ── */}
         {!isLoading && tab === 'members' && (
           <div className="space-y-3">
+            {/* Visibility toggle — host only */}
+            {isHost && (
+              <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3 border border-gray-100 shadow-sm">
+                <div className="flex items-center gap-2">
+                  {isPublic
+                    ? <Globe size={14} className="text-emerald-500" />
+                    : <Lock size={14} className="text-gray-400" />
+                  }
+                  <span className="text-gray-700 text-sm font-medium">
+                    {isPublic ? 'Public room' : 'Private room'}
+                  </span>
+                  <span className="text-gray-400 text-xs">
+                    {isPublic ? '· anyone can join' : '· invite only'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleToggleVisibility(!isPublic)}
+                  disabled={togglingVisibility}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-50 overflow-hidden shrink-0 ${isPublic ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                >
+                  <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${isPublic ? 'translate-x-5' : 'translate-x-0'}`} />
+                </button>
+              </div>
+            )}
+
             {isHost && (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="flex items-center gap-2 px-3 py-3 border-b border-gray-50">
