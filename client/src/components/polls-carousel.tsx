@@ -408,13 +408,12 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
     <div className="bg-white border border-gray-100 shadow rounded-2xl p-4 mb-4 overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
-            <BarChart3 className="w-3.5 h-3.5 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-900">{category || 'Quick Polls'}</p>
-            <p className="text-[10px] text-gray-500">{category ? `${filteredData.length} polls` : 'Share your opinion'}</p>
-          </div>
+          {category && (
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 tracking-wide">
+              {category}
+            </span>
+          )}
+          <p className="text-sm font-semibold text-gray-900">Cast Your Vote</p>
         </div>
         
         <div className="flex items-center gap-1">
