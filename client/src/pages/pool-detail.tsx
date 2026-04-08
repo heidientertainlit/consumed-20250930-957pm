@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil } from "lucide-react";
+import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil, HelpCircle, Tv, Vote, Dna, Zap } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -907,13 +907,360 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
   );
 }
 
+/* ─── Play Tab: Trivia card ──────────────────────────────────────────── */
+function PlayTriviaCard({ poll, token, onVoted }: { poll: any; token: string; onVoted: () => void }) {
+  const { toast } = useToast();
+  const [myVote, setMyVote] = useState<string | null>(poll.user_vote || null);
+  const [counts, setCounts] = useState<Record<string, number>>(poll.vote_counts || {});
+  const [submitting, setSubmitting] = useState(false);
+
+  const options: string[] = poll.options || [];
+  const total = Object.values(counts).reduce((s, n) => s + n, 0);
+  const correctAnswer = poll.correct_answer || '';
+  const hasVoted = !!myVote;
+  const isCorrect = hasVoted && myVote?.toLowerCase() === correctAnswer.toLowerCase();
+
+  const handleVote = async (option: string) => {
+    if (hasVoted || submitting || !token) return;
+    setSubmitting(true);
+    setMyVote(option);
+    setCounts(prev => ({ ...prev, [option]: (prev[option] || 0) + 1 }));
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/predictions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pool_id: poll.id, prediction: option }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setMyVote(null);
+        setCounts(prev => ({ ...prev, [option]: Math.max(0, (prev[option] || 1) - 1) }));
+        toast({ title: data.error, variant: 'destructive' });
+      } else {
+        onVoted();
+      }
+    } catch {
+      toast({ title: 'Network error', variant: 'destructive' });
+    }
+    setSubmitting(false);
+  };
+
+  return (
+    <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm">
+      {/* Show tag */}
+      {poll.show_tag && (
+        <div className="flex items-center gap-1.5 px-4 pt-3 pb-0">
+          <Tv size={11} className="text-purple-400" />
+          <span className="text-[10px] font-semibold text-purple-500 uppercase tracking-wider">{poll.show_tag}</span>
+        </div>
+      )}
+      {/* Question */}
+      <div className="px-4 pt-2.5 pb-3">
+        <p className="text-gray-900 text-sm font-semibold leading-snug">{poll.title}</p>
+      </div>
+      {/* Options */}
+      <div className="px-4 pb-4 space-y-2">
+        {options.map((opt) => {
+          const pct = total > 0 && hasVoted ? Math.round(((counts[opt] || 0) / total) * 100) : 0;
+          const isThisCorrect = opt.toLowerCase() === correctAnswer.toLowerCase();
+          const isMyPick = opt === myVote;
+          let bg = 'bg-gray-50 border border-gray-200';
+          if (hasVoted && isThisCorrect) bg = 'bg-emerald-50 border border-emerald-200';
+          else if (hasVoted && isMyPick && !isThisCorrect) bg = 'bg-red-50 border border-red-200';
+          return (
+            <button
+              key={opt}
+              onClick={() => handleVote(opt)}
+              disabled={hasVoted || submitting}
+              className={`w-full rounded-xl text-left overflow-hidden relative transition-all ${bg} ${!hasVoted ? 'hover:bg-purple-50 hover:border-purple-200 active:scale-[0.99]' : ''}`}
+            >
+              {hasVoted && (
+                <div
+                  className={`absolute inset-y-0 left-0 rounded-xl transition-all duration-700 ${isThisCorrect ? 'bg-emerald-100' : isMyPick ? 'bg-red-100' : 'bg-gray-100'}`}
+                  style={{ width: `${pct}%` }}
+                />
+              )}
+              <div className="relative px-3 py-2.5 flex items-center justify-between">
+                <span className={`text-sm font-medium ${hasVoted && isThisCorrect ? 'text-emerald-700' : hasVoted && isMyPick ? 'text-red-600' : 'text-gray-700'}`}>{opt}</span>
+                {hasVoted && (
+                  <div className="flex items-center gap-2">
+                    {isThisCorrect && <CheckCircle2 size={13} className="text-emerald-500" />}
+                    <span className={`text-[11px] font-semibold ${isThisCorrect ? 'text-emerald-600' : 'text-gray-400'}`}>{pct}%</span>
+                  </div>
+                )}
+              </div>
+            </button>
+          );
+        })}
+        {hasVoted && (
+          <p className={`text-xs font-medium pt-0.5 ${isCorrect ? 'text-emerald-600' : 'text-gray-400'}`}>
+            {isCorrect ? 'Correct! +' + (poll.points_reward || 10) + ' pts' : 'Nice try — the answer is ' + correctAnswer}
+          </p>
+        )}
+        {!hasVoted && <p className="text-[11px] text-gray-300 pt-0.5">+{poll.points_reward || 10} pts for correct answer</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Play Tab: Generic poll card (Cast Your Vote / DNA) ────────────── */
+function PlayPollCard({ poll, token, onVoted, accentColor = 'purple' }: { poll: any; token: string; onVoted: () => void; accentColor?: string }) {
+  const { toast } = useToast();
+  const [myVote, setMyVote] = useState<string | null>(poll.user_vote || null);
+  const [counts, setCounts] = useState<Record<string, number>>(poll.vote_counts || {});
+  const [submitting, setSubmitting] = useState(false);
+
+  const options: string[] = poll.options || [];
+  const total = Object.values(counts).reduce((s, n) => s + n, 0);
+  const hasVoted = !!myVote;
+
+  const handleVote = async (option: string) => {
+    if (hasVoted || submitting || !token) return;
+    setSubmitting(true);
+    setMyVote(option);
+    setCounts(prev => ({ ...prev, [option]: (prev[option] || 0) + 1 }));
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/predictions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pool_id: poll.id, prediction: option }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setMyVote(null);
+        setCounts(prev => ({ ...prev, [option]: Math.max(0, (prev[option] || 1) - 1) }));
+        toast({ title: data.error, variant: 'destructive' });
+      } else {
+        onVoted();
+      }
+    } catch {
+      toast({ title: 'Network error', variant: 'destructive' });
+    }
+    setSubmitting(false);
+  };
+
+  return (
+    <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm">
+      <div className="px-4 pt-3.5 pb-3">
+        <p className="text-gray-900 text-sm font-semibold leading-snug">{poll.title}</p>
+      </div>
+      <div className="px-4 pb-4 space-y-2">
+        {options.map((opt) => {
+          const pct = total > 0 && hasVoted ? Math.round(((counts[opt] || 0) / total) * 100) : 0;
+          const isMyPick = opt === myVote;
+          return (
+            <button
+              key={opt}
+              onClick={() => handleVote(opt)}
+              disabled={hasVoted || submitting}
+              className={`w-full rounded-xl text-left overflow-hidden relative border transition-all ${isMyPick && hasVoted ? 'border-purple-300 bg-purple-50' : 'border-gray-200 bg-gray-50'} ${!hasVoted ? 'hover:bg-purple-50 hover:border-purple-200' : ''}`}
+            >
+              {hasVoted && (
+                <div
+                  className={`absolute inset-y-0 left-0 rounded-xl transition-all duration-700 ${isMyPick ? 'bg-purple-100' : 'bg-gray-100'}`}
+                  style={{ width: `${pct}%` }}
+                />
+              )}
+              <div className="relative px-3 py-2.5 flex items-center justify-between">
+                <span className={`text-sm font-medium ${isMyPick && hasVoted ? 'text-purple-700' : 'text-gray-700'}`}>{opt}</span>
+                {hasVoted && <span className="text-[11px] font-semibold text-gray-400">{pct}%</span>}
+              </div>
+            </button>
+          );
+        })}
+        {hasVoted && <p className="text-[11px] text-gray-400 pt-0.5">{total} {total === 1 ? 'vote' : 'votes'}</p>}
+        {!hasVoted && <p className="text-[11px] text-gray-300 pt-0.5">+{poll.points_reward || 5} pts for voting</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Play Tab: Section header ───────────────────────────────────────── */
+function PlaySectionHeader({ icon, label, count }: { icon: React.ReactNode; label: string; count?: number }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center">
+        {icon}
+      </div>
+      <span className="text-[12px] font-bold text-gray-700 uppercase tracking-wider">{label}</span>
+      {count !== undefined && count > 0 && (
+        <span className="text-[11px] text-gray-400 font-medium">{count}</span>
+      )}
+    </div>
+  );
+}
+
+/* ─── Play Tab: Coming soon placeholder ─────────────────────────────── */
+function PlayComingSoon({ label }: { label: string }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-5 px-4 text-center mb-4">
+      <p className="text-gray-400 text-sm font-medium">{label} coming soon</p>
+      <p className="text-gray-300 text-xs mt-0.5">More games dropping regularly</p>
+    </div>
+  );
+}
+
+/* ─── Play Tab: Main component ───────────────────────────────────────── */
+function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, managingId, onManagePick }: {
+  featuredPolls: any[];
+  picks: any[];
+  token: string;
+  isHost: boolean;
+  poolId: string;
+  onRefresh: () => void;
+  managingId: string | null;
+  onManagePick: (id: string, action: 'close' | 'delete') => void;
+}) {
+  const isPartnerRoom = featuredPolls.length > 0;
+
+  if (!isPartnerRoom) {
+    // Regular room: show host-created picks
+    return (
+      <div className="space-y-3">
+        {isHost && <PickComposer poolId={poolId} token={token} onPosted={onRefresh} />}
+        {picks.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-400 text-sm">No picks yet.</p>
+            {isHost && <p className="text-gray-300 text-xs mt-1">Create the first pick above.</p>}
+          </div>
+        )}
+        {[...picks].reverse().map((p: any) => {
+          const isOpen = p.status !== 'resolved';
+          const opts: string[] = p.options || [];
+          const allAnswers: any[] = p.all_answers || [];
+          const vc: Record<string, number> = {};
+          allAnswers.forEach((a: any) => { vc[a.answer] = (vc[a.answer] || 0) + 1; });
+          const totalVotes = Object.values(vc).reduce((s, n) => s + n, 0);
+          const isBusy = managingId === p.id;
+          return (
+            <div key={p.id} className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #12102b 0%, #1e1654 55%, #2d1f6e 100%)' }}>
+              <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
+                <div className="flex items-center gap-2">
+                  <BarChart2 size={13} className="text-white/60" />
+                  <span className="text-white text-xs font-semibold">The Pick</span>
+                  {isOpen ? <span className="text-[10px] font-bold text-emerald-400 tracking-widest">LIVE</span>
+                    : <span className="text-[10px] font-medium text-white/35 tracking-wide">CLOSED</span>}
+                </div>
+                {isHost && (
+                  <div className="flex items-center gap-3">
+                    {isOpen && <button onClick={() => onManagePick(p.id, 'close')} disabled={isBusy} className="text-white/50 text-[11px] font-medium hover:text-white/80 transition-colors disabled:opacity-40">{isBusy ? '...' : 'Close'}</button>}
+                    <button onClick={() => onManagePick(p.id, 'delete')} disabled={isBusy} className="text-rose-400/60 text-[11px] font-medium hover:text-rose-300 transition-colors disabled:opacity-40">Delete</button>
+                  </div>
+                )}
+              </div>
+              <div className="px-4 pb-2">
+                <p className="text-white/90 text-sm font-medium leading-snug">{p.prompt_text}</p>
+              </div>
+              {opts.length > 0 && (
+                <div className="px-4 pb-4 space-y-1.5">
+                  {opts.map((opt: string) => {
+                    const count = vc[opt] || 0;
+                    const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                    return (
+                      <div key={opt} className="rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                        <div className="relative px-3 py-2">
+                          <div className="absolute inset-y-0 left-0 rounded-lg transition-all duration-500" style={{ width: `${pct}%`, background: 'rgba(139,92,246,0.2)' }} />
+                          <div className="relative flex items-center justify-between">
+                            <span className="text-xs text-white/75">{opt}</span>
+                            <span className="text-[11px] font-medium text-white/40">{pct}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Partner room: categorized game sections
+  const triviaPolls = featuredPolls.filter(p => p.type === 'trivia' || (p.category || '').includes('trivia'));
+  const headToHeadPolls = featuredPolls.filter(p => p.category === 'head_to_head');
+  const dnaPolls = featuredPolls.filter(p => p.category === 'entertainment_dna');
+
+  // Group trivia by show_tag
+  const triviaByShow: Record<string, any[]> = {};
+  for (const poll of triviaPolls) {
+    const show = poll.show_tag || 'General';
+    if (!triviaByShow[show]) triviaByShow[show] = [];
+    triviaByShow[show].push(poll);
+  }
+  const showGroups = Object.entries(triviaByShow);
+
+  return (
+    <div className="space-y-1 pb-4">
+
+      {/* ── Trivia Section ── */}
+      <PlaySectionHeader
+        icon={<HelpCircle size={14} className="text-purple-600" />}
+        label="Trivia"
+        count={triviaPolls.length}
+      />
+
+      {showGroups.length === 0 && <PlayComingSoon label="Trivia" />}
+
+      {showGroups.map(([show, questions]) => (
+        <div key={show} className="mb-4">
+          {showGroups.length > 1 && (
+            <div className="flex items-center gap-1.5 mb-2">
+              <Tv size={11} className="text-gray-400" />
+              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{show}</span>
+              <span className="text-[10px] text-gray-300">· {questions.length} {questions.length === 1 ? 'question' : 'questions'}</span>
+            </div>
+          )}
+          <div className="space-y-2.5">
+            {questions.map(poll => (
+              <PlayTriviaCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* ── Divider ── */}
+      <div className="pt-3 pb-1 border-t border-gray-100" />
+
+      {/* ── Cast Your Vote Section ── */}
+      <PlaySectionHeader
+        icon={<Vote size={14} className="text-purple-600" />}
+        label="Cast Your Vote"
+        count={headToHeadPolls.length}
+      />
+
+      {headToHeadPolls.length === 0 && <PlayComingSoon label="Head-to-head polls" />}
+      {headToHeadPolls.map(poll => (
+        <PlayPollCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
+      ))}
+
+      {/* ── Divider ── */}
+      <div className="pt-3 pb-1 border-t border-gray-100" />
+
+      {/* ── Entertainment DNA Section ── */}
+      <PlaySectionHeader
+        icon={<Zap size={14} className="text-purple-600" />}
+        label="Entertainment DNA"
+        count={dnaPolls.length}
+      />
+
+      {dnaPolls.length === 0 && <PlayComingSoon label="How-you-watch polls" />}
+      {dnaPolls.map(poll => (
+        <PlayPollCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
+      ))}
+
+    </div>
+  );
+}
+
 export default function PoolDetailPage() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<'feed' | 'picks' | 'leaderboard' | 'members'>('feed');
+  const [tab, setTab] = useState<'feed' | 'play' | 'leaderboard' | 'members'>('feed');
   const [feedPickIndex, setFeedPickIndex] = useState(0);
   const [managingId, setManagingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -1029,7 +1376,7 @@ export default function PoolDetailPage() {
 
   const TABS = [
     { key: 'feed', label: 'Feed' },
-    { key: 'picks', label: 'Picks' },
+    { key: 'play', label: 'Play' },
     { key: 'leaderboard', label: 'Scores' },
     { key: 'members', label: 'Members' },
   ] as const;
@@ -1189,17 +1536,22 @@ export default function PoolDetailPage() {
         )}
 
         {/* ── PICKS ── */}
-        {!isLoading && tab === 'picks' && (
-          <div className="space-y-3">
-            {/* Pick composer — host only */}
-            {isHost && <PickComposer poolId={params.id} token={token} onPosted={refresh} />}
+        {!isLoading && tab === 'play' && (
+          <PlayTab
+            featuredPolls={featuredPolls}
+            picks={picks}
+            token={token}
+            isHost={isHost}
+            poolId={params.id}
+            onRefresh={refresh}
+            managingId={managingId}
+            onManagePick={handleManagePrompt}
+          />
+        )}
 
-            {picks.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-400 text-sm">No picks yet.</p>
-                {isHost && <p className="text-gray-300 text-xs mt-1">Create the first pick above.</p>}
-              </div>
-            )}
+        {/* ── PICKS (legacy, kept for reference in non-partner rooms via PlayTab) ── */}
+        {false && !isLoading && tab === 'play' && (
+          <div className="space-y-3">
             {[...picks].reverse().map((p: any) => {
               const isOpen = p.status !== 'resolved';
               const opts: string[] = p.options || [];
