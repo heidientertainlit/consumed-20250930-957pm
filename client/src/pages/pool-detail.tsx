@@ -615,36 +615,66 @@ function FeaturedPollCarousel({ polls, token, onVoted }: {
       setSubmitting(null);
     };
 
+    const ptsPerAnswer = poll.points_reward || 2;
+    const progressSegments = 4;
+    const filledSegments = Math.min(progressSegments, Math.ceil((votedCount / Math.max(polls.length, 1)) * progressSegments));
+
     return (
       <div className="mb-3">
-        {/* Teaser / collapsed header — always visible */}
+        {/* Featured challenge banner */}
         <button
           onClick={() => setExpanded(e => !e)}
-          className="w-full bg-white rounded-2xl border border-gray-200 shadow-sm px-4 py-3 flex items-center gap-3 text-left"
+          className="w-full rounded-2xl overflow-hidden text-left shadow-lg"
+          style={{ background: 'linear-gradient(135deg, #1a1040 0%, #2d1f6e 50%, #4c2898 100%)' }}
         >
-          <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-            <BarChart2 size={15} className="text-blue-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest">Cast Your Vote</span>
+          <div className="px-4 pt-4 pb-3">
+            {/* Top row */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-white/60 tracking-widest uppercase">Play the Room</span>
+                <div className="flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span className="text-[10px] font-semibold text-emerald-400">Live</span>
+                </div>
+              </div>
+              <span className="text-[11px] text-white/50">{polls.length} polls this week</span>
+            </div>
+
+            {/* Play icon + titles */}
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-11 h-11 rounded-full bg-purple-500/40 border border-white/20 flex items-center justify-center shrink-0">
+                <Play size={17} className="text-white fill-white ml-0.5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-bold text-[15px] leading-snug">This week's challenge</p>
+                <p className="text-white/60 text-sm leading-snug mt-0.5 truncate">{poll.title}</p>
+              </div>
+              <ChevronDown
+                size={16}
+                className={`text-white/40 shrink-0 mt-1 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+              />
+            </div>
+
+            {/* Progress bar */}
+            <div className="flex gap-1 mb-3">
+              {Array.from({ length: progressSegments }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-[3px] flex-1 rounded-full transition-colors ${i < filledSegments ? 'bg-purple-400' : 'bg-white/20'}`}
+                />
+              ))}
+            </div>
+
+            {/* Bottom: pts + votes */}
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-400/20 rounded-full px-3 py-1">
+                +{ptsPerAnswer} pts per answer
+              </span>
               {votedCount > 0 && (
-                <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 rounded-full px-1.5 py-0.5">
-                  {votedCount}/{polls.length} voted
-                </span>
-              )}
-              {votedCount === 0 && (
-                <span className="text-[10px] font-semibold text-violet-600 bg-violet-50 rounded-full px-1.5 py-0.5">
-                  {polls.length} polls
-                </span>
+                <span className="text-[11px] text-white/50">{votedCount}/{polls.length} answered</span>
               )}
             </div>
-            <p className="text-sm font-medium text-gray-800 truncate leading-tight">{poll.title}</p>
           </div>
-          <ChevronDown
-            size={16}
-            className={`text-gray-400 shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
-          />
         </button>
 
         {/* Expanded full card */}

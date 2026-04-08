@@ -65,10 +65,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
       setSelectedAction("track");
       setAddToList(true);
     } else if (isOpen && roomId && !preselectedMedia) {
-      // Room discussion: skip the menu and go straight to Say something
-      setSelectedIntent("say");
-      setSelectedAction("post");
-      setSayMode("thought");
+      // Room discussion: skip the menu, go straight to full compose form
+      setSelectedIntent("capture");
+      setSelectedAction("track");
     }
   }, [isOpen, preselectedMedia, roomId]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -279,8 +278,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
   };
 
   const handleBack = () => {
-    // If opened directly into Say something from a room, back = close
-    if (roomId && selectedIntent === "say") {
+    // If opened directly into the room composer, back = close
+    if (roomId && (selectedIntent === "say" || selectedIntent === "capture")) {
       handleClose();
       return;
     }
@@ -302,8 +301,59 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
       
       if (selectedAction === "track") {
-        if (!selectedMedia) {
+        if (!selectedMedia && !roomId) {
           toast({ title: "Please select media to track", variant: "destructive" });
+          return;
+        }
+        
+        // Room mode: post to social_posts directly, optionally also track media
+        if (roomId) {
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (!authUser) throw new Error('Not authenticated');
+          const postType = trackPostType === 'thought' ? 'thought' : trackPostType === 'review' ? 'rate_review' : 'predict';
+          const { error: postError } = await supabase.from('social_posts').insert({
+            user_id: authUser.id,
+            content: contentText || null,
+            post_type: postType,
+            visibility: !shareToFeed ? 'room_only' : 'public',
+            media_title: selectedMedia?.title || null,
+            media_type: selectedMedia?.type?.toLowerCase() || null,
+            media_external_id: selectedMedia?.external_id || null,
+            media_external_source: selectedMedia?.external_source || null,
+            image_url: selectedMedia?.image || selectedMedia?.image_url || '',
+            rating: ratingValue > 0 ? ratingValue : null,
+            contains_spoiler: containsSpoilers,
+            fire_votes: 0,
+            ice_votes: 0,
+            room_id: roomId,
+          });
+          if (postError) throw postError;
+          // Also track to list if media selected and a list is chosen
+          if (selectedMedia && addToList) {
+            await fetch(`${supabaseUrl}/functions/v1/track-media`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                media: {
+                  title: selectedMedia.title,
+                  mediaType: selectedMedia.type,
+                  creator: selectedMedia.creator || '',
+                  imageUrl: selectedMedia.image || selectedMedia.image_url || '',
+                  externalId: selectedMedia.external_id,
+                  externalSource: selectedMedia.external_source || 'tmdb',
+                },
+                listType: selectedListId || 'currently',
+                rating: ratingValue > 0 ? ratingValue : undefined,
+                privateMode: true, // don't double-post to feed
+              }),
+            });
+          }
+          toast({ title: "Posted!" });
+          queryClient.invalidateQueries({ queryKey: ['room-posts', roomId] });
+          queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+          queryClient.invalidateQueries({ queryKey: ['feed'] });
+          onPosted?.();
+          handleClose();
           return;
         }
         
@@ -530,94 +580,93 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
 
   const renderActionContent = () => {
     if (selectedAction === "track") {
+      const isRoomMode = !!roomId;
       return (
         <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for a movie, show, book..."
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              data-testid="quick-action-search"
-            />
-          </div>
-          
-          {isSearching && (
-            <div className="flex justify-center py-4">
-              <Loader2 className="animate-spin text-purple-500" size={24} />
+          {/* Media search — required normally, optional in room mode */}
+          {!selectedMedia && (
+            <div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={isRoomMode ? "Tag a movie, show, book... (optional)" : "Search for a movie, show, book..."}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  data-testid="quick-action-search"
+                />
+              </div>
+
+              {isSearching && (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="animate-spin text-purple-500" size={24} />
+                </div>
+              )}
+
+              {searchResults.length > 0 && (
+                <div className="max-h-48 overflow-y-auto space-y-2 mt-2">
+                  {searchResults.slice(0, 6).map((result, idx) => (
+                    <button
+                      key={`${result.external_id}-${idx}`}
+                      onClick={() => {
+                        setSelectedMedia(result);
+                        setSearchResults([]);
+                        setSearchQuery("");
+                      }}
+                      className="w-full flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg text-left"
+                      data-testid={`search-result-${result.external_id}`}
+                    >
+                      {result.image && (
+                        <img src={result.image} alt={result.title} className="w-10 h-14 object-cover rounded" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">{result.title}</p>
+                        <p className="text-sm text-gray-500 truncate">{result.type} {result.year && `• ${result.year}`}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
-          
-          {!selectedMedia && searchResults.length > 0 && (
-            <div className="max-h-48 overflow-y-auto space-y-2">
-              {searchResults.slice(0, 6).map((result, idx) => (
-                <button
-                  key={`${result.external_id}-${idx}`}
-                  onClick={() => {
-                    setSelectedMedia(result);
-                    setSearchResults([]);
-                    setSearchQuery("");
-                  }}
-                  className="w-full flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg text-left"
-                  data-testid={`search-result-${result.external_id}`}
-                >
-                  {result.image && (
-                    <img src={result.image} alt={result.title} className="w-10 h-14 object-cover rounded" />
+
+          {/* Show full form: media selected normally, OR always in room mode */}
+          {(selectedMedia || isRoomMode) && (
+            <div className="space-y-3">
+              {/* Media card — shown when media is selected */}
+              {selectedMedia && (
+                <div className="flex items-center gap-3 p-2 bg-purple-50 rounded-lg">
+                  {selectedMedia.image && (
+                    <img src={selectedMedia.image} alt={selectedMedia.title} className="w-10 h-14 object-cover rounded" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{result.title}</p>
-                    <p className="text-sm text-gray-500 truncate">{result.type} {result.year && `• ${result.year}`}</p>
+                    <p className="font-semibold text-gray-900 truncate">{selectedMedia.title}</p>
+                    <p className="text-xs text-gray-600">{selectedMedia.type} {selectedMedia.year && `• ${selectedMedia.year}`}</p>
                   </div>
-                </button>
-              ))}
-            </div>
-          )}
-          
-          {selectedMedia && (
-            <div className="space-y-3">
-              {/* Selected media card - compact */}
-              <div className="flex items-center gap-3 p-2 bg-purple-50 rounded-lg">
-                {selectedMedia.image && (
-                  <img src={selectedMedia.image} alt={selectedMedia.title} className="w-10 h-14 object-cover rounded" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 truncate">{selectedMedia.title}</p>
-                  <p className="text-xs text-gray-600">{selectedMedia.type} {selectedMedia.year && `• ${selectedMedia.year}`}</p>
+                  <button onClick={() => setSelectedMedia(null)} className="p-1 hover:bg-purple-100 rounded">
+                    <X size={16} className="text-gray-500" />
+                  </button>
                 </div>
-                <button onClick={() => setSelectedMedia(null)} className="p-1 hover:bg-purple-100 rounded">
-                  <X size={16} className="text-gray-500" />
-                </button>
-              </div>
-              
-              {/* Rating - slider-based with half-star support */}
+              )}
+
+              {/* Rating - always shown */}
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Rating:</span>
                 <div className="relative flex gap-0.5">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <div 
-                      key={star} 
-                      className="relative"
-                      style={{ width: 24, height: 24 }}
-                    >
+                    <div key={star} className="relative" style={{ width: 24, height: 24 }}>
                       <Star className="w-6 h-6 text-gray-300 absolute inset-0" />
-                      <div 
+                      <div
                         className="absolute inset-0 overflow-hidden pointer-events-none"
-                        style={{ 
-                          width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%'
-                        }}
+                        style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}
                       >
                         <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
                       </div>
                     </div>
                   ))}
-                  {/* Invisible slider overlay for half-star ratings */}
                   <input
-                    type="range"
-                    min="0"
-                    max="5"
-                    step="0.5"
+                    type="range" min="0" max="5" step="0.5"
                     value={ratingValue}
                     onChange={(e) => setRatingValue(parseFloat(e.target.value))}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
@@ -625,12 +674,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                     data-testid="rating-slider"
                   />
                 </div>
-                {ratingValue > 0 && (
-                  <span className="text-sm font-medium text-gray-700">{ratingValue}/5</span>
-                )}
+                {ratingValue > 0 && <span className="text-sm font-medium text-gray-700">{ratingValue}/5</span>}
               </div>
-              
-              {/* Post type toggle */}
+
+              {/* Post type toggle - always shown */}
               <div className="flex items-center gap-2 flex-wrap">
                 {([
                   { key: 'thought' as const, label: 'Reaction' },
@@ -641,16 +688,15 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                     key={key}
                     onClick={() => setTrackPostType(key)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      trackPostType === key
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      trackPostType === key ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                   >
                     {label}
                   </button>
                 ))}
               </div>
-              
+
+              {/* Text area - always shown */}
               <textarea
                 value={contentText}
                 onChange={(e) => setContentText(e.target.value)}
@@ -660,123 +706,91 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                   "What do you predict?"
                 }
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none text-sm"
-                rows={2}
+                rows={3}
               />
-              
+
               {trackPostType === 'prediction' && (
                 <div className="space-y-2">
                   {pollOptions.map((option, idx) => (
                     <div key={idx} className="flex items-center gap-2">
                       <input
-                        type="text"
-                        value={option}
-                        onChange={(e) => {
-                          const newOptions = [...pollOptions];
-                          newOptions[idx] = e.target.value;
-                          setPollOptions(newOptions);
-                        }}
+                        type="text" value={option}
+                        onChange={(e) => { const n = [...pollOptions]; n[idx] = e.target.value; setPollOptions(n); }}
                         placeholder={`Option ${idx + 1}`}
                         className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
                       />
                       {pollOptions.length > 2 && (
-                        <button
-                          onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}
-                          className="p-1 text-gray-400 hover:text-red-500"
-                        >
+                        <button onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))} className="p-1 text-gray-400 hover:text-red-500">
                           <X size={16} />
                         </button>
                       )}
                     </div>
                   ))}
                   {pollOptions.length < 4 && (
-                    <button
-                      onClick={() => setPollOptions([...pollOptions, ""])}
-                      className="text-sm text-purple-600 hover:text-purple-700 font-medium"
-                    >
+                    <button onClick={() => setPollOptions([...pollOptions, ""])} className="text-sm text-purple-600 hover:text-purple-700 font-medium">
                       + Add option
                     </button>
                   )}
                 </div>
               )}
-              
-              {/* List selection - horizontal pills with custom list drawer */}
-              <div className="flex flex-wrap items-center gap-2">
-                {[
-                  { id: 'finished', label: 'Finished' },
-                  { id: 'currently', label: 'Currently' },
-                  { id: 'queue', label: 'Want To' },
-                  { id: 'favorites', label: 'Favorites' },
-                  { id: 'dnf', label: 'DNF' },
-                ].map((list) => (
-                  <button
-                    key={list.id}
-                    onClick={() => setSelectedListId(list.id)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      selectedListId === list.id
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    data-testid={`list-pill-${list.id}`}
-                  >
-                    {list.label}
-                  </button>
-                ))}
-              </div>
-              
-              {/* More options toggle */}
-              <button
-                onClick={() => setShowMoreOptions(!showMoreOptions)}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 py-1"
-                data-testid="more-options-toggle"
-              >
-                <ChevronDown 
-                  size={16} 
-                  className={`transition-transform ${showMoreOptions ? 'rotate-180' : ''}`} 
-                />
-                {showMoreOptions ? 'Less options' : 'More options'}
-              </button>
-              
-              {/* Collapsible advanced options */}
-              {showMoreOptions && (
-                <div className="space-y-3 pt-2 border-t border-gray-100">
-                  {/* Repeat consumption */}
-                  <div className="flex items-center gap-2">
-                    <Checkbox 
-                      checked={rewatchCount > 1} 
-                      onCheckedChange={(c) => setRewatchCount(c ? 2 : 1)} 
-                      data-testid="rewatch-toggle"
-                    />
-                    <span className="text-sm text-gray-600">Repeat?</span>
-                    {rewatchCount > 1 && (
-                      <input
-                        type="number"
-                        min="2"
-                        max="99"
-                        value={rewatchCount}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value);
-                          if (!isNaN(val) && val >= 2) setRewatchCount(Math.min(99, val));
-                        }}
-                        className="w-12 px-2 py-1 text-sm border border-gray-200 rounded text-center"
-                        data-testid="rewatch-count-input"
-                      />
-                    )}
-                  </div>
-                  
-                  {/* Privacy options - combined row */}
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
-                    <label className="flex items-center gap-1.5">
-                      <Checkbox checked={containsSpoilers} onCheckedChange={(c) => setContainsSpoilers(!!c)} />
-                      Spoilers
-                    </label>
-                    <label className="flex items-center gap-1.5">
-                      <Checkbox checked={privateMode} onCheckedChange={(c) => setPrivateMode(!!c)} />
-                      Don't post to feed
-                    </label>
+
+              {/* Status pills + advanced options — only shown when media is selected */}
+              {selectedMedia && (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {[
+                      { id: 'finished', label: 'Finished' },
+                      { id: 'currently', label: 'Currently' },
+                      { id: 'queue', label: 'Want To' },
+                      { id: 'favorites', label: 'Favorites' },
+                      { id: 'dnf', label: 'DNF' },
+                    ].map((list) => (
+                      <button
+                        key={list.id}
+                        onClick={() => setSelectedListId(list.id)}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                          selectedListId === list.id ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                        data-testid={`list-pill-${list.id}`}
+                      >
+                        {list.label}
+                      </button>
+                    ))}
                   </div>
 
-                  {/* TV episode picker */}
-                  {selectedMedia.type === 'tv' && (
+                  <button
+                    onClick={() => setShowMoreOptions(!showMoreOptions)}
+                    className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 py-1"
+                    data-testid="more-options-toggle"
+                  >
+                    <ChevronDown size={16} className={`transition-transform ${showMoreOptions ? 'rotate-180' : ''}`} />
+                    {showMoreOptions ? 'Less options' : 'More options'}
+                  </button>
+
+                  {showMoreOptions && (
+                    <div className="space-y-3 pt-2 border-t border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <Checkbox checked={rewatchCount > 1} onCheckedChange={(c) => setRewatchCount(c ? 2 : 1)} data-testid="rewatch-toggle" />
+                        <span className="text-sm text-gray-600">Repeat?</span>
+                        {rewatchCount > 1 && (
+                          <input type="number" min="2" max="99" value={rewatchCount}
+                            onChange={(e) => { const val = parseInt(e.target.value); if (!isNaN(val) && val >= 2) setRewatchCount(Math.min(99, val)); }}
+                            className="w-12 px-2 py-1 text-sm border border-gray-200 rounded text-center"
+                            data-testid="rewatch-count-input"
+                          />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <label className="flex items-center gap-1.5">
+                          <Checkbox checked={containsSpoilers} onCheckedChange={(c) => setContainsSpoilers(!!c)} />
+                          Spoilers
+                        </label>
+                        <label className="flex items-center gap-1.5">
+                          <Checkbox checked={privateMode} onCheckedChange={(c) => setPrivateMode(!!c)} />
+                          Don't post to feed
+                        </label>
+                      </div>
+                      {selectedMedia.type === 'tv' && (
                     <div className="space-y-2">
                       <p className="text-xs font-medium text-gray-500 uppercase">Episode</p>
                       {isLoadingSeasons ? (
@@ -817,8 +831,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                       ) : null}
                     </div>
                   )}
-                  
-                </div>
+
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -1106,7 +1122,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
   };
 
   const canPost = () => {
-    if (selectedAction === "track") return !!selectedMedia;
+    if (selectedAction === "track") {
+      if (roomId) return !!contentText.trim() || ratingValue > 0 || !!selectedMedia;
+      return !!selectedMedia;
+    }
     // Allow posting with just a rating OR just content (text is optional if rating is set)
     if (selectedAction === "post") return !!contentText.trim() || ratingValue > 0;
     if (selectedAction === "prediction") return !!contentText.trim() && pollOptions.filter(o => o.trim()).length >= 2;
@@ -1117,7 +1136,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
 
   const getSheetTitle = () => {
     if (!selectedIntent) return null;
-    if (selectedIntent === "capture") return "Add Media";
+    if (selectedIntent === "capture") return roomId ? "Share to Room" : "Add Media";
     if (selectedIntent === "say") return "Say something";
     if (selectedIntent === "play" && !selectedAction) return "Play";
     if (selectedAction) return actions.find(a => a.id === selectedAction)?.label;
@@ -1336,7 +1355,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
             
             {selectedAction && selectedAction !== "challenge" && (selectedAction !== "rank" || (selectedAction === "rank" && userRanks.length > 0)) && (
               <div className="pt-4 pb-2 space-y-3">
-                {roomId && selectedAction === "post" && (
+                {roomId && (selectedAction === "post" || selectedAction === "track") && (
                   <button
                     onClick={() => setShareToFeed(v => !v)}
                     className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 rounded-xl border border-gray-100"
@@ -1359,7 +1378,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                   {isPosting ? (
                     <Loader2 className="animate-spin" size={20} />
                   ) : (
-                    selectedAction === "track" ? "Add Media" : 
+                    selectedAction === "track" ? (roomId ? "Share" : "Add Media") : 
                     selectedAction === "rank" ? "Add to Rank" : 
                     sayMode === "ask" ? "Ask" :
                     "Share"
