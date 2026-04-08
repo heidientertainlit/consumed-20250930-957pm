@@ -1112,6 +1112,8 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, manag
   onManagePick: (id: string, action: 'close' | 'delete') => void;
 }) {
   const isPartnerRoom = featuredPolls.length > 0;
+  const [filter, setFilter] = useState<'all' | 'trivia' | 'vote' | 'dna'>('all');
+  const [showSearch, setShowSearch] = useState('');
 
   if (!isPartnerRoom) {
     // Regular room: show host-created picks
@@ -1182,73 +1184,136 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, manag
   const headToHeadPolls = featuredPolls.filter(p => p.category === 'head_to_head');
   const dnaPolls = featuredPolls.filter(p => p.category === 'entertainment_dna');
 
-  // Group trivia by show_tag
+  // Group trivia by show_tag, applying search filter
   const triviaByShow: Record<string, any[]> = {};
   for (const poll of triviaPolls) {
     const show = poll.show_tag || 'General';
+    if (showSearch && !show.toLowerCase().includes(showSearch.toLowerCase())) continue;
     if (!triviaByShow[show]) triviaByShow[show] = [];
     triviaByShow[show].push(poll);
   }
   const showGroups = Object.entries(triviaByShow);
 
+  const FILTER_PILLS = [
+    { key: 'all', label: 'All' },
+    { key: 'trivia', label: 'Trivia' },
+    { key: 'vote', label: 'Cast Your Vote' },
+    { key: 'dna', label: 'Entertainment DNA' },
+  ] as const;
+
+  const showTrivia = filter === 'all' || filter === 'trivia';
+  const showVote = filter === 'all' || filter === 'vote';
+  const showDna = filter === 'all' || filter === 'dna';
+
   return (
-    <div className="space-y-1 pb-4">
+    <div className="pb-4">
+
+      {/* ── Filter pills ── */}
+      <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-none">
+        {FILTER_PILLS.map(pill => (
+          <button
+            key={pill.key}
+            onClick={() => { setFilter(pill.key); if (pill.key !== 'trivia' && pill.key !== 'all') setShowSearch(''); }}
+            className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+              filter === pill.key
+                ? 'bg-purple-600 text-white border-purple-600'
+                : 'bg-white text-gray-500 border-gray-200 hover:border-purple-300 hover:text-purple-600'
+            }`}
+          >
+            {pill.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Show search (visible when Trivia or All is selected) ── */}
+      {(filter === 'all' || filter === 'trivia') && triviaPolls.length > 0 && (
+        <div className="relative mb-4">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            value={showSearch}
+            onChange={e => setShowSearch(e.target.value)}
+            placeholder="Search by show..."
+            className="w-full pl-8 pr-4 py-2 rounded-xl bg-white border border-gray-200 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-200"
+          />
+          {showSearch && (
+            <button onClick={() => setShowSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X size={13} />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── Trivia Section ── */}
-      <PlaySectionHeader
-        icon={<HelpCircle size={14} className="text-purple-600" />}
-        label="Trivia"
-        count={triviaPolls.length}
-      />
+      {showTrivia && (
+        <div className="mb-2">
+          <PlaySectionHeader
+            icon={<HelpCircle size={14} className="text-purple-600" />}
+            label="Trivia"
+            count={triviaPolls.length}
+          />
 
-      {showGroups.length === 0 && <PlayComingSoon label="Trivia" />}
-
-      {showGroups.map(([show, questions]) => (
-        <div key={show} className="mb-4">
-          {showGroups.length > 1 && (
-            <div className="flex items-center gap-1.5 mb-2">
-              <Tv size={11} className="text-gray-400" />
-              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{show}</span>
-              <span className="text-[10px] text-gray-300">· {questions.length} {questions.length === 1 ? 'question' : 'questions'}</span>
+          {showGroups.length === 0 && !showSearch && <PlayComingSoon label="Trivia" />}
+          {showGroups.length === 0 && showSearch && (
+            <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-5 px-4 text-center mb-4">
+              <p className="text-gray-400 text-sm">No shows matching "{showSearch}"</p>
             </div>
           )}
+
+          {showGroups.map(([show, questions]) => (
+            <div key={show} className="mb-4">
+              {(showGroups.length > 1 || showSearch) && (
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Tv size={11} className="text-gray-400" />
+                  <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{show}</span>
+                  <span className="text-[10px] text-gray-300">· {questions.length} {questions.length === 1 ? 'question' : 'questions'}</span>
+                </div>
+              )}
+              <div className="space-y-2.5">
+                {questions.map(poll => (
+                  <PlayTriviaCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Cast Your Vote Section ── */}
+      {showVote && (
+        <div className="mb-2">
+          {showTrivia && headToHeadPolls.length + dnaPolls.length > 0 && <div className="pt-1 pb-3 border-t border-gray-100" />}
+          <PlaySectionHeader
+            icon={<Vote size={14} className="text-purple-600" />}
+            label="Cast Your Vote"
+            count={headToHeadPolls.length}
+          />
+          {headToHeadPolls.length === 0 && <PlayComingSoon label="Head-to-head polls" />}
           <div className="space-y-2.5">
-            {questions.map(poll => (
-              <PlayTriviaCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
+            {headToHeadPolls.map(poll => (
+              <PlayPollCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
             ))}
           </div>
         </div>
-      ))}
-
-      {/* ── Divider ── */}
-      <div className="pt-3 pb-1 border-t border-gray-100" />
-
-      {/* ── Cast Your Vote Section ── */}
-      <PlaySectionHeader
-        icon={<Vote size={14} className="text-purple-600" />}
-        label="Cast Your Vote"
-        count={headToHeadPolls.length}
-      />
-
-      {headToHeadPolls.length === 0 && <PlayComingSoon label="Head-to-head polls" />}
-      {headToHeadPolls.map(poll => (
-        <PlayPollCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
-      ))}
-
-      {/* ── Divider ── */}
-      <div className="pt-3 pb-1 border-t border-gray-100" />
+      )}
 
       {/* ── Entertainment DNA Section ── */}
-      <PlaySectionHeader
-        icon={<Zap size={14} className="text-purple-600" />}
-        label="Entertainment DNA"
-        count={dnaPolls.length}
-      />
-
-      {dnaPolls.length === 0 && <PlayComingSoon label="How-you-watch polls" />}
-      {dnaPolls.map(poll => (
-        <PlayPollCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
-      ))}
+      {showDna && (
+        <div className="mb-2">
+          {(showTrivia || showVote) && dnaPolls.length >= 0 && <div className="pt-1 pb-3 border-t border-gray-100" />}
+          <PlaySectionHeader
+            icon={<Zap size={14} className="text-purple-600" />}
+            label="Entertainment DNA"
+            count={dnaPolls.length}
+          />
+          {dnaPolls.length === 0 && <PlayComingSoon label="How-you-watch polls" />}
+          <div className="space-y-2.5">
+            {dnaPolls.map(poll => (
+              <PlayPollCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
+            ))}
+          </div>
+        </div>
+      )}
 
     </div>
   );
