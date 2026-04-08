@@ -247,6 +247,10 @@ export const pools = pgTable("pools", {
   isPublic: boolean("is_public").notNull().default(false),
   category: text("category"), // 'tv', 'movies', 'sports', 'custom'
   coverImage: text("cover_image"),
+  isOfficial: boolean("is_official").notNull().default(false), // Official partner room
+  partnerName: text("partner_name"), // e.g. "Reelz", "Peacock"
+  partnerLogoUrl: text("partner_logo_url"), // Partner logo image URL
+  accentColor: text("accent_color"), // Hex color e.g. "#c8102e" for Reelz red
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

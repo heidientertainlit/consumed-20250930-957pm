@@ -217,21 +217,31 @@ export default function PoolsPage() {
           <>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider pt-3">Discover</p>
             {publicRooms.map((pool) => {
-              const isOfficial = pool.host?.user_name === 'HeidiIsConsumed' || pool.invite_code === 'REELZ2026';
+              const isOfficial = pool.is_official === true;
+              const accent = pool.accent_color || (isOfficial ? '#7c3aed' : '#10b981');
+              const accentLight = accent + '18'; // 10% opacity version for backgrounds
+              const partnerLabel = pool.partner_name ? `${pool.partner_name} Official Room` : 'Official Partner Room';
               return (
-                <div key={pool.id} className={`bg-white rounded-2xl shadow-sm overflow-hidden ${isOfficial ? 'border border-purple-200' : 'border border-gray-100'}`}>
+                <div key={pool.id} className="bg-white rounded-2xl shadow-sm overflow-hidden" style={{ border: `1px solid ${isOfficial ? accent + '40' : '#f3f4f6'}` }}>
                   {isOfficial && (
-                    <div className="flex items-center gap-1.5 px-4 py-2 border-b border-purple-100" style={{ background: 'linear-gradient(to right, #f5f3ff, #ede9fe)' }}>
-                      <BadgeCheck size={13} className="text-purple-600 shrink-0" />
-                      <span className="text-[11px] font-semibold text-purple-700 tracking-wide uppercase">Official Partner Room</span>
+                    <div className="flex items-center gap-2 px-4 py-2 border-b" style={{ background: accentLight, borderColor: accent + '20' }}>
+                      {pool.partner_logo_url ? (
+                        <img src={pool.partner_logo_url} alt={pool.partner_name || 'Partner'} className="h-4 w-auto object-contain" />
+                      ) : (
+                        <BadgeCheck size={13} style={{ color: accent }} className="shrink-0" />
+                      )}
+                      <span className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: accent }}>{partnerLabel}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-3 p-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${isOfficial ? 'bg-purple-50' : 'bg-emerald-50'}`}>
-                      {isOfficial
-                        ? <BadgeCheck size={18} className="text-purple-500" />
-                        : <Globe size={18} className="text-emerald-500" />
-                      }
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: accentLight }}>
+                      {isOfficial && pool.partner_logo_url ? (
+                        <img src={pool.partner_logo_url} alt={pool.partner_name || 'Partner'} className="h-6 w-auto object-contain rounded-full" />
+                      ) : isOfficial ? (
+                        <BadgeCheck size={18} style={{ color: accent }} />
+                      ) : (
+                        <Globe size={18} className="text-emerald-500" />
+                      )}
                     </div>
 
                     <button onClick={() => setLocation(`/room/${pool.id}`)} className="flex-1 min-w-0 text-left">
@@ -252,7 +262,7 @@ export default function PoolsPage() {
                       onClick={() => handleJoin(pool.id)}
                       disabled={joiningId === pool.id}
                       className="shrink-0 text-xs font-semibold px-4 py-1.5 rounded-full text-white disabled:opacity-50"
-                      style={{ background: isOfficial ? 'linear-gradient(to right, #7c3aed, #6d28d9)' : 'linear-gradient(to right, #7c3aed, #2563eb)' }}
+                      style={{ background: isOfficial ? accent : 'linear-gradient(to right, #7c3aed, #2563eb)' }}
                     >
                       {joiningId === pool.id ? '...' : 'Join'}
                     </button>

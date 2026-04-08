@@ -18,10 +18,16 @@ async function enrichPool(svc: any, pool: any, userId: string, isHost: boolean, 
   return {
     id: pool.id,
     name: pool.name,
+    description: pool.description,
     host_id: pool.host_id,
     invite_code: pool.invite_code,
     status: pool.status,
     is_public: pool.is_public ?? false,
+    is_official: pool.is_official ?? false,
+    partner_name: pool.partner_name ?? null,
+    partner_logo_url: pool.partner_logo_url ?? null,
+    accent_color: pool.accent_color ?? null,
+    cover_image: pool.cover_image ?? null,
     created_at: pool.created_at,
     is_host: isHost,
     user_points: userPoints,
@@ -48,7 +54,7 @@ serve(async (req) => {
     // 1. Rooms the user is a member of
     const { data: memberships } = await svc
       .from('pool_members')
-      .select('pool_id, role, total_points, joined_at, pools:pool_id(id, name, host_id, invite_code, status, is_public, created_at, pool_type)')
+      .select('pool_id, role, total_points, joined_at, pools:pool_id(id, name, description, host_id, invite_code, status, is_public, is_official, partner_name, partner_logo_url, accent_color, cover_image, created_at, pool_type)')
       .eq('user_id', appUser.id)
       .order('joined_at', { ascending: false });
 
@@ -63,7 +69,7 @@ serve(async (req) => {
     // 2. Public rooms the user has NOT joined
     const { data: publicPools } = await svc
       .from('pools')
-      .select('id, name, host_id, invite_code, status, is_public, created_at, pool_type')
+      .select('id, name, description, host_id, invite_code, status, is_public, is_official, partner_name, partner_logo_url, accent_color, cover_image, created_at, pool_type')
       .eq('pool_type', 'room')
       .eq('is_public', true)
       .neq('status', 'completed')
