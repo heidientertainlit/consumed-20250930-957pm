@@ -155,12 +155,55 @@ serve(async (req) => {
       vote_counts: (p.prompt_type === 'pick' || p.prompt_type === 'call_it') ? (voteCountsMap[p.id] || {}) : undefined,
     }));
 
+    // Fetch featured prediction_pools for partner rooms (e.g. partner_tag = 'reelz')
+    let featuredPolls: any[] = [];
+    const partnerTag = (pool.partner_name || '').toLowerCase().trim();
+    if (partnerTag) {
+      const { data: partnerPolls } = await svc
+        .from('prediction_pools')
+        .select('id, title, type, status, options, points_reward, category, show_tag, partner_tag')
+        .eq('partner_tag', partnerTag)
+        .eq('status', 'open')
+        .order('created_at', { ascending: true });
+
+      if (partnerPolls && partnerPolls.length > 0) {
+        const pollIds = partnerPolls.map((p: any) => p.id);
+        // Fetch this user's existing votes
+        const { data: myVotes } = await svc
+          .from('user_predictions')
+          .select('pool_id, prediction')
+          .eq('user_id', appUser.id)
+          .in('pool_id', pollIds);
+        const myVoteMap: Record<string, string> = {};
+        for (const v of (myVotes || [])) myVoteMap[v.pool_id] = v.prediction;
+
+        // Fetch total vote counts per option per poll
+        const { data: allVotes } = await svc
+          .from('user_predictions')
+          .select('pool_id, prediction')
+          .in('pool_id', pollIds);
+        const voteCountsById: Record<string, Record<string, number>> = {};
+        for (const v of (allVotes || [])) {
+          if (!voteCountsById[v.pool_id]) voteCountsById[v.pool_id] = {};
+          voteCountsById[v.pool_id][v.prediction] = (voteCountsById[v.pool_id][v.prediction] || 0) + 1;
+        }
+
+        featuredPolls = partnerPolls.map((p: any) => ({
+          ...p,
+          user_vote: myVoteMap[p.id] || null,
+          vote_counts: voteCountsById[p.id] || {},
+          total_votes: Object.values(voteCountsById[p.id] || {}).reduce((s: any, n: any) => s + n, 0),
+        }));
+      }
+    }
+
     return json({
       pool: { ...pool, host },
       posts,
       members,
       is_host: isHost,
-      is_member: isMember
+      is_member: isMember,
+      featured_polls: featuredPolls,
     });
   } catch (e) {
     return json({ error: e.message }, 500);

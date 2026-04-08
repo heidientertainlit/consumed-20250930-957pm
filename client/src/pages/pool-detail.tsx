@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2 } from "lucide-react";
+import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -553,6 +553,178 @@ function PickComposer({ poolId, token, onPosted }: {
   );
 }
 
+/* ─── Featured Poll Carousel (Reelz / partner rooms) ────────────────── */
+function FeaturedPollCarousel({ polls, token, onVoted }: {
+  polls: any[];
+  token: string;
+  onVoted: () => void;
+}) {
+  const { toast } = useToast();
+  const [index, setIndex] = useState(0);
+  const [localVotes, setLocalVotes] = useState<Record<string, string>>(
+    Object.fromEntries(polls.filter(p => p.user_vote).map(p => [p.id, p.user_vote]))
+  );
+  const [localCounts, setLocalCounts] = useState<Record<string, Record<string, number>>>(
+    Object.fromEntries(polls.map(p => [p.id, p.vote_counts || {}]))
+  );
+  const [submitting, setSubmitting] = useState<string | null>(null);
+
+  const safeIndex = Math.min(index, Math.max(0, polls.length - 1));
+  const poll = polls[safeIndex];
+  if (!poll) return null;
+
+  const options: string[] = poll.options || [];
+  const myVote = localVotes[poll.id] || null;
+  const counts = localCounts[poll.id] || {};
+  const total = Object.values(counts).reduce((s, n) => s + n, 0);
+  const hasVoted = !!myVote;
+
+  const handleVote = async (option: string) => {
+    if (hasVoted || submitting || !token) return;
+    setSubmitting(poll.id);
+    setLocalVotes(prev => ({ ...prev, [poll.id]: option }));
+    setLocalCounts(prev => ({
+      ...prev,
+      [poll.id]: { ...(prev[poll.id] || {}), [option]: ((prev[poll.id] || {})[option] || 0) + 1 }
+    }));
+
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/predictions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pool_id: poll.id, prediction: option })
+      });
+      const data = await res.json();
+      if (data.error) {
+        setLocalVotes(prev => { const n = { ...prev }; delete n[poll.id]; return n; });
+        setLocalCounts(prev => ({
+          ...prev,
+          [poll.id]: { ...(prev[poll.id] || {}), [option]: Math.max(0, ((prev[poll.id] || {})[option] || 1) - 1) }
+        }));
+        toast({ title: data.error, variant: 'destructive' });
+      } else {
+        onVoted();
+      }
+    } catch {
+      toast({ title: 'Network error', variant: 'destructive' });
+    }
+    setSubmitting(null);
+  };
+
+  return (
+    <div className="mb-3">
+      <div className="flex items-center justify-between px-0.5 pb-2">
+        <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest">Cast Your Vote</p>
+        {polls.length > 1 && (
+          <span className="text-xs text-gray-400">{safeIndex + 1}/{polls.length}</span>
+        )}
+      </div>
+
+      {/* Poll card */}
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+        {/* Card header */}
+        <div className="flex items-center justify-between px-4 pt-4 pb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+              <BarChart2 size={14} className="text-blue-500" />
+            </div>
+            <span className="text-xs text-gray-500 font-medium">
+              {poll.category || 'TV'} · {polls.length} {polls.length === 1 ? 'poll' : 'polls'}
+            </span>
+          </div>
+          {polls.length > 1 && (
+            <div className="flex items-center gap-1">
+              {safeIndex > 0 && (
+                <button onClick={() => setIndex(i => i - 1)} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                  <ChevronLeft className="w-4 h-4 text-gray-500" />
+                </button>
+              )}
+              {safeIndex < polls.length - 1 && (
+                <button onClick={() => setIndex(i => i + 1)} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                  <ChevronRight className="w-4 h-4 text-gray-500" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Show tag */}
+        {poll.show_tag && (
+          <div className="px-4 pb-2">
+            <span className="inline-block text-xs font-medium text-blue-600 bg-blue-50 rounded-md px-2 py-1">
+              {poll.show_tag}
+            </span>
+          </div>
+        )}
+
+        {/* Question */}
+        <p className="px-4 pb-3 text-[15px] font-medium text-gray-900 leading-snug">{poll.title}</p>
+
+        {/* Options */}
+        <div className="px-4 pb-2 space-y-2">
+          {options.map(opt => {
+            const count = counts[opt] || 0;
+            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+            const isSelected = myVote === opt;
+
+            if (hasVoted) {
+              return (
+                <div key={opt} className="relative rounded-full overflow-hidden" style={{ background: '#f1f3f5', height: 40 }}>
+                  <div
+                    className="absolute inset-y-0 left-0 rounded-full transition-all duration-500"
+                    style={{ width: `${pct}%`, background: isSelected ? 'rgba(109,40,217,0.15)' : 'rgba(0,0,0,0.05)' }}
+                  />
+                  <div className="relative flex items-center justify-between h-full px-4">
+                    <span className={`text-sm font-medium ${isSelected ? 'text-violet-700' : 'text-gray-700'}`}>{opt}</span>
+                    <span className={`text-xs font-semibold ${isSelected ? 'text-violet-600' : 'text-gray-400'}`}>{pct}%</span>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <button
+                key={opt}
+                onClick={() => handleVote(opt)}
+                disabled={!!submitting}
+                className="w-full text-left text-sm text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-full px-4 py-2.5 transition-colors disabled:opacity-60"
+              >
+                {opt}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Footer: vote count + pts */}
+        <div className="flex items-center justify-between px-4 pt-1 pb-3">
+          {hasVoted && total > 0
+            ? <span className="text-xs text-gray-400">{total} {total === 1 ? 'vote' : 'votes'}</span>
+            : <span className="text-xs text-gray-400">Tap to vote</span>
+          }
+          <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 rounded-full px-2 py-0.5">
+            +{poll.points_reward || 2} pts
+          </span>
+        </div>
+      </div>
+
+      {/* Progress dots */}
+      {polls.length > 1 && (
+        <div className="flex items-center gap-1.5 px-0.5 pt-2">
+          {polls.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIndex(i)}
+              className="h-1 rounded-full transition-all duration-200 flex-1"
+              style={{ background: i === safeIndex ? '#00c896' : 'rgba(0,0,0,0.12)' }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── About Section ─────────────────────────────────────────────────── */
 function AboutSection({ pool, members, isLoading }: { pool: any; members: any[]; isLoading: boolean }) {
   const [expanded, setExpanded] = useState(false);
@@ -689,6 +861,7 @@ export default function PoolDetailPage() {
   const openPicks = picks.filter(p => p.status !== 'resolved');
   const safePickIndex = Math.min(feedPickIndex, Math.max(0, openPicks.length - 1));
   const currentFeedPick = openPicks[safePickIndex] || null;
+  const featuredPolls: any[] = data?.featured_polls || [];
 
   const TABS = [
     { key: 'feed', label: 'Feed' },
@@ -790,23 +963,16 @@ export default function PoolDetailPage() {
         {/* ── FEED ── */}
         {!isLoading && tab === 'feed' && (
           <div>
-            {/* ── Polls carousel section ── */}
-            {currentFeedPick && (
+            {/* ── Featured Poll Carousel (from prediction_pools with partner_tag) ── */}
+            {featuredPolls.length > 0 && (
+              <FeaturedPollCarousel polls={featuredPolls} token={token} onVoted={refresh} />
+            )}
+
+            {/* ── Fallback: room picks carousel (if no featured polls yet) ── */}
+            {featuredPolls.length === 0 && currentFeedPick && (
               <div className="mb-2">
                 <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest px-1 pb-2">This week's polls</p>
                 <FeaturedPickBanner key={currentFeedPick.id} post={currentFeedPick} isHost={isHost} token={token} onRefresh={refresh} />
-                {openPicks.length > 1 && (
-                  <div className="flex items-center gap-1.5 px-1 pb-3">
-                    {openPicks.map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setFeedPickIndex(i)}
-                        className="h-1 rounded-full transition-all duration-200 flex-1"
-                        style={{ background: i === safePickIndex ? '#00c896' : 'rgba(0,0,0,0.12)' }}
-                      />
-                    ))}
-                  </div>
-                )}
               </div>
             )}
 

@@ -182,6 +182,8 @@ export const predictionPools = pgTable("prediction_pools", {
   rotationType: text("rotation_type"), // 'evergreen', 'trending', 'seasonal'
   difficulty: text("difficulty"), // 'easy', 'medium', 'chaotic' (for trivia)
   socialPrompt: text("social_prompt"), // Shown after vote/answer, e.g. "Tag the friend who'd argue this"
+  partnerTag: text("partner_tag"), // Partner room tag e.g. 'reelz' — marks this poll as featured in that partner's room carousel
+  showTag: text("show_tag"), // Display label shown on poll card e.g. 'The White Lotus S3'
   createdAt: timestamp("created_at"),
 });
 
