@@ -9,7 +9,15 @@ const cors = {
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
-async function enrichPool(svc: any, pool: any, userId: string, isHost: boolean, userPoints: number) {
+// Full select with partner columns (requires SQL migration to have run)
+const FULL_POOL_SELECT = 'id, name, description, host_id, invite_code, status, is_public, is_official, partner_name, partner_logo_url, accent_color, cover_image, created_at, pool_type';
+const FULL_MEMBERSHIP_SELECT = `pool_id, role, total_points, joined_at, pools:pool_id(${FULL_POOL_SELECT})`;
+
+// Fallback select without partner columns (for backwards compatibility)
+const BASE_POOL_SELECT = 'id, name, description, host_id, invite_code, status, is_public, created_at, pool_type';
+const BASE_MEMBERSHIP_SELECT = `pool_id, role, total_points, joined_at, pools:pool_id(${BASE_POOL_SELECT})`;
+
+async function enrichPool(svc: any, pool: any, _userId: string, isHost: boolean, userPoints: number) {
   const [{ count: memberCount }, { count: roundCount }, { data: host }] = await Promise.all([
     svc.from('pool_members').select('*', { count: 'exact', head: true }).eq('pool_id', pool.id),
     svc.from('pool_rounds').select('*', { count: 'exact', head: true }).eq('pool_id', pool.id),
@@ -18,7 +26,7 @@ async function enrichPool(svc: any, pool: any, userId: string, isHost: boolean, 
   return {
     id: pool.id,
     name: pool.name,
-    description: pool.description,
+    description: pool.description ?? null,
     host_id: pool.host_id,
     invite_code: pool.invite_code,
     status: pool.status,
@@ -51,12 +59,24 @@ serve(async (req) => {
     const { data: appUser } = await svc.from('users').select('id').eq('email', user.email).single();
     if (!appUser) return json({ error: 'User not found' }, 404);
 
-    // 1. Rooms the user is a member of
-    const { data: memberships } = await svc
+    // 1. Rooms the user is a member of — try full select, fall back to base
+    let memberships: any[] | null = null;
+    const { data: membershipsFullData, error: membershipsFullError } = await svc
       .from('pool_members')
-      .select('pool_id, role, total_points, joined_at, pools:pool_id(id, name, description, host_id, invite_code, status, is_public, is_official, partner_name, partner_logo_url, accent_color, cover_image, created_at, pool_type)')
+      .select(FULL_MEMBERSHIP_SELECT)
       .eq('user_id', appUser.id)
       .order('joined_at', { ascending: false });
+
+    if (membershipsFullError) {
+      const { data: membershipsBaseData } = await svc
+        .from('pool_members')
+        .select(BASE_MEMBERSHIP_SELECT)
+        .eq('user_id', appUser.id)
+        .order('joined_at', { ascending: false });
+      memberships = membershipsBaseData;
+    } else {
+      memberships = membershipsFullData;
+    }
 
     const myRooms = await Promise.all((memberships || []).map(async (m: any) => {
       const pool = m.pools as any;
@@ -66,15 +86,30 @@ serve(async (req) => {
 
     const myRoomIds = new Set((memberships || []).map((m: any) => m.pool_id));
 
-    // 2. Public rooms the user has NOT joined
-    const { data: publicPools } = await svc
+    // 2. Public rooms the user has NOT joined — try full select, fall back to base
+    let publicPools: any[] | null = null;
+    const { data: publicFullData, error: publicFullError } = await svc
       .from('pools')
-      .select('id, name, description, host_id, invite_code, status, is_public, is_official, partner_name, partner_logo_url, accent_color, cover_image, created_at, pool_type')
+      .select(FULL_POOL_SELECT)
       .eq('pool_type', 'room')
       .eq('is_public', true)
       .neq('status', 'completed')
       .order('created_at', { ascending: false })
       .limit(20);
+
+    if (publicFullError) {
+      const { data: publicBaseData } = await svc
+        .from('pools')
+        .select(BASE_POOL_SELECT)
+        .eq('pool_type', 'room')
+        .eq('is_public', true)
+        .neq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      publicPools = publicBaseData;
+    } else {
+      publicPools = publicFullData;
+    }
 
     const publicRooms = await Promise.all((publicPools || [])
       .filter((p: any) => !myRoomIds.has(p.id))
@@ -82,7 +117,7 @@ serve(async (req) => {
     );
 
     return json({
-      pools: myRooms.filter(Boolean),       // backwards-compat field
+      pools: myRooms.filter(Boolean),
       myRooms: myRooms.filter(Boolean),
       publicRooms: publicRooms.filter(Boolean)
     });
