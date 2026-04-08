@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil, HelpCircle, Tv, Vote, Dna, Zap } from "lucide-react";
+import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil, HelpCircle, Tv, Vote, Dna, Zap, Brain, Film, Music, BookOpen } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -907,6 +907,27 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
   );
 }
 
+/* ─── Play Tab: Media type pill helper ───────────────────────────────── */
+function MediaTypePill({ poll }: { poll: any }) {
+  const src = (poll.media_external_source || '').toLowerCase();
+  const cat = (poll.category || '').toLowerCase();
+
+  let label = 'TV';
+  let Icon = Tv;
+
+  if (src === 'spotify' || cat.includes('music')) { label = 'Music'; Icon = Music; }
+  else if (src === 'googlebooks' || cat.includes('book')) { label = 'Book'; Icon = BookOpen; }
+  else if (cat.includes('movie') || src === 'tmdb_movie') { label = 'Movie'; Icon = Film; }
+  else if (poll.show_tag || src === 'tmdb' || src === 'tv') { label = 'TV'; Icon = Tv; }
+
+  return (
+    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200">
+      <Icon size={10} className="text-gray-500" />
+      <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">{label}</span>
+    </div>
+  );
+}
+
 /* ─── Play Tab: Trivia card ──────────────────────────────────────────── */
 function PlayTriviaCard({ poll, token, onVoted }: { poll: any; token: string; onVoted: () => void }) {
   const { toast } = useToast();
@@ -947,13 +968,18 @@ function PlayTriviaCard({ poll, token, onVoted }: { poll: any; token: string; on
 
   return (
     <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm">
-      {/* Show tag */}
-      {poll.show_tag && (
-        <div className="flex items-center gap-1.5 px-4 pt-3 pb-0">
-          <Tv size={11} className="text-purple-400" />
-          <span className="text-[10px] font-semibold text-purple-500 uppercase tracking-wider">{poll.show_tag}</span>
+      {/* Card header: show tag left, media type pill right */}
+      <div className="flex items-center justify-between px-4 pt-3 pb-0">
+        <div className="flex items-center gap-1.5">
+          {poll.show_tag && (
+            <>
+              <Tv size={11} className="text-purple-400" />
+              <span className="text-[10px] font-semibold text-purple-500 uppercase tracking-wider">{poll.show_tag}</span>
+            </>
+          )}
         </div>
-      )}
+        <MediaTypePill poll={poll} />
+      </div>
       {/* Question */}
       <div className="px-4 pt-2.5 pb-3">
         <p className="text-gray-900 text-sm font-semibold leading-snug">{poll.title}</p>
@@ -1041,9 +1067,11 @@ function PlayPollCard({ poll, token, onVoted, accentColor = 'purple' }: { poll: 
 
   return (
     <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm">
-      <div className="px-4 pt-3.5 pb-3">
-        <p className="text-gray-900 text-sm font-semibold leading-snug">{poll.title}</p>
+      <div className="flex items-start justify-between px-4 pt-3.5 pb-0">
+        <p className="text-gray-900 text-sm font-semibold leading-snug flex-1 pr-3">{poll.title}</p>
+        <MediaTypePill poll={poll} />
       </div>
+      <div className="px-4 pb-0 pt-1" />
       <div className="px-4 pb-4 space-y-2">
         {options.map((opt) => {
           const pct = total > 0 && hasVoted ? Math.round(((counts[opt] || 0) / total) * 100) : 0;
@@ -1248,7 +1276,7 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, manag
       {showTrivia && (
         <div className="mb-2">
           <PlaySectionHeader
-            icon={<HelpCircle size={14} className="text-purple-600" />}
+            icon={<Brain size={14} className="text-purple-600" />}
             label="Trivia"
             count={triviaPolls.length}
           />
