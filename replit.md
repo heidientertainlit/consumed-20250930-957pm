@@ -64,6 +64,8 @@ All changes are styling/layout only. No voting logic, point systems, interaction
 - **Daily Call System**: Featured daily game. Content from `prediction_pools` (where `featured_date` = today's date), user responses in `user_predictions`, and streak tracking in `login_streaks`. Managed by `daily-challenge` edge function.
 - **Bot Persona System**: 20 AI-powered persona users (`is_persona = true` in `public.users`) that post authentic entertainment content via Claude-driven admin workflow. Content generation and scheduling managed through `persona_post_drafts` and `scheduled_persona_posts` tables and related edge functions. Admin hub at `/admin`.
 - **Pools System**: Structured, round-based group competition engine. Architecture: Pool → Rounds → Prompts → Answers → Leaderboard. Host-controlled, invite-only. Tables: `pools`, `pool_members`, `pool_rounds`, `pool_prompts`, `pool_answers`. Several associated edge functions and routes.
+- **Room Discussion Posts**: `social_posts` has a `room_id text` column (nullable). Room-scoped posts are inserted with `room_id` set to the pool's ID. Query key `['room-posts', roomId]`. Posts without `room_id` are general feed posts.
+- **Partner Room Polls Architecture**: `prediction_pools` has `partner_tag text` column (e.g. `'reelz'`). Polls with `partner_tag` set are room-specific (shown only in that room's carousel via `get-pool-details` which filters by `partner_tag = pool.partner_name`). Polls with `partner_tag = null` go to the main activity feed. Main feed query uses `.is('partner_tag', null)` to exclude room polls.
 
 ### Feature Specifications
 - Friend Profile Viewing: Access to Stats, DNA, Collections.
@@ -82,6 +84,12 @@ All changes are styling/layout only. No voting logic, point systems, interaction
 - Polls/Surveys System: Real-time voting, duplicate prevention, points.
 - Discover Page: AI-powered recommendations and trending content.
 - Analytics Dashboard: Admin dashboard (`/admin`) for engagement, retention, activation, partnership, and behavioral analytics.
+- **Admin Content Creation (PLANNED — not yet built)**: Admin tool for creating trivia and polls at `/admin`. Key requirements:
+  - **Generate + Add**: AI-assisted creation of new trivia/polls with fields for title, options, correct answer (trivia), points, category, show_tag.
+  - **Add Existing**: Ability to browse and assign already-created `prediction_pools` records to a room or feed — NOT just generate new ones. Search/filter by title, category, partner_tag.
+  - **Partner tag field**: When creating/assigning a poll, set `partner_tag` (e.g. `'reelz'`) to scope it to a room carousel, OR leave blank for main feed.
+  - **Room assignment**: Assign polls to specific rooms by matching `partner_tag` to the room's `partner_name`.
+  - All content comes from approved sources (user spreadsheets or manual creation) — no AI-generated content seeded without approval.
 
 ### System Design Choices
 - Database Schema: Strict naming conventions and synced dev/prod environments.
