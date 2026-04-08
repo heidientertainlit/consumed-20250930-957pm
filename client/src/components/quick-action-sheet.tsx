@@ -68,6 +68,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
       // Room discussion: skip the menu, go straight to full compose form
       setSelectedIntent("capture");
       setSelectedAction("track");
+      setShareToFeed(false);
+    }
+    if (isOpen && !roomId) {
+      setShareToFeed(true);
     }
   }, [isOpen, preselectedMedia, roomId]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -348,7 +352,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
               }),
             });
           }
-          toast({ title: "Posted!" });
           queryClient.invalidateQueries({ queryKey: ['room-posts', roomId] });
           queryClient.invalidateQueries({ queryKey: ['social-feed'] });
           queryClient.invalidateQueries({ queryKey: ['feed'] });
@@ -450,7 +453,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
         
         if (error) throw error;
         
-        toast({ title: "Post created!" });
         if (roomId) {
           queryClient.invalidateQueries({ queryKey: ['room-posts', roomId] });
           onPosted?.();
@@ -492,7 +494,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
           throw new Error('Failed to create prediction');
         }
         
-        toast({ title: "Prediction posted!" });
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
         queryClient.invalidateQueries({ queryKey: ['feed'] });
         
