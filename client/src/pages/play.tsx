@@ -16,7 +16,7 @@ const gameModes = [
   },
   {
     id: "polls",
-    label: "Polls",
+    label: "Cast Your Vote",
     description: "Vote and see what others think",
     icon: Vote,
     color: "bg-violet-50 border-violet-100",

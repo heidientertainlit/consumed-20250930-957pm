@@ -200,7 +200,7 @@ export default function PlayPollsPage() {
           <button onClick={() => window.history.back()} className="absolute left-4 top-6 flex items-center text-gray-400 hover:text-white transition-colors">
             <ChevronLeft size={20} />
           </button>
-          <h1 className="text-2xl font-semibold text-white text-center tracking-tight mb-7">Polls</h1>
+          <h1 className="text-2xl font-semibold text-white text-center tracking-tight mb-7">Cast Your Vote</h1>
 
           {/* Pill category filters */}
           {pollsByCategory.length > 0 && (
@@ -247,13 +247,10 @@ export default function PlayPollsPage() {
                       {/* Card header — matches trivia style */}
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-purple-900 flex items-center justify-center flex-shrink-0">
-                            <Vote className="w-3.5 h-3.5 text-white" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-gray-900">{label} Polls</p>
-                            <p className="text-[10px] text-gray-500">Tap to vote</p>
-                          </div>
+                          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 tracking-wide shrink-0">
+                            {label}
+                          </span>
+                          <p className="text-sm font-semibold text-gray-900">Cast Your Vote</p>
                         </div>
                         <div className="flex items-center gap-1">
                           {currentIndex > 0 && (
