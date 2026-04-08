@@ -3781,11 +3781,12 @@ export default function Feed() {
       const completedPoolIds = new Set(userPredictions?.map(p => p.pool_id) || []);
       console.log('✅ User has completed:', completedPoolIds);
 
-      // Get all open games
+      // Get all open games — exclude partner-tagged polls (those belong to specific rooms)
       const { data, error } = await supabase
         .from('prediction_pools')
         .select('*')
         .eq('status', 'open')
+        .is('partner_tag', null)
         .order('created_at', { ascending: false });
 
       if (error) {
