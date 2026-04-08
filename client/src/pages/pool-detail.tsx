@@ -864,7 +864,7 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {post.visibility === 'room_only' && (
+            {post.visibility === 'private' && (
               <span className="text-[10px] font-medium text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">Room only</span>
             )}
             {isOwn && (
