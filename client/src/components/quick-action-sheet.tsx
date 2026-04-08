@@ -64,8 +64,13 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
       setSelectedIntent("capture");
       setSelectedAction("track");
       setAddToList(true);
+    } else if (isOpen && roomId && !preselectedMedia) {
+      // Room discussion: skip the menu and go straight to Say something
+      setSelectedIntent("say");
+      setSelectedAction("post");
+      setSayMode("thought");
     }
-  }, [isOpen, preselectedMedia]);
+  }, [isOpen, preselectedMedia, roomId]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -274,6 +279,11 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
   };
 
   const handleBack = () => {
+    // If opened directly into Say something from a room, back = close
+    if (roomId && selectedIntent === "say") {
+      handleClose();
+      return;
+    }
     if (selectedAction && selectedIntent === "play") {
       setSelectedAction(null);
     } else if (selectedIntent) {
