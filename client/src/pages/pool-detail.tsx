@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight } from "lucide-react";
+import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 import { supabase } from "@/lib/supabase";
 import { formatDistanceToNow } from "date-fns";
+import { QuickActionSheet } from "@/components/quick-action-sheet";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
@@ -793,6 +794,89 @@ function AboutSection({ pool, members, isLoading }: { pool: any; members: any[];
 }
 
 /* ─── Main Page ─────────────────────────────────────────────────────── */
+/* ─── Room Post Card ─────────────────────────────────────────────────── */
+function RoomPostCard({ post, currentUserId, onDelete }: {
+  post: any;
+  currentUserId: string;
+  onDelete: (id: string) => void;
+}) {
+  const displayName = (post.users as any)?.display_name || (post.users as any)?.user_name || 'Someone';
+  const initial = displayName[0]?.toUpperCase() || '?';
+  const isOwn = post.user_id === currentUserId;
+  const timeAgo = post.created_at
+    ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true })
+    : '';
+  const isRateReview = post.post_type === 'rate_review' || post.post_type === 'rating';
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Media banner if present */}
+      {post.image_url && (
+        <div className="flex items-center gap-3 px-4 pt-3 pb-2 bg-gray-50 border-b border-gray-100">
+          <img src={post.image_url} alt={post.media_title || ''} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-900 truncate">{post.media_title}</p>
+            {post.media_type && <p className="text-xs text-gray-400 capitalize">{post.media_type}</p>}
+          </div>
+        </div>
+      )}
+
+      <div className="px-4 pt-3 pb-3">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {initial}
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900 leading-tight">{displayName}</p>
+              <p className="text-[11px] text-gray-400">{timeAgo}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {post.visibility === 'room_only' && (
+              <span className="text-[10px] font-medium text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">Room only</span>
+            )}
+            {isOwn && (
+              <button
+                onClick={() => onDelete(post.id)}
+                className="p-1 rounded-full hover:bg-red-50 transition-colors"
+              >
+                <Trash2 size={13} className="text-gray-300 hover:text-red-400" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Star rating if rate-review */}
+        {isRateReview && post.rating > 0 && (
+          <div className="flex items-center gap-0.5 mb-1.5">
+            {[1, 2, 3, 4, 5].map(s => (
+              <Star
+                key={s}
+                size={13}
+                className={s <= Math.round(post.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-100'}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Content */}
+        {post.content && (
+          <p className="text-sm text-gray-800 leading-relaxed">{post.content}</p>
+        )}
+
+        {/* Post type badge */}
+        {isRateReview && (
+          <div className="mt-2">
+            <span className="text-[10px] font-semibold text-purple-600 bg-purple-50 rounded-full px-2 py-0.5">Review</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function PoolDetailPage() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
@@ -809,6 +893,7 @@ export default function PoolDetailPage() {
   const [addingId, setAddingId] = useState<string | null>(null);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [joiningRoom, setJoiningRoom] = useState(false);
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -823,6 +908,23 @@ export default function PoolDetailPage() {
   });
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['pool-detail', params.id] });
+
+  const { data: roomPostsData, refetch: refetchRoomPosts } = useQuery({
+    queryKey: ['room-posts', params.id],
+    queryFn: async () => {
+      const { data: posts, error } = await supabase
+        .from('social_posts')
+        .select('*, users:user_id(id, display_name, user_name)')
+        .eq('room_id', params.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return posts || [];
+    },
+    enabled: !!params.id && !!session?.access_token
+  });
+
+  const roomPosts: any[] = roomPostsData || [];
 
   const handleCopyLink = () => {
     const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
@@ -1009,40 +1111,49 @@ export default function PoolDetailPage() {
             )}
 
             {/* ── Discussion section ── */}
-            <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest px-1 pb-2 pt-1">Discussion</p>
+            <div className="flex items-center justify-between px-1 pb-2 pt-1">
+              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest">Discussion</p>
+              {roomPosts.length > 0 && (
+                <span className="text-[11px] text-gray-400">{roomPosts.length} posts</span>
+              )}
+            </div>
 
             {/* Composer — members only */}
-            {isMember && <PostComposer poolId={params.id} token={token} currentUserName={myName} onPosted={refresh} />}
+            {isMember && (
+              <button
+                onClick={() => setIsComposerOpen(true)}
+                className="w-full bg-white rounded-2xl border border-gray-200 px-4 py-3 flex items-center gap-3 mb-3 shadow-sm text-left"
+              >
+                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                  <Pencil size={14} className="text-purple-600" />
+                </div>
+                <span className="text-sm text-gray-400 flex-1">Write something...</span>
+              </button>
+            )}
             {!isMember && (
               <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-4 px-4 text-center mb-3">
                 <p className="text-gray-400 text-sm">Join this room to participate</p>
               </div>
             )}
 
-            {/* Threaded discussion */}
+            {/* Room posts */}
             <div className="space-y-3">
-              {comments.length === 0 && (
+              {roomPosts.length === 0 && (
                 <div className="text-center py-6">
                   <p className="text-gray-400 text-sm">No posts yet. Start the conversation.</p>
                 </div>
               )}
-              {[...comments]
-                .filter(c => !c.parent_id)
-                .reverse()
-                .map(thread => (
-                  <ThreadCard
-                    key={thread.id}
-                    post={thread}
-                    replies={comments.filter(c => c.parent_id === thread.id)}
-                    isMember={isMember}
-                    token={token}
-                    onRefresh={refresh}
-                    currentUserName={myName}
-                    isHost={isHost}
-                    currentUserId={session?.user?.id || ''}
-                  />
-                ))
-              }
+              {roomPosts.map(post => (
+                <RoomPostCard
+                  key={post.id}
+                  post={post}
+                  currentUserId={session?.user?.id || ''}
+                  onDelete={async (id) => {
+                    await supabase.from('social_posts').delete().eq('id', id);
+                    refetchRoomPosts();
+                  }}
+                />
+              ))}
             </div>
           </div>
         )}
@@ -1252,6 +1363,16 @@ export default function PoolDetailPage() {
       </div>
 
       <Navigation hideTopBar />
+
+      <QuickActionSheet
+        isOpen={isComposerOpen}
+        onClose={() => setIsComposerOpen(false)}
+        roomId={params.id}
+        onPosted={() => {
+          setIsComposerOpen(false);
+          refetchRoomPosts();
+        }}
+      />
     </div>
   );
 }

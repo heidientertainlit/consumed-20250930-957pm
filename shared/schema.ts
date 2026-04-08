@@ -125,6 +125,7 @@ export const socialPosts = pgTable("social_posts", {
   likesCount: integer("likes_count").default(0),
   commentsCount: integer("comments_count").default(0),
   predictionPoolId: text("prediction_pool_id"),
+  roomId: text("room_id"), // For posts scoped to a specific room (pools table)
   originType: text("origin_type").default("user"), // 'user' or 'consumed' for platform-created content
   originUserId: varchar("origin_user_id"), // For platform personas or admin accounts
   createdAt: timestamp("created_at").defaultNow().notNull(),

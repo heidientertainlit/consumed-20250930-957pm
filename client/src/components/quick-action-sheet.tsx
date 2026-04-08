@@ -32,9 +32,11 @@ interface QuickActionSheetProps {
     externalSource?: string;
     creator?: string;
   } | null;
+  roomId?: string | null;
+  onPosted?: () => void;
 }
 
-export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickActionSheetProps) {
+export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, onPosted }: QuickActionSheetProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   
@@ -88,6 +90,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [isListDrawerOpen, setIsListDrawerOpen] = useState(false);
+  const [shareToFeed, setShareToFeed] = useState(true);
   
   const episodeCache = useRef<Record<string, any[]>>({});
 
@@ -373,7 +376,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           user_id: authUser.id,
           content: contentText,
           post_type: postType,
-          visibility: 'public',
+          visibility: roomId && !shareToFeed ? 'room_only' : 'public',
           media_title: selectedMedia?.title || null,
           media_type: selectedMedia?.type?.toLowerCase() || null,
           media_external_id: selectedMedia?.external_id || null,
@@ -382,11 +385,16 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
           contains_spoiler: containsSpoilers,
           fire_votes: 0,
           ice_votes: 0,
+          room_id: roomId || null,
         });
         
         if (error) throw error;
         
         toast({ title: "Post created!" });
+        if (roomId) {
+          queryClient.invalidateQueries({ queryKey: ['room-posts', roomId] });
+          onPosted?.();
+        }
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
         queryClient.invalidateQueries({ queryKey: ['feed'] });
         
@@ -1317,7 +1325,21 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia }: QuickAct
             )}
             
             {selectedAction && selectedAction !== "challenge" && (selectedAction !== "rank" || (selectedAction === "rank" && userRanks.length > 0)) && (
-              <div className="pt-4 pb-2">
+              <div className="pt-4 pb-2 space-y-3">
+                {roomId && selectedAction === "post" && (
+                  <button
+                    onClick={() => setShareToFeed(v => !v)}
+                    className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 rounded-xl border border-gray-100"
+                  >
+                    <div className="flex flex-col items-start">
+                      <span className="text-sm font-medium text-gray-800">Also share to main feed</span>
+                      <span className="text-xs text-gray-400">Your followers will see this too</span>
+                    </div>
+                    <div className={`w-10 h-6 rounded-full transition-colors relative ${shareToFeed ? 'bg-purple-600' : 'bg-gray-200'}`}>
+                      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${shareToFeed ? 'translate-x-5' : 'translate-x-1'}`} />
+                    </div>
+                  </button>
+                )}
                 <Button
                   onClick={handlePost}
                   disabled={!canPost() || isPosting}
