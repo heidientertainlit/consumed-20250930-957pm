@@ -1505,8 +1505,13 @@ export default function PoolDetailPage() {
         {/* Room name + meta */}
         <div className="px-4 pb-3">
           <p className="text-white/40 text-[10px] font-medium uppercase tracking-widest mb-1">Room</p>
-          <h1 className="text-white text-[22px] font-medium leading-tight mb-2.5" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-white text-[22px] font-medium leading-tight mb-2.5 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
             {isLoading ? '...' : pool?.name || 'Room'}
+            {!isLoading && pool?.partner_name && (
+              <span title="Official Partner Room" className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 shrink-0" style={{ marginTop: '1px' }}>
+                <CheckCircle2 size={13} className="text-white" strokeWidth={2.5} />
+              </span>
+            )}
           </h1>
           {/* Member count + visibility */}
           {!isLoading && (
