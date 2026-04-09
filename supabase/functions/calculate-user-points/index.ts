@@ -312,38 +312,30 @@ serve(async (req) => {
     const globalRank = usersWithMorePoints + 1;
     const totalUsersWithPoints = Object.keys(userPointsMap).length;
 
-    // Create the points data - we'll use a simple user_points table with category and points
-    const pointsData = [
-      { user_id: appUser.id, category: 'all_time', points: allTimePoints },
-      { user_id: appUser.id, category: 'books', points: bookPoints },
-      { user_id: appUser.id, category: 'movies', points: moviePoints },
-      { user_id: appUser.id, category: 'tv', points: tvPoints },
-      { user_id: appUser.id, category: 'music', points: musicPoints },
-      { user_id: appUser.id, category: 'podcasts', points: podcastPoints },
-      { user_id: appUser.id, category: 'games', points: gamePoints },
-      { user_id: appUser.id, category: 'reviews', points: reviewPoints },
-      { user_id: appUser.id, category: 'predictions', points: predictionPoints },
-      { user_id: appUser.id, category: 'trivia', points: triviaPoints },
-      { user_id: appUser.id, category: 'polls', points: pollPoints },
-      { user_id: appUser.id, category: 'bets', points: betsPoints },
-      { user_id: appUser.id, category: 'friends', points: friendPoints },
-      { user_id: appUser.id, category: 'referrals', points: referralPoints },
-      { user_id: appUser.id, category: 'engagement', points: engagementPoints }
-    ];
-
-    // First try to create the user_points table if it doesn't exist (this might fail, that's ok)
+    // Persist calculated points to user_points table (single row per user, matches actual schema)
     try {
-      for (const pointData of pointsData) {
-        const { error: upsertError } = await supabase
-          .from('user_points')
-          .upsert(pointData, { onConflict: 'user_id,category' });
-        
-        if (upsertError) {
-          console.log('Upsert error (expected if table doesn\'t exist):', upsertError);
-        }
+      const { error: upsertError } = await supabaseAdmin
+        .from('user_points')
+        .upsert({
+          user_id: targetUserId,
+          reviews_written: reviews.length,
+          ratings_given: 0,
+          books_read: books.length,
+          tv_shows_watched: tv.length,
+          movies_watched: movies.length,
+          predictions_right: predictionCount,
+          trivia_points: triviaPoints,
+          login_streak: 0,
+          app_engagement: engagementPoints,
+          all_time: allTimePoints,
+          last_updated: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+
+      if (upsertError) {
+        console.log('Points upsert error:', upsertError);
       }
     } catch (error) {
-      console.log('Points upsert failed, table might not exist:', error);
+      console.log('Points persist failed:', error);
     }
 
     return new Response(JSON.stringify({
