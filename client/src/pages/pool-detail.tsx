@@ -1617,29 +1617,29 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
       </div>
 
       {/* Live prediction card */}
-      <div className="rounded-2xl overflow-hidden shadow-lg" style={{ background: 'linear-gradient(135deg, #1a1040 0%, #2d1f6e 50%, #4c2898 100%)' }}>
+      <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm">
         <div className="px-4 pt-4 pb-3">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-bold text-emerald-400 tracking-widest uppercase">Live Now</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-emerald-600 tracking-widest uppercase">Live Now</span>
             </div>
             {phase === 'lockin' && (
               <div className="flex items-center gap-1">
-                <span className="text-white/60 text-xs">Locks in</span>
-                <span className="text-white font-bold text-sm w-5 text-center">{countdown}</span>
+                <span className="text-gray-400 text-xs">Locks in</span>
+                <span className="text-gray-900 font-bold text-sm w-5 text-center">{countdown}</span>
               </div>
             )}
             {phase === 'reveal' && (
-              <button onClick={reset} className="text-[11px] text-white/40 hover:text-white/70 transition-colors">
+              <button onClick={reset} className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors">
                 Play again
               </button>
             )}
           </div>
 
           {/* Question */}
-          <p className="text-white font-bold text-[15px] leading-snug mb-4">{question}</p>
+          <p className="text-gray-900 font-bold text-[15px] leading-snug mb-4">{question}</p>
 
           {/* Options */}
           <div className="space-y-2.5">
@@ -1655,23 +1655,25 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
                   disabled={phase !== 'predict'}
                   className="w-full text-left relative overflow-hidden rounded-xl transition-all"
                   style={{
-                    background: showBar
-                      ? isVoted ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.06)'
-                      : isVoted ? 'rgba(139,92,246,0.35)' : 'rgba(255,255,255,0.08)',
-                    border: isVoted ? '1px solid rgba(139,92,246,0.6)' : '1px solid rgba(255,255,255,0.1)',
+                    background: isVoted
+                      ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)'
+                      : showBar
+                        ? '#f3f4f6'
+                        : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                    border: isVoted ? '1px solid #6d28d9' : showBar ? '1px solid #e5e7eb' : '1px solid #8b5cf6',
                   }}
                 >
-                  {/* Progress fill */}
-                  {showBar && (
+                  {/* Progress fill on reveal */}
+                  {showBar && !isVoted && (
                     <div
                       className="absolute inset-y-0 left-0 rounded-xl transition-all duration-700"
-                      style={{ width: `${pct}%`, background: isVoted ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.05)' }}
+                      style={{ width: `${pct}%`, background: 'rgba(139,92,246,0.15)' }}
                     />
                   )}
                   <div className="relative flex items-center justify-between px-4 py-3">
-                    <span className="text-white text-sm font-medium">{opt}</span>
+                    <span className={`text-sm font-medium ${showBar && !isVoted ? 'text-gray-700' : 'text-white'}`}>{opt}</span>
                     {showBar && (
-                      <span className={`text-sm font-bold ${isVoted ? 'text-purple-300' : 'text-white/50'}`}>{pct}%</span>
+                      <span className={`text-sm font-bold ${isVoted ? 'text-white' : 'text-gray-500'}`}>{pct}%</span>
                     )}
                   </div>
                 </button>
@@ -1682,34 +1684,34 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
           {/* Lock in state */}
           {phase === 'lockin' && (
             <div className="mt-3 text-center">
-              <p className="text-white/50 text-[13px]">Voting closes in <span className="text-white font-bold">{countdown}s</span> — locked in as <span className="text-purple-300 font-semibold">{voted}</span></p>
+              <p className="text-gray-500 text-[13px]">Voting closes in <span className="text-gray-900 font-bold">{countdown}s</span> — locked in as <span className="text-purple-600 font-semibold">{voted}</span></p>
             </div>
           )}
 
           {/* Reveal state */}
           {phase === 'reveal' && voted && (
-            <div className="mt-4 rounded-xl px-4 py-3" style={{ background: isContrarian ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.06)' }}>
+            <div className={`mt-4 rounded-xl px-4 py-3 ${isContrarian ? 'bg-emerald-50 border border-emerald-100' : 'bg-gray-50 border border-gray-100'}`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-white text-sm font-semibold">
+                  <p className={`text-sm font-semibold ${isContrarian ? 'text-emerald-700' : 'text-gray-900'}`}>
                     {isContrarian ? 'Contrarian pick!' : 'Points earned'}
                   </p>
-                  <p className="text-white/50 text-[12px] mt-0.5">
+                  <p className="text-gray-400 text-[12px] mt-0.5">
                     {isContrarian
                       ? `Only ${votedPercent}% picked ${voted} — bold call.`
                       : `${votedPercent}% of voters agreed with you.`}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className={`text-2xl font-bold ${isContrarian ? 'text-emerald-400' : 'text-white'}`}>+{pointsEarned}</p>
-                  <p className="text-white/40 text-[11px]">pts</p>
+                  <p className={`text-2xl font-bold ${isContrarian ? 'text-emerald-600' : 'text-gray-900'}`}>+{pointsEarned}</p>
+                  <p className="text-gray-400 text-[11px]">pts</p>
                 </div>
               </div>
             </div>
           )}
 
           {phase === 'predict' && (
-            <p className="text-white/40 text-[11px] text-center mt-3">Tap an option to vote</p>
+            <p className="text-gray-400 text-[11px] text-center mt-3">Tap an option to vote</p>
           )}
         </div>
       </div>
