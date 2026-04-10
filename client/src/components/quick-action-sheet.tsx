@@ -86,7 +86,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
   const [recCategory, setRecCategory] = useState<string>("");
   
   const [addToList, setAddToList] = useState(false);
-  const [selectedListId, setSelectedListId] = useState<string>("currently");
+  const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [privateMode, setPrivateMode] = useState(false);
   const [selectedRankId, setSelectedRankId] = useState<string>("");
   
@@ -748,7 +748,15 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                     ].map((list) => (
                       <button
                         key={list.id}
-                        onClick={() => setSelectedListId(list.id)}
+                        onClick={() => {
+                          if (selectedListId === list.id) {
+                            setSelectedListId(null);
+                            setAddToList(false);
+                          } else {
+                            setSelectedListId(list.id);
+                            setAddToList(true);
+                          }
+                        }}
                         className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                           selectedListId === list.id ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}

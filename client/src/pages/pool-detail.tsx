@@ -826,6 +826,8 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
   currentUserId: string;
   onDelete: (id: string) => void;
 }) {
+  const { session } = useAuth();
+  const { toast } = useToast();
   const displayName = (post.users as any)?.display_name || (post.users as any)?.user_name || 'Someone';
   const initial = displayName[0]?.toUpperCase() || '?';
   const isOwn = post.user_id === currentUserId;
@@ -833,6 +835,52 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
     ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true })
     : '';
   const isRateReview = post.post_type === 'rate_review' || post.post_type === 'rating';
+
+  const [commentsExpanded, setCommentsExpanded] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [commentCount, setCommentCount] = useState<number>(post.comment_count ?? 0);
+
+  const fetchComments = async () => {
+    setLoadingComments(true);
+    const { data, error } = await supabase
+      .from('social_post_comments')
+      .select('id, content, created_at, user_id, users:user_id (id, user_name, display_name)')
+      .eq('social_post_id', post.id)
+      .order('created_at', { ascending: true })
+      .limit(50);
+    if (!error && data) {
+      setComments(data);
+      setCommentCount(data.length);
+    }
+    setCommentsLoaded(true);
+    setLoadingComments(false);
+  };
+
+  const toggleComments = () => {
+    if (!commentsExpanded && !commentsLoaded) fetchComments();
+    setCommentsExpanded(v => !v);
+  };
+
+  const submitComment = async () => {
+    if (!newComment.trim() || !session?.access_token) return;
+    setSubmittingComment(true);
+    try {
+      const { error } = await supabase.functions.invoke('social-feed-comments', {
+        method: 'POST',
+        body: { post_id: post.id, content: newComment.trim() }
+      });
+      if (error) throw error;
+      setNewComment('');
+      fetchComments();
+    } catch {
+      toast({ title: 'Failed to add comment', variant: 'destructive' });
+    }
+    setSubmittingComment(false);
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
@@ -899,6 +947,65 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
           </div>
         )}
       </div>
+
+      {/* Comment bar */}
+      <div className="border-t border-gray-100 px-4 py-2 flex items-center gap-3">
+        <button
+          onClick={toggleComments}
+          className="flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-purple-600 transition-colors"
+        >
+          <MessageSquare size={13} />
+          {commentCount > 0 ? `${commentCount} ${commentCount === 1 ? 'comment' : 'comments'}` : 'Comment'}
+        </button>
+      </div>
+
+      {/* Comments section */}
+      {commentsExpanded && (
+        <div className="border-t border-gray-100 px-4 pb-3 pt-2 space-y-3">
+          {loadingComments && (
+            <p className="text-xs text-gray-400">Loading...</p>
+          )}
+          {!loadingComments && comments.length === 0 && (
+            <p className="text-xs text-gray-400">No comments yet.</p>
+          )}
+          {comments.map((c: any) => {
+            const cName = (c.users as any)?.display_name || (c.users as any)?.user_name || 'Someone';
+            const cInitial = cName[0]?.toUpperCase() || '?';
+            return (
+              <div key={c.id} className="flex items-start gap-2">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-300 to-blue-300 flex items-center justify-center text-white text-[10px] font-bold shrink-0 mt-0.5">
+                  {cInitial}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] font-semibold text-gray-700 leading-tight">{cName}</p>
+                  <p className="text-sm text-gray-800 leading-snug">{c.content}</p>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Comment input */}
+          {session?.user && (
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="text"
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') submitComment(); }}
+                placeholder="Write a comment..."
+                className="flex-1 text-sm bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 outline-none focus:border-purple-400 transition-colors"
+              />
+              <button
+                onClick={submitComment}
+                disabled={!newComment.trim() || submittingComment}
+                className="p-1.5 rounded-full bg-purple-600 text-white disabled:opacity-40 hover:bg-purple-700 transition-colors"
+              >
+                <Send size={12} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
