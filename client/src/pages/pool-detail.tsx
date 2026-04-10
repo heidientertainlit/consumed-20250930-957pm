@@ -1450,15 +1450,87 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, manag
 }
 
 /* ─── Live Tab ───────────────────────────────────────────────────────── */
-function LiveTab({ featuredPolls }: { featuredPolls: any[] }) {
+function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[], poolId: string, currentUserId: string | null }) {
   const [phase, setPhase] = useState<'predict' | 'lockin' | 'reveal'>('predict');
   const [countdown, setCountdown] = useState(10);
   const [voted, setVoted] = useState<string | null>(null);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
+  const [reactText, setReactText] = useState('');
+  const [submittingReact, setSubmittingReact] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [submittingReply, setSubmittingReply] = useState(false);
+
+  const { data: quickReacts, refetch: refetchReacts } = useQuery({
+    queryKey: ['live-quick-reacts', poolId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('social_posts')
+        .select('id, content, post_type, created_at, user_id, users:user_id(id, display_name, user_name)')
+        .eq('room_id', poolId)
+        .order('created_at', { ascending: false })
+        .limit(40);
+      return data || [];
+    },
+    enabled: !!poolId,
+    refetchInterval: 8000,
+  });
+
+  const { data: commentsByPost } = useQuery({
+    queryKey: ['live-react-comments', poolId],
+    queryFn: async () => {
+      const postIds = (quickReacts || []).map((p: any) => p.id);
+      if (!postIds.length) return {};
+      const { data } = await supabase
+        .from('social_post_comments')
+        .select('id, post_id, content, created_at, user_id, users:user_id(id, display_name, user_name)')
+        .in('post_id', postIds)
+        .order('created_at', { ascending: true });
+      const map: Record<string, any[]> = {};
+      (data || []).forEach((c: any) => {
+        if (!map[c.post_id]) map[c.post_id] = [];
+        map[c.post_id].push(c);
+      });
+      return map;
+    },
+    enabled: !!(quickReacts && quickReacts.length > 0),
+  });
+
+  const submitReact = async (content: string) => {
+    if (!content.trim() || !currentUserId || !poolId) return;
+    setSubmittingReact(true);
+    await supabase.from('social_posts').insert({
+      user_id: currentUserId,
+      room_id: poolId,
+      post_type: 'thought',
+      content: content.trim(),
+      visibility: 'public',
+    });
+    setReactText('');
+    setSubmittingReact(false);
+    refetchReacts();
+  };
+
+  const submitReply = async (postId: string) => {
+    if (!replyText.trim() || !currentUserId) return;
+    setSubmittingReply(true);
+    await supabase.from('social_post_comments').insert({
+      post_id: postId,
+      user_id: currentUserId,
+      content: replyText.trim(),
+    });
+    setReplyText('');
+    setReplyingTo(null);
+    setSubmittingReply(false);
+    refetchReacts();
+  };
+
+  const EMOJIS = ['🔥', '😮', '😂', '👏', '❤️'];
 
   const poll = featuredPolls[0] || null;
-  const rawOptions: string[] = poll?.options || ['Arrest', 'Warning', 'Search'];
+  const rawOptions: string[] = poll?.options || ['Arrest', 'Warning', 'Let go', 'Search'];
   const options = rawOptions.slice(0, Math.min(rawOptions.length, 4));
-  const question = poll?.title || 'What happens next on patrol?';
+  const question = poll?.title || 'What happens next?';
 
   useEffect(() => {
     if (phase !== 'lockin') return;
@@ -1492,53 +1564,55 @@ function LiveTab({ featuredPolls }: { featuredPolls: any[] }) {
 
   return (
     <div className="space-y-4 pb-8">
-      {/* How it works explainer */}
+      {/* How it works explainer — collapsed by default */}
       <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f0d24 0%, #1a1545 100%)' }}>
-        <div className="px-4 pt-4 pb-1">
-          <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3">How It Works</p>
-        </div>
-        <div className="px-4 pb-4 space-y-4">
-          {/* Step 1 */}
-          <div className="flex gap-3">
-            <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-white text-[10px] font-bold">1</span>
-            </div>
-            <div>
-              <p className="text-white text-sm font-semibold mb-0.5">Predict</p>
-              <p className="text-white/50 text-[13px] leading-snug">A question drops in real time. Vote before the window closes.</p>
+        <button
+          className="w-full px-4 py-3 flex items-center justify-between"
+          onClick={() => setHowItWorksOpen(o => !o)}
+        >
+          <div className="flex items-center gap-2">
+            <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest">How It Works</p>
+            <div className="flex gap-1.5">
+              <span className="bg-white/10 rounded-full px-2 py-0.5 text-white text-[10px] font-bold">+2 voting</span>
+              <span className="bg-emerald-500/20 border border-emerald-500/30 rounded-full px-2 py-0.5 text-emerald-400 text-[10px] font-bold">+5 contrarian</span>
             </div>
           </div>
-          {/* Step 2 */}
-          <div className="flex gap-3">
-            <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-white text-[10px] font-bold">2</span>
+          {howItWorksOpen ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+        </button>
+        {howItWorksOpen && (
+          <div className="px-4 pb-4 space-y-4">
+            {/* Step 1 */}
+            <div className="flex gap-3">
+              <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-white text-[10px] font-bold">1</span>
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold mb-0.5">Predict</p>
+                <p className="text-white/50 text-[13px] leading-snug">A question drops in real time. Vote before the window closes.</p>
+              </div>
             </div>
-            <div>
-              <p className="text-white text-sm font-semibold mb-0.5">Lock In</p>
-              <p className="text-white/50 text-[13px] leading-snug">After 10 seconds voting closes. No changing your answer.</p>
+            {/* Step 2 */}
+            <div className="flex gap-3">
+              <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-white text-[10px] font-bold">2</span>
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold mb-0.5">Lock In</p>
+                <p className="text-white/50 text-[13px] leading-snug">After 10 seconds voting closes. No changing your answer.</p>
+              </div>
             </div>
-          </div>
-          {/* Step 3 */}
-          <div className="flex gap-3">
-            <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
-              <span className="text-white text-[10px] font-bold">3</span>
-            </div>
-            <div>
-              <p className="text-white text-sm font-semibold mb-0.5">Reveal</p>
-              <p className="text-white/50 text-[13px] leading-snug">See what everyone thought — not who was right. Points go to voters, with a bonus for picking the unexpected option.</p>
-              <div className="mt-2 flex gap-3">
-                <div className="bg-white/10 rounded-lg px-3 py-1.5 text-center">
-                  <p className="text-white font-bold text-sm">+2</p>
-                  <p className="text-white/50 text-[10px]">for voting</p>
-                </div>
-                <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-lg px-3 py-1.5 text-center">
-                  <p className="text-emerald-400 font-bold text-sm">+5</p>
-                  <p className="text-emerald-400/70 text-[10px]">contrarian pick</p>
-                </div>
+            {/* Step 3 */}
+            <div className="flex gap-3">
+              <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-white text-[10px] font-bold">3</span>
+              </div>
+              <div>
+                <p className="text-white text-sm font-semibold mb-0.5">Reveal</p>
+                <p className="text-white/50 text-[13px] leading-snug">See what everyone thought — not who was right. Points go to voters, with a bonus for picking the unexpected option.</p>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Live prediction card */}
@@ -1636,6 +1710,125 @@ function LiveTab({ featuredPolls }: { featuredPolls: any[] }) {
           {phase === 'predict' && (
             <p className="text-white/40 text-[11px] text-center mt-3">Tap an option to vote</p>
           )}
+        </div>
+      </div>
+
+      {/* ── Quick React Feed ── */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f0d24 0%, #1a1545 100%)' }}>
+        <div className="px-4 pt-3 pb-2 border-b border-white/8">
+          <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Live Feed</p>
+        </div>
+
+        {/* Emoji quick-react row */}
+        <div className="flex gap-2 px-4 pt-3 pb-2">
+          {EMOJIS.map(emoji => (
+            <button
+              key={emoji}
+              onClick={() => submitReact(emoji)}
+              disabled={!currentUserId}
+              className="flex-1 py-1.5 rounded-xl text-lg bg-white/6 hover:bg-white/12 active:scale-95 transition-all disabled:opacity-40"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+
+        {/* Text comment input */}
+        <div className="flex items-center gap-2 px-4 pb-3">
+          <input
+            value={reactText}
+            onChange={e => setReactText(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && submitReact(reactText)}
+            placeholder={currentUserId ? "Say something..." : "Sign in to comment"}
+            disabled={!currentUserId || submittingReact}
+            className="flex-1 bg-white/8 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 outline-none border border-white/10 focus:border-white/25 disabled:opacity-40"
+          />
+          <button
+            onClick={() => submitReact(reactText)}
+            disabled={!reactText.trim() || !currentUserId || submittingReact}
+            className="w-8 h-8 rounded-xl bg-purple-600 flex items-center justify-center disabled:opacity-30 hover:bg-purple-500 transition-colors"
+          >
+            <Send size={13} className="text-white" />
+          </button>
+        </div>
+
+        {/* Feed items */}
+        <div className="divide-y divide-white/5 max-h-80 overflow-y-auto">
+          {(!quickReacts || quickReacts.length === 0) && (
+            <p className="text-white/30 text-[12px] text-center py-4">Be first to react</p>
+          )}
+          {(quickReacts || []).map((post: any) => {
+            const name = post.users?.display_name || post.users?.user_name || 'Someone';
+            const initial = name[0]?.toUpperCase();
+            const isEmoji = EMOJIS.includes(post.content?.trim());
+            const replies = (commentsByPost || {})[post.id] || [];
+            const timeAgo = post.created_at
+              ? formatDistanceToNow(new Date(post.created_at), { addSuffix: true })
+              : '';
+            return (
+              <div key={post.id} className="px-4 py-2.5">
+                <div className="flex items-start gap-2">
+                  <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0 mt-0.5">
+                    {initial}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-1.5 mb-0.5">
+                      <span className="text-white text-[12px] font-semibold">{name}</span>
+                      <span className="text-white/30 text-[10px]">{timeAgo}</span>
+                    </div>
+                    <p className={`text-white/80 ${isEmoji ? 'text-xl leading-tight' : 'text-[13px] leading-snug'}`}>
+                      {post.content}
+                    </p>
+                    {/* Reply button */}
+                    {currentUserId && (
+                      <button
+                        onClick={() => setReplyingTo(replyingTo === post.id ? null : post.id)}
+                        className="text-white/30 text-[10px] mt-1 hover:text-white/60 transition-colors"
+                      >
+                        Reply
+                      </button>
+                    )}
+                    {/* Replies */}
+                    {replies.length > 0 && (
+                      <div className="mt-1.5 space-y-1.5 pl-3 border-l border-white/10">
+                        {replies.map((reply: any) => (
+                          <div key={reply.id} className="flex items-start gap-1.5">
+                            <div className="w-4 h-4 rounded-full bg-purple-700 flex items-center justify-center text-white text-[8px] font-bold shrink-0 mt-0.5">
+                              {(reply.users?.display_name || reply.users?.user_name || '?')[0]?.toUpperCase()}
+                            </div>
+                            <div>
+                              <span className="text-white/60 text-[10px] font-semibold">{reply.users?.display_name || reply.users?.user_name || 'Someone'} </span>
+                              <span className="text-white/60 text-[11px]">{reply.content}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Reply input */}
+                    {replyingTo === post.id && (
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <input
+                          value={replyText}
+                          onChange={e => setReplyText(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && submitReply(post.id)}
+                          placeholder="Reply..."
+                          autoFocus
+                          className="flex-1 bg-white/6 rounded-lg px-2 py-1 text-[12px] text-white placeholder-white/30 outline-none border border-white/10"
+                        />
+                        <button
+                          onClick={() => submitReply(post.id)}
+                          disabled={!replyText.trim() || submittingReply}
+                          className="w-6 h-6 rounded-lg bg-purple-600 flex items-center justify-center disabled:opacity-30"
+                        >
+                          <Send size={10} className="text-white" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -1875,7 +2068,7 @@ export default function PoolDetailPage() {
 
         {/* ── LIVE ── */}
         {!isLoading && tab === 'live' && (
-          <LiveTab featuredPolls={featuredPolls} />
+          <LiveTab featuredPolls={featuredPolls} poolId={params.id!} currentUserId={session?.user?.id ?? null} />
         )}
 
         {/* ── FEED ── */}
