@@ -334,6 +334,41 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
 
   const handleSubmit = async () => {
     if (!session?.access_token) return;
+
+    // When adding directly to a list (from inside list-detail), no post text needed — just track the media
+    if (defaultListId && selectedMedia) {
+      setIsSubmitting(true);
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+        let externalSource = selectedMedia.source || selectedMedia.external_source || 'tmdb';
+        const externalId = String(selectedMedia.external_id || selectedMedia.id);
+        if (!selectedMedia.source && !selectedMedia.external_source) {
+          if (selectedMedia.type === 'book') externalSource = 'openlibrary';
+          else if (selectedMedia.type === 'podcast' || selectedMedia.type === 'music') externalSource = 'spotify';
+        }
+        const mediaData = {
+          title: selectedMedia.title,
+          mediaType: selectedMedia.type || 'movie',
+          creator: selectedMedia.creator || selectedMedia.artist || '',
+          imageUrl: selectedMedia.poster_url || selectedMedia.image_url || selectedMedia.poster_path || selectedMedia.image || '',
+          externalId,
+          externalSource,
+        };
+        await trackMediaToList(supabaseUrl, session.access_token, mediaData, defaultListId, false, rewatchCount, dnfReason);
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] }),
+          queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] }),
+          queryClient.invalidateQueries({ queryKey: ['list-detail'] }),
+        ]);
+        toast({ title: "Added!", description: `${selectedMedia.title} added to your list.` });
+        onClose();
+      } catch (err: any) {
+        toast({ title: "Error", description: err.message || "Failed to add media.", variant: "destructive" });
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
     
     // For rank posts, require media selection
     if (postType === 'rank' && !selectedMedia) {

@@ -50,7 +50,6 @@ import EdnaSharePage from "@/pages/edna-share";
 import CTVDemo from "@/pages/ctv";
 import CTVRoku from "@/pages/ctv-roku";
 import EngagePage from "@/pages/engage";
-import CollectionsPage from "@/pages/collections";
 
 import LoginPage from "./pages/login";
 import ResetPasswordPage from "./pages/reset-password";
@@ -341,9 +340,7 @@ function Router() {
           </Route>
 
           <Route path="/collections">
-            <ProtectedRoute>
-              <CollectionsPage />
-            </ProtectedRoute>
+            <RedirectTo to="/my-library" />
           </Route>
 
           <Route path="/trivia">
