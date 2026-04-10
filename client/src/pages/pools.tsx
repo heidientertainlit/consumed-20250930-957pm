@@ -33,7 +33,7 @@ export default function PoolsPage() {
       <Navigation />
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
         <div className="flex items-center justify-center py-12">
-          <h1 className="text-xl font-semibold text-white text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>Rooms</h1>
+          <h1 className="text-2xl font-bold text-white text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>Rooms</h1>
         </div>
       </div>
 
