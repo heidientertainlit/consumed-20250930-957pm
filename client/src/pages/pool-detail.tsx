@@ -1621,9 +1621,9 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
         <div className="px-4 pt-4 pb-3">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-emerald-600 tracking-widest uppercase">Live Now</span>
+            <div className="flex items-center gap-1.5 bg-emerald-500 rounded-full px-2.5 py-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              <span className="text-[10px] font-bold text-white tracking-widest uppercase">Live Now</span>
             </div>
             {phase === 'lockin' && (
               <div className="flex items-center gap-1">
@@ -1653,25 +1653,23 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
                   key={opt}
                   onClick={() => handleVote(opt)}
                   disabled={phase !== 'predict'}
-                  className="w-full text-left relative overflow-hidden rounded-xl transition-all"
+                  className="w-full text-left relative overflow-hidden rounded-full transition-all"
                   style={{
-                    background: isVoted
-                      ? 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)'
-                      : showBar
-                        ? '#f3f4f6'
-                        : 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                    border: isVoted ? '1px solid #6d28d9' : showBar ? '1px solid #e5e7eb' : '1px solid #8b5cf6',
+                    background: showBar
+                      ? isVoted ? 'linear-gradient(135deg, #4c1d95 0%, #3b0764 100%)' : '#f3f4f6'
+                      : 'linear-gradient(135deg, #4c1d95 0%, #3b0764 100%)',
+                    border: showBar && !isVoted ? '1px solid #e5e7eb' : '1px solid transparent',
                   }}
                 >
-                  {/* Progress fill on reveal */}
+                  {/* Progress fill on reveal for non-voted */}
                   {showBar && !isVoted && (
                     <div
-                      className="absolute inset-y-0 left-0 rounded-xl transition-all duration-700"
-                      style={{ width: `${pct}%`, background: 'rgba(139,92,246,0.15)' }}
+                      className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+                      style={{ width: `${pct}%`, background: 'rgba(109,40,217,0.12)' }}
                     />
                   )}
-                  <div className="relative flex items-center justify-between px-4 py-3">
-                    <span className={`text-sm font-medium ${showBar && !isVoted ? 'text-gray-700' : 'text-white'}`}>{opt}</span>
+                  <div className="relative flex items-center justify-between px-5 py-3">
+                    <span className={`text-sm font-semibold ${showBar && !isVoted ? 'text-gray-700' : 'text-white'}`}>{opt}</span>
                     {showBar && (
                       <span className={`text-sm font-bold ${isVoted ? 'text-white' : 'text-gray-500'}`}>{pct}%</span>
                     )}
