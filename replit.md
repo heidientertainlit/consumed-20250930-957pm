@@ -12,6 +12,7 @@ Preferred communication style: Simple, everyday language.
 - **NEVER add, seed, or modify data in Supabase without explicit user approval first.** Always double-check with the user before inserting, updating, or seeding any content (trivia, polls, predictions, etc.) to the production database.
 - All content data comes from user's spreadsheets - do not create fake/placeholder content.
 - **Room trivia/poll media type requirement**: When building or inserting trivia/polls for any room, always ensure `media_external_source`, `category`, and/or `show_tag` are set on the `prediction_pools` record so the `MediaTypePill` component (in pool-detail.tsx) can display the correct media type (TV / Movie / Music / Book). Do not insert records where all three fields are blank — the pill will fall back to "TV" as a default, which may be incorrect.
+- **⚠️ QuickActionSheet is shared — changes affect BOTH the global nav "+" button AND the room "Write something..." button.** The `useEffect` at the top of `quick-action-sheet.tsx` controls which flow opens based on props (`roomId`, `preselectedMedia`). Room discussion MUST open `intent: "capture"` / `action: "track"` (Add Media flow). NEVER change this to `intent: "say"` / `action: "post"` for room mode — that breaks the room discussion and shows the wrong composer. Any edit to this file must be tested in both contexts.
 
 ### Feed UI Redesign Plan (COSMETIC ONLY — no functional changes)
 All changes are styling/layout only. No voting logic, point systems, interaction handlers, or data pipelines may change.
