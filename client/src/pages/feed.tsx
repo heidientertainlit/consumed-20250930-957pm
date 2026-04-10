@@ -2448,7 +2448,14 @@ export default function Feed() {
         }
 
         if (p.type === 'cast_approved') return true;
-        if (p.type === 'game_moment') return true;
+        if (p.type === 'game_moment') {
+          // Exclude poll-type game moments — "Cast your vote" cards don't belong in the feed
+          try {
+            const parsed = JSON.parse((p.content || '').trim());
+            if (parsed.gameType === 'poll') return false;
+          } catch (_) {}
+          return true;
+        }
 
         if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
         if ((p.type === 'poll' || p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) return true;
@@ -5208,6 +5215,18 @@ export default function Feed() {
                 if ((item as any).type === 'friend_activity_block') return true;
                 if ((item as any).type === 'consumption_carousel') return false;
                 if ((item as any).type === 'swipeable_ratings') return false;
+                // Exclude consumed carousel polls — only user-created predict/poll posts belong in the feed
+                const itemType = (item as any).type;
+                if (itemType === 'poll' || itemType === 'predict' || itemType === 'prediction') {
+                  if ((item as any).origin_type !== 'user') return false;
+                }
+                // Exclude poll-type game moments — "Cast your vote" cards don't belong in the main feed
+                if (itemType === 'game_moment') {
+                  try {
+                    const parsed = JSON.parse(((item as any).content || '').trim());
+                    if (parsed.gameType === 'poll') return false;
+                  } catch (_) {}
+                }
                 // In 'All' mode, skip posts already rendered via standaloneUGCPosts to prevent duplicates
                 if ((selectedFilter === 'All' || selectedFilter === 'all') && item.id && ugcUsedIds.has(item.id)) return false;
                 const post = item as SocialPost;
