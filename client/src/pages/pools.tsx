@@ -90,72 +90,73 @@ export default function PoolsPage() {
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: '#0a0a0f' }}>
       <Navigation />
+      {/* Slim centered hero — title only */}
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
-        <div className="px-4 pt-4 pb-8 flex flex-col items-center">
-          <h1 className="text-2xl font-semibold text-white mb-5 text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>Rooms</h1>
-
-          {!showCreate ? (
-            <button
-              onClick={() => setShowCreate(true)}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-full text-white text-sm font-semibold mb-2"
-              style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
-            >
-              <Plus size={14} /> New Room
-            </button>
-          ) : (
-            <div className="space-y-2 mb-2 w-full">
-              <div className="flex gap-2">
-                <Input
-                  value={newPoolName}
-                  onChange={(e) => setNewPoolName(e.target.value)}
-                  placeholder="Room name..."
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') { setShowCreate(false); setNewPoolName(''); setNewPoolDesc(''); setIsPublicNew(false); }
-                  }}
-                />
-                <Button
-                  onClick={() => createMutation.mutate({ name: newPoolName, is_public: isPublicNew, description: newPoolDesc })}
-                  disabled={!newPoolName.trim() || createMutation.isPending}
-                  className="bg-purple-600 hover:bg-purple-700 text-white shrink-0"
-                >
-                  {createMutation.isPending ? '...' : 'Create'}
-                </Button>
-                <Button variant="ghost" onClick={() => { setShowCreate(false); setNewPoolName(''); setNewPoolDesc(''); setIsPublicNew(false); }} className="text-white/60 shrink-0">Cancel</Button>
-              </div>
-              {/* Optional description */}
-              <textarea
-                value={newPoolDesc}
-                onChange={(e) => setNewPoolDesc(e.target.value)}
-                placeholder="Description (optional)..."
-                rows={2}
-                className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/40 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-500"
-              />
-              {/* Public / Private toggle */}
-              <div className="flex items-center gap-3 pl-1">
-                <button
-                  onClick={() => setIsPublicNew(false)}
-                  className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${!isPublicNew ? 'border-white/40 text-white bg-white/15' : 'border-white/15 text-white/40'}`}
-                >
-                  <Lock size={11} /> Private
-                </button>
-                <button
-                  onClick={() => setIsPublicNew(true)}
-                  className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${isPublicNew ? 'border-emerald-400/60 text-emerald-300 bg-emerald-400/10' : 'border-white/15 text-white/40'}`}
-                >
-                  <Globe size={11} /> Public
-                </button>
-                <span className="text-white/30 text-xs">
-                  {isPublicNew ? 'Anyone can find and join' : 'Invite-only'}
-                </span>
-              </div>
-            </div>
-          )}
+        <div className="flex items-center justify-center py-4">
+          <h1 className="text-xl font-semibold text-white text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>Rooms</h1>
         </div>
       </div>
 
       <div className="bg-gray-50 px-4 pt-4 space-y-3 min-h-screen">
+        {/* ── New Room button / create form ── */}
+        {!showCreate ? (
+          <div className="flex justify-center pb-1">
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-1.5 px-5 py-2 rounded-full text-white text-sm font-semibold"
+              style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
+            >
+              <Plus size={14} /> New Room
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2 pb-1">
+            <div className="flex gap-2">
+              <Input
+                value={newPoolName}
+                onChange={(e) => setNewPoolName(e.target.value)}
+                placeholder="Room name..."
+                className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') { setShowCreate(false); setNewPoolName(''); setNewPoolDesc(''); setIsPublicNew(false); }
+                }}
+              />
+              <Button
+                onClick={() => createMutation.mutate({ name: newPoolName, is_public: isPublicNew, description: newPoolDesc })}
+                disabled={!newPoolName.trim() || createMutation.isPending}
+                className="bg-purple-600 hover:bg-purple-700 text-white shrink-0"
+              >
+                {createMutation.isPending ? '...' : 'Create'}
+              </Button>
+              <Button variant="ghost" onClick={() => { setShowCreate(false); setNewPoolName(''); setNewPoolDesc(''); setIsPublicNew(false); }} className="text-gray-400 shrink-0">Cancel</Button>
+            </div>
+            <textarea
+              value={newPoolDesc}
+              onChange={(e) => setNewPoolDesc(e.target.value)}
+              placeholder="Description (optional)..."
+              rows={2}
+              className="w-full bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-500"
+            />
+            <div className="flex items-center gap-3 pl-1">
+              <button
+                onClick={() => setIsPublicNew(false)}
+                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${!isPublicNew ? 'border-purple-400 text-purple-600 bg-purple-50' : 'border-gray-200 text-gray-400'}`}
+              >
+                <Lock size={11} /> Private
+              </button>
+              <button
+                onClick={() => setIsPublicNew(true)}
+                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${isPublicNew ? 'border-emerald-400 text-emerald-600 bg-emerald-50' : 'border-gray-200 text-gray-400'}`}
+              >
+                <Globe size={11} /> Public
+              </button>
+              <span className="text-gray-400 text-xs">
+                {isPublicNew ? 'Anyone can find and join' : 'Invite-only'}
+              </span>
+            </div>
+          </div>
+        )}
         {isLoading && (
           <div className="space-y-3">
             {[1, 2].map(i => <div key={i} className="h-24 rounded-2xl bg-gray-200 animate-pulse" />)}
