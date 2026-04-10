@@ -421,22 +421,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       
       await supabase.rpc('increment_user_points', { user_id_param: user.id, points_to_add: points });
 
-      const { error: gmError } = await supabase.from('social_posts').insert({
-        user_id: user.id,
-        post_type: 'game_moment',
-        content: JSON.stringify({ answer, gameType: 'trivia', isCorrect }),
-        media_title: questionTitle || 'Trivia',
-        prediction_pool_id: poolId,
-        visibility: 'public',
-        fire_votes: 0,
-        ice_votes: 0,
-      });
-      if (gmError) {
-        console.error('[game_moment trivia] insert failed:', gmError.message, gmError.details, gmError.code);
-      } else {
-        console.log('[game_moment trivia] post created for pool:', poolId);
-      }
-      
       const { data: allPredictions } = await supabase
         .from('user_predictions')
         .select('prediction, user_id')
