@@ -356,9 +356,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
         };
         await trackMediaToList(supabaseUrl, session.access_token, mediaData, defaultListId, false, rewatchCount, dnfReason);
         await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] }),
           queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] }),
           queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] }),
-          queryClient.invalidateQueries({ queryKey: ['list-detail'] }),
         ]);
         toast({ title: "Added!", description: `${selectedMedia.title} added to your list.` });
         onClose();
