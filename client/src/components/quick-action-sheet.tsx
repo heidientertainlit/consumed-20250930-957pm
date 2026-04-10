@@ -319,7 +319,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
             user_id: authUser.id,
             content: contentText || null,
             post_type: postType,
-            visibility: !shareToFeed ? 'private' : 'public',
+            // Room posts must be 'public' so the RLS policy lets all members read them.
+            // They are kept out of the main feed by the room_id IS NULL filter in social-feed.
+            visibility: 'public',
             media_title: selectedMedia?.title || null,
             media_type: selectedMedia?.type?.toLowerCase() || null,
             media_external_id: selectedMedia?.external_id || null,
