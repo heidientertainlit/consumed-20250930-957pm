@@ -85,6 +85,7 @@ export default function PoolsPage() {
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: '#0a0a0f' }}>
+      <Navigation />
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
         <div className="px-4 pt-4 pb-8">
           <h1 className="text-2xl font-semibold text-white mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>Rooms</h1>
@@ -281,7 +282,6 @@ export default function PoolsPage() {
         )}
       </div>
 
-      <Navigation />
     </div>
   );
 }

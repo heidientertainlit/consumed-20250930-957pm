@@ -1677,9 +1677,10 @@ export default function PoolDetailPage() {
 
   return (
     <div className="min-h-screen pb-28" style={{ backgroundColor: '#f4f4f8' }}>
+      <Navigation />
 
       {/* ── Purple gradient hero — top to tabs ── */}
-      <div style={{ background: 'linear-gradient(160deg, #0a0a0f 0%, #12121f 45%, #2d1f4e 100%)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <div style={{ background: 'linear-gradient(160deg, #0a0a0f 0%, #12121f 45%, #2d1f4e 100%)' }}>
         {/* Back + invite */}
         <div className="flex items-center justify-between px-4 pt-4 pb-3">
           <button onClick={() => setLocation('/rooms')} className="text-white/60 hover:text-white transition-colors">
@@ -2045,7 +2046,6 @@ export default function PoolDetailPage() {
         )}
       </div>
 
-      <Navigation hideTopBar />
 
       <QuickActionSheet
         isOpen={isComposerOpen}
