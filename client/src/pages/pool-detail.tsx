@@ -1680,7 +1680,7 @@ export default function PoolDetailPage() {
       <Navigation />
 
       {/* ── Purple gradient hero — top to tabs ── */}
-      <div style={{ background: 'linear-gradient(160deg, #0a0a0f 0%, #12121f 45%, #2d1f4e 100%)' }}>
+      <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
         {/* Back + invite */}
         <div className="flex items-center justify-between px-4 pt-4 pb-3">
           <button onClick={() => setLocation('/rooms')} className="text-white/60 hover:text-white transition-colors">
@@ -1700,8 +1700,8 @@ export default function PoolDetailPage() {
           <h1 className="text-white text-[22px] font-medium leading-tight mb-2.5 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
             {isLoading ? '...' : pool?.name || 'Room'}
             {!isLoading && pool?.partner_name && (
-              <span title="Official Partner Room" className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 shrink-0" style={{ marginTop: '1px' }}>
-                <CheckCircle2 size={13} className="text-white" strokeWidth={2.5} />
+              <span title="Official Partner Room" className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full shrink-0" style={{ marginTop: '1px', background: '#4f7ef7' }}>
+                <Check size={12} className="text-white" strokeWidth={3} />
               </span>
             )}
           </h1>
