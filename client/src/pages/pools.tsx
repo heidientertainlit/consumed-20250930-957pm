@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { BadgeCheck, Globe } from "lucide-react";
+import { Globe } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
 
@@ -32,7 +32,7 @@ export default function PoolsPage() {
     <div className="min-h-screen pb-24" style={{ backgroundColor: '#0a0a0f' }}>
       <Navigation />
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
-        <div className="flex items-center justify-center py-4">
+        <div className="flex items-center justify-center py-12">
           <h1 className="text-xl font-semibold text-white text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>Rooms</h1>
         </div>
       </div>
@@ -47,27 +47,18 @@ export default function PoolsPage() {
         {!isLoading && officialRooms.map((pool) => {
           const accent = pool.accent_color || '#7c3aed';
           const accentLight = accent + '18';
-          const partnerLabel = pool.partner_name ? `${pool.partner_name} Official Room` : 'Official Room';
           return (
             <div
               key={pool.id}
               className="bg-white rounded-2xl shadow-sm overflow-hidden"
               style={{ border: `1px solid ${accent + '40'}` }}
             >
-              <div className="flex items-center gap-2 px-4 py-2 border-b" style={{ background: accentLight, borderColor: accent + '20' }}>
-                {pool.partner_logo_url ? (
-                  <img src={pool.partner_logo_url} alt={pool.partner_name || 'Partner'} className="h-4 w-auto object-contain" />
-                ) : (
-                  <BadgeCheck size={13} style={{ color: accent }} className="shrink-0" />
-                )}
-                <span className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: accent }}>{partnerLabel}</span>
-              </div>
               <div className="flex items-center gap-3 p-4">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: accentLight }}>
                   {pool.partner_logo_url ? (
                     <img src={pool.partner_logo_url} alt={pool.partner_name || 'Partner'} className="h-6 w-auto object-contain rounded-full" />
                   ) : (
-                    <BadgeCheck size={18} style={{ color: accent }} />
+                    <Globe size={18} style={{ color: accent }} />
                   )}
                 </div>
                 <button onClick={() => setLocation(`/room/${pool.id}`)} className="flex-1 min-w-0 text-left">
