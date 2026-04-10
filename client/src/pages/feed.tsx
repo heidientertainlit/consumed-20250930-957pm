@@ -2727,6 +2727,9 @@ export default function Feed() {
     // Prediction posts — render as interactive voting card
     if (item?.type === 'predict' && (item._rawPost || item.options?.length > 0)) {
       const raw = item._rawPost || item;
+      // Skip prediction_pools carousel polls — they live in the TriviaCarousel, not the feed
+      const originType = raw.origin_type || item.origin_type || 'user';
+      if (originType === 'consumed') return null;
       const predictionCardData = {
         ...raw,
         id: raw.poolId || raw.id,
