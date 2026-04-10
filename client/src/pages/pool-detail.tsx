@@ -1565,30 +1565,31 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
   return (
     <div className="space-y-4 pb-8">
       {/* How it works explainer — collapsed by default */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f0d24 0%, #1a1545 100%)' }}>
+      <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm">
         <button
           className="w-full px-4 py-3 flex items-center justify-between"
           onClick={() => setHowItWorksOpen(o => !o)}
         >
           <div className="flex items-center gap-2">
-            <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest">How It Works</p>
+            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">How It Works</p>
             <div className="flex gap-1.5">
-              <span className="bg-white/10 rounded-full px-2 py-0.5 text-white text-[10px] font-bold">+2 voting</span>
-              <span className="bg-emerald-500/20 border border-emerald-500/30 rounded-full px-2 py-0.5 text-emerald-400 text-[10px] font-bold">+5 contrarian</span>
+              <span className="bg-gray-100 rounded-full px-2 py-0.5 text-gray-600 text-[10px] font-bold">+2 voting</span>
+              <span className="bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 text-emerald-600 text-[10px] font-bold">+5 contrarian</span>
             </div>
           </div>
-          {howItWorksOpen ? <ChevronUp size={14} className="text-white/40" /> : <ChevronDown size={14} className="text-white/40" />}
+          {howItWorksOpen ? <ChevronUp size={14} className="text-gray-300" /> : <ChevronDown size={14} className="text-gray-300" />}
         </button>
         {howItWorksOpen && (
-          <div className="px-4 pb-4 space-y-4">
+          <div className="px-4 pb-4 space-y-4 border-t border-gray-100">
+            <div className="pt-3" />
             {/* Step 1 */}
             <div className="flex gap-3">
               <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center shrink-0 mt-0.5">
                 <span className="text-white text-[10px] font-bold">1</span>
               </div>
               <div>
-                <p className="text-white text-sm font-semibold mb-0.5">Predict</p>
-                <p className="text-white/50 text-[13px] leading-snug">A question drops in real time. Vote before the window closes.</p>
+                <p className="text-gray-900 text-sm font-semibold mb-0.5">Predict</p>
+                <p className="text-gray-400 text-[13px] leading-snug">A question drops in real time. Vote before the window closes.</p>
               </div>
             </div>
             {/* Step 2 */}
@@ -1597,8 +1598,8 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
                 <span className="text-white text-[10px] font-bold">2</span>
               </div>
               <div>
-                <p className="text-white text-sm font-semibold mb-0.5">Lock In</p>
-                <p className="text-white/50 text-[13px] leading-snug">After 10 seconds voting closes. No changing your answer.</p>
+                <p className="text-gray-900 text-sm font-semibold mb-0.5">Lock In</p>
+                <p className="text-gray-400 text-[13px] leading-snug">After 10 seconds voting closes. No changing your answer.</p>
               </div>
             </div>
             {/* Step 3 */}
@@ -1607,8 +1608,8 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
                 <span className="text-white text-[10px] font-bold">3</span>
               </div>
               <div>
-                <p className="text-white text-sm font-semibold mb-0.5">Reveal</p>
-                <p className="text-white/50 text-[13px] leading-snug">See what everyone thought — not who was right. Points go to voters, with a bonus for picking the unexpected option.</p>
+                <p className="text-gray-900 text-sm font-semibold mb-0.5">Reveal</p>
+                <p className="text-gray-400 text-[13px] leading-snug">See what everyone thought — not who was right. Points go to voters, with a bonus for picking the unexpected option.</p>
               </div>
             </div>
           </div>
@@ -1714,9 +1715,9 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
       </div>
 
       {/* ── Quick React Feed ── */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f0d24 0%, #1a1545 100%)' }}>
-        <div className="px-4 pt-3 pb-2 border-b border-white/8">
-          <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Live Feed</p>
+      <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm">
+        <div className="px-4 pt-3 pb-2 border-b border-gray-100">
+          <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Live Feed</p>
         </div>
 
         {/* Emoji quick-react row */}
@@ -1726,7 +1727,7 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
               key={emoji}
               onClick={() => submitReact(emoji)}
               disabled={!currentUserId}
-              className="flex-1 py-1.5 rounded-xl text-lg bg-white/6 hover:bg-white/12 active:scale-95 transition-all disabled:opacity-40"
+              className="flex-1 py-1.5 rounded-xl text-lg bg-gray-50 hover:bg-gray-100 active:scale-95 transition-all disabled:opacity-40"
             >
               {emoji}
             </button>
@@ -1741,7 +1742,7 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
             onKeyDown={e => e.key === 'Enter' && submitReact(reactText)}
             placeholder={currentUserId ? "Say something..." : "Sign in to comment"}
             disabled={!currentUserId || submittingReact}
-            className="flex-1 bg-white/8 rounded-xl px-3 py-2 text-sm text-white placeholder-white/30 outline-none border border-white/10 focus:border-white/25 disabled:opacity-40"
+            className="flex-1 bg-gray-50 rounded-xl px-3 py-2 text-sm text-gray-900 placeholder-gray-400 outline-none border border-gray-200 focus:border-purple-300 disabled:opacity-40"
           />
           <button
             onClick={() => submitReact(reactText)}
@@ -1753,9 +1754,9 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
         </div>
 
         {/* Feed items */}
-        <div className="divide-y divide-white/5 max-h-80 overflow-y-auto">
+        <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
           {(!quickReacts || quickReacts.length === 0) && (
-            <p className="text-white/30 text-[12px] text-center py-4">Be first to react</p>
+            <p className="text-gray-400 text-[12px] text-center py-4">Be first to react</p>
           )}
           {(quickReacts || []).map((post: any) => {
             const name = post.users?.display_name || post.users?.user_name || 'Someone';
@@ -1768,43 +1769,40 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
             return (
               <div key={post.id} className="px-4 py-2.5">
                 <div className="flex items-start gap-2">
-                  <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0 mt-0.5">
+                  <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 text-[10px] font-bold shrink-0 mt-0.5">
                     {initial}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-1.5 mb-0.5">
-                      <span className="text-white text-[12px] font-semibold">{name}</span>
-                      <span className="text-white/30 text-[10px]">{timeAgo}</span>
+                      <span className="text-gray-900 text-[12px] font-semibold">{name}</span>
+                      <span className="text-gray-400 text-[10px]">{timeAgo}</span>
                     </div>
-                    <p className={`text-white/80 ${isEmoji ? 'text-xl leading-tight' : 'text-[13px] leading-snug'}`}>
+                    <p className={`text-gray-700 ${isEmoji ? 'text-xl leading-tight' : 'text-[13px] leading-snug'}`}>
                       {post.content}
                     </p>
-                    {/* Reply button */}
                     {currentUserId && (
                       <button
                         onClick={() => setReplyingTo(replyingTo === post.id ? null : post.id)}
-                        className="text-white/30 text-[10px] mt-1 hover:text-white/60 transition-colors"
+                        className="text-gray-400 text-[10px] mt-1 hover:text-purple-500 transition-colors"
                       >
                         Reply
                       </button>
                     )}
-                    {/* Replies */}
                     {replies.length > 0 && (
-                      <div className="mt-1.5 space-y-1.5 pl-3 border-l border-white/10">
+                      <div className="mt-1.5 space-y-1.5 pl-3 border-l-2 border-gray-100">
                         {replies.map((reply: any) => (
                           <div key={reply.id} className="flex items-start gap-1.5">
-                            <div className="w-4 h-4 rounded-full bg-purple-700 flex items-center justify-center text-white text-[8px] font-bold shrink-0 mt-0.5">
+                            <div className="w-4 h-4 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 text-[8px] font-bold shrink-0 mt-0.5">
                               {(reply.users?.display_name || reply.users?.user_name || '?')[0]?.toUpperCase()}
                             </div>
                             <div>
-                              <span className="text-white/60 text-[10px] font-semibold">{reply.users?.display_name || reply.users?.user_name || 'Someone'} </span>
-                              <span className="text-white/60 text-[11px]">{reply.content}</span>
+                              <span className="text-gray-600 text-[10px] font-semibold">{reply.users?.display_name || reply.users?.user_name || 'Someone'} </span>
+                              <span className="text-gray-500 text-[11px]">{reply.content}</span>
                             </div>
                           </div>
                         ))}
                       </div>
                     )}
-                    {/* Reply input */}
                     {replyingTo === post.id && (
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <input
@@ -1813,7 +1811,7 @@ function LiveTab({ featuredPolls, poolId, currentUserId }: { featuredPolls: any[
                           onKeyDown={e => e.key === 'Enter' && submitReply(post.id)}
                           placeholder="Reply..."
                           autoFocus
-                          className="flex-1 bg-white/6 rounded-lg px-2 py-1 text-[12px] text-white placeholder-white/30 outline-none border border-white/10"
+                          className="flex-1 bg-gray-50 rounded-lg px-2 py-1 text-[12px] text-gray-900 placeholder-gray-400 outline-none border border-gray-200"
                         />
                         <button
                           onClick={() => submitReply(post.id)}
