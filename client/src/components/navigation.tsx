@@ -362,7 +362,14 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   return (
     <>
       {/* Top bar with logo and points */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] sticky top-0 z-50" style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)', display: hideTopBar ? 'none' : undefined }}>
+      <div
+        className="sticky top-0 z-50"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top, 0px), 12px)',
+          display: hideTopBar ? 'none' : undefined,
+          background: (location.startsWith('/room/') || location === '/rooms') ? 'transparent' : 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)',
+        }}
+      >
         <div className="flex justify-between items-center h-11 px-4">
           <Link href="/" className="flex items-center space-x-2">
             <img

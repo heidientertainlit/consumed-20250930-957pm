@@ -1677,10 +1677,12 @@ export default function PoolDetailPage() {
 
   return (
     <div className="min-h-screen pb-28" style={{ backgroundColor: '#f4f4f8' }}>
+      {/* ── Unified gradient: nav bar + hero as one surface ── */}
+      <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
       <Navigation />
 
       {/* ── Purple gradient hero — top to tabs ── */}
-      <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
+      <div>
         {/* Back + invite */}
         <div className="flex items-center justify-between px-4 pt-4 pb-3">
           <button onClick={() => setLocation('/rooms')} className="text-white/60 hover:text-white transition-colors">
@@ -1759,6 +1761,7 @@ export default function PoolDetailPage() {
           ))}
         </div>
       </div>
+      </div>{/* end unified gradient wrapper */}
 
       {/* ── Content ── */}
       <div className="px-4 pt-4">
