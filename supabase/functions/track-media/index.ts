@@ -194,7 +194,19 @@ serve(async (req) => {
     // Parse the request body
     const requestBody = await req.json();
     const { media, rating, review, listType, skip_social_post, rewatchCount, containsSpoilers, privateMode } = requestBody;
-    const { title, mediaType, mediaSubtype, creator, imageUrl, externalId, externalSource, seasonNumber, episodeNumber, episodeTitle, pageCount } = media || {};
+    const { title, mediaType: rawMediaType, mediaSubtype, creator, imageUrl, externalId, externalSource, seasonNumber, episodeNumber, episodeTitle, pageCount } = media || {};
+    // Normalize media type to lowercase canonical form — prevents 'Movie'/'TV Show'/'Podcast' drift
+    const normalizeMediaType = (mt?: string): string => {
+      const t = (mt || '').toLowerCase().trim();
+      if (t === 'tv show' || t === 'tv') return 'tv';
+      if (t === 'movie') return 'movie';
+      if (t === 'book') return 'book';
+      if (t === 'music') return 'music';
+      if (t === 'podcast') return 'podcast';
+      if (t === 'game') return 'game';
+      return t || 'mixed';
+    };
+    const mediaType = normalizeMediaType(rawMediaType);
 
     let targetList = null;
 

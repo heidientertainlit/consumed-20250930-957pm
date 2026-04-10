@@ -850,7 +850,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   };
 
   const ti = getTypeInfo();
-  const mediaTypeLabel = post.mediaType === 'tv' ? 'TV' : post.mediaType;
+  // Normalize to lowercase canonical form for comparison (handles 'Movie', 'TV Show', etc.)
+  const mediaTypeNorm = (() => {
+    const t = (post.mediaType || '').toLowerCase();
+    if (t === 'tv show') return 'tv';
+    return t;
+  })();
 
   return (
     <div className="snap-start flex-shrink-0 w-[85vw] max-w-[340px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -879,9 +884,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           </Link>
           <div className="flex items-center gap-1.5">
-            {mediaTypeLabel && (
-              <span className="text-[11px] font-medium text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full capitalize">{mediaTypeLabel}</span>
-            )}
             {currentUserId && post.user?.id === currentUserId && onDeletePost && (
               <button
                 onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }}
@@ -897,10 +899,34 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {post.mediaImage && post.mediaImage.startsWith('http') ? (
               post.externalId && post.externalSource ? (
                 <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-                  <img src={post.mediaImage} alt={post.mediaTitle} className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md cursor-pointer hover:opacity-90 transition-opacity" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <div className="relative flex-shrink-0">
+                    <img src={post.mediaImage} alt={post.mediaTitle} className="w-20 h-[120px] rounded-xl object-cover shadow-md cursor-pointer hover:opacity-90 transition-opacity" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    {mediaTypeNorm && (
+                      <div className="absolute bottom-1.5 left-1.5 bg-black/60 rounded-md p-0.5">
+                        {mediaTypeNorm === 'tv' && <Tv2 size={11} className="text-white" />}
+                        {mediaTypeNorm === 'movie' && <Film size={11} className="text-white" />}
+                        {mediaTypeNorm === 'book' && <Book size={11} className="text-white" />}
+                        {mediaTypeNorm === 'music' && <Music size={11} className="text-white" />}
+                        {mediaTypeNorm === 'podcast' && <Headphones size={11} className="text-white" />}
+                        {mediaTypeNorm === 'game' && <Gamepad2 size={11} className="text-white" />}
+                      </div>
+                    )}
+                  </div>
                 </Link>
               ) : (
-                <img src={post.mediaImage} alt={post.mediaTitle} className="w-20 h-[120px] rounded-xl object-cover flex-shrink-0 shadow-md" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <div className="relative flex-shrink-0">
+                  <img src={post.mediaImage} alt={post.mediaTitle} className="w-20 h-[120px] rounded-xl object-cover shadow-md" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  {mediaTypeNorm && (
+                    <div className="absolute bottom-1.5 left-1.5 bg-black/60 rounded-md p-0.5">
+                      {mediaTypeNorm === 'tv' && <Tv2 size={11} className="text-white" />}
+                      {mediaTypeNorm === 'movie' && <Film size={11} className="text-white" />}
+                      {mediaTypeNorm === 'book' && <Book size={11} className="text-white" />}
+                      {mediaTypeNorm === 'music' && <Music size={11} className="text-white" />}
+                      {mediaTypeNorm === 'podcast' && <Headphones size={11} className="text-white" />}
+                      {mediaTypeNorm === 'game' && <Gamepad2 size={11} className="text-white" />}
+                    </div>
+                  )}
+                </div>
               )
             ) : null}
             <div className="min-w-0 flex-1 flex flex-col justify-center">
@@ -1342,6 +1368,12 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     : getTypeInfo(post.type);
   const TypeIcon = typeInfo.icon;
   const isRatingType = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review';
+  // Normalize media type for case-insensitive icon checks (handles 'Movie', 'TV Show', 'Podcast', etc.)
+  const spMediaTypeNorm = (() => {
+    const t = (post.mediaType || '').toLowerCase();
+    if (t === 'tv show') return 'tv';
+    return t;
+  })();
 
   const timeAgo = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -1447,14 +1479,14 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                       className="w-20 h-[120px] rounded-xl object-cover shadow-md cursor-pointer hover:opacity-90 transition-opacity"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
-                    {post.mediaType && (
+                    {spMediaTypeNorm && (
                       <div className="absolute bottom-1.5 left-1.5 bg-black/60 rounded-md p-0.5">
-                        {post.mediaType === 'tv' && <Tv2 size={11} className="text-white" />}
-                        {post.mediaType === 'movie' && <Film size={11} className="text-white" />}
-                        {post.mediaType === 'book' && <Book size={11} className="text-white" />}
-                        {post.mediaType === 'music' && <Music size={11} className="text-white" />}
-                        {post.mediaType === 'podcast' && <Headphones size={11} className="text-white" />}
-                        {post.mediaType === 'game' && <Gamepad2 size={11} className="text-white" />}
+                        {spMediaTypeNorm === 'tv' && <Tv2 size={11} className="text-white" />}
+                        {spMediaTypeNorm === 'movie' && <Film size={11} className="text-white" />}
+                        {spMediaTypeNorm === 'book' && <Book size={11} className="text-white" />}
+                        {spMediaTypeNorm === 'music' && <Music size={11} className="text-white" />}
+                        {spMediaTypeNorm === 'podcast' && <Headphones size={11} className="text-white" />}
+                        {spMediaTypeNorm === 'game' && <Gamepad2 size={11} className="text-white" />}
                       </div>
                     )}
                   </div>
@@ -1467,14 +1499,14 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                     className="w-20 h-[120px] rounded-xl object-cover shadow-md"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
-                  {post.mediaType && (
+                  {spMediaTypeNorm && (
                     <div className="absolute bottom-1.5 left-1.5 bg-black/60 rounded-md p-0.5">
-                      {post.mediaType === 'tv' && <Tv2 size={11} className="text-white" />}
-                      {post.mediaType === 'movie' && <Film size={11} className="text-white" />}
-                      {post.mediaType === 'book' && <Book size={11} className="text-white" />}
-                      {post.mediaType === 'music' && <Music size={11} className="text-white" />}
-                      {post.mediaType === 'podcast' && <Headphones size={11} className="text-white" />}
-                      {post.mediaType === 'game' && <Gamepad2 size={11} className="text-white" />}
+                      {spMediaTypeNorm === 'tv' && <Tv2 size={11} className="text-white" />}
+                      {spMediaTypeNorm === 'movie' && <Film size={11} className="text-white" />}
+                      {spMediaTypeNorm === 'book' && <Book size={11} className="text-white" />}
+                      {spMediaTypeNorm === 'music' && <Music size={11} className="text-white" />}
+                      {spMediaTypeNorm === 'podcast' && <Headphones size={11} className="text-white" />}
+                      {spMediaTypeNorm === 'game' && <Gamepad2 size={11} className="text-white" />}
                     </div>
                   )}
                 </div>
