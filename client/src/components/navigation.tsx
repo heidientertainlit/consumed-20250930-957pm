@@ -401,10 +401,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               className={`flex items-center justify-center hover:opacity-70 transition-opacity ${location === '/me' ? 'opacity-100' : 'opacity-70'}`}
               aria-label="Profile"
             >
-              <div className="relative">
-                <User className="text-white" size={21} />
-                <Dna className="text-white absolute -bottom-1 -right-1.5" size={10} />
-              </div>
+              <User className="text-white h-5 w-5" />
             </Link>
           </div>
         </div>
