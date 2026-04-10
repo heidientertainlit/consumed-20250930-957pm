@@ -1710,10 +1710,6 @@ export default function PoolDetailPage() {
           {/* Member count + visibility */}
           {!isLoading && (
             <div className="flex items-center gap-2">
-              {members.slice(0, 1).map((m: any) => {
-                const name = (m.users as any)?.display_name || (m.users as any)?.user_name || 'U';
-                return <AvatarCircle key={m.user_id} name={name} size="sm" />;
-              })}
               <span className="text-white/55 text-xs">
                 {members.length} {members.length === 1 ? 'member' : 'members'}
               </span>
