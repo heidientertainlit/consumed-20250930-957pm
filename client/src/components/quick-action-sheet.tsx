@@ -65,9 +65,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
       setSelectedAction("track");
       setAddToList(true);
     } else if (isOpen && roomId && !preselectedMedia) {
-      // Room discussion: skip the menu, go straight to simple text post form
-      setSelectedIntent("say");
-      setSelectedAction("post");
+      // Room discussion: open Add Media flow so users can search + post media to the room
+      setSelectedIntent("capture");
+      setSelectedAction("track");
       setShareToFeed(false);
     }
     if (isOpen && !roomId) {
