@@ -632,10 +632,6 @@ function FeaturedPollCarousel({ polls, token, onVoted }: {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-white/60 tracking-widest uppercase">Play the Room</span>
-                <div className="flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span className="text-[10px] font-semibold text-emerald-400">Live</span>
-                </div>
               </div>
               <span className="text-[11px] text-white/50">{polls.length} polls this week</span>
             </div>
@@ -1347,13 +1343,206 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, manag
   );
 }
 
+/* ─── Live Tab ───────────────────────────────────────────────────────── */
+function LiveTab({ featuredPolls }: { featuredPolls: any[] }) {
+  const [phase, setPhase] = useState<'predict' | 'lockin' | 'reveal'>('predict');
+  const [countdown, setCountdown] = useState(10);
+  const [voted, setVoted] = useState<string | null>(null);
+
+  const poll = featuredPolls[0] || null;
+  const rawOptions: string[] = poll?.options || ['Arrest', 'Warning', 'Search'];
+  const options = rawOptions.slice(0, Math.min(rawOptions.length, 4));
+  const question = poll?.title || 'What happens next on patrol?';
+
+  useEffect(() => {
+    if (phase !== 'lockin') return;
+    if (countdown <= 0) { setPhase('reveal'); return; }
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [phase, countdown]);
+
+  const handleVote = (opt: string) => {
+    if (voted || phase !== 'predict') return;
+    setVoted(opt);
+    setPhase('lockin');
+    setCountdown(10);
+  };
+
+  const reset = () => { setPhase('predict'); setCountdown(10); setVoted(null); };
+
+  const fakePercents: Record<string, number> = {};
+  let remaining = 100;
+  options.forEach((o, i) => {
+    if (i === options.length - 1) { fakePercents[o] = remaining; return; }
+    const base = i === 0 ? 52 : i === 1 ? 28 : 14;
+    const p = Math.min(base, remaining - (options.length - i - 1));
+    fakePercents[o] = p;
+    remaining -= p;
+  });
+
+  const votedPercent = voted ? (fakePercents[voted] ?? 0) : 0;
+  const isContrarian = votedPercent < 20;
+  const pointsEarned = voted ? (isContrarian ? 7 : 2) : 0;
+
+  return (
+    <div className="space-y-4 pb-8">
+      {/* How it works explainer */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f0d24 0%, #1a1545 100%)' }}>
+        <div className="px-4 pt-4 pb-1">
+          <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest mb-3">How It Works</p>
+        </div>
+        <div className="px-4 pb-4 space-y-4">
+          {/* Step 1 */}
+          <div className="flex gap-3">
+            <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-white text-[10px] font-bold">1</span>
+            </div>
+            <div>
+              <p className="text-white text-sm font-semibold mb-0.5">Predict</p>
+              <p className="text-white/50 text-[13px] leading-snug">A question drops in real time. Vote before the window closes.</p>
+            </div>
+          </div>
+          {/* Step 2 */}
+          <div className="flex gap-3">
+            <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-white text-[10px] font-bold">2</span>
+            </div>
+            <div>
+              <p className="text-white text-sm font-semibold mb-0.5">Lock In</p>
+              <p className="text-white/50 text-[13px] leading-snug">After 10 seconds voting closes. No changing your answer.</p>
+            </div>
+          </div>
+          {/* Step 3 */}
+          <div className="flex gap-3">
+            <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
+              <span className="text-white text-[10px] font-bold">3</span>
+            </div>
+            <div>
+              <p className="text-white text-sm font-semibold mb-0.5">Reveal</p>
+              <p className="text-white/50 text-[13px] leading-snug">See what everyone thought — not who was right. Points go to voters, with a bonus for picking the unexpected option.</p>
+              <div className="mt-2 flex gap-3">
+                <div className="bg-white/10 rounded-lg px-3 py-1.5 text-center">
+                  <p className="text-white font-bold text-sm">+2</p>
+                  <p className="text-white/50 text-[10px]">for voting</p>
+                </div>
+                <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-lg px-3 py-1.5 text-center">
+                  <p className="text-emerald-400 font-bold text-sm">+5</p>
+                  <p className="text-emerald-400/70 text-[10px]">contrarian pick</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Live prediction card */}
+      <div className="rounded-2xl overflow-hidden shadow-lg" style={{ background: 'linear-gradient(135deg, #1a1040 0%, #2d1f6e 50%, #4c2898 100%)' }}>
+        <div className="px-4 pt-4 pb-3">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] font-bold text-emerald-400 tracking-widest uppercase">Live Now</span>
+            </div>
+            {phase === 'lockin' && (
+              <div className="flex items-center gap-1">
+                <span className="text-white/60 text-xs">Locks in</span>
+                <span className="text-white font-bold text-sm w-5 text-center">{countdown}</span>
+              </div>
+            )}
+            {phase === 'reveal' && (
+              <button onClick={reset} className="text-[11px] text-white/40 hover:text-white/70 transition-colors">
+                Play again
+              </button>
+            )}
+          </div>
+
+          {/* Question */}
+          <p className="text-white font-bold text-[15px] leading-snug mb-4">{question}</p>
+
+          {/* Options */}
+          <div className="space-y-2.5">
+            {options.map((opt) => {
+              const pct = fakePercents[opt] ?? 0;
+              const isVoted = voted === opt;
+              const showBar = phase === 'reveal';
+
+              return (
+                <button
+                  key={opt}
+                  onClick={() => handleVote(opt)}
+                  disabled={phase !== 'predict'}
+                  className="w-full text-left relative overflow-hidden rounded-xl transition-all"
+                  style={{
+                    background: showBar
+                      ? isVoted ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.06)'
+                      : isVoted ? 'rgba(139,92,246,0.35)' : 'rgba(255,255,255,0.08)',
+                    border: isVoted ? '1px solid rgba(139,92,246,0.6)' : '1px solid rgba(255,255,255,0.1)',
+                  }}
+                >
+                  {/* Progress fill */}
+                  {showBar && (
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-xl transition-all duration-700"
+                      style={{ width: `${pct}%`, background: isVoted ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.05)' }}
+                    />
+                  )}
+                  <div className="relative flex items-center justify-between px-4 py-3">
+                    <span className="text-white text-sm font-medium">{opt}</span>
+                    {showBar && (
+                      <span className={`text-sm font-bold ${isVoted ? 'text-purple-300' : 'text-white/50'}`}>{pct}%</span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Lock in state */}
+          {phase === 'lockin' && (
+            <div className="mt-3 text-center">
+              <p className="text-white/50 text-[13px]">Voting closes in <span className="text-white font-bold">{countdown}s</span> — locked in as <span className="text-purple-300 font-semibold">{voted}</span></p>
+            </div>
+          )}
+
+          {/* Reveal state */}
+          {phase === 'reveal' && voted && (
+            <div className="mt-4 rounded-xl px-4 py-3" style={{ background: isContrarian ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-white text-sm font-semibold">
+                    {isContrarian ? 'Contrarian pick!' : 'Points earned'}
+                  </p>
+                  <p className="text-white/50 text-[12px] mt-0.5">
+                    {isContrarian
+                      ? `Only ${votedPercent}% picked ${voted} — bold call.`
+                      : `${votedPercent}% of voters agreed with you.`}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className={`text-2xl font-bold ${isContrarian ? 'text-emerald-400' : 'text-white'}`}>+{pointsEarned}</p>
+                  <p className="text-white/40 text-[11px]">pts</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {phase === 'predict' && (
+            <p className="text-white/40 text-[11px] text-center mt-3">Tap an option to vote</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PoolDetailPage() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<'feed' | 'play' | 'leaderboard' | 'members'>('feed');
+  const [tab, setTab] = useState<'feed' | 'live' | 'play' | 'leaderboard' | 'members'>('feed');
   const [feedPickIndex, setFeedPickIndex] = useState(0);
   const [managingId, setManagingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -1467,8 +1656,10 @@ export default function PoolDetailPage() {
   const currentFeedPick = openPicks[safePickIndex] || null;
   const featuredPolls: any[] = data?.featured_polls || [];
 
+  const isPartnerRoom = !!pool?.partner_name;
   const TABS = [
     { key: 'feed', label: 'Feed' },
+    ...(isPartnerRoom ? [{ key: 'live', label: 'live' }] : []),
     { key: 'play', label: 'Play' },
     { key: 'leaderboard', label: 'Scores' },
     { key: 'members', label: 'Members' },
@@ -1550,12 +1741,19 @@ export default function PoolDetailPage() {
           {TABS.map(t => (
             <button
               key={t.key}
-              onClick={() => setTab(t.key)}
+              onClick={() => setTab(t.key as any)}
               className={`px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px ${
                 tab === t.key ? 'text-white border-white' : 'text-white/40 border-transparent hover:text-white/70'
               }`}
             >
-              {t.label}
+              {t.key === 'live' ? (
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span className="capitalize">Live</span>
+                </span>
+              ) : (
+                t.label
+              )}
             </button>
           ))}
         </div>
@@ -1567,6 +1765,11 @@ export default function PoolDetailPage() {
           <div className="space-y-3">
             {[1, 2, 3].map(i => <div key={i} className="h-28 rounded-2xl bg-gray-200 animate-pulse" />)}
           </div>
+        )}
+
+        {/* ── LIVE ── */}
+        {!isLoading && tab === 'live' && (
+          <LiveTab featuredPolls={featuredPolls} />
         )}
 
         {/* ── FEED ── */}
