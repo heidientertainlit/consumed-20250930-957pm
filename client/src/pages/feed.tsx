@@ -2507,7 +2507,11 @@ export default function Feed() {
 
   const standaloneUGCPosts: any[] = (() => {
     const allUGC = ugcPosts.filter(p => {
-      return p.type === 'review' || p.type === 'thought' || p.type === 'rating' || p.type === 'predict' || p.type === 'poll' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment';
+      // Only include predict/poll posts that are explicitly user-created — consumed carousel polls belong in TriviaCarousel
+      if (p.type === 'predict' || p.type === 'poll' || p.type === 'prediction') {
+        return (p as any).origin_type === 'user';
+      }
+      return p.type === 'review' || p.type === 'thought' || p.type === 'rating' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment';
     });
 
     // Group posts by user within 24-hour rolling windows.
