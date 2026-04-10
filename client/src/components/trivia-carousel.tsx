@@ -236,26 +236,45 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   // Fetch social proof (most-picked option + voter name) for each pool in one batch
   useEffect(() => {
     if (!data || data.length === 0) return;
-    const poolIds = [...new Set(data.map(item => item.poolId).filter(Boolean))];
+    // Only use real UUID pool IDs (not hardcoded trivia string IDs)
+    const poolIds = [...new Set(
+      data.map(item => item.poolId).filter(id => id && /^[0-9a-f-]{36}$/.test(id))
+    )];
     if (poolIds.length === 0) return;
 
     (async () => {
       try {
-        const { data: votes } = await supabase
+        // Step 1: get votes
+        const { data: votes, error: votesError } = await supabase
           .from('user_predictions')
-          .select('pool_id, prediction, users(display_name, user_name)')
+          .select('pool_id, prediction, user_id')
           .in('pool_id', poolIds)
           .order('created_at', { ascending: false })
           .limit(500);
 
-        if (!votes || votes.length === 0) return;
+        if (votesError || !votes || votes.length === 0) return;
 
-        // Aggregate per pool
+        // Step 2: get user names for the most recent voter per pool
+        const recentUserIds = [...new Set(poolIds.map(poolId => {
+          const first = votes.find(v => v.pool_id === poolId);
+          return first?.user_id;
+        }).filter(Boolean))];
+
+        const { data: userRows } = await supabase
+          .from('users')
+          .select('id, display_name, user_name')
+          .in('id', recentUserIds);
+
+        const userMap: Record<string, string> = {};
+        for (const u of userRows || []) {
+          userMap[u.id] = u.display_name || u.user_name || 'Someone';
+        }
+
+        // Step 3: aggregate per pool
         const map: Record<string, { userName: string; option: string; pct: number; total: number }> = {};
         for (const poolId of poolIds) {
           const poolVotes = votes.filter(v => v.pool_id === poolId);
           if (poolVotes.length === 0) continue;
-          // Count each option
           const counts: Record<string, number> = {};
           for (const v of poolVotes) {
             const opt = v.prediction as string;
@@ -265,8 +284,8 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
           if (!topOption) continue;
           const total = poolVotes.length;
           const pct = Math.round((counts[topOption] / total) * 100);
-          const latest = poolVotes[0];
-          const latestUser = (latest.users as any)?.display_name || (latest.users as any)?.user_name || 'Someone';
+          const latestUserId = poolVotes[0]?.user_id;
+          const latestUser = latestUserId ? (userMap[latestUserId] || 'Someone') : 'Someone';
           map[poolId] = { userName: latestUser, option: topOption, pct, total };
         }
         setSocialProofMap(map);
