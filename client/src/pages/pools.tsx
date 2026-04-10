@@ -1,41 +1,14 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trophy, Crown, Trash2, Users, Globe, Lock, BadgeCheck } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { BadgeCheck, Globe } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
-async function callFn(name: string, body: unknown, token: string) {
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  return res.json();
-}
-
-function VisibilityBadge({ isPublic }: { isPublic: boolean }) {
-  return isPublic
-    ? <span className="flex items-center gap-0.5 text-[10px] text-emerald-600 font-medium bg-emerald-50 rounded-full px-2 py-0.5"><Globe size={9} /> Public</span>
-    : <span className="flex items-center gap-0.5 text-[10px] text-gray-400 font-medium bg-gray-100 rounded-full px-2 py-0.5"><Lock size={9} /> Private</span>;
-}
-
 export default function PoolsPage() {
   const [, setLocation] = useLocation();
   const { session } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [showCreate, setShowCreate] = useState(false);
-  const [newPoolName, setNewPoolName] = useState('');
-  const [newPoolDesc, setNewPoolDesc] = useState('');
-  const [isPublicNew, setIsPublicNew] = useState(false);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [joiningId, setJoiningId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['user-pools'],
@@ -48,49 +21,16 @@ export default function PoolsPage() {
     enabled: !!session?.access_token
   });
 
-  const createMutation = useMutation({
-    mutationFn: (payload: { name: string; is_public: boolean; description?: string }) =>
-      callFn('create-pool', payload, session?.access_token || ''),
-    onSuccess: (data) => {
-      if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
-      queryClient.invalidateQueries({ queryKey: ['user-pools'] });
-      setShowCreate(false);
-      setNewPoolName('');
-      setNewPoolDesc('');
-      setIsPublicNew(false);
-      setLocation(`/room/${data.pool.id}`);
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (poolId: string) => callFn('delete-pool', { pool_id: poolId }, session?.access_token || ''),
-    onSuccess: (data) => {
-      if (data.error) { toast({ title: data.error, variant: 'destructive' }); return; }
-      queryClient.invalidateQueries({ queryKey: ['user-pools'] });
-      setConfirmDeleteId(null);
-    }
-  });
-
-  const handleJoin = async (poolId: string) => {
-    setJoiningId(poolId);
-    const result = await callFn('join-pool', { pool_id: poolId }, session?.access_token || '');
-    setJoiningId(null);
-    if (result.error) { toast({ title: result.error, variant: 'destructive' }); return; }
-    queryClient.invalidateQueries({ queryKey: ['user-pools'] });
-    setLocation(`/room/${poolId}`);
-  };
-
   const myRooms: any[] = data?.myRooms || data?.pools || [];
   const publicRooms: any[] = data?.publicRooms || [];
+  const allPublicRooms = [...myRooms.filter((r: any) => r.is_public), ...publicRooms];
 
-  const myPublicRooms = myRooms.filter((r: any) => r.is_public);
-  const myPrivateRooms = myRooms.filter((r: any) => !r.is_public);
-  const allPublicRooms = [...myPublicRooms, ...publicRooms];
+  // Only show official (Consumed-created) rooms
+  const officialRooms = allPublicRooms.filter((r: any) => r.is_official === true);
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: '#0a0a0f' }}>
       <Navigation />
-      {/* Slim centered hero — title only */}
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
         <div className="flex items-center justify-center py-4">
           <h1 className="text-xl font-semibold text-white text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>Rooms</h1>
@@ -98,196 +38,59 @@ export default function PoolsPage() {
       </div>
 
       <div className="bg-gray-50 px-4 pt-4 space-y-3 min-h-screen">
-        {/* ── New Room button / create form ── */}
-        {!showCreate ? (
-          <div className="flex justify-center pb-1">
-            <button
-              onClick={() => setShowCreate(true)}
-              className="flex items-center gap-1.5 px-5 py-2 rounded-full text-white text-sm font-semibold"
-              style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
-            >
-              <Plus size={14} /> New Room
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-2 pb-1">
-            <div className="flex gap-2">
-              <Input
-                value={newPoolName}
-                onChange={(e) => setNewPoolName(e.target.value)}
-                placeholder="Room name..."
-                className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Escape') { setShowCreate(false); setNewPoolName(''); setNewPoolDesc(''); setIsPublicNew(false); }
-                }}
-              />
-              <Button
-                onClick={() => createMutation.mutate({ name: newPoolName, is_public: isPublicNew, description: newPoolDesc })}
-                disabled={!newPoolName.trim() || createMutation.isPending}
-                className="bg-purple-600 hover:bg-purple-700 text-white shrink-0"
-              >
-                {createMutation.isPending ? '...' : 'Create'}
-              </Button>
-              <Button variant="ghost" onClick={() => { setShowCreate(false); setNewPoolName(''); setNewPoolDesc(''); setIsPublicNew(false); }} className="text-gray-400 shrink-0">Cancel</Button>
-            </div>
-            <textarea
-              value={newPoolDesc}
-              onChange={(e) => setNewPoolDesc(e.target.value)}
-              placeholder="Description (optional)..."
-              rows={2}
-              className="w-full bg-white border border-gray-200 text-gray-900 placeholder:text-gray-400 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-purple-500"
-            />
-            <div className="flex items-center gap-3 pl-1">
-              <button
-                onClick={() => setIsPublicNew(false)}
-                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${!isPublicNew ? 'border-purple-400 text-purple-600 bg-purple-50' : 'border-gray-200 text-gray-400'}`}
-              >
-                <Lock size={11} /> Private
-              </button>
-              <button
-                onClick={() => setIsPublicNew(true)}
-                className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${isPublicNew ? 'border-emerald-400 text-emerald-600 bg-emerald-50' : 'border-gray-200 text-gray-400'}`}
-              >
-                <Globe size={11} /> Public
-              </button>
-              <span className="text-gray-400 text-xs">
-                {isPublicNew ? 'Anyone can find and join' : 'Invite-only'}
-              </span>
-            </div>
-          </div>
-        )}
         {isLoading && (
           <div className="space-y-3">
             {[1, 2].map(i => <div key={i} className="h-24 rounded-2xl bg-gray-200 animate-pulse" />)}
           </div>
         )}
 
-        {!isLoading && myRooms.length === 0 && publicRooms.length === 0 && (
-          <div className="text-center py-16">
-            <Trophy size={40} className="text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm">No rooms yet. Create one above.</p>
-          </div>
-        )}
-
-        {/* ── Public Rooms ── */}
-        {!isLoading && allPublicRooms.length > 0 && (
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider pt-1">Public Rooms</p>
-        )}
-
-        {!isLoading && allPublicRooms.map((pool) => {
-          const isOfficial = pool.is_official === true;
-          const isMine = myPublicRooms.some((r: any) => r.id === pool.id);
-          const accent = pool.accent_color || (isOfficial ? '#7c3aed' : '#10b981');
+        {!isLoading && officialRooms.map((pool) => {
+          const accent = pool.accent_color || '#7c3aed';
           const accentLight = accent + '18';
-          const partnerLabel = pool.partner_name ? `${pool.partner_name} Official Room` : 'Official Partner Room';
+          const partnerLabel = pool.partner_name ? `${pool.partner_name} Official Room` : 'Official Room';
           return (
-            <div key={pool.id} className="bg-white rounded-2xl shadow-sm overflow-hidden" style={{ border: `1px solid ${isOfficial ? accent + '40' : '#f3f4f6'}` }}>
-              {isOfficial && (
-                <div className="flex items-center gap-2 px-4 py-2 border-b" style={{ background: accentLight, borderColor: accent + '20' }}>
-                  {pool.partner_logo_url ? (
-                    <img src={pool.partner_logo_url} alt={pool.partner_name || 'Partner'} className="h-4 w-auto object-contain" />
-                  ) : (
-                    <BadgeCheck size={13} style={{ color: accent }} className="shrink-0" />
-                  )}
-                  <span className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: accent }}>{partnerLabel}</span>
-                </div>
-              )}
+            <div
+              key={pool.id}
+              className="bg-white rounded-2xl shadow-sm overflow-hidden"
+              style={{ border: `1px solid ${accent + '40'}` }}
+            >
+              <div className="flex items-center gap-2 px-4 py-2 border-b" style={{ background: accentLight, borderColor: accent + '20' }}>
+                {pool.partner_logo_url ? (
+                  <img src={pool.partner_logo_url} alt={pool.partner_name || 'Partner'} className="h-4 w-auto object-contain" />
+                ) : (
+                  <BadgeCheck size={13} style={{ color: accent }} className="shrink-0" />
+                )}
+                <span className="text-[11px] font-semibold tracking-wide uppercase" style={{ color: accent }}>{partnerLabel}</span>
+              </div>
               <div className="flex items-center gap-3 p-4">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: accentLight }}>
-                  {isOfficial && pool.partner_logo_url ? (
+                  {pool.partner_logo_url ? (
                     <img src={pool.partner_logo_url} alt={pool.partner_name || 'Partner'} className="h-6 w-auto object-contain rounded-full" />
-                  ) : isOfficial ? (
-                    <BadgeCheck size={18} style={{ color: accent }} />
                   ) : (
-                    <Globe size={18} className="text-emerald-500" />
+                    <BadgeCheck size={18} style={{ color: accent }} />
                   )}
                 </div>
                 <button onClick={() => setLocation(`/room/${pool.id}`)} className="flex-1 min-w-0 text-left">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <h3 className="text-gray-900 font-semibold text-base truncate">{pool.name}</h3>
-                    {isMine && pool.is_host && <Crown size={11} className="text-yellow-500 shrink-0" />}
-                  </div>
+                  <h3 className="text-gray-900 font-semibold text-base truncate mb-0.5">{pool.name}</h3>
                   {pool.description && (
                     <p className="text-gray-500 text-xs mb-1 line-clamp-1">{pool.description}</p>
                   )}
                   <p className="text-gray-400 text-xs">
                     {pool.member_count} {pool.member_count === 1 ? 'member' : 'members'}
-                    {!isOfficial && !isMine && (pool.host?.display_name ? ` · by ${pool.host.display_name}` : pool.host?.user_name ? ` · by ${pool.host.user_name}` : '')}
                   </p>
                 </button>
-                {!isMine ? (
-                  <button
-                    onClick={() => handleJoin(pool.id)}
-                    disabled={joiningId === pool.id}
-                    className="shrink-0 text-xs font-semibold px-4 py-1.5 rounded-full text-white disabled:opacity-50"
-                    style={{ background: isOfficial ? accent : 'linear-gradient(to right, #7c3aed, #2563eb)' }}
-                  >
-                    {joiningId === pool.id ? '...' : 'Join'}
-                  </button>
-                ) : pool.is_host && (
-                  confirmDeleteId === pool.id ? (
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button onClick={() => deleteMutation.mutate(pool.id)} disabled={deleteMutation.isPending} className="text-xs text-red-500 font-semibold disabled:opacity-50">
-                        {deleteMutation.isPending ? '...' : 'Delete'}
-                      </button>
-                      <button onClick={() => setConfirmDeleteId(null)} className="text-xs text-gray-400">Cancel</button>
-                    </div>
-                  ) : (
-                    <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(pool.id); }} className="text-gray-300 hover:text-red-400 transition-colors p-1 shrink-0">
-                      <Trash2 size={14} />
-                    </button>
-                  )
-                )}
               </div>
             </div>
           );
         })}
 
-        {/* ── Divider ── */}
-        {!isLoading && allPublicRooms.length > 0 && myPrivateRooms.length > 0 && (
-          <div className="border-t border-gray-200 pt-1" />
-        )}
-
-        {/* ── Private Rooms ── */}
-        {!isLoading && myPrivateRooms.length > 0 && (
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider pt-1">Private Rooms</p>
-        )}
-
-        {!isLoading && myPrivateRooms.map((pool) => (
-          <div key={pool.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <div className="flex items-center gap-3 p-4">
-              <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
-                <Lock size={16} className="text-gray-400" />
-              </div>
-              <button onClick={() => setLocation(`/room/${pool.id}`)} className="flex-1 min-w-0 text-left">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                  <h3 className="text-gray-900 font-semibold text-base truncate">{pool.name}</h3>
-                  {pool.is_host && <Crown size={11} className="text-yellow-500 shrink-0" />}
-                </div>
-                <p className="text-gray-400 text-xs">
-                  {pool.member_count} {pool.member_count === 1 ? 'member' : 'members'} &bull; {pool.round_count} {pool.round_count === 1 ? 'round' : 'rounds'}
-                </p>
-              </button>
-              {pool.is_host && (
-                confirmDeleteId === pool.id ? (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => deleteMutation.mutate(pool.id)} disabled={deleteMutation.isPending} className="text-xs text-red-500 font-semibold disabled:opacity-50">
-                      {deleteMutation.isPending ? '...' : 'Delete'}
-                    </button>
-                    <button onClick={() => setConfirmDeleteId(null)} className="text-xs text-gray-400">Cancel</button>
-                  </div>
-                ) : (
-                  <button onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(pool.id); }} className="text-gray-300 hover:text-red-400 transition-colors p-1 shrink-0">
-                    <Trash2 size={14} />
-                  </button>
-                )
-              )}
-            </div>
+        {!isLoading && officialRooms.length === 0 && (
+          <div className="text-center py-16">
+            <Globe size={40} className="text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-400 text-sm">No rooms available yet.</p>
           </div>
-        ))}
+        )}
       </div>
-
     </div>
   );
 }
