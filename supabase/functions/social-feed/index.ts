@@ -167,6 +167,8 @@ serve(async (req) => {
       // Excluded: list adds, grouped list events — these live in Library, not the feed.
       if (!specificPostId) {
         query = query.not('post_type', 'in', '("added_to_list","add-to-list","friend_list_group","media_group")');
+        // Exclude room-scoped posts — they belong only in the room feed, not the main activity feed
+        query = query.is('room_id', null);
       }
       
       const { data: posts, error } = await query;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil, HelpCircle, Tv, Vote, Dna, Zap, Brain, Film, Music, BookOpen } from "lucide-react";
+import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, MessageCircle, User, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil, HelpCircle, Tv, Vote, Dna, Zap, Brain, Film, Music, BookOpen } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -948,59 +948,58 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
         )}
       </div>
 
-      {/* Comment bar */}
-      <div className="border-t border-gray-100 px-4 py-2 flex items-center gap-3">
+      {/* Action bar — matches feed card style */}
+      <div className="flex items-center gap-4 px-4 pt-3 pb-3 border-t border-gray-50">
         <button
           onClick={toggleComments}
-          className="flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-purple-600 transition-colors"
+          className={`flex items-center gap-1.5 text-sm ${commentsExpanded ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
         >
-          <MessageSquare size={13} />
-          {commentCount > 0 ? `${commentCount} ${commentCount === 1 ? 'comment' : 'comments'}` : 'Comment'}
+          <MessageCircle size={15} />
+          <span className="text-xs">{commentCount}</span>
         </button>
       </div>
 
-      {/* Comments section */}
+      {/* Comments section — matches feed card style */}
       {commentsExpanded && (
-        <div className="border-t border-gray-100 px-4 pb-3 pt-2 space-y-3">
-          {loadingComments && (
-            <p className="text-xs text-gray-400">Loading...</p>
+        <div className="border-t border-gray-100 px-4 pb-4 bg-gray-50/50">
+          {loadingComments ? (
+            <p className="text-xs text-gray-400 text-center py-3">Loading...</p>
+          ) : comments.length === 0 ? (
+            <p className="text-xs text-gray-400 text-center py-3">No comments yet. Be the first!</p>
+          ) : (
+            <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pt-3 mb-2">
+              {comments.map((c: any) => {
+                const cName = (c.users as any)?.display_name || (c.users as any)?.user_name || 'Someone';
+                return (
+                  <div key={c.id} className="flex items-start gap-2">
+                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                      <User size={12} className="text-purple-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-semibold text-gray-800 mr-1">{cName}</span>
+                      <span className="text-xs text-gray-600">{c.content}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
-          {!loadingComments && comments.length === 0 && (
-            <p className="text-xs text-gray-400">No comments yet.</p>
-          )}
-          {comments.map((c: any) => {
-            const cName = (c.users as any)?.display_name || (c.users as any)?.user_name || 'Someone';
-            const cInitial = cName[0]?.toUpperCase() || '?';
-            return (
-              <div key={c.id} className="flex items-start gap-2">
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-300 to-blue-300 flex items-center justify-center text-white text-[10px] font-bold shrink-0 mt-0.5">
-                  {cInitial}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold text-gray-700 leading-tight">{cName}</p>
-                  <p className="text-sm text-gray-800 leading-snug">{c.content}</p>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Comment input */}
           {session?.user && (
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex gap-2 pt-2">
               <input
                 type="text"
                 value={newComment}
                 onChange={e => setNewComment(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') submitComment(); }}
-                placeholder="Write a comment..."
-                className="flex-1 text-sm bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 outline-none focus:border-purple-400 transition-colors"
+                placeholder="Add a comment..."
+                className="flex-1 text-xs px-3 py-2 rounded-full border border-gray-200 focus:outline-none focus:border-purple-400 bg-white"
               />
               <button
                 onClick={submitComment}
                 disabled={!newComment.trim() || submittingComment}
-                className="p-1.5 rounded-full bg-purple-600 text-white disabled:opacity-40 hover:bg-purple-700 transition-colors"
+                className="p-2 rounded-full bg-purple-600 text-white disabled:opacity-50"
               >
-                <Send size={12} />
+                <Send size={14} />
               </button>
             </div>
           )}
