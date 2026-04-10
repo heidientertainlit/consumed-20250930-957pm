@@ -396,6 +396,16 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               {isSearchExpanded ? <X className="text-white" size={20} /> : <Search className="text-white" size={20} />}
             </button>
             <NotificationBell />
+            <Link
+              href="/me?tab=dna"
+              className={`flex items-center justify-center hover:opacity-70 transition-opacity ${location === '/me' ? 'opacity-100' : 'opacity-70'}`}
+              aria-label="Profile"
+            >
+              <div className="relative">
+                <User className="text-white" size={21} />
+                <Dna className="text-white absolute -bottom-1 -right-1.5" size={10} />
+              </div>
+            </Link>
           </div>
         </div>
 
@@ -594,20 +604,6 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             <span className="text-white text-[10px] mt-0.5">Library</span>
           </Link>
 
-          {/* Me */}
-          <Link
-            href="/me?tab=dna"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/me" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`}
-            data-testid="nav-dna"
-          >
-            <div className="h-[22px] flex items-center justify-center">
-              <div className="relative">
-                <User className="text-white" size={22} />
-                <Dna className="text-white absolute -bottom-1 -right-1.5" size={11} />
-              </div>
-            </div>
-            <span className="text-white text-[10px] mt-0.5">Profile</span>
-          </Link>
         </div>
       </nav>
 
