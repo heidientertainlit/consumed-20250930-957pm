@@ -25,8 +25,8 @@ export default function PoolsPage() {
   const publicRooms: any[] = data?.publicRooms || [];
   const allPublicRooms = [...myRooms.filter((r: any) => r.is_public), ...publicRooms];
 
-  // Only show official (Consumed-created) rooms
-  const officialRooms = allPublicRooms.filter((r: any) => r.is_official === true);
+  // Show all public rooms — only official/Consumed-created rooms are public
+  const officialRooms = allPublicRooms;
 
   return (
     <div className="min-h-screen pb-24" style={{ backgroundColor: '#0a0a0f' }}>
