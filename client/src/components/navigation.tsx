@@ -398,7 +398,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             <NotificationBell />
             <Link
               href="/me?tab=dna"
-              className={`flex items-center justify-center hover:opacity-70 transition-opacity ${location === '/me' ? 'opacity-100' : 'opacity-70'}`}
+              className="flex items-center justify-center hover:opacity-70 transition-opacity"
               aria-label="Profile"
             >
               <User className="text-white h-5 w-5" />
