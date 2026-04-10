@@ -236,9 +236,8 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   // Fetch social proof (most-picked option + voter name) for each pool in one batch
   useEffect(() => {
     if (!data || data.length === 0) return;
-    // Only use real UUID pool IDs (not hardcoded trivia string IDs)
     const poolIds = [...new Set(
-      data.map(item => item.poolId).filter(id => id && /^[0-9a-f-]{36}$/.test(id))
+      data.map(item => item.poolId).filter(id => !!id)
     )];
     if (poolIds.length === 0) return;
 
