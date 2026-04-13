@@ -185,6 +185,49 @@ Return ONLY the JSON array. No markdown, no explanation, no code blocks.`;
       });
     }
 
+    // --- Self-verification pass for trivia correct answers ---
+    const triviaItems = items.filter((i: any) => i.content_type === 'trivia' && i.correct_answer);
+    if (triviaItems.length > 0) {
+      try {
+        const verifyPrompt = `You are a fact-checker. For each trivia question below, verify whether the listed correct_answer is actually correct given the provided options.
+
+If the correct_answer is RIGHT: return it unchanged.
+If the correct_answer is WRONG: replace it with the actual correct answer (must exactly match one of the options).
+
+Return ONLY a JSON array with objects: { "idx": number, "correct_answer": string }
+
+Questions to verify:
+${triviaItems.map((q: any, i: number) => `${i}. "${q.title}" | Options: [${q.options.join(', ')}] | Claimed answer: "${q.correct_answer}"`).join('\n')}`;
+
+        const verifyResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            max_tokens: 1024,
+            temperature: 0,
+            messages: [{ role: 'user', content: verifyPrompt }],
+          }),
+        });
+
+        if (verifyResponse.ok) {
+          const verifyData = await verifyResponse.json();
+          const verifyText = verifyData.choices?.[0]?.message?.content || '';
+          const verifyMatch = verifyText.match(/\[[\s\S]*\]/);
+          if (verifyMatch) {
+            const corrections: { idx: number; correct_answer: string }[] = JSON.parse(verifyMatch[0]);
+            for (const fix of corrections) {
+              if (triviaItems[fix.idx] && triviaItems[fix.idx].options.includes(fix.correct_answer)) {
+                triviaItems[fix.idx].correct_answer = fix.correct_answer;
+              }
+            }
+          }
+        }
+      } catch (_verifyErr) {
+        // Verification is best-effort — don't block if it fails
+      }
+    }
+
     const drafts: any[] = [];
     const errors: string[] = [];
 

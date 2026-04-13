@@ -444,9 +444,19 @@ export default function AdminTriviaPage() {
   }
 
   async function publishAllScheduled() {
-    const toPublish = scheduled.filter(d => scheduleDates[d.id] || d.content_type === "dna_moment");
+    // Auto-assign dates if none have been set yet — so "Publish All" works in one click
+    let currentDates = scheduleDates;
+    const undated = scheduled.filter(d => d.content_type !== "dna_moment" && !currentDates[d.id]);
+    if (undated.length > 0) {
+      const start = new Date(batchStartDate + "T12:00:00");
+      const newDates = autoScheduleBatch(scheduled, start);
+      currentDates = { ...currentDates, ...newDates };
+      setScheduleDates(currentDates);
+    }
+
+    const toPublish = scheduled.filter(d => currentDates[d.id] || d.content_type === "dna_moment");
     if (toPublish.length === 0) {
-      toast({ title: "No items ready", description: "Run Auto-schedule first, or set dates manually.", variant: "destructive" });
+      toast({ title: "No items ready", description: "No scheduled items found. Check the Scheduled tab.", variant: "destructive" });
       return;
     }
     setBatchPublishing(true);
