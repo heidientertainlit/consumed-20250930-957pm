@@ -37,7 +37,11 @@ All changes are styling/layout only. No voting logic, point systems, interaction
   - **The Daily Call** (`DailyChallengeCard`): A distinct, purple card at the top of the feed for a single featured daily game.
   - **Quick Trivia** (`TriviaCarousel`): A dark purple carousel below the Daily Call, featuring multiple trivia questions.
 - **Track Page Design**: Accessible via `/track`, featuring "Track Media" and "Import History" buttons, and stats cards.
-- **Rooms**: Feature is hidden but fully implemented, accessible via `/rooms`.
+- **Rooms**: Feature is hidden from regular users but fully implemented. Controlled by `rooms_enabled` flag in the `app_settings` Supabase table.
+  - **Admin (HeidiIsConsumed, ID `88bfb2a0-e8ce-4081-b731-2a49567ff093`) always sees Rooms** regardless of the flag — both the nav tab and all `/rooms`/`/room/*` routes.
+  - **Turn Rooms ON for everyone**: `UPDATE app_settings SET value = 'true', updated_at = now() WHERE key = 'rooms_enabled';`
+  - **Turn Rooms OFF for everyone**: `UPDATE app_settings SET value = 'false', updated_at = now() WHERE key = 'rooms_enabled';`
+  - Flag is read by `client/src/lib/feature-flags.tsx` (`FeatureFlagsProvider`). Admin bypass lives in `RoomsGuard` (App.tsx) and navigation.tsx. No code deploy needed to toggle.
 - **Navigation**: Bottom navigation includes 4 items: Activity, DNA, Library, and Leaders. The floating Plus button always links to `/add`. Play page combines game tiles with embedded leaderboard content. Collections page at `/collections` has 3 tabs: Lists, Ranks, and History. Leaderboard, Discover, and Track pages exist as backpages. Creator profile at `/creator-profile` shows Follow/Inner Circle buttons and external links.
 - **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Friends, Collections, History).
 - **Collections System**: Collections tab contains sub-navigation for Lists and Ranks. Ranks feature supports drag-and-drop ordering, position-based ranking, and collaboration.

@@ -577,8 +577,8 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             <span className="text-white text-[10px] mt-0.5">Play</span>
           </Link>
 
-          {/* Rooms — hidden until rooms_enabled = 'true' in app_settings */}
-          {roomsEnabled && (
+          {/* Rooms — hidden until rooms_enabled = 'true', always visible to admin */}
+          {(roomsEnabled || user?.id === "88bfb2a0-e8ce-4081-b731-2a49567ff093") && (
             <Link
               href="/rooms"
               className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/rooms" || location.startsWith("/room/") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`}

@@ -172,13 +172,17 @@ function CapacitorDeepLinkHandler() {
   return null;
 }
 
+const ADMIN_USER_ID = "88bfb2a0-e8ce-4081-b731-2a49567ff093";
+
 function RoomsGuard({ children }: { children: React.ReactNode }) {
   const { roomsEnabled, loading } = useFeatureFlags();
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.id === ADMIN_USER_ID;
   useEffect(() => {
-    if (!loading && !roomsEnabled) setLocation("/");
-  }, [loading, roomsEnabled, setLocation]);
-  if (loading || !roomsEnabled) return null;
+    if (!loading && !roomsEnabled && !isAdmin) setLocation("/");
+  }, [loading, roomsEnabled, isAdmin, setLocation]);
+  if (loading || (!roomsEnabled && !isAdmin)) return null;
   return <>{children}</>;
 }
 
