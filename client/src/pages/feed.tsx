@@ -970,6 +970,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
         <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50">
           <button
+            onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
+            className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+          >
+            <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
+            <span className="text-xs">{post.likes || 0}</span>
+          </button>
+          <button
             onClick={handleCommentToggle}
             className={`flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
           >
@@ -1647,6 +1654,15 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
 
         {/* Action bar — Comment | Add | Seen it */}
         <div className="flex items-center gap-4 mt-2.5 pt-2.5 border-t border-gray-50">
+          {onLike && (
+            <button
+              onClick={() => onLike(post.id)}
+              className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+            >
+              <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
+              <span className="text-xs">{post.likes || 0}</span>
+            </button>
+          )}
           <button
             onClick={() => onComment?.(post.id)}
             className={`flex items-center gap-1.5 text-sm ${isCommentsActive ? 'text-purple-500' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
