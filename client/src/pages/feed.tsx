@@ -706,35 +706,26 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [resolvedExternalSource, setResolvedExternalSource] = useState(post.externalSource || 'tmdb');
   const [isSearchingMedia, setIsSearchingMedia] = useState(false);
 
-  const handleStarClick = async (e: React.MouseEvent) => {
+  const handleStarClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const eid = resolvedExternalId || post.externalId;
-    if (eid) {
-      setShowStarPicker(prev => !prev);
-      return;
-    }
-    if (!post.mediaTitle || isSearchingMedia || !session?.access_token) return;
-    setIsSearchingMedia(true);
-    try {
-      const mediaType = (post.mediaType || 'movie').toLowerCase();
-      const res = await fetch(
+    setShowStarPicker(prev => !prev);
+    if (!resolvedExternalId && !post.externalId && post.mediaTitle && session?.access_token && !isSearchingMedia) {
+      setIsSearchingMedia(true);
+      const mediaType = (post.mediaType || 'tv').toLowerCase();
+      fetch(
         `${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(post.mediaTitle)}&type=${mediaType}&limit=1`,
         { headers: { Authorization: `Bearer ${session.access_token}` } }
-      );
-      const data = await res.json();
-      const results = data?.results || data || [];
-      const first = Array.isArray(results) ? results[0] : null;
-      const newEid = first?.externalId || first?.external_id || first?.id;
-      const newEsrc = first?.externalSource || first?.external_source || 'tmdb';
-      if (newEid) {
-        setResolvedExternalId(String(newEid));
-        setResolvedExternalSource(newEsrc);
-        setShowStarPicker(true);
-      }
-    } catch (err) {
-      console.error('Media lookup failed', err);
-    } finally {
-      setIsSearchingMedia(false);
+      )
+        .then(r => r.json())
+        .then(data => {
+          const results = data?.results || data || [];
+          const first = Array.isArray(results) ? results[0] : null;
+          const newEid = first?.externalId || first?.external_id || first?.id;
+          const newEsrc = first?.externalSource || first?.external_source || 'tmdb';
+          if (newEid) { setResolvedExternalId(String(newEid)); setResolvedExternalSource(newEsrc); }
+        })
+        .catch(err => console.error('Media lookup failed', err))
+        .finally(() => setIsSearchingMedia(false));
     }
   };
 
@@ -806,11 +797,26 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
-    const externalId = resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId || '';
-    const externalSource = resolvedExternalSource || post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
+    let externalId = resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId || '';
+    let externalSource = resolvedExternalSource || post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
     const mediaTitle = post.mediaTitle || post.mediaItems?.[0]?.title || '';
-    const mediaType = post.mediaType || post.mediaItems?.[0]?.type || 'movie';
+    const mediaType = post.mediaType || post.mediaItems?.[0]?.type || 'tv';
     const mediaImage = post.mediaImage || post.mediaItems?.[0]?.imageUrl || '';
+    if (!externalId && mediaTitle) {
+      try {
+        const r = await fetch(
+          `${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(mediaTitle)}&type=${mediaType.toLowerCase()}&limit=1`,
+          { headers: { Authorization: `Bearer ${session.access_token}` } }
+        );
+        const d = await r.json();
+        const results = d?.results || d || [];
+        const first = Array.isArray(results) ? results[0] : null;
+        externalId = String(first?.externalId || first?.external_id || first?.id || '');
+        externalSource = first?.externalSource || first?.external_source || 'tmdb';
+        if (externalId) { setResolvedExternalId(externalId); setResolvedExternalSource(externalSource); }
+      } catch { /* fall through */ }
+    }
+    if (!externalId) return;
     try {
       await fetch(`${supabaseUrl}/functions/v1/rate-media`, {
         method: 'POST',
@@ -1105,7 +1111,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {/* Your Turn — star picker, shown when not yet rated OR when changing */}
-        {(resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId) && session?.access_token && (showStarPicker || ((post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && !ratingSubmitted)) && (
+        {(post.mediaTitle || resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId) && session?.access_token && (showStarPicker || ((post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && !ratingSubmitted)) && (
           <div className="mt-3 pt-3 border-t border-gray-100">
             {true && (
               <>
@@ -1285,33 +1291,28 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const [resolvedExternalSource, setResolvedExternalSource] = useState(post.externalSource || 'tmdb');
   const [isSearchingMedia, setIsSearchingMedia] = useState(false);
 
-  const handleStarClick = async () => {
-    if (resolvedExternalId) {
-      setShowStarPicker(prev => !prev);
-      return;
-    }
-    if (!post.mediaTitle || isSearchingMedia || !session?.access_token) return;
-    setIsSearchingMedia(true);
-    try {
-      const mediaType = (post.mediaType || 'movie').toLowerCase();
-      const res = await fetch(
+  const handleStarClick = () => {
+    setShowStarPicker(prev => !prev);
+    if (!resolvedExternalId && post.mediaTitle && session?.access_token && !isSearchingMedia) {
+      setIsSearchingMedia(true);
+      const mediaType = (post.mediaType || 'tv').toLowerCase();
+      fetch(
         `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search?q=${encodeURIComponent(post.mediaTitle)}&type=${mediaType}&limit=1`,
         { headers: { Authorization: `Bearer ${session.access_token}` } }
-      );
-      const data = await res.json();
-      const results = data?.results || data || [];
-      const first = Array.isArray(results) ? results[0] : null;
-      const eid = first?.externalId || first?.external_id || first?.id;
-      const esrc = first?.externalSource || first?.external_source || 'tmdb';
-      if (eid) {
-        setResolvedExternalId(String(eid));
-        setResolvedExternalSource(esrc);
-        setShowStarPicker(true);
-      }
-    } catch (err) {
-      console.error('Media lookup failed', err);
-    } finally {
-      setIsSearchingMedia(false);
+      )
+        .then(r => r.json())
+        .then(data => {
+          const results = data?.results || data || [];
+          const first = Array.isArray(results) ? results[0] : null;
+          const eid = first?.externalId || first?.external_id || first?.id;
+          const esrc = first?.externalSource || first?.external_source || 'tmdb';
+          if (eid) {
+            setResolvedExternalId(String(eid));
+            setResolvedExternalSource(esrc);
+          }
+        })
+        .catch(err => console.error('Media lookup failed', err))
+        .finally(() => setIsSearchingMedia(false));
     }
   };
 
@@ -1436,12 +1437,30 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     setRatingValue(rating);
     setRatingSubmitted(true);
     setShowStarPicker(false);
+    let eid = resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId || '';
+    let esrc = resolvedExternalSource || post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
+    if (!eid && post.mediaTitle) {
+      try {
+        const mediaType = (post.mediaType || 'tv').toLowerCase();
+        const r = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search?q=${encodeURIComponent(post.mediaTitle)}&type=${mediaType}&limit=1`,
+          { headers: { Authorization: `Bearer ${session.access_token}` } }
+        );
+        const d = await r.json();
+        const results = d?.results || d || [];
+        const first = Array.isArray(results) ? results[0] : null;
+        eid = String(first?.externalId || first?.external_id || first?.id || '');
+        esrc = first?.externalSource || first?.external_source || 'tmdb';
+        if (eid) { setResolvedExternalId(eid); setResolvedExternalSource(esrc); }
+      } catch { /* fall through with empty eid */ }
+    }
+    if (!eid) return;
     const media = {
       title: post.mediaTitle || post.mediaItems?.[0]?.title || '',
-      externalId: resolvedExternalId || post.mediaItems?.[0]?.externalId || '',
-      externalSource: resolvedExternalSource || post.mediaItems?.[0]?.externalSource || 'tmdb',
+      externalId: eid,
+      externalSource: esrc,
       imageUrl: post.mediaImage || post.mediaItems?.[0]?.imageUrl || '',
-      type: post.mediaType || post.mediaItems?.[0]?.type || 'movie',
+      type: post.mediaType || post.mediaItems?.[0]?.type || 'tv',
     };
     try {
       await fetch(
@@ -1754,7 +1773,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
         )}
 
         {/* Your Turn — inline star rating for rating/review posts */}
-        {(resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId) && currentUserId && post.user?.id !== currentUserId && (showStarPicker || (isRatingType && !ratingSubmitted)) && (
+        {(post.mediaTitle || resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId) && currentUserId && post.user?.id !== currentUserId && (showStarPicker || (isRatingType && !ratingSubmitted)) && (
           <div className="border-t border-gray-100 mt-3 pt-3">
             {true && (
               <>
