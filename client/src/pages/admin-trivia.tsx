@@ -759,18 +759,23 @@ export default function AdminTriviaPage() {
                   </p>
                   <div className="flex items-end gap-3">
                     <div className="flex-1">
-                      <label className="text-xs text-gray-500 mb-1 block">Start from</label>
+                      <label className="text-xs text-gray-500 mb-1 block">Drop dates start from</label>
                       <input
                         type="date"
                         value={batchStartDate}
-                        onChange={e => setBatchStartDate(e.target.value)}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setBatchStartDate(val);
+                          if (val) {
+                            const start = new Date(val + "T12:00:00");
+                            const newDates = autoScheduleBatch(scheduled, start);
+                            setScheduleDates(prev => ({ ...prev, ...newDates }));
+                          }
+                        }}
                         min={toLocalDateStr(new Date())}
                         className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white w-full"
                       />
                     </div>
-                    <Button onClick={handleAutoSchedule} variant="outline" size="sm" className="border-purple-600 text-purple-400 hover:bg-purple-900/20 whitespace-nowrap">
-                      <Calendar size={13} className="mr-1" /> Auto-assign Dates
-                    </Button>
                     <Button
                       onClick={publishAllScheduled}
                       disabled={batchPublishing}
@@ -783,7 +788,7 @@ export default function AdminTriviaPage() {
                   </div>
                 </div>
 
-                <p className="text-xs text-gray-500 mb-1">{scheduled.length} item{scheduled.length !== 1 ? "s" : ""} — override any date below, or Publish All</p>
+                <p className="text-xs text-gray-500 mb-1">{scheduled.length} item{scheduled.length !== 1 ? "s" : ""} — NOT live yet. Change the start date above to shift all drop dates, or override individually below, then Publish All.</p>
 
                 {scheduled.map(draft => (
                   <div key={draft.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
