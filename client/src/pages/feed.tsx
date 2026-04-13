@@ -1055,7 +1055,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {/* Your Turn — star picker, shown when not yet rated OR when changing */}
-        {(post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && post.externalId && session?.access_token && (!ratingSubmitted || showStarPicker) && (
+        {post.externalId && session?.access_token && (showStarPicker || ((post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && !ratingSubmitted)) && (
           <div className="mt-3 pt-3 border-t border-gray-100">
             {true && (
               <>
@@ -1672,7 +1672,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
         )}
 
         {/* Your Turn — inline star rating for rating/review posts */}
-        {isRatingType && post.mediaTitle && post.externalId && currentUserId && post.user?.id !== currentUserId && (!ratingSubmitted || showStarPicker) && (
+        {post.externalId && currentUserId && post.user?.id !== currentUserId && (showStarPicker || (isRatingType && !ratingSubmitted)) && (
           <div className="border-t border-gray-100 mt-3 pt-3">
             {true && (
               <>
@@ -1768,14 +1768,14 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                     <Plus size={15} />
                   </button>
                 )}
-                {isRatingType && post.externalId && currentUserId && post.user?.id !== currentUserId && ratingSubmitted && (
+                {post.externalId && currentUserId && post.user?.id !== currentUserId && (
                   <button
                     onClick={() => setShowStarPicker(prev => !prev)}
-                    className="flex items-center gap-1 text-yellow-400 active:scale-110 transition-all"
-                    title="Change your rating"
+                    className={`flex items-center gap-1 active:scale-110 transition-all ${ratingSubmitted ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'}`}
+                    title={ratingSubmitted ? 'Change your rating' : 'Rate this'}
                   >
-                    <Star size={15} fill="currentColor" />
-                    <span className="text-xs font-medium text-yellow-500">{ratingValue}</span>
+                    <Star size={15} fill={ratingSubmitted ? 'currentColor' : 'none'} />
+                    {ratingSubmitted && <span className="text-xs font-medium text-yellow-500">{ratingValue}</span>}
                   </button>
                 )}
                 <button
@@ -2209,14 +2209,14 @@ function CurrentlyConsumingFeedCard({
                 <Plus size={15} />
               </button>
             )}
-            {selectedRating > 0 && !isOwnPost && (
+            {!isOwnPost && media.externalId && (
               <button
                 onClick={() => setShowRating(prev => !prev)}
-                className="flex items-center gap-1 text-yellow-400 active:scale-110 transition-all"
-                title="Change your rating"
+                className={`flex items-center gap-1 active:scale-110 transition-all ${selectedRating > 0 ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'}`}
+                title={selectedRating > 0 ? 'Change your rating' : 'Rate this'}
               >
-                <Star size={15} fill="currentColor" />
-                <span className="text-xs font-medium text-yellow-500">{selectedRating}</span>
+                <Star size={15} fill={selectedRating > 0 ? 'currentColor' : 'none'} />
+                {selectedRating > 0 && <span className="text-xs font-medium text-yellow-500">{selectedRating}</span>}
               </button>
             )}
             {(() => {
