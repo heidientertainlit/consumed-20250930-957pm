@@ -733,8 +733,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   };
 
   useEffect(() => {
-    const externalId = post.externalId;
-    const externalSource = post.externalSource;
+    const externalId = post.externalId || post.mediaItems?.[0]?.externalId;
+    const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource;
     if (!externalId || !externalSource) return;
 
     // Community average rating
@@ -771,16 +771,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
+    const externalId = post.externalId || post.mediaItems?.[0]?.externalId || '';
+    const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
+    const mediaTitle = post.mediaTitle || post.mediaItems?.[0]?.title || '';
+    const mediaType = post.mediaType || post.mediaItems?.[0]?.type || 'movie';
+    const mediaImage = post.mediaImage || post.mediaItems?.[0]?.imageUrl || '';
     try {
       await fetch(`${supabaseUrl}/functions/v1/rate-media`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          media_external_id: post.externalId,
-          media_external_source: post.externalSource || 'tmdb',
-          media_title: post.mediaTitle,
-          media_type: post.mediaType || 'movie',
-          media_image_url: post.mediaImage,
+          media_external_id: externalId,
+          media_external_source: externalSource,
+          media_title: mediaTitle,
+          media_type: mediaType,
+          media_image_url: mediaImage,
           rating,
           skip_social_post: false,
         }),
@@ -796,6 +801,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   const handleRemoveRating = async () => {
     if (!session?.access_token) return;
+    const externalId = post.externalId || post.mediaItems?.[0]?.externalId || '';
+    const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
+    const mediaTitle = post.mediaTitle || post.mediaItems?.[0]?.title || '';
+    const mediaType = post.mediaType || post.mediaItems?.[0]?.type || 'movie';
+    const mediaImage = post.mediaImage || post.mediaItems?.[0]?.imageUrl || '';
     setRatingValue(0);
     setRatingSubmitted(false);
     setShowStarPicker(false);
@@ -805,11 +815,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          media_external_id: post.externalId,
-          media_external_source: post.externalSource || 'tmdb',
-          media_title: post.mediaTitle,
-          media_type: post.mediaType || 'movie',
-          media_image_url: post.mediaImage,
+          media_external_id: externalId,
+          media_external_source: externalSource,
+          media_title: mediaTitle,
+          media_type: mediaType,
+          media_image_url: mediaImage,
           rating: 0,
           skip_social_post: true,
         }),
@@ -1055,7 +1065,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {/* Your Turn — star picker, shown when not yet rated OR when changing */}
-        {post.externalId && session?.access_token && (showStarPicker || ((post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && !ratingSubmitted)) && (
+        {(post.externalId || post.mediaItems?.[0]?.externalId) && session?.access_token && (showStarPicker || ((post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && !ratingSubmitted)) && (
           <div className="mt-3 pt-3 border-t border-gray-100">
             {true && (
               <>
@@ -1672,7 +1682,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
         )}
 
         {/* Your Turn — inline star rating for rating/review posts */}
-        {post.externalId && currentUserId && post.user?.id !== currentUserId && (showStarPicker || (isRatingType && !ratingSubmitted)) && (
+        {(post.externalId || post.mediaItems?.[0]?.externalId) && currentUserId && post.user?.id !== currentUserId && (showStarPicker || (isRatingType && !ratingSubmitted)) && (
           <div className="border-t border-gray-100 mt-3 pt-3">
             {true && (
               <>
@@ -1768,7 +1778,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                     <Plus size={15} />
                   </button>
                 )}
-                {post.externalId && currentUserId && post.user?.id !== currentUserId && (
+                {media.externalId && currentUserId && post.user?.id !== currentUserId && (
                   <button
                     onClick={() => setShowStarPicker(prev => !prev)}
                     className={`flex items-center gap-1 active:scale-110 transition-all ${ratingSubmitted ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'}`}
