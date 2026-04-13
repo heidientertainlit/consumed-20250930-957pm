@@ -789,3 +789,33 @@ export const dailyRuns = pgTable("daily_runs", {
 export const insertDailyRunSchema = createInsertSchema(dailyRuns).omit({ id: true, createdAt: true, updatedAt: true });
 export type DailyRun = typeof dailyRuns.$inferSelect;
 export type InsertDailyRun = z.infer<typeof insertDailyRunSchema>;
+
+// Trivia & Poll Drafts - AI-generated content staging for admin review
+export const triviaPollDrafts = pgTable("trivia_poll_drafts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  contentType: text("content_type").notNull(), // 'trivia' | 'poll' | 'featured_play' | 'dna_moment'
+  title: text("title").notNull(), // The question text
+  options: jsonb("options").notNull(), // Array of answer strings
+  correctAnswer: text("correct_answer"), // Trivia only
+  category: text("category").notNull(), // 'TV' | 'Movies' | 'Books' | 'Music'
+  showTag: text("show_tag"), // e.g. 'The White Lotus S3'
+  mediaType: text("media_type"), // 'tv' | 'movie' | 'book' | 'music'
+  difficulty: text("difficulty").default("medium"), // 'easy' | 'medium' | 'chaotic'
+  pointsReward: integer("points_reward").default(10),
+  partnerTag: text("partner_tag"), // Room scoping (e.g. 'reelz')
+  templateType: text("template_type"), // e.g. 'who_played', 'what_year'
+  rotationType: text("rotation_type").default("evergreen"), // 'evergreen' | 'trending' | 'seasonal'
+  status: text("status").notNull().default("draft"), // 'draft' | 'approved' | 'rejected' | 'published'
+  featuredDate: text("featured_date"), // YYYY-MM-DD for featured play scheduling
+  publishAt: text("publish_at"), // ISO timestamp for drop scheduling
+  rejectionReason: text("rejection_reason"),
+  aiNotes: text("ai_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  approvedAt: timestamp("approved_at"),
+  publishedAt: timestamp("published_at"),
+  publishedPoolId: text("published_pool_id"), // Set after publishing to prediction_pools
+});
+
+export const insertTriviaPollDraftSchema = createInsertSchema(triviaPollDrafts).omit({ id: true, createdAt: true, approvedAt: true, publishedAt: true });
+export type TriviaPollDraft = typeof triviaPollDrafts.$inferSelect;
+export type InsertTriviaPollDraft = z.infer<typeof insertTriviaPollDraftSchema>;
