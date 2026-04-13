@@ -140,7 +140,7 @@ function autoScheduleBatch(items: Draft[], startDate: Date): Record<string, stri
     dropDays.sort((a, b) => a.getTime() - b.getTime());
 
     triviaAndPolls.forEach((d, i) => {
-      const dropIndex = Math.floor(i / 8);
+      const dropIndex = Math.floor(i / 40);
       if (dropDays[dropIndex]) {
         dates[d.id] = toLocalDateStr(dropDays[dropIndex]);
       }
@@ -755,7 +755,7 @@ export default function AdminTriviaPage() {
                 <div className="bg-gray-900 border border-gray-700 rounded-xl p-4 mb-1">
                   <p className="text-sm font-semibold text-white mb-1">Auto-schedule Batch</p>
                   <p className="text-xs text-gray-400 mb-3">
-                    Trivia + polls → Tuesdays &amp; Saturdays (up to 8/drop). Featured Plays → 1 per day. DNA Moments → no date needed.
+                    Trivia + polls → Tuesdays &amp; Saturdays (up to 40/drop). Featured Plays → 1 per day. DNA Moments → no date needed.
                   </p>
                   <div className="flex items-end gap-3">
                     <div className="flex-1">
