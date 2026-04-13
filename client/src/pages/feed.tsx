@@ -702,6 +702,41 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const hasFetched = useRef(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
   const starsRef = useRef<HTMLDivElement>(null);
+  const [resolvedExternalId, setResolvedExternalId] = useState(post.externalId || '');
+  const [resolvedExternalSource, setResolvedExternalSource] = useState(post.externalSource || 'tmdb');
+  const [isSearchingMedia, setIsSearchingMedia] = useState(false);
+
+  const handleStarClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const eid = resolvedExternalId || post.externalId;
+    if (eid) {
+      setShowStarPicker(prev => !prev);
+      return;
+    }
+    if (!post.mediaTitle || isSearchingMedia || !session?.access_token) return;
+    setIsSearchingMedia(true);
+    try {
+      const mediaType = (post.mediaType || 'movie').toLowerCase();
+      const res = await fetch(
+        `${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(post.mediaTitle)}&type=${mediaType}&limit=1`,
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+      const data = await res.json();
+      const results = data?.results || data || [];
+      const first = Array.isArray(results) ? results[0] : null;
+      const newEid = first?.externalId || first?.external_id || first?.id;
+      const newEsrc = first?.externalSource || first?.external_source || 'tmdb';
+      if (newEid) {
+        setResolvedExternalId(String(newEid));
+        setResolvedExternalSource(newEsrc);
+        setShowStarPicker(true);
+      }
+    } catch (err) {
+      console.error('Media lookup failed', err);
+    } finally {
+      setIsSearchingMedia(false);
+    }
+  };
 
   const handleSeenIt = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -771,8 +806,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
-    const externalId = post.externalId || post.mediaItems?.[0]?.externalId || '';
-    const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
+    const externalId = resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId || '';
+    const externalSource = resolvedExternalSource || post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
     const mediaTitle = post.mediaTitle || post.mediaItems?.[0]?.title || '';
     const mediaType = post.mediaType || post.mediaItems?.[0]?.type || 'movie';
     const mediaImage = post.mediaImage || post.mediaItems?.[0]?.imageUrl || '';
@@ -801,8 +836,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   const handleRemoveRating = async () => {
     if (!session?.access_token) return;
-    const externalId = post.externalId || post.mediaItems?.[0]?.externalId || '';
-    const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
+    const externalId = resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId || '';
+    const externalSource = resolvedExternalSource || post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
     const mediaTitle = post.mediaTitle || post.mediaItems?.[0]?.title || '';
     const mediaType = post.mediaType || post.mediaItems?.[0]?.type || 'movie';
     const mediaImage = post.mediaImage || post.mediaItems?.[0]?.imageUrl || '';
@@ -1037,14 +1072,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <Plus size={15} />
                 </button>
               )}
-              {(post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && post.externalId && ratingSubmitted && (
+              {post.mediaTitle && session?.user?.id && post.user?.id !== session?.user?.id && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); setShowStarPicker(prev => !prev); }}
-                  className="flex items-center gap-1 text-yellow-400 active:scale-110 transition-all"
-                  title="Change your rating"
+                  onClick={handleStarClick}
+                  disabled={isSearchingMedia}
+                  className={`flex items-center gap-1 active:scale-110 transition-all disabled:opacity-50 ${ratingSubmitted ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'}`}
+                  title={ratingSubmitted ? 'Change your rating' : 'Rate this'}
                 >
-                  <Star size={15} fill="currentColor" />
-                  <span className="text-xs font-medium text-yellow-500">{ratingValue}</span>
+                  {isSearchingMedia ? (
+                    <div className="w-[15px] h-[15px] border-2 border-gray-300 border-t-yellow-400 rounded-full animate-spin" />
+                  ) : (
+                    <Star size={15} fill={ratingSubmitted ? 'currentColor' : 'none'} />
+                  )}
+                  {ratingSubmitted && <span className="text-xs font-medium text-yellow-500">{ratingValue}</span>}
                 </button>
               )}
               <button
@@ -1065,7 +1105,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {/* Your Turn — star picker, shown when not yet rated OR when changing */}
-        {(post.externalId || post.mediaItems?.[0]?.externalId) && session?.access_token && (showStarPicker || ((post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && !ratingSubmitted)) && (
+        {(resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId) && session?.access_token && (showStarPicker || ((post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && !ratingSubmitted)) && (
           <div className="mt-3 pt-3 border-t border-gray-100">
             {true && (
               <>
@@ -1241,6 +1281,39 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const [hoverRating, setHoverRating] = useState(0);
   const starsRef = useRef<HTMLDivElement>(null);
   const [seenItDone, setSeenItDone] = useState(false);
+  const [resolvedExternalId, setResolvedExternalId] = useState(post.externalId || '');
+  const [resolvedExternalSource, setResolvedExternalSource] = useState(post.externalSource || 'tmdb');
+  const [isSearchingMedia, setIsSearchingMedia] = useState(false);
+
+  const handleStarClick = async () => {
+    if (resolvedExternalId) {
+      setShowStarPicker(prev => !prev);
+      return;
+    }
+    if (!post.mediaTitle || isSearchingMedia || !session?.access_token) return;
+    setIsSearchingMedia(true);
+    try {
+      const mediaType = (post.mediaType || 'movie').toLowerCase();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search?q=${encodeURIComponent(post.mediaTitle)}&type=${mediaType}&limit=1`,
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+      const data = await res.json();
+      const results = data?.results || data || [];
+      const first = Array.isArray(results) ? results[0] : null;
+      const eid = first?.externalId || first?.external_id || first?.id;
+      const esrc = first?.externalSource || first?.external_source || 'tmdb';
+      if (eid) {
+        setResolvedExternalId(String(eid));
+        setResolvedExternalSource(esrc);
+        setShowStarPicker(true);
+      }
+    } catch (err) {
+      console.error('Media lookup failed', err);
+    } finally {
+      setIsSearchingMedia(false);
+    }
+  };
 
   const handleSeenIt = async (media: { title: string; externalId: string; externalSource: string; imageUrl: string; type: string }) => {
     if (seenItDone || !session?.access_token) return;
@@ -1360,14 +1433,13 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
-    // Optimistic update — show stars immediately
     setRatingValue(rating);
     setRatingSubmitted(true);
     setShowStarPicker(false);
     const media = {
       title: post.mediaTitle || post.mediaItems?.[0]?.title || '',
-      externalId: post.externalId || post.mediaItems?.[0]?.externalId || '',
-      externalSource: post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb',
+      externalId: resolvedExternalId || post.mediaItems?.[0]?.externalId || '',
+      externalSource: resolvedExternalSource || post.mediaItems?.[0]?.externalSource || 'tmdb',
       imageUrl: post.mediaImage || post.mediaItems?.[0]?.imageUrl || '',
       type: post.mediaType || post.mediaItems?.[0]?.type || 'movie',
     };
@@ -1395,8 +1467,8 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
 
   const handleRemoveRating = async () => {
     if (!session?.access_token) return;
-    const externalId = post.externalId || post.mediaItems?.[0]?.externalId || '';
-    const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
+    const externalId = resolvedExternalId || post.mediaItems?.[0]?.externalId || '';
+    const externalSource = resolvedExternalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
     setRatingValue(0);
     setRatingSubmitted(false);
     setShowStarPicker(false);
@@ -1682,7 +1754,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
         )}
 
         {/* Your Turn — inline star rating for rating/review posts */}
-        {(post.externalId || post.mediaItems?.[0]?.externalId) && currentUserId && post.user?.id !== currentUserId && (showStarPicker || (isRatingType && !ratingSubmitted)) && (
+        {(resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId) && currentUserId && post.user?.id !== currentUserId && (showStarPicker || (isRatingType && !ratingSubmitted)) && (
           <div className="border-t border-gray-100 mt-3 pt-3">
             {true && (
               <>
@@ -1762,8 +1834,8 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
           {(post.externalId || post.mediaItems?.[0]?.externalId || post.mediaTitle) && (() => {
             const media = {
               title: post.mediaTitle || post.mediaItems?.[0]?.title || '',
-              externalId: post.externalId || post.mediaItems?.[0]?.externalId || '',
-              externalSource: post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb',
+              externalId: resolvedExternalId || post.mediaItems?.[0]?.externalId || '',
+              externalSource: resolvedExternalSource || post.mediaItems?.[0]?.externalSource || 'tmdb',
               imageUrl: post.mediaImage || post.mediaItems?.[0]?.imageUrl || post.mediaItems?.[0]?.poster_url || '',
               type: post.mediaType || post.mediaItems?.[0]?.type || 'movie',
             };
@@ -1778,13 +1850,18 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                     <Plus size={15} />
                   </button>
                 )}
-                {media.externalId && currentUserId && post.user?.id !== currentUserId && (
+                {media.title && currentUserId && post.user?.id !== currentUserId && (
                   <button
-                    onClick={() => setShowStarPicker(prev => !prev)}
-                    className={`flex items-center gap-1 active:scale-110 transition-all ${ratingSubmitted ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'}`}
+                    onClick={handleStarClick}
+                    disabled={isSearchingMedia}
+                    className={`flex items-center gap-1 active:scale-110 transition-all ${ratingSubmitted ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'} disabled:opacity-50`}
                     title={ratingSubmitted ? 'Change your rating' : 'Rate this'}
                   >
-                    <Star size={15} fill={ratingSubmitted ? 'currentColor' : 'none'} />
+                    {isSearchingMedia ? (
+                      <div className="w-[15px] h-[15px] border-2 border-gray-300 border-t-yellow-400 rounded-full animate-spin" />
+                    ) : (
+                      <Star size={15} fill={ratingSubmitted ? 'currentColor' : 'none'} />
+                    )}
                     {ratingSubmitted && <span className="text-xs font-medium text-yellow-500">{ratingValue}</span>}
                   </button>
                 )}
@@ -2673,9 +2750,9 @@ export default function Feed() {
         else postType = 'thought';
 
         const media = p.mediaItems?.[0];
-        let mediaImg = media?.imageUrl || media?.image_url || media?.poster_url || '';
-        const src = media?.externalSource || media?.external_source || 'tmdb';
-        const eid = media?.externalId || media?.external_id;
+        let mediaImg = media?.imageUrl || media?.image_url || media?.poster_url || (p as any).image_url || '';
+        const src = media?.externalSource || media?.external_source || (p as any).media_external_source || 'tmdb';
+        const eid = media?.externalId || media?.external_id || (p as any).media_external_id || (p as any).externalId;
         if (src === 'googlebooks' && eid) mediaImg = `https://books.google.com/books/content?id=${eid}&printsec=frontcover&img=1&zoom=1`;
         else if (src === 'open_library' && eid) mediaImg = `https://covers.openlibrary.org/b/olid/${eid}-L.jpg`;
 
@@ -2684,7 +2761,7 @@ export default function Feed() {
           id: p.id, type: postType,
           user: { id: userObj?.id || '', username: userObj?.username || '', displayName: userObj?.displayName || userObj?.display_name || '', avatar: userObj?.avatar_url || userObj?.avatarUrl || userObj?.avatar || '' },
           content: (postType === 'poll' || postType === 'predict') ? ((p as any).question || content) : content,
-          mediaTitle: media?.title || (p as any).mediaTitle, mediaType: media?.mediaType || media?.type, mediaImage: mediaImg, externalId: eid, externalSource: src,
+          mediaTitle: media?.title || (p as any).mediaTitle || (p as any).media_title, mediaType: media?.mediaType || media?.type || (p as any).media_type, mediaImage: mediaImg, externalId: eid, externalSource: src,
           rating: p.rating, containsSpoilers: p.containsSpoilers || false, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
           fire_votes: p.fire_votes || 0, ice_votes: p.ice_votes || 0,
           options: (p as any).options || [], optionVotes: (p as any).optionVotes || [], timestamp: p.createdAt || p.created_at || p.timestamp, pollId: (p as any).poolId || p.id,
