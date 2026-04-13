@@ -14,6 +14,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "./lib/auth";
 import { ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
+import { FeatureFlagsProvider, useFeatureFlags } from "@/lib/feature-flags";
 
 // Pages
 import AdminPage from "@/pages/admin";
@@ -171,6 +172,16 @@ function CapacitorDeepLinkHandler() {
   return null;
 }
 
+function RoomsGuard({ children }: { children: React.ReactNode }) {
+  const { roomsEnabled, loading } = useFeatureFlags();
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    if (!loading && !roomsEnabled) setLocation("/");
+  }, [loading, roomsEnabled, setLocation]);
+  if (loading || !roomsEnabled) return null;
+  return <>{children}</>;
+}
+
 function Router() {
   useKeyboardAdjust();
 
@@ -308,19 +319,25 @@ function Router() {
           </Route>
 
           <Route path="/rooms">
-            <ProtectedRoute>
-              <PoolsPage />
-            </ProtectedRoute>
+            <RoomsGuard>
+              <ProtectedRoute>
+                <PoolsPage />
+              </ProtectedRoute>
+            </RoomsGuard>
           </Route>
 
           <Route path="/room/join/:code">
-            <PoolJoinPage />
+            <RoomsGuard>
+              <PoolJoinPage />
+            </RoomsGuard>
           </Route>
 
           <Route path="/room/:id">
-            <ProtectedRoute>
-              <PoolDetailPage />
-            </ProtectedRoute>
+            <RoomsGuard>
+              <ProtectedRoute>
+                <PoolDetailPage />
+              </ProtectedRoute>
+            </RoomsGuard>
           </Route>
 
           <Route path="/play">
@@ -550,8 +567,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Router />
-        <Toaster />
+        <FeatureFlagsProvider>
+          <Router />
+          <Toaster />
+        </FeatureFlagsProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

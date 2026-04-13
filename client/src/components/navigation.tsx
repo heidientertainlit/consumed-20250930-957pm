@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { QuickActionSheet } from "./quick-action-sheet";
+import { useFeatureFlags } from "@/lib/feature-flags";
 import { QuickAddListSheet } from "./quick-add-list-sheet";
 
 interface NavigationProps {
@@ -46,6 +47,7 @@ interface UserResult {
 export default function Navigation({ onTrackConsumption, hideTopBar }: NavigationProps) {
   const [location, setLocation] = useLocation();
   const { user, session } = useAuth();
+  const { roomsEnabled } = useFeatureFlags();
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -575,17 +577,19 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             <span className="text-white text-[10px] mt-0.5">Play</span>
           </Link>
 
-          {/* Rooms */}
-          <Link
-            href="/rooms"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/rooms" || location.startsWith("/room/") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`}
-            data-testid="nav-rooms"
-          >
-            <div className="h-[22px] flex items-center justify-center">
-              <DoorOpen className="text-white" size={21} />
-            </div>
-            <span className="text-white text-[10px] mt-0.5">Rooms</span>
-          </Link>
+          {/* Rooms — hidden until rooms_enabled = 'true' in app_settings */}
+          {roomsEnabled && (
+            <Link
+              href="/rooms"
+              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/rooms" || location.startsWith("/room/") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`}
+              data-testid="nav-rooms"
+            >
+              <div className="h-[22px] flex items-center justify-center">
+                <DoorOpen className="text-white" size={21} />
+              </div>
+              <span className="text-white text-[10px] mt-0.5">Rooms</span>
+            </Link>
+          )}
 
           {/* Library */}
           <Link
