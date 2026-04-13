@@ -30,11 +30,13 @@ serve(async (req) => {
     const genre = searchParams.get('genre');
     const search = searchParams.get('search');
 
+    const now = new Date().toISOString();
     let query = supabaseAdmin
       .from('prediction_pools')
       .select('*')
       .eq('status', 'open')
-      .eq('type', 'vote');
+      .eq('type', 'vote')
+      .or(`publish_at.is.null,publish_at.lte.${now}`);
 
     if (category) {
       query = query.eq('category', category);

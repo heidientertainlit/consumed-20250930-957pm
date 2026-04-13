@@ -69,11 +69,13 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   const { data, isLoading, isError } = useQuery({
     queryKey: ['polls-carousel', user?.id],
     queryFn: async () => {
+      const now = new Date().toISOString();
       const { data: pools, error } = await supabase
         .from('prediction_pools')
         .select('*')
         .eq('type', 'vote')
         .eq('status', 'open')
+        .or(`publish_at.is.null,publish_at.lte.${now}`)
         .order('created_at', { ascending: false })
         .limit(500);
       

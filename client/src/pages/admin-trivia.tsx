@@ -358,9 +358,10 @@ export default function AdminTriviaPage() {
         }).eq("id", draft.id);
       } else {
         // Insert into prediction_pools
+        // polls-carousel.tsx and get-polls BOTH query type = 'vote' — must match
         const poolType = draft.content_type === "trivia" ? "trivia"
           : draft.content_type === "featured_play" ? "predict"
-          : "poll";
+          : "vote";
 
         const poolId = crypto.randomUUID();
 
