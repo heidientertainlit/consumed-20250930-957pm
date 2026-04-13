@@ -25,6 +25,72 @@ serve(async (req) => {
       });
     }
 
+    const body = await req.json();
+
+    // --- Publish action: insert pool + mark draft published (uses service role, bypasses RLS) ---
+    if (body.action === 'publish') {
+      const { poolData, draftId } = body;
+      if (!poolData || !draftId) {
+        return new Response(JSON.stringify({ error: 'Missing poolData or draftId' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const { error: insertError } = await supabaseAdmin
+        .from('prediction_pools')
+        .insert(poolData);
+
+      if (insertError) {
+        return new Response(JSON.stringify({ error: insertError.message, details: insertError.details }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const { error: updateError } = await supabaseAdmin
+        .from('trivia_poll_drafts')
+        .update({ status: 'published', published_at: new Date().toISOString(), published_pool_id: poolData.id })
+        .eq('id', draftId);
+
+      if (updateError) {
+        return new Response(JSON.stringify({ error: updateError.message }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // --- DNA publish action: insert into dna_moments + mark draft published ---
+    if (body.action === 'publish_dna') {
+      const { dnaData, draftId } = body;
+      if (!dnaData || !draftId) {
+        return new Response(JSON.stringify({ error: 'Missing dnaData or draftId' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const { error: insertError } = await supabaseAdmin
+        .from('dna_moments')
+        .insert(dnaData);
+
+      if (insertError) {
+        return new Response(JSON.stringify({ error: insertError.message }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      await supabaseAdmin
+        .from('trivia_poll_drafts')
+        .update({ status: 'published', published_at: new Date().toISOString() })
+        .eq('id', draftId);
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const {
       contentType = 'mixed',
       count = 10,
@@ -32,7 +98,7 @@ serve(async (req) => {
       focusTopic = '',
       partnerTag = '',
       difficulty = 'medium',
-    } = await req.json();
+    } = body;
 
     // Fetch recent rejections to teach GPT what to avoid
     const { data: recentRejections } = await supabaseAdmin

@@ -337,10 +337,11 @@ export default function AdminTriviaPage() {
     setPublishingId(draft.id);
     try {
       const dateStr = scheduleDates[draft.id];
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
       if (draft.content_type === "dna_moment") {
-        // Insert into dna_moments
-        const { error } = await supabase.from("dna_moments").insert({
+        const dnaData = {
           question_text: draft.title,
           option_a: draft.options[0] || "Yes",
           option_b: draft.options[1] || "No",
@@ -350,14 +351,15 @@ export default function AdminTriviaPage() {
             : "genre",
           is_active: true,
           display_date: dateStr ? new Date(dateStr).toISOString() : null,
+        };
+        const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ action: "publish_dna", dnaData, draftId: draft.id }),
         });
-        if (error) throw error;
-        await supabase.from("trivia_poll_drafts").update({
-          status: "published",
-          published_at: new Date().toISOString(),
-        }).eq("id", draft.id);
+        const result = await resp.json();
+        if (!resp.ok || result.error) throw new Error(result.error || "DNA publish failed");
       } else {
-        // Insert into prediction_pools
         // polls-carousel.tsx and get-polls BOTH query type = 'vote' — must match
         const poolType = draft.content_type === "trivia" ? "trivia"
           : draft.content_type === "featured_play" ? "predict"
@@ -390,19 +392,18 @@ export default function AdminTriviaPage() {
         };
 
         if (draft.content_type === "featured_play" && dateStr) {
-          poolData.featured_date = dateStr; // YYYY-MM-DD
+          poolData.featured_date = dateStr;
         } else if (dateStr) {
           poolData.publish_at = new Date(dateStr).toISOString();
         }
 
-        const { error } = await supabase.from("prediction_pools").insert(poolData);
-        if (error) throw error;
-
-        await supabase.from("trivia_poll_drafts").update({
-          status: "published",
-          published_at: new Date().toISOString(),
-          published_pool_id: poolId,
-        }).eq("id", draft.id);
+        const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ action: "publish", poolData, draftId: draft.id }),
+        });
+        const result = await resp.json();
+        if (!resp.ok || result.error) throw new Error(result.error || "Publish failed");
       }
 
       toast({ title: "Published!", description: `${draft.title.slice(0, 50)}… is now live.` });
@@ -410,6 +411,7 @@ export default function AdminTriviaPage() {
       queryClient.invalidateQueries({ queryKey: ["trivia-poll-published"] });
     } catch (err: any) {
       toast({ title: "Publish failed", description: err.message, variant: "destructive" });
+      throw err; // Rethrow so batch can count failures correctly
     } finally {
       setPublishingId(null);
     }
