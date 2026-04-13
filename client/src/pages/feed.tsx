@@ -695,6 +695,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [showRating, setShowRating] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [showStarPicker, setShowStarPicker] = useState(false);
   const [communityRating, setCommunityRating] = useState<number | null>(null);
   const [seenItDone, setSeenItDone] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
@@ -786,6 +787,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       });
       setRatingValue(rating);
       setRatingSubmitted(true);
+      setShowStarPicker(false);
       setHoverRating(0);
     } catch (err) {
       console.error('Rating failed', err);
@@ -1000,6 +1002,16 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <Plus size={15} />
                 </button>
               )}
+              {(post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && post.externalId && ratingSubmitted && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowStarPicker(prev => !prev); }}
+                  className="flex items-center gap-1 text-yellow-400 active:scale-110 transition-all"
+                  title="Change your rating"
+                >
+                  <Star size={15} fill="currentColor" />
+                  <span className="text-xs font-medium text-yellow-500">{ratingValue}</span>
+                </button>
+              )}
               <button
                 onClick={handleSeenIt}
                 className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`}
@@ -1017,17 +1029,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         </div>
 
-        {/* Your Turn — always-visible rating for rating/review posts */}
-        {(post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && post.externalId && session?.access_token && (
+        {/* Your Turn — star picker, shown when not yet rated OR when changing */}
+        {(post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && post.externalId && session?.access_token && (!ratingSubmitted || showStarPicker) && (
           <div className="mt-3 pt-3 border-t border-gray-100">
-            {ratingSubmitted ? (
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-green-600 font-medium">Your Rating: ★ {ratingValue}/5</p>
-                <button onClick={() => setRatingSubmitted(false)} className="text-[10px] text-purple-500 underline">Change</button>
-              </div>
-            ) : (
+            {true && (
               <>
-                <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">Your Turn</p>
+                <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">{showStarPicker && ratingSubmitted ? 'Change Rating' : 'Your Turn'}</p>
                 <div
                   ref={starsRef}
                   className="flex items-center gap-0.5 touch-none select-none"
@@ -1186,6 +1193,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const [showRating, setShowRating] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [showStarPicker, setShowStarPicker] = useState(false);
   const [communityRating, setCommunityRating] = useState<number | null>(null);
   const [externalRating, setExternalRating] = useState<number | null>(null);
   const [externalRatingLabel, setExternalRatingLabel] = useState<string>('');
@@ -1315,6 +1323,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     // Optimistic update — show stars immediately
     setRatingValue(rating);
     setRatingSubmitted(true);
+    setShowStarPicker(false);
     const media = {
       title: post.mediaTitle || post.mediaItems?.[0]?.title || '',
       externalId: post.externalId || post.mediaItems?.[0]?.externalId || '',
@@ -1611,16 +1620,11 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
         )}
 
         {/* Your Turn — inline star rating for rating/review posts */}
-        {isRatingType && post.mediaTitle && post.externalId && currentUserId && post.user?.id !== currentUserId && (
+        {isRatingType && post.mediaTitle && post.externalId && currentUserId && post.user?.id !== currentUserId && (!ratingSubmitted || showStarPicker) && (
           <div className="border-t border-gray-100 mt-3 pt-3">
-            {ratingSubmitted ? (
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-green-600 font-medium">Your Rating: ★ {ratingValue}/5</p>
-                <button onClick={() => setRatingSubmitted(false)} className="text-[10px] text-purple-500 underline">Change</button>
-              </div>
-            ) : (
+            {true && (
               <>
-                <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">Your Turn</p>
+                <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">{showStarPicker && ratingSubmitted ? 'Change Rating' : 'Your Turn'}</p>
                 <div
                   ref={starsRef}
                   className="flex items-center gap-0.5 touch-none select-none"
@@ -1705,6 +1709,16 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                     title="Add to list"
                   >
                     <Plus size={15} />
+                  </button>
+                )}
+                {isRatingType && post.externalId && currentUserId && post.user?.id !== currentUserId && ratingSubmitted && (
+                  <button
+                    onClick={() => setShowStarPicker(prev => !prev)}
+                    className="flex items-center gap-1 text-yellow-400 active:scale-110 transition-all"
+                    title="Change your rating"
+                  >
+                    <Star size={15} fill="currentColor" />
+                    <span className="text-xs font-medium text-yellow-500">{ratingValue}</span>
                   </button>
                 )}
                 <button
@@ -2119,6 +2133,16 @@ function CurrentlyConsumingFeedCard({
                 <Plus size={15} />
               </button>
             )}
+            {selectedRating > 0 && !isOwnPost && (
+              <button
+                onClick={() => setShowRating(prev => !prev)}
+                className="flex items-center gap-1 text-yellow-400 active:scale-110 transition-all"
+                title="Change your rating"
+              >
+                <Star size={15} fill="currentColor" />
+                <span className="text-xs font-medium text-yellow-500">{selectedRating}</span>
+              </button>
+            )}
             {(() => {
               const mType = (media.mediaType || '').toLowerCase();
               const siLabel = mType === 'music' ? { idle: 'Heard it', done: 'Heard!' }
@@ -2162,16 +2186,11 @@ function CurrentlyConsumingFeedCard({
           </div>
 
           {/* Your Turn — inline star rating */}
-          {media.externalId && !isOwnPost && session?.access_token && (
+          {media.externalId && !isOwnPost && session?.access_token && (!selectedRating || showRating) && (
             <div className="border-t border-gray-100 mt-3 pt-3">
-              {selectedRating > 0 ? (
-                <div className="flex items-center gap-2">
-                  <p className="text-xs text-green-600 font-medium">Your Rating: ★ {selectedRating}/5</p>
-                  <button onClick={() => setSelectedRating(0)} className="text-[10px] text-purple-500 underline">Change</button>
-                </div>
-              ) : (
+              {true && (
                 <>
-                  <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">Your Turn</p>
+                  <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">{showRating && selectedRating ? 'Change Rating' : 'Your Turn'}</p>
                   <div
                     ref={starsRef}
                     className="flex items-center gap-0.5 touch-none select-none"
