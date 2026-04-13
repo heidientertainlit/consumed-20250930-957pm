@@ -384,7 +384,6 @@ export default function AdminTriviaPage() {
           origin_type: "consumed",
           partner_tag: draft.partner_tag || null,
           difficulty: draft.difficulty || "medium",
-          rotation_type: draft.rotation_type || "evergreen",
           inline: draft.content_type !== "featured_play",
           icon: draft.content_type === "trivia" ? "help-circle"
             : draft.content_type === "featured_play" ? "⭐"
