@@ -290,17 +290,23 @@ export default function AdminTriviaPage() {
     }
   }
 
-  async function approveDraft(id: string) {
-    const { error } = await supabase
-      .from("trivia_poll_drafts")
-      .update({ status: "approved", approved_at: new Date().toISOString() })
-      .eq("id", id);
-    if (error) {
-      toast({ title: "Approve failed", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Approved", description: "Moved to Scheduled tab." });
-      queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
-      queryClient.invalidateQueries({ queryKey: ["trivia-poll-scheduled"] });
+  // Returns the next upcoming Tuesday or Saturday from batchStartDate
+  function getNextDropDate(contentType: string): string {
+    const start = new Date(batchStartDate + "T12:00:00");
+    if (contentType === "featured_play") return batchStartDate;
+    if (contentType === "dna_moment") return "";
+    const nextTue = getUpcomingDaysOfWeek(2, 1, start)[0];
+    const nextSat = getUpcomingDaysOfWeek(6, 1, start)[0];
+    return toLocalDateStr(nextTue < nextSat ? nextTue : nextSat);
+  }
+
+  async function approveDraft(draft: Draft) {
+    // Immediately publish — no separate "Publish" step needed
+    const dateStr = getNextDropDate(draft.content_type);
+    try {
+      await publishDraft(draft, dateStr);
+    } catch {
+      // publishDraft already shows the toast
     }
   }
 
@@ -333,10 +339,10 @@ export default function AdminTriviaPage() {
     }
   }
 
-  async function publishDraft(draft: Draft) {
+  async function publishDraft(draft: Draft, dateOverride?: string) {
     setPublishingId(draft.id);
     try {
-      const dateStr = scheduleDates[draft.id];
+      const dateStr = dateOverride !== undefined ? dateOverride : scheduleDates[draft.id];
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
@@ -417,19 +423,29 @@ export default function AdminTriviaPage() {
   }
 
   async function approveAll() {
-    const ids = drafts.map(d => d.id);
-    if (ids.length === 0) return;
-    const { error } = await supabase
-      .from("trivia_poll_drafts")
-      .update({ status: "approved", approved_at: new Date().toISOString() })
-      .in("id", ids);
-    if (error) {
-      toast({ title: "Bulk approve failed", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: `Approved all ${ids.length} drafts`, description: "Set publish dates in the Scheduled tab." });
-      queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
-      queryClient.invalidateQueries({ queryKey: ["trivia-poll-scheduled"] });
+    if (drafts.length === 0) return;
+    // Calculate batch dates, then publish all immediately — no Scheduled tab needed
+    const start = new Date(batchStartDate + "T12:00:00");
+    const batchDates = autoScheduleBatch(drafts, start);
+    setBatchPublishing(true);
+    let successCount = 0;
+    let failCount = 0;
+    for (const draft of drafts) {
+      const dateStr = draft.content_type === "dna_moment" ? "" : (batchDates[draft.id] || getNextDropDate(draft.content_type));
+      try {
+        await publishDraft(draft, dateStr);
+        successCount++;
+      } catch {
+        failCount++;
+      }
     }
+    setBatchPublishing(false);
+    toast({
+      title: `Published ${successCount} item${successCount !== 1 ? "s" : ""}${failCount > 0 ? `, ${failCount} failed` : ""}`,
+      description: "Check the Published tab to confirm.",
+    });
+    queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
+    queryClient.invalidateQueries({ queryKey: ["trivia-poll-published"] });
   }
 
   function handleAutoSchedule() {
@@ -692,11 +708,24 @@ export default function AdminTriviaPage() {
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between gap-3 mb-2">
                   <p className="text-sm text-gray-400">{drafts.length} draft{drafts.length !== 1 ? "s" : ""} waiting for review</p>
-                  <Button onClick={approveAll} variant="outline" size="sm" className="text-xs border-green-700 text-green-400 hover:bg-green-900/20">
-                    <Check size={12} className="mr-1" /> Approve All
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-xs text-gray-500 whitespace-nowrap">Schedule from</label>
+                      <input
+                        type="date"
+                        value={batchStartDate}
+                        onChange={e => { if (e.target.value) setBatchStartDate(e.target.value); }}
+                        min={toLocalDateStr(new Date())}
+                        className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white"
+                      />
+                    </div>
+                    <Button onClick={approveAll} disabled={batchPublishing} size="sm" className="text-xs bg-green-700 hover:bg-green-600 text-white whitespace-nowrap">
+                      {batchPublishing ? <Loader2 size={12} className="animate-spin mr-1" /> : <Check size={12} className="mr-1" />}
+                      Approve &amp; Publish All
+                    </Button>
+                  </div>
                 </div>
                 {drafts.map(draft => (
                   <DraftCard
@@ -715,7 +744,7 @@ export default function AdminTriviaPage() {
                     onEdit={() => startEdit(draft)}
                     onSaveEdit={() => saveEdit(draft)}
                     onCancelEdit={() => setEditingId(null)}
-                    onApprove={() => approveDraft(draft.id)}
+                    onApprove={() => approveDraft(draft)}
                     onStartReject={() => { setRejectingId(draft.id); setRejectFeedback(""); }}
                     onConfirmReject={() => rejectDraft(draft.id)}
                     onCancelReject={() => setRejectingId(null)}
