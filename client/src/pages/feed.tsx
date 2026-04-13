@@ -899,7 +899,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {post.mediaImage && post.mediaImage.startsWith('http') ? (
               post.externalId && post.externalSource ? (
                 <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-                  <div className="relative flex-shrink-0">
+                  <div className="relative flex-shrink-0 self-start w-20 h-[120px]">
                     <img src={post.mediaImage} alt={post.mediaTitle} className="w-20 h-[120px] rounded-xl object-cover shadow-md cursor-pointer hover:opacity-90 transition-opacity" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     {mediaTypeNorm && (
                       <div className="absolute bottom-1.5 left-1.5 bg-purple-600/50 backdrop-blur-sm rounded-md p-1">
@@ -914,7 +914,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </div>
                 </Link>
               ) : (
-                <div className="relative flex-shrink-0">
+                <div className="relative flex-shrink-0 self-start w-20 h-[120px]">
                   <img src={post.mediaImage} alt={post.mediaTitle} className="w-20 h-[120px] rounded-xl object-cover shadow-md" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   {mediaTypeNorm && (
                     <div className="absolute bottom-1.5 left-1.5 bg-purple-600/50 backdrop-blur-sm rounded-md p-1">
@@ -1472,7 +1472,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
             {post.mediaImage && post.mediaImage.startsWith('http') && (
               post.externalId && post.externalSource ? (
                 <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-                  <div className="relative flex-shrink-0">
+                  <div className="relative flex-shrink-0 self-start w-20 h-[120px]">
                     <img
                       src={post.mediaImage}
                       alt={post.mediaTitle}
@@ -1492,7 +1492,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                   </div>
                 </Link>
               ) : (
-                <div className="relative flex-shrink-0">
+                <div className="relative flex-shrink-0 self-start w-20 h-[120px]">
                   <img
                     src={post.mediaImage}
                     alt={post.mediaTitle}
