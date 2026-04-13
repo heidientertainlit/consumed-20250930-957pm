@@ -155,16 +155,39 @@ serve(async (req) => {
     });
 
     // Validate input
-    if (!media_external_id || !media_external_source || !media_title || !media_type || !rating) {
+    if (!media_external_id || !media_external_source || !media_title || !media_type) {
       return new Response(JSON.stringify({ 
-        error: 'Missing required fields: media_external_id, media_external_source, media_title, media_type, rating' 
+        error: 'Missing required fields: media_external_id, media_external_source, media_title, media_type' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    if (rating < 0.5 || rating > 5) {
+    // rating === 0 means DELETE the rating
+    if (rating === 0) {
+      const { error: deleteError } = await supabase
+        .from('media_ratings')
+        .delete()
+        .eq('user_id', appUser.id)
+        .eq('media_external_id', media_external_id)
+        .eq('media_external_source', media_external_source);
+
+      if (deleteError) {
+        console.error('Error deleting rating:', deleteError);
+        return new Response(JSON.stringify({ error: 'Failed to remove rating: ' + deleteError.message }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      console.log('Rating removed successfully');
+      return new Response(JSON.stringify({ success: true, deleted: true }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (rating === undefined || rating === null || rating < 0.5 || rating > 5) {
       return new Response(JSON.stringify({ 
         error: 'Rating must be between 0.5 and 5' 
       }), {
