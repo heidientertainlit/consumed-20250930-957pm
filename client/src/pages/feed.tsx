@@ -794,6 +794,31 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     }
   };
 
+  const handleRemoveRating = async () => {
+    if (!session?.access_token) return;
+    setRatingValue(0);
+    setRatingSubmitted(false);
+    setShowStarPicker(false);
+    setHoverRating(0);
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/rate-media`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          media_external_id: post.externalId,
+          media_external_source: post.externalSource || 'tmdb',
+          media_title: post.mediaTitle,
+          media_type: post.mediaType || 'movie',
+          media_image_url: post.mediaImage,
+          rating: 0,
+          skip_social_post: true,
+        }),
+      });
+    } catch (err) {
+      console.error('Remove rating failed', err);
+    }
+  };
+
   const timeAgo = (dateStr?: string) => {
     if (!dateStr) return '';
     const mins = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
@@ -1034,7 +1059,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           <div className="mt-3 pt-3 border-t border-gray-100">
             {true && (
               <>
-                <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">{showStarPicker && ratingSubmitted ? 'Change Rating' : 'Your Turn'}</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-bold text-purple-600 tracking-widest uppercase">{showStarPicker && ratingSubmitted ? 'Change Rating' : 'Your Turn'}</p>
+                  {showStarPicker && ratingSubmitted && (
+                    <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove rating</button>
+                  )}
+                </div>
                 <div
                   ref={starsRef}
                   className="flex items-center gap-0.5 touch-none select-none"
@@ -1353,6 +1383,28 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     }
   };
 
+  const handleRemoveRating = async () => {
+    if (!session?.access_token) return;
+    const externalId = post.externalId || post.mediaItems?.[0]?.externalId || '';
+    const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
+    setRatingValue(0);
+    setRatingSubmitted(false);
+    setShowStarPicker(false);
+    setHoverRating(0);
+    try {
+      await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/rate-media`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ media_external_id: externalId, media_external_source: externalSource, media_title: post.mediaTitle, media_type: post.mediaType || 'movie', rating: 0, skip_social_post: true }),
+        }
+      );
+    } catch (err) {
+      console.error('Remove rating failed', err);
+    }
+  };
+
   const handleCommentLike = (commentId: string, commentLikesCount: number) => {
     const wasLiked = localLikedComments.has(commentId);
     setLocalLikedComments(prev => {
@@ -1624,7 +1676,12 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
           <div className="border-t border-gray-100 mt-3 pt-3">
             {true && (
               <>
-                <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">{showStarPicker && ratingSubmitted ? 'Change Rating' : 'Your Turn'}</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] font-bold text-purple-600 tracking-widest uppercase">{showStarPicker && ratingSubmitted ? 'Change Rating' : 'Your Turn'}</p>
+                  {showStarPicker && ratingSubmitted && (
+                    <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove rating</button>
+                  )}
+                </div>
                 <div
                   ref={starsRef}
                   className="flex items-center gap-0.5 touch-none select-none"
@@ -1959,6 +2016,25 @@ function CurrentlyConsumingFeedCard({
     }
   };
 
+  const handleRemoveRating = async () => {
+    if (!session?.access_token) return;
+    setSelectedRating(0);
+    setShowRating(false);
+    setHoverRating(0);
+    try {
+      await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/rate-media`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ media_external_id: media.externalId, media_external_source: media.externalSource || 'tmdb', media_title: media.title, media_type: media.mediaType || 'movie', rating: 0, skip_social_post: true }),
+        }
+      );
+    } catch (err) {
+      console.error('Remove rating failed', err);
+    }
+  };
+
   const handleSeenIt = async () => {
     if (seenItDone || !session?.access_token) return;
     setSeenItDone(true);
@@ -2190,7 +2266,12 @@ function CurrentlyConsumingFeedCard({
             <div className="border-t border-gray-100 mt-3 pt-3">
               {true && (
                 <>
-                  <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">{showRating && selectedRating ? 'Change Rating' : 'Your Turn'}</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-bold text-purple-600 tracking-widest uppercase">{showRating && selectedRating ? 'Change Rating' : 'Your Turn'}</p>
+                    {showRating && selectedRating > 0 && (
+                      <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove rating</button>
+                    )}
+                  </div>
                   <div
                     ref={starsRef}
                     className="flex items-center gap-0.5 touch-none select-none"
