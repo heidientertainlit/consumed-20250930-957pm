@@ -856,6 +856,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     if (t === 'tv show') return 'tv';
     return t;
   })();
+  const seenItLabel = (() => {
+    if (mediaTypeNorm === 'music') return { idle: 'Heard it', done: 'Heard!' };
+    if (mediaTypeNorm === 'podcast') return { idle: 'Listened', done: 'Listened!' };
+    if (mediaTypeNorm === 'book') return { idle: 'Read it', done: 'Read!' };
+    return { idle: 'Seen it', done: 'Seen!' };
+  })();
 
   return (
     <div className="snap-start flex-shrink-0 w-[85vw] max-w-[340px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -997,11 +1003,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <button
                 onClick={handleSeenIt}
                 className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`}
-                title="Seen it"
+                title={seenItLabel.idle}
                 disabled={seenItDone}
               >
                 <Check size={15} />
-                <span className="text-xs">{seenItDone ? 'Saved!' : 'Seen it'}</span>
+                <span className="text-xs">{seenItDone ? seenItLabel.done : seenItLabel.idle}</span>
               </button>
             </>
           )}
@@ -1381,6 +1387,12 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     if (t === 'tv show') return 'tv';
     return t;
   })();
+  const spSeenItLabel = (() => {
+    if (spMediaTypeNorm === 'music') return { idle: 'Heard it', done: 'Heard!' };
+    if (spMediaTypeNorm === 'podcast') return { idle: 'Listened', done: 'Listened!' };
+    if (spMediaTypeNorm === 'book') return { idle: 'Read it', done: 'Read!' };
+    return { idle: 'Seen it', done: 'Seen!' };
+  })();
 
   const timeAgo = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -1692,11 +1704,11 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                 <button
                   onClick={() => handleSeenIt(media)}
                   className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`}
-                  title="Seen it"
+                  title={spSeenItLabel.idle}
                   disabled={seenItDone}
                 >
                   <Check size={15} />
-                  <span className="text-xs">{seenItDone ? 'Saved!' : 'Seen it'}</span>
+                  <span className="text-xs">{seenItDone ? spSeenItLabel.done : spSeenItLabel.idle}</span>
                 </button>
               </>
             );
@@ -2101,15 +2113,24 @@ function CurrentlyConsumingFeedCard({
                 <Plus size={15} />
               </button>
             )}
-            <button
-              onClick={handleSeenIt}
-              className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`}
-              disabled={seenItDone}
-              title="Seen it"
-            >
-              <Check size={15} />
-              <span className="text-xs">{seenItDone ? 'Saved!' : 'Seen it'}</span>
-            </button>
+            {(() => {
+              const mType = (media.mediaType || '').toLowerCase();
+              const siLabel = mType === 'music' ? { idle: 'Heard it', done: 'Heard!' }
+                : mType === 'podcast' ? { idle: 'Listened', done: 'Listened!' }
+                : mType === 'book' ? { idle: 'Read it', done: 'Read!' }
+                : { idle: 'Seen it', done: 'Seen!' };
+              return (
+                <button
+                  onClick={handleSeenIt}
+                  className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`}
+                  disabled={seenItDone}
+                  title={siLabel.idle}
+                >
+                  <Check size={15} />
+                  <span className="text-xs">{seenItDone ? siLabel.done : siLabel.idle}</span>
+                </button>
+              );
+            })()}
             {/* Bet button - only for other users' Currently posts */}
             {!isOwnPost && onBet && (
               <button
