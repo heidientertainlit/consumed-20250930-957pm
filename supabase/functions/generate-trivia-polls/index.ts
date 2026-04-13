@@ -87,20 +87,29 @@ Make them feel personal, slightly dramatic, shareable. 2-4 options.`,
 - Cultural moment reactions: "This is the show of the summer:"
 These do NOT need a correct answer. They should feel like the biggest conversation of the day. 2-4 options.`,
 
-      dna_moment: `Generate DNA MOMENT questions — binary yes/no identity questions that build a user's Entertainment DNA profile. Categories:
-- How you consume: "Do you scroll while watching?"
-- Honest habits: "Do you finish shows you don't like?"  
-- Personality: "Are you a rewatcher?"
-- Social identity: "Do you need someone to watch with?"
-- Taste confidence: "Do you trust your own taste?"
-- Decision style: "Do you start multiple shows at once?"
-Each must have exactly 2 options (e.g., "Yes, always" / "Never"). Make them relatable, slightly exposing, addictive.`,
+      dna_moment: `Generate DNA MOMENT questions — casual, conversational, binary identity questions that reveal how someone really consumes entertainment. These should feel like something you'd see in a fun quiz, NOT a formal survey.
 
-      mixed: `Generate a MIXED batch. Aim for: 40% trivia, 35% polls, 15% featured plays, 10% DNA moments.
-Trivia: 4 options, 1 correct answer. Fun templates (who played, what year, which movie is this quote from, etc.)
-Polls: 2-4 options, no correct answer. Emotional, identity-driven, debate-worthy.
-Featured Play: 2-4 options, no correct answer. The biggest cultural moment/debate of the day.
-DNA Moment: exactly 2 options (binary), identity-revealing questions about consumption habits.`,
+VOICE RULES for DNA moments:
+- BAD: "Do you prefer reading books or watching movies?" (formal, clinical)
+- GOOD: "What do you consume more — books or movies?" (casual, direct)
+- BAD: "Are you someone who finishes shows even if you don't enjoy them?"
+- GOOD: "Do you finish shows you're not feeling?"
+- BAD: "Do you prefer to watch television with others or alone?"
+- GOOD: "Solo watching or watch parties — which are you?"
+
+CATEGORIES to cover (vary across the batch):
+- Consumption habits: "Binge all at once or slow burn it?" / "Do you read reviews before or after?"
+- Taste identity: "Subtitles on or off?" / "Do you trust your own taste?"
+- Social habits: "Do you need someone to watch with?" / "Do you talk during movies?"
+- Content loyalty: "Do you finish shows you're not feeling?" / "Do you rewatch your favorites?"
+- Format preferences: "Audio book or physical?" / "Cinema or streaming?"
+
+Each must have exactly 2 options — short, punchy (e.g., "All at once" / "One episode at a time"). Make them feel addictive and slightly exposing.`,
+
+      mixed: `Generate a MIXED batch of TRIVIA and POLLS only (no featured plays, no DNA moments — those are generated separately).
+Aim for: 55% trivia, 45% polls.
+Trivia: exactly 4 options, 1 correct answer. Use fun templates (who played, what year, finish the line, which came first, etc.)
+Polls: 2-4 options, no correct answer. Emotional, identity-driven, debate-worthy. Personal and slightly dramatic.`,
     };
 
     const systemPrompt = `You are a world-class entertainment content creator for Consumed, a social platform where fans actively engage with movies, TV, books, and music. You generate content that drives daily participation, feels culturally relevant, and is instantly shareable.
@@ -189,7 +198,7 @@ Return ONLY the JSON array. No markdown, no explanation, no code blocks.`;
         show_tag: item.show_tag || null,
         media_type: item.media_type || null,
         difficulty: item.difficulty || difficulty,
-        points_reward: item.content_type === 'trivia' ? 10 : item.content_type === 'featured_play' ? 20 : 5,
+        points_reward: item.content_type === 'trivia' ? 10 : item.content_type === 'featured_play' ? 20 : item.content_type === 'dna_moment' ? 5 : 2,
         partner_tag: partnerTag || null,
         template_type: item.template_type || null,
         rotation_type: item.rotation_type || 'evergreen',

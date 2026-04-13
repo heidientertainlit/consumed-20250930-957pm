@@ -98,6 +98,58 @@ function toLocalDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// Returns upcoming dates for a given day-of-week (0=Sun, 2=Tue, 6=Sat)
+function getUpcomingDaysOfWeek(dayOfWeek: number, count: number, startDate: Date): Date[] {
+  const results: Date[] = [];
+  const d = new Date(startDate);
+  const diff = (dayOfWeek - d.getDay() + 7) % 7;
+  d.setDate(d.getDate() + (diff === 0 ? 7 : diff));
+  for (let i = 0; i < count; i++) {
+    results.push(new Date(d));
+    d.setDate(d.getDate() + 7);
+  }
+  return results;
+}
+
+// Auto-assign publish dates across a batch of approved items
+function autoScheduleBatch(items: Draft[], startDate: Date): Record<string, string> {
+  const dates: Record<string, string> = {};
+  const featuredPlays = items.filter(d => d.content_type === "featured_play");
+  const triviaAndPolls = items.filter(d => d.content_type === "trivia" || d.content_type === "poll");
+  // DNA moments get no date — they publish without one
+
+  // Featured plays: 1 per day starting from startDate
+  featuredPlays.forEach((d, i) => {
+    const date = new Date(startDate);
+    date.setDate(date.getDate() + i);
+    dates[d.id] = toLocalDateStr(date);
+  });
+
+  // Trivia + polls: Tuesday (2) and Saturday (6) drops, up to 8 per drop day
+  if (triviaAndPolls.length > 0) {
+    const numDropDays = Math.ceil(triviaAndPolls.length / 8);
+    const tueDrops = getUpcomingDaysOfWeek(2, Math.ceil(numDropDays / 2) + 1, startDate);
+    const satDrops = getUpcomingDaysOfWeek(6, Math.ceil(numDropDays / 2) + 1, startDate);
+    // Interleave: Tue, Sat, Tue, Sat...
+    const dropDays: Date[] = [];
+    const maxLen = Math.max(tueDrops.length, satDrops.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (i < tueDrops.length) dropDays.push(tueDrops[i]);
+      if (i < satDrops.length) dropDays.push(satDrops[i]);
+    }
+    dropDays.sort((a, b) => a.getTime() - b.getTime());
+
+    triviaAndPolls.forEach((d, i) => {
+      const dropIndex = Math.floor(i / 8);
+      if (dropDays[dropIndex]) {
+        dates[d.id] = toLocalDateStr(dropDays[dropIndex]);
+      }
+    });
+  }
+
+  return dates;
+}
+
 export default function AdminTriviaPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -131,6 +183,8 @@ export default function AdminTriviaPage() {
   // Schedule state
   const [scheduleDates, setScheduleDates] = useState<Record<string, string>>({});
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [batchPublishing, setBatchPublishing] = useState(false);
+  const [batchStartDate, setBatchStartDate] = useState(toLocalDateStr((() => { const d = new Date(); d.setDate(d.getDate() + 1); return d; })()));
 
   // Expanded notes
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
@@ -376,6 +430,44 @@ export default function AdminTriviaPage() {
     }
   }
 
+  function handleAutoSchedule() {
+    const start = new Date(batchStartDate + "T12:00:00");
+    const newDates = autoScheduleBatch(scheduled, start);
+    setScheduleDates(prev => ({ ...prev, ...newDates }));
+    const assigned = Object.keys(newDates).length;
+    const dna = scheduled.filter(d => d.content_type === "dna_moment").length;
+    toast({
+      title: `Dates assigned to ${assigned} items`,
+      description: dna > 0 ? `${dna} DNA Moments will publish without a date.` : "Review dates below, then Publish All.",
+    });
+  }
+
+  async function publishAllScheduled() {
+    const toPublish = scheduled.filter(d => scheduleDates[d.id] || d.content_type === "dna_moment");
+    if (toPublish.length === 0) {
+      toast({ title: "No items ready", description: "Run Auto-schedule first, or set dates manually.", variant: "destructive" });
+      return;
+    }
+    setBatchPublishing(true);
+    let successCount = 0;
+    let failCount = 0;
+    for (const draft of toPublish) {
+      try {
+        await publishDraft(draft);
+        successCount++;
+      } catch {
+        failCount++;
+      }
+    }
+    setBatchPublishing(false);
+    toast({
+      title: `Published ${successCount} items${failCount > 0 ? `, ${failCount} failed` : ""}`,
+      description: "Check the Published tab to confirm.",
+    });
+    queryClient.invalidateQueries({ queryKey: ["trivia-poll-scheduled"] });
+    queryClient.invalidateQueries({ queryKey: ["trivia-poll-published"] });
+  }
+
   const tabs = [
     { id: "generate", label: "Generate", icon: <Sparkles size={14} /> },
     { id: "drafts", label: `Drafts${drafts.length ? ` (${drafts.length})` : ""}`, icon: <Brain size={14} /> },
@@ -432,7 +524,7 @@ export default function AdminTriviaPage() {
               <h3 className="text-sm font-semibold text-gray-200 mb-3">Content Type</h3>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {[
-                  { id: "mixed", label: "Mixed Batch", desc: "Best for weekly drops", icon: <Zap size={16} /> },
+                  { id: "mixed", label: "Mixed Batch", desc: "Trivia + polls for weekly drops", icon: <Zap size={16} /> },
                   { id: "trivia", label: "Trivia Only", desc: "4 options, 1 correct", icon: <Brain size={16} /> },
                   { id: "poll", label: "Polls Only", desc: "Opinion, no right answer", icon: <Vote size={16} /> },
                   { id: "featured_play", label: "Featured Play", desc: "Daily main event", icon: <Star size={16} /> },
@@ -647,7 +739,40 @@ export default function AdminTriviaPage() {
               </div>
             ) : (
               <>
-                <p className="text-sm text-gray-400 mb-2">{scheduled.length} item{scheduled.length !== 1 ? "s" : ""} approved — set dates and publish</p>
+                {/* Batch scheduling panel */}
+                <div className="bg-gray-900 border border-gray-700 rounded-xl p-4 mb-1">
+                  <p className="text-sm font-semibold text-white mb-1">Auto-schedule Batch</p>
+                  <p className="text-xs text-gray-400 mb-3">
+                    Trivia + polls → Tuesdays &amp; Saturdays (up to 8/drop). Featured Plays → 1 per day. DNA Moments → no date needed.
+                  </p>
+                  <div className="flex items-end gap-3">
+                    <div className="flex-1">
+                      <label className="text-xs text-gray-500 mb-1 block">Start from</label>
+                      <input
+                        type="date"
+                        value={batchStartDate}
+                        onChange={e => setBatchStartDate(e.target.value)}
+                        min={toLocalDateStr(new Date())}
+                        className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white w-full"
+                      />
+                    </div>
+                    <Button onClick={handleAutoSchedule} variant="outline" size="sm" className="border-purple-600 text-purple-400 hover:bg-purple-900/20 whitespace-nowrap">
+                      <Calendar size={13} className="mr-1" /> Auto-assign Dates
+                    </Button>
+                    <Button
+                      onClick={publishAllScheduled}
+                      disabled={batchPublishing}
+                      size="sm"
+                      className="bg-green-700 hover:bg-green-600 text-white whitespace-nowrap"
+                    >
+                      {batchPublishing ? <Loader2 size={13} className="animate-spin mr-1" /> : <Send size={13} className="mr-1" />}
+                      Publish All
+                    </Button>
+                  </div>
+                </div>
+
+                <p className="text-xs text-gray-500 mb-1">{scheduled.length} item{scheduled.length !== 1 ? "s" : ""} — override any date below, or Publish All</p>
+
                 {scheduled.map(draft => (
                   <div key={draft.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
                     <div className="flex items-start justify-between gap-3 mb-3">
@@ -657,6 +782,7 @@ export default function AdminTriviaPage() {
                           {draft.difficulty && <DifficultyBadge difficulty={draft.difficulty} />}
                           {draft.category && <span className="text-xs text-gray-500">{draft.category}</span>}
                           {draft.show_tag && <span className="text-xs text-purple-400">{draft.show_tag}</span>}
+                          <span className="text-xs text-gray-600">{draft.points_reward}pts</span>
                         </div>
                         <p className="text-sm font-medium text-white leading-snug">{draft.title}</p>
                         <div className="flex flex-wrap gap-1 mt-2">
@@ -676,15 +802,19 @@ export default function AdminTriviaPage() {
                     <div className="flex items-center gap-3">
                       <div className="flex-1">
                         <label className="text-xs text-gray-500 mb-1 block">
-                          {draft.content_type === "featured_play" ? "Featured Date (YYYY-MM-DD)" : "Publish Date (optional)"}
+                          {draft.content_type === "featured_play" ? "Featured Date" : draft.content_type === "dna_moment" ? "No date needed" : "Drop Date"}
                         </label>
-                        <input
-                          type="date"
-                          value={scheduleDates[draft.id] || ""}
-                          onChange={e => setScheduleDates(prev => ({ ...prev, [draft.id]: e.target.value }))}
-                          min={toLocalDateStr(new Date())}
-                          className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white w-full"
-                        />
+                        {draft.content_type === "dna_moment" ? (
+                          <p className="text-xs text-green-500 py-1.5">Publishes immediately</p>
+                        ) : (
+                          <input
+                            type="date"
+                            value={scheduleDates[draft.id] || ""}
+                            onChange={e => setScheduleDates(prev => ({ ...prev, [draft.id]: e.target.value }))}
+                            min={toLocalDateStr(new Date())}
+                            className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white w-full"
+                          />
+                        )}
                       </div>
                       <Button
                         onClick={() => publishDraft(draft)}
@@ -696,8 +826,8 @@ export default function AdminTriviaPage() {
                         <span className="ml-1">Publish</span>
                       </Button>
                     </div>
-                    {draft.content_type === "featured_play" && !scheduleDates[draft.id] && (
-                      <p className="text-xs text-yellow-600 mt-2">Set a featured date — this will become the Daily Call for that day</p>
+                    {draft.content_type === "featured_play" && scheduleDates[draft.id] && (
+                      <p className="text-xs text-yellow-600 mt-1">This will be the Daily Call on {scheduleDates[draft.id]}</p>
                     )}
                   </div>
                 ))}
@@ -873,14 +1003,15 @@ function DraftCard({
       {/* Reject feedback */}
       {rejecting && (
         <div className="mt-2 space-y-2">
+          <p className="text-xs text-purple-400 font-medium">Your feedback trains the AI — be specific so it doesn't repeat this mistake.</p>
           <Textarea
             value={rejectFeedback}
             onChange={e => setRejectFeedback(e.target.value)}
-            placeholder="What was wrong? (e.g. 'question is too obscure', 'wrong correct answer', 'already exists')"
-            className="bg-gray-800 border-gray-700 text-white text-xs min-h-[60px]"
+            placeholder={`e.g. "DNA moments should be casual, not formal surveys — rephrase as a direct question"\n"This trivia answer is wrong — it was actually..."\n"Too obscure, use more mainstream examples"`}
+            className="bg-gray-800 border-gray-700 text-white text-xs min-h-[80px]"
           />
           <div className="flex gap-2">
-            <Button onClick={onConfirmReject} size="sm" className="bg-red-700 hover:bg-red-600 text-white text-xs">Reject</Button>
+            <Button onClick={onConfirmReject} size="sm" className="bg-red-700 hover:bg-red-600 text-white text-xs">Reject & Train AI</Button>
             <Button onClick={onCancelReject} variant="outline" size="sm" className="border-gray-700 text-gray-400 text-xs">Cancel</Button>
           </div>
         </div>
