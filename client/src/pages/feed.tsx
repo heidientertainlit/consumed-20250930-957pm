@@ -1020,9 +1020,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {/* Your Turn — always-visible rating for rating/review posts */}
         {(post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && post.externalId && session?.access_token && (
           <div className="mt-3 pt-3 border-t border-gray-100">
-            {true && (
+            {ratingSubmitted ? (
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-green-600 font-medium">Your Rating: ★ {ratingValue}/5</p>
+                <button onClick={() => setRatingSubmitted(false)} className="text-[10px] text-purple-500 underline">Change</button>
+              </div>
+            ) : (
               <>
-                <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">{ratingSubmitted ? 'Your Rating' : 'Your Turn'}</p>
+                <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">Your Turn</p>
                 <div
                   ref={starsRef}
                   className="flex items-center gap-0.5 touch-none select-none"
@@ -1608,9 +1613,14 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
         {/* Your Turn — inline star rating for rating/review posts */}
         {isRatingType && post.mediaTitle && post.externalId && currentUserId && post.user?.id !== currentUserId && (
           <div className="border-t border-gray-100 mt-3 pt-3">
-            {true && (
+            {ratingSubmitted ? (
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-green-600 font-medium">Your Rating: ★ {ratingValue}/5</p>
+                <button onClick={() => setRatingSubmitted(false)} className="text-[10px] text-purple-500 underline">Change</button>
+              </div>
+            ) : (
               <>
-                <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">{ratingSubmitted ? 'Your Rating' : 'Your Turn'}</p>
+                <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">Your Turn</p>
                 <div
                   ref={starsRef}
                   className="flex items-center gap-0.5 touch-none select-none"
@@ -2154,9 +2164,14 @@ function CurrentlyConsumingFeedCard({
           {/* Your Turn — inline star rating */}
           {media.externalId && !isOwnPost && session?.access_token && (
             <div className="border-t border-gray-100 mt-3 pt-3">
-              {true && (
+              {selectedRating > 0 ? (
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-green-600 font-medium">Your Rating: ★ {selectedRating}/5</p>
+                  <button onClick={() => setSelectedRating(0)} className="text-[10px] text-purple-500 underline">Change</button>
+                </div>
+              ) : (
                 <>
-                  <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">{selectedRating > 0 ? 'Your Rating' : 'Your Turn'}</p>
+                  <p className="text-[10px] font-bold text-purple-600 mb-2 tracking-widest uppercase">Your Turn</p>
                   <div
                     ref={starsRef}
                     className="flex items-center gap-0.5 touch-none select-none"
