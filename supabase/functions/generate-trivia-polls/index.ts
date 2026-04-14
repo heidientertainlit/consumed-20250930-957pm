@@ -375,47 +375,74 @@ Return ONLY the JSON array. No markdown, no explanation, no code blocks.`;
 
     const dedupDropped = items.length - dedupedItems.length;
 
-    // --- Self-verification pass for trivia correct answers ---
-    const triviaItems = dedupedItems.filter((i: any) => i.content_type === 'trivia' && i.correct_answer);
-    if (triviaItems.length > 0) {
-      try {
-        const verifyPrompt = `You are a fact-checker. For each trivia question below, verify whether the listed correct_answer is actually correct given the provided options.
+    // --- Full QC pass: verify correct answers AND category/wording accuracy for all items ---
+    try {
+      const qcPrompt = `You are a strict fact-checker and content QC reviewer for an entertainment trivia platform.
 
-If the correct_answer is RIGHT: return it unchanged.
-If the correct_answer is WRONG: replace it with the actual correct answer (must exactly match one of the options).
+For each item below, check ALL of the following and return corrections:
 
-Return ONLY a JSON array with objects: { "idx": number, "correct_answer": string }
+1. TRIVIA CORRECT ANSWER: Is the correct_answer actually correct? If wrong, replace with the real answer (must exactly match one of the options).
+2. CATEGORY ACCURACY: Does the category match what the content actually is?
+   - "Books" = ONLY actual written books (novels, memoirs, nonfiction). Songs, lyrics, Disney rides, movies, TV shows are NEVER "Books".
+   - "Music" = songs, albums, artists, lyrics. "Finish the lyric" questions about songs MUST be "Music".
+   - "TV" = TV series only. "Movies" = films only.
+   - Fix the category if it's wrong.
+3. MEDIA TYPE ACCURACY: Does media_type match? (song/lyric → "music", book → "book", TV show → "tv", film → "movie")
+4. QUESTION WORDING: Does the question wording match the category? If a question says "From which book?" but it's about a song, fix the wording to match (e.g., "From which song?"). If a question is incoherent or factually absurd, set flag: true.
 
-Questions to verify:
-${triviaItems.map((q: any, i: number) => `${i}. "${q.title}" | Options: [${q.options.join(', ')}] | Claimed answer: "${q.correct_answer}"`).join('\n')}`;
+Return ONLY a JSON array. One object per item (use the same idx). Only include fields that need changing — omit unchanged fields.
 
-        const verifyResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
-          body: JSON.stringify({
-            model: 'gpt-4o',
-            max_tokens: 1024,
-            temperature: 0,
-            messages: [{ role: 'user', content: verifyPrompt }],
-          }),
-        });
+Fields you may return per object:
+- idx: number (required)
+- correct_answer: string (trivia only — only include if corrected)
+- category: string (only include if corrected)
+- media_type: string (only include if corrected)  
+- title: string (only include if question wording needed fixing)
+- flag: boolean (true if the item has an unfixable factual problem — leave for human review)
 
-        if (verifyResponse.ok) {
-          const verifyData = await verifyResponse.json();
-          const verifyText = verifyData.choices?.[0]?.message?.content || '';
-          const verifyMatch = verifyText.match(/\[[\s\S]*\]/);
-          if (verifyMatch) {
-            const corrections: { idx: number; correct_answer: string }[] = JSON.parse(verifyMatch[0]);
-            for (const fix of corrections) {
-              if (triviaItems[fix.idx] && triviaItems[fix.idx].options.includes(fix.correct_answer)) {
-                triviaItems[fix.idx].correct_answer = fix.correct_answer;
-              }
+Items to QC:
+${dedupedItems.map((q: any, i: number) => {
+  const parts = [`${i}. [${q.content_type}] Category: "${q.category}" | media_type: "${q.media_type}" | "${q.title}"`];
+  if (q.options?.length) parts.push(`   Options: [${q.options.join(', ')}]`);
+  if (q.correct_answer) parts.push(`   Claimed answer: "${q.correct_answer}"`);
+  return parts.join('\n');
+}).join('\n\n')}`;
+
+      const qcResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          max_tokens: 2048,
+          temperature: 0,
+          messages: [{ role: 'user', content: qcPrompt }],
+        }),
+      });
+
+      if (qcResponse.ok) {
+        const qcData = await qcResponse.json();
+        const qcText = qcData.choices?.[0]?.message?.content || '';
+        const qcMatch = qcText.match(/\[[\s\S]*\]/);
+        if (qcMatch) {
+          const fixes: { idx: number; correct_answer?: string; category?: string; media_type?: string; title?: string; flag?: boolean }[] = JSON.parse(qcMatch[0]);
+          for (const fix of fixes) {
+            const item = dedupedItems[fix.idx];
+            if (!item) continue;
+            if (fix.correct_answer && item.options?.includes(fix.correct_answer)) {
+              item.correct_answer = fix.correct_answer;
+            }
+            if (fix.category) item.category = fix.category;
+            if (fix.media_type) item.media_type = fix.media_type;
+            if (fix.title) item.title = fix.title;
+            if (fix.flag) {
+              // Mark in ai_notes so admin can spot it during review
+              item.ai_notes = `⚠️ QC FLAG: Possible factual issue — review before publishing. ${item.ai_notes || ''}`.trim();
             }
           }
         }
-      } catch (_verifyErr) {
-        // Verification is best-effort — don't block if it fails
       }
+    } catch (_qcErr) {
+      // QC is best-effort — don't block if it fails
     }
 
     const drafts: any[] = [];
