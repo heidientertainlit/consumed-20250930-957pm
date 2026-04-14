@@ -98,9 +98,41 @@ serve(async (req) => {
       focusTopic = '',
       partnerTag = '',
       difficulty = 'medium',
+      useTrending = false,
     } = body;
 
-    // Fetch recent rejections to teach GPT what to avoid
+    // ── 1. Fetch existing titles for dedup (prediction_pools + approved drafts) ──
+    const [existingPoolsRes, existingDraftsRes] = await Promise.all([
+      supabaseAdmin
+        .from('prediction_pools')
+        .select('title')
+        .in('type', ['trivia', 'vote', 'predict'])
+        .order('created_at', { ascending: false })
+        .limit(300),
+      supabaseAdmin
+        .from('trivia_poll_drafts')
+        .select('title')
+        .in('status', ['approved', 'published', 'pending'])
+        .order('created_at', { ascending: false })
+        .limit(100),
+    ]);
+
+    const existingTitles = new Set<string>();
+    const normalizeTitle = (t: string) => t.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+
+    for (const row of (existingPoolsRes.data || [])) {
+      if (row.title) existingTitles.add(normalizeTitle(row.title));
+    }
+    for (const row of (existingDraftsRes.data || [])) {
+      if (row.title) existingTitles.add(normalizeTitle(row.title));
+    }
+
+    const dedupBlock = existingTitles.size > 0
+      ? `\n\nDO NOT REPEAT — these questions already exist in our database (do not generate anything similar):\n` +
+        Array.from(existingTitles).slice(0, 150).map((t, i) => `${i + 1}. ${t}`).join('\n')
+      : '';
+
+    // ── 2. Fetch recent rejections ──
     const { data: recentRejections } = await supabaseAdmin
       .from('trivia_poll_drafts')
       .select('title, rejection_reason, content_type')
@@ -116,11 +148,78 @@ serve(async (req) => {
         ).join('\n')
       : '';
 
+    // ── 3. Fetch trending titles if requested ──
+    let trendingBlock = '';
+    if (useTrending) {
+      try {
+        const flixKey = Deno.env.get('FLIXPATROL_API_KEY');
+        const tmdbKey = Deno.env.get('TMDB_API_KEY') || '';
+        const today = new Date().toISOString().split('T')[0];
+        const trendingTitles: string[] = [];
+
+        // FlixPatrol: top shows on Netflix + Max + Disney+
+        if (flixKey) {
+          const platforms = [
+            { id: 'netflix', label: 'Netflix' },
+            { id: 'max', label: 'Max' },
+            { id: 'disney-plus', label: 'Disney+' },
+          ];
+          for (const p of platforms) {
+            try {
+              for (const mt of ['tv-shows', 'movies']) {
+                const res = await fetch(
+                  `https://api.flixpatrol.com/v1/top10/${p.id}/${mt}/united-states/${today}`,
+                  { headers: { 'X-API-Key': flixKey } }
+                );
+                if (res.ok) {
+                  const data = await res.json();
+                  (data.top10 || []).slice(0, 5).forEach((item: any) => {
+                    if (item.title) trendingTitles.push(`${item.title} (${p.label} #${item.rank || '?'} ${mt === 'tv-shows' ? 'TV' : 'Movie'})`);
+                  });
+                }
+              }
+            } catch (_) {}
+          }
+        }
+
+        // TMDB fallback / supplement
+        if (tmdbKey && trendingTitles.length < 10) {
+          try {
+            const [tvRes, movieRes] = await Promise.all([
+              fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${tmdbKey}`),
+              fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${tmdbKey}`),
+            ]);
+            if (tvRes.ok) {
+              const d = await tvRes.json();
+              (d.results || []).slice(0, 8).forEach((s: any) => {
+                if (s.name) trendingTitles.push(`${s.name} (Trending TV)`);
+              });
+            }
+            if (movieRes.ok) {
+              const d = await movieRes.json();
+              (d.results || []).slice(0, 6).forEach((m: any) => {
+                if (m.title) trendingTitles.push(`${m.title} (Trending Movie)`);
+              });
+            }
+          } catch (_) {}
+        }
+
+        if (trendingTitles.length > 0) {
+          trendingBlock = `\n\nTRENDING RIGHT NOW — base your questions heavily on these titles (at least 70% of your content should be about one of these):\n` +
+            trendingTitles.map((t, i) => `${i + 1}. ${t}`).join('\n');
+        }
+      } catch (_) {
+        // Trending fetch is best-effort — don't block generation if it fails
+      }
+    }
+
     const mediaFocus = focusTopic
       ? `Focus heavily on: "${focusTopic}"`
-      : mediaType === 'mixed'
-        ? 'Use this media mix: 40% TV, 30% Movies, 20% Books, 10% Music/other'
-        : `Focus on: ${mediaType} content`;
+      : useTrending
+        ? 'Focus on the trending titles listed above.'
+        : mediaType === 'mixed'
+          ? 'Use this media mix: 40% TV, 30% Movies, 20% Books, 10% Music/other'
+          : `Focus on: ${mediaType} content`;
 
     const typeInstructions: Record<string, string> = {
       trivia: `Generate TRIVIA questions only. Use these high-engagement templates:
@@ -184,7 +283,7 @@ Your content must be:
 - Immediately recognizable (mainstream + cult favorites)
 - Fast to answer (no research needed for most users)
 - Emotionally engaging (identity, nostalgia, debate)
-- Accurate (real titles, real actors, real years)${rejectionBlock}`;
+- Accurate (real titles, real actors, real years)${rejectionBlock}${dedupBlock}${trendingBlock}`;
 
     const userPrompt = `Generate exactly ${count} pieces of entertainment content.
 
@@ -251,8 +350,20 @@ Return ONLY the JSON array. No markdown, no explanation, no code blocks.`;
       });
     }
 
+    // ── Post-generation dedup: drop any item whose title too closely matches an existing one ──
+    const dedupedItems = items.filter((item: any) => {
+      if (!item.title) return false;
+      const norm = normalizeTitle(item.title);
+      if (existingTitles.has(norm)) return false;
+      // also check generated batch for within-batch duplication
+      existingTitles.add(norm);
+      return true;
+    });
+
+    const dedupDropped = items.length - dedupedItems.length;
+
     // --- Self-verification pass for trivia correct answers ---
-    const triviaItems = items.filter((i: any) => i.content_type === 'trivia' && i.correct_answer);
+    const triviaItems = dedupedItems.filter((i: any) => i.content_type === 'trivia' && i.correct_answer);
     if (triviaItems.length > 0) {
       try {
         const verifyPrompt = `You are a fact-checker. For each trivia question below, verify whether the listed correct_answer is actually correct given the provided options.
@@ -297,7 +408,7 @@ ${triviaItems.map((q: any, i: number) => `${i}. "${q.title}" | Options: [${q.opt
     const drafts: any[] = [];
     const errors: string[] = [];
 
-    for (const item of items) {
+    for (const item of dedupedItems) {
       const draft = {
         content_type: item.content_type || contentType,
         title: item.title || '',
@@ -331,6 +442,7 @@ ${triviaItems.map((q: any, i: number) => `${i}. "${q.title}" | Options: [${q.opt
     return new Response(JSON.stringify({
       success: true,
       generated: drafts.length,
+      dedupDropped: dedupDropped > 0 ? dedupDropped : undefined,
       drafts,
       errors: errors.length > 0 ? errors : undefined,
     }), {

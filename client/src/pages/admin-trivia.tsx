@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth";
 import {
   Sparkles, Check, X, Clock, ArrowLeft, Loader2, Trash2, Pencil,
   ChevronDown, ChevronUp, Calendar, Star, Zap, Brain, Vote, Dna,
-  RefreshCw, Send, ListChecks,
+  RefreshCw, Send, ListChecks, TrendingUp,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -166,6 +166,7 @@ export default function AdminTriviaPage() {
   const [focusTopic, setFocusTopic] = useState<string>("");
   const [partnerTag, setPartnerTag] = useState<string>("");
   const [difficulty, setDifficulty] = useState<string>("medium");
+  const [useTrending, setUseTrending] = useState<boolean>(false);
 
   // Editing state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -243,13 +244,14 @@ export default function AdminTriviaPage() {
           "Authorization": `Bearer ${session?.access_token}`,
           "apikey": supabaseAnonKey,
         },
-        body: JSON.stringify({ contentType, count, mediaType, focusTopic, partnerTag, difficulty }),
+        body: JSON.stringify({ contentType, count, mediaType, focusTopic, partnerTag, difficulty, useTrending }),
       });
       const result = await resp.json();
       if (!resp.ok || !result.success) {
         throw new Error(result.error || "Generation failed");
       }
-      toast({ title: `Generated ${result.generated} items`, description: "Review them in the Drafts tab." });
+      const dedupMsg = result.dedupDropped ? ` (${result.dedupDropped} skipped as duplicates)` : "";
+      toast({ title: `Generated ${result.generated} items${dedupMsg}`, description: "Review them in the Drafts tab." });
       queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
       setActiveTab("drafts");
     } catch (err: any) {
@@ -657,9 +659,10 @@ export default function AdminTriviaPage() {
                   <label className="text-xs text-gray-400 mb-1 block">Focus Topic (e.g. "Oscars 2026", "Taylor Swift")</label>
                   <Input
                     value={focusTopic}
-                    onChange={e => setFocusTopic(e.target.value)}
+                    onChange={e => { setFocusTopic(e.target.value); if (e.target.value) setUseTrending(false); }}
                     placeholder="Leave blank for general content"
-                    className="bg-gray-800 border-gray-700 text-white text-sm"
+                    disabled={useTrending}
+                    className="bg-gray-800 border-gray-700 text-white text-sm disabled:opacity-40"
                   />
                 </div>
                 <div>
@@ -671,6 +674,19 @@ export default function AdminTriviaPage() {
                     className="bg-gray-800 border-gray-700 text-white text-sm"
                   />
                 </div>
+              </div>
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => { setUseTrending(v => !v); if (!useTrending) setFocusTopic(""); }}
+                  className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg border transition-colors ${useTrending ? "bg-purple-600/20 border-purple-500 text-purple-300" : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600"}`}
+                >
+                  <TrendingUp size={14} />
+                  {useTrending ? "Trending mode ON — questions based on what's hot right now" : "Generate from trending (FlixPatrol + TMDB)"}
+                </button>
+                {useTrending && (
+                  <p className="text-xs text-purple-400/70 mt-1.5">Questions will focus on today's top shows & movies on Netflix, Max, Disney+, and TMDB trending.</p>
+                )}
               </div>
             </div>
 
