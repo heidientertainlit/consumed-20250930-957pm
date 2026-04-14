@@ -682,10 +682,10 @@ export default function AdminTriviaPage() {
                   className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg border transition-colors ${useTrending ? "bg-purple-600/20 border-purple-500 text-purple-300" : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600"}`}
                 >
                   <TrendingUp size={14} />
-                  {useTrending ? "Trending mode ON — questions based on what's hot right now" : "Generate from trending (FlixPatrol + TMDB)"}
+                  {useTrending ? "Trending mode ON — questions based on what's hot right now" : "Generate from trending (TMDB + Open Library)"}
                 </button>
                 {useTrending && (
-                  <p className="text-xs text-purple-400/70 mt-1.5">Questions will focus on today's top shows & movies on Netflix, Max, Disney+, and TMDB trending.</p>
+                  <p className="text-xs text-purple-400/70 mt-1.5">Pulls this week's trending TV, movies (TMDB), and books (Open Library + Google Books) — all free sources.</p>
                 )}
               </div>
             </div>

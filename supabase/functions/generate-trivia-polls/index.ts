@@ -149,41 +149,16 @@ serve(async (req) => {
       : '';
 
     // ── 3. Fetch trending titles if requested ──
+    // Sources: TMDB (TV + Movies, free tier), Open Library (Books, free), Google Books (Books, free key)
     let trendingBlock = '';
     if (useTrending) {
       try {
-        const flixKey = Deno.env.get('FLIXPATROL_API_KEY');
         const tmdbKey = Deno.env.get('TMDB_API_KEY') || '';
-        const today = new Date().toISOString().split('T')[0];
+        const googleBooksKey = Deno.env.get('GOOGLE_BOOKS_API_KEY') || '';
         const trendingTitles: string[] = [];
 
-        // FlixPatrol: top shows on Netflix + Max + Disney+
-        if (flixKey) {
-          const platforms = [
-            { id: 'netflix', label: 'Netflix' },
-            { id: 'max', label: 'Max' },
-            { id: 'disney-plus', label: 'Disney+' },
-          ];
-          for (const p of platforms) {
-            try {
-              for (const mt of ['tv-shows', 'movies']) {
-                const res = await fetch(
-                  `https://api.flixpatrol.com/v1/top10/${p.id}/${mt}/united-states/${today}`,
-                  { headers: { 'X-API-Key': flixKey } }
-                );
-                if (res.ok) {
-                  const data = await res.json();
-                  (data.top10 || []).slice(0, 5).forEach((item: any) => {
-                    if (item.title) trendingTitles.push(`${item.title} (${p.label} #${item.rank || '?'} ${mt === 'tv-shows' ? 'TV' : 'Movie'})`);
-                  });
-                }
-              }
-            } catch (_) {}
-          }
-        }
-
-        // TMDB fallback / supplement
-        if (tmdbKey && trendingTitles.length < 10) {
+        // TMDB: trending TV shows and movies this week (free, no FlixPatrol needed)
+        if (tmdbKey) {
           try {
             const [tvRes, movieRes] = await Promise.all([
               fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${tmdbKey}`),
@@ -191,14 +166,43 @@ serve(async (req) => {
             ]);
             if (tvRes.ok) {
               const d = await tvRes.json();
-              (d.results || []).slice(0, 8).forEach((s: any) => {
-                if (s.name) trendingTitles.push(`${s.name} (Trending TV)`);
+              (d.results || []).slice(0, 10).forEach((s: any, i: number) => {
+                if (s.name) trendingTitles.push(`${s.name} (Trending TV #${i + 1})`);
               });
             }
             if (movieRes.ok) {
               const d = await movieRes.json();
-              (d.results || []).slice(0, 6).forEach((m: any) => {
-                if (m.title) trendingTitles.push(`${m.title} (Trending Movie)`);
+              (d.results || []).slice(0, 8).forEach((m: any, i: number) => {
+                if (m.title) trendingTitles.push(`${m.title} (Trending Movie #${i + 1})`);
+              });
+            }
+          } catch (_) {}
+        }
+
+        // Open Library: trending books this week (completely free, no key)
+        try {
+          const olRes = await fetch('https://openlibrary.org/trending/weekly.json?limit=10', {
+            headers: { 'User-Agent': 'Consumed-App/1.0' },
+          });
+          if (olRes.ok) {
+            const d = await olRes.json();
+            ((d.works || []) as any[]).slice(0, 8).forEach((w: any, i: number) => {
+              if (w.title) trendingTitles.push(`${w.title} (Trending Book #${i + 1})`);
+            });
+          }
+        } catch (_) {}
+
+        // Google Books: popular / recently published (free key)
+        if (googleBooksKey) {
+          try {
+            const gbRes = await fetch(
+              `https://www.googleapis.com/books/v1/volumes?q=subject:fiction&orderBy=newest&maxResults=8&key=${googleBooksKey}`
+            );
+            if (gbRes.ok) {
+              const d = await gbRes.json();
+              ((d.items || []) as any[]).slice(0, 6).forEach((item: any) => {
+                const title = item.volumeInfo?.title;
+                if (title) trendingTitles.push(`${title} (New Book)`);
               });
             }
           } catch (_) {}
