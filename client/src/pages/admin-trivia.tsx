@@ -156,7 +156,7 @@ export default function AdminTriviaPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<"generate" | "drafts" | "published">("generate");
+  const [activeTab, setActiveTab] = useState<"generate" | "drafts" | "scheduled" | "published">("generate");
   const [generating, setGenerating] = useState(false);
 
   // Generate form state
@@ -225,6 +225,26 @@ export default function AdminTriviaPage() {
         .select("*")
         .eq("status", "published")
         .order("published_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Upcoming: already-published content from prediction_pools with future dates
+  const { data: upcoming = [], isLoading: upcomingLoading } = useQuery<{
+    id: string; title: string; type: string; category: string | null;
+    show_tag: string | null; featured_date: string | null; publish_at: string | null;
+    difficulty: string | null; correct_answer: string | null;
+  }[]>({
+    queryKey: ["trivia-poll-upcoming"],
+    queryFn: async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { data, error } = await supabase
+        .from("prediction_pools")
+        .select("id, title, type, category, show_tag, featured_date, publish_at, difficulty, correct_answer")
+        .or(`featured_date.gte.${today},publish_at.gte.${new Date().toISOString()}`)
+        .order("featured_date", { ascending: true, nullsFirst: false })
         .limit(200);
       if (error) throw error;
       return data || [];
@@ -409,9 +429,9 @@ export default function AdminTriviaPage() {
         if (!resp.ok || result.error) throw new Error(result.error || "Publish failed");
       }
 
-      toast({ title: "Published!", description: `${draft.title.slice(0, 50)}… is now live.` });
       queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
       queryClient.invalidateQueries({ queryKey: ["trivia-poll-published"] });
+      queryClient.invalidateQueries({ queryKey: ["trivia-poll-upcoming"] });
     } catch (err: any) {
       toast({ title: "Publish failed", description: err.message, variant: "destructive" });
       throw err; // Rethrow so batch can count failures correctly
@@ -486,6 +506,7 @@ export default function AdminTriviaPage() {
   const tabs = [
     { id: "generate", label: "Generate", icon: <Sparkles size={14} /> },
     { id: "drafts", label: `Drafts${totalDraftCount ? ` (${totalDraftCount})` : ""}`, icon: <Brain size={14} /> },
+    { id: "scheduled", label: `Scheduled${upcoming.length ? ` (${upcoming.length})` : ""}`, icon: <Clock size={14} /> },
     { id: "published", label: "Published", icon: <Check size={14} /> },
   ];
 
@@ -823,6 +844,79 @@ export default function AdminTriviaPage() {
                       />
                     ))}
                   </>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* SCHEDULED TAB — shows already-published content with future dates */}
+        {activeTab === "scheduled" && (
+          <div className="space-y-4">
+            {upcomingLoading ? (
+              <div className="flex items-center justify-center py-12"><Loader2 size={24} className="animate-spin text-gray-500" /></div>
+            ) : upcoming.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Clock size={40} className="mx-auto mb-3 opacity-30" />
+                <p>Nothing scheduled yet. Approve drafts to see your content calendar here.</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs text-gray-500">{upcoming.length} item{upcoming.length !== 1 ? "s" : ""} scheduled — already live in the app, appearing on their assigned dates.</p>
+
+                {/* Featured Plays section */}
+                {upcoming.filter(u => u.type === "predict").length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-yellow-400 uppercase tracking-wide mb-2">Featured Plays — 1 per day</p>
+                    <div className="space-y-1.5">
+                      {upcoming.filter(u => u.type === "predict").sort((a, b) => (a.featured_date || "").localeCompare(b.featured_date || "")).map(item => (
+                        <div key={item.id} className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 flex items-center gap-3">
+                          <span className="text-xs text-yellow-600 font-mono w-20 shrink-0">
+                            {item.featured_date ? new Date(item.featured_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
+                          </span>
+                          <p className="text-sm text-white flex-1 truncate">{item.title}</p>
+                          {item.category && <span className="text-xs text-gray-500 shrink-0">{item.category}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Trivia section */}
+                {upcoming.filter(u => u.type === "trivia").length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-purple-400 uppercase tracking-wide mb-2">Trivia drops</p>
+                    <div className="space-y-1.5">
+                      {upcoming.filter(u => u.type === "trivia").sort((a, b) => (a.publish_at || "").localeCompare(b.publish_at || "")).map(item => (
+                        <div key={item.id} className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 flex items-center gap-3">
+                          <span className="text-xs text-purple-600 font-mono w-20 shrink-0">
+                            {item.publish_at ? new Date(item.publish_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
+                          </span>
+                          <p className="text-sm text-white flex-1 truncate">{item.title}</p>
+                          {item.category && <span className="text-xs text-gray-500 shrink-0">{item.category}</span>}
+                          {item.correct_answer && <span className="text-xs text-green-600 shrink-0 truncate max-w-24">✓ {item.correct_answer}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Polls section */}
+                {upcoming.filter(u => u.type === "vote").length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-2">Poll drops</p>
+                    <div className="space-y-1.5">
+                      {upcoming.filter(u => u.type === "vote").sort((a, b) => (a.publish_at || "").localeCompare(b.publish_at || "")).map(item => (
+                        <div key={item.id} className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 flex items-center gap-3">
+                          <span className="text-xs text-blue-600 font-mono w-20 shrink-0">
+                            {item.publish_at ? new Date(item.publish_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
+                          </span>
+                          <p className="text-sm text-white flex-1 truncate">{item.title}</p>
+                          {item.category && <span className="text-xs text-gray-500 shrink-0">{item.category}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </>
             )}
