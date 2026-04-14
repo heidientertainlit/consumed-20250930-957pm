@@ -296,6 +296,15 @@ CONTENT TYPE: ${typeInstructions[contentType] || typeInstructions.mixed}
 MEDIA FOCUS: ${mediaFocus}
 ${difficulty !== 'medium' ? `DIFFICULTY BIAS: ${difficulty === 'easy' ? 'Lean toward mainstream, widely-known content' : 'Include deeper cuts and fandom knowledge'}` : ''}
 
+CATEGORY ACCURACY RULES — these are strict, not suggestions:
+- category "Books" = ONLY actual written books (novels, memoirs, nonfiction). Songs, lyrics, movies, TV shows, and Disney rides are NEVER "Books".
+- category "Music" = songs, albums, artists, lyrics, bands. "Finish the lyric" questions MUST use category "Music", not "Books".
+- category "TV" = television series only. Not movies, not songs.
+- category "Movies" = theatrical or streaming films only. Not TV shows.
+- "It's a Small World" is a Disney RIDE SONG — category: "Music", media_type: "music". NOT a book.
+- If a "finish the lyric/line" question is about a song or theme song, it MUST be Music. If it's about dialogue from a movie, category is Movies. If it's about dialogue from a show, category is TV.
+- Never ask "From which book?" when the lyric/quote is from a song or movie.
+
 Return ONLY a valid JSON array. Each item must have these exact fields:
 - content_type: "trivia" | "poll" | "featured_play" | "dna_moment"
 - title: the question text (compelling, concise)

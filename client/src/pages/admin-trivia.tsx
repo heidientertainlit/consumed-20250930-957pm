@@ -163,6 +163,14 @@ export default function AdminTriviaPage() {
   const [contentType, setContentType] = useState<string>("mixed");
   const [mediaType, setMediaType] = useState<string>("mixed");
   const [count, setCount] = useState<number>(10);
+
+  // Auto-set count when content type changes
+  function handleContentTypeChange(newType: string) {
+    setContentType(newType);
+    if (newType === "featured_play") setCount(31);
+    else if (newType === "dna_moment" && count > 20) setCount(20);
+    else if (count === 31 && newType !== "featured_play") setCount(10);
+  }
   const [focusTopic, setFocusTopic] = useState<string>("");
   const [partnerTag, setPartnerTag] = useState<string>("");
   const [difficulty, setDifficulty] = useState<string>("medium");
@@ -557,12 +565,12 @@ export default function AdminTriviaPage() {
                   { id: "mixed", label: "Mixed Batch", desc: "Trivia + polls for weekly drops", icon: <Zap size={16} /> },
                   { id: "trivia", label: "Trivia Only", desc: "4 options, 1 correct", icon: <Brain size={16} /> },
                   { id: "poll", label: "Polls Only", desc: "Opinion, no right answer", icon: <Vote size={16} /> },
-                  { id: "featured_play", label: "Featured Play", desc: "Daily main event", icon: <Star size={16} /> },
+                  { id: "featured_play", label: "Featured Play", desc: "1 per day · generate 31 at a time", icon: <Star size={16} /> },
                   { id: "dna_moment", label: "DNA Moments", desc: "Binary identity questions", icon: <Dna size={16} /> },
                 ].map(opt => (
                   <button
                     key={opt.id}
-                    onClick={() => setContentType(opt.id)}
+                    onClick={() => handleContentTypeChange(opt.id)}
                     className={`flex flex-col items-start gap-1 p-3 rounded-xl border text-left transition-all ${
                       contentType === opt.id
                         ? "border-purple-500 bg-purple-500/10"
@@ -607,23 +615,35 @@ export default function AdminTriviaPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
                 <h3 className="text-sm font-semibold text-gray-200 mb-3">How Many to Generate</h3>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="range"
-                    min={1}
-                    max={20}
-                    value={count}
-                    onChange={e => setCount(Number(e.target.value))}
-                    className="flex-1 accent-purple-500"
-                  />
-                  <span className="text-xl font-bold text-white w-8 text-center">{count}</span>
-                </div>
-                <div className="flex justify-between text-xs text-gray-600 mt-1">
-                  <span>1</span>
-                  <span>Quick test</span>
-                  <span>Monthly batch</span>
-                  <span>20</span>
-                </div>
+                {contentType === "featured_play" ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl font-bold text-purple-400">31</span>
+                      <span className="text-sm text-gray-400">items</span>
+                    </div>
+                    <p className="text-xs text-gray-500">1 per day = full month. Scheduled consecutively from your start date.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min={1}
+                        max={20}
+                        value={count}
+                        onChange={e => setCount(Number(e.target.value))}
+                        className="flex-1 accent-purple-500"
+                      />
+                      <span className="text-xl font-bold text-white w-8 text-center">{count}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-600 mt-1">
+                      <span>1</span>
+                      <span>Quick test</span>
+                      <span>Monthly batch</span>
+                      <span>20</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
@@ -690,12 +710,12 @@ export default function AdminTriviaPage() {
               </div>
             </div>
 
-            {/* Weekly cadence reminder */}
+            {/* Cadence reminder */}
             <div className="bg-blue-950/40 border border-blue-800/40 rounded-xl p-4 text-xs text-blue-300 space-y-1">
-              <p className="font-semibold">Weekly cadence reminder</p>
-              <p>Featured Plays: 1/day → generate 30 at once (monthly batch)</p>
-              <p>Trivia + Polls: Tuesday + Saturday drops → 6–8 trivia + 6–8 polls per drop</p>
-              <p>DNA Moments: generate 10–20 at a time, keep a steady queue</p>
+              <p className="font-semibold">Content cadence</p>
+              <p><span className="text-yellow-400">Featured Plays:</span> Generate 31 → "Approve &amp; Publish All" schedules 1/day for a month automatically</p>
+              <p><span className="text-purple-300">Trivia + Polls:</span> Tuesday + Saturday drops → 6–8 trivia + 6–8 polls per drop, up to 40 per drop</p>
+              <p><span className="text-green-400">DNA Moments:</span> Generate 10–20 at a time, publish without dates (they release continuously)</p>
             </div>
 
             <Button
