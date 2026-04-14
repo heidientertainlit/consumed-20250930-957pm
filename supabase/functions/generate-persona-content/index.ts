@@ -18,12 +18,79 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { personaIds, postsPerPersona = 2 } = await req.json();
+    const { personaIds, postsPerPersona = 2, useTrending = false } = await req.json();
 
     if (!personaIds || !Array.isArray(personaIds) || personaIds.length === 0) {
       return new Response(JSON.stringify({ error: 'personaIds array required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
+    }
+
+    // ── Fetch trending content once, share across all personas ──
+    let trendingContext = '';
+    if (useTrending) {
+      try {
+        const tmdbKey = Deno.env.get('TMDB_API_KEY') || '';
+        const googleBooksKey = Deno.env.get('GOOGLE_BOOKS_API_KEY') || '';
+        const trendingTitles: string[] = [];
+
+        // TMDB trending TV + movies this week
+        if (tmdbKey) {
+          try {
+            const [tvRes, movieRes] = await Promise.all([
+              fetch(`https://api.themoviedb.org/3/trending/tv/week?api_key=${tmdbKey}`),
+              fetch(`https://api.themoviedb.org/3/trending/movie/week?api_key=${tmdbKey}`),
+            ]);
+            if (tvRes.ok) {
+              const d = await tvRes.json();
+              ((d.results || []) as any[]).slice(0, 10).forEach((s: any, i: number) => {
+                if (s.name) trendingTitles.push(`${s.name} [TV, #${i + 1} trending]`);
+              });
+            }
+            if (movieRes.ok) {
+              const d = await movieRes.json();
+              ((d.results || []) as any[]).slice(0, 8).forEach((m: any, i: number) => {
+                if (m.title) trendingTitles.push(`${m.title} [Movie, #${i + 1} trending]`);
+              });
+            }
+          } catch (_) {}
+        }
+
+        // Open Library trending books this week (free, no key)
+        try {
+          const olRes = await fetch('https://openlibrary.org/trending/weekly.json?limit=10', {
+            headers: { 'User-Agent': 'Consumed-App/1.0' },
+          });
+          if (olRes.ok) {
+            const d = await olRes.json();
+            ((d.works || []) as any[]).slice(0, 8).forEach((w: any, i: number) => {
+              if (w.title) trendingTitles.push(`${w.title} [Book, #${i + 1} trending]`);
+            });
+          }
+        } catch (_) {}
+
+        // Google Books: recent popular fiction (free key)
+        if (googleBooksKey) {
+          try {
+            const gbRes = await fetch(
+              `https://www.googleapis.com/books/v1/volumes?q=subject:fiction&orderBy=newest&maxResults=6&key=${googleBooksKey}`
+            );
+            if (gbRes.ok) {
+              const d = await gbRes.json();
+              ((d.items || []) as any[]).slice(0, 5).forEach((item: any) => {
+                const title = item.volumeInfo?.title;
+                if (title) trendingTitles.push(`${title} [Book, new release]`);
+              });
+            }
+          } catch (_) {}
+        }
+
+        if (trendingTitles.length > 0) {
+          trendingContext = `\n\nTRENDING THIS WEEK — at least half of your posts should be personal reactions to something from this list (pick whatever fits your taste best):\n${trendingTitles.map((t, i) => `${i + 1}. ${t}`).join('\n')}\n\nThe other posts can be about anything that fits your personality.`;
+        }
+      } catch (_) {
+        // Trending fetch is best-effort — don't block generation
+      }
     }
 
     const { data: personas, error: personaError } = await supabaseAdmin
@@ -90,7 +157,7 @@ PERSONALITY:
 WRITING STYLE EXAMPLES (match this voice exactly):
 ${styleExamples}${rejectionBlock}`;
 
-      const userPrompt = `Generate ${postsPerPersona} distinct social posts this person would authentically write right now. Posts should be about specific real media (movies, TV shows, books, podcasts, music, or games) that fit their taste.
+      const userPrompt = `Generate ${postsPerPersona} distinct social posts this person would authentically write right now. Posts should be about specific real media (movies, TV shows, books, podcasts, music, or games) that fit their taste.${trendingContext}
 
 CRITICAL STYLE RULES — read carefully:
 - Write HUMAN REACTIONS, not descriptions. Posts must be personal opinions, feelings, or takes — never a plot summary or factual overview.

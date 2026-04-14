@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth";
 import {
   Sparkles, Check, X, Clock, ChevronDown, ChevronUp,
   RefreshCw, Calendar, Star, MessageSquare, Flame,
-  User, Loader2, Trash2, Pencil, ArrowLeft
+  User, Loader2, Trash2, Pencil, ArrowLeft, TrendingUp
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -163,6 +163,7 @@ export default function AdminPersonasPage() {
 
   const [selectedPersonaIds, setSelectedPersonaIds] = useState<string[]>([]);
   const [postsPerPersona, setPostsPerPersona] = useState(2);
+  const [useTrending, setUseTrending] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [editingDraft, setEditingDraft] = useState<string | null>(null);
@@ -488,7 +489,7 @@ export default function AdminPersonasPage() {
           "Authorization": `Bearer ${session?.access_token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ personaIds: selectedPersonaIds, postsPerPersona }),
+        body: JSON.stringify({ personaIds: selectedPersonaIds, postsPerPersona, useTrending }),
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "Generation failed");
@@ -577,7 +578,7 @@ export default function AdminPersonasPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 mb-5">
+          <div className="flex items-center gap-4 mb-4">
             <div>
               <p className="text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Posts per persona</p>
               <div className="flex items-center gap-2">
@@ -596,6 +597,20 @@ export default function AdminPersonasPage() {
                 ))}
               </div>
             </div>
+          </div>
+
+          <div className="mb-5">
+            <button
+              type="button"
+              onClick={() => setUseTrending(v => !v)}
+              className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg border transition-colors ${useTrending ? "bg-purple-600/20 border-purple-500 text-purple-300" : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600"}`}
+            >
+              <TrendingUp size={14} />
+              {useTrending ? "Trending mode ON — posts will react to what's hot right now" : "Generate from trending (TMDB + Open Library)"}
+            </button>
+            {useTrending && (
+              <p className="text-xs text-purple-400/70 mt-1.5">Each persona will write reactions to this week's trending TV, movies, and books — making posts feel timely and culturally relevant.</p>
+            )}
           </div>
 
           <Button
