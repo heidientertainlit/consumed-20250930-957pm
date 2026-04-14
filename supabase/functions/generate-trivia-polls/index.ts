@@ -248,13 +248,17 @@ Each must have exactly 4 options with one correct answer. Vary difficulty from e
 - "You either get it or you don't — this show is:"
 Make them feel personal, slightly dramatic, shareable. 2-4 options.`,
 
-      featured_play: `Generate FEATURED PLAY content — the main daily event. Mix of:
-- Light predictions (no resolution needed): "Does this go viral?", "Will [show] get renewed?"
-- Big cultural polls: "Everyone's watching this right now:"
-- "Pick your side" moments: "You're either Team X or Team Y"
-- "Call it" takes: "This show will be remembered as:"
-- Cultural moment reactions: "This is the show of the summer:"
-These do NOT need a correct answer. They should feel like the biggest conversation of the day. 2-4 options.`,
+      featured_play: `Generate FEATURED PLAY content — the main daily event. Generate a MIX of approximately half trivia and half polls:
+
+TRIVIA-STYLE (about half): Fun, fast entertainment trivia with exactly 4 options and a correct_answer.
+- Examples: "What year did [iconic show] premiere?", "Who played [famous role]?", "Which film won Best Picture in [year]?", "Finish the iconic line: '___'"
+- Must have correct_answer matching one of the 4 options exactly.
+
+POLL-STYLE (about half): Opinionated, debate-worthy, no correct answer. Emotional, identity-driven.
+- Examples: "Everyone's watching this right now:", "You're either Team X or Team Y", "This series finale left me speechless:", "Pick your side:"
+- correct_answer must be null. 2-4 options.
+
+All of them should feel like the biggest conversation or moment of the day — regardless of whether they're trivia or poll style. Set content_type: "featured_play" for all of them.`,
 
       dna_moment: `Generate DNA MOMENT questions — casual, conversational, binary identity questions that reveal how someone really consumes entertainment. These should feel like something you'd see in a fun quiz, NOT a formal survey.
 

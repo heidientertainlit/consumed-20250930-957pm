@@ -458,10 +458,9 @@ export default function AdminTriviaPage() {
       }
     }
     setBatchPublishing(false);
-    toast({
-      title: `Published ${successCount} item${successCount !== 1 ? "s" : ""}${failCount > 0 ? `, ${failCount} failed` : ""}`,
-      description: "Check the Published tab to confirm.",
-    });
+    if (failCount > 0) {
+      toast({ title: `${failCount} item${failCount !== 1 ? "s" : ""} failed to publish`, variant: "destructive" });
+    }
     queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
     queryClient.invalidateQueries({ queryKey: ["trivia-poll-published"] });
   }
@@ -494,10 +493,9 @@ export default function AdminTriviaPage() {
       }
     }
     setBatchPublishing(false);
-    toast({
-      title: `Published ${successCount} items${failCount > 0 ? `, ${failCount} failed` : ""}`,
-      description: "Check the Published tab to confirm.",
-    });
+    if (failCount > 0) {
+      toast({ title: `${failCount} item${failCount !== 1 ? "s" : ""} failed to publish`, variant: "destructive" });
+    }
     queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
     queryClient.invalidateQueries({ queryKey: ["trivia-poll-published"] });
   }
