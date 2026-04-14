@@ -156,7 +156,7 @@ export default function AdminTriviaPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<"generate" | "drafts" | "scheduled" | "published">("generate");
+  const [activeTab, setActiveTab] = useState<"generate" | "drafts" | "published">("generate");
   const [generating, setGenerating] = useState(false);
 
   // Generate form state
@@ -199,13 +199,13 @@ export default function AdminTriviaPage() {
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
 
   // Data queries
-  const { data: drafts = [], isLoading: draftsLoading, refetch: refetchDrafts } = useQuery<Draft[]>({
+  const { data: allDrafts = [], isLoading: draftsLoading } = useQuery<Draft[]>({
     queryKey: ["trivia-poll-drafts"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("trivia_poll_drafts")
         .select("*")
-        .eq("status", "draft")
+        .in("status", ["draft", "approved"])
         .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
@@ -213,19 +213,9 @@ export default function AdminTriviaPage() {
     },
   });
 
-  const { data: scheduled = [], isLoading: scheduledLoading, refetch: refetchScheduled } = useQuery<Draft[]>({
-    queryKey: ["trivia-poll-scheduled"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("trivia_poll_drafts")
-        .select("*")
-        .eq("status", "approved")
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  // Separate pending review from approved-but-not-yet-published (legacy items from old flow)
+  const drafts = allDrafts.filter(d => d.status === "draft");
+  const legacyApproved = allDrafts.filter(d => d.status === "approved");
 
   const { data: published = [], isLoading: publishedLoading, refetch: refetchPublished } = useQuery<Draft[]>({
     queryKey: ["trivia-poll-published"],
@@ -296,7 +286,6 @@ export default function AdminTriviaPage() {
     } else {
       setEditingId(null);
       queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
-      queryClient.invalidateQueries({ queryKey: ["trivia-poll-scheduled"] });
     }
   }
 
@@ -344,7 +333,6 @@ export default function AdminTriviaPage() {
       toast({ title: "Delete failed", description: error.message, variant: "destructive" });
     } else {
       queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
-      queryClient.invalidateQueries({ queryKey: ["trivia-poll-scheduled"] });
       queryClient.invalidateQueries({ queryKey: ["trivia-poll-published"] });
     }
   }
@@ -422,7 +410,7 @@ export default function AdminTriviaPage() {
       }
 
       toast({ title: "Published!", description: `${draft.title.slice(0, 50)}… is now live.` });
-      queryClient.invalidateQueries({ queryKey: ["trivia-poll-scheduled"] });
+      queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
       queryClient.invalidateQueries({ queryKey: ["trivia-poll-published"] });
     } catch (err: any) {
       toast({ title: "Publish failed", description: err.message, variant: "destructive" });
@@ -458,32 +446,20 @@ export default function AdminTriviaPage() {
     queryClient.invalidateQueries({ queryKey: ["trivia-poll-published"] });
   }
 
-  function handleAutoSchedule() {
-    const start = new Date(batchStartDate + "T12:00:00");
-    const newDates = autoScheduleBatch(scheduled, start);
-    setScheduleDates(prev => ({ ...prev, ...newDates }));
-    const assigned = Object.keys(newDates).length;
-    const dna = scheduled.filter(d => d.content_type === "dna_moment").length;
-    toast({
-      title: `Dates assigned to ${assigned} items`,
-      description: dna > 0 ? `${dna} DNA Moments will publish without a date.` : "Review dates below, then Publish All.",
-    });
-  }
-
   async function publishAllScheduled() {
     // Auto-assign dates if none have been set yet — so "Publish All" works in one click
     let currentDates = scheduleDates;
-    const undated = scheduled.filter(d => d.content_type !== "dna_moment" && !currentDates[d.id]);
+    const undated = legacyApproved.filter(d => d.content_type !== "dna_moment" && !currentDates[d.id]);
     if (undated.length > 0) {
       const start = new Date(batchStartDate + "T12:00:00");
-      const newDates = autoScheduleBatch(scheduled, start);
+      const newDates = autoScheduleBatch(legacyApproved, start);
       currentDates = { ...currentDates, ...newDates };
       setScheduleDates(currentDates);
     }
 
-    const toPublish = scheduled.filter(d => currentDates[d.id] || d.content_type === "dna_moment");
+    const toPublish = legacyApproved.filter(d => currentDates[d.id] || d.content_type === "dna_moment");
     if (toPublish.length === 0) {
-      toast({ title: "No items ready", description: "No scheduled items found. Check the Scheduled tab.", variant: "destructive" });
+      toast({ title: "No items ready", description: "No items are ready to publish.", variant: "destructive" });
       return;
     }
     setBatchPublishing(true);
@@ -502,14 +478,14 @@ export default function AdminTriviaPage() {
       title: `Published ${successCount} items${failCount > 0 ? `, ${failCount} failed` : ""}`,
       description: "Check the Published tab to confirm.",
     });
-    queryClient.invalidateQueries({ queryKey: ["trivia-poll-scheduled"] });
+    queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
     queryClient.invalidateQueries({ queryKey: ["trivia-poll-published"] });
   }
 
+  const totalDraftCount = drafts.length + legacyApproved.length;
   const tabs = [
     { id: "generate", label: "Generate", icon: <Sparkles size={14} /> },
-    { id: "drafts", label: `Drafts${drafts.length ? ` (${drafts.length})` : ""}`, icon: <Brain size={14} /> },
-    { id: "scheduled", label: `Scheduled${scheduled.length ? ` (${scheduled.length})` : ""}`, icon: <Clock size={14} /> },
+    { id: "drafts", label: `Drafts${totalDraftCount ? ` (${totalDraftCount})` : ""}`, icon: <Brain size={14} /> },
     { id: "published", label: "Published", icon: <Check size={14} /> },
   ];
 
@@ -737,182 +713,117 @@ export default function AdminTriviaPage() {
           <div className="space-y-3">
             {draftsLoading ? (
               <div className="flex items-center justify-center py-12"><Loader2 size={24} className="animate-spin text-gray-500" /></div>
-            ) : drafts.length === 0 ? (
+            ) : totalDraftCount === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <ListChecks size={40} className="mx-auto mb-3 opacity-30" />
                 <p>No drafts yet. Generate content to get started.</p>
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <p className="text-sm text-gray-400">{drafts.length} draft{drafts.length !== 1 ? "s" : ""} waiting for review</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <label className="text-xs text-gray-500 whitespace-nowrap">Schedule from</label>
-                      <input
-                        type="date"
-                        value={batchStartDate}
-                        onChange={e => { if (e.target.value) setBatchStartDate(e.target.value); }}
-                        min={toLocalDateStr(new Date())}
-                        className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white"
-                      />
-                    </div>
-                    <Button onClick={approveAll} disabled={batchPublishing} size="sm" className="text-xs bg-green-700 hover:bg-green-600 text-white whitespace-nowrap">
-                      {batchPublishing ? <Loader2 size={12} className="animate-spin mr-1" /> : <Check size={12} className="mr-1" />}
-                      Approve &amp; Publish All
-                    </Button>
-                  </div>
-                </div>
-                {drafts.map(draft => (
-                  <DraftCard
-                    key={draft.id}
-                    draft={draft}
-                    editing={editingId === draft.id}
-                    rejecting={rejectingId === draft.id}
-                    editTitle={editTitle}
-                    editOptions={editOptions}
-                    editCorrectAnswer={editCorrectAnswer}
-                    editCategory={editCategory}
-                    editShowTag={editShowTag}
-                    editPointsReward={editPointsReward}
-                    rejectFeedback={rejectFeedback}
-                    expandedNotes={expandedNotes}
-                    onEdit={() => startEdit(draft)}
-                    onSaveEdit={() => saveEdit(draft)}
-                    onCancelEdit={() => setEditingId(null)}
-                    onApprove={() => approveDraft(draft)}
-                    onStartReject={() => { setRejectingId(draft.id); setRejectFeedback(""); }}
-                    onConfirmReject={() => rejectDraft(draft.id)}
-                    onCancelReject={() => setRejectingId(null)}
-                    onDelete={() => deleteDraft(draft.id)}
-                    onToggleNotes={() => {
-                      const next = new Set(expandedNotes);
-                      next.has(draft.id) ? next.delete(draft.id) : next.add(draft.id);
-                      setExpandedNotes(next);
-                    }}
-                    setEditTitle={setEditTitle}
-                    setEditOptions={setEditOptions}
-                    setEditCorrectAnswer={setEditCorrectAnswer}
-                    setEditCategory={setEditCategory}
-                    setEditShowTag={setEditShowTag}
-                    setEditPointsReward={setEditPointsReward}
-                    setRejectFeedback={setRejectFeedback}
-                  />
-                ))}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* SCHEDULED TAB */}
-        {activeTab === "scheduled" && (
-          <div className="space-y-3">
-            {scheduledLoading ? (
-              <div className="flex items-center justify-center py-12"><Loader2 size={24} className="animate-spin text-gray-500" /></div>
-            ) : scheduled.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <Clock size={40} className="mx-auto mb-3 opacity-30" />
-                <p>No approved content yet. Approve drafts to add them here.</p>
-              </div>
-            ) : (
-              <>
-                {/* Batch scheduling panel */}
-                <div className="bg-gray-900 border border-gray-700 rounded-xl p-4 mb-1">
-                  <p className="text-sm font-semibold text-white mb-1">Auto-schedule Batch</p>
-                  <p className="text-xs text-gray-400 mb-3">
-                    Trivia + polls → Tuesdays &amp; Saturdays (up to 40/drop). Featured Plays → 1 per day. DNA Moments → no date needed.
-                  </p>
-                  <div className="flex items-end gap-3">
-                    <div className="flex-1">
-                      <label className="text-xs text-gray-500 mb-1 block">Drop dates start from</label>
-                      <input
-                        type="date"
-                        value={batchStartDate}
-                        onChange={e => {
-                          const val = e.target.value;
-                          setBatchStartDate(val);
-                          if (val) {
-                            const start = new Date(val + "T12:00:00");
-                            const newDates = autoScheduleBatch(scheduled, start);
-                            setScheduleDates(prev => ({ ...prev, ...newDates }));
-                          }
-                        }}
-                        min={toLocalDateStr(new Date())}
-                        className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white w-full"
-                      />
-                    </div>
-                    <Button
-                      onClick={publishAllScheduled}
-                      disabled={batchPublishing}
-                      size="sm"
-                      className="bg-green-700 hover:bg-green-600 text-white whitespace-nowrap"
-                    >
-                      {batchPublishing ? <Loader2 size={13} className="animate-spin mr-1" /> : <Send size={13} className="mr-1" />}
-                      Publish All
-                    </Button>
-                  </div>
-                </div>
-
-                <p className="text-xs text-gray-500 mb-1">{scheduled.length} item{scheduled.length !== 1 ? "s" : ""} — NOT live yet. Change the start date above to shift all drop dates, or override individually below, then Publish All.</p>
-
-                {scheduled.map(draft => (
-                  <div key={draft.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <ContentTypePill type={draft.content_type} />
-                          {draft.difficulty && <DifficultyBadge difficulty={draft.difficulty} />}
-                          {draft.category && <span className="text-xs text-gray-500">{draft.category}</span>}
-                          {draft.show_tag && <span className="text-xs text-purple-400">{draft.show_tag}</span>}
-                          <span className="text-xs text-gray-600">{draft.points_reward}pts</span>
-                        </div>
-                        <p className="text-sm font-medium text-white leading-snug">{draft.title}</p>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {draft.options.map((opt, i) => (
-                            <span key={i} className={`text-xs px-2 py-0.5 rounded-full border ${draft.correct_answer === opt ? "border-green-600 bg-green-900/30 text-green-300" : "border-gray-700 text-gray-400"}`}>
-                              {opt}
-                              {draft.correct_answer === opt && " ✓"}
-                            </span>
-                          ))}
-                        </div>
+                {/* Legacy approved items — need to be published */}
+                {legacyApproved.length > 0 && (
+                  <div className="bg-yellow-950/40 border border-yellow-700/50 rounded-xl p-4 mb-2">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <p className="text-sm font-semibold text-yellow-300">{legacyApproved.length} item{legacyApproved.length !== 1 ? "s" : ""} ready to publish</p>
+                        <p className="text-xs text-yellow-600 mt-0.5">These were approved but not yet published. Set a date and publish each, or publish all at once.</p>
                       </div>
-                      <button onClick={() => deleteDraft(draft.id)} className="text-gray-600 hover:text-red-400 transition-colors flex-shrink-0">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1">
-                        <label className="text-xs text-gray-500 mb-1 block">
-                          {draft.content_type === "featured_play" ? "Featured Date" : draft.content_type === "dna_moment" ? "No date needed" : "Drop Date"}
-                        </label>
-                        {draft.content_type === "dna_moment" ? (
-                          <p className="text-xs text-green-500 py-1.5">Publishes immediately</p>
-                        ) : (
-                          <input
-                            type="date"
-                            value={scheduleDates[draft.id] || ""}
-                            onChange={e => setScheduleDates(prev => ({ ...prev, [draft.id]: e.target.value }))}
-                            min={toLocalDateStr(new Date())}
-                            className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white w-full"
-                          />
-                        )}
-                      </div>
-                      <Button
-                        onClick={() => publishDraft(draft)}
-                        disabled={publishingId === draft.id}
-                        size="sm"
-                        className="bg-green-700 hover:bg-green-600 text-white mt-4"
-                      >
-                        {publishingId === draft.id ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                        <span className="ml-1">Publish</span>
+                      <Button onClick={publishAllScheduled} disabled={batchPublishing} size="sm" className="bg-yellow-700 hover:bg-yellow-600 text-white whitespace-nowrap text-xs">
+                        {batchPublishing ? <Loader2 size={12} className="animate-spin mr-1" /> : <Send size={12} className="mr-1" />}
+                        Publish All
                       </Button>
                     </div>
-                    {draft.content_type === "featured_play" && scheduleDates[draft.id] && (
-                      <p className="text-xs text-yellow-600 mt-1">This will be the Daily Call on {scheduleDates[draft.id]}</p>
-                    )}
+                    <div className="space-y-2">
+                      {legacyApproved.map(draft => (
+                        <div key={draft.id} className="bg-gray-900 border border-gray-700 rounded-lg p-3 flex items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                              <ContentTypePill type={draft.content_type} />
+                              {draft.category && <span className="text-xs text-gray-500">{draft.category}</span>}
+                            </div>
+                            <p className="text-sm text-white truncate">{draft.title}</p>
+                          </div>
+                          {draft.content_type !== "dna_moment" && (
+                            <input
+                              type="date"
+                              value={scheduleDates[draft.id] || ""}
+                              onChange={e => setScheduleDates(prev => ({ ...prev, [draft.id]: e.target.value }))}
+                              min={toLocalDateStr(new Date())}
+                              className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1 text-xs text-white"
+                            />
+                          )}
+                          <Button onClick={() => publishDraft(draft)} disabled={publishingId === draft.id} size="sm" className="bg-green-700 hover:bg-green-600 text-white text-xs">
+                            {publishingId === draft.id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                          </Button>
+                          <button onClick={() => deleteDraft(draft.id)} className="text-gray-600 hover:text-red-400 transition-colors">
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
+                )}
+
+                {/* Pending review drafts */}
+                {drafts.length > 0 && (
+                  <>
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <p className="text-sm text-gray-400">{drafts.length} draft{drafts.length !== 1 ? "s" : ""} waiting for review</p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <label className="text-xs text-gray-500 whitespace-nowrap">Schedule from</label>
+                          <input
+                            type="date"
+                            value={batchStartDate}
+                            onChange={e => { if (e.target.value) setBatchStartDate(e.target.value); }}
+                            min={toLocalDateStr(new Date())}
+                            className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white"
+                          />
+                        </div>
+                        <Button onClick={approveAll} disabled={batchPublishing} size="sm" className="text-xs bg-green-700 hover:bg-green-600 text-white whitespace-nowrap">
+                          {batchPublishing ? <Loader2 size={12} className="animate-spin mr-1" /> : <Check size={12} className="mr-1" />}
+                          Approve &amp; Publish All
+                        </Button>
+                      </div>
+                    </div>
+                    {drafts.map(draft => (
+                      <DraftCard
+                        key={draft.id}
+                        draft={draft}
+                        editing={editingId === draft.id}
+                        rejecting={rejectingId === draft.id}
+                        editTitle={editTitle}
+                        editOptions={editOptions}
+                        editCorrectAnswer={editCorrectAnswer}
+                        editCategory={editCategory}
+                        editShowTag={editShowTag}
+                        editPointsReward={editPointsReward}
+                        rejectFeedback={rejectFeedback}
+                        expandedNotes={expandedNotes}
+                        onEdit={() => startEdit(draft)}
+                        onSaveEdit={() => saveEdit(draft)}
+                        onCancelEdit={() => setEditingId(null)}
+                        onApprove={() => approveDraft(draft)}
+                        onStartReject={() => { setRejectingId(draft.id); setRejectFeedback(""); }}
+                        onConfirmReject={() => rejectDraft(draft.id)}
+                        onCancelReject={() => setRejectingId(null)}
+                        onDelete={() => deleteDraft(draft.id)}
+                        onToggleNotes={() => {
+                          const next = new Set(expandedNotes);
+                          next.has(draft.id) ? next.delete(draft.id) : next.add(draft.id);
+                          setExpandedNotes(next);
+                        }}
+                        setEditTitle={setEditTitle}
+                        setEditOptions={setEditOptions}
+                        setEditCorrectAnswer={setEditCorrectAnswer}
+                        setEditCategory={setEditCategory}
+                        setEditShowTag={setEditShowTag}
+                        setEditPointsReward={setEditPointsReward}
+                        setRejectFeedback={setRejectFeedback}
+                      />
+                    ))}
+                  </>
+                )}
               </>
             )}
           </div>
