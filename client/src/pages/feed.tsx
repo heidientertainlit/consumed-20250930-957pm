@@ -1074,7 +1074,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     if (!baselineRating) return null;
     const diff = rating - baselineRating;
     const abs = Math.abs(diff);
-    if (abs <= 0.3) return <p className={`text-[10px] text-orange-400 ${className}`}>On par with {baselineLabel}</p>;
+    if (abs <= 0.3) return <p className={`text-[10px] text-orange-400 ${className}`}>Right on the avg</p>;
     if (diff > 0) return <p className={`text-[10px] text-green-600 ${className}`}>↑ {abs.toFixed(1)} above {baselineLabel}</p>;
     return <p className={`text-[10px] text-orange-500 ${className}`}>↓ {abs.toFixed(1)} below {baselineLabel}</p>;
   };
@@ -1251,14 +1251,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </div>
               )}
             </div>
+            {/* Primary poster's rating vs baseline — right under the stars */}
+            {post.rating ? ratingDiffLine(post.rating, 'mb-1.5') : null}
             {/* Taste alignment */}
             {tasteAlignment !== null && (
               <p className="text-[11px] text-violet-600 italic mb-1.5">
                 You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
               </p>
             )}
-            {/* Primary poster's rating vs baseline */}
-            {post.rating ? ratingDiffLine(post.rating, 'mb-2') : null}
             {post.content && (
               <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mb-2">
                 <p className={`text-gray-600 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
@@ -1349,6 +1349,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       return <Star key={s} size={14} className="text-gray-200" />;
                     })}
                   </div>
+                )}
+                {post.rating ? ratingDiffLine(post.rating, 'mt-0.5') : null}
+                {tasteAlignment !== null && isOtherUser && (
+                  <p className="text-[11px] text-violet-600 italic mt-0.5">
+                    You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
+                  </p>
                 )}
                 {post.content && (
                   <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mt-1.5">
