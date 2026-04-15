@@ -1189,16 +1189,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 })}
               </div>
             )}
-            <div className="flex items-center gap-1.5 mt-4 mb-1.5">
-              <div>
-                <p className="text-[11px] font-medium text-gray-500 leading-tight">{post.user?.displayName || post.user?.username}'s Take</p>
-                {post.user?.username && <p className="text-[10px] text-gray-400 leading-tight">@{post.user.username}</p>}
-              </div>
-            </div>
+            <p className="text-[11px] font-medium text-gray-500 mt-4 mb-1.5">{post.user?.displayName || post.user?.username}'s Take</p>
             {post.content && (
               <div className="relative rounded-xl overflow-hidden border border-gray-100">
-                <p className="text-gray-600 text-sm p-3 blur-sm select-none pointer-events-none line-clamp-3">{post.content}</p>
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/60 backdrop-blur-[1px]">
+                <p className="text-gray-600 text-sm px-3 pt-4 pb-6 blur-sm select-none pointer-events-none line-clamp-4">{post.content}</p>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/60 backdrop-blur-[1px] pt-3">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm">
                     <Lock size={10} className="text-gray-500" />
                     <span className="text-[11px] font-medium text-gray-600">Rate or answer to unlock</span>
