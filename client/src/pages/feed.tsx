@@ -1159,36 +1159,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )
         )}
 
-        {/* State 1 — peek + friend mini-header + blurred review + Watch/Skip (after media) */}
+        {/* State 1 — friend label + blurred review + Watch/Skip (after media) */}
         {isState1 && (
           <div className="mt-2">
-            {communityRating && (
-              <button
-                onClick={() => setPeeked(p => !p)}
-                className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600 transition-colors mb-2"
-              >
-                <Eye size={11} />
-                <span>{peeked ? 'Hide ratings' : `Can't decide? Peek at ratings →`}</span>
-              </button>
-            )}
-            {peeked && communityRating && Object.keys(ratingDistribution).length > 0 && (
-              <div className="space-y-0.5 mb-2">
-                {[5, 4, 3, 2, 1].map(s => {
-                  const pct = ratingDistribution[s] || 0;
-                  const topVal = Math.max(...Object.values(ratingDistribution));
-                  const isMajority = pct === topVal && topVal > 0;
-                  return (
-                    <div key={s} className="flex items-center gap-1.5">
-                      <span className="text-[9px] font-bold w-2.5 text-right text-gray-400">{s}</span>
-                      <div className="flex-1 h-1.5 rounded-full bg-gray-100">
-                        <div className="h-full rounded-full" style={{ width: `${pct}%`, background: isMajority ? '#a78bfa' : '#d1d5db' }} />
-                      </div>
-                      <span className="text-[9px] text-gray-400 w-5">{pct}%</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
             <p className="text-[11px] font-medium text-gray-500 mt-4 mb-1.5">{post.user?.displayName || post.user?.username}'s Take</p>
             {post.content && (
               <div className="relative rounded-xl overflow-hidden border border-gray-100">
@@ -1198,25 +1171,33 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     <Lock size={10} className="text-gray-500" />
                     <span className="text-[11px] font-medium text-gray-600">Rate or answer to unlock</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    {onAddToList && (
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div className="flex items-center gap-3">
+                      {onAddToList && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' });
+                            setState1Dismissed(true);
+                          }}
+                          className="flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-blue-600 transition-colors"
+                        >
+                          <Bookmark size={11} /> Watch
+                        </button>
+                      )}
+                      <span className="text-gray-300 text-xs">·</span>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' });
-                          setState1Dismissed(true);
-                        }}
-                        className="flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-blue-600 transition-colors"
+                        onClick={() => setState1Dismissed(true)}
+                        className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-gray-600 transition-colors"
                       >
-                        <Bookmark size={11} /> Watch
+                        <X size={11} /> Skip
                       </button>
-                    )}
-                    <span className="text-gray-300 text-xs">·</span>
+                    </div>
                     <button
                       onClick={() => setState1Dismissed(true)}
-                      className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-gray-600 transition-colors"
+                      className="text-[10px] text-gray-300 hover:text-gray-500 transition-colors"
                     >
-                      <X size={11} /> Skip
+                      Just curious? Reveal →
                     </button>
                   </div>
                 </div>
