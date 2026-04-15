@@ -6,12 +6,7 @@ function StarRow({ selected, onSelect }: { selected: number; onSelect: (n: numbe
   return (
     <div className="flex items-center gap-2">
       {[1,2,3,4,5].map(i => (
-        <button
-          key={i}
-          onMouseEnter={() => setHovered(i)}
-          onMouseLeave={() => setHovered(0)}
-          onClick={() => onSelect(i)}
-        >
+        <button key={i} onMouseEnter={() => setHovered(i)} onMouseLeave={() => setHovered(0)} onClick={() => onSelect(i)}>
           <svg width="36" height="36" viewBox="0 0 24 24"
             fill={active >= i ? "#f59e0b" : "none"}
             stroke={active >= i ? "#f59e0b" : "#c4b5fd"}
@@ -26,14 +21,16 @@ function StarRow({ selected, onSelect }: { selected: number; onSelect: (n: numbe
   );
 }
 
+const dist = [
+  { stars: 5, pct: 12 }, { stars: 4, pct: 61 }, { stars: 3, pct: 18 }, { stars: 2, pct: 6 }, { stars: 1, pct: 3 },
+];
+
 export default function FlipState1() {
   const [selected, setSelected] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [peeked, setPeeked] = useState(false);
 
-  const handleRate = (n: number) => {
-    setSelected(n);
-    setTimeout(() => setSubmitted(true), 350);
-  };
+  const handleRate = (n: number) => { setSelected(n); setTimeout(() => setSubmitted(true), 350); };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-start justify-center pt-6 px-4">
@@ -47,9 +44,8 @@ export default function FlipState1() {
 
         <div className="bg-white rounded-2xl overflow-hidden" style={{ border: "0.5px solid #e5e7eb" }}>
 
-          {/* ── TOP: Stars lead, action first ── */}
+          {/* ── TOP: Stars lead ── */}
           <div className="px-4 pt-4 pb-4" style={{ background: "linear-gradient(160deg, #f5f3ff 0%, #ede9fe 100%)" }}>
-            {/* Movie identity */}
             <div className="flex items-center gap-2.5 mb-3">
               <div className="shrink-0 rounded-lg overflow-hidden" style={{ width: 44, height: 60, background: "linear-gradient(135deg, #2d1b69 0%, #4c1d95 60%, #1e3a5f 100%)" }}>
                 <div className="w-full h-full flex items-end p-1">
@@ -60,7 +56,7 @@ export default function FlipState1() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-gray-900 text-[16px] font-black tracking-tight leading-none">Past Lives</p>
-                <p className="text-gray-400 text-[11px] mt-0.5">Your turn — rate it</p>
+                <p className="text-gray-400 text-[11px] mt-0.5">Rate or answer to unlock</p>
               </div>
               <div className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full" style={{ background: "rgba(124,58,237,0.13)", border: "0.5px solid rgba(124,58,237,0.2)" }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="#7c3aed"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
@@ -68,7 +64,7 @@ export default function FlipState1() {
               </div>
             </div>
 
-            {/* Big stars — the main action */}
+            {/* Stars */}
             {!submitted ? (
               <StarRow selected={selected} onSelect={handleRate} />
             ) : (
@@ -89,11 +85,48 @@ export default function FlipState1() {
                 </div>
               </div>
             )}
+
+            {/* Peek toggle — only visible before rating */}
+            {!submitted && (
+              <button
+                onClick={() => setPeeked(p => !p)}
+                className="mt-2.5 flex items-center gap-1.5 text-violet-500 text-[11px] font-semibold"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                {peeked ? "Hide ratings" : "Can't decide? Peek at ratings →"}
+              </button>
+            )}
+
+            {/* Peek panel — expanded inline */}
+            {peeked && !submitted && (
+              <div className="mt-2.5 rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.7)", border: "0.5px solid #ddd6fe" }}>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-gray-500 text-[10px] font-bold uppercase tracking-wide">Consumed avg</p>
+                  <div className="flex items-center gap-1">
+                    {[1,2,3,4].map(i => <svg key={i} width="9" height="9" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>)}
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="#e5e7eb"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <span className="text-gray-600 text-[11px] font-bold ml-1">4.1</span>
+                    <span className="text-gray-300 text-[10px] ml-1">2.4k</span>
+                  </div>
+                </div>
+                {dist.map(({ stars, pct }) => (
+                  <div key={stars} className="flex items-center gap-1.5 mb-1">
+                    <span className="text-gray-400 text-[9px] w-3 text-right shrink-0">{stars}</span>
+                    <div className="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                      <div className="h-full rounded-full bg-violet-200" style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="text-gray-400 text-[9px] w-5 shrink-0">{pct}%</span>
+                  </div>
+                ))}
+                <p className="text-violet-500 text-[10px] font-semibold mt-1.5">68% gave it 4+ stars — now what do YOU think?</p>
+              </div>
+            )}
           </div>
 
           {/* ── MIDDLE: Marcus's take — blurred until rated ── */}
           <div className="relative" style={{ borderTop: "0.5px solid #e5e7eb" }}>
-            {/* The review content — always rendered, blurred if not submitted */}
             <div
               className="px-4 pt-3 pb-3 transition-all duration-500"
               style={{ filter: submitted ? "none" : "blur(4px)", opacity: submitted ? 1 : 0.6, userSelect: submitted ? "auto" : "none" }}
@@ -115,13 +148,11 @@ export default function FlipState1() {
                 </div>
               </div>
             </div>
-
-            {/* Lock overlay — only shown before rating */}
             {!submitted && (
               <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.55)" }}>
                 <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-white" style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.1)", border: "0.5px solid #ddd6fe" }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  <span className="text-violet-600 text-[11px] font-bold">Rate to unlock Marcus's take</span>
+                  <span className="text-violet-600 text-[11px] font-bold">Rate or answer to unlock</span>
                 </div>
               </div>
             )}
