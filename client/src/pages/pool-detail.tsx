@@ -1231,15 +1231,24 @@ function PlayComingSoon({ label }: { label: string }) {
 }
 
 /* ─── Pools Tab ──────────────────────────────────────────────────────── */
-function PoolsTab({ posts, token, onRefresh }: { posts: any[]; token: string; onRefresh: () => void }) {
+function PoolsTab({ posts, pool, token, onRefresh }: { posts: any[]; pool: any; token: string; onRefresh: () => void }) {
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [localAnswers, setLocalAnswers] = useState<Record<string, string>>({});
+  const [cardIndex, setCardIndex] = useState(0);
 
   const quizPrompts = posts.filter(p => p.prompt_type === 'pick' && (p.options || []).length > 0);
   const answeredCount = quizPrompts.filter(p => !!p.user_answer || !!localAnswers[p.id]).length;
   const totalPoints = quizPrompts.reduce((sum, p) => sum + (p.user_answer?.points_earned || 0), 0);
-  const unanswered = quizPrompts.filter(p => !p.user_answer && !localAnswers[p.id]);
+
+  const currentPrompt = quizPrompts[cardIndex] || null;
+
+  // Clamp index when data changes
+  useEffect(() => {
+    if (cardIndex >= quizPrompts.length && quizPrompts.length > 0) {
+      setCardIndex(quizPrompts.length - 1);
+    }
+  }, [quizPrompts.length]);
 
   const handleAnswer = async (promptId: string, answer: string) => {
     if (submitting) return;
@@ -1252,8 +1261,28 @@ function PoolsTab({ posts, token, onRefresh }: { posts: any[]; token: string; on
       toast({ title: result.error, variant: 'destructive' });
     } else {
       onRefresh();
+      // Auto-advance to next unanswered question
+      const nextUnanswered = quizPrompts.findIndex((p, i) => i > cardIndex && !p.user_answer && !localAnswers[p.id] && p.id !== promptId);
+      if (nextUnanswered !== -1) setTimeout(() => setCardIndex(nextUnanswered), 400);
     }
   };
+
+  function formatDeadline(deadline: string | null | undefined) {
+    if (!deadline) return null;
+    try {
+      const d = new Date(deadline);
+      const now = new Date();
+      const diffMs = d.getTime() - now.getTime();
+      if (diffMs < 0) return 'Round closed';
+      const diffH = Math.floor(diffMs / 3600000);
+      if (diffH < 1) return 'Closes in < 1 hr';
+      if (diffH < 24) return `Closes in ${diffH}h`;
+      const diffD = Math.floor(diffH / 24);
+      return `Closes in ${diffD}d`;
+    } catch { return null; }
+  }
+
+  const deadlineLabel = formatDeadline(pool?.deadline);
 
   if (quizPrompts.length === 0) {
     return (
@@ -1268,123 +1297,259 @@ function PoolsTab({ posts, token, onRefresh }: { posts: any[]; token: string; on
   }
 
   return (
-    <div className="px-4 pt-4 pb-6">
-      {/* Progress header */}
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex flex-col" style={{ minHeight: 0 }}>
+      {/* ── Round header ── */}
+      <div className="px-4 pt-3 pb-2 flex items-center justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-purple-500 mb-0.5">Current Round</p>
-          <p className="text-gray-700 text-sm font-medium">{answeredCount} of {quizPrompts.length} answered</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-purple-500 leading-none mb-0.5">Current Round</p>
+          <p className="text-gray-500 text-xs">{answeredCount} of {quizPrompts.length} answered</p>
         </div>
-        {totalPoints > 0 && (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100">
-            <Star size={12} className="text-amber-400 fill-amber-400" />
-            <span className="text-amber-600 text-xs font-bold">{totalPoints} pts</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {deadlineLabel && (
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100">
+              <Flame size={10} className="text-orange-400" />
+              <span className="text-gray-500 text-xs font-medium">{deadlineLabel}</span>
+            </div>
+          )}
+          {totalPoints > 0 && (
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100">
+              <Star size={10} className="text-amber-400 fill-amber-400" />
+              <span className="text-amber-600 text-xs font-bold">{totalPoints} pts</span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Progress bar */}
-      <div className="h-1.5 rounded-full bg-gray-100 mb-5 overflow-hidden">
-        <div
-          className="h-full rounded-full bg-purple-500 transition-all"
-          style={{ width: quizPrompts.length > 0 ? `${(answeredCount / quizPrompts.length) * 100}%` : '0%' }}
+      {/* ── Progress bar ── */}
+      <div className="px-4 mb-3">
+        <div className="h-1 rounded-full bg-gray-100 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-purple-500 transition-all duration-500"
+            style={{ width: quizPrompts.length > 0 ? `${(answeredCount / quizPrompts.length) * 100}%` : '0%' }}
+          />
+        </div>
+      </div>
+
+      {/* ── Carousel card ── */}
+      {currentPrompt && (
+        <CarouselCard
+          prompt={currentPrompt}
+          index={cardIndex}
+          total={quizPrompts.length}
+          localAnswer={localAnswers[currentPrompt.id] || null}
+          submitting={submitting === currentPrompt.id}
+          onAnswer={(answer) => handleAnswer(currentPrompt.id, answer)}
+          onPrev={() => setCardIndex(i => Math.max(0, i - 1))}
+          onNext={() => setCardIndex(i => Math.min(quizPrompts.length - 1, i + 1))}
         />
+      )}
+
+      {/* ── Dot indicators ── */}
+      <div className="flex justify-center gap-1.5 py-3">
+        {quizPrompts.map((p, i) => {
+          const isAnswered = !!p.user_answer || !!localAnswers[p.id];
+          const isActive = i === cardIndex;
+          return (
+            <button
+              key={p.id}
+              onClick={() => setCardIndex(i)}
+              className={`rounded-full transition-all ${
+                isActive
+                  ? 'w-4 h-2 bg-purple-500'
+                  : isAnswered
+                    ? 'w-2 h-2 bg-purple-200'
+                    : 'w-2 h-2 bg-gray-200'
+              }`}
+            />
+          );
+        })}
       </div>
 
-      {/* Unanswered questions first */}
-      {unanswered.length > 0 && (
-        <div className="mb-5">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Answer these</p>
-          <div className="space-y-3">
-            {unanswered.map((prompt: any) => {
-              const opts: string[] = prompt.options || [];
-              const isSubmitting = submitting === prompt.id;
-              return (
-                <div key={prompt.id} className="bg-white rounded-2xl shadow-sm overflow-hidden" style={{ border: '0.5px solid #e5e7eb' }}>
-                  <div className="px-4 pt-4 pb-2">
-                    <p className="text-gray-900 text-sm font-semibold leading-snug mb-3">{prompt.prompt_text}</p>
-                    <div className="space-y-2">
-                      {opts.map((opt) => (
-                        <button
-                          key={opt}
-                          disabled={isSubmitting}
-                          onClick={() => handleAnswer(prompt.id, opt)}
-                          className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all border"
-                          style={{ borderColor: '#e5e7eb', color: '#374151', background: '#fafafa' }}
-                          onMouseEnter={e => {
-                            (e.currentTarget as HTMLButtonElement).style.background = '#f3f0ff';
-                            (e.currentTarget as HTMLButtonElement).style.borderColor = '#7c3aed';
-                            (e.currentTarget as HTMLButtonElement).style.color = '#7c3aed';
-                          }}
-                          onMouseLeave={e => {
-                            (e.currentTarget as HTMLButtonElement).style.background = '#fafafa';
-                            (e.currentTarget as HTMLButtonElement).style.borderColor = '#e5e7eb';
-                            (e.currentTarget as HTMLButtonElement).style.color = '#374151';
-                          }}
-                        >
-                          {isSubmitting ? '...' : opt}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="px-4 py-2 border-t border-gray-50 flex items-center justify-between">
-                    <span className="text-xs text-gray-400">{prompt.points_value || 10} pts</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Answered questions */}
-      {quizPrompts.filter(p => !!p.user_answer || !!localAnswers[p.id]).length > 0 && (
-        <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Your answers</p>
-          <div className="space-y-2">
-            {quizPrompts.filter(p => !!p.user_answer || !!localAnswers[p.id]).map((prompt: any) => {
-              const myAnswer = prompt.user_answer?.answer || localAnswers[prompt.id] || '';
-              const isCorrect = prompt.user_answer?.is_correct;
-              const isResolved = prompt.status === 'resolved';
-              const ptsEarned = prompt.user_answer?.points_earned || 0;
-              return (
-                <div key={prompt.id} className="bg-white rounded-2xl px-4 py-3 flex items-start gap-3" style={{ border: '0.5px solid #e5e7eb' }}>
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
-                    isResolved ? (isCorrect ? 'bg-green-100' : 'bg-red-100') : 'bg-purple-100'
-                  }`}>
-                    {isResolved ? (
-                      isCorrect
-                        ? <CheckCircle2 size={12} className="text-green-500" />
-                        : <X size={12} className="text-red-400" />
-                    ) : (
-                      <CheckCircle2 size={12} className="text-purple-400" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-500 text-xs mb-0.5 line-clamp-1">{prompt.prompt_text}</p>
-                    <p className="text-gray-800 text-sm font-medium">{myAnswer}</p>
-                    {isResolved && prompt.correct_answer && myAnswer !== prompt.correct_answer && (
-                      <p className="text-xs text-green-600 mt-0.5">Answer: {prompt.correct_answer}</p>
-                    )}
-                  </div>
-                  {ptsEarned > 0 && (
-                    <span className="text-xs font-bold text-amber-500 shrink-0">+{ptsEarned}</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* All done state */}
-      {unanswered.length === 0 && quizPrompts.length > 0 && (
-        <div className="mt-4 rounded-2xl bg-purple-50 border border-purple-100 py-5 text-center">
-          <CheckCircle2 size={24} className="text-purple-400 mx-auto mb-2" />
+      {/* ── All done banner ── */}
+      {answeredCount === quizPrompts.length && quizPrompts.length > 0 && (
+        <div className="mx-4 mb-4 rounded-2xl bg-purple-50 border border-purple-100 py-4 text-center">
+          <CheckCircle2 size={20} className="text-purple-400 mx-auto mb-1.5" />
           <p className="text-purple-700 text-sm font-semibold">Round complete!</p>
           <p className="text-purple-400 text-xs mt-0.5">Check back when the next round drops</p>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ─── Carousel Card ──────────────────────────────────────────────────── */
+function CarouselCard({
+  prompt, index, total, localAnswer, submitting, onAnswer, onPrev, onNext
+}: {
+  prompt: any;
+  index: number;
+  total: number;
+  localAnswer: string | null;
+  submitting: boolean;
+  onAnswer: (answer: string) => void;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  const opts: string[] = prompt.options || [];
+  const myAnswer = prompt.user_answer?.answer || localAnswer || null;
+  const hasAnswered = !!myAnswer;
+  const isResolved = prompt.status === 'resolved';
+  const isCorrect = prompt.user_answer?.is_correct;
+  const ptsEarned = prompt.user_answer?.points_earned || 0;
+  const voteCounts: Record<string, number> = prompt.vote_counts || {};
+  const totalVotes = Object.values(voteCounts).reduce((s, n) => s + (n as number), 0);
+  const allAnswers: any[] = prompt.all_answers || [];
+  const isFirst = index === 0;
+  const isLast = index === total - 1;
+
+  // Build player avatars from all_answers (distinct users, first 5)
+  const playerNames: string[] = [];
+  const seenIds = new Set<string>();
+  for (const a of allAnswers) {
+    const name = a.users?.display_name || a.users?.user_name;
+    if (name && !seenIds.has(a.user_id)) {
+      seenIds.add(a.user_id);
+      playerNames.push(name);
+      if (playerNames.length >= 5) break;
+    }
+  }
+  const playerCount = seenIds.size || totalVotes;
+
+  return (
+    <div className="px-4 pb-1">
+      <div className="bg-white rounded-2xl overflow-hidden" style={{ border: '0.5px solid #e5e7eb' }}>
+
+        {/* Card header: question number + pts */}
+        <div className="px-4 pt-4 pb-3 flex items-center justify-between">
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+            Q{index + 1} / {total}
+          </span>
+          <span className="text-xs font-semibold text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full">
+            {prompt.points_value || 2} pts
+          </span>
+        </div>
+
+        {/* Question text */}
+        <div className="px-4 pb-4">
+          <p className="text-gray-900 text-[15px] font-semibold leading-snug">{prompt.prompt_text}</p>
+        </div>
+
+        {/* Answer options or results */}
+        <div className="px-4 pb-4 space-y-2">
+          {!hasAnswered ? (
+            opts.map((opt) => (
+              <button
+                key={opt}
+                disabled={submitting}
+                onClick={() => onAnswer(opt)}
+                className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all border"
+                style={{ borderColor: '#e5e7eb', color: '#374151', background: '#fafafa' }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLButtonElement).style.background = '#f3f0ff';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = '#7c3aed';
+                  (e.currentTarget as HTMLButtonElement).style.color = '#7c3aed';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLButtonElement).style.background = '#fafafa';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = '#e5e7eb';
+                  (e.currentTarget as HTMLButtonElement).style.color = '#374151';
+                }}
+              >
+                {submitting ? <span className="opacity-40">{opt}</span> : opt}
+              </button>
+            ))
+          ) : (
+            /* Vote results bars */
+            opts.map((opt) => {
+              const count = voteCounts[opt] || 0;
+              const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+              const isMine = opt === myAnswer;
+              const isCorrectOpt = isResolved && prompt.correct_answer === opt;
+              return (
+                <div key={opt} className="relative">
+                  <div
+                    className={`relative rounded-xl px-4 py-2.5 overflow-hidden ${
+                      isCorrectOpt ? 'border border-green-300' : isMine ? 'border border-purple-300' : 'border border-gray-100'
+                    }`}
+                  >
+                    {/* Fill bar */}
+                    <div
+                      className={`absolute inset-y-0 left-0 rounded-xl transition-all duration-700 ${
+                        isCorrectOpt ? 'bg-green-50' : isMine ? 'bg-purple-50' : 'bg-gray-50'
+                      }`}
+                      style={{ width: `${pct}%` }}
+                    />
+                    <div className="relative flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        {isMine && !isResolved && <CheckCircle2 size={12} className="text-purple-400 shrink-0" />}
+                        {isCorrectOpt && <CheckCircle2 size={12} className="text-green-500 shrink-0" />}
+                        {isResolved && isMine && !isCorrectOpt && <X size={12} className="text-red-400 shrink-0" />}
+                        <span className={`text-sm font-medium ${
+                          isCorrectOpt ? 'text-green-700' : isMine ? 'text-purple-700' : 'text-gray-600'
+                        }`}>{opt}</span>
+                      </div>
+                      <span className={`text-xs font-bold tabular-nums ${
+                        isCorrectOpt ? 'text-green-500' : isMine ? 'text-purple-500' : 'text-gray-400'
+                      }`}>{pct}%</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Card footer: social proof + pts earned */}
+        <div className="px-4 py-3 border-t border-gray-50 flex items-center justify-between bg-gray-50/50">
+          <div className="flex items-center gap-2">
+            {/* Avatar cluster */}
+            {playerNames.length > 0 && (
+              <div className="flex -space-x-1.5">
+                {playerNames.slice(0, 4).map((name) => (
+                  <div
+                    key={name}
+                    className={`w-5 h-5 rounded-full border border-white flex items-center justify-center text-[8px] font-bold text-white shrink-0 ${avatarColor(name)}`}
+                  >
+                    {name[0].toUpperCase()}
+                  </div>
+                ))}
+              </div>
+            )}
+            <span className="text-gray-400 text-xs">
+              {playerCount > 0
+                ? `${playerCount} player${playerCount !== 1 ? 's' : ''} answered`
+                : 'Be the first to answer'}
+            </span>
+          </div>
+          {hasAnswered && ptsEarned > 0 && (
+            <span className="text-xs font-bold text-amber-500">+{ptsEarned} pts</span>
+          )}
+        </div>
+      </div>
+
+      {/* Prev / Next nav */}
+      <div className="flex items-center justify-between mt-3">
+        <button
+          onClick={onPrev}
+          disabled={isFirst}
+          className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full transition-all ${
+            isFirst ? 'text-gray-200 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-100'
+          }`}
+        >
+          <ChevronLeft size={14} />
+          Prev
+        </button>
+        <button
+          onClick={onNext}
+          disabled={isLast}
+          className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full transition-all ${
+            isLast ? 'text-gray-200 cursor-not-allowed' : 'text-purple-500 hover:bg-purple-50'
+          }`}
+        >
+          Next
+          <ChevronRight size={14} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -2311,6 +2476,7 @@ export default function PoolDetailPage() {
         {!isLoading && tab === 'pools' && (
           <PoolsTab
             posts={posts}
+            pool={data?.pool}
             token={token}
             onRefresh={refresh}
           />
