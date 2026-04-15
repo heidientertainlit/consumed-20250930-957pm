@@ -108,30 +108,50 @@ export default function FlipState3() {
             </div>
           </div>
 
-          {/* Poll CTA */}
-          <div className="mx-4 my-3 rounded-xl overflow-hidden" style={{ border: "0.5px solid #e5e7eb" }}>
-            <div className="px-3 py-2 flex items-center gap-2" style={{ background: "#7c3aed" }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-              <p className="text-white text-[10px] font-bold uppercase tracking-wide">Related poll</p>
-              <div className="ml-auto flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/20">
-                <svg width="8" height="8" viewBox="0 0 24 24" fill="white"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                <span className="text-white text-[9px] font-bold">+5 pts</span>
+          {/* Poll CTA — matches Cast Your Vote carousel */}
+          <div className="mx-4 my-3 bg-white border border-gray-100 shadow-sm rounded-2xl p-4">
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[13px] font-semibold text-gray-900">Cast Your Vote</p>
+              <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-green-50 text-green-600 text-[10px] font-bold">
+                +5 pts
               </div>
             </div>
-            <div className="px-3 py-2.5 bg-white">
-              <p className="text-gray-800 text-[12px] font-bold leading-snug mb-2">Best A24 film of the decade?</p>
-              <div className="space-y-1.5">
-                {["Past Lives", "Everything Everywhere All at Once", "Hereditary"].map((opt, i) => (
-                  <button key={opt} className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left" style={{ background: i === 0 ? "#f5f3ff" : "#fafafa", border: `0.5px solid ${i === 0 ? "#ddd6fe" : "#e5e7eb"}` }}>
-                    {i === 0 && <div className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0" />}
-                    <span className="text-gray-700 text-[11px]" style={{ fontWeight: i === 0 ? 600 : 400 }}>{opt}</span>
-                    {i === 0 && <span className="ml-auto text-violet-500 text-[10px] font-bold">38%</span>}
-                  </button>
-                ))}
-              </div>
-              <button className="mt-2 w-full py-1.5 rounded-lg text-gray-700 text-[11px] font-semibold bg-gray-50" style={{ border: "0.5px solid #e5e7eb" }}>
-                Vote now →
-              </button>
+
+            {/* Question */}
+            <p className="text-gray-900 font-semibold text-[13px] mb-3 leading-snug">Best A24 film of the decade?</p>
+
+            {/* Options — pill style, one pre-selected with dark blue gradient */}
+            <div className="flex flex-col gap-2">
+              {[
+                { label: "Past Lives", selected: true, pct: 38 },
+                { label: "Everything Everywhere All at Once", selected: false, pct: 44 },
+                { label: "Hereditary", selected: false, pct: 18 },
+              ].map(({ label, selected, pct }) => (
+                <div
+                  key={label}
+                  className="relative py-2.5 px-4 rounded-full border overflow-hidden"
+                  style={{
+                    background: selected
+                      ? "linear-gradient(to right, #1e293b, #1e3a5f, #164e63)"
+                      : "#f3f4f6",
+                    borderColor: selected ? "rgba(59,130,246,0.5)" : "#e5e7eb"
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {selected && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      )}
+                      <span className="text-[12px] font-medium" style={{ color: selected ? "white" : "#374151" }}>{label}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={selected ? "rgba(255,255,255,0.6)" : "#9ca3af"} strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                      <span className="text-[11px] font-bold" style={{ color: selected ? "white" : "#9ca3af" }}>{pct}%</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
