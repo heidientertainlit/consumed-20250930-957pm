@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { ChevronLeft, ChevronRight, Flame, Star, Users, Zap, Share2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Flame, Users, Zap, Share2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
 const POOL_EMOJIS: Record<string, string> = {
   "Binge Watch Battle": "🎬",
   "Harry Potter": "⚡",
   "Reelz True Crime": "🔍",
+  "Reelz Official Room": "📺",
   "The Traitors S3": "🗡️",
   "Stranger Things": "🔦",
 };
@@ -22,7 +25,7 @@ function avatarColor(name: string) {
   return palette[(name || "?").charCodeAt(0) % palette.length];
 }
 
-function AvatarCluster({ names, accent }: { names: string[]; accent: string }) {
+function AvatarCluster({ names }: { names: string[] }) {
   const colors = ["bg-violet-500", "bg-fuchsia-500", "bg-blue-500", "bg-emerald-500", "bg-amber-500"];
   return (
     <div className="flex -space-x-1.5">
@@ -61,8 +64,6 @@ interface FriendActivity {
   name: string;
   poolId: string;
   poolName: string;
-  score: number;
-  total: number;
 }
 
 export default function PlayPoolsPage() {
@@ -73,25 +74,26 @@ export default function PlayPoolsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (!session?.user?.id || !session?.access_token) return;
     const userId = session.user.id;
+    const token = session.access_token;
 
     async function load() {
       try {
-        // 1. Fetch public open pools
-        const { data: rawPools } = await supabase
-          .from("pools")
-          .select("id, name, description, accent_color, partner_name, partner_logo_url, is_official")
-          .eq("is_public", true)
-          .eq("status", "open")
-          .order("created_at", { ascending: false })
-          .limit(20);
+        // 1. Get pools from edge function (bypasses RLS, uses service role)
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/get-user-pools`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        const myPools: any[] = data?.myRooms || data?.pools || [];
+        const publicPools: any[] = data?.publicRooms || [];
+        const allRaw = [...myPools, ...publicPools.filter((p: any) => !myPools.find((m: any) => m.id === p.id))];
 
-        if (!rawPools?.length) { setLoading(false); return; }
+        if (!allRaw.length) { setLoading(false); return; }
 
-        const poolIds = rawPools.map((p) => p.id);
+        const poolIds = allRaw.map((p) => p.id);
 
-        // 2. Fetch rounds for those pools
+        // 2. Fetch rounds (service role via edge fn would be ideal; try direct query since we're members)
         const { data: rounds } = await supabase
           .from("pool_rounds")
           .select("id, pool_id, title, status, lock_time")
@@ -103,7 +105,7 @@ export default function PlayPoolsPage() {
           .select("pool_id, user_id")
           .in("pool_id", poolIds);
 
-        // 4. Friend IDs
+        // 4. Friends
         const { data: friendships } = await supabase
           .from("friendships")
           .select("user_id, friend_id")
@@ -114,7 +116,6 @@ export default function PlayPoolsPage() {
           (friendships || []).map((f: any) => f.user_id === userId ? f.friend_id : f.user_id)
         );
 
-        // 5. Fetch friend user info
         let friendUsers: Record<string, string> = {};
         if (friendIds.size > 0) {
           const { data: uf } = await supabase
@@ -124,8 +125,8 @@ export default function PlayPoolsPage() {
           (uf || []).forEach((u: any) => { friendUsers[u.id] = u.display_name || u.user_name || "Friend"; });
         }
 
-        // 6. Assemble pool rows
-        const enriched: PoolRow[] = rawPools.map((p) => {
+        // 5. Build pool rows
+        const enriched: PoolRow[] = allRaw.map((p) => {
           const poolRounds = (rounds || []).filter((r: any) => r.pool_id === p.id);
           const poolMembers = (members || []).filter((m: any) => m.pool_id === p.id);
           const friendMemberNames = poolMembers
@@ -133,20 +134,26 @@ export default function PlayPoolsPage() {
             .map((m: any) => friendUsers[m.user_id])
             .filter(Boolean);
           return {
-            ...p,
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            accent_color: p.accent_color,
+            partner_name: p.partner_name,
+            partner_logo_url: p.partner_logo_url,
+            is_official: p.is_official || false,
             rounds: poolRounds,
-            memberCount: poolMembers.length,
+            memberCount: poolMembers.length || p.member_count || 0,
             friendNames: friendMemberNames,
           };
         });
 
-        // 7. Friend activity (friends in any pool)
+        // 6. Friend activity strip (friends in pools)
         const fa: FriendActivity[] = [];
         (members || []).forEach((m: any) => {
           if (friendIds.has(m.user_id) && friendUsers[m.user_id]) {
-            const pool = rawPools.find((p) => p.id === m.pool_id);
+            const pool = allRaw.find((p) => p.id === m.pool_id);
             if (pool && !fa.find((f) => f.user_id === m.user_id && f.poolId === pool.id)) {
-              fa.push({ user_id: m.user_id, name: friendUsers[m.user_id], poolId: pool.id, poolName: pool.name, score: 0, total: 5 });
+              fa.push({ user_id: m.user_id, name: friendUsers[m.user_id], poolId: pool.id, poolName: pool.name });
             }
           }
         });
@@ -154,7 +161,7 @@ export default function PlayPoolsPage() {
         setPools(enriched);
         setFriends(fa.slice(0, 6));
       } catch (err) {
-        console.error("[PlayPools] load error:", err);
+        console.error("[PlayPools] error:", err);
       } finally {
         setLoading(false);
       }
@@ -176,39 +183,23 @@ export default function PlayPoolsPage() {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
 
-      {/* Header */}
-      <div className="bg-white px-4 pt-5 pb-0" style={{ borderBottom: "0.5px solid #f3f4f6" }}>
-        <div className="flex items-center gap-3 mb-1">
+      {/* Header — no tabs */}
+      <div className="bg-white px-4 pt-5 pb-4" style={{ borderBottom: "0.5px solid #f3f4f6" }}>
+        <div className="flex items-center gap-3">
           <button
             onClick={() => setLocation("/play")}
             className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center shrink-0"
           >
             <ChevronLeft size={14} className="text-gray-500" />
           </button>
-          <h1 className="text-gray-900 text-xl font-bold">Pools</h1>
-        </div>
-        {/* Sub-nav tabs to match mockup layout */}
-        <div className="flex gap-0 mt-3">
-          {["Trivia", "Polls", "Pools"].map((tab) => {
-            const active = tab === "Pools";
-            return (
-              <button
-                key={tab}
-                onClick={() => { if (tab === "Trivia") setLocation("/play/trivia"); if (tab === "Polls") setLocation("/play/polls"); }}
-                className="flex-1 pb-2.5 text-sm font-semibold transition-all"
-                style={{
-                  color: active ? "#7c3aed" : "#9ca3af",
-                  borderBottom: active ? "2px solid #7c3aed" : "2px solid #f3f4f6",
-                }}
-              >
-                {tab}
-              </button>
-            );
-          })}
+          <div>
+            <h1 className="text-gray-900 text-xl font-bold leading-tight">Pools</h1>
+            <p className="text-gray-400 text-xs mt-0.5">Compete with friends, round by round</p>
+          </div>
         </div>
       </div>
 
-      {/* Scrollable content */}
+      {/* Content */}
       <div className="px-4 pt-4 pb-28">
 
         {/* Friends Playing Now */}
@@ -229,9 +220,6 @@ export default function PlayPoolsPage() {
                   <div className="min-w-0 text-left">
                     <p className="text-gray-900 text-xs font-semibold leading-tight truncate">{f.name}</p>
                     <p className="text-gray-400 text-[10px] leading-tight truncate">{f.poolName}</p>
-                    {f.score > 0 && (
-                      <p className="text-amber-500 text-[10px] font-bold mt-0.5">{f.score}/{f.total} correct</p>
-                    )}
                   </div>
                 </button>
               ))}
@@ -240,12 +228,9 @@ export default function PlayPoolsPage() {
         )}
 
         {/* Active Rounds */}
-        <div className="mb-3">
+        <div>
           <div className="flex items-center justify-between mb-3">
             <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest">Active Rounds</p>
-            <button className="text-purple-500 text-xs font-medium flex items-center gap-0.5">
-              See all <ChevronRight size={12} />
-            </button>
           </div>
 
           {loading && (
@@ -255,8 +240,10 @@ export default function PlayPoolsPage() {
           )}
 
           {!loading && pools.length === 0 && (
-            <div className="bg-white rounded-2xl py-10 text-center" style={{ border: "0.5px solid #e5e7eb" }}>
-              <p className="text-gray-400 text-sm">No active pools yet</p>
+            <div className="bg-white rounded-2xl py-12 text-center" style={{ border: "0.5px solid #e5e7eb" }}>
+              <p className="text-3xl mb-2">🎮</p>
+              <p className="text-gray-400 text-sm font-medium">No active pools yet</p>
+              <p className="text-gray-300 text-xs mt-1">Check back soon for new rounds</p>
             </div>
           )}
 
@@ -266,7 +253,9 @@ export default function PlayPoolsPage() {
               const openRound = pool.rounds.find((r) => r.status === "open") || pool.rounds[0];
               const roundCount = pool.rounds.length;
               const roundIndex = openRound ? pool.rounds.indexOf(openRound) + 1 : 1;
-              const roundLabel = openRound ? `Round ${roundIndex} of ${roundCount}` : `${roundCount} round${roundCount !== 1 ? "s" : ""}`;
+              const roundLabel = roundCount > 0
+                ? `Round ${roundIndex} of ${roundCount}`
+                : null;
               const deadline = openRound?.lock_time ? formatDeadline(openRound.lock_time) : null;
               const emoji = poolEmoji(pool.name);
 
@@ -276,8 +265,8 @@ export default function PlayPoolsPage() {
                   onClick={() => setLocation(`/play/pools/${pool.id}`)}
                   className="w-full text-left rounded-2xl overflow-hidden relative active:scale-[0.98] transition-transform"
                   style={{
-                    background: `linear-gradient(135deg, ${accent}10 0%, ${accent}18 100%)`,
-                    border: `1px solid ${accent}30`,
+                    background: `linear-gradient(135deg, ${accent}0e 0%, ${accent}1a 100%)`,
+                    border: `1px solid ${accent}28`,
                   }}
                 >
                   {/* Official badge */}
@@ -294,13 +283,15 @@ export default function PlayPoolsPage() {
                   <div className="px-4 pt-4 pb-3">
                     <div className="flex items-start gap-3">
                       <span className="text-2xl leading-none mt-0.5">{emoji}</span>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 pr-16">
                         <p className="text-gray-900 text-[15px] font-bold leading-tight">{pool.name}</p>
                         {pool.description && (
                           <p className="text-gray-500 text-xs mt-0.5 line-clamp-1">{pool.description}</p>
                         )}
                         <div className="flex items-center gap-3 mt-2 flex-wrap">
-                          <span className="text-gray-400 text-[10px] font-medium">{roundLabel}</span>
+                          {roundLabel && (
+                            <span className="text-gray-400 text-[10px] font-medium">{roundLabel}</span>
+                          )}
                           {deadline && (
                             <div className="flex items-center gap-1">
                               {deadline.urgent ? (
@@ -320,29 +311,38 @@ export default function PlayPoolsPage() {
                     {/* Footer row */}
                     <div
                       className="flex items-center justify-between mt-3 pt-2.5"
-                      style={{ borderTop: `0.5px solid ${accent}25` }}
+                      style={{ borderTop: `0.5px solid ${accent}20` }}
                     >
                       <div className="flex items-center gap-2.5 flex-wrap">
                         <div className="flex items-center gap-1">
                           <Users size={10} className="text-gray-400" />
                           <span className="text-gray-400 text-[10px] font-medium">
-                            {pool.memberCount > 0 ? pool.memberCount.toLocaleString() : "—"} playing
+                            {pool.memberCount > 0 ? `${pool.memberCount.toLocaleString()} playing` : "Be first to play"}
                           </span>
                         </div>
                         {pool.friendNames.length > 0 && (
                           <div className="flex items-center gap-1.5">
-                            <AvatarCluster names={pool.friendNames} accent={accent} />
+                            <AvatarCluster names={pool.friendNames} />
                             <span className="text-[10px] font-semibold" style={{ color: accent }}>
                               {pool.friendNames.length} friend{pool.friendNames.length !== 1 ? "s" : ""}
                             </span>
                           </div>
                         )}
                       </div>
-                      <div
-                        className="px-3 py-1.5 rounded-xl text-xs font-bold text-white"
-                        style={{ background: accent }}
-                      >
-                        Play Now
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={(e) => handleShare(pool, e)}
+                          className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                          style={{ background: `${accent}18` }}
+                        >
+                          <Share2 size={12} style={{ color: accent }} />
+                        </button>
+                        <div
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold text-white"
+                          style={{ background: accent }}
+                        >
+                          Play Now
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -352,11 +352,10 @@ export default function PlayPoolsPage() {
           </div>
         </div>
 
-        {/* Challenge friends CTA */}
+        {/* Challenge CTA */}
         {!loading && (
-          <div className="mt-4 mb-2">
+          <div className="mt-4">
             <button
-              onClick={() => navigator.share?.({ title: "Consumed Pools", url: window.location.origin + "/play/pools" })}
               className="w-full rounded-2xl px-4 py-3.5 flex items-center gap-3"
               style={{ background: "rgba(124,58,237,0.05)", border: "0.5px dashed rgba(124,58,237,0.3)" }}
             >
@@ -365,7 +364,7 @@ export default function PlayPoolsPage() {
               </div>
               <div className="flex-1 text-left">
                 <p className="text-purple-700 text-sm font-semibold">Challenge your friends</p>
-                <p className="text-purple-400 text-xs mt-0.5">Share a pool link and compete</p>
+                <p className="text-purple-400 text-xs mt-0.5">Share a pool link and compete head-to-head</p>
               </div>
               <ChevronRight size={14} className="text-purple-400" />
             </button>
