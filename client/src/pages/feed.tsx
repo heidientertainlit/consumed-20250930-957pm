@@ -1068,7 +1068,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   // Use external (3rd-party) rating as comparison baseline when available; convert /10 → /5
   const baselineRating = externalRating ? externalRating / 2 : communityRating;
-  const baselineLabel = externalRating ? `${externalRatingLabel} avg` : 'community avg';
+  const baselineLabel = 'avg';
 
   const ratingDiffLine = (rating: number, className = 'mt-0.5') => {
     if (!baselineRating) return null;
