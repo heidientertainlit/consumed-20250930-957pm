@@ -697,6 +697,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
   const [showStarPicker, setShowStarPicker] = useState(false);
   const [communityRating, setCommunityRating] = useState<number | null>(null);
+  const [externalRating, setExternalRating] = useState<number | null>(null);
+  const [externalRatingLabel, setExternalRatingLabel] = useState<string>('');
+  const [tasteAlignment, setTasteAlignment] = useState<number | null>(null);
   const [seenItDone, setSeenItDone] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
@@ -806,6 +809,56 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         });
     }
   }, [post.externalId, post.externalSource, session?.user?.id]);
+
+  // External (3rd-party) rating from TMDB/Spotify etc.
+  useEffect(() => {
+    const isRatingPost2 = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review';
+    if (!isRatingPost2) return;
+    const externalId = post.externalId || post.mediaItems?.[0]?.externalId;
+    const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource;
+    const mediaType = post.mediaType || post.mediaItems?.[0]?.type;
+    if (!externalId || !externalSource) return;
+    const sourceLabels: Record<string, string> = { tmdb: 'TMDB', google_books: 'Google Books', googlebooks: 'Google Books', openlibrary: 'Open Library', open_library: 'Open Library', spotify: 'Spotify' };
+    const label = sourceLabels[externalSource] || externalSource;
+    const url = `${supabaseUrl}/functions/v1/get-media-details?source=${externalSource}&external_id=${externalId}${mediaType ? `&media_type=${mediaType}` : ''}`;
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+    fetch(url, { headers: { apikey: key, Authorization: `Bearer ${key}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.rating) {
+          const val = parseFloat(data.rating);
+          if (val > 0) { setExternalRating(Math.round(val * 10) / 10); setExternalRatingLabel(label); }
+        }
+      })
+      .catch(() => {});
+  }, [post.externalId, post.externalSource, post.type]);
+
+  // Taste alignment between current user and post author
+  useEffect(() => {
+    const postUserId = post.user?.id;
+    if (!postUserId || !session?.user?.id || postUserId === session?.user?.id) return;
+    const isRatingPost2 = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review';
+    if (!isRatingPost2) return;
+    supabase
+      .from('media_ratings')
+      .select('user_id, media_external_id, media_external_source, rating')
+      .in('user_id', [session.user.id, postUserId])
+      .then(({ data }) => {
+        if (!data || data.length < 2) return;
+        const myRatings: Record<string, number> = {};
+        const theirRatings: Record<string, number> = {};
+        data.forEach((r: any) => {
+          const key = `${r.media_external_id}__${r.media_external_source}`;
+          if (r.user_id === session.user.id) myRatings[key] = Number(r.rating);
+          else theirRatings[key] = Number(r.rating);
+        });
+        const sharedKeys = Object.keys(myRatings).filter(k => k in theirRatings);
+        if (sharedKeys.length < 2) return;
+        const avgDiff = sharedKeys.reduce((sum, k) => sum + Math.abs(myRatings[k] - theirRatings[k]), 0) / sharedKeys.length;
+        const alignment = Math.round((1 - avgDiff / 4) * 100);
+        setTasteAlignment(Math.max(0, Math.min(100, alignment)));
+      });
+  }, [post.user?.id, session?.user?.id, post.type]);
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
@@ -1064,6 +1117,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         <>
           {/* Top: violet action section */}
           <div className="px-4 pt-4 pb-4 bg-violet-50">
+            <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase mb-2">What's Your Take?</p>
             <div className="flex items-center gap-3 mb-3">
               {posterEl}
               <div className="flex-1 min-w-0">
@@ -1075,6 +1129,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <p className="text-sm font-bold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
                 )}
                 <p className="text-[11px] text-gray-400 mt-0.5">Have you seen it? Rate it.</p>
+                {externalRating && externalRatingLabel && (
+                  <p className="text-[10px] text-gray-400 mt-0.5">{externalRatingLabel}: {externalRating}/10</p>
+                )}
               </div>
               <div className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-violet-100 border border-violet-200 flex-shrink-0">
                 <Star size={9} className="text-violet-600 fill-violet-600" />
@@ -1148,6 +1205,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </div>
               )}
             </div>
+            {/* Taste alignment */}
+            {tasteAlignment !== null && (
+              <p className="text-[11px] text-violet-600 italic mb-1.5">
+                You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
+              </p>
+            )}
+            {/* Friend's rating vs community average */}
+            {post.rating && communityRating && (() => {
+              const diff = post.rating - communityRating;
+              if (Math.abs(diff) <= 0.3) return <p className="text-[10px] text-gray-400 mb-2">On par with average ({communityRating}/5 avg)</p>;
+              if (diff > 0) return <p className="text-[10px] text-green-600 mb-2">↑ {diff.toFixed(1)} above average ({communityRating}/5 avg)</p>;
+              return <p className="text-[10px] text-orange-500 mb-2">↓ {Math.abs(diff).toFixed(1)} below average ({communityRating}/5 avg)</p>;
+            })()}
             {post.content && (
               <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mb-3">
                 <p className={`text-gray-600 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
