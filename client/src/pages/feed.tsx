@@ -1201,7 +1201,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <div className="flex items-center gap-3">
                     {onAddToList && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' });
+                          setState1Dismissed(true);
+                        }}
                         className="flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-blue-600 transition-colors"
                       >
                         <Bookmark size={11} /> Watch
