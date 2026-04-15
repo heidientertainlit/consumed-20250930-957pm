@@ -1189,15 +1189,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 })}
               </div>
             )}
-            <div className="flex items-center gap-2 mb-1.5">
-              <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {post.user?.avatar
-                  ? <img src={post.user.avatar} alt="" className="w-full h-full object-cover" />
-                  : <span className="text-white text-[10px] font-bold">{(post.user?.displayName || post.user?.username || '?')[0]?.toUpperCase()}</span>
-                }
-              </div>
+            <div className="flex items-center gap-1.5 mb-1.5">
               <div>
-                <p className="text-xs font-semibold text-gray-900 leading-tight">{post.user?.displayName || post.user?.username}'s Take</p>
+                <p className="text-[11px] font-medium text-gray-500 leading-tight">{post.user?.displayName || post.user?.username}'s Take</p>
                 {post.user?.username && <p className="text-[10px] text-gray-400 leading-tight">@{post.user.username}</p>}
               </div>
             </div>
