@@ -699,6 +699,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [communityRating, setCommunityRating] = useState<number | null>(null);
   const [seenItDone, setSeenItDone] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewPosted, setReviewPosted] = useState(false);
+  const [peeked, setPeeked] = useState(false);
+  const [ratingDistribution, setRatingDistribution] = useState<Record<number, number>>({});
+  const [ratingCount, setRatingCount] = useState(0);
+  const [state1Dismissed, setState1Dismissed] = useState(false);
   const hasFetched = useRef(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
   const starsRef = useRef<HTMLDivElement>(null);
@@ -763,7 +769,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource;
     if (!externalId || !externalSource) return;
 
-    // Community average rating
+    // Community average rating + distribution
     supabase
       .from('media_ratings')
       .select('rating')
@@ -773,6 +779,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         if (data && data.length > 0) {
           const avg = data.reduce((sum: number, r: any) => sum + Number(r.rating), 0) / data.length;
           setCommunityRating(Math.round(avg * 10) / 10);
+          setRatingCount(data.length);
+          const dist: Record<number, number> = {};
+          for (let s = 1; s <= 5; s++) {
+            const count = data.filter((r: any) => Math.round(Number(r.rating)) === s).length;
+            dist[s] = Math.round((count / data.length) * 100);
+          }
+          setRatingDistribution(dist);
         }
       });
 
@@ -868,6 +881,27 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     } catch (err) {
       console.error('Remove rating failed', err);
     }
+  };
+
+  const handleWriteReview = async () => {
+    if (!reviewText.trim()) { setReviewPosted(true); return; }
+    const userId = session?.user?.id;
+    if (!userId) return;
+    try {
+      await supabase.from('social_posts').insert({
+        user_id: userId,
+        content: reviewText.trim(),
+        type: 'thought',
+        media_title: post.mediaTitle || null,
+        media_image: post.mediaImage || null,
+        media_type: post.mediaType || null,
+        external_id: resolvedExternalId || post.externalId || null,
+        external_source: resolvedExternalSource || post.externalSource || null,
+      });
+    } catch (err) {
+      console.error('Review post failed', err);
+    }
+    setReviewPosted(true);
   };
 
   const timeAgo = (dateStr?: string) => {
@@ -1110,14 +1144,15 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         </div>
 
-        {/* Your Turn — star picker, shown when not yet rated OR when changing */}
-        {(post.mediaTitle || resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId) && session?.access_token && (showStarPicker || ((post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && !ratingSubmitted)) && (
+        {/* 3-State Gamified Rating Section */}
+        {(post.mediaTitle || resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId) && session?.access_token && (showStarPicker || ((post.type === 'rating' || post.type === 'review' || post.type === 'rate-review') && post.user?.id !== currentUserId && !state1Dismissed)) && (
           <div className="mt-3 pt-3 border-t border-gray-100">
-            {true && (
+            {showStarPicker ? (
+              // Change Rating mode — star picker unchanged
               <>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-[10px] font-bold text-purple-600 tracking-widest uppercase">{showStarPicker && ratingSubmitted ? 'Change Rating' : 'Your Turn'}</p>
-                  {showStarPicker && ratingSubmitted && (
+                  <p className="text-[10px] font-bold text-purple-600 tracking-widest uppercase">{ratingSubmitted ? 'Change Rating' : 'Your Turn'}</p>
+                  {ratingSubmitted && (
                     <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove rating</button>
                   )}
                 </div>
@@ -1146,17 +1181,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   {[1, 2, 3, 4, 5].map(star => {
                     const displayVal = hoverRating || ratingValue;
                     return (
-                      <div
-                        key={star}
-                        className="relative"
-                        style={{ width: 30, height: 30 }}
-                      >
+                      <div key={star} className="relative" style={{ width: 30, height: 30 }}>
                         <Star size={30} className="absolute inset-0 text-gray-200" />
                         <div
                           className="absolute inset-0 overflow-hidden pointer-events-none"
                           style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}
                         >
-                          <Star size={30} className={`${hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'}`} />
+                          <Star size={30} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
                         </div>
                         <button
                           className="absolute top-0 left-0 h-full z-10"
@@ -1180,6 +1211,217 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </span>
                 </div>
               </>
+            ) : !ratingSubmitted ? (
+              // STATE 1 — Rate first (big stars + peek + secondary options)
+              <div className="rounded-xl bg-gray-50 p-3">
+                <div className="flex items-center justify-between mb-2.5">
+                  <div>
+                    <p className="text-[12px] font-bold text-gray-900 leading-tight">Your turn — rate it</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">Tap a star to unlock +10 pts</p>
+                  </div>
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-50 border border-violet-100">
+                    <Star size={9} className="text-violet-600 fill-violet-600" />
+                    <span className="text-[10px] font-bold text-violet-700">+10 pts</span>
+                  </div>
+                </div>
+                <div
+                  ref={starsRef}
+                  className="flex items-center gap-1 touch-none select-none mb-2.5"
+                  onMouseLeave={() => setHoverRating(0)}
+                  onTouchMove={(e) => {
+                    e.stopPropagation();
+                    if (!starsRef.current) return;
+                    const touch = e.touches[0];
+                    const rect = starsRef.current.getBoundingClientRect();
+                    const x = touch.clientX - rect.left;
+                    const starWidth = rect.width / 5;
+                    const starIndex = Math.floor(x / starWidth);
+                    const withinStar = (x % starWidth) / starWidth;
+                    const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
+                    setHoverRating(Math.round(val * 2) / 2);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation();
+                    if (hoverRating > 0) handleSubmitRating(hoverRating);
+                    setHoverRating(0);
+                  }}
+                >
+                  {[1, 2, 3, 4, 5].map(star => {
+                    const displayVal = hoverRating || 0;
+                    return (
+                      <div key={star} className="relative" style={{ width: 36, height: 36 }}>
+                        <Star size={36} className="absolute inset-0 text-gray-200" />
+                        <div
+                          className="absolute inset-0 overflow-hidden pointer-events-none"
+                          style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}
+                        >
+                          <Star size={36} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
+                        </div>
+                        <button
+                          className="absolute top-0 left-0 h-full z-10"
+                          style={{ width: '50%' }}
+                          onMouseEnter={() => setHoverRating(star - 0.5)}
+                          onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }}
+                          aria-label={`Rate ${star - 0.5}`}
+                        />
+                        <button
+                          className="absolute top-0 right-0 h-full z-10"
+                          style={{ width: '50%' }}
+                          onMouseEnter={() => setHoverRating(star)}
+                          onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }}
+                          aria-label={`Rate ${star}`}
+                        />
+                      </div>
+                    );
+                  })}
+                  {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
+                </div>
+                {communityRating && (
+                  <button
+                    onClick={() => setPeeked(p => !p)}
+                    className="flex items-center gap-1.5 text-[11px] text-gray-400 hover:text-gray-600 transition-colors mb-2"
+                  >
+                    <Eye size={11} />
+                    {peeked ? 'Hide ratings' : `Peek at ratings — avg ${communityRating}/5`}
+                  </button>
+                )}
+                {peeked && communityRating && Object.keys(ratingDistribution).length > 0 && (
+                  <div className="space-y-1 mb-2.5">
+                    {[5, 4, 3, 2, 1].map(s => {
+                      const pct = ratingDistribution[s] || 0;
+                      const topVal = Math.max(...Object.values(ratingDistribution));
+                      const isMajority = pct === topVal && topVal > 0;
+                      return (
+                        <div key={s} className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-bold w-2.5 text-right text-gray-400">{s}</span>
+                          <div className="flex-1 h-1.5 rounded-full bg-gray-200">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{ width: `${pct}%`, background: isMajority ? '#a78bfa' : '#d1d5db' }}
+                            />
+                          </div>
+                          <span className="text-[9px] text-gray-400 w-5">{pct}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  {onAddToList && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-gray-200 text-[11px] font-medium text-gray-500 hover:border-purple-300 hover:text-purple-600 transition-colors"
+                    >
+                      <Plus size={11} /> Want to watch
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setState1Dismissed(true)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl border border-gray-200 text-[11px] font-medium text-gray-400 hover:border-gray-300 transition-colors"
+                  >
+                    <X size={11} /> Not for me
+                  </button>
+                </div>
+              </div>
+            ) : !reviewPosted ? (
+              // STATE 2 — Confirmed rating + write review
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Your rating</p>
+                    <div className="flex items-center gap-0.5 mt-0.5">
+                      {[1, 2, 3, 4, 5].map(s => (
+                        <Star key={s} size={16} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(ratingValue) && ratingValue % 1 >= 0.5 ? 'text-yellow-300 fill-yellow-200' : 'text-gray-200'} />
+                      ))}
+                      <span className="text-[11px] text-yellow-500 font-bold ml-1">{ratingValue}/5</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowStarPicker(true)}
+                    className="text-[10px] text-gray-400 border border-gray-200 px-2 py-1 rounded-lg hover:border-gray-300 transition-colors"
+                  >
+                    Edit
+                  </button>
+                </div>
+                <p className="text-[12px] font-bold text-gray-900 mb-1.5">
+                  Add a review <span className="text-gray-400 font-normal text-[11px]">optional</span>
+                </p>
+                <textarea
+                  value={reviewText}
+                  onChange={e => setReviewText(e.target.value)}
+                  placeholder="What did you think? Your honest take..."
+                  rows={2}
+                  className="w-full text-[12px] text-gray-700 placeholder-gray-300 rounded-xl px-3 py-2 resize-none outline-none border border-gray-200 focus:border-purple-300 transition-colors"
+                />
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    onClick={handleWriteReview}
+                    className="flex-1 py-2 rounded-xl text-[12px] font-bold transition-colors"
+                    style={{ background: reviewText.trim() ? '#7c3aed' : '#f3f4f6', color: reviewText.trim() ? 'white' : '#9ca3af' }}
+                  >
+                    {reviewText.trim() ? 'Post Review' : 'Skip for now'}
+                  </button>
+                  {reviewText.trim() && (
+                    <div className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-green-50 border border-green-100">
+                      <Star size={9} className="text-green-600 fill-green-600" />
+                      <span className="text-[10px] font-bold text-green-700">+15 pts</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              // STATE 3 — Bold call + rating distribution
+              <div>
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex-1">
+                    {communityRating && ratingValue ? (
+                      ratingValue > communityRating + 0.5
+                        ? <p className="text-[12px] font-bold text-gray-900">Bold call — you rated it higher</p>
+                        : ratingValue < communityRating - 0.5
+                        ? <p className="text-[12px] font-bold text-gray-900">Tough crowd — you're the critic</p>
+                        : <p className="text-[12px] font-bold text-gray-900">You agree with the crowd</p>
+                    ) : (
+                      <p className="text-[12px] font-bold text-gray-900">Rated!</p>
+                    )}
+                    {communityRating && (
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        Avg {communityRating}/5 · {ratingCount} {ratingCount === 1 ? 'rating' : 'ratings'}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-center ml-3 px-2.5 py-1.5 rounded-xl bg-amber-50 border border-amber-100">
+                    <span className="text-[8px] text-amber-600 font-bold uppercase tracking-wide mb-0.5">You</span>
+                    <div className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map(s => (
+                        <Star key={s} size={10} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {Object.keys(ratingDistribution).length > 0 && (
+                  <div className="space-y-1">
+                    {[5, 4, 3, 2, 1].map(s => {
+                      const pct = ratingDistribution[s] || 0;
+                      const isUser = Math.round(ratingValue) === s;
+                      const topVal = Math.max(...Object.values(ratingDistribution));
+                      const isMajority = pct === topVal && topVal > 0;
+                      return (
+                        <div key={s} className="flex items-center gap-1.5">
+                          <span className="text-[9px] font-bold w-2.5 text-right" style={{ color: isUser ? '#f59e0b' : '#9ca3af' }}>{s}</span>
+                          <div className="flex-1 h-2 rounded-full bg-gray-100">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{ width: `${pct}%`, background: isUser ? '#f59e0b' : isMajority ? '#a78bfa' : '#e5e7eb' }}
+                            />
+                          </div>
+                          <span className="text-[9px] font-bold w-5" style={{ color: isUser ? '#f59e0b' : '#d1d5db' }}>{pct}%</span>
+                          {isUser && <span className="text-[9px] text-amber-400">you</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
