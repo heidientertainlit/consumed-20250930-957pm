@@ -1337,30 +1337,17 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             ) : (
               // STATES 2 + 3 COMBINED — rating locked in + bold call + optional review
               <div className="space-y-3">
-                {/* Your rating row */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Your rating</p>
-                    <div className="flex items-center gap-0.5 mt-0.5">
-                      {[1, 2, 3, 4, 5].map(s => (
-                        <Star key={s} size={15} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(ratingValue) && ratingValue % 1 >= 0.5 ? 'text-yellow-300 fill-yellow-200' : 'text-gray-200'} />
-                      ))}
-                      <span className="text-[11px] text-yellow-500 font-bold ml-1">{ratingValue}/5</span>
-                    </div>
-                    {communityRating && ratingValue ? (() => {
-                      const diff = ratingValue - communityRating;
-                      if (Math.abs(diff) <= 0.3) return <p className="text-[10px] text-gray-400 mt-0.5">On par with average</p>;
-                      if (diff > 0) return <p className="text-[10px] text-green-600 mt-0.5">↑ {diff.toFixed(1)} above average</p>;
-                      return <p className="text-[10px] text-orange-500 mt-0.5">↓ {Math.abs(diff).toFixed(1)} below average</p>;
-                    })() : null}
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
+                {/* YOUR RATING header + inline Edit · Remove */}
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Your rating</p>
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => setShowStarPicker(true)}
-                      className="text-[10px] text-gray-400 border border-gray-200 px-2 py-1 rounded-lg hover:border-gray-300 transition-colors"
+                      className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors"
                     >
                       Edit
                     </button>
+                    <span className="text-gray-200 text-[10px]">·</span>
                     <button
                       onClick={() => { setRatingSubmitted(false); setRatingValue(0); }}
                       className="text-[10px] text-gray-300 hover:text-red-400 transition-colors"
@@ -1369,6 +1356,46 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     </button>
                   </div>
                 </div>
+                {/* Stars + below/above average */}
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <Star key={s} size={15} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(ratingValue) && ratingValue % 1 >= 0.5 ? 'text-yellow-300 fill-yellow-200' : 'text-gray-200'} />
+                  ))}
+                  <span className="text-[11px] text-yellow-500 font-bold ml-1">{ratingValue}/5</span>
+                </div>
+                {communityRating && ratingValue ? (() => {
+                  const diff = ratingValue - communityRating;
+                  if (Math.abs(diff) <= 0.3) return <p className="text-[10px] text-gray-400 mt-0.5">On par with average</p>;
+                  if (diff > 0) return <p className="text-[10px] text-green-600 mt-0.5">↑ {diff.toFixed(1)} above average</p>;
+                  return <p className="text-[10px] text-orange-500 mt-0.5">↓ {Math.abs(diff).toFixed(1)} below average</p>;
+                })() : null}
+                {/* Optional review — right after rating */}
+                {!reviewPosted && (
+                  <div className="mt-2">
+                    <textarea
+                      value={reviewText}
+                      onChange={e => setReviewText(e.target.value)}
+                      placeholder="Add your take (optional)..."
+                      rows={2}
+                      className="w-full text-[12px] text-gray-700 placeholder-gray-300 rounded-xl px-3 py-2 resize-none outline-none border border-gray-200 focus:border-purple-300 transition-colors"
+                    />
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <button
+                        onClick={handleWriteReview}
+                        className="flex-1 py-1.5 rounded-xl text-[12px] font-bold transition-colors"
+                        style={{ background: reviewText.trim() ? '#7c3aed' : '#f3f4f6', color: reviewText.trim() ? 'white' : '#9ca3af' }}
+                      >
+                        {reviewText.trim() ? 'Post Review' : 'Skip'}
+                      </button>
+                      {reviewText.trim() && (
+                        <div className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-green-50 border border-green-100">
+                          <Star size={9} className="text-green-600 fill-green-600" />
+                          <span className="text-[10px] font-bold text-green-700">+15 pts</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {/* Bold call verdict + community */}
                 {communityRating && ratingValue ? (
                   <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-gray-50">
@@ -1409,33 +1436,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                         </div>
                       );
                     })}
-                  </div>
-                )}
-                {/* Optional review — shown until posted */}
-                {!reviewPosted && (
-                  <div className="pt-1 border-t border-gray-50">
-                    <textarea
-                      value={reviewText}
-                      onChange={e => setReviewText(e.target.value)}
-                      placeholder="Add your take (optional)..."
-                      rows={2}
-                      className="w-full text-[12px] text-gray-700 placeholder-gray-300 rounded-xl px-3 py-2 resize-none outline-none border border-gray-200 focus:border-purple-300 transition-colors"
-                    />
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <button
-                        onClick={handleWriteReview}
-                        className="flex-1 py-1.5 rounded-xl text-[12px] font-bold transition-colors"
-                        style={{ background: reviewText.trim() ? '#7c3aed' : '#f3f4f6', color: reviewText.trim() ? 'white' : '#9ca3af' }}
-                      >
-                        {reviewText.trim() ? 'Post Review' : 'Skip'}
-                      </button>
-                      {reviewText.trim() && (
-                        <div className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-green-50 border border-green-100">
-                          <Star size={9} className="text-green-600 fill-green-600" />
-                          <span className="text-[10px] font-bold text-green-700">+15 pts</span>
-                        </div>
-                      )}
-                    </div>
                   </div>
                 )}
               </div>
