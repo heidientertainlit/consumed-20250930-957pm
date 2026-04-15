@@ -12,7 +12,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "./lib/auth";
+import { AuthProvider, useAuth } from "./lib/auth";
 import { ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
 import { FeatureFlagsProvider, useFeatureFlags } from "@/lib/feature-flags";
 
