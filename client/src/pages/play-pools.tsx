@@ -83,7 +83,7 @@ export default function PlayPoolsPage() {
           .from("pools")
           .select("id, name, description, accent_color, is_official, pool_type, status")
           .in("id", myPoolIds)
-          .not("pool_type", "eq", "room") // exclude Rooms — this page is for standalone pools only
+          .or("pool_type.is.null,pool_type.neq.room") // include null pool_type AND non-room types
           .eq("status", "open");
 
         if (poolsError) {
