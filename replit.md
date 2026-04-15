@@ -43,6 +43,7 @@ All changes are styling/layout only. No voting logic, point systems, interaction
   - **Turn Rooms OFF for everyone**: `UPDATE app_settings SET value = 'false', updated_at = now() WHERE key = 'rooms_enabled';`
   - Flag is read by `client/src/lib/feature-flags.tsx` (`FeatureFlagsProvider`). Admin bypass lives in `RoomsGuard` (App.tsx) and navigation.tsx. No code deploy needed to toggle.
 - **Navigation**: Bottom navigation includes 4 items: Activity, DNA, Library, and Leaders. The floating Plus button always links to `/add`. Play page combines game tiles with embedded leaderboard content. Collections page at `/collections` has 3 tabs: Lists, Ranks, and History. Leaderboard, Discover, and Track pages exist as backpages. Creator profile at `/creator-profile` shows Follow/Inner Circle buttons and external links.
+- **Play > Pools**: `/play/pools` is a dark-themed browse page showing all public pools as gradient cards. Friends strip at top shows friends who are in pools. Each pool card links to `/room/:id`. Challenge Friends share CTA at bottom. Pools tile added to Play page game modes grid.
 - **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Friends, Collections, History).
 - **Collections System**: Collections tab contains sub-navigation for Lists and Ranks. Ranks feature supports drag-and-drop ordering, position-based ranking, and collaboration.
 - **Search Page**: AI-powered search at `/search` with unified results showing Conversations, AI Recommendations, and Media Results. Uses custom AI icon in navigation.

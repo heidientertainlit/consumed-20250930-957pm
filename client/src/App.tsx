@@ -30,6 +30,7 @@ import Conversations from "@/pages/conversations";
 import Leaderboard from "@/pages/leaderboard";
 
 import PlayPage from "@/pages/play";
+import PlayPools from "@/pages/play-pools";
 import PlayTrivia from "@/pages/play-trivia";
 import PlayPolls from "@/pages/play-polls";
 import PlayPredictions from "@/pages/play-predictions";
@@ -347,6 +348,12 @@ function Router() {
           <Route path="/play">
             <ProtectedRoute>
               <PlayPage />
+            </ProtectedRoute>
+          </Route>
+
+          <Route path="/play/pools">
+            <ProtectedRoute>
+              <PlayPools />
             </ProtectedRoute>
           </Route>
 

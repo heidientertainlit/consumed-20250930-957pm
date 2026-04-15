@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { supabase } from "@/lib/supabase";
-import { Target, HelpCircle, Vote, BarChart2, UserPlus, Trophy, ChevronRight, ArrowRight } from "lucide-react";
+import { Target, HelpCircle, Vote, BarChart2, UserPlus, Trophy, ChevronRight, ArrowRight, Layers } from "lucide-react";
 
 const gameModes = [
   {
@@ -42,6 +42,15 @@ const gameModes = [
     color: "bg-rose-50 border-rose-100",
     iconColor: "text-rose-500",
     href: "/play/predictions",
+  },
+  {
+    id: "pools",
+    label: "Pools",
+    description: "Play rounds, compete with friends",
+    icon: Layers,
+    color: "bg-purple-50 border-purple-100",
+    iconColor: "text-purple-600",
+    href: "/play/pools",
   },
 ];
 
