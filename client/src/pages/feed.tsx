@@ -1241,18 +1241,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </p>
               </Link>
               {post.rating && post.rating > 0 && (
-                <div className="flex items-center gap-0.5">
-                  {[1,2,3,4,5].map(s => {
-                    const r = post.rating!;
-                    if (s <= Math.floor(r)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
-                    if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={12} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                    return <Star key={s} size={12} className="text-gray-200" />;
-                  })}
+                <div className="flex flex-col items-end">
+                  <div className="flex items-center gap-0.5">
+                    {[1,2,3,4,5].map(s => {
+                      const r = post.rating!;
+                      if (s <= Math.floor(r)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
+                      if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={12} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                      return <Star key={s} size={12} className="text-gray-200" />;
+                    })}
+                  </div>
+                  {ratingDiffLine(post.rating, 'mt-0.5 text-right')}
                 </div>
               )}
             </div>
-            {/* Primary poster's rating vs baseline — right under the stars */}
-            {post.rating ? ratingDiffLine(post.rating, 'mb-1.5') : null}
             {/* Taste alignment */}
             {tasteAlignment !== null && (
               <p className="text-[11px] text-violet-600 italic mb-1.5">
