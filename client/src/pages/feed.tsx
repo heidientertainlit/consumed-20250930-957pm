@@ -1175,8 +1175,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <p className="text-sm font-bold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
                 )}
                 <p className="text-[11px] text-gray-400 mt-0.5">Have you seen it? Rate it.</p>
-                {externalRating && externalRatingLabel && (
-                  <p className="text-[10px] text-gray-400 mt-0.5">{externalRatingLabel}: {externalRating}/10</p>
+                {tasteAlignment !== null && (
+                  <p className="text-[11px] text-violet-600 italic mt-0.5">
+                    You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
+                  </p>
                 )}
               </div>
               <div className="flex items-center px-2 py-1 rounded-full bg-gray-100 border border-gray-200 flex-shrink-0">
@@ -1344,7 +1346,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
                     )}
                   </div>
-                  {post.rating && post.rating > 0 && isRatingPost && (
+                  {post.rating && post.rating > 0 && (post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought') && (
                     <div className="flex flex-col items-end flex-shrink-0">
                       <div className="flex items-center gap-0.5">
                         {[1,2,3,4,5].map(s => {
