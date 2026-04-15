@@ -1163,46 +1163,47 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {isState1 && (
           <div className="mt-2">
             <p className="text-[11px] font-medium text-gray-500 mt-4 mb-1.5">{post.user?.displayName || post.user?.username}'s Take</p>
-            {post.content && (
-              <div className="relative rounded-xl overflow-hidden border border-gray-100">
-                <p className="text-gray-600 text-sm px-3 pt-4 pb-6 blur-sm select-none pointer-events-none line-clamp-4">{post.content}</p>
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/60 backdrop-blur-[1px] pt-3">
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm">
-                    <Lock size={10} className="text-gray-500" />
-                    <span className="text-[11px] font-medium text-gray-600">Rate or answer to unlock</span>
-                  </div>
-                  <div className="flex flex-col items-center gap-1.5">
-                    <div className="flex items-center gap-3">
-                      {onAddToList && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' });
-                            setState1Dismissed(true);
-                          }}
-                          className="flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-blue-600 transition-colors"
-                        >
-                          <Bookmark size={11} /> Watch
-                        </button>
-                      )}
-                      <span className="text-gray-300 text-xs">·</span>
+            <div className="relative rounded-xl overflow-hidden border border-gray-100">
+              {post.content
+                ? <p className="text-gray-600 text-sm px-3 pt-4 pb-6 blur-sm select-none pointer-events-none line-clamp-4">{post.content}</p>
+                : <div className="h-16" />
+              }
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/60 backdrop-blur-[1px] pt-2">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm">
+                  <Lock size={10} className="text-gray-500" />
+                  <span className="text-[11px] font-medium text-gray-600">Rate or answer to unlock</span>
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="flex items-center gap-3">
+                    {onAddToList && (
                       <button
-                        onClick={() => setState1Dismissed(true)}
-                        className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-gray-600 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' });
+                          setState1Dismissed(true);
+                        }}
+                        className="flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-blue-600 transition-colors"
                       >
-                        <X size={11} /> Skip
+                        <Bookmark size={11} /> Watch
                       </button>
-                    </div>
+                    )}
+                    <span className="text-gray-300 text-xs">·</span>
                     <button
                       onClick={() => setState1Dismissed(true)}
-                      className="text-[10px] text-gray-300 hover:text-gray-500 transition-colors"
+                      className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-gray-600 transition-colors"
                     >
-                      Just curious? Reveal →
+                      <X size={11} /> Skip
                     </button>
                   </div>
+                  <button
+                    onClick={() => setState1Dismissed(true)}
+                    className="text-[10px] text-gray-300 hover:text-gray-500 transition-colors"
+                  >
+                    Just curious? Reveal →
+                  </button>
                 </div>
               </div>
-            )}
+            </div>
           </div>
         )}
 
@@ -1333,15 +1334,16 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </span>
                 </div>
               </>
-            ) : !reviewPosted ? (
-              // STATE 2 — Confirmed rating + write review
-              <div>
-                <div className="flex items-center justify-between mb-3">
+            ) : (
+              // STATES 2 + 3 COMBINED — rating locked in + bold call + optional review
+              <div className="space-y-3">
+                {/* Your rating row */}
+                <div className="flex items-center justify-between">
                   <div>
                     <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Your rating</p>
                     <div className="flex items-center gap-0.5 mt-0.5">
                       {[1, 2, 3, 4, 5].map(s => (
-                        <Star key={s} size={16} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(ratingValue) && ratingValue % 1 >= 0.5 ? 'text-yellow-300 fill-yellow-200' : 'text-gray-200'} />
+                        <Star key={s} size={15} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(ratingValue) && ratingValue % 1 >= 0.5 ? 'text-yellow-300 fill-yellow-200' : 'text-gray-200'} />
                       ))}
                       <span className="text-[11px] text-yellow-500 font-bold ml-1">{ratingValue}/5</span>
                     </div>
@@ -1353,61 +1355,28 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     Edit
                   </button>
                 </div>
-                <p className="text-[12px] font-bold text-gray-900 mb-1.5">
-                  Add a review <span className="text-gray-400 font-normal text-[11px]">optional</span>
-                </p>
-                <textarea
-                  value={reviewText}
-                  onChange={e => setReviewText(e.target.value)}
-                  placeholder="What did you think? Your honest take..."
-                  rows={2}
-                  className="w-full text-[12px] text-gray-700 placeholder-gray-300 rounded-xl px-3 py-2 resize-none outline-none border border-gray-200 focus:border-purple-300 transition-colors"
-                />
-                <div className="flex items-center gap-2 mt-2">
-                  <button
-                    onClick={handleWriteReview}
-                    className="flex-1 py-2 rounded-xl text-[12px] font-bold transition-colors"
-                    style={{ background: reviewText.trim() ? '#7c3aed' : '#f3f4f6', color: reviewText.trim() ? 'white' : '#9ca3af' }}
-                  >
-                    {reviewText.trim() ? 'Post Review' : 'Skip for now'}
-                  </button>
-                  {reviewText.trim() && (
-                    <div className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-green-50 border border-green-100">
-                      <Star size={9} className="text-green-600 fill-green-600" />
-                      <span className="text-[10px] font-bold text-green-700">+15 pts</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              // STATE 3 — Bold call + rating distribution
-              <div>
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="flex-1">
-                    {communityRating && ratingValue ? (
-                      ratingValue > communityRating + 0.5
-                        ? <p className="text-[12px] font-bold text-gray-900">Bold call — you rated it higher</p>
-                        : ratingValue < communityRating - 0.5
-                        ? <p className="text-[12px] font-bold text-gray-900">Tough crowd — you're the critic</p>
-                        : <p className="text-[12px] font-bold text-gray-900">You agree with the crowd</p>
-                    ) : (
-                      <p className="text-[12px] font-bold text-gray-900">Rated!</p>
-                    )}
-                    {communityRating && (
-                      <p className="text-[10px] text-gray-400 mt-0.5">
-                        Avg {communityRating}/5 · {ratingCount} {ratingCount === 1 ? 'rating' : 'ratings'}
+                {/* Bold call verdict + community */}
+                {communityRating && ratingValue ? (
+                  <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-gray-50">
+                    <div>
+                      <p className="text-[12px] font-bold text-gray-900">
+                        {ratingValue > communityRating + 0.5 ? 'Bold call.' : ratingValue < communityRating - 0.5 ? 'Tough crowd.' : 'You agree.'}
                       </p>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-center ml-3 px-2.5 py-1.5 rounded-xl bg-amber-50 border border-amber-100">
-                    <span className="text-[8px] text-amber-600 font-bold uppercase tracking-wide mb-0.5">You</span>
-                    <div className="flex items-center gap-0.5">
-                      {[1, 2, 3, 4, 5].map(s => (
-                        <Star key={s} size={10} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
-                      ))}
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        Community avg {communityRating}/5 · {ratingCount} ratings
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-center ml-3 px-2 py-1 rounded-xl bg-amber-50 border border-amber-100">
+                      <span className="text-[8px] text-amber-600 font-bold uppercase tracking-wide mb-0.5">You</span>
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map(s => (
+                          <Star key={s} size={9} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : null}
+                {/* Distribution bars */}
                 {Object.keys(ratingDistribution).length > 0 && (
                   <div className="space-y-1">
                     {[5, 4, 3, 2, 1].map(s => {
@@ -1418,17 +1387,41 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       return (
                         <div key={s} className="flex items-center gap-1.5">
                           <span className="text-[9px] font-bold w-2.5 text-right" style={{ color: isUser ? '#f59e0b' : '#9ca3af' }}>{s}</span>
-                          <div className="flex-1 h-2 rounded-full bg-gray-100">
-                            <div
-                              className="h-full rounded-full transition-all"
-                              style={{ width: `${pct}%`, background: isUser ? '#f59e0b' : isMajority ? '#a78bfa' : '#e5e7eb' }}
-                            />
+                          <div className="flex-1 h-1.5 rounded-full bg-gray-100">
+                            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: isUser ? '#f59e0b' : isMajority ? '#a78bfa' : '#e5e7eb' }} />
                           </div>
                           <span className="text-[9px] font-bold w-5" style={{ color: isUser ? '#f59e0b' : '#d1d5db' }}>{pct}%</span>
                           {isUser && <span className="text-[9px] text-amber-400">you</span>}
                         </div>
                       );
                     })}
+                  </div>
+                )}
+                {/* Optional review — shown until posted */}
+                {!reviewPosted && (
+                  <div className="pt-1 border-t border-gray-50">
+                    <textarea
+                      value={reviewText}
+                      onChange={e => setReviewText(e.target.value)}
+                      placeholder="Add your take (optional)..."
+                      rows={2}
+                      className="w-full text-[12px] text-gray-700 placeholder-gray-300 rounded-xl px-3 py-2 resize-none outline-none border border-gray-200 focus:border-purple-300 transition-colors"
+                    />
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <button
+                        onClick={handleWriteReview}
+                        className="flex-1 py-1.5 rounded-xl text-[12px] font-bold transition-colors"
+                        style={{ background: reviewText.trim() ? '#7c3aed' : '#f3f4f6', color: reviewText.trim() ? 'white' : '#9ca3af' }}
+                      >
+                        {reviewText.trim() ? 'Post Review' : 'Skip'}
+                      </button>
+                      {reviewText.trim() && (
+                        <div className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-green-50 border border-green-100">
+                          <Star size={9} className="text-green-600 fill-green-600" />
+                          <span className="text-[10px] font-bold text-green-700">+15 pts</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
