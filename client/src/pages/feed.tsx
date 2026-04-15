@@ -1074,7 +1074,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     if (!baselineRating) return null;
     const diff = rating - baselineRating;
     const abs = Math.abs(diff);
-    if (abs <= 0.3) return <p className={`text-[10px] text-orange-400 ${className}`}>Right on the avg</p>;
+    if (abs <= 0.3) return <p className={`text-[10px] text-orange-400 ${className}`}>= Average rating</p>;
     if (diff > 0) return <p className={`text-[10px] text-green-600 ${className}`}>↑ {abs.toFixed(1)} above {baselineLabel}</p>;
     return <p className={`text-[10px] text-orange-500 ${className}`}>↓ {abs.toFixed(1)} below {baselineLabel}</p>;
   };
