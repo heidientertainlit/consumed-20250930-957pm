@@ -1189,7 +1189,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 })}
               </div>
             )}
-            <div className="flex items-center gap-1.5 mb-1.5">
+            <div className="flex items-center gap-1.5 mt-4 mb-1.5">
               <div>
                 <p className="text-[11px] font-medium text-gray-500 leading-tight">{post.user?.displayName || post.user?.username}'s Take</p>
                 {post.user?.username && <p className="text-[10px] text-gray-400 leading-tight">@{post.user.username}</p>}
