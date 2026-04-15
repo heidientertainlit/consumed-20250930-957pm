@@ -1016,63 +1016,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             )}
           </div>
         </div>
-        {isState1 && (
-          <div className="mt-1 mb-2">
-            <p className="text-[11px] font-bold text-gray-500 tracking-widest uppercase mb-2">What's Your Take?</p>
-            <div
-              ref={starsRef}
-              className="flex items-center gap-1 touch-none select-none"
-              onMouseLeave={() => setHoverRating(0)}
-              onTouchMove={(e) => {
-                e.stopPropagation();
-                if (!starsRef.current) return;
-                const touch = e.touches[0];
-                const rect = starsRef.current.getBoundingClientRect();
-                const x = touch.clientX - rect.left;
-                const starWidth = rect.width / 5;
-                const starIndex = Math.floor(x / starWidth);
-                const withinStar = (x % starWidth) / starWidth;
-                const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
-                setHoverRating(Math.round(val * 2) / 2);
-              }}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                if (hoverRating > 0) handleSubmitRating(hoverRating);
-                setHoverRating(0);
-              }}
-            >
-              {[1, 2, 3, 4, 5].map(star => {
-                const displayVal = hoverRating || 0;
-                return (
-                  <div key={star} className="relative" style={{ width: 36, height: 36 }}>
-                    <Star size={36} className="absolute inset-0 text-gray-200" />
-                    <div
-                      className="absolute inset-0 overflow-hidden pointer-events-none"
-                      style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}
-                    >
-                      <Star size={36} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
-                    </div>
-                    <button
-                      className="absolute top-0 left-0 h-full z-10"
-                      style={{ width: '50%' }}
-                      onMouseEnter={() => setHoverRating(star - 0.5)}
-                      onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }}
-                      aria-label={`Rate ${star - 0.5}`}
-                    />
-                    <button
-                      className="absolute top-0 right-0 h-full z-10"
-                      style={{ width: '50%' }}
-                      onMouseEnter={() => setHoverRating(star)}
-                      onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }}
-                      aria-label={`Rate ${star}`}
-                    />
-                  </div>
-                );
-              })}
-              {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
-            </div>
-          </div>
-        )}
         {post.mediaTitle ? (
           <div className="flex gap-3">
             {post.mediaImage && post.mediaImage.startsWith('http') ? (
@@ -1159,9 +1102,62 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )
         )}
 
-        {/* State 1 — peek + friend label + blurred review + Watch/Skip (stars are above media) */}
+        {/* State 1 — stars + peek + friend label + blurred review + Watch/Skip (after media) */}
         {isState1 && (
           <div className="mt-2">
+            <p className="text-[11px] font-bold text-gray-500 tracking-widest uppercase mb-2">What's Your Take?</p>
+            <div
+              ref={starsRef}
+              className="flex items-center gap-1 touch-none select-none mb-3"
+              onMouseLeave={() => setHoverRating(0)}
+              onTouchMove={(e) => {
+                e.stopPropagation();
+                if (!starsRef.current) return;
+                const touch = e.touches[0];
+                const rect = starsRef.current.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const starWidth = rect.width / 5;
+                const starIndex = Math.floor(x / starWidth);
+                const withinStar = (x % starWidth) / starWidth;
+                const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
+                setHoverRating(Math.round(val * 2) / 2);
+              }}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                if (hoverRating > 0) handleSubmitRating(hoverRating);
+                setHoverRating(0);
+              }}
+            >
+              {[1, 2, 3, 4, 5].map(star => {
+                const displayVal = hoverRating || 0;
+                return (
+                  <div key={star} className="relative" style={{ width: 36, height: 36 }}>
+                    <Star size={36} className="absolute inset-0 text-gray-200" />
+                    <div
+                      className="absolute inset-0 overflow-hidden pointer-events-none"
+                      style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}
+                    >
+                      <Star size={36} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
+                    </div>
+                    <button
+                      className="absolute top-0 left-0 h-full z-10"
+                      style={{ width: '50%' }}
+                      onMouseEnter={() => setHoverRating(star - 0.5)}
+                      onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }}
+                      aria-label={`Rate ${star - 0.5}`}
+                    />
+                    <button
+                      className="absolute top-0 right-0 h-full z-10"
+                      style={{ width: '50%' }}
+                      onMouseEnter={() => setHoverRating(star)}
+                      onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }}
+                      aria-label={`Rate ${star}`}
+                    />
+                  </div>
+                );
+              })}
+              {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
+            </div>
             {communityRating && (
               <button
                 onClick={() => setPeeked(p => !p)}
@@ -1193,30 +1189,31 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {post.content && (
               <div className="relative rounded-xl overflow-hidden border border-gray-100">
                 <p className="text-gray-600 text-sm p-3 blur-sm select-none pointer-events-none line-clamp-3">{post.content}</p>
-                <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[1px]">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/60 backdrop-blur-[1px]">
                   <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm">
                     <Lock size={10} className="text-gray-500" />
                     <span className="text-[11px] font-medium text-gray-600">Rate or answer to unlock</span>
                   </div>
+                  <div className="flex items-center gap-3">
+                    {onAddToList && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
+                        className="flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-blue-600 transition-colors"
+                      >
+                        <Bookmark size={11} /> Watch
+                      </button>
+                    )}
+                    <span className="text-gray-300 text-xs">·</span>
+                    <button
+                      onClick={() => setState1Dismissed(true)}
+                      className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <X size={11} /> Skip
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
-            <div className="flex items-center gap-2 mt-2">
-              {onAddToList && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-[11px] font-medium text-gray-500 hover:border-blue-300 hover:text-blue-600 transition-colors"
-                >
-                  <Bookmark size={11} /> Watch
-                </button>
-              )}
-              <button
-                onClick={() => setState1Dismissed(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-[11px] font-medium text-gray-400 hover:border-gray-300 transition-colors"
-              >
-                <X size={11} /> Skip
-              </button>
-            </div>
           </div>
         )}
 
