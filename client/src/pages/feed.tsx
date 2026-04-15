@@ -982,8 +982,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   return (
     <div className="snap-start flex-shrink-0 w-[85vw] max-w-[340px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="p-4">
-        {/* User header inside card */}
-        <div className="flex items-center justify-between mb-3">
+        {/* User header inside card — hidden in State 1 (appears again above blurred review) */}
+        <div className={`flex items-center justify-between mb-3 ${isState1 ? 'hidden' : ''}`}>
           <Link href={`/user/${post.user?.id || ''}`} className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold overflow-hidden flex-shrink-0">
               {post.user?.avatar
