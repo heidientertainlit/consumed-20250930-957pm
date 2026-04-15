@@ -1230,6 +1230,165 @@ function PlayComingSoon({ label }: { label: string }) {
   );
 }
 
+/* ─── Pools Tab ──────────────────────────────────────────────────────── */
+function PoolsTab({ posts, token, onRefresh }: { posts: any[]; token: string; onRefresh: () => void }) {
+  const { toast } = useToast();
+  const [submitting, setSubmitting] = useState<string | null>(null);
+  const [localAnswers, setLocalAnswers] = useState<Record<string, string>>({});
+
+  const quizPrompts = posts.filter(p => p.prompt_type === 'pick' && (p.options || []).length > 0);
+  const answeredCount = quizPrompts.filter(p => !!p.user_answer || !!localAnswers[p.id]).length;
+  const totalPoints = quizPrompts.reduce((sum, p) => sum + (p.user_answer?.points_earned || 0), 0);
+  const unanswered = quizPrompts.filter(p => !p.user_answer && !localAnswers[p.id]);
+
+  const handleAnswer = async (promptId: string, answer: string) => {
+    if (submitting) return;
+    setSubmitting(promptId);
+    setLocalAnswers(prev => ({ ...prev, [promptId]: answer }));
+    const result = await callFn('submit-pool-answer', { prompt_id: promptId, answer }, token);
+    setSubmitting(null);
+    if (result.error) {
+      setLocalAnswers(prev => { const n = { ...prev }; delete n[promptId]; return n; });
+      toast({ title: result.error, variant: 'destructive' });
+    } else {
+      onRefresh();
+    }
+  };
+
+  if (quizPrompts.length === 0) {
+    return (
+      <div className="px-4 pt-6 pb-4">
+        <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-10 text-center">
+          <Brain size={32} className="text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-400 text-sm font-medium">No questions yet</p>
+          <p className="text-gray-300 text-xs mt-1">Check back soon for the next round</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 pt-4 pb-6">
+      {/* Progress header */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-purple-500 mb-0.5">Current Round</p>
+          <p className="text-gray-700 text-sm font-medium">{answeredCount} of {quizPrompts.length} answered</p>
+        </div>
+        {totalPoints > 0 && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100">
+            <Star size={12} className="text-amber-400 fill-amber-400" />
+            <span className="text-amber-600 text-xs font-bold">{totalPoints} pts</span>
+          </div>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-1.5 rounded-full bg-gray-100 mb-5 overflow-hidden">
+        <div
+          className="h-full rounded-full bg-purple-500 transition-all"
+          style={{ width: quizPrompts.length > 0 ? `${(answeredCount / quizPrompts.length) * 100}%` : '0%' }}
+        />
+      </div>
+
+      {/* Unanswered questions first */}
+      {unanswered.length > 0 && (
+        <div className="mb-5">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Answer these</p>
+          <div className="space-y-3">
+            {unanswered.map((prompt: any) => {
+              const opts: string[] = prompt.options || [];
+              const isSubmitting = submitting === prompt.id;
+              return (
+                <div key={prompt.id} className="bg-white rounded-2xl shadow-sm overflow-hidden" style={{ border: '0.5px solid #e5e7eb' }}>
+                  <div className="px-4 pt-4 pb-2">
+                    <p className="text-gray-900 text-sm font-semibold leading-snug mb-3">{prompt.prompt_text}</p>
+                    <div className="space-y-2">
+                      {opts.map((opt) => (
+                        <button
+                          key={opt}
+                          disabled={isSubmitting}
+                          onClick={() => handleAnswer(prompt.id, opt)}
+                          className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all border"
+                          style={{ borderColor: '#e5e7eb', color: '#374151', background: '#fafafa' }}
+                          onMouseEnter={e => {
+                            (e.currentTarget as HTMLButtonElement).style.background = '#f3f0ff';
+                            (e.currentTarget as HTMLButtonElement).style.borderColor = '#7c3aed';
+                            (e.currentTarget as HTMLButtonElement).style.color = '#7c3aed';
+                          }}
+                          onMouseLeave={e => {
+                            (e.currentTarget as HTMLButtonElement).style.background = '#fafafa';
+                            (e.currentTarget as HTMLButtonElement).style.borderColor = '#e5e7eb';
+                            (e.currentTarget as HTMLButtonElement).style.color = '#374151';
+                          }}
+                        >
+                          {isSubmitting ? '...' : opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="px-4 py-2 border-t border-gray-50 flex items-center justify-between">
+                    <span className="text-xs text-gray-400">{prompt.points_value || 10} pts</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Answered questions */}
+      {quizPrompts.filter(p => !!p.user_answer || !!localAnswers[p.id]).length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Your answers</p>
+          <div className="space-y-2">
+            {quizPrompts.filter(p => !!p.user_answer || !!localAnswers[p.id]).map((prompt: any) => {
+              const myAnswer = prompt.user_answer?.answer || localAnswers[prompt.id] || '';
+              const isCorrect = prompt.user_answer?.is_correct;
+              const isResolved = prompt.status === 'resolved';
+              const ptsEarned = prompt.user_answer?.points_earned || 0;
+              return (
+                <div key={prompt.id} className="bg-white rounded-2xl px-4 py-3 flex items-start gap-3" style={{ border: '0.5px solid #e5e7eb' }}>
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                    isResolved ? (isCorrect ? 'bg-green-100' : 'bg-red-100') : 'bg-purple-100'
+                  }`}>
+                    {isResolved ? (
+                      isCorrect
+                        ? <CheckCircle2 size={12} className="text-green-500" />
+                        : <X size={12} className="text-red-400" />
+                    ) : (
+                      <CheckCircle2 size={12} className="text-purple-400" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-gray-500 text-xs mb-0.5 line-clamp-1">{prompt.prompt_text}</p>
+                    <p className="text-gray-800 text-sm font-medium">{myAnswer}</p>
+                    {isResolved && prompt.correct_answer && myAnswer !== prompt.correct_answer && (
+                      <p className="text-xs text-green-600 mt-0.5">Answer: {prompt.correct_answer}</p>
+                    )}
+                  </div>
+                  {ptsEarned > 0 && (
+                    <span className="text-xs font-bold text-amber-500 shrink-0">+{ptsEarned}</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* All done state */}
+      {unanswered.length === 0 && quizPrompts.length > 0 && (
+        <div className="mt-4 rounded-2xl bg-purple-50 border border-purple-100 py-5 text-center">
+          <CheckCircle2 size={24} className="text-purple-400 mx-auto mb-2" />
+          <p className="text-purple-700 text-sm font-semibold">Round complete!</p>
+          <p className="text-purple-400 text-xs mt-0.5">Check back when the next round drops</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Play Tab: Main component ───────────────────────────────────────── */
 function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, managingId, onManagePick }: {
   featuredPolls: any[];
@@ -1839,7 +1998,7 @@ export default function PoolDetailPage() {
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<'feed' | 'live' | 'play' | 'leaderboard' | 'members'>('feed');
+  const [tab, setTab] = useState<'feed' | 'live' | 'play' | 'pools' | 'leaderboard' | 'members'>('feed');
   const [feedPickIndex, setFeedPickIndex] = useState(0);
   const [managingId, setManagingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -1958,6 +2117,7 @@ export default function PoolDetailPage() {
     { key: 'feed', label: 'Feed' },
     ...(isPartnerRoom ? [{ key: 'live', label: 'live' }] : []),
     { key: 'play', label: 'Play' },
+    { key: 'pools', label: 'Pools' },
     { key: 'leaderboard', label: 'Scores' },
     { key: 'members', label: 'Members' },
   ] as const;
@@ -2144,6 +2304,15 @@ export default function PoolDetailPage() {
             onRefresh={refresh}
             managingId={managingId}
             onManagePick={handleManagePrompt}
+          />
+        )}
+
+        {/* ── POOLS ── */}
+        {!isLoading && tab === 'pools' && (
+          <PoolsTab
+            posts={posts}
+            token={token}
+            onRefresh={refresh}
           />
         )}
 
