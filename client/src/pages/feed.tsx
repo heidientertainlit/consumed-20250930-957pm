@@ -700,6 +700,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [externalRating, setExternalRating] = useState<number | null>(null);
   const [externalRatingLabel, setExternalRatingLabel] = useState<string>('');
   const [tasteAlignment, setTasteAlignment] = useState<number | null>(null);
+  const [relatedRatings, setRelatedRatings] = useState<Array<{userId: string; userName: string; displayName: string; avatar?: string; rating: number}>>([]);
+  const [showAllRelated, setShowAllRelated] = useState(false);
   const [seenItDone, setSeenItDone] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
@@ -859,6 +861,37 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         setTasteAlignment(Math.max(0, Math.min(100, alignment)));
       });
   }, [post.user?.id, session?.user?.id, post.type]);
+
+  // Related ratings: other users who rated the same media
+  useEffect(() => {
+    const externalId = post.externalId || post.mediaItems?.[0]?.externalId;
+    const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource;
+    if (!externalId || !externalSource) return;
+    const primaryUserId = post.user?.id;
+    const currentId = session?.user?.id;
+    supabase
+      .from('media_ratings')
+      .select('user_id, rating')
+      .eq('media_external_id', externalId)
+      .eq('media_external_source', externalSource)
+      .order('created_at', { ascending: false })
+      .limit(10)
+      .then(async ({ data: ratings }) => {
+        if (!ratings || ratings.length === 0) return;
+        const filtered = ratings.filter((r: any) => r.user_id !== primaryUserId && r.user_id !== currentId);
+        if (filtered.length === 0) return;
+        const ids = filtered.map((r: any) => r.user_id);
+        const { data: users } = await supabase.from('users').select('id, user_name, display_name').in('id', ids);
+        const userMap: Record<string, any> = {};
+        (users || []).forEach((u: any) => { userMap[u.id] = u; });
+        setRelatedRatings(filtered.map((r: any) => ({
+          userId: r.user_id,
+          userName: userMap[r.user_id]?.user_name || '',
+          displayName: userMap[r.user_id]?.display_name || userMap[r.user_id]?.user_name || 'User',
+          rating: Number(r.rating),
+        })));
+      });
+  }, [post.externalId, post.externalSource, post.user?.id, session?.user?.id]);
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
@@ -1032,6 +1065,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   // Action First layout for other users' unrated rating posts
   const isActionFirst = isRatingPost && isOtherUser && !ratingSubmitted && session?.access_token;
+
+  // Use external (3rd-party) rating as comparison baseline when available; convert /10 → /5
+  const baselineRating = externalRating ? externalRating / 2 : communityRating;
+  const baselineLabel = externalRating ? `${externalRatingLabel} avg` : 'community avg';
+
+  const ratingDiffLine = (rating: number, className = 'mt-0.5') => {
+    if (!baselineRating) return null;
+    const diff = rating - baselineRating;
+    const abs = Math.abs(diff);
+    if (abs <= 0.3) return <p className={`text-[10px] text-orange-400 ${className}`}>On par with {baselineLabel}</p>;
+    if (diff > 0) return <p className={`text-[10px] text-green-600 ${className}`}>↑ {abs.toFixed(1)} above {baselineLabel}</p>;
+    return <p className={`text-[10px] text-orange-500 ${className}`}>↓ {abs.toFixed(1)} below {baselineLabel}</p>;
+  };
 
   // Reusable action bar
   const actionBar = (
@@ -1211,20 +1257,43 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
               </p>
             )}
-            {/* Friend's rating vs community average */}
-            {post.rating && communityRating && (() => {
-              const diff = post.rating - communityRating;
-              if (Math.abs(diff) <= 0.3) return <p className="text-[10px] text-gray-400 mb-2">On par with average ({communityRating}/5 avg)</p>;
-              if (diff > 0) return <p className="text-[10px] text-green-600 mb-2">↑ {diff.toFixed(1)} above average ({communityRating}/5 avg)</p>;
-              return <p className="text-[10px] text-orange-500 mb-2">↓ {Math.abs(diff).toFixed(1)} below average ({communityRating}/5 avg)</p>;
-            })()}
+            {/* Primary poster's rating vs baseline */}
+            {post.rating ? ratingDiffLine(post.rating, 'mb-2') : null}
             {post.content && (
-              <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mb-3">
+              <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mb-2">
                 <p className={`text-gray-600 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
                 {!contentExpanded && post.content.length > 80 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
               </div>
             )}
-            <div className="pt-2 border-t border-gray-50">{actionBar}</div>
+            {/* Other users who rated the same media */}
+            {relatedRatings.length > 0 && (
+              <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2">
+                {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
+                  <div key={r.userId}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
+                          {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
+                        </div>
+                        <span className="text-[11px] font-semibold text-gray-700">{r.displayName || r.userName}</span>
+                      </div>
+                      <div className="flex items-center gap-0.5">
+                        {[1,2,3,4,5].map(s => (
+                          <Star key={s} size={10} className={s <= Math.floor(r.rating) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(r.rating) && r.rating % 1 >= 0.5 ? 'text-yellow-200 fill-yellow-200' : 'text-gray-200'} />
+                        ))}
+                      </div>
+                    </div>
+                    {ratingDiffLine(r.rating, 'mt-0.5')}
+                  </div>
+                ))}
+                {relatedRatings.length > 2 && (
+                  <button onClick={() => setShowAllRelated(v => !v)} className="text-[10px] text-violet-500 font-medium text-left">
+                    {showAllRelated ? 'Show less' : `+ ${relatedRatings.length - 2} more`}
+                  </button>
+                )}
+              </div>
+            )}
+            <div className="pt-2 border-t border-gray-50 mt-2">{actionBar}</div>
           </div>
         </>
       ) : (
@@ -1381,12 +1450,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   ))}
                   <span className="text-[11px] text-yellow-500 font-bold ml-1">{ratingValue}/5</span>
                 </div>
-                {communityRating && ratingValue ? (() => {
-                  const diff = ratingValue - communityRating;
-                  if (Math.abs(diff) <= 0.3) return <p className="text-[10px] text-gray-400 mt-0.5">On par with average</p>;
-                  if (diff > 0) return <p className="text-[10px] text-green-600 mt-0.5">↑ {diff.toFixed(1)} above average</p>;
-                  return <p className="text-[10px] text-orange-500 mt-0.5">↓ {Math.abs(diff).toFixed(1)} below average</p>;
-                })() : null}
+                {ratingValue ? ratingDiffLine(ratingValue) : null}
               </div>
             )}
           </div>
