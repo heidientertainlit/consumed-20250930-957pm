@@ -1330,30 +1330,38 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             </div>
           </div>
           {post.mediaTitle ? (
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-start">
               {posterEl}
-              <div className="min-w-0 flex-1 flex flex-col justify-center">
-                {post.externalId && post.externalSource ? (
-                  <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-                    <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{post.mediaTitle}</p>
-                  </Link>
-                ) : (
-                  <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
-                )}
-                {post.rating && post.rating > 0 && (
-                  <div className="flex items-center gap-0.5 mt-1">
-                    {[1,2,3,4,5].map(s => {
-                      const r = post.rating!;
-                      if (s <= Math.floor(r)) return <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />;
-                      if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={14} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={14} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                      return <Star key={s} size={14} className="text-gray-200" />;
-                    })}
+              <div className="min-w-0 flex-1">
+                {/* Title row + stars right-aligned for rating posts */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    {post.externalId && post.externalSource ? (
+                      <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
+                        <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{post.mediaTitle}</p>
+                      </Link>
+                    ) : (
+                      <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
+                    )}
                   </div>
-                )}
-                {post.rating ? ratingDiffLine(post.rating, 'mt-0.5') : null}
+                  {post.rating && post.rating > 0 && isRatingPost && (
+                    <div className="flex flex-col items-end flex-shrink-0">
+                      <div className="flex items-center gap-0.5">
+                        {[1,2,3,4,5].map(s => {
+                          const r = post.rating!;
+                          if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
+                          if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                          return <Star key={s} size={13} className="text-gray-200" />;
+                        })}
+                      </div>
+                      {ratingDiffLine(post.rating, 'mt-0.5 text-right')}
+                    </div>
+                  )}
+                </div>
+                {/* Taste alignment */}
                 {tasteAlignment !== null && isOtherUser && (
-                  <p className="text-[11px] text-violet-600 italic mt-0.5">
-                    You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
+                  <p className="text-[11px] text-violet-600 italic mt-1">
+                    You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
                   </p>
                 )}
                 {post.content && (
