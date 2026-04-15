@@ -977,173 +977,257 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const isRatingPost = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review';
   const isOtherUser = post.user?.id !== currentUserId;
 
+  // Action First layout for other users' unrated rating posts
+  const isActionFirst = isRatingPost && isOtherUser && !ratingSubmitted && session?.access_token;
+
+  // Reusable action bar
+  const actionBar = (
+    <div className="flex items-center gap-3">
+      <button
+        onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
+        className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+      >
+        <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
+        <span className="text-xs">{post.likes || 0}</span>
+      </button>
+      <button
+        onClick={handleCommentToggle}
+        className={`flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
+      >
+        <MessageCircle size={15} />
+        <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
+      </button>
+      {(post.externalId || post.mediaTitle) && (
+        <>
+          {onAddToList && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
+              className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
+              title="Add to list"
+            >
+              <Plus size={15} />
+            </button>
+          )}
+          <button
+            onClick={handleSeenIt}
+            className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`}
+            title={seenItLabel.idle}
+            disabled={seenItDone}
+          >
+            <Check size={15} />
+            <span className="text-xs">{seenItDone ? seenItLabel.done : seenItLabel.idle}</span>
+          </button>
+        </>
+      )}
+      <div className="ml-auto flex items-center gap-1.5">
+        <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
+        <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
+      </div>
+    </div>
+  );
+
+  // Poster helper
+  const posterEl = post.mediaImage && post.mediaImage.startsWith('http') ? (
+    post.externalId && post.externalSource ? (
+      <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
+        <div className="relative flex-shrink-0 w-14 h-[84px] rounded-xl overflow-hidden shadow-md cursor-pointer hover:opacity-90 transition-opacity">
+          <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          {mediaTypeNorm && (
+            <div className="absolute bottom-1 left-1 bg-purple-600/50 backdrop-blur-sm rounded-md p-0.5">
+              {mediaTypeNorm === 'tv' && <Tv2 size={9} className="text-white" />}
+              {mediaTypeNorm === 'movie' && <Film size={9} className="text-white" />}
+              {mediaTypeNorm === 'book' && <Book size={9} className="text-white" />}
+              {mediaTypeNorm === 'music' && <Music size={9} className="text-white" />}
+            </div>
+          )}
+        </div>
+      </Link>
+    ) : (
+      <div className="relative flex-shrink-0 w-14 h-[84px] rounded-xl overflow-hidden shadow-md">
+        <img src={post.mediaImage} alt={post.mediaTitle} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        {mediaTypeNorm && (
+          <div className="absolute bottom-1 left-1 bg-purple-600/50 backdrop-blur-sm rounded-md p-0.5">
+            {mediaTypeNorm === 'tv' && <Tv2 size={9} className="text-white" />}
+            {mediaTypeNorm === 'movie' && <Film size={9} className="text-white" />}
+            {mediaTypeNorm === 'book' && <Book size={9} className="text-white" />}
+            {mediaTypeNorm === 'music' && <Music size={9} className="text-white" />}
+          </div>
+        )}
+      </div>
+    )
+  ) : null;
+
   return (
     <div className="snap-start flex-shrink-0 w-[85vw] max-w-[340px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <Link href={`/user/${post.user?.id || ''}`} className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold overflow-hidden flex-shrink-0">
-              {post.user?.avatar
-                ? <img src={post.user.avatar} alt="" className="w-full h-full object-cover" />
-                : (post.user?.displayName || post.user?.username || '?')[0]?.toUpperCase()}
+      {isActionFirst ? (
+        // ACTION FIRST layout — stars on top, friend's take below
+        <>
+          {/* Top: violet action section */}
+          <div className="px-4 pt-4 pb-4 bg-violet-50">
+            <div className="flex items-center gap-3 mb-3">
+              {posterEl}
+              <div className="flex-1 min-w-0">
+                {post.externalId && post.externalSource ? (
+                  <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
+                    <p className="text-sm font-bold text-gray-900 hover:text-purple-600 line-clamp-2">{post.mediaTitle}</p>
+                  </Link>
+                ) : (
+                  <p className="text-sm font-bold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
+                )}
+                <p className="text-[11px] text-gray-400 mt-0.5">Have you seen it? Rate it.</p>
+              </div>
+              <div className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-violet-100 border border-violet-200 flex-shrink-0">
+                <Star size={9} className="text-violet-600 fill-violet-600" />
+                <span className="text-[10px] font-bold text-violet-700">+10 pts</span>
+              </div>
             </div>
-            <div>
-              {(() => {
-                const cardDisplayName = post.user?.displayName || post.user?.username || 'Someone';
-                const cardIsRatingType = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review' || post.type === 'thought';
+            {/* Large interactive stars */}
+            <div
+              ref={starsRef}
+              className="flex items-center gap-1.5 touch-none select-none"
+              onMouseLeave={() => setHoverRating(0)}
+              onTouchMove={(e) => {
+                e.stopPropagation();
+                if (!starsRef.current) return;
+                const touch = e.touches[0];
+                const rect = starsRef.current.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const starWidth = rect.width / 5;
+                const starIndex = Math.floor(x / starWidth);
+                const withinStar = (x % starWidth) / starWidth;
+                const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
+                setHoverRating(Math.round(val * 2) / 2);
+              }}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                if (hoverRating > 0) handleSubmitRating(hoverRating);
+                setHoverRating(0);
+              }}
+            >
+              {[1, 2, 3, 4, 5].map(star => {
+                const displayVal = hoverRating;
                 return (
-                  <p className="text-xs font-semibold text-gray-900 leading-tight hover:text-purple-600">
-                    {cardIsRatingType ? `${cardDisplayName}'s Take` : cardDisplayName}
-                  </p>
-                );
-              })()}
-              {post.user?.username && post.user.username !== post.user?.displayName && (
-                <p className="text-[10px] text-gray-400 leading-tight">@{post.user.username}</p>
-              )}
-            </div>
-          </Link>
-          <div className="flex items-center gap-1.5">
-            {currentUserId && post.user?.id === currentUserId && onDeletePost && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }}
-                className="text-gray-300 hover:text-red-500 transition-colors"
-              >
-                <Trash2 size={14} />
-              </button>
-            )}
-          </div>
-        </div>
-        {post.mediaTitle ? (
-          <div className="flex gap-3">
-            {post.mediaImage && post.mediaImage.startsWith('http') ? (
-              post.externalId && post.externalSource ? (
-                <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-                  <div className="relative flex-shrink-0 self-start w-16 h-[96px]">
-                    <img src={post.mediaImage} alt={post.mediaTitle} className="w-16 h-[96px] rounded-xl object-cover shadow-md cursor-pointer hover:opacity-90 transition-opacity" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    {mediaTypeNorm && (
-                      <div className="absolute bottom-1.5 left-1.5 bg-purple-600/50 backdrop-blur-sm rounded-md p-1">
-                        {mediaTypeNorm === 'tv' && <Tv2 size={10} className="text-white" />}
-                        {mediaTypeNorm === 'movie' && <Film size={10} className="text-white" />}
-                        {mediaTypeNorm === 'book' && <Book size={10} className="text-white" />}
-                        {mediaTypeNorm === 'music' && <Music size={10} className="text-white" />}
-                        {mediaTypeNorm === 'podcast' && <Headphones size={10} className="text-white" />}
-                        {mediaTypeNorm === 'game' && <Gamepad2 size={10} className="text-white" />}
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              ) : (
-                <div className="relative flex-shrink-0 self-start w-16 h-[96px]">
-                  <img src={post.mediaImage} alt={post.mediaTitle} className="w-16 h-[96px] rounded-xl object-cover shadow-md" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  {mediaTypeNorm && (
-                    <div className="absolute bottom-1.5 left-1.5 bg-purple-600/50 backdrop-blur-sm rounded-md p-1">
-                      {mediaTypeNorm === 'tv' && <Tv2 size={10} className="text-white" />}
-                      {mediaTypeNorm === 'movie' && <Film size={10} className="text-white" />}
-                      {mediaTypeNorm === 'book' && <Book size={10} className="text-white" />}
-                      {mediaTypeNorm === 'music' && <Music size={10} className="text-white" />}
-                      {mediaTypeNorm === 'podcast' && <Headphones size={10} className="text-white" />}
-                      {mediaTypeNorm === 'game' && <Gamepad2 size={10} className="text-white" />}
+                  <div key={star} className="relative" style={{ width: 38, height: 38 }}>
+                    <Star size={38} className="absolute inset-0 text-violet-200" />
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
+                      <Star size={38} className="fill-yellow-400 text-yellow-400" />
                     </div>
-                  )}
+                    <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
+                    <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
+                  </div>
+                );
+              })}
+              {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
+            </div>
+          </div>
+          {/* From your feed separator */}
+          <div className="px-4 pt-3 pb-1">
+            <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">From your feed</p>
+          </div>
+          {/* Bottom: friend's content */}
+          <div className="px-4 pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <Link href={`/user/${post.user?.id || ''}`} className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold overflow-hidden flex-shrink-0">
+                  {post.user?.avatar
+                    ? <img src={post.user.avatar} alt="" className="w-full h-full object-cover" />
+                    : (post.user?.displayName || post.user?.username || '?')[0]?.toUpperCase()}
                 </div>
-              )
-            ) : null}
-            <div className="min-w-0 flex-1 flex flex-col justify-center">
-              {post.externalId && post.externalSource ? (
-                <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-                  <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{post.mediaTitle}</p>
-                </Link>
-              ) : (
-                <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
-              )}
+                <p className="text-xs font-semibold text-gray-900 hover:text-purple-600">
+                  {post.user?.displayName || post.user?.username || 'Someone'}
+                </p>
+              </Link>
               {post.rating && post.rating > 0 && (
-                <div className="flex items-center gap-0.5 mt-1">
+                <div className="flex items-center gap-0.5">
                   {[1,2,3,4,5].map(s => {
                     const r = post.rating!;
-                    if (s <= Math.floor(r)) return <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />;
-                    if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={14} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={14} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                    return <Star key={s} size={14} className="text-gray-200" />;
+                    if (s <= Math.floor(r)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
+                    if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={12} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                    return <Star key={s} size={12} className="text-gray-200" />;
                   })}
                 </div>
               )}
-              {post.content && (
-                <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mt-1.5">
-                  <p className={`text-gray-700 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
-                  {!contentExpanded && post.content.length > 100 && (
-                    <span className="text-purple-500 text-xs font-medium">Read more</span>
-                  )}
-                </div>
+            </div>
+            {post.content && (
+              <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mb-3">
+                <p className={`text-gray-600 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
+                {!contentExpanded && post.content.length > 80 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
+              </div>
+            )}
+            <div className="pt-2 border-t border-gray-50">{actionBar}</div>
+          </div>
+        </>
+      ) : (
+        // NORMAL layout — for already-rated or own posts
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <Link href={`/user/${post.user?.id || ''}`} className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold overflow-hidden flex-shrink-0">
+                {post.user?.avatar
+                  ? <img src={post.user.avatar} alt="" className="w-full h-full object-cover" />
+                  : (post.user?.displayName || post.user?.username || '?')[0]?.toUpperCase()}
+              </div>
+              <div>
+                {(() => {
+                  const cardDisplayName = post.user?.displayName || post.user?.username || 'Someone';
+                  const cardIsRatingType = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review' || post.type === 'thought';
+                  return (
+                    <p className="text-xs font-semibold text-gray-900 leading-tight hover:text-purple-600">
+                      {cardIsRatingType ? `${cardDisplayName}'s Take` : cardDisplayName}
+                    </p>
+                  );
+                })()}
+                {post.user?.username && post.user.username !== post.user?.displayName && (
+                  <p className="text-[10px] text-gray-400 leading-tight">@{post.user.username}</p>
+                )}
+              </div>
+            </Link>
+            <div className="flex items-center gap-1.5">
+              {currentUserId && post.user?.id === currentUserId && onDeletePost && (
+                <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors">
+                  <Trash2 size={14} />
+                </button>
               )}
             </div>
           </div>
-        ) : (
-          post.content && (
-            <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
-              <p className={`text-gray-800 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
-              {!contentExpanded && post.content.length > 100 && (
-                <span className="text-purple-500 text-xs font-medium">Read more</span>
-              )}
+          {post.mediaTitle ? (
+            <div className="flex gap-3">
+              {posterEl}
+              <div className="min-w-0 flex-1 flex flex-col justify-center">
+                {post.externalId && post.externalSource ? (
+                  <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
+                    <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{post.mediaTitle}</p>
+                  </Link>
+                ) : (
+                  <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
+                )}
+                {post.rating && post.rating > 0 && (
+                  <div className="flex items-center gap-0.5 mt-1">
+                    {[1,2,3,4,5].map(s => {
+                      const r = post.rating!;
+                      if (s <= Math.floor(r)) return <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />;
+                      if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={14} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={14} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                      return <Star key={s} size={14} className="text-gray-200" />;
+                    })}
+                  </div>
+                )}
+                {post.content && (
+                  <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mt-1.5">
+                    <p className={`text-gray-700 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
+                    {!contentExpanded && post.content.length > 100 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
+                  </div>
+                )}
+              </div>
             </div>
-          )
-        )}
-
-        <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-50">
-          <button
-            onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
-            className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
-          >
-            <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
-            <span className="text-xs">{post.likes || 0}</span>
-          </button>
-          <button
-            onClick={handleCommentToggle}
-            className={`flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
-          >
-            <MessageCircle size={15} />
-            <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
-          </button>
-          {(post.externalId || post.mediaTitle) && (
-            <>
-              {onAddToList && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
-                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
-                  title="Add to list"
-                >
-                  <Plus size={15} />
-                </button>
-              )}
-              {post.mediaTitle && session?.user?.id && post.user?.id !== session?.user?.id && (
-                <button
-                  onClick={handleStarClick}
-                  disabled={isSearchingMedia}
-                  className={`flex items-center gap-1 active:scale-110 transition-all disabled:opacity-50 ${ratingSubmitted ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'}`}
-                  title={ratingSubmitted ? 'Change your rating' : 'Rate this'}
-                >
-                  {isSearchingMedia ? (
-                    <div className="w-[15px] h-[15px] border-2 border-gray-300 border-t-yellow-400 rounded-full animate-spin" />
-                  ) : (
-                    <Star size={15} fill={ratingSubmitted ? 'currentColor' : 'none'} />
-                  )}
-                  {ratingSubmitted && <span className="text-xs font-medium text-yellow-500">{ratingValue}</span>}
-                </button>
-              )}
-              <button
-                onClick={handleSeenIt}
-                className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`}
-                title={seenItLabel.idle}
-                disabled={seenItDone}
-              >
-                <Check size={15} />
-                <span className="text-xs">{seenItDone ? seenItLabel.done : seenItLabel.idle}</span>
-              </button>
-            </>
+          ) : (
+            post.content && (
+              <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
+                <p className={`text-gray-800 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
+                {!contentExpanded && post.content.length > 100 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
+              </div>
+            )
           )}
-          <div className="ml-auto flex items-center gap-1.5">
-            <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
-            <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
-          </div>
-        </div>
+          <div className="mt-3 pt-3 border-t border-gray-50">{actionBar}</div>
 
         {/* YOUR TURN / Post-rating section */}
         {isRatingPost && isOtherUser && session?.access_token && (
@@ -1237,7 +1321,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             )}
           </div>
         )}
-      </div>
+        </div>
+      )}
 
       {showComments && (
         <div className="border-t border-gray-100 px-4 pb-4 bg-gray-50/50">
