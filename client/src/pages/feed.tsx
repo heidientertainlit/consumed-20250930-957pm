@@ -704,7 +704,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [peeked, setPeeked] = useState(false);
   const [ratingDistribution, setRatingDistribution] = useState<Record<number, number>>({});
   const [ratingCount, setRatingCount] = useState(0);
-  const [state1Dismissed, setState1Dismissed] = useState(false);
   const hasFetched = useRef(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
   const starsRef = useRef<HTMLDivElement>(null);
@@ -977,13 +976,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   const isRatingPost = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review';
   const isOtherUser = post.user?.id !== currentUserId;
-  const isState1 = isRatingPost && isOtherUser && !ratingSubmitted && !state1Dismissed && !showStarPicker && !!session?.access_token;
 
   return (
     <div className="snap-start flex-shrink-0 w-[85vw] max-w-[340px] bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="p-4">
-        {/* User header inside card — hidden in State 1 (appears again above blurred review) */}
-        <div className={`flex items-center justify-between mb-3 ${isState1 ? 'hidden' : ''}`}>
+        <div className="flex items-center justify-between mb-3">
           <Link href={`/user/${post.user?.id || ''}`} className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold overflow-hidden flex-shrink-0">
               {post.user?.avatar
@@ -1016,70 +1013,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             )}
           </div>
         </div>
-        {isState1 && (
-          <div className="mt-1 mb-2">
-            <p className="text-[11px] font-bold text-gray-500 tracking-widest uppercase mb-2">What's Your Take?</p>
-            <div
-              ref={starsRef}
-              className="flex items-center gap-1 touch-none select-none"
-              onMouseLeave={() => setHoverRating(0)}
-              onTouchMove={(e) => {
-                e.stopPropagation();
-                if (!starsRef.current) return;
-                const touch = e.touches[0];
-                const rect = starsRef.current.getBoundingClientRect();
-                const x = touch.clientX - rect.left;
-                const starWidth = rect.width / 5;
-                const starIndex = Math.floor(x / starWidth);
-                const withinStar = (x % starWidth) / starWidth;
-                const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
-                setHoverRating(Math.round(val * 2) / 2);
-              }}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                if (hoverRating > 0) handleSubmitRating(hoverRating);
-                setHoverRating(0);
-              }}
-            >
-              {[1, 2, 3, 4, 5].map(star => {
-                const displayVal = hoverRating || 0;
-                return (
-                  <div key={star} className="relative" style={{ width: 36, height: 36 }}>
-                    <Star size={36} className="absolute inset-0 text-gray-200" />
-                    <div
-                      className="absolute inset-0 overflow-hidden pointer-events-none"
-                      style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}
-                    >
-                      <Star size={36} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
-                    </div>
-                    <button
-                      className="absolute top-0 left-0 h-full z-10"
-                      style={{ width: '50%' }}
-                      onMouseEnter={() => setHoverRating(star - 0.5)}
-                      onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }}
-                      aria-label={`Rate ${star - 0.5}`}
-                    />
-                    <button
-                      className="absolute top-0 right-0 h-full z-10"
-                      style={{ width: '50%' }}
-                      onMouseEnter={() => setHoverRating(star)}
-                      onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }}
-                      aria-label={`Rate ${star}`}
-                    />
-                  </div>
-                );
-              })}
-              {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
-            </div>
-          </div>
-        )}
         {post.mediaTitle ? (
           <div className="flex gap-3">
             {post.mediaImage && post.mediaImage.startsWith('http') ? (
               post.externalId && post.externalSource ? (
                 <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-                  <div className={`relative flex-shrink-0 self-start ${isState1 ? 'w-12 h-[72px]' : 'w-20 h-[120px]'}`}>
-                    <img src={post.mediaImage} alt={post.mediaTitle} className={`${isState1 ? 'w-12 h-[72px]' : 'w-20 h-[120px]'} rounded-xl object-cover shadow-md cursor-pointer hover:opacity-90 transition-opacity`} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <div className="relative flex-shrink-0 self-start w-16 h-[96px]">
+                    <img src={post.mediaImage} alt={post.mediaTitle} className="w-16 h-[96px] rounded-xl object-cover shadow-md cursor-pointer hover:opacity-90 transition-opacity" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     {mediaTypeNorm && (
                       <div className="absolute bottom-1.5 left-1.5 bg-purple-600/50 backdrop-blur-sm rounded-md p-1">
                         {mediaTypeNorm === 'tv' && <Tv2 size={10} className="text-white" />}
@@ -1093,8 +1033,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </div>
                 </Link>
               ) : (
-                <div className={`relative flex-shrink-0 self-start ${isState1 ? 'w-12 h-[72px]' : 'w-20 h-[120px]'}`}>
-                  <img src={post.mediaImage} alt={post.mediaTitle} className={`${isState1 ? 'w-12 h-[72px]' : 'w-20 h-[120px]'} rounded-xl object-cover shadow-md`} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                <div className="relative flex-shrink-0 self-start w-16 h-[96px]">
+                  <img src={post.mediaImage} alt={post.mediaTitle} className="w-16 h-[96px] rounded-xl object-cover shadow-md" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   {mediaTypeNorm && (
                     <div className="absolute bottom-1.5 left-1.5 bg-purple-600/50 backdrop-blur-sm rounded-md p-1">
                       {mediaTypeNorm === 'tv' && <Tv2 size={10} className="text-white" />}
@@ -1116,40 +1056,28 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               ) : (
                 <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
               )}
-              {isState1 ? (
-                <div className="flex items-center gap-1.5 mt-1.5">
-                  <p className="text-[11px] text-gray-400">Rate or answer to unlock</p>
-                  <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-violet-50 border border-violet-100">
-                    <Star size={8} className="text-violet-600 fill-violet-600" />
-                    <span className="text-[9px] font-bold text-violet-700">+10 pts</span>
-                  </div>
+              {post.rating && post.rating > 0 && (
+                <div className="flex items-center gap-0.5 mt-1">
+                  {[1,2,3,4,5].map(s => {
+                    const r = post.rating!;
+                    if (s <= Math.floor(r)) return <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />;
+                    if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={14} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={14} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                    return <Star key={s} size={14} className="text-gray-200" />;
+                  })}
                 </div>
-              ) : (
-                <>
-                  {post.rating && post.rating > 0 && (
-                    <div className="flex items-center gap-0.5 mt-1">
-                      {[1,2,3,4,5].map(s => {
-                        const r = post.rating!;
-                        if (s <= Math.floor(r)) return <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />;
-                        if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={14} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={14} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                        return <Star key={s} size={14} className="text-gray-200" />;
-                      })}
-                    </div>
+              )}
+              {post.content && (
+                <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mt-1.5">
+                  <p className={`text-gray-700 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
+                  {!contentExpanded && post.content.length > 100 && (
+                    <span className="text-purple-500 text-xs font-medium">Read more</span>
                   )}
-                  {post.content && (
-                    <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mt-1.5">
-                      <p className={`text-gray-700 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
-                      {!contentExpanded && post.content.length > 100 && (
-                        <span className="text-purple-500 text-xs font-medium">Read more</span>
-                      )}
-                    </div>
-                  )}
-                </>
+                </div>
               )}
             </div>
           </div>
         ) : (
-          post.content && !isState1 && (
+          post.content && (
             <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
               <p className={`text-gray-800 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
               {!contentExpanded && post.content.length > 100 && (
@@ -1159,64 +1087,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )
         )}
 
-        {/* State 1 — friend label + blurred review + Watch/Skip (after media) */}
-        {isState1 && (
-          <div className="mt-2">
-            <p className="text-[11px] font-medium text-gray-500 mt-4 mb-1.5">{post.user?.displayName || post.user?.username}'s Take</p>
-            <div className="relative rounded-xl overflow-hidden border border-gray-100">
-              {post.content
-                ? <p className="text-gray-600 text-sm px-3 pt-4 pb-6 blur-sm select-none pointer-events-none line-clamp-4">{post.content}</p>
-                : <div className="h-24" />
-              }
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/60 backdrop-blur-[1px] pt-2">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm">
-                  <Lock size={10} className="text-gray-500" />
-                  <span className="text-[11px] font-medium text-gray-600">Rate or answer to unlock</span>
-                </div>
-                <div className="flex flex-col items-center gap-1.5">
-                  <div className="flex items-center gap-3">
-                    {onAddToList && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' });
-                          setState1Dismissed(true);
-                        }}
-                        className="flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-blue-600 transition-colors"
-                      >
-                        <Bookmark size={11} /> Watch
-                      </button>
-                    )}
-                    <span className="text-gray-300 text-xs">·</span>
-                    <button
-                      onClick={() => setState1Dismissed(true)}
-                      className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <X size={11} /> Skip
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => setState1Dismissed(true)}
-                    className="text-[10px] text-gray-300 hover:text-gray-500 transition-colors"
-                  >
-                    Just curious? Reveal →
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-50">
-          {!isState1 && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
-              className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
-            >
-              <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
-              <span className="text-xs">{post.likes || 0}</span>
-            </button>
-          )}
+          <button
+            onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
+            className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+          >
+            <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
+            <span className="text-xs">{post.likes || 0}</span>
+          </button>
           <button
             onClick={handleCommentToggle}
             className={`flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
@@ -1235,7 +1113,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <Plus size={15} />
                 </button>
               )}
-              {!isState1 && post.mediaTitle && session?.user?.id && post.user?.id !== session?.user?.id && (
+              {post.mediaTitle && session?.user?.id && post.user?.id !== session?.user?.id && (
                 <button
                   onClick={handleStarClick}
                   disabled={isSearchingMedia}
@@ -1267,21 +1145,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         </div>
 
-        {/* States 2 + 3 Gamified Section (shown after rating) */}
-        {(post.mediaTitle || resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId) && session?.access_token && (showStarPicker || (isRatingPost && isOtherUser && ratingSubmitted && !state1Dismissed)) && (
+        {/* YOUR TURN / Post-rating section */}
+        {isRatingPost && isOtherUser && session?.access_token && (
           <div className="mt-3 pt-3 border-t border-gray-100">
-            {showStarPicker ? (
-              // Change Rating mode — star picker unchanged
+            {showStarPicker || !ratingSubmitted ? (
+              // YOUR TURN — interactive stars (before and during editing)
               <>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[10px] font-bold text-purple-600 tracking-widest uppercase">{ratingSubmitted ? 'Change Rating' : 'Your Turn'}</p>
                   {ratingSubmitted && (
-                    <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove rating</button>
+                    <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove</button>
                   )}
                 </div>
                 <div
                   ref={starsRef}
-                  className="flex items-center gap-0.5 touch-none select-none"
+                  className="flex items-center gap-1 touch-none select-none"
                   onMouseLeave={() => setHoverRating(0)}
                   onTouchMove={(e) => {
                     e.stopPropagation();
@@ -1302,15 +1180,15 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   }}
                 >
                   {[1, 2, 3, 4, 5].map(star => {
-                    const displayVal = hoverRating || ratingValue;
+                    const displayVal = hoverRating || (ratingSubmitted ? ratingValue : 0);
                     return (
-                      <div key={star} className="relative" style={{ width: 30, height: 30 }}>
-                        <Star size={30} className="absolute inset-0 text-gray-200" />
+                      <div key={star} className="relative" style={{ width: 32, height: 32 }}>
+                        <Star size={32} className="absolute inset-0 text-gray-200" />
                         <div
                           className="absolute inset-0 overflow-hidden pointer-events-none"
                           style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}
                         >
-                          <Star size={30} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
+                          <Star size={32} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
                         </div>
                         <button
                           className="absolute top-0 left-0 h-full z-10"
@@ -1329,34 +1207,20 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       </div>
                     );
                   })}
-                  <span className="ml-2 text-xs text-gray-400">
-                    {hoverRating > 0 ? `${hoverRating}/5` : ratingValue > 0 ? `${ratingValue}/5` : ''}
-                  </span>
+                  {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
                 </div>
               </>
             ) : (
-              // STATES 2 + 3 COMBINED — rating locked in + bold call + optional review
-              <div className="space-y-3">
-                {/* YOUR RATING header + inline Edit · Remove */}
+              // Post-rating: compact YOUR RATING + comparison
+              <div>
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Your rating</p>
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setShowStarPicker(true)}
-                      className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      Edit
-                    </button>
+                    <button onClick={() => setShowStarPicker(true)} className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors">Edit</button>
                     <span className="text-gray-200 text-[10px]">·</span>
-                    <button
-                      onClick={() => { setRatingSubmitted(false); setRatingValue(0); }}
-                      className="text-[10px] text-gray-300 hover:text-red-400 transition-colors"
-                    >
-                      Remove
-                    </button>
+                    <button onClick={() => { setRatingSubmitted(false); setRatingValue(0); }} className="text-[10px] text-gray-300 hover:text-red-400 transition-colors">Remove</button>
                   </div>
                 </div>
-                {/* Stars + below/above average */}
                 <div className="flex items-center gap-0.5">
                   {[1, 2, 3, 4, 5].map(s => (
                     <Star key={s} size={15} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(ratingValue) && ratingValue % 1 >= 0.5 ? 'text-yellow-300 fill-yellow-200' : 'text-gray-200'} />
@@ -1369,75 +1233,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   if (diff > 0) return <p className="text-[10px] text-green-600 mt-0.5">↑ {diff.toFixed(1)} above average</p>;
                   return <p className="text-[10px] text-orange-500 mt-0.5">↓ {Math.abs(diff).toFixed(1)} below average</p>;
                 })() : null}
-                {/* Optional review — right after rating */}
-                {!reviewPosted && (
-                  <div className="mt-2">
-                    <textarea
-                      value={reviewText}
-                      onChange={e => setReviewText(e.target.value)}
-                      placeholder="Add your take (optional)..."
-                      rows={2}
-                      className="w-full text-[12px] text-gray-700 placeholder-gray-300 rounded-xl px-3 py-2 resize-none outline-none border border-gray-200 focus:border-purple-300 transition-colors"
-                    />
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <button
-                        onClick={handleWriteReview}
-                        className="flex-1 py-1.5 rounded-xl text-[12px] font-bold transition-colors"
-                        style={{ background: reviewText.trim() ? '#7c3aed' : '#f3f4f6', color: reviewText.trim() ? 'white' : '#9ca3af' }}
-                      >
-                        {reviewText.trim() ? 'Post Review' : 'Skip'}
-                      </button>
-                      {reviewText.trim() && (
-                        <div className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-green-50 border border-green-100">
-                          <Star size={9} className="text-green-600 fill-green-600" />
-                          <span className="text-[10px] font-bold text-green-700">+15 pts</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-                {/* Bold call verdict + community */}
-                {communityRating && ratingValue ? (
-                  <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-gray-50">
-                    <div>
-                      <p className="text-[12px] font-bold text-gray-900">
-                        {ratingValue > communityRating + 0.5 ? 'Bold call.' : ratingValue < communityRating - 0.5 ? 'Tough crowd.' : 'You agree.'}
-                      </p>
-                      <p className="text-[10px] text-gray-400 mt-0.5">
-                        Community avg {communityRating}/5 · {ratingCount} ratings
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-center ml-3 px-2 py-1 rounded-xl bg-amber-50 border border-amber-100">
-                      <span className="text-[8px] text-amber-600 font-bold uppercase tracking-wide mb-0.5">You</span>
-                      <div className="flex items-center gap-0.5">
-                        {[1, 2, 3, 4, 5].map(s => (
-                          <Star key={s} size={9} className={s <= Math.floor(ratingValue) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-                {/* Distribution bars */}
-                {Object.keys(ratingDistribution).length > 0 && (
-                  <div className="space-y-1">
-                    {[5, 4, 3, 2, 1].map(s => {
-                      const pct = ratingDistribution[s] || 0;
-                      const isUser = Math.round(ratingValue) === s;
-                      const topVal = Math.max(...Object.values(ratingDistribution));
-                      const isMajority = pct === topVal && topVal > 0;
-                      return (
-                        <div key={s} className="flex items-center gap-1.5">
-                          <span className="text-[9px] font-bold w-2.5 text-right" style={{ color: isUser ? '#f59e0b' : '#9ca3af' }}>{s}</span>
-                          <div className="flex-1 h-1.5 rounded-full bg-gray-100">
-                            <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: isUser ? '#f59e0b' : isMajority ? '#a78bfa' : '#e5e7eb' }} />
-                          </div>
-                          <span className="text-[9px] font-bold w-5" style={{ color: isUser ? '#f59e0b' : '#d1d5db' }}>{pct}%</span>
-                          {isUser && <span className="text-[9px] text-amber-400">you</span>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             )}
           </div>
