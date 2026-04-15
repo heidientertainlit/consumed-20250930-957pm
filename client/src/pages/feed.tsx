@@ -1166,7 +1166,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <div className="relative rounded-xl overflow-hidden border border-gray-100">
               {post.content
                 ? <p className="text-gray-600 text-sm px-3 pt-4 pb-6 blur-sm select-none pointer-events-none line-clamp-4">{post.content}</p>
-                : <div className="h-16" />
+                : <div className="h-24" />
               }
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/60 backdrop-blur-[1px] pt-2">
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 shadow-sm">
@@ -1347,13 +1347,27 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       ))}
                       <span className="text-[11px] text-yellow-500 font-bold ml-1">{ratingValue}/5</span>
                     </div>
+                    {communityRating && ratingValue ? (() => {
+                      const diff = ratingValue - communityRating;
+                      if (Math.abs(diff) <= 0.3) return <p className="text-[10px] text-gray-400 mt-0.5">On par with average</p>;
+                      if (diff > 0) return <p className="text-[10px] text-green-600 mt-0.5">↑ {diff.toFixed(1)} above average</p>;
+                      return <p className="text-[10px] text-orange-500 mt-0.5">↓ {Math.abs(diff).toFixed(1)} below average</p>;
+                    })() : null}
                   </div>
-                  <button
-                    onClick={() => setShowStarPicker(true)}
-                    className="text-[10px] text-gray-400 border border-gray-200 px-2 py-1 rounded-lg hover:border-gray-300 transition-colors"
-                  >
-                    Edit
-                  </button>
+                  <div className="flex flex-col items-end gap-1">
+                    <button
+                      onClick={() => setShowStarPicker(true)}
+                      className="text-[10px] text-gray-400 border border-gray-200 px-2 py-1 rounded-lg hover:border-gray-300 transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => { setRatingSubmitted(false); setRatingValue(0); }}
+                      className="text-[10px] text-gray-300 hover:text-red-400 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
                 {/* Bold call verdict + community */}
                 {communityRating && ratingValue ? (
