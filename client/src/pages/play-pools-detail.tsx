@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Star, Flame, CheckCircle2, X, Share2, Users, Brain } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star, Flame, CheckCircle2, X, Share2, Users, Brain, Trophy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +53,7 @@ export default function PlayPoolsDetailPage() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [members, setMembers] = useState<PoolMember[]>([]);
   const [friendMembers, setFriendMembers] = useState<{ name: string; score: number; color: string }[]>([]);
+  const [leaderboard, setLeaderboard] = useState<{ rank: number; user_id: string; display_name: string; username: string; total_points: number; is_current_user: boolean }[]>([]);
   const [loading, setLoading] = useState(true);
   const [cardIndex, setCardIndex] = useState(0);
   const [localAnswers, setLocalAnswers] = useState<Record<string, string>>({});
@@ -121,6 +122,9 @@ export default function PlayPoolsDetailPage() {
           }));
         setFriendMembers(fm);
       }
+      // 4. Pool leaderboard
+      const lb = await callFn("get-pool-leaderboard", { pool_id: params.id }, token);
+      if (lb?.leaderboard) setLeaderboard(lb.leaderboard);
     } catch (err) {
       console.error("[PlayPoolsDetail] error:", err);
     } finally {
@@ -446,6 +450,75 @@ export default function PlayPoolsDetailPage() {
             Next
             <ChevronRight size={14} />
           </button>
+        </div>
+      )}
+
+      {/* Standings */}
+      {leaderboard.length > 0 && (
+        <div className="px-4 pb-4 shrink-0">
+          <div className="bg-white rounded-2xl overflow-hidden" style={{ border: "0.5px solid #e5e7eb" }}>
+            <div className="px-4 pt-3.5 pb-2.5 flex items-center gap-2" style={{ borderBottom: "0.5px solid #f3f4f6" }}>
+              <Trophy size={12} className="text-amber-400" />
+              <span className="text-gray-500 text-[11px] font-bold uppercase tracking-widest">Standings</span>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {leaderboard.slice(0, 5).map((entry) => {
+                const medal = entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : entry.rank === 3 ? "🥉" : null;
+                const nm = entry.display_name || entry.username || "Player";
+                const colors = ["bg-violet-500", "bg-fuchsia-500", "bg-blue-500", "bg-emerald-500", "bg-amber-500"];
+                const avatarBg = colors[nm.charCodeAt(0) % colors.length];
+                return (
+                  <div
+                    key={entry.user_id}
+                    className="flex items-center gap-3 px-4 py-2.5"
+                    style={entry.is_current_user ? { background: `${accent}08` } : {}}
+                  >
+                    <span className="text-[11px] font-bold tabular-nums w-4 shrink-0 text-center" style={{ color: entry.rank <= 3 ? "#f59e0b" : "#d1d5db" }}>
+                      {medal || `${entry.rank}`}
+                    </span>
+                    <div className={`w-6 h-6 ${avatarBg} rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0`}>
+                      {nm[0]}
+                    </div>
+                    <span className="flex-1 text-xs font-semibold truncate" style={{ color: entry.is_current_user ? accent : "#374151" }}>
+                      {nm}{entry.is_current_user ? " (you)" : ""}
+                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Star size={9} className="text-amber-400 fill-amber-400" />
+                      <span className="text-xs font-bold tabular-nums" style={{ color: entry.is_current_user ? accent : "#6b7280" }}>
+                        {entry.total_points.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+              {leaderboard.length > 5 && (() => {
+                const myEntry = leaderboard.find(e => e.is_current_user);
+                if (!myEntry || myEntry.rank <= 5) return null;
+                return (
+                  <>
+                    <div className="px-4 py-1.5 flex items-center gap-2">
+                      <div className="flex-1 border-t border-dashed border-gray-200" />
+                      <span className="text-gray-300 text-[9px]">···</span>
+                      <div className="flex-1 border-t border-dashed border-gray-200" />
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-2.5" style={{ background: `${accent}08` }}>
+                      <span className="text-[11px] font-bold tabular-nums w-4 shrink-0 text-center text-gray-400">{myEntry.rank}</span>
+                      <div className={`w-6 h-6 ${["bg-violet-500","bg-fuchsia-500","bg-blue-500","bg-emerald-500","bg-amber-500"][(myEntry.display_name || myEntry.username || "P").charCodeAt(0) % 5]} rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0`}>
+                        {(myEntry.display_name || myEntry.username || "P")[0]}
+                      </div>
+                      <span className="flex-1 text-xs font-semibold truncate" style={{ color: accent }}>
+                        {myEntry.display_name || myEntry.username} (you)
+                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Star size={9} className="text-amber-400 fill-amber-400" />
+                        <span className="text-xs font-bold tabular-nums" style={{ color: accent }}>{myEntry.total_points.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
         </div>
       )}
 
