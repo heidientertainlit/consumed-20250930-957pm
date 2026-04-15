@@ -1162,7 +1162,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         // ACTION FIRST layout — stars on top, friend's take below
         <>
           {/* Top: violet action section */}
-          <div className="px-4 pt-4 pb-4 bg-violet-50">
+          <div className="px-4 pt-4 pb-4 bg-gray-50">
             <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase mb-2">What's Your Take?</p>
             <div className="flex items-center gap-3 mb-3">
               {posterEl}
@@ -1179,9 +1179,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   <p className="text-[10px] text-gray-400 mt-0.5">{externalRatingLabel}: {externalRating}/10</p>
                 )}
               </div>
-              <div className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-violet-100 border border-violet-200 flex-shrink-0">
-                <Star size={9} className="text-violet-600 fill-violet-600" />
-                <span className="text-[10px] font-bold text-violet-700">+10 pts</span>
+              <div className="flex items-center px-2 py-1 rounded-full bg-gray-100 border border-gray-200 flex-shrink-0">
+                <span className="text-[10px] font-bold text-gray-500">+10 pts</span>
               </div>
             </div>
             {/* Large interactive stars */}
