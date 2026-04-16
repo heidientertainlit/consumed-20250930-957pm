@@ -64,12 +64,31 @@ interface PoolRow {
   friendNames: string[];
 }
 
+interface ChallengeGroup {
+  showTag: string;
+  questionCount: number;
+  poolIds: string[];
+}
+
+const SHOW_CONFIG: Record<string, { emoji: string; accentColor: string; description: string }> = {
+  "Harry Potter": { emoji: "⚡", accentColor: "#7c3aed", description: "Test your wizarding world knowledge" },
+  "Friends": { emoji: "☕", accentColor: "#f59e0b", description: "Could you BE any more of a fan?" },
+  "Friends Pool": { emoji: "☕", accentColor: "#f59e0b", description: "Could you BE any more of a fan?" },
+  "Stranger Things": { emoji: "🔦", accentColor: "#ef4444", description: "Enter the Upside Down" },
+  "Reelz True Crime": { emoji: "🔍", accentColor: "#0ea5e9", description: "True crime trivia" },
+};
+function showConfig(tag: string) {
+  return SHOW_CONFIG[tag] || { emoji: "🎮", accentColor: "#7c3aed", description: `${tag} trivia` };
+}
+
 export default function PlayPoolsPage() {
   const [, setLocation] = useLocation();
   const { session } = useAuth();
   const [pools, setPools] = useState<PoolRow[]>([]);
+  const [challenges, setChallenges] = useState<ChallengeGroup[]>([]);
   const [friendActivity, setFriendActivity] = useState<{ name: string; poolId: string; poolName: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [challengesLoading, setChallengesLoading] = useState(true);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -183,6 +202,50 @@ export default function PlayPoolsPage() {
     load();
   }, [session?.user?.id]);
 
+  useEffect(() => {
+    async function loadChallenges() {
+      setChallengesLoading(true);
+      try {
+        const { data: pools } = await supabase
+          .from("prediction_pools")
+          .select("id, show_tag, options, title")
+          .eq("type", "trivia")
+          .eq("status", "open")
+          .not("show_tag", "is", null);
+
+        if (!pools || pools.length === 0) { setChallengesLoading(false); return; }
+
+        const grouped: Record<string, { poolIds: string[]; questionCount: number }> = {};
+        for (const pool of pools) {
+          const tag = pool.show_tag as string;
+          if (!tag) continue;
+          if (!grouped[tag]) grouped[tag] = { poolIds: [], questionCount: 0 };
+          grouped[tag].poolIds.push(pool.id);
+          if (pool.options && Array.isArray(pool.options)) {
+            const firstOpt = pool.options[0];
+            if (typeof firstOpt === "object" && firstOpt !== null && "question" in firstOpt) {
+              grouped[tag].questionCount += pool.options.length;
+            } else {
+              grouped[tag].questionCount += 1;
+            }
+          }
+        }
+
+        const groups: ChallengeGroup[] = Object.entries(grouped)
+          .map(([showTag, data]) => ({ showTag, ...data }))
+          .filter(g => g.questionCount > 0)
+          .sort((a, b) => b.questionCount - a.questionCount);
+
+        setChallenges(groups);
+      } catch (err) {
+        console.error("[PlayPools] challenges error:", err);
+      } finally {
+        setChallengesLoading(false);
+      }
+    }
+    loadChallenges();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -227,6 +290,59 @@ export default function PlayPoolsPage() {
                   </div>
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Trivia Pools (from prediction_pools grouped by show_tag) */}
+        {(challengesLoading || challenges.length > 0) && (
+          <div className="mb-6">
+            <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest mb-3">Trivia Pools</p>
+            {challengesLoading && (
+              <div className="space-y-3">
+                {[1, 2].map(i => <div key={i} className="h-24 rounded-2xl bg-gray-200 animate-pulse" />)}
+              </div>
+            )}
+            <div className="space-y-3">
+              {challenges.map((group) => {
+                const cfg = showConfig(group.showTag);
+                const accent = cfg.accentColor;
+                return (
+                  <div
+                    key={group.showTag}
+                    onClick={() => setLocation(`/play/challenge/${encodeURIComponent(group.showTag)}`)}
+                    className="rounded-2xl overflow-hidden relative cursor-pointer active:scale-[0.98] transition-transform"
+                    style={{
+                      background: `linear-gradient(135deg, ${accent}0e 0%, ${accent}1a 100%)`,
+                      border: `1px solid ${accent}28`,
+                    }}
+                  >
+                    <div className="px-4 pt-4 pb-3">
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl leading-none mt-0.5">{cfg.emoji}</span>
+                        <div className="flex-1 min-w-0 pr-20">
+                          <p className="text-gray-900 text-[15px] font-bold leading-tight">{group.showTag}</p>
+                          <p className="text-gray-500 text-xs mt-0.5 line-clamp-1">{cfg.description}</p>
+                          <div className="flex items-center gap-3 mt-2">
+                            <span className="text-gray-400 text-[10px] font-medium">{group.questionCount} question{group.questionCount !== 1 ? "s" : ""}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div
+                        className="flex items-center justify-end mt-3 pt-2.5"
+                        style={{ borderTop: `0.5px solid ${accent}20` }}
+                      >
+                        <div
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold text-white"
+                          style={{ background: accent }}
+                        >
+                          Play Now
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
