@@ -1940,11 +1940,6 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                   <p className="text-sm font-bold text-gray-900 line-clamp-2">{post.mediaTitle || 'Untitled'}</p>
                 )}
                 <p className="text-[11px] text-gray-400 mt-0.5">Have you seen it? Rate it.</p>
-                {tasteAlignment !== null && (
-                  <p className="text-[11px] text-violet-600 italic mt-0.5">
-                    You're {tasteAlignment}% aligned with {displayName}'s taste overall
-                  </p>
-                )}
               </div>
             </div>
             <div
@@ -2014,6 +2009,11 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                 )}
               </div>
             </div>
+            {tasteAlignment !== null && (
+              <p className="text-[11px] text-violet-600 italic mb-1">
+                You're {tasteAlignment}% aligned with {displayName}'s taste overall
+              </p>
+            )}
             {displayContent && (
               <div onClick={() => setContentExpanded(e => !e)} className="cursor-pointer mb-2">
                 <p className={`text-gray-600 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-3'}`}>{displayContent}</p>
