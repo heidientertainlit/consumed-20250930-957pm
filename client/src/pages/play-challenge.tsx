@@ -261,6 +261,18 @@ export default function PlayChallengePage() {
   const [rankInfo, setRankInfo] = useState<RankInfo | null>(null);
   const [challengerData, setChallengerData] = useState<ChallengerData | null>(null);
 
+  // Reset all game state when the round changes (e.g. navigating easy → medium → hard)
+  useEffect(() => {
+    setCurrentIndex(0);
+    setSelectedAnswer(null);
+    setAnswered(false);
+    setResults({});
+    setSubmitting(false);
+    setDone(false);
+    setRankInfo(null);
+    setChallengerData(null);
+  }, [showTag, difficulty]);
+
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
   const totalPoints = Object.values(results).reduce((sum, r) => sum + r.points, 0);
