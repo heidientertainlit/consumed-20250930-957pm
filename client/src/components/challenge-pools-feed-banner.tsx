@@ -14,6 +14,27 @@ interface Pool {
   category?: string;
 }
 
+const HARDCODED_POOLS: Pool[] = [
+  {
+    id: "harry-potter",
+    show_tag: "Harry Potter",
+    title: "Harry Potter",
+    poster_url: "https://image.tmdb.org/t/p/w200/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg",
+    fallback_emoji: "⚡",
+    accent_color: "#7c3aed",
+    category: "Movies & TV",
+  },
+  {
+    id: "friends",
+    show_tag: "Friends",
+    title: "Friends",
+    poster_url: "https://image.tmdb.org/t/p/w200/f496cm9enuEsZkSPzCwnTESEK5s.jpg",
+    fallback_emoji: "☕",
+    accent_color: "#f59e0b",
+    category: "TV",
+  },
+];
+
 function completedCount(showTag: string): number {
   return ["easy", "medium", "hard"].filter(
     (d) => localStorage.getItem(`challenge-completed-${showTag}-${d}`) === "1"
@@ -32,11 +53,9 @@ export function ChallengePoolsFeedBanner() {
       .eq("is_active", true)
       .limit(6)
       .then(({ data }) => {
-        if (data && data.length > 0) {
-          // shuffle slightly so feed doesn't always show same order
-          const shuffled = [...data].sort(() => Math.random() - 0.5);
-          setPools(shuffled.slice(0, 3));
-        }
+        const source = data && data.length > 0 ? data : HARDCODED_POOLS;
+        const shuffled = [...source].sort(() => Math.random() - 0.5);
+        setPools(shuffled.slice(0, 3));
       });
   }, []);
 
