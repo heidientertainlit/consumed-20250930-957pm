@@ -548,7 +548,7 @@ serve(async (req) => {
         console.log('Querying users with IDs:', validUserIds.slice(0, 3));
         let result = await supabaseAdmin
           .from('users')
-          .select('id, user_name, display_name, email, avatar')
+          .select('id, user_name, display_name, email, avatar, is_persona')
           .in('id', validUserIds);
         users = result.data || [];
         usersError = result.error;
@@ -559,7 +559,7 @@ serve(async (req) => {
           console.log('Admin client returned 0 users, trying regular client');
           const regularResult = await supabase
             .from('users')
-            .select('id, user_name, display_name, email, avatar')
+            .select('id, user_name, display_name, email, avatar, is_persona')
             .in('id', validUserIds);
           users = regularResult.data || [];
           usersError = regularResult.error;
@@ -1012,7 +1012,8 @@ serve(async (req) => {
               username: postUser.user_name || 'Unknown',
               displayName: postUser.display_name || postUser.user_name || 'Unknown',
               avatar: postUser.avatar || '',
-              email: postUser.email || ''
+              email: postUser.email || '',
+              is_persona: (postUser as any).is_persona || false
             },
             content: post.content || '',
             timestamp: post.created_at,
@@ -1087,6 +1088,7 @@ serve(async (req) => {
               displayName: postUser.display_name || postUser.user_name || 'Unknown',
               avatar: postUser.avatar || '',
               email: postUser.email || '',
+              is_persona: (postUser as any).is_persona || false,
               activityText,
               content: post.content || '',
               rating: post.rating,
@@ -1140,7 +1142,8 @@ serve(async (req) => {
               username: postUser.user_name || 'Unknown',
               displayName: postUser.display_name || postUser.user_name || 'Unknown',
               avatar: postUser.avatar || '',
-              email: postUser.email || ''
+              email: postUser.email || '',
+              is_persona: (postUser as any).is_persona || false
             },
             content: post.content || '',
             timestamp: post.created_at,
@@ -1187,7 +1190,8 @@ serve(async (req) => {
             id: post.user_id,
             username: postUser.user_name || 'Unknown',
             displayName: postUser.display_name || postUser.user_name || 'Unknown',
-            avatar: postUser.avatar || ''
+            avatar: postUser.avatar || '',
+            is_persona: (postUser as any).is_persona || false
           },
           content: post.content || '',
           timestamp: post.created_at,

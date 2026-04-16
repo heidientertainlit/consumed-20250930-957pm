@@ -3159,9 +3159,18 @@ export default function Feed() {
       }
     });
 
+    // Filter out persona (AI bot) posts — only real user content goes in carousels
+    const realRatingItems = ratingItems.filter((item: any) =>
+      !(item._rawPost?.user?.is_persona === true || item.user?.is_persona === true)
+    );
+
+    // Cap total posts fed into carousels so the feed doesn't become endless
+    const MAX_RATING_POSTS = 18;
+    const capped = realRatingItems.slice(0, MAX_RATING_POSTS);
+
     // Round-robin by user so no same person clusters together in a row
     const byUser = new Map<string, any[]>();
-    ratingItems.forEach((item: any) => {
+    capped.forEach((item: any) => {
       const uid = item.user?.id || 'anon';
       if (!byUser.has(uid)) byUser.set(uid, []);
       byUser.get(uid)!.push(item);
@@ -3176,10 +3185,11 @@ export default function Feed() {
       }
     }
 
-    // Small batches of 3 per carousel line
+    // Small batches of 3 per carousel line — max 6 carousels total
     const batches: { id: string; type: string; posts: any[] }[] = [];
     const BATCH_SIZE = 3;
-    for (let i = 0; i < shuffled.length; i += BATCH_SIZE) {
+    const MAX_CAROUSELS = 6;
+    for (let i = 0; i < shuffled.length && batches.length < MAX_CAROUSELS; i += BATCH_SIZE) {
       const batch = shuffled.slice(i, i + BATCH_SIZE);
       if (batch.length > 0) {
         batches.push({ id: `rating-carousel-${i}`, type: 'rating_carousel', posts: batch });
