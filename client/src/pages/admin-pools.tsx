@@ -170,7 +170,7 @@ function QuestionSection({ difficulty, questions, onChange }: { difficulty: Diff
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function AdminPoolsPage() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
