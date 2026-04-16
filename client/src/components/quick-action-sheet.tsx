@@ -257,7 +257,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
     setSelectedEpisode(null);
     setSeasons([]);
     setEpisodes([]);
-    setTrackPostType("thought");
+    setTrackPostType("review");
   };
 
   const handleClose = () => {
@@ -314,7 +314,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
         if (roomId) {
           const { data: { user: authUser } } = await supabase.auth.getUser();
           if (!authUser) throw new Error('Not authenticated');
-          const postType = trackPostType === 'thought' ? 'thought' : trackPostType === 'review' ? 'rate_review' : 'predict';
+          const postType = trackPostType === 'review' ? 'rate_review' : 'predict';
           const { error: postError } = await supabase.from('social_posts').insert({
             user_id: authUser.id,
             content: contentText || null,
@@ -380,7 +380,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
             },
             listType: selectedListId || 'currently',
             rating: ratingValue > 0 ? ratingValue : undefined,
-            review: trackPostType === 'thought' ? contentText : undefined,
+            review: trackPostType === 'review' ? contentText : undefined,
             containsSpoilers,
             privateMode,
             rewatchCount: rewatchCount > 1 ? rewatchCount : undefined,
@@ -579,7 +579,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
   ];
 
   // Post type state for the inline toggle in track form
-  const [trackPostType, setTrackPostType] = useState<"thought" | "review" | "prediction">("thought");
+  const [trackPostType, setTrackPostType] = useState<"review" | "prediction">("review");
 
   const renderActionContent = () => {
     if (selectedAction === "track") {
@@ -683,8 +683,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
               {/* Post type toggle - always shown */}
               <div className="flex items-center gap-2 flex-wrap">
                 {([
-                  { key: 'thought' as const, label: 'Reaction' },
-                  { key: 'review' as const, label: 'Review' },
+                  { key: 'review' as const, label: 'Rate / Review' },
                   { key: 'prediction' as const, label: 'Prediction' },
                 ] as const).map(({ key, label }) => (
                   <button
@@ -704,7 +703,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                 value={contentText}
                 onChange={(e) => setContentText(e.target.value)}
                 placeholder={
-                  trackPostType === 'thought' ? "What's your reaction?" :
                   trackPostType === 'review' ? "Write your review..." :
                   "What do you predict?"
                 }

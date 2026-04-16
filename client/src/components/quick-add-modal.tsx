@@ -57,13 +57,13 @@ interface QuickAddModalProps {
   onClose: () => void;
   preSelectedMedia?: PreSelectedMedia | null;
   defaultListId?: string;
-  initialPostType?: "react" | "predict" | "rank" | "review";
+  initialPostType?: "predict" | "rank" | "review";
   skipToComposer?: boolean;
   searchToCompose?: boolean;
 }
 
 type Stage = "search" | "composer";
-type PostType = "react" | "predict" | "rank" | "review";
+type PostType = "predict" | "rank" | "review";
 
 export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId, initialPostType, skipToComposer, searchToCompose }: QuickAddModalProps) {
   const { user, session } = useAuth();
@@ -116,7 +116,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
   const [musicFormat, setMusicFormat] = useState<"album" | "single" | "track">("album");
   
   // Post type for composer
-  const [postType, setPostType] = useState<PostType>("react");
+  const [postType, setPostType] = useState<PostType>("review");
   
   const [predictionOptions, setPredictionOptions] = useState<string[]>(["", ""]);
 
@@ -254,7 +254,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
     setTvSeason("");
     setTvEpisode("");
     setMusicFormat("album");
-    setPostType("react");
+    setPostType("review");
     setPredictionOptions(["", ""]);
   };
   
@@ -323,7 +323,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
     setTvSeason("");
     setTvEpisode("");
     setMusicFormat("album");
-    setPostType("react");
+    setPostType("review");
     setPredictionOptions(["", ""]);
   };
   
@@ -439,7 +439,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
       console.log('🎯 Composer: Posting', { postType, hasMedia: !!selectedMedia, mediaData, reviewText: reviewText.substring(0, 50) });
       
       // Handle based on post type
-      if (postType === 'react' || postType === 'review') {
+      if (postType === 'review') {
         // If rating is provided, let rate-media handle the social post (it stores ratings properly)
         // Otherwise use inline-post for reactions
         if (selectedMedia && rating > 0) {
@@ -1112,9 +1112,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               {!defaultListId && (
                 <div className="flex flex-wrap gap-2">
                   {[
-                    { id: 'react', label: 'React' },
+                    { id: 'review', label: 'Rate / Review' },
                     { id: 'predict', label: 'Predict' },
-                    { id: 'review', label: 'Review' },
                   ].map((type) => (
                     <button
                       key={type.id}
@@ -1133,19 +1132,6 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
 
 
               {/* Dynamic content based on post type */}
-              {postType === 'react' && (
-                <>
-                  <Textarea
-                    placeholder={defaultListId ? "Add a reaction (optional)..." : "What's your reaction?"}
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    className="bg-white border-gray-200 resize-none min-h-[80px]"
-                    style={{ fontSize: '16px' }}
-                    rows={3}
-                    data-testid="thought-textarea"
-                  />
-                </>
-              )}
 
               {postType === 'predict' && (
                 <>
@@ -1215,7 +1201,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               )}
 
               {/* Show rating and list options when media is attached or in add-to-list mode, or always for review */}
-              {(defaultListId || (selectedMedia && postType === 'react') || postType === 'review') && (
+              {(defaultListId || postType === 'review') && (
                 <>
                   {/* Rating */}
                   <div className="flex items-center gap-2">
