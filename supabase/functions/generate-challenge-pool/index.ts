@@ -152,6 +152,55 @@ Return ONLY a valid JSON array of 8 objects with these exact keys. No markdown, 
       });
     }
 
+    // --- Append questions to existing pool ---
+    if (body.action === 'append_questions') {
+      const { pool_id, questions } = body;
+      if (!pool_id || !questions) {
+        return new Response(JSON.stringify({ error: 'Missing pool_id or questions' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Get current max sort_order per difficulty so we append after existing
+      const { data: existing } = await supabaseAdmin
+        .from('challenge_questions')
+        .select('difficulty, sort_order')
+        .eq('pool_id', pool_id);
+
+      const maxOrder: Record<string, number> = { easy: -1, medium: -1, hard: -1 };
+      for (const row of existing || []) {
+        if (row.difficulty in maxOrder && row.sort_order > maxOrder[row.difficulty]) {
+          maxOrder[row.difficulty] = row.sort_order;
+        }
+      }
+
+      const questionRows = [];
+      for (const diff of ['easy', 'medium', 'hard']) {
+        const qs = questions[diff] || [];
+        qs.forEach((q: any, i: number) => {
+          questionRows.push({
+            pool_id,
+            difficulty: diff,
+            question_text: q.question_text,
+            options: q.options,
+            correct_answer: q.correct_answer,
+            sort_order: maxOrder[diff] + 1 + i,
+          });
+        });
+      }
+
+      const { error: qError } = await supabaseAdmin.from('challenge_questions').insert(questionRows);
+      if (qError) {
+        return new Response(JSON.stringify({ error: qError.message }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true, added: questionRows.length }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // --- Delete action ---
     if (body.action === 'delete') {
       const { pool_id } = body;

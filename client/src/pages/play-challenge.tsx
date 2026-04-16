@@ -187,11 +187,12 @@ export default function PlayChallengePage() {
     async function loadQuestions() {
       setQuestionsLoading(true);
       try {
+        // Case-insensitive lookup so "Harry Potter" and "harry potter" match
         const { data: poolData } = await supabase
           .from("challenge_pools")
           .select("id, poster_url, fallback_emoji, accent_color")
-          .eq("show_tag", showTag)
-          .single();
+          .ilike("show_tag", showTag)
+          .maybeSingle();
 
         if (poolData?.id && !cancelled) {
           setPoolConfig({
@@ -204,11 +205,18 @@ export default function PlayChallengePage() {
             .from("challenge_questions")
             .select("id, question_text, options, correct_answer")
             .eq("pool_id", poolData.id)
-            .eq("difficulty", difficulty)
-            .order("sort_order");
+            .eq("difficulty", difficulty);
 
           if (qData && qData.length > 0 && !cancelled) {
-            const mapped: Question[] = qData.map((q) => ({
+            // If there are more than 12 questions, randomly pick 12 so replays feel fresh
+            const ROUND_SIZE = 12;
+            const pool = [...qData];
+            for (let i = pool.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+            const selected = pool.slice(0, ROUND_SIZE);
+            const mapped: Question[] = selected.map((q) => ({
               id: q.id,
               text: q.question_text,
               options: shuffleOptions(q.options as string[], q.correct_answer),

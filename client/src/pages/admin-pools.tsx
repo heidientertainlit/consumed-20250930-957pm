@@ -157,6 +157,9 @@ export default function AdminPoolsPage() {
   const [activeTab, setActiveTab] = useState<"create" | "manage">("create");
   const [step, setStep] = useState<"suggest" | "form" | "preview">("suggest");
 
+  // When set, we're adding more questions to an existing pool (not creating new)
+  const [appendTarget, setAppendTarget] = useState<{ id: string; title: string; category: string } | null>(null);
+
   // Suggestion state
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [suggestLoading, setSuggestLoading] = useState(false);
@@ -242,9 +245,22 @@ export default function AdminPoolsPage() {
   }
 
   function startCustom() {
+    setAppendTarget(null);
     setPoolName(""); setDescription(""); setTopic(""); setPosterUrl("");
     setCategory("TV Shows"); setEmoji("📺");
     setStep("form");
+  }
+
+  function startAddQuestions(pool: PoolRow) {
+    setAppendTarget({ id: pool.id, title: pool.title, category: pool.category || "TV Shows" });
+    setPoolName(pool.title);
+    setCategory((pool.category as Category) || "TV Shows");
+    setDescription("");
+    setTopic("");
+    setPosterUrl("");
+    setGeneratedQuestions(null);
+    setStep("form");
+    setActiveTab("create");
   }
 
   async function handleGenerate() {
@@ -270,14 +286,25 @@ export default function AdminPoolsPage() {
     if (!generatedQuestions || !poolName.trim()) return;
     setSaving(true);
     try {
-      await callEdgeFunction({
-        action: "save",
-        pool: { show_tag: poolName.trim(), title: poolName.trim(), description: description.trim() || null, category, poster_url: posterUrl.trim() || null, fallback_emoji: emoji, accent_color: "#7c3aed" },
-        questions: generatedQuestions,
-      });
-      toast({ title: `"${poolName}" saved!`, description: "It will now appear in the Pools list for players." });
+      if (appendTarget) {
+        // Add questions to existing pool
+        const result = await callEdgeFunction({
+          action: "append_questions",
+          pool_id: appendTarget.id,
+          questions: generatedQuestions,
+        });
+        toast({ title: `${result.added} questions added to "${appendTarget.title}"!`, description: "Players will now see the expanded question bank with random selection each round." });
+      } else {
+        // Create brand-new pool
+        await callEdgeFunction({
+          action: "save",
+          pool: { show_tag: poolName.trim(), title: poolName.trim(), description: description.trim() || null, category, poster_url: posterUrl.trim() || null, fallback_emoji: emoji, accent_color: "#7c3aed" },
+          questions: generatedQuestions,
+        });
+        toast({ title: `"${poolName}" saved!`, description: "It will now appear in the Pools list for players." });
+      }
       setPoolName(""); setDescription(""); setTopic(""); setPosterUrl(""); setGeneratedQuestions(null);
-      setStep("suggest"); setSuggestions([]);
+      setStep("suggest"); setSuggestions([]); setAppendTarget(null);
       refetchPools();
       setActiveTab("manage");
     } catch (err: any) {
@@ -404,16 +431,36 @@ export default function AdminPoolsPage() {
             {/* STEP: FORM */}
             {step === "form" && (
               <div className="space-y-4">
-                <button onClick={() => setStep("suggest")} className="flex items-center gap-1.5 text-gray-400 hover:text-gray-200 text-sm transition-colors">
-                  <ArrowLeft size={14} /> Back to suggestions
+                <button
+                  onClick={() => { setAppendTarget(null); setStep("suggest"); }}
+                  className="flex items-center gap-1.5 text-gray-400 hover:text-gray-200 text-sm transition-colors"
+                >
+                  <ArrowLeft size={14} /> {appendTarget ? "Cancel" : "Back to suggestions"}
                 </button>
 
+                {appendTarget && (
+                  <div className="rounded-xl bg-purple-900/20 border border-purple-700/40 px-4 py-3 flex items-start gap-3">
+                    <Plus size={16} className="text-purple-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-purple-300 text-sm font-medium">Adding questions to "{appendTarget.title}"</p>
+                      <p className="text-purple-400/70 text-xs mt-0.5">Generate 36 new questions — they'll be added to the existing bank. Players get a random 12 each session.</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="rounded-xl bg-gray-900/50 border border-gray-800 p-5 space-y-4">
-                  <h2 className="text-white font-semibold">Pool details</h2>
+                  <h2 className="text-white font-semibold">{appendTarget ? "Question details" : "Pool details"}</h2>
 
                   <div>
                     <label className="text-xs text-gray-400 mb-1.5 block">Pool name *</label>
-                    <Input value={poolName} onChange={e => setPoolName(e.target.value)} placeholder='e.g. "Breaking Bad"' className="bg-gray-800/50 border-gray-700 text-white" />
+                    <Input
+                      value={poolName}
+                      onChange={e => !appendTarget && setPoolName(e.target.value)}
+                      readOnly={!!appendTarget}
+                      placeholder='e.g. "Breaking Bad"'
+                      className={`bg-gray-800/50 border-gray-700 text-white ${appendTarget ? "opacity-60 cursor-not-allowed" : ""}`}
+                    />
+                    {appendTarget && <p className="text-xs text-gray-500 mt-1">Pool name is locked — questions will be added to this pool.</p>}
                   </div>
 
                   <div>
@@ -505,7 +552,12 @@ export default function AdminPoolsPage() {
                 ))}
 
                 <Button onClick={handleSave} disabled={saving || !poolName.trim()} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                  {saving ? <><Loader2 size={16} className="mr-2 animate-spin" />Saving...</> : <><Save size={16} className="mr-2" />Save Pool to Database</>}
+                  {saving
+                    ? <><Loader2 size={16} className="mr-2 animate-spin" />{appendTarget ? "Adding questions..." : "Saving..."}</>
+                    : appendTarget
+                      ? <><Plus size={16} className="mr-2" />Add {totalGenerated} Questions to "{appendTarget.title}"</>
+                      : <><Save size={16} className="mr-2" />Save Pool to Database</>
+                  }
                 </Button>
               </div>
             )}
@@ -526,7 +578,7 @@ export default function AdminPoolsPage() {
                 </Button>
               </div>
             ) : (
-              pools.map(pool => <PoolCard key={pool.id} pool={pool} onDelete={handleDelete} />)
+              pools.map(pool => <PoolCard key={pool.id} pool={pool} onDelete={handleDelete} onAddQuestions={startAddQuestions} />)
             )}
           </div>
         )}
@@ -536,7 +588,7 @@ export default function AdminPoolsPage() {
 }
 
 // ── Pool card in manage tab ───────────────────────────────────────────────────
-function PoolCard({ pool, onDelete }: { pool: PoolRow; onDelete: (id: string, title: string) => void }) {
+function PoolCard({ pool, onDelete, onAddQuestions }: { pool: PoolRow; onDelete: (id: string, title: string) => void; onAddQuestions: (pool: PoolRow) => void }) {
   const [counts, setCounts] = useState<Record<string, number> | null>(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -565,6 +617,13 @@ function PoolCard({ pool, onDelete }: { pool: PoolRow; onDelete: (id: string, ti
           <p className="text-gray-600 text-xs mt-0.5">{pool.category}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={() => onAddQuestions(pool)}
+            title="Add more questions to this pool"
+            className="p-2 text-gray-400 hover:text-purple-400 rounded-lg hover:bg-gray-800 transition-colors"
+          >
+            <Plus size={16} />
+          </button>
           <button onClick={toggle} className="p-2 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800 transition-colors">
             {loading ? <Loader2 size={16} className="animate-spin" /> : expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
@@ -574,14 +633,30 @@ function PoolCard({ pool, onDelete }: { pool: PoolRow; onDelete: (id: string, ti
         </div>
       </div>
       {expanded && counts && (
-        <div className="px-4 pb-4 flex gap-2">
-          {(["easy", "medium", "hard"] as Difficulty[]).map(diff => (
-            <div key={diff} className={`flex-1 rounded-lg p-2 text-center border ${DIFF_COLORS[diff]}`}>
-              <p className="text-xs font-medium">{DIFF_LABELS[diff]}</p>
-              <p className="text-lg font-bold">{counts[diff]}</p>
-              <p className="text-xs opacity-60">questions</p>
-            </div>
-          ))}
+        <div className="px-4 pb-4 space-y-3">
+          <div className="flex gap-2">
+            {(["easy", "medium", "hard"] as Difficulty[]).map(diff => (
+              <div key={diff} className={`flex-1 rounded-lg p-2 text-center border ${DIFF_COLORS[diff]}`}>
+                <p className="text-xs font-medium">{DIFF_LABELS[diff]}</p>
+                <p className="text-lg font-bold">{counts[diff]}</p>
+                <p className="text-xs opacity-60">questions</p>
+              </div>
+            ))}
+          </div>
+          {Object.values(counts).some(c => c > 12) && (
+            <p className="text-xs text-purple-400/80 flex items-center gap-1.5">
+              <RefreshCw size={11} />
+              This pool has more than 12 questions per tier — players get a random 12 each play, so each session feels fresh.
+            </p>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onAddQuestions(pool)}
+            className="w-full border-purple-700/40 text-purple-300 hover:bg-purple-900/30 text-xs"
+          >
+            <Plus size={12} className="mr-1.5" />Add 36 More Questions
+          </Button>
         </div>
       )}
     </div>
