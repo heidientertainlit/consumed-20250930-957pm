@@ -5562,7 +5562,7 @@ export default function Feed() {
           <div>
 
             <h1 className="text-2xl font-bold text-white mb-6 text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Play What's Trending
+              Trending Now
             </h1>
 
             <DailyChallengeCard />
