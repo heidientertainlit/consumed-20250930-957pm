@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
-import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, CheckCircle, XCircle } from 'lucide-react';
+import { Brain, Loader2, ChevronLeft, ChevronRight, Trophy, Users, CheckCircle, XCircle, Star, Send } from 'lucide-react';
 import { incrementActivityCount } from '@/components/dna-survey-nudge';
 
 function normalizeCategory(cat: string | null | undefined): string {
@@ -78,6 +78,14 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const [lockedOrder, setLockedOrder] = useState<TriviaItem[] | null>(null);
   const [celebratingItems, setCelebratingItems] = useState<Record<string, number>>({});
   const [socialProofMap, setSocialProofMap] = useState<Record<string, { userName: string; option: string; pct: number; total: number }>>({});
+  const [triviaRatings, setTriviaRatings] = useState<Record<string, {
+    ratingState: 'idle' | 'rated' | 'reviewed';
+    rating: number;
+    reviewText: string;
+    skipped: boolean;
+    hoverRating: number;
+    reviewFocused: boolean;
+  }>>({});
 
   const { data: leaderboardData } = useQuery({
     queryKey: ['trivia-leaderboard-position', user?.id, session?.access_token],
@@ -524,6 +532,69 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     }
   });
 
+  const triviaMediaType = (category?: string) => {
+    const c = (category || '').toLowerCase();
+    if (c === 'movies' || c === 'movie') return 'movie';
+    if (c === 'tv' || c === 'tv shows' || c === 'tv show') return 'tv';
+    if (c === 'music') return 'music';
+    if (c === 'books' || c === 'book') return 'book';
+    return 'movie';
+  };
+
+  const setTriviaRatingField = (itemId: string, updates: Partial<typeof triviaRatings[string]>) => {
+    setTriviaRatings(prev => ({
+      ...prev,
+      [itemId]: { ratingState: 'idle', rating: 0, reviewText: '', skipped: false, hoverRating: 0, reviewFocused: false, ...(prev[itemId] || {}), ...updates },
+    }));
+  };
+
+  const handleTriviaRate = async (item: TriviaItem, rating: number) => {
+    if (!session?.access_token || !item.mediaTitle) return;
+    setTriviaRatingField(item.id, { rating, ratingState: 'rated' });
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+    const mediaType = triviaMediaType(item.category);
+    try {
+      // Try to find externalId first
+      const searchRes = await fetch(
+        `${supabaseUrl}/functions/v1/media-search?q=${encodeURIComponent(item.mediaTitle)}&type=${mediaType}&limit=1`,
+        { headers: { Authorization: `Bearer ${session.access_token}` } }
+      );
+      const searchData = await searchRes.json();
+      const results = searchData?.results || searchData || [];
+      const first = Array.isArray(results) ? results[0] : null;
+      const externalId = String(first?.externalId || first?.external_id || first?.id || '');
+      const externalSource = first?.externalSource || first?.external_source || 'tmdb';
+      if (!externalId) return;
+      await fetch(`${supabaseUrl}/functions/v1/rate-media`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          media_external_id: externalId,
+          media_external_source: externalSource,
+          media_title: item.mediaTitle,
+          media_type: mediaType,
+          media_image_url: first?.posterUrl || first?.image || '',
+          rating,
+          skip_social_post: false,
+        }),
+      });
+    } catch { /* silent — UI already updated optimistically */ }
+  };
+
+  const handleTriviaReview = async (item: TriviaItem, reviewText: string) => {
+    setTriviaRatingField(item.id, { ratingState: 'reviewed' });
+    if (!session?.user?.id || !reviewText.trim()) return;
+    try {
+      await supabase.from('social_posts').insert({
+        user_id: session.user.id,
+        content: reviewText.trim(),
+        type: 'thought',
+        media_title: item.mediaTitle || null,
+        media_type: item.category ? triviaMediaType(item.category) : null,
+      });
+    } catch { /* silent */ }
+  };
+
   const scrollToNext = () => {
     if (scrollRef.current && data && currentIndex < data.length - 1) {
       const cardWidth = scrollRef.current.children[0]?.clientWidth || 280;
@@ -742,6 +813,106 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                           </div>
                         );
                       })}
+
+                      {/* ─── Inline rating / review strip ─── */}
+                      {item.mediaTitle && session?.access_token && (() => {
+                        const tr = triviaRatings[item.id] || { ratingState: 'idle', rating: 0, reviewText: '', skipped: false, hoverRating: 0, reviewFocused: false };
+                        if (tr.skipped) return null;
+                        return (
+                          <div className="mt-3 rounded-xl bg-violet-50 border border-violet-100 overflow-hidden">
+                            {tr.ratingState === 'idle' && (
+                              <div className="px-3 py-2.5">
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase">
+                                    Rate {item.mediaTitle}
+                                  </p>
+                                  <button className="text-[10px] text-gray-400" onClick={(e) => { e.stopPropagation(); setTriviaRatingField(item.id, { skipped: true }); }}>
+                                    Skip
+                                  </button>
+                                </div>
+                                <div
+                                  className="flex items-center gap-1"
+                                  onMouseLeave={() => setTriviaRatingField(item.id, { hoverRating: 0 })}
+                                >
+                                  {[1,2,3,4,5].map(s => (
+                                    <button
+                                      key={s}
+                                      className="p-0.5 transition-transform hover:scale-110 active:scale-95"
+                                      onMouseEnter={() => setTriviaRatingField(item.id, { hoverRating: s })}
+                                      onClick={(e) => { e.stopPropagation(); handleTriviaRate(item, s); }}
+                                    >
+                                      <Star size={22} className={(tr.hoverRating || 0) >= s ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+                                    </button>
+                                  ))}
+                                  <span className="text-[10px] text-gray-400 ml-1">while it's on your mind</span>
+                                </div>
+                              </div>
+                            )}
+                            {tr.ratingState === 'rated' && (
+                              <div>
+                                <div className="px-3 pt-2.5 pb-2 flex items-center justify-between">
+                                  <div>
+                                    <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase mb-1">{item.mediaTitle}</p>
+                                    <div className="flex items-center gap-0.5">
+                                      {[1,2,3,4,5].map(s => (
+                                        <Star key={s} size={13} className={s <= tr.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
+                                      ))}
+                                      <span className="ml-1 text-[10px] text-gray-500">{tr.rating}/5</span>
+                                    </div>
+                                  </div>
+                                  <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">+5 pts</span>
+                                </div>
+                                <div className="border-t border-violet-100 mx-3" />
+                                <div className="px-3 pt-2 pb-2.5">
+                                  <p className="text-[10px] font-semibold text-gray-600 mb-1.5">
+                                    Add a quick take? <span className="font-normal text-gray-400">(optional)</span>
+                                  </p>
+                                  <div className={`flex items-end gap-1.5 bg-white rounded-lg border transition-colors ${tr.reviewFocused ? 'border-violet-300' : 'border-gray-200'}`}>
+                                    <textarea
+                                      value={tr.reviewText}
+                                      onChange={(e) => setTriviaRatingField(item.id, { reviewText: e.target.value })}
+                                      onFocus={() => setTriviaRatingField(item.id, { reviewFocused: true })}
+                                      onBlur={() => setTriviaRatingField(item.id, { reviewFocused: false })}
+                                      placeholder={`Your take on ${item.mediaTitle}…`}
+                                      rows={2}
+                                      className="flex-1 resize-none text-xs text-gray-800 placeholder-gray-400 px-2.5 py-2 bg-transparent outline-none leading-snug"
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleTriviaReview(item, tr.reviewText); }}
+                                      disabled={!tr.reviewText.trim()}
+                                      className={`mb-1.5 mr-1.5 p-1.5 rounded-lg transition-all ${tr.reviewText.trim() ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-300'}`}
+                                    >
+                                      <Send size={12} />
+                                    </button>
+                                  </div>
+                                  <button className="mt-1 text-[10px] text-gray-400" onClick={(e) => { e.stopPropagation(); handleTriviaReview(item, ''); }}>
+                                    Skip review
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                            {tr.ratingState === 'reviewed' && (
+                              <div className="px-3 py-2.5 flex items-center justify-between">
+                                <div>
+                                  <div className="flex items-center gap-0.5 mb-0.5">
+                                    {[1,2,3,4,5].map(s => (
+                                      <Star key={s} size={12} className={s <= tr.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
+                                    ))}
+                                  </div>
+                                  {tr.reviewText.trim() && (
+                                    <p className="text-[11px] text-gray-500 italic line-clamp-1">"{tr.reviewText}"</p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                                  <span className="text-[11px] font-semibold text-green-600">Posted</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {/* Continue/Done button */}
                       <button
