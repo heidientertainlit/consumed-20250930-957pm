@@ -21,6 +21,7 @@ import { PollsCarousel } from "@/components/polls-carousel";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { GamesCarousel } from "@/components/games-carousel";
 import { RanksCarousel } from "@/components/ranks-carousel";
+import { ChallengePoolsFeedBanner } from "@/components/challenge-pools-feed-banner";
 import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
@@ -5850,6 +5851,11 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
               )}
 
+              {/* Challenge Pools banner #1 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <ChallengePoolsFeedBanner />
+              )}
+
               {/* — Rating carousel #1 — */}
               {renderRatingCarousel(1)}
 
@@ -5912,6 +5918,11 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Movies" />
               )}
 
+              {/* Challenge Pools banner #2 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <ChallengePoolsFeedBanner />
+              )}
+
               {/* — Rating carousel #3 — */}
               {renderRatingCarousel(3)}
 
@@ -5931,6 +5942,11 @@ export default function Feed() {
 
               {/* Play slot #5 */}
               {renderPostBatchByIndex(5)}
+
+              {/* Challenge Pools banner #3 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <ChallengePoolsFeedBanner />
+              )}
 
               {/* Podcasts trivia — round 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
