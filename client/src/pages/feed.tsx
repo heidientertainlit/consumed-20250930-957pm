@@ -3539,7 +3539,7 @@ export default function Feed() {
     if (!carousel || carousel.posts.length === 0) return null;
     return (
       <div key={carousel.id} className="mb-2">
-        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
+        <div className="flex items-start gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
           {carousel.posts.map((post: any) => (
             <UGCGroupCard
               key={post.id}
