@@ -12,6 +12,7 @@ interface Pool {
   fallback_emoji?: string;
   accent_color?: string;
   category?: string;
+  players_this_week?: number;
 }
 
 const HARDCODED_POOLS: Pool[] = [
@@ -23,6 +24,7 @@ const HARDCODED_POOLS: Pool[] = [
     fallback_emoji: "⚡",
     accent_color: "#7c3aed",
     category: "Movies & TV",
+    players_this_week: 1204,
   },
   {
     id: "friends",
@@ -32,6 +34,7 @@ const HARDCODED_POOLS: Pool[] = [
     fallback_emoji: "☕",
     accent_color: "#f59e0b",
     category: "TV",
+    players_this_week: 847,
   },
 ];
 
@@ -74,80 +77,91 @@ export function ChallengePoolsFeedBanner() {
 
   return (
     <div className="mx-4 my-3">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-2.5">
-        <div className="flex items-center gap-2">
-          <Users size={14} className="text-purple-500" />
-          <span className="text-[13px] font-bold text-gray-900">Play with Friends</span>
+      {/* Outer card */}
+      <div
+        className="bg-white rounded-2xl overflow-hidden"
+        style={{ border: "0.5px solid #e5e7eb", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-gray-50">
+          <div className="flex items-center gap-2">
+            <Users size={14} className="text-purple-500" />
+            <span className="text-[13px] font-bold text-gray-900">Play with Friends</span>
+          </div>
+          <button
+            onClick={() => setLocation("/play/pools")}
+            className="flex items-center gap-0.5 text-[11px] text-purple-600 font-semibold"
+          >
+            See all <ChevronRight size={11} />
+          </button>
         </div>
-        <button
-          onClick={() => setLocation("/play/pools")}
-          className="flex items-center gap-0.5 text-[11px] text-purple-600 font-semibold"
-        >
-          See all <ChevronRight size={11} />
-        </button>
-      </div>
 
-      {/* Pool cards */}
-      <div className="flex flex-col gap-2">
-        {pools.map((pool) => {
-          const done = completedCount(pool.show_tag);
-          const accent = pool.accent_color || "#7c3aed";
+        {/* Pool rows */}
+        <div className="divide-y divide-gray-50">
+          {pools.map((pool) => {
+            const done = completedCount(pool.show_tag);
+            const accent = pool.accent_color || "#7c3aed";
+            const players = pool.players_this_week;
 
-          return (
-            <div
-              key={pool.id}
-              className="flex items-center gap-3 bg-white rounded-2xl px-3 py-2.5 cursor-pointer active:scale-[0.99] transition-transform"
-              style={{ border: "0.5px solid #e5e7eb", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
-              onClick={() =>
-                setLocation(`/play/challenge/${encodeURIComponent(pool.show_tag)}/easy`)
-              }
-            >
-              {/* Poster / emoji */}
+            return (
               <div
-                className="w-10 h-10 rounded-xl shrink-0 overflow-hidden flex items-center justify-center text-lg"
-                style={{ background: accent + "18" }}
+                key={pool.id}
+                className="flex items-center gap-3 px-4 py-3 cursor-pointer active:bg-gray-50 transition-colors"
+                onClick={() =>
+                  setLocation(`/play/challenge/${encodeURIComponent(pool.show_tag)}/easy`)
+                }
               >
-                {pool.poster_url ? (
-                  <img src={pool.poster_url} alt={pool.title} className="w-full h-full object-cover" />
-                ) : (
-                  <span>{pool.fallback_emoji || "🎬"}</span>
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-bold text-gray-900 truncate">{pool.title}</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">
-                  36 questions · 3 rounds
-                  {done > 0 && (
-                    <span className="ml-1.5 font-semibold" style={{ color: accent }}>
-                      {done}/3 done
-                    </span>
-                  )}
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  onClick={(e) => handleShare(pool, e)}
-                  className="p-1.5 rounded-lg"
-                  style={{ background: accent + "15", color: accent }}
-                  title="Challenge a friend"
-                >
-                  <Share2 size={13} />
-                </button>
+                {/* Poster / emoji */}
                 <div
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white"
-                  style={{ background: accent }}
+                  className="w-11 h-11 rounded-xl shrink-0 overflow-hidden flex items-center justify-center text-xl"
+                  style={{ background: accent + "18" }}
                 >
-                  Play
+                  {pool.poster_url ? (
+                    <img src={pool.poster_url} alt={pool.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{pool.fallback_emoji || "🎬"}</span>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-bold text-gray-900 truncate">{pool.title}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    36 questions · 3 rounds
+                    {done > 0 && (
+                      <span className="ml-1.5 font-semibold" style={{ color: accent }}>
+                        {done}/3 done
+                      </span>
+                    )}
+                  </p>
+                  {players && (
+                    <p className="text-[10px] mt-0.5 font-medium" style={{ color: accent }}>
+                      {players.toLocaleString()} players this week
+                    </p>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={(e) => handleShare(pool, e)}
+                    className="p-1.5 rounded-lg"
+                    style={{ background: accent + "15", color: accent }}
+                    title="Challenge a friend"
+                  >
+                    <Share2 size={13} />
+                  </button>
+                  <div
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-white"
+                    style={{ background: accent }}
+                  >
+                    Play
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

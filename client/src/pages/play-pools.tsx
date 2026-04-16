@@ -307,7 +307,7 @@ export default function PlayPoolsPage() {
           </button>
         </div>
         <h1 className="text-white text-[28px] font-bold leading-tight">Pools</h1>
-        <p className="text-white/50 text-sm mt-1">Compete with friends, round by round</p>
+        <p className="text-white/50 text-sm mt-1">Join the pool—compete with everyone or your friends</p>
       </div>
 
       {/* Pool List */}
