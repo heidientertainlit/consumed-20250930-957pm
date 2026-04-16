@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation, useParams } from "wouter";
 import { ChevronLeft, CheckCircle2, XCircle, Trophy, Brain, Lock } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -129,6 +129,15 @@ function getConfig(showTag: string) {
   return SHOW_CONFIG[showTag] || { accentColor: "#7c3aed", posterUrl: "", fallbackEmoji: "🎮" };
 }
 
+function shuffleOptions(options: string[], correctAnswer: string): string[] {
+  const shuffled = [...options];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
 function completionKey(showTag: string, difficulty: Difficulty) {
   return `challenge-completed-${showTag}-${difficulty}`;
 }
@@ -154,11 +163,15 @@ export default function PlayChallengePage() {
 
   const bankForShow = CHALLENGE_BANKS[showTag];
   const rawQuestions = bankForShow?.[difficulty] || [];
-  const questions: Question[] = rawQuestions.map((q, i) => ({
-    ...q,
-    id: `${showTag.replace(/\s+/g, "-").toLowerCase()}-${difficulty}-q${i}`,
-    points: diffConfig.points,
-  }));
+  const questions: Question[] = useMemo(() =>
+    rawQuestions.map((q, i) => ({
+      ...q,
+      options: shuffleOptions(q.options, q.correctAnswer),
+      id: `${showTag.replace(/\s+/g, "-").toLowerCase()}-${difficulty}-q${i}`,
+      points: diffConfig.points,
+    })),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [showTag, difficulty]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -280,6 +293,24 @@ export default function PlayChallengePage() {
               Play {DIFFICULTY_CONFIG[next].label} Round
             </button>
           )}
+
+          {/* Challenge a Friend */}
+          <button
+            onClick={() => {
+              const url = `${window.location.origin}/play/challenge/${encodeURIComponent(showTag)}/${difficulty}`;
+              const text = `I got ${pct}% on ${showTag} (${diffConfig.label}) on Consumed — can you beat me?`;
+              if (navigator.share) {
+                navigator.share({ title: "Challenge me on Consumed", text, url }).catch(() => {});
+              } else {
+                navigator.clipboard.writeText(`${text} ${url}`);
+              }
+            }}
+            className="w-full max-w-xs py-3.5 rounded-2xl text-sm font-bold mb-2.5 flex items-center justify-center gap-2"
+            style={{ background: accent + "12", color: accent, border: `1px solid ${accent}30` }}
+          >
+            Challenge a Friend
+          </button>
+
           <button
             onClick={() => setLocation("/play/pools")}
             className="w-full max-w-xs py-3 rounded-2xl text-sm font-semibold text-gray-500 bg-gray-100"

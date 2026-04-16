@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ChevronLeft, Lock, ChevronRight } from "lucide-react";
+import { ChevronLeft, Lock, ChevronRight, Trophy, X } from "lucide-react";
 import Navigation from "@/components/navigation";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
 
 type Difficulty = "easy" | "medium" | "hard";
 
@@ -23,6 +25,13 @@ interface Pool {
   category: string;
   playersThisWeek: number;
   rounds: Round[];
+}
+
+interface LeaderboardEntry {
+  display_name: string;
+  user_name: string;
+  total_points: number;
+  isCurrentUser?: boolean;
 }
 
 const ROUNDS: Round[] = [
@@ -59,11 +68,9 @@ const POOLS: Pool[] = [
 function completionKey(showTag: string, difficulty: Difficulty) {
   return `challenge-completed-${showTag}-${difficulty}`;
 }
-
 function isCompleted(showTag: string, difficulty: Difficulty) {
   return localStorage.getItem(completionKey(showTag, difficulty)) === "1";
 }
-
 function isUnlocked(showTag: string, difficulty: Difficulty) {
   if (difficulty === "easy") return true;
   if (difficulty === "medium") return isCompleted(showTag, "easy");
@@ -86,12 +93,158 @@ function PosterImage({ posterUrl, fallbackEmoji, alt }: { posterUrl: string; fal
   return <span className="text-2xl">{fallbackEmoji}</span>;
 }
 
-export default function PlayPoolsPage() {
-  const [, setLocation] = useLocation();
-  const [completionState, setCompletionState] = useState(0);
+function medalColor(rank: number) {
+  if (rank === 1) return "#f59e0b";
+  if (rank === 2) return "#9ca3af";
+  if (rank === 3) return "#92400e";
+  return "#6b7280";
+}
+
+function LeaderboardSheet({ pool, onClose }: { pool: Pool; onClose: () => void }) {
+  const { user } = useAuth();
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setCompletionState(prev => prev + 1);
+    async function load() {
+      try {
+        const slug = pool.showTag.replace(/\s+/g, "-").toLowerCase();
+        const prefix = `challenge-${slug}-`;
+
+        const { data: preds } = await supabase
+          .from("user_predictions")
+          .select("user_id, points_earned, pool_id")
+          .like("pool_id", `${prefix}%`);
+
+        if (!preds || preds.length === 0) {
+          setLoading(false);
+          return;
+        }
+
+        const totals: Record<string, number> = {};
+        for (const p of preds) {
+          totals[p.user_id] = (totals[p.user_id] || 0) + (p.points_earned || 0);
+        }
+
+        const userIds = Object.keys(totals);
+        const { data: users } = await supabase
+          .from("users")
+          .select("id, display_name, user_name")
+          .in("id", userIds);
+
+        const enriched: LeaderboardEntry[] = userIds.map(uid => {
+          const u = (users || []).find((x: any) => x.id === uid);
+          return {
+            display_name: u?.display_name || u?.user_name || "Player",
+            user_name: u?.user_name || "",
+            total_points: totals[uid],
+            isCurrentUser: uid === user?.id,
+          };
+        }).sort((a, b) => b.total_points - a.total_points);
+
+        setEntries(enriched);
+      } catch (e) {
+        console.error("[Leaderboard] error:", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [pool.showTag, user?.id]);
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/40 z-40"
+        onClick={onClose}
+      />
+      {/* Sheet */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl pb-10"
+        style={{ maxHeight: "80vh", overflowY: "auto" }}
+      >
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-gray-200" />
+        </div>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-3 pb-4 border-b border-gray-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center shrink-0">
+              <PosterImage posterUrl={pool.posterUrl} fallbackEmoji={pool.fallbackEmoji} alt={pool.title} />
+            </div>
+            <div>
+              <p className="text-gray-900 text-sm font-bold">{pool.title}</p>
+              <p className="text-gray-400 text-xs">Leaderboard</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
+            <X size={14} className="text-gray-500" />
+          </button>
+        </div>
+
+        <div className="px-5 pt-4">
+          {loading && (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-14 rounded-2xl bg-gray-100 animate-pulse" />
+              ))}
+            </div>
+          )}
+
+          {!loading && entries.length === 0 && (
+            <div className="py-12 text-center">
+              <Trophy size={32} className="text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm font-medium">No scores yet</p>
+              <p className="text-gray-400 text-xs mt-1">Be the first to complete a round!</p>
+            </div>
+          )}
+
+          {!loading && entries.length > 0 && (
+            <div className="space-y-2.5">
+              {entries.map((entry, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl"
+                  style={{
+                    background: entry.isCurrentUser ? "#ede9fe" : "#f9fafb",
+                    border: entry.isCurrentUser ? "1px solid #c4b5fd" : "1px solid #f3f4f6",
+                  }}
+                >
+                  <div
+                    className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-black shrink-0"
+                    style={{ background: medalColor(i + 1) + "20", color: medalColor(i + 1) }}
+                  >
+                    {i + 1}
+                  </div>
+                  <p className="flex-1 text-gray-900 text-sm font-semibold truncate">
+                    {entry.display_name}
+                    {entry.isCurrentUser && (
+                      <span className="text-purple-500 text-[10px] font-bold ml-1.5">YOU</span>
+                    )}
+                  </p>
+                  <p className="text-sm font-bold shrink-0" style={{ color: "#7c3aed" }}>
+                    {entry.total_points} pts
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default function PlayPoolsPage() {
+  const [, setLocation] = useLocation();
+  const [leaderboardPool, setLeaderboardPool] = useState<Pool | null>(null);
+  const [, forceUpdate] = useState(0);
+
+  useEffect(() => {
+    forceUpdate(n => n + 1);
   }, []);
 
   return (
@@ -176,19 +329,16 @@ export default function PlayPoolsPage() {
                         opacity: unlocked ? 1 : 0.6,
                       }}
                     >
-                      {/* Difficulty dot */}
                       <div
                         className="w-2 h-2 rounded-full shrink-0"
                         style={{ background: unlocked ? round.color : "#d1d5db" }}
                       />
-
                       <div className="flex-1 text-left">
                         <span className="text-gray-900 text-[13px] font-semibold">{round.label}</span>
                         <span className="text-gray-400 text-[11px] ml-1.5">
                           {round.questionCount} questions · {round.pointsEach} pts each
                         </span>
                       </div>
-
                       {completed ? (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: round.color + "15", color: round.color }}>
                           Done
@@ -202,10 +352,27 @@ export default function PlayPoolsPage() {
                   );
                 })}
               </div>
+
+              {/* Leaderboard Bar */}
+              <button
+                onClick={() => setLeaderboardPool(pool)}
+                className="w-full flex items-center justify-between px-4 py-2.5 border-t border-gray-100 active:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Trophy size={13} className="text-amber-500" />
+                  <span className="text-gray-500 text-xs font-semibold">See Leaderboard</span>
+                </div>
+                <ChevronRight size={13} className="text-gray-300" />
+              </button>
             </div>
           );
         })}
       </div>
+
+      {/* Leaderboard Sheet */}
+      {leaderboardPool && (
+        <LeaderboardSheet pool={leaderboardPool} onClose={() => setLeaderboardPool(null)} />
+      )}
     </div>
   );
 }
