@@ -562,7 +562,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             <div className="h-[22px] flex items-center justify-center">
               <Activity className="text-white" size={22} />
             </div>
-            <span className="text-white text-[10px] mt-0.5">Activity</span>
+            <span className="text-white text-[10px] mt-0.5">Now</span>
           </Link>
 
           {/* Play */}

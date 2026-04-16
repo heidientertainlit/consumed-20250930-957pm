@@ -5562,10 +5562,10 @@ export default function Feed() {
           <div>
 
             <h1 className="text-2xl font-bold text-white mb-6 text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Activity
+              Now
             </h1>
 
-            <MediaSearchBar session={session} placeholder="Search to add media..." />
+            <DailyChallengeCard />
 
           </div>
           
@@ -5585,10 +5585,6 @@ export default function Feed() {
             ))}
           </div>
         )}
-        {/* Daily Call - Daily Challenge at top of light feed area */}
-        <div className="mb-4">
-          <DailyChallengeCard />
-        </div>
 
         {/* Activity Stream */}
         <div className="space-y-3">
