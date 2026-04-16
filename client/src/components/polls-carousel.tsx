@@ -75,6 +75,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         .select('*')
         .eq('type', 'vote')
         .eq('status', 'open')
+        .is('partner_tag', null)
         .or(`publish_at.is.null,publish_at.lte.${now}`)
         .order('created_at', { ascending: false })
         .limit(500);
