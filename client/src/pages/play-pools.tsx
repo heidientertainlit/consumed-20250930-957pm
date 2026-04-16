@@ -108,22 +108,21 @@ function LeaderboardSheet({ pool, onClose }: { pool: Pool; onClose: () => void }
   useEffect(() => {
     async function load() {
       try {
-        const slug = pool.showTag.replace(/\s+/g, "-").toLowerCase();
-        const prefix = `challenge-${slug}-`;
+        const { data: scores, error: scoresError } = await supabase
+          .from("challenge_scores")
+          .select("user_id, points_earned")
+          .eq("show_tag", pool.showTag);
 
-        const { data: preds } = await supabase
-          .from("user_predictions")
-          .select("user_id, points_earned, pool_id")
-          .like("pool_id", `${prefix}%`);
+        if (scoresError) console.error("[Leaderboard] scores error:", scoresError);
 
-        if (!preds || preds.length === 0) {
+        if (!scores || scores.length === 0) {
           setLoading(false);
           return;
         }
 
         const totals: Record<string, number> = {};
-        for (const p of preds) {
-          totals[p.user_id] = (totals[p.user_id] || 0) + (p.points_earned || 0);
+        for (const s of scores) {
+          totals[s.user_id] = (totals[s.user_id] || 0) + (s.points_earned || 0);
         }
 
         const userIds = Object.keys(totals);

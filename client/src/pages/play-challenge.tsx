@@ -194,30 +194,42 @@ export default function PlayChallengePage() {
     const points = isCorrect ? currentQuestion.points : 0;
     setResults(prev => ({ ...prev, [currentQuestion.id]: { correct: isCorrect, points } }));
 
-    if (user?.id) {
+    if (user?.id && points > 0) {
       setSubmitting(true);
       try {
-        const poolKey = `challenge-${showTag.replace(/\s+/g, "-").toLowerCase()}-${difficulty}-${currentIndex}`;
-        await supabase
-          .from("user_predictions")
-          .upsert(
-            { user_id: user.id, pool_id: poolKey, prediction: option, points_earned: points },
-            { onConflict: "user_id,pool_id" }
-          );
-        if (points > 0) {
-          await supabase.rpc("increment_user_points", { user_id_param: user.id, points_to_add: points });
-        }
+        await supabase.rpc("increment_user_points", { user_id_param: user.id, points_to_add: points });
       } catch (e) {
-        console.error("[PlayChallenge] submit error:", e);
+        console.error("[PlayChallenge] points error:", e);
       } finally {
         setSubmitting(false);
       }
     }
   }
 
+  async function saveRoundScore(finalResults: Record<string, { correct: boolean; points: number }>) {
+    if (!user?.id) return;
+    const roundCorrect = Object.values(finalResults).filter(r => r.correct).length;
+    const roundPoints = Object.values(finalResults).reduce((sum, r) => sum + r.points, 0);
+    const { error } = await supabase
+      .from("challenge_scores")
+      .upsert(
+        {
+          user_id: user.id,
+          show_tag: showTag,
+          difficulty,
+          correct_count: roundCorrect,
+          total_questions: questions.length,
+          points_earned: roundPoints,
+        },
+        { onConflict: "user_id,show_tag,difficulty" }
+      );
+    if (error) console.error("[PlayChallenge] score save error:", error);
+  }
+
   function handleNext() {
     if (currentIndex + 1 >= totalQuestions) {
       markChallengeCompleted(showTag, difficulty);
+      saveRoundScore(results);
       setDone(true);
     } else {
       setCurrentIndex(prev => prev + 1);

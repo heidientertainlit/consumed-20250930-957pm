@@ -297,6 +297,18 @@ export const poolAnswers = pgTable("pool_answers", {
 
 // ============================================
 // END POOLS SYSTEM
+
+// Challenge Scores - Per-round results for pool trivia challenges
+export const challengeScores = pgTable("challenge_scores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  showTag: text("show_tag").notNull(),
+  difficulty: text("difficulty").notNull(),
+  correctCount: integer("correct_count").notNull().default(0),
+  totalQuestions: integer("total_questions").notNull().default(0),
+  pointsEarned: integer("points_earned").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 // ============================================
 
 // Bets table - for betting on friends' reactions to media
