@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
-import { ChevronLeft, CheckCircle2, XCircle, Trophy, Brain, Lock } from "lucide-react";
+import { ChevronLeft, CheckCircle2, XCircle, Trophy, Brain, Lock, Star, Users } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
@@ -150,6 +150,19 @@ export function isChallengeCompleted(showTag: string, difficulty: Difficulty) {
   return localStorage.getItem(completionKey(showTag, difficulty)) === "1";
 }
 
+interface RankInfo {
+  rank: number;
+  total: number;
+  topPct: number;
+}
+
+interface ChallengerData {
+  display_name: string;
+  correct_count: number;
+  total_questions: number;
+  points_earned: number;
+}
+
 export default function PlayChallengePage() {
   const [, setLocation] = useLocation();
   const params = useParams<{ showTag: string; difficulty?: string }>();
@@ -160,6 +173,10 @@ export default function PlayChallengePage() {
   const config = getConfig(showTag);
   const diffConfig = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.easy;
   const [posterFailed, setPosterFailed] = useState(false);
+
+  const challengerUserId = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("from")
+    : null;
 
   const bankForShow = CHALLENGE_BANKS[showTag];
   const rawQuestions = bankForShow?.[difficulty] || [];
@@ -179,6 +196,8 @@ export default function PlayChallengePage() {
   const [results, setResults] = useState<Record<string, { correct: boolean; points: number }>>({});
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [rankInfo, setRankInfo] = useState<RankInfo | null>(null);
+  const [challengerData, setChallengerData] = useState<ChallengerData | null>(null);
 
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
@@ -226,10 +245,10 @@ export default function PlayChallengePage() {
     if (error) console.error("[PlayChallenge] score save error:", error);
   }
 
-  function handleNext() {
+  async function handleNext() {
     if (currentIndex + 1 >= totalQuestions) {
       markChallengeCompleted(showTag, difficulty);
-      saveRoundScore(results);
+      await saveRoundScore(results);
       setDone(true);
     } else {
       setCurrentIndex(prev => prev + 1);
@@ -237,6 +256,57 @@ export default function PlayChallengePage() {
       setAnswered(false);
     }
   }
+
+  useEffect(() => {
+    if (!done) return;
+
+    async function fetchResults() {
+      const { data: allScores } = await supabase
+        .from("challenge_scores")
+        .select("user_id, correct_count, total_questions")
+        .eq("show_tag", showTag)
+        .eq("difficulty", difficulty);
+
+      if (allScores && allScores.length > 0) {
+        const myPct = correctCount / totalQuestions;
+        const playersBetter = allScores.filter(
+          s => (s.correct_count / (s.total_questions || totalQuestions)) > myPct
+        ).length;
+        const rank = playersBetter + 1;
+        const total = allScores.length;
+        const topPct = Math.max(1, Math.round((rank / total) * 100));
+        setRankInfo({ rank, total, topPct });
+      }
+
+      if (challengerUserId && challengerUserId !== user?.id) {
+        const { data: cScore } = await supabase
+          .from("challenge_scores")
+          .select("correct_count, total_questions, points_earned")
+          .eq("user_id", challengerUserId)
+          .eq("show_tag", showTag)
+          .eq("difficulty", difficulty)
+          .single();
+
+        if (cScore) {
+          const { data: cUser } = await supabase
+            .from("users")
+            .select("display_name, user_name")
+            .eq("id", challengerUserId)
+            .single();
+
+          setChallengerData({
+            display_name: (cUser as any)?.display_name || (cUser as any)?.user_name || "Your friend",
+            correct_count: (cScore as any).correct_count,
+            total_questions: (cScore as any).total_questions || totalQuestions,
+            points_earned: (cScore as any).points_earned,
+          });
+        }
+      }
+    }
+
+    fetchResults();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [done]);
 
   const accent = config.accentColor;
 
@@ -265,41 +335,123 @@ export default function PlayChallengePage() {
   if (done) {
     const pct = Math.round((correctCount / totalQuestions) * 100);
     const next = nextDifficulty[difficulty];
+    const challengeUrl = user?.id
+      ? `${window.location.origin}/play/challenge/${encodeURIComponent(showTag)}/${difficulty}?from=${user.id}`
+      : `${window.location.origin}/play/challenge/${encodeURIComponent(showTag)}/${difficulty}`;
+    const shareText = `I got ${pct}% on ${showTag} (${diffConfig.label}) on Consumed — can you beat me?`;
+
+    const challengerPct = challengerData
+      ? Math.round((challengerData.correct_count / challengerData.total_questions) * 100)
+      : null;
+    const iWon = challengerPct !== null && pct > challengerPct;
+    const iLost = challengerPct !== null && pct < challengerPct;
+
     return (
       <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(160deg, ${accent}22 0%, #f9fafb 40%)` }}>
         <Navigation />
-        <div className="flex-1 flex flex-col items-center justify-center px-6 pb-28 pt-8 text-center">
-          <div className="w-20 h-20 rounded-full flex items-center justify-center mb-5" style={{ background: accent + "20" }}>
-            <Trophy size={36} style={{ color: accent }} />
+        <div className="flex-1 flex flex-col items-center px-5 pb-28 pt-6 max-w-sm mx-auto w-full">
+
+          {/* Trophy + Title */}
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 mt-2" style={{ background: accent + "20" }}>
+            <Trophy size={30} style={{ color: accent }} />
           </div>
-          <h1 className="text-gray-900 text-2xl font-bold mb-1">Round Complete!</h1>
-          <p className="text-gray-500 text-sm mb-1">{showTag}</p>
+          <h1 className="text-gray-900 text-2xl font-bold mb-0.5 text-center">Round Complete!</h1>
+          <p className="text-gray-500 text-sm mb-1 text-center">{showTag}</p>
           <div
-            className="text-[11px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full mb-8"
+            className="text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full mb-5"
             style={{ background: diffConfig.color + "18", color: diffConfig.color }}
           >
             {diffConfig.label}
           </div>
 
-          <div className="w-full max-w-xs bg-white rounded-2xl shadow-sm p-6 mb-6" style={{ border: `1px solid ${accent}20` }}>
-            <div className="text-5xl font-black mb-1" style={{ color: accent }}>{pct}%</div>
-            <p className="text-gray-400 text-sm mb-4">Correct</p>
+          {/* Score card */}
+          <div className="w-full bg-white rounded-2xl shadow-sm p-5 mb-3" style={{ border: `1px solid ${accent}20` }}>
+            <div className="text-5xl font-black mb-0.5 text-center" style={{ color: accent }}>{pct}%</div>
+            <p className="text-gray-400 text-sm mb-4 text-center">Correct</p>
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gray-50 rounded-xl p-3">
+              <div className="bg-gray-50 rounded-xl p-3 text-center">
                 <p className="text-gray-900 text-lg font-bold">{correctCount}/{totalQuestions}</p>
                 <p className="text-gray-400 text-xs">Questions</p>
               </div>
-              <div className="bg-gray-50 rounded-xl p-3">
+              <div className="bg-gray-50 rounded-xl p-3 text-center">
                 <p className="text-lg font-bold" style={{ color: accent }}>+{totalPoints}</p>
                 <p className="text-gray-400 text-xs">Points earned</p>
               </div>
             </div>
           </div>
 
+          {/* Ranking context */}
+          {rankInfo && rankInfo.total > 1 && (
+            <div
+              className="w-full flex items-center gap-2.5 px-4 py-3 rounded-2xl mb-3"
+              style={{ background: accent + "0e", border: `1px solid ${accent}25` }}
+            >
+              <Users size={15} style={{ color: accent }} className="shrink-0" />
+              <p className="text-[13px] font-semibold" style={{ color: accent }}>
+                {rankInfo.topPct <= 10
+                  ? `You're in the top ${rankInfo.topPct}% of ${showTag} players`
+                  : rankInfo.topPct <= 30
+                  ? `You're beating ${100 - rankInfo.topPct}% of ${showTag} players`
+                  : `You're rank ${rankInfo.rank} of ${rankInfo.total} ${showTag} players`}
+              </p>
+            </div>
+          )}
+
+          {/* Challenger comparison */}
+          {challengerData && challengerPct !== null && (
+            <div
+              className="w-full rounded-2xl mb-3 overflow-hidden"
+              style={{ border: `1px solid ${iWon ? "#22c55e" : iLost ? "#ef4444" : "#9ca3af"}30` }}
+            >
+              <div
+                className="px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-center"
+                style={{
+                  background: iWon ? "#22c55e18" : iLost ? "#ef444418" : "#6b728018",
+                  color: iWon ? "#16a34a" : iLost ? "#dc2626" : "#6b7280",
+                }}
+              >
+                {iWon ? "You won this one!" : iLost ? "They got you this time" : "It's a tie!"}
+              </div>
+              <div className="px-4 py-3 bg-white grid grid-cols-2 gap-3">
+                <div className="text-center">
+                  <p className="text-[11px] text-gray-400 mb-0.5 truncate">You</p>
+                  <p className="text-xl font-black" style={{ color: iWon ? "#22c55e" : iLost ? "#ef4444" : accent }}>
+                    {pct}%
+                  </p>
+                  <p className="text-[11px] text-gray-400">{correctCount}/{totalQuestions} correct</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-[11px] text-gray-400 mb-0.5 truncate">{challengerData.display_name}</p>
+                  <p className="text-xl font-black" style={{ color: iLost ? "#22c55e" : iWon ? "#ef4444" : accent }}>
+                    {challengerPct}%
+                  </p>
+                  <p className="text-[11px] text-gray-400">{challengerData.correct_count}/{challengerData.total_questions} correct</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Rate & Review CTA */}
+          <button
+            onClick={() => setLocation(`/search?q=${encodeURIComponent(showTag)}`)}
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl mb-4 text-left"
+            style={{ background: "#fef9c3", border: "1px solid #fde68a" }}
+          >
+            <Star size={16} className="text-amber-500 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-bold text-amber-900 leading-tight">
+                Rate &amp; review {showTag}
+              </p>
+              <p className="text-[11px] text-amber-700">You're feeling it — lock in your take</p>
+            </div>
+            <ChevronLeft size={14} className="text-amber-500 rotate-180 shrink-0" />
+          </button>
+
+          {/* Next round */}
           {next && (
             <button
               onClick={() => setLocation(`/play/challenge/${encodeURIComponent(showTag)}/${next}`)}
-              className="w-full max-w-xs py-3.5 rounded-2xl text-white font-bold text-sm mb-2.5"
+              className="w-full py-3.5 rounded-2xl text-white font-bold text-sm mb-2.5"
               style={{ background: accent }}
             >
               Play {DIFFICULTY_CONFIG[next].label} Round
@@ -309,15 +461,13 @@ export default function PlayChallengePage() {
           {/* Challenge a Friend */}
           <button
             onClick={() => {
-              const url = `${window.location.origin}/play/challenge/${encodeURIComponent(showTag)}/${difficulty}`;
-              const text = `I got ${pct}% on ${showTag} (${diffConfig.label}) on Consumed — can you beat me?`;
               if (navigator.share) {
-                navigator.share({ title: "Challenge me on Consumed", text, url }).catch(() => {});
+                navigator.share({ title: "Challenge me on Consumed", text: shareText, url: challengeUrl }).catch(() => {});
               } else {
-                navigator.clipboard.writeText(`${text} ${url}`);
+                navigator.clipboard.writeText(`${shareText} ${challengeUrl}`);
               }
             }}
-            className="w-full max-w-xs py-3.5 rounded-2xl text-sm font-bold mb-2.5 flex items-center justify-center gap-2"
+            className="w-full py-3.5 rounded-2xl text-sm font-bold mb-2.5 flex items-center justify-center gap-2"
             style={{ background: accent + "12", color: accent, border: `1px solid ${accent}30` }}
           >
             Challenge a Friend
@@ -325,13 +475,13 @@ export default function PlayChallengePage() {
 
           <button
             onClick={() => setLocation("/play/pools")}
-            className="w-full max-w-xs py-3 rounded-2xl text-sm font-semibold text-gray-500 bg-gray-100"
+            className="w-full py-3 rounded-2xl text-sm font-semibold text-gray-500 bg-gray-100 mb-1"
           >
             Back to Pools
           </button>
           <button
-            onClick={() => { setCurrentIndex(0); setSelectedAnswer(null); setAnswered(false); setResults({}); setDone(false); }}
-            className="mt-2 text-sm text-gray-400 underline"
+            onClick={() => { setCurrentIndex(0); setSelectedAnswer(null); setAnswered(false); setResults({}); setDone(false); setRankInfo(null); setChallengerData(null); }}
+            className="mt-1.5 text-sm text-gray-400 underline"
           >
             Play again
           </button>
