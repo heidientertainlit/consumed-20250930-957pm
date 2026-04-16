@@ -1060,7 +1060,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     return { idle: 'Seen it', done: 'Seen!' };
   })();
 
-  const isRatingPost = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review';
+  const isRatingPost = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought';
   const isOtherUser = post.user?.id !== currentUserId;
 
   // Action First layout for other users' unrated rating posts
@@ -3091,7 +3091,9 @@ export default function Feed() {
       if (p.type === 'predict' || p.type === 'poll' || p.type === 'prediction') {
         return (p as any).origin_type === 'user';
       }
-      return p.type === 'review' || p.type === 'thought' || p.type === 'rating' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment';
+      // Filter out thought posts that have no rating — they're low-signal filler
+      if (p.type === 'thought') return !!(p.rating && p.rating > 0);
+      return p.type === 'review' || p.type === 'rating' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment';
     });
 
     // Group posts by user within 24-hour rolling windows.
