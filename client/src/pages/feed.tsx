@@ -3136,15 +3136,47 @@ export default function Feed() {
     }
     return interleaved;
   })();
-  // Map each post/group to a sequential slot index so item 0 appears at slot 0,
-  // item 1 at slot 1, etc. — interleaved between game cards in the feed.
+  // Split standaloneUGCPosts into two streams:
+  // 1. feedPlaySlots — game_moments + user predictions (shown standalone, interleaved with play carousels)
+  // 2. feedRatingCarousels — rate/review posts, grouped into cross-user batches of 4 for compact carousels
+  const feedPlaySlots: any[] = standaloneUGCPosts.filter((item: any) =>
+    item.type === 'game_moment' ||
+    item.type === 'predict' ||
+    item.type === 'prediction'
+  );
+
+  const feedRatingCarousels: { id: string; type: string; posts: any[] }[] = (() => {
+    const ratingItems: any[] = [];
+    standaloneUGCPosts.forEach((item: any) => {
+      if (item.type === 'ugc_group') {
+        item.posts.forEach((p: any) => ratingItems.push(p));
+      } else if (
+        item.type !== 'game_moment' &&
+        item.type !== 'predict' &&
+        item.type !== 'prediction'
+      ) {
+        ratingItems.push(item);
+      }
+    });
+    const batches: { id: string; type: string; posts: any[] }[] = [];
+    const BATCH_SIZE = 4;
+    for (let i = 0; i < ratingItems.length; i += BATCH_SIZE) {
+      const batch = ratingItems.slice(i, i + BATCH_SIZE);
+      if (batch.length > 0) {
+        batches.push({ id: `rating-carousel-${i}`, type: 'rating_carousel', posts: batch });
+      }
+    }
+    return batches;
+  })();
+
+  // Map each play slot to a sequential index for renderPostBatchByIndex
   const slotAssignments = useMemo(() => {
     const map = new Map<number, any>();
-    standaloneUGCPosts.forEach((item, i) => {
+    feedPlaySlots.forEach((item, i) => {
       map.set(i, item);
     });
     return map;
-  }, [standaloneUGCPosts]);
+  }, [feedPlaySlots]);
 
   // Compact play activity card — leaderboard nudges and friend activity
   const renderPlayActivityCard = (item: any) => {
@@ -3457,20 +3489,47 @@ export default function Feed() {
 
   const renderPostBatchByIndex = (batchIndex: number) => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
-    const len = standaloneUGCPosts.length;
+    const len = feedPlaySlots.length;
     if (len === 0 || batchIndex >= len) return null;
     const item = slotAssignments.get(batchIndex);
     if (!item) return null;
     return renderFeedItem(item, `batch-${batchIndex}`);
   };
 
+  const renderRatingCarousel = (carouselIndex: number) => {
+    if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
+    const carousel = feedRatingCarousels[carouselIndex];
+    if (!carousel || carousel.posts.length === 0) return null;
+    return (
+      <div key={carousel.id} className="mb-2">
+        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
+          {carousel.posts.map((post: any) => (
+            <UGCGroupCard
+              key={post.id}
+              post={post}
+              onLike={handleLike}
+              isLiked={likedPosts.has(post.id)}
+              session={session}
+              fetchComments={fetchComments}
+              currentUserId={currentAppUserId || undefined}
+              onDeletePost={handleDeletePost}
+              onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const renderRemainingPosts = () => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
-    const remaining = standaloneUGCPosts.slice(33);
-    if (remaining.length === 0) return null;
+    const remaining = feedPlaySlots.slice(7);
+    const remainingRatings = feedRatingCarousels.slice(8);
+    if (remaining.length === 0 && remainingRatings.length === 0) return null;
     return (
       <>
         {remaining.map((item, i) => renderFeedItem(item, `remaining-${i}`))}
+        {remainingRatings.map((carousel, i) => renderRatingCarousel(8 + i))}
       </>
     );
   };
@@ -5561,17 +5620,12 @@ export default function Feed() {
               )}
 
 
+              {/* === FEED SEQUENCE === */}
+
+              {/* BLOCK 1 */}
               {renderPostBatchByIndex(0)}
 
-              {renderPostBatchByIndex(1)}
-
-              {/* TRIVIA filter - Movies category — appears after 2 post batches */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && 
-               (!selectedCategory || selectedCategory === 'movies') && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Movies" />
-              )}
-
-              {/* TRIVIA - Other categories (show when that category is selected) */}
+              {/* TRIVIA - category-selected views */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'music' && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Music" />
               )}
@@ -5585,51 +5639,31 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
               )}
 
-              {renderPostBatchByIndex(2)}
+              {/* Movies trivia — round 1 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') &&
+               (!selectedCategory || selectedCategory === 'movies') && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Movies" />
+              )}
 
-              {/* Entertainment DNA Card - in All or DNA filter */}
+              {/* Rating carousel #0 */}
+              {renderRatingCarousel(0)}
+
+              {/* DNA Moment #1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <DnaMomentCard />
               )}
 
-              {/* Play activity — sprinkle 1 leaderboard card */}
+              {/* Leaderboard #0 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 0 && (
                 <div className="mt-4">
                   <SocialProofCard card={buildLeaderboardSocialProof(playActivity[0], 0)} />
                 </div>
               )}
 
+              {/* BLOCK 2 */}
               {/* TV Polls */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
-              )}
-
-              {renderPostBatchByIndex(3)}
-
-              {/* Play activity — sprinkle second leaderboard card */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 1 && (
-                <div className="mt-4">
-                  <SocialProofCard card={buildLeaderboardSocialProof(playActivity[1], 1)} />
-                </div>
-              )}
-
-
-              {renderPostBatchByIndex(4)}
-              {renderPostBatchByIndex(5)}
-
-              {/* TRIVIA - Books (All feed only; books category-selected view handled above) */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && 
-               !selectedCategory && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
-              )}
-
-              {/* Always put posts between carousels — never two carousels back-to-back */}
-              {renderPostBatchByIndex(6)}
-
-              {/* POLLS filter - Movies category */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
-               (!selectedCategory || selectedCategory === 'movies') && (
-                <PollsCarousel expanded={selectedFilter === 'polls'} category="Movies" />
               )}
 
               {/* POLLS - Other categories (show when that category is selected) */}
@@ -5639,9 +5673,6 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'books' && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Books" />
               )}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'sports' && (
-                <PollsCarousel expanded={selectedFilter === 'polls'} category="Sports" />
-              )}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'podcasts' && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Podcasts" />
               )}
@@ -5649,108 +5680,123 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Games" />
               )}
 
-              {renderPostBatchByIndex(7)}
+              {/* Rating carousel #1 */}
+              {renderRatingCarousel(1)}
 
-              {renderPostBatchByIndex(8)}
+              {renderPostBatchByIndex(1)}
 
-              {/* Play activity — card 3 */}
+              {/* TV trivia — round 1 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') &&
+               (!selectedCategory || selectedCategory === 'tv') && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
+              )}
+
+              {/* Leaderboard #1 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 1 && (
+                <div className="mt-4">
+                  <SocialProofCard card={buildLeaderboardSocialProof(playActivity[1], 1)} />
+                </div>
+              )}
+
+              {/* BLOCK 3 */}
+              {/* Rating carousel #2 */}
+              {renderRatingCarousel(2)}
+
+              {/* Books trivia — round 1 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
+              )}
+
+              {renderPostBatchByIndex(2)}
+
+              {/* Movies Polls */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') &&
+               (!selectedCategory || selectedCategory === 'movies') && (
+                <PollsCarousel expanded={selectedFilter === 'polls'} category="Movies" />
+              )}
+
+              {/* BLOCK 4 */}
+              {/* Leaderboard #2 + Points Glimpse */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 2 && (
                 <div className="mt-4">
                   <SocialProofCard card={buildLeaderboardSocialProof(playActivity[2], 2)} />
                 </div>
               )}
-
-              {/* Points Glimpse - only in All view */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <PointsGlimpse />
               )}
 
-              {renderPostBatchByIndex(9)}
+              {/* Rating carousel #3 */}
+              {renderRatingCarousel(3)}
 
-              {/* Consumed Rankings Carousel - only in All view */}
+              {/* Ranks set 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <RanksCarousel offset={0} />
               )}
 
-              {renderPostBatchByIndex(10)}
+              {renderPostBatchByIndex(3)}
 
-              {renderPostBatchByIndex(11)}
+              {/* Music trivia — round 1 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Music" />
+              )}
 
-              {/* Play activity — card 4 */}
+              {/* BLOCK 5 */}
+              {/* Leaderboard #3 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 3 && (
                 <div className="mt-4">
                   <SocialProofCard card={buildLeaderboardSocialProof(playActivity[3], 3)} />
                 </div>
               )}
 
-              {renderPostBatchByIndex(12)}
+              {/* Rating carousel #4 */}
+              {renderRatingCarousel(4)}
 
-              {/* TRIVIA filter - TV category */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') && 
-               (!selectedCategory || selectedCategory === 'tv') && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
-              )}
-
-              {renderPostBatchByIndex(13)}
-
-
-              {renderPostBatchByIndex(14)}
-
-              {renderPostBatchByIndex(15)}
-
-              {/* Entertainment DNA Card #2 - second instance deeper in feed */}
+              {/* DNA Moment #2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
                 <DnaMomentCard />
               )}
 
-              {renderPostBatchByIndex(16)}
-
-              {/* POLLS filter - TV category */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls' || selectedFilter === 'games') && 
-               (!selectedCategory || selectedCategory === 'tv') && (
+              {/* TV Polls — round 2 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
               )}
 
-              {renderPostBatchByIndex(17)}
+              {renderPostBatchByIndex(4)}
 
-              {/* More Ranks */}
+              {/* BLOCK 6 */}
+              {/* Ranks set 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <RanksCarousel offset={1} />
               )}
 
-              {renderPostBatchByIndex(18)}
+              {/* Rating carousel #5 */}
+              {renderRatingCarousel(5)}
 
-
-              {renderPostBatchByIndex(19)}
-              {renderPostBatchByIndex(20)}
-              {renderPostBatchByIndex(21)}
-              {renderPostBatchByIndex(22)}
-
-              {renderPostBatchByIndex(23)}
-
-              {renderPostBatchByIndex(24)}
-
-              {/* TRIVIA - Podcasts category */}
+              {/* Podcasts trivia — round 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Podcasts" />
               )}
 
-              {renderPostBatchByIndex(25)}
-              {renderPostBatchByIndex(26)}
-              {renderPostBatchByIndex(27)}
-              {renderPostBatchByIndex(28)}
+              {renderPostBatchByIndex(5)}
 
-              {/* TRIVIA - Gaming category */}
+              {/* Games trivia — round 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
               )}
 
-              {renderPostBatchByIndex(29)}
-              {renderPostBatchByIndex(30)}
-              {renderPostBatchByIndex(31)}
+              {/* Rating carousel #6 */}
+              {renderRatingCarousel(6)}
 
+              {/* Movies trivia — round 2 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Movies" />
+              )}
 
-              {renderPostBatchByIndex(32)}
+              {renderPostBatchByIndex(6)}
+
+              {/* Rating carousel #7 */}
+              {renderRatingCarousel(7)}
 
               {renderRemainingPosts()}
 
