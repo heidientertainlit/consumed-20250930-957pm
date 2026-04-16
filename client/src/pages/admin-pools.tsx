@@ -5,12 +5,11 @@ import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import {
   Sparkles, ArrowLeft, Loader2, Trash2, ChevronDown, ChevronUp,
-  CheckCircle, Layers, Plus, Pencil, X, Save,
+  CheckCircle, Layers, Plus, Pencil, Save, RefreshCw, ArrowRight,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -18,6 +17,32 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 type Difficulty = "easy" | "medium" | "hard";
+
+const CATEGORIES = ["TV Shows", "Movies", "Music", "Books", "Pop Culture"] as const;
+type Category = typeof CATEGORIES[number];
+
+const CATEGORY_EMOJIS: Record<Category, string> = {
+  "TV Shows": "📺",
+  "Movies": "🎬",
+  "Music": "🎵",
+  "Books": "📚",
+  "Pop Culture": "⭐",
+};
+
+const DIFF_LABELS: Record<Difficulty, string> = { easy: "Easy", medium: "Medium", hard: "Hard" };
+const DIFF_COLORS: Record<Difficulty, string> = {
+  easy: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+  medium: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+  hard: "bg-red-500/20 text-red-300 border-red-500/30",
+};
+
+interface Suggestion {
+  title: string;
+  category: Category;
+  description: string;
+  topic_context: string;
+  emoji: string;
+}
 
 interface GeneratedQuestion {
   question_text: string;
@@ -43,13 +68,7 @@ interface PoolRow {
   created_at: string;
 }
 
-const DIFF_LABELS: Record<Difficulty, string> = { easy: "Easy", medium: "Medium", hard: "Hard" };
-const DIFF_COLORS: Record<Difficulty, string> = {
-  easy: "bg-emerald-500/20 text-emerald-300",
-  medium: "bg-amber-500/20 text-amber-300",
-  hard: "bg-red-500/20 text-red-300",
-};
-
+// ── Question editor (inline) ──────────────────────────────────────────────────
 function QuestionEditor({
   question,
   onChange,
@@ -60,33 +79,23 @@ function QuestionEditor({
   onDelete: () => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [localQ, setLocalQ] = useState(question);
+  const [local, setLocal] = useState(question);
 
-  function save() {
-    onChange(localQ);
-    setEditing(false);
-  }
+  function save() { onChange(local); setEditing(false); }
 
   if (!editing) {
     return (
       <div className="rounded-lg bg-gray-800/60 border border-gray-700/40 p-3 group">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-gray-200 text-sm flex-1">{question.question_text}</p>
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-            <button onClick={() => { setLocalQ(question); setEditing(true); }} className="p-1 text-gray-400 hover:text-gray-200">
-              <Pencil size={13} />
-            </button>
-            <button onClick={onDelete} className="p-1 text-gray-400 hover:text-red-400">
-              <Trash2 size={13} />
-            </button>
+          <p className="text-gray-200 text-sm flex-1 leading-snug">{question.question_text}</p>
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
+            <button onClick={() => { setLocal(question); setEditing(true); }} className="p-1 text-gray-400 hover:text-gray-200"><Pencil size={13} /></button>
+            <button onClick={onDelete} className="p-1 text-gray-400 hover:text-red-400"><Trash2 size={13} /></button>
           </div>
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {question.options.map((opt, i) => (
-            <span
-              key={i}
-              className={`text-xs px-2 py-0.5 rounded-full border ${opt === question.correct_answer ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300" : "bg-gray-700/50 border-gray-600/40 text-gray-400"}`}
-            >
+            <span key={i} className={`text-xs px-2 py-0.5 rounded-full border ${opt === question.correct_answer ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300" : "bg-gray-700/40 border-gray-600/30 text-gray-400"}`}>
               {opt}
             </span>
           ))}
@@ -97,130 +106,70 @@ function QuestionEditor({
 
   return (
     <div className="rounded-lg bg-gray-800/80 border border-purple-500/30 p-3 space-y-2">
-      <Textarea
-        value={localQ.question_text}
-        onChange={e => setLocalQ(q => ({ ...q, question_text: e.target.value }))}
-        className="bg-gray-900/50 border-gray-700 text-gray-200 text-sm min-h-[60px]"
-        placeholder="Question text..."
-      />
+      <Textarea value={local.question_text} onChange={e => setLocal(q => ({ ...q, question_text: e.target.value }))} className="bg-gray-900/50 border-gray-700 text-gray-200 text-sm min-h-[56px]" />
       <div className="space-y-1.5">
-        {localQ.options.map((opt, i) => (
+        {local.options.map((opt, i) => (
           <div key={i} className="flex gap-2 items-center">
-            <input
-              type="radio"
-              checked={localQ.correct_answer === opt}
-              onChange={() => setLocalQ(q => ({ ...q, correct_answer: opt }))}
-              className="shrink-0 accent-emerald-500"
-              title="Mark as correct answer"
-            />
-            <Input
-              value={opt}
-              onChange={e => {
-                const newOpts = [...localQ.options];
-                const wasCorrect = localQ.correct_answer === opt;
-                newOpts[i] = e.target.value;
-                setLocalQ(q => ({
-                  ...q,
-                  options: newOpts,
-                  correct_answer: wasCorrect ? e.target.value : q.correct_answer,
-                }));
-              }}
-              className="bg-gray-900/50 border-gray-700 text-gray-200 text-sm h-8"
-            />
+            <input type="radio" checked={local.correct_answer === opt} onChange={() => setLocal(q => ({ ...q, correct_answer: opt }))} className="shrink-0 accent-emerald-500" title="Correct answer" />
+            <Input value={opt} onChange={e => { const o = [...local.options]; const wasCorrect = local.correct_answer === opt; o[i] = e.target.value; setLocal(q => ({ ...q, options: o, correct_answer: wasCorrect ? e.target.value : q.correct_answer })); }} className="bg-gray-900/50 border-gray-700 text-gray-200 text-sm h-8" />
           </div>
         ))}
       </div>
-      <p className="text-gray-500 text-xs">Radio = correct answer</p>
+      <p className="text-gray-500 text-[11px]">Radio selects the correct answer</p>
       <div className="flex gap-2">
-        <Button size="sm" onClick={save} className="bg-purple-600 hover:bg-purple-700 text-white h-7 text-xs px-3">
-          <Save size={11} className="mr-1" /> Save
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => setEditing(false)} className="text-gray-400 h-7 text-xs px-3">
-          Cancel
-        </Button>
+        <Button size="sm" onClick={save} className="bg-purple-600 hover:bg-purple-700 text-white h-7 text-xs px-3"><Save size={11} className="mr-1" />Save</Button>
+        <Button size="sm" variant="ghost" onClick={() => setEditing(false)} className="text-gray-400 h-7 text-xs px-3">Cancel</Button>
       </div>
     </div>
   );
 }
 
-function QuestionSection({
-  difficulty,
-  questions,
-  onChange,
-}: {
-  difficulty: Difficulty;
-  questions: GeneratedQuestion[];
-  onChange: (qs: GeneratedQuestion[]) => void;
-}) {
+function QuestionSection({ difficulty, questions, onChange }: { difficulty: Difficulty; questions: GeneratedQuestion[]; onChange: (qs: GeneratedQuestion[]) => void }) {
   const [expanded, setExpanded] = useState(difficulty === "easy");
-
-  function updateQ(i: number, updated: GeneratedQuestion) {
-    const next = [...questions];
-    next[i] = updated;
-    onChange(next);
-  }
-
-  function deleteQ(i: number) {
-    onChange(questions.filter((_, idx) => idx !== i));
-  }
-
   return (
     <div className="rounded-xl border border-gray-700/40 overflow-hidden">
-      <button
-        onClick={() => setExpanded(e => !e)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-gray-800/40 hover:bg-gray-800/60 transition-colors"
-      >
+      <button onClick={() => setExpanded(e => !e)} className="w-full flex items-center justify-between px-4 py-3 bg-gray-800/40 hover:bg-gray-800/60 transition-colors">
         <div className="flex items-center gap-2">
-          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${DIFF_COLORS[difficulty]}`}>
-            {DIFF_LABELS[difficulty]}
-          </span>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${DIFF_COLORS[difficulty]}`}>{DIFF_LABELS[difficulty]}</span>
           <span className="text-gray-400 text-sm">{questions.length} questions</span>
         </div>
         {expanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
       </button>
       {expanded && (
         <div className="p-3 space-y-2 bg-gray-900/20">
-          {questions.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center py-4">No questions in this tier</p>
-          ) : (
-            questions.map((q, i) => (
-              <QuestionEditor
-                key={i}
-                question={q}
-                onChange={updated => updateQ(i, updated)}
-                onDelete={() => deleteQ(i)}
-              />
-            ))
-          )}
+          {questions.length === 0
+            ? <p className="text-gray-500 text-sm text-center py-4">No questions in this tier</p>
+            : questions.map((q, i) => (
+              <QuestionEditor key={i} question={q} onChange={updated => { const n = [...questions]; n[i] = updated; onChange(n); }} onDelete={() => onChange(questions.filter((_, idx) => idx !== i))} />
+            ))}
         </div>
       )}
     </div>
   );
 }
 
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function AdminPoolsPage() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<"create" | "manage">("create");
+  const [step, setStep] = useState<"suggest" | "form" | "preview">("suggest");
+
+  // Suggestion state
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<Category | "all">("all");
 
   // Form state
   const [poolName, setPoolName] = useState("");
-  const [showTag, setShowTag] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<Category>("TV Shows");
   const [topic, setTopic] = useState("");
-  const [category, setCategory] = useState("TV & Movies");
+  const [emoji, setEmoji] = useState("📺");
   const [posterUrl, setPosterUrl] = useState("");
-  const [emoji, setEmoji] = useState("🎮");
-
-  // Auto-fill show_tag from pool name
-  useEffect(() => {
-    if (!showTag || showTag === poolName.slice(0, showTag.length)) {
-      setShowTag(poolName);
-    }
-  }, [poolName]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Generated questions
   const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestions | null>(null);
@@ -232,56 +181,84 @@ export default function AdminPoolsPage() {
     queryKey: ["admin-profile-check", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data } = await supabase.from("users").select("id, user_name, is_admin").eq("id", user.id).single();
+      const { data } = await supabase.from("users").select("id, is_admin").eq("id", user.id).single();
       return data;
     },
     enabled: !!user?.id,
   });
 
   useEffect(() => {
-    if (!profileLoading && currentProfile && !currentProfile.is_admin) {
-      setLocation("/");
-    }
+    if (!profileLoading && currentProfile && !currentProfile.is_admin) setLocation("/");
   }, [currentProfile, profileLoading]);
 
-  // Existing pools
+  // Pools list
   const { data: pools = [], isLoading: poolsLoading, refetch: refetchPools } = useQuery<PoolRow[]>({
     queryKey: ["challenge-pools-admin"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("challenge_pools")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("challenge_pools").select("*").order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
     },
   });
 
+  // Sync emoji when category changes
+  useEffect(() => {
+    setEmoji(CATEGORY_EMOJIS[category] || "🎮");
+  }, [category]);
+
+  async function callEdgeFunction(payload: object) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const resp = await fetch(`${supabaseUrl}/functions/v1/generate-challenge-pool`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token}`, "apikey": supabaseAnonKey },
+      body: JSON.stringify(payload),
+    });
+    const result = await resp.json();
+    if (!resp.ok || result.error) throw new Error(result.error || "Request failed");
+    return result;
+  }
+
+  async function handleSuggest() {
+    setSuggestLoading(true);
+    setSuggestions([]);
+    try {
+      const result = await callEdgeFunction({ action: "suggest_topics", categoryFilter: categoryFilter === "all" ? "" : categoryFilter });
+      setSuggestions(result.suggestions || []);
+    } catch (err: any) {
+      toast({ title: "Couldn't load suggestions", description: err.message, variant: "destructive" });
+    } finally {
+      setSuggestLoading(false);
+    }
+  }
+
+  function selectSuggestion(s: Suggestion) {
+    setPoolName(s.title);
+    setDescription(s.description);
+    setCategory(s.category as Category);
+    setTopic(s.topic_context);
+    setEmoji(s.emoji || CATEGORY_EMOJIS[s.category as Category] || "🎮");
+    setPosterUrl("");
+    setStep("form");
+  }
+
+  function startCustom() {
+    setPoolName(""); setDescription(""); setTopic(""); setPosterUrl("");
+    setCategory("TV Shows"); setEmoji("📺");
+    setStep("form");
+  }
+
   async function handleGenerate() {
     if (!poolName.trim() || !topic.trim()) {
-      toast({ title: "Fill in Pool Name and Topic first", variant: "destructive" });
+      toast({ title: "Fill in the Pool Name and Topic first", variant: "destructive" });
       return;
     }
     setGenerating(true);
     setGeneratedQuestions(null);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-challenge-pool`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token}`,
-          "apikey": supabaseAnonKey,
-        },
-        body: JSON.stringify({ action: "generate", poolName, topic, category }),
-      });
-      const result = await resp.json();
-      if (!resp.ok || !result.success) throw new Error(result.error || "Generation failed");
+      const result = await callEdgeFunction({ action: "generate", poolName, topic, category });
       setGeneratedQuestions(result.questions);
-      toast({
-        title: `Generated ${result.total} questions`,
-        description: `${result.counts.easy} easy, ${result.counts.medium} medium, ${result.counts.hard} hard`,
-      });
+      toast({ title: `${result.total} questions generated`, description: `${result.counts.easy} easy · ${result.counts.medium} medium · ${result.counts.hard} hard` });
+      setStep("preview");
     } catch (err: any) {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
     } finally {
@@ -290,45 +267,17 @@ export default function AdminPoolsPage() {
   }
 
   async function handleSave() {
-    if (!generatedQuestions) return;
-    if (!poolName.trim() || !showTag.trim()) {
-      toast({ title: "Pool Name and Show Tag are required", variant: "destructive" });
-      return;
-    }
+    if (!generatedQuestions || !poolName.trim()) return;
     setSaving(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-challenge-pool`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token}`,
-          "apikey": supabaseAnonKey,
-        },
-        body: JSON.stringify({
-          action: "save",
-          pool: {
-            show_tag: showTag.trim(),
-            title: poolName.trim(),
-            description: description.trim() || null,
-            category: category,
-            poster_url: posterUrl.trim() || null,
-            fallback_emoji: emoji || "🎮",
-            accent_color: "#7c3aed",
-          },
-          questions: generatedQuestions,
-        }),
+      await callEdgeFunction({
+        action: "save",
+        pool: { show_tag: poolName.trim(), title: poolName.trim(), description: description.trim() || null, category, poster_url: posterUrl.trim() || null, fallback_emoji: emoji, accent_color: "#7c3aed" },
+        questions: generatedQuestions,
       });
-      const result = await resp.json();
-      if (!resp.ok || !result.success) throw new Error(result.error || "Save failed");
-      toast({ title: `${poolName} pool saved!`, description: "Players can now challenge themselves in this pool." });
-      setPoolName("");
-      setShowTag("");
-      setDescription("");
-      setTopic("");
-      setPosterUrl("");
-      setEmoji("🎮");
-      setGeneratedQuestions(null);
+      toast({ title: `"${poolName}" saved!`, description: "It will now appear in the Pools list for players." });
+      setPoolName(""); setDescription(""); setTopic(""); setPosterUrl(""); setGeneratedQuestions(null);
+      setStep("suggest"); setSuggestions([]);
       refetchPools();
       setActiveTab("manage");
     } catch (err: any) {
@@ -339,21 +288,10 @@ export default function AdminPoolsPage() {
   }
 
   async function handleDelete(poolId: string, title: string) {
-    if (!confirm(`Delete "${title}" and all its questions? This cannot be undone.`)) return;
+    if (!confirm(`Delete "${title}" and all its questions?`)) return;
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-challenge-pool`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token}`,
-          "apikey": supabaseAnonKey,
-        },
-        body: JSON.stringify({ action: "delete", pool_id: poolId }),
-      });
-      const result = await resp.json();
-      if (!resp.ok || !result.success) throw new Error(result.error || "Delete failed");
-      toast({ title: `${title} deleted` });
+      await callEdgeFunction({ action: "delete", pool_id: poolId });
+      toast({ title: `"${title}" deleted` });
       refetchPools();
     } catch (err: any) {
       toast({ title: "Delete failed", description: err.message, variant: "destructive" });
@@ -361,19 +299,10 @@ export default function AdminPoolsPage() {
   }
 
   if (profileLoading || !user) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <Loader2 size={24} className="animate-spin text-purple-400" />
-      </div>
-    );
+    return <div className="min-h-screen bg-gray-950 flex items-center justify-center"><Loader2 size={24} className="animate-spin text-purple-400" /></div>;
   }
-
   if (!currentProfile?.is_admin) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-400">Access restricted</p>
-      </div>
-    );
+    return <div className="min-h-screen bg-gray-950 flex items-center justify-center"><p className="text-gray-400">Access restricted</p></div>;
   }
 
   const totalGenerated = generatedQuestions
@@ -383,6 +312,7 @@ export default function AdminPoolsPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="max-w-2xl mx-auto px-4 py-8 pb-24">
+
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <button onClick={() => setLocation("/admin")} className="p-2 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800/50 transition-colors">
@@ -390,199 +320,213 @@ export default function AdminPoolsPage() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-white">Challenge Pools</h1>
-            <p className="text-gray-400 text-sm">Create AI-generated trivia pools for any show, movie, or franchise</p>
+            <p className="text-gray-400 text-sm">AI-generated trivia pools — no code changes needed</p>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="flex gap-1 p-1 bg-gray-900 rounded-xl mb-6">
           {(["create", "manage"] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab ? "bg-gray-800 text-white" : "text-gray-400 hover:text-gray-200"}`}
-            >
-              {tab === "create" ? "Create Pool" : `Manage Pools ${pools.length > 0 ? `(${pools.length})` : ""}`}
+            <button key={tab} onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab ? "bg-gray-800 text-white" : "text-gray-400 hover:text-gray-200"}`}>
+              {tab === "create" ? "Create Pool" : `Manage ${pools.length > 0 ? `(${pools.length})` : ""}`}
             </button>
           ))}
         </div>
 
-        {/* CREATE TAB */}
+        {/* ── CREATE TAB ─────────────────────────────────────────────── */}
         {activeTab === "create" && (
-          <div className="space-y-6">
-            {/* Pool details form */}
-            <div className="rounded-xl bg-gray-900/50 border border-gray-800 p-5 space-y-4">
-              <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Pool Details</h2>
+          <div className="space-y-5">
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2">
-                  <label className="text-xs text-gray-400 mb-1.5 block">Pool Name *</label>
-                  <Input
-                    value={poolName}
-                    onChange={e => setPoolName(e.target.value)}
-                    placeholder='e.g. "The Office"'
-                    className="bg-gray-800/50 border-gray-700 text-white"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="text-xs text-gray-400 mb-1.5 block">
-                    Show Tag (URL key) *
-                    <span className="text-gray-500 ml-1">— used for routing, e.g. "The Office"</span>
-                  </label>
-                  <Input
-                    value={showTag}
-                    onChange={e => setShowTag(e.target.value)}
-                    placeholder="The Office"
-                    className="bg-gray-800/50 border-gray-700 text-white"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="text-xs text-gray-400 mb-1.5 block">Short Description</label>
-                  <Input
-                    value={description}
-                    onChange={e => setDescription(e.target.value)}
-                    placeholder='e.g. "That&apos;s what she said — prove you watched every episode"'
-                    className="bg-gray-800/50 border-gray-700 text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs text-gray-400 mb-1.5 block">Category</label>
-                  <Input
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                    placeholder="TV & Movies"
-                    className="bg-gray-800/50 border-gray-700 text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs text-gray-400 mb-1.5 block">Fallback Emoji</label>
-                  <Input
-                    value={emoji}
-                    onChange={e => setEmoji(e.target.value)}
-                    placeholder="🎮"
-                    className="bg-gray-800/50 border-gray-700 text-white"
-                    maxLength={4}
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="text-xs text-gray-400 mb-1.5 block">Poster URL (optional)</label>
-                  <Input
-                    value={posterUrl}
-                    onChange={e => setPosterUrl(e.target.value)}
-                    placeholder="https://image.tmdb.org/t/p/w200/..."
-                    className="bg-gray-800/50 border-gray-700 text-white"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* AI generation form */}
-            <div className="rounded-xl bg-gray-900/50 border border-gray-800 p-5 space-y-4">
-              <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">AI Question Generation</h2>
-
-              <div>
-                <label className="text-xs text-gray-400 mb-1.5 block">
-                  Topic context for AI *
-                  <span className="text-gray-500 ml-1">— be specific: seasons, characters, lore</span>
-                </label>
-                <Textarea
-                  value={topic}
-                  onChange={e => setTopic(e.target.value)}
-                  placeholder={`e.g. "The Office US (2005–2013), all 9 seasons. Focus on Dunder Mifflin Scranton branch characters, episodes, quotes, relationships, and behind-the-scenes facts."`}
-                  className="bg-gray-800/50 border-gray-700 text-white min-h-[90px]"
-                />
-              </div>
-
-              <Button
-                onClick={handleGenerate}
-                disabled={generating || !poolName.trim() || !topic.trim()}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                {generating ? (
-                  <><Loader2 size={16} className="mr-2 animate-spin" /> Generating 36 questions...</>
-                ) : (
-                  <><Sparkles size={16} className="mr-2" /> Generate 36 Questions (12 per tier)</>
-                )}
-              </Button>
-            </div>
-
-            {/* Preview */}
-            {generatedQuestions && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-emerald-400" />
-                    <h2 className="text-white font-semibold">{totalGenerated} questions generated</h2>
+            {/* STEP: SUGGEST */}
+            {step === "suggest" && (
+              <div className="space-y-5">
+                {/* Suggest button + filter */}
+                <div className="rounded-xl bg-gray-900/50 border border-gray-800 p-5 space-y-4">
+                  <div>
+                    <h2 className="text-white font-semibold mb-1">Let AI suggest popular topics</h2>
+                    <p className="text-gray-400 text-sm">Pick a category or leave it mixed, then hit Suggest and choose one to build.</p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleGenerate}
-                    disabled={generating}
-                    className="text-gray-400 text-xs"
-                  >
-                    Regenerate
+
+                  <div className="flex gap-2 flex-wrap">
+                    {(["all", ...CATEGORIES] as const).map(c => (
+                      <button key={c} onClick={() => setCategoryFilter(c as any)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${categoryFilter === c ? "bg-purple-600 border-purple-500 text-white" : "border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-300"}`}>
+                        {c === "all" ? "All categories" : c}
+                      </button>
+                    ))}
+                  </div>
+
+                  <Button onClick={handleSuggest} disabled={suggestLoading} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                    {suggestLoading ? <><Loader2 size={16} className="mr-2 animate-spin" />Thinking up topics...</> : <><Sparkles size={16} className="mr-2" />Suggest Pool Ideas</>}
                   </Button>
                 </div>
 
-                <p className="text-gray-500 text-xs">
-                  Review and edit any question below. Click the pencil icon to edit question text, options, or the correct answer (radio = correct).
-                </p>
+                {/* Suggestion cards */}
+                {suggestions.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-gray-400 text-xs px-1">Click any topic to start building it</p>
+                    {suggestions.map((s, i) => (
+                      <button key={i} onClick={() => selectSuggestion(s)}
+                        className="w-full text-left rounded-xl bg-gray-900/50 border border-gray-800 hover:border-purple-500/40 hover:bg-gray-800/60 p-4 transition-all group">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl shrink-0">{s.emoji}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <p className="text-white font-semibold text-sm">{s.title}</p>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-800 text-gray-400 shrink-0">{s.category}</span>
+                            </div>
+                            <p className="text-gray-400 text-xs leading-snug">{s.description}</p>
+                          </div>
+                          <ArrowRight size={16} className="text-gray-600 group-hover:text-purple-400 transition-colors shrink-0" />
+                        </div>
+                      </button>
+                    ))}
+                    <Button variant="ghost" onClick={() => handleSuggest()} disabled={suggestLoading} className="w-full text-gray-400 text-sm">
+                      <RefreshCw size={14} className="mr-1.5" /> Refresh suggestions
+                    </Button>
+                  </div>
+                )}
+
+                {/* Divider + manual option */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-800" /></div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-gray-950 px-3 text-gray-500 text-xs">or</span>
+                  </div>
+                </div>
+                <Button variant="outline" onClick={startCustom} className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white">
+                  <Plus size={16} className="mr-2" /> Create a pool from scratch
+                </Button>
+              </div>
+            )}
+
+            {/* STEP: FORM */}
+            {step === "form" && (
+              <div className="space-y-4">
+                <button onClick={() => setStep("suggest")} className="flex items-center gap-1.5 text-gray-400 hover:text-gray-200 text-sm transition-colors">
+                  <ArrowLeft size={14} /> Back to suggestions
+                </button>
+
+                <div className="rounded-xl bg-gray-900/50 border border-gray-800 p-5 space-y-4">
+                  <h2 className="text-white font-semibold">Pool details</h2>
+
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1.5 block">Pool name *</label>
+                    <Input value={poolName} onChange={e => setPoolName(e.target.value)} placeholder='e.g. "Breaking Bad"' className="bg-gray-800/50 border-gray-700 text-white" />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1.5 block">Category *</label>
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                      {CATEGORIES.map(c => (
+                        <button key={c} onClick={() => setCategory(c)}
+                          className={`flex flex-col items-center gap-1 p-2.5 rounded-xl border text-xs font-medium transition-all ${category === c ? "bg-purple-600/20 border-purple-500/50 text-purple-300" : "border-gray-700 text-gray-400 hover:border-gray-500"}`}>
+                          <span className="text-lg">{CATEGORY_EMOJIS[c]}</span>
+                          <span className="leading-tight text-center">{c.replace(" & ", " &\n")}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1.5 block">Short description</label>
+                    <Input value={description} onChange={e => setDescription(e.target.value)} placeholder='e.g. "Say my name — if you can answer all 36 questions."' className="bg-gray-800/50 border-gray-700 text-white" />
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1.5 block">
+                      Topic context for AI *
+                      <span className="text-gray-600 ml-1">— the more specific, the better</span>
+                    </label>
+                    <Textarea value={topic} onChange={e => setTopic(e.target.value)}
+                      placeholder='e.g. "Breaking Bad (2008–2013), all 5 seasons. Walter White, Jesse Pinkman, Heisenberg, chemistry, cartel, Skyler, Hank, the desert, key episodes like Ozymandias."'
+                      className="bg-gray-800/50 border-gray-700 text-white min-h-[80px]" />
+                  </div>
+
+                  {/* Advanced (hidden by default) */}
+                  <button onClick={() => setShowAdvanced(a => !a)} className="text-gray-500 text-xs flex items-center gap-1 hover:text-gray-400 transition-colors">
+                    {showAdvanced ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    {showAdvanced ? "Hide" : "Show"} advanced options (emoji, poster URL)
+                  </button>
+                  {showAdvanced && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs text-gray-400 mb-1.5 block">Emoji</label>
+                        <Input value={emoji} onChange={e => setEmoji(e.target.value)} maxLength={4} className="bg-gray-800/50 border-gray-700 text-white" />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-xs text-gray-400 mb-1.5 block">Poster URL (optional)</label>
+                        <Input value={posterUrl} onChange={e => setPosterUrl(e.target.value)} placeholder="https://image.tmdb.org/t/p/w200/..." className="bg-gray-800/50 border-gray-700 text-white" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Button onClick={handleGenerate} disabled={generating || !poolName.trim() || !topic.trim()} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+                  {generating
+                    ? <><Loader2 size={16} className="mr-2 animate-spin" />Generating 36 questions...</>
+                    : <><Sparkles size={16} className="mr-2" />Generate 36 Questions</>}
+                </Button>
+              </div>
+            )}
+
+            {/* STEP: PREVIEW */}
+            {step === "preview" && generatedQuestions && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <button onClick={() => setStep("form")} className="flex items-center gap-1.5 text-gray-400 hover:text-gray-200 text-sm transition-colors">
+                    <ArrowLeft size={14} /> Back to form
+                  </button>
+                  <Button size="sm" variant="ghost" onClick={handleGenerate} disabled={generating} className="text-gray-400 text-xs">
+                    <RefreshCw size={13} className="mr-1" />Regenerate
+                  </Button>
+                </div>
+
+                {/* Pool summary */}
+                <div className="flex items-center gap-3 rounded-xl bg-gray-900/50 border border-gray-800 p-4">
+                  <span className="text-3xl">{emoji}</span>
+                  <div>
+                    <p className="text-white font-bold">{poolName}</p>
+                    <p className="text-gray-400 text-xs">{category} · {totalGenerated} questions</p>
+                    {description && <p className="text-gray-500 text-xs mt-0.5 italic">{description}</p>}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={16} className="text-emerald-400 shrink-0" />
+                  <p className="text-gray-300 text-sm">{totalGenerated} questions ready — review and edit any below</p>
+                </div>
+                <p className="text-gray-500 text-xs px-0.5">Hover a question and click the pencil to edit it. The radio button marks the correct answer.</p>
 
                 {(["easy", "medium", "hard"] as Difficulty[]).map(diff => (
-                  <QuestionSection
-                    key={diff}
-                    difficulty={diff}
-                    questions={generatedQuestions[diff] || []}
-                    onChange={qs => setGeneratedQuestions(prev => prev ? { ...prev, [diff]: qs } : prev)}
-                  />
+                  <QuestionSection key={diff} difficulty={diff} questions={generatedQuestions[diff] || []}
+                    onChange={qs => setGeneratedQuestions(prev => prev ? { ...prev, [diff]: qs } : prev)} />
                 ))}
 
-                <Button
-                  onClick={handleSave}
-                  disabled={saving || !poolName.trim() || !showTag.trim()}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                >
-                  {saving ? (
-                    <><Loader2 size={16} className="mr-2 animate-spin" /> Saving pool...</>
-                  ) : (
-                    <><Save size={16} className="mr-2" /> Save Pool to Database</>
-                  )}
+                <Button onClick={handleSave} disabled={saving || !poolName.trim()} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                  {saving ? <><Loader2 size={16} className="mr-2 animate-spin" />Saving...</> : <><Save size={16} className="mr-2" />Save Pool to Database</>}
                 </Button>
               </div>
             )}
           </div>
         )}
 
-        {/* MANAGE TAB */}
+        {/* ── MANAGE TAB ─────────────────────────────────────────────── */}
         {activeTab === "manage" && (
           <div className="space-y-3">
             {poolsLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 size={24} className="animate-spin text-gray-500" />
-              </div>
+              <div className="flex items-center justify-center py-16"><Loader2 size={24} className="animate-spin text-gray-500" /></div>
             ) : pools.length === 0 ? (
               <div className="text-center py-16">
                 <Layers size={32} className="text-gray-600 mx-auto mb-3" />
                 <p className="text-gray-400 font-medium">No pools created yet</p>
-                <p className="text-gray-600 text-sm mt-1">Create your first pool in the Create tab</p>
-                <Button
-                  size="sm"
-                  onClick={() => setActiveTab("create")}
-                  className="mt-4 bg-purple-600 hover:bg-purple-700 text-white"
-                >
-                  <Plus size={14} className="mr-1.5" /> Create a Pool
+                <Button size="sm" onClick={() => setActiveTab("create")} className="mt-4 bg-purple-600 hover:bg-purple-700 text-white">
+                  <Plus size={14} className="mr-1.5" />Create a Pool
                 </Button>
               </div>
             ) : (
-              pools.map(pool => (
-                <PoolCard key={pool.id} pool={pool} onDelete={handleDelete} />
-              ))
+              pools.map(pool => <PoolCard key={pool.id} pool={pool} onDelete={handleDelete} />)
             )}
           </div>
         )}
@@ -591,26 +535,20 @@ export default function AdminPoolsPage() {
   );
 }
 
+// ── Pool card in manage tab ───────────────────────────────────────────────────
 function PoolCard({ pool, onDelete }: { pool: PoolRow; onDelete: (id: string, title: string) => void }) {
-  const [questionCounts, setQuestionCounts] = useState<Record<string, number> | null>(null);
+  const [counts, setCounts] = useState<Record<string, number> | null>(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  async function loadCounts() {
-    if (questionCounts) { setExpanded(e => !e); return; }
+  async function toggle() {
+    if (counts) { setExpanded(e => !e); return; }
     setLoading(true);
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    const sb = createClient(supabaseUrl, supabaseAnonKey);
-    const { data } = await sb
-      .from("challenge_questions")
-      .select("difficulty")
-      .eq("pool_id", pool.id);
-    const counts: Record<string, number> = { easy: 0, medium: 0, hard: 0 };
-    for (const row of data || []) {
-      if (row.difficulty in counts) counts[row.difficulty]++;
-    }
-    setQuestionCounts(counts);
+    const sb = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
+    const { data } = await sb.from("challenge_questions").select("difficulty").eq("pool_id", pool.id);
+    const c: Record<string, number> = { easy: 0, medium: 0, hard: 0 };
+    for (const row of data || []) if (row.difficulty in c) c[row.difficulty]++;
+    setCounts(c);
     setLoading(false);
     setExpanded(true);
   }
@@ -618,47 +556,30 @@ function PoolCard({ pool, onDelete }: { pool: PoolRow; onDelete: (id: string, ti
   return (
     <div className="rounded-xl bg-gray-900/50 border border-gray-800 overflow-hidden">
       <div className="flex items-center gap-3 p-4">
-        {pool.poster_url ? (
-          <img src={pool.poster_url} alt={pool.title} className="w-10 h-14 object-cover rounded-lg shrink-0" />
-        ) : (
-          <div className="w-10 h-14 bg-gray-800 rounded-lg flex items-center justify-center shrink-0 text-xl">
-            {pool.fallback_emoji || "🎮"}
-          </div>
-        )}
+        {pool.poster_url
+          ? <img src={pool.poster_url} alt={pool.title} className="w-10 h-14 object-cover rounded-lg shrink-0" />
+          : <div className="w-10 h-14 bg-gray-800 rounded-lg flex items-center justify-center shrink-0 text-xl">{pool.fallback_emoji || "🎮"}</div>}
         <div className="flex-1 min-w-0">
           <p className="text-white font-semibold truncate">{pool.title}</p>
           <p className="text-gray-400 text-xs truncate">{pool.description || "No description"}</p>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-gray-500 text-xs">{pool.show_tag}</span>
-            {pool.category && (
-              <Badge variant="outline" className="text-gray-500 border-gray-700 text-xs py-0 h-4">
-                {pool.category}
-              </Badge>
-            )}
-          </div>
+          <p className="text-gray-600 text-xs mt-0.5">{pool.category}</p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <button
-            onClick={loadCounts}
-            className="p-2 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800 transition-colors"
-          >
+          <button onClick={toggle} className="p-2 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800 transition-colors">
             {loading ? <Loader2 size={16} className="animate-spin" /> : expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
-          <button
-            onClick={() => onDelete(pool.id, pool.title)}
-            className="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-gray-800 transition-colors"
-          >
+          <button onClick={() => onDelete(pool.id, pool.title)} className="p-2 text-gray-400 hover:text-red-400 rounded-lg hover:bg-gray-800 transition-colors">
             <Trash2 size={16} />
           </button>
         </div>
       </div>
-      {expanded && questionCounts && (
+      {expanded && counts && (
         <div className="px-4 pb-4 flex gap-2">
           {(["easy", "medium", "hard"] as Difficulty[]).map(diff => (
-            <div key={diff} className={`flex-1 rounded-lg p-2 text-center ${DIFF_COLORS[diff]} bg-opacity-10`}>
+            <div key={diff} className={`flex-1 rounded-lg p-2 text-center border ${DIFF_COLORS[diff]}`}>
               <p className="text-xs font-medium">{DIFF_LABELS[diff]}</p>
-              <p className="text-lg font-bold">{questionCounts[diff]}</p>
-              <p className="text-xs opacity-70">questions</p>
+              <p className="text-lg font-bold">{counts[diff]}</p>
+              <p className="text-xs opacity-60">questions</p>
             </div>
           ))}
         </div>

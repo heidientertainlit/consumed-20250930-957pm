@@ -27,6 +27,72 @@ serve(async (req) => {
 
     const body = await req.json();
 
+    // --- Suggest topics action: AI generates pool topic ideas ---
+    if (body.action === 'suggest_topics') {
+      const { categoryFilter = '' } = body;
+
+      // Fetch existing pool show_tags to avoid suggesting duplicates
+      const { data: existingPools } = await supabaseAdmin
+        .from('challenge_pools')
+        .select('show_tag, title');
+      const existingTitles = (existingPools || []).map((p: any) => p.title).join(', ');
+      const avoidClause = existingTitles
+        ? `Do NOT suggest any of these — they already exist as pools: ${existingTitles}.`
+        : '';
+
+      const categoryClause = categoryFilter && categoryFilter !== 'all'
+        ? `Only suggest topics in the category: ${categoryFilter}.`
+        : 'Mix categories: TV Shows, Movies, Music, Books, Pop Culture.';
+
+      const prompt = `You are a trivia expert creating pool topics for Consumed, an entertainment fan platform. Generate 8 popular trivia pool ideas — shows, movies, book series, musicians, or pop culture franchises that have a dedicated, passionate fanbase and enough depth to support 36 trivia questions.
+
+${categoryClause}
+${avoidClause}
+
+For each suggestion, provide:
+- title: The exact name (e.g. "Breaking Bad", "Taylor Swift", "The Hunger Games")
+- category: one of "TV Shows", "Movies", "Music", "Books", "Pop Culture"
+- description: A punchy 1-sentence tagline for the pool (e.g. "How well do you know the meth empire?")
+- topic_context: A 1-2 sentence brief for the AI question generator (key seasons/albums/characters/lore to cover)
+- emoji: A single relevant emoji
+
+Return ONLY a valid JSON array of 8 objects with these exact keys. No markdown, no explanation.`;
+
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          max_tokens: 2000,
+          temperature: 0.9,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+
+      if (!openaiResponse.ok) {
+        const errText = await openaiResponse.text();
+        return new Response(JSON.stringify({ error: `OpenAI error: ${errText}` }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const openaiData = await openaiResponse.json();
+      const rawText = openaiData.choices?.[0]?.message?.content || '';
+      let suggestions: any[] = [];
+      try {
+        const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+        suggestions = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+      } catch (e) {
+        return new Response(JSON.stringify({ error: 'Failed to parse suggestions', raw: rawText.slice(0, 300) }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true, suggestions }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // --- Save action: persist pool + questions to DB ---
     if (body.action === 'save') {
       const { pool, questions } = body;
@@ -58,7 +124,6 @@ serve(async (req) => {
       }
 
       const poolId = poolRow.id;
-
       const questionRows = [];
       for (const diff of ['easy', 'medium', 'hard']) {
         const qs = questions[diff] || [];
@@ -74,10 +139,7 @@ serve(async (req) => {
         });
       }
 
-      const { error: qError } = await supabaseAdmin
-        .from('challenge_questions')
-        .insert(questionRows);
-
+      const { error: qError } = await supabaseAdmin.from('challenge_questions').insert(questionRows);
       if (qError) {
         await supabaseAdmin.from('challenge_pools').delete().eq('id', poolId);
         return new Response(JSON.stringify({ error: qError.message }), {
@@ -98,25 +160,19 @@ serve(async (req) => {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
-
-      const { error } = await supabaseAdmin
-        .from('challenge_pools')
-        .delete()
-        .eq('id', pool_id);
-
+      const { error } = await supabaseAdmin.from('challenge_pools').delete().eq('id', pool_id);
       if (error) {
         return new Response(JSON.stringify({ error: error.message }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
-
       return new Response(JSON.stringify({ success: true }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // --- Generate action: use OpenAI to generate 36 questions ---
-    const { poolName, topic, category = 'TV & Movies' } = body;
+    // --- Generate action: AI generates 36 questions ---
+    const { poolName, topic, category = 'TV Shows' } = body;
     if (!poolName || !topic) {
       return new Response(JSON.stringify({ error: 'Missing poolName or topic' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -138,7 +194,7 @@ DIFFICULTY CALIBRATION:
 - Hard (12): Deep fandom knowledge. Minor details, production trivia, obscure references, specific numbers/dates, rarely-known facts.
 
 QUESTION RULES:
-- Each question has exactly 4 options (A, B, C, D style but just the text)
+- Each question has exactly 4 options
 - Exactly 1 correct answer per question
 - Wrong answers must be plausible (not obviously wrong)
 - Question text should be a complete, clear sentence or question
@@ -158,10 +214,7 @@ No markdown, no code blocks, no explanation. Just the JSON object.`;
 
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiKey}`,
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
       body: JSON.stringify({
         model: 'gpt-4o',
         max_tokens: 6000,
