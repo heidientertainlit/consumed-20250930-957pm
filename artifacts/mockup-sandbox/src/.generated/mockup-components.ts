@@ -3,6 +3,7 @@ type ModuleMap = Record<string, () => Promise<Record<string, unknown>>>;
 export const modules: ModuleMap = {
   "./components/mockups/pools/BrowseScreen.tsx": () => import("../components/mockups/pools/BrowseScreen.tsx"),
   "./components/mockups/pools/PlayingScreen.tsx": () => import("../components/mockups/pools/PlayingScreen.tsx"),
+  "./components/mockups/room-feed/RoomFeedSection.tsx": () => import("../components/mockups/room-feed/RoomFeedSection.tsx"),
   "./components/mockups/post-cards/ActionFirstNoPoster.tsx": () => import("../components/mockups/post-cards/ActionFirstNoPoster.tsx"),
   "./components/mockups/post-cards/ActionFirstSmallPoster.tsx": () => import("../components/mockups/post-cards/ActionFirstSmallPoster.tsx"),
   "./components/mockups/post-cards/CurrentCard.tsx": () => import("../components/mockups/post-cards/CurrentCard.tsx"),
@@ -11,6 +12,5 @@ export const modules: ModuleMap = {
   "./components/mockups/post-cards/FlipState3.tsx": () => import("../components/mockups/post-cards/FlipState3.tsx"),
   "./components/mockups/post-cards/NoPosterCard.tsx": () => import("../components/mockups/post-cards/NoPosterCard.tsx"),
   "./components/mockups/post-cards/SmallPosterCard.tsx": () => import("../components/mockups/post-cards/SmallPosterCard.tsx"),
-  "./components/mockups/room-feed/RoomFeedSection.tsx": () => import("../components/mockups/room-feed/RoomFeedSection.tsx"),
   "./components/mockups/trivia-rating/TriviaCard.tsx": () => import("../components/mockups/trivia-rating/TriviaCard.tsx")
 };

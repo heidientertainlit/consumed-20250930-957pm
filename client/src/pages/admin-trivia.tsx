@@ -26,6 +26,7 @@ type Draft = {
   correct_answer: string | null;
   category: string;
   show_tag: string | null;
+  media_title: string | null;
   media_type: string | null;
   difficulty: string | null;
   points_reward: number;
@@ -183,6 +184,7 @@ export default function AdminTriviaPage() {
   const [editCorrectAnswer, setEditCorrectAnswer] = useState<string>("");
   const [editCategory, setEditCategory] = useState<string>("");
   const [editShowTag, setEditShowTag] = useState<string>("");
+  const [editMediaTitle, setEditMediaTitle] = useState<string>("");
   const [editPointsReward, setEditPointsReward] = useState<number>(10);
 
   // Reject state
@@ -286,6 +288,7 @@ export default function AdminTriviaPage() {
     setEditCorrectAnswer(draft.correct_answer || "");
     setEditCategory(draft.category || "");
     setEditShowTag(draft.show_tag || "");
+    setEditMediaTitle(draft.media_title || draft.show_tag || "");
     setEditPointsReward(draft.points_reward || 10);
   }
 
@@ -297,7 +300,7 @@ export default function AdminTriviaPage() {
         options: editOptions,
         correct_answer: editCorrectAnswer || null,
         category: editCategory,
-        show_tag: editShowTag || null,
+        show_tag: editMediaTitle || editShowTag || null,
         points_reward: editPointsReward,
       })
       .eq("id", draft.id);
@@ -399,6 +402,7 @@ export default function AdminTriviaPage() {
           correct_answer: draft.correct_answer || null,
           category: draft.category || "Pop Culture",
           show_tag: draft.show_tag || null,
+          media_title: draft.media_title || draft.show_tag || null,
           media_external_source: draft.media_type === "tv" || draft.media_type === "movie" ? "tmdb"
             : draft.media_type === "book" ? "googlebooks"
             : draft.media_type === "music" ? "spotify"
@@ -816,6 +820,7 @@ export default function AdminTriviaPage() {
                         editCorrectAnswer={editCorrectAnswer}
                         editCategory={editCategory}
                         editShowTag={editShowTag}
+                        editMediaTitle={editMediaTitle}
                         editPointsReward={editPointsReward}
                         rejectFeedback={rejectFeedback}
                         expandedNotes={expandedNotes}
@@ -837,6 +842,7 @@ export default function AdminTriviaPage() {
                         setEditCorrectAnswer={setEditCorrectAnswer}
                         setEditCategory={setEditCategory}
                         setEditShowTag={setEditShowTag}
+                        setEditMediaTitle={setEditMediaTitle}
                         setEditPointsReward={setEditPointsReward}
                         setRejectFeedback={setRejectFeedback}
                       />
@@ -980,10 +986,10 @@ export default function AdminTriviaPage() {
 // Extracted draft card for cleanliness
 function DraftCard({
   draft, editing, rejecting,
-  editTitle, editOptions, editCorrectAnswer, editCategory, editShowTag, editPointsReward,
+  editTitle, editOptions, editCorrectAnswer, editCategory, editShowTag, editMediaTitle, editPointsReward,
   rejectFeedback, expandedNotes,
   onEdit, onSaveEdit, onCancelEdit, onApprove, onStartReject, onConfirmReject, onCancelReject, onDelete, onToggleNotes,
-  setEditTitle, setEditOptions, setEditCorrectAnswer, setEditCategory, setEditShowTag, setEditPointsReward, setRejectFeedback,
+  setEditTitle, setEditOptions, setEditCorrectAnswer, setEditCategory, setEditShowTag, setEditMediaTitle, setEditPointsReward, setRejectFeedback,
 }: any) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
@@ -1036,13 +1042,32 @@ function DraftCard({
                   <Input value={editCategory} onChange={e => setEditCategory(e.target.value)} className="bg-gray-800 border-gray-700 text-white text-sm h-8" />
                 </div>
                 <div>
-                  <label className="text-xs text-gray-500 block mb-1">Show tag</label>
+                  <label className="text-xs text-gray-500 block mb-1">Show / Media tag</label>
                   <Input value={editShowTag} onChange={e => setEditShowTag(e.target.value)} className="bg-gray-800 border-gray-700 text-white text-sm h-8" />
                 </div>
                 <div>
                   <label className="text-xs text-gray-500 block mb-1">Points</label>
                   <Input type="number" value={editPointsReward} onChange={e => setEditPointsReward(Number(e.target.value))} className="bg-gray-800 border-gray-700 text-white text-sm h-8" />
                 </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">
+                  Media title override{" "}
+                  <span className="text-gray-600">
+                    (exact title on TMDB/Spotify — drives the rate-after-trivia strip; defaults to Show tag if blank)
+                  </span>
+                </label>
+                <Input
+                  value={editMediaTitle}
+                  onChange={e => setEditMediaTitle(e.target.value)}
+                  placeholder={editShowTag || "e.g. The Dark Knight"}
+                  className="bg-gray-800 border-gray-700 text-white text-sm h-8"
+                />
+                {editMediaTitle && editMediaTitle !== editShowTag && (
+                  <p className="text-[10px] text-amber-400 mt-1">
+                    Saving will update the Show tag to "{editMediaTitle}"
+                  </p>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button onClick={onSaveEdit} size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">Save</Button>
