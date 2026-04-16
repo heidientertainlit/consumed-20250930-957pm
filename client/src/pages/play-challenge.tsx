@@ -7,19 +7,50 @@ import Navigation from "@/components/navigation";
 
 interface Question {
   id: string;
-  poolId: string;
   text: string;
   options: string[];
-  correctAnswer?: string;
+  correctAnswer: string;
   points: number;
 }
+
+const CHALLENGE_BANKS: Record<string, { questions: Omit<Question, "id" | "points">[] }> = {
+  "Harry Potter": {
+    questions: [
+      { text: "What is the name of Harry Potter's owl?", options: ["Hedwig", "Crookshanks", "Fang", "Scabbers"], correctAnswer: "Hedwig" },
+      { text: "Which Hogwarts house does Harry belong to?", options: ["Gryffindor", "Slytherin", "Ravenclaw", "Hufflepuff"], correctAnswer: "Gryffindor" },
+      { text: "What is the core of Harry Potter's wand?", options: ["Phoenix feather", "Dragon heartstring", "Unicorn hair", "Veela hair"], correctAnswer: "Phoenix feather" },
+      { text: "What platform do students board the Hogwarts Express from?", options: ["Platform 9¾", "Platform 10", "Platform 8¾", "Platform 7"], correctAnswer: "Platform 9¾" },
+      { text: "What is the name of Hagrid's three-headed dog?", options: ["Fluffy", "Fang", "Norbert", "Buckbeak"], correctAnswer: "Fluffy" },
+      { text: "What subject does Professor Snape actually want to teach?", options: ["Defense Against the Dark Arts", "Potions", "Transfiguration", "Divination"], correctAnswer: "Defense Against the Dark Arts" },
+      { text: "How many points is catching the Golden Snitch worth in Quidditch?", options: ["150 points", "100 points", "50 points", "200 points"], correctAnswer: "150 points" },
+      { text: "What is the name of the Weasley family's home?", options: ["The Burrow", "The Hollow", "The Den", "The Hive"], correctAnswer: "The Burrow" },
+      { text: "Who is revealed to be the Half-Blood Prince?", options: ["Severus Snape", "Tom Riddle", "Sirius Black", "Albus Dumbledore"], correctAnswer: "Severus Snape" },
+      { text: "What animal form does Professor McGonagall's Animagus take?", options: ["Tabby cat", "Black dog", "Stag", "Raven"], correctAnswer: "Tabby cat" },
+      { text: "What is the name of Voldemort's snake?", options: ["Nagini", "Basilisk", "Norberta", "Aragog"], correctAnswer: "Nagini" },
+      { text: "What type of creature guards the vaults at Gringotts bank?", options: ["Goblins", "Trolls", "Giants", "House Elves"], correctAnswer: "Goblins" },
+    ],
+  },
+  "Friends": {
+    questions: [
+      { text: "What is the name of the coffee shop the friends hang out at?", options: ["Central Perk", "The Coffee Bean", "Java City", "Perky's"], correctAnswer: "Central Perk" },
+      { text: "How many times has Ross been divorced?", options: ["3", "2", "1", "4"], correctAnswer: "3" },
+      { text: "What is Phoebe's twin sister's name?", options: ["Ursula", "Sandra", "Regina", "Francesca"], correctAnswer: "Ursula" },
+      { text: "What is Monica's career?", options: ["Chef", "Doctor", "Lawyer", "Florist"], correctAnswer: "Chef" },
+      { text: "What is Rachel's last name?", options: ["Green", "Geller", "Bing", "Buffay"], correctAnswer: "Green" },
+      { text: "What song does Phoebe sing at Central Perk?", options: ["Smelly Cat", "Sticky Shoes", "Hairy Bear", "Lonely Dog"], correctAnswer: "Smelly Cat" },
+      { text: "Which friend works at Bloomingdale's?", options: ["Rachel", "Monica", "Phoebe", "Emily"], correctAnswer: "Rachel" },
+      { text: "What is Joey's agent's name?", options: ["Estelle", "Stella", "Nicole", "Karen"], correctAnswer: "Estelle" },
+      { text: "Who famously said \"We were on a break!\"?", options: ["Ross", "Chandler", "Joey", "Richard"], correctAnswer: "Ross" },
+      { text: "What is the name of Ross's pet monkey?", options: ["Marcel", "Max", "Buddy", "Chester"], correctAnswer: "Marcel" },
+      { text: "Where do Monica and Chandler move at the end of the series?", options: ["Westchester", "New Jersey", "Connecticut", "Long Island"], correctAnswer: "Westchester" },
+      { text: "What is Joey's character name on Days of Our Lives?", options: ["Dr. Drake Ramoray", "Dr. Ramoray Drake", "Dr. Joe Drake", "Dr. Joey Drake"], correctAnswer: "Dr. Drake Ramoray" },
+    ],
+  },
+};
 
 const SHOW_CONFIG: Record<string, { emoji: string; accentColor: string; description: string }> = {
   "Harry Potter": { emoji: "⚡", accentColor: "#7c3aed", description: "Test your wizarding world knowledge" },
   "Friends": { emoji: "☕", accentColor: "#f59e0b", description: "Could you BE any more of a fan?" },
-  "Friends Pool": { emoji: "☕", accentColor: "#f59e0b", description: "Could you BE any more of a fan?" },
-  "Stranger Things": { emoji: "🔦", accentColor: "#ef4444", description: "Enter the Upside Down" },
-  "Reelz True Crime": { emoji: "🔍", accentColor: "#0ea5e9", description: "True crime trivia" },
 };
 
 function getConfig(showTag: string) {
@@ -33,85 +64,20 @@ export default function PlayChallengePage() {
   const showTag = decodeURIComponent(params.showTag || "");
   const config = getConfig(showTag);
 
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [loading, setLoading] = useState(true);
+  const bank = CHALLENGE_BANKS[showTag];
+  const questions: Question[] = (bank?.questions || []).map((q, i) => ({
+    ...q,
+    id: `${showTag.replace(/\s+/g, "-").toLowerCase()}-q${i}`,
+    points: 10,
+  }));
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [answered, setAnswered] = useState(false);
   const [results, setResults] = useState<Record<string, { correct: boolean; points: number }>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [alreadyAnswered, setAlreadyAnswered] = useState<Set<string>>(new Set());
   const [done, setDone] = useState(false);
-
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const { data: pools } = await supabase
-          .from("prediction_pools")
-          .select("*")
-          .eq("type", "trivia")
-          .eq("status", "open")
-          .eq("show_tag", showTag)
-          .order("created_at", { ascending: true });
-
-        if (!pools || pools.length === 0) { setLoading(false); return; }
-
-        const poolIds = pools.map((p: any) => p.id);
-
-        let answeredPoolIds: Set<string> = new Set();
-        if (user?.id) {
-          const { data: userPreds } = await supabase
-            .from("user_predictions")
-            .select("pool_id")
-            .eq("user_id", user.id)
-            .in("pool_id", poolIds);
-          answeredPoolIds = new Set((userPreds || []).map((p: any) => p.pool_id));
-        }
-        setAlreadyAnswered(answeredPoolIds);
-
-        const flatQuestions: Question[] = [];
-        for (const pool of pools) {
-          if (!pool.options || !Array.isArray(pool.options)) continue;
-          const firstOpt = pool.options[0];
-          const isMulti = typeof firstOpt === "object" && firstOpt !== null && "question" in firstOpt;
-
-          if (isMulti) {
-            pool.options.forEach((q: any, i: number) => {
-              if (!q.question || !q.options) return;
-              flatQuestions.push({
-                id: `${pool.id}_q${i}`,
-                poolId: pool.id,
-                text: q.question,
-                options: q.options,
-                correctAnswer: q.answer || pool.correct_answer,
-                points: 10,
-              });
-            });
-          } else {
-            const opts = pool.options.filter((o: any) => typeof o === "string");
-            if (opts.length > 0) {
-              flatQuestions.push({
-                id: pool.id,
-                poolId: pool.id,
-                text: pool.title,
-                options: opts,
-                correctAnswer: pool.correct_answer,
-                points: pool.points_reward || 10,
-              });
-            }
-          }
-        }
-
-        setQuestions(flatQuestions);
-      } catch (err) {
-        console.error("[PlayChallenge] load error:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, [showTag, user?.id]);
+  const [sessionKey] = useState(() => `challenge-${showTag}-${Date.now()}`);
 
   const currentQuestion = questions[currentIndex];
   const totalQuestions = questions.length;
@@ -122,18 +88,22 @@ export default function PlayChallengePage() {
     if (answered || submitting || !currentQuestion) return;
     setSelectedAnswer(option);
     setAnswered(true);
-    const isCorrect = currentQuestion.correctAnswer ? option === currentQuestion.correctAnswer : false;
-    const points = isCorrect ? currentQuestion.points : 0;
 
+    const isCorrect = option === currentQuestion.correctAnswer;
+    const points = isCorrect ? currentQuestion.points : 0;
     setResults(prev => ({ ...prev, [currentQuestion.id]: { correct: isCorrect, points } }));
 
-    if (user?.id && !alreadyAnswered.has(currentQuestion.poolId)) {
+    if (user?.id) {
       setSubmitting(true);
       try {
-        const { error } = await supabase
+        const poolKey = `challenge-${showTag.replace(/\s+/g, "-").toLowerCase()}-${currentIndex}`;
+        await supabase
           .from("user_predictions")
-          .upsert({ user_id: user.id, pool_id: currentQuestion.poolId, prediction: option, points_earned: points }, { onConflict: "user_id,pool_id" });
-        if (!error && points > 0) {
+          .upsert(
+            { user_id: user.id, pool_id: poolKey, prediction: option, points_earned: points },
+            { onConflict: "user_id,pool_id" }
+          );
+        if (points > 0) {
           await supabase.rpc("increment_user_points", { user_id_param: user.id, points_to_add: points });
         }
       } catch (e) {
@@ -155,18 +125,6 @@ export default function PlayChallengePage() {
   }
 
   const accent = config.accentColor;
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Navigation />
-        <div className="text-center pt-24">
-          <div className="w-12 h-12 rounded-full animate-pulse mx-auto mb-3" style={{ background: accent + "30" }} />
-          <p className="text-gray-500 text-sm">Loading challenge...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (questions.length === 0) {
     return (
@@ -275,26 +233,12 @@ export default function PlayChallengePage() {
             {q.options.map((option) => {
               const isSelected = selectedAnswer === option;
               const isCorrect = option === q.correctAnswer;
-              let bg = "bg-gray-50";
-              let border = "border-gray-200";
-              let textColor = "text-gray-900";
               let iconEl = null;
 
-              if (answered) {
-                if (isCorrect) {
-                  bg = "bg-green-50";
-                  border = "border-green-400";
-                  textColor = "text-green-800";
-                  iconEl = <CheckCircle2 size={16} className="text-green-500 shrink-0" />;
-                } else if (isSelected && !isCorrect) {
-                  bg = "bg-red-50";
-                  border = "border-red-400";
-                  textColor = "text-red-800";
-                  iconEl = <XCircle size={16} className="text-red-400 shrink-0" />;
-                }
-              } else if (isSelected) {
-                bg = "";
-                border = `border-[${accent}]`;
+              if (answered && isCorrect) {
+                iconEl = <CheckCircle2 size={16} className="text-green-500 shrink-0" />;
+              } else if (answered && isSelected && !isCorrect) {
+                iconEl = <XCircle size={16} className="text-red-400 shrink-0" />;
               }
 
               return (
@@ -302,10 +246,11 @@ export default function PlayChallengePage() {
                   key={option}
                   disabled={answered}
                   onClick={() => handleSelectAnswer(option)}
-                  className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition-all ${bg} ${textColor}`}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition-all"
                   style={{
-                    borderColor: answered && isCorrect ? "#4ade80" : answered && isSelected ? "#f87171" : isSelected ? accent : "#e5e7eb",
+                    borderColor: answered && isCorrect ? "#4ade80" : answered && isSelected && !isCorrect ? "#f87171" : isSelected && !answered ? accent : "#e5e7eb",
                     background: answered && isCorrect ? "#f0fdf4" : answered && isSelected && !isCorrect ? "#fef2f2" : isSelected && !answered ? accent + "10" : "",
+                    color: answered && isCorrect ? "#166534" : answered && isSelected && !isCorrect ? "#991b1b" : "#111827",
                   }}
                 >
                   <span className="text-sm font-medium leading-snug">{option}</span>
@@ -321,7 +266,7 @@ export default function PlayChallengePage() {
                 <p className="text-green-600 text-sm font-semibold text-center">Correct! +{result.points} pts</p>
               ) : (
                 <p className="text-gray-500 text-sm text-center">
-                  {q.correctAnswer ? `The answer was: ${q.correctAnswer}` : "Better luck next time!"}
+                  The answer was: <span className="font-semibold text-gray-700">{q.correctAnswer}</span>
                 </p>
               )}
             </div>

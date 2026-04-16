@@ -67,7 +67,6 @@ interface PoolRow {
 interface ChallengeGroup {
   showTag: string;
   questionCount: number;
-  poolIds: string[];
 }
 
 const SHOW_CONFIG: Record<string, { emoji: string; accentColor: string; description: string }> = {
@@ -85,10 +84,12 @@ export default function PlayPoolsPage() {
   const [, setLocation] = useLocation();
   const { session } = useAuth();
   const [pools, setPools] = useState<PoolRow[]>([]);
-  const [challenges, setChallenges] = useState<ChallengeGroup[]>([]);
+  const challenges: ChallengeGroup[] = [
+    { showTag: "Harry Potter", questionCount: 12 },
+    { showTag: "Friends", questionCount: 12 },
+  ];
   const [friendActivity, setFriendActivity] = useState<{ name: string; poolId: string; poolName: string }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [challengesLoading, setChallengesLoading] = useState(true);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -202,49 +203,6 @@ export default function PlayPoolsPage() {
     load();
   }, [session?.user?.id]);
 
-  useEffect(() => {
-    async function loadChallenges() {
-      setChallengesLoading(true);
-      try {
-        const { data: pools } = await supabase
-          .from("prediction_pools")
-          .select("id, show_tag, options, title")
-          .eq("type", "trivia")
-          .eq("status", "open")
-          .not("show_tag", "is", null);
-
-        if (!pools || pools.length === 0) { setChallengesLoading(false); return; }
-
-        const grouped: Record<string, { poolIds: string[]; questionCount: number }> = {};
-        for (const pool of pools) {
-          const tag = pool.show_tag as string;
-          if (!tag) continue;
-          if (!grouped[tag]) grouped[tag] = { poolIds: [], questionCount: 0 };
-          grouped[tag].poolIds.push(pool.id);
-          if (pool.options && Array.isArray(pool.options)) {
-            const firstOpt = pool.options[0];
-            if (typeof firstOpt === "object" && firstOpt !== null && "question" in firstOpt) {
-              grouped[tag].questionCount += pool.options.length;
-            } else {
-              grouped[tag].questionCount += 1;
-            }
-          }
-        }
-
-        const groups: ChallengeGroup[] = Object.entries(grouped)
-          .map(([showTag, data]) => ({ showTag, ...data }))
-          .filter(g => g.questionCount > 0)
-          .sort((a, b) => b.questionCount - a.questionCount);
-
-        setChallenges(groups);
-      } catch (err) {
-        console.error("[PlayPools] challenges error:", err);
-      } finally {
-        setChallengesLoading(false);
-      }
-    }
-    loadChallenges();
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -294,15 +252,10 @@ export default function PlayPoolsPage() {
           </div>
         )}
 
-        {/* Trivia Pools (from prediction_pools grouped by show_tag) */}
-        {(challengesLoading || challenges.length > 0) && (
+        {/* Trivia Challenges */}
+        {challenges.length > 0 && (
           <div className="mb-6">
-            <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest mb-3">Trivia Pools</p>
-            {challengesLoading && (
-              <div className="space-y-3">
-                {[1, 2].map(i => <div key={i} className="h-24 rounded-2xl bg-gray-200 animate-pulse" />)}
-              </div>
-            )}
+            <p className="text-gray-400 text-xs font-semibold uppercase tracking-widest mb-3">Trivia Challenges</p>
             <div className="space-y-3">
               {challenges.map((group) => {
                 const cfg = showConfig(group.showTag);
