@@ -124,7 +124,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
   if (!card.user || !label) {
     return (
       <Link to={card.ctaHref}>
-        <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-purple-50 border border-purple-100 mb-3 active:opacity-75 transition-opacity">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-purple-50 border border-purple-100 active:opacity-75 transition-opacity">
           <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center shrink-0">
             <Play size={10} className="text-white ml-0.5" />
           </div>
@@ -150,7 +150,7 @@ export function SocialProofCard({ card }: { card: SocialProofCardData }) {
   };
 
   return (
-    <div className="rounded-2xl bg-white border border-gray-100 shadow overflow-hidden mb-3">
+    <div className="rounded-2xl bg-white border border-gray-100 shadow overflow-hidden">
       <div className="px-4 pt-4 pb-4">
 
         {/* Top row: type pill left, timestamp right */}

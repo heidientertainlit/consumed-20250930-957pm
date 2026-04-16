@@ -392,13 +392,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
 
   if (!session) return null;
   if (isLoading || !votedLoaded) {
-    return (
-      <div className="bg-white rounded-2xl p-5 mb-4">
-        <div className="flex items-center justify-center py-6">
-          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-        </div>
-      </div>
-    );
+    return null;
   }
   if (isError || !data || data.length === 0) return null;
 
@@ -408,7 +402,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
   if (filteredData.length === 0) return null;
 
   return (
-    <div className="bg-white border border-gray-100 shadow rounded-2xl p-4 mb-4 overflow-hidden relative">
+    <div className="bg-white border border-gray-100 shadow rounded-2xl p-4 overflow-hidden relative">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           {category && (

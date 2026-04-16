@@ -3539,7 +3539,7 @@ export default function Feed() {
     if (!carousel || carousel.posts.length === 0) return null;
     return (
       <div key={carousel.id} className="mb-2">
-        <div className="flex items-start gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
+        <div className="flex items-stretch gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
           {carousel.posts.map((post: any) => (
             <UGCGroupCard
               key={post.id}
@@ -5709,9 +5709,7 @@ export default function Feed() {
 
               {/* Leaderboard #0 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 0 && (
-                <div className="mt-4">
-                  <SocialProofCard card={buildLeaderboardSocialProof(playActivity[0], 0)} />
-                </div>
+                <SocialProofCard card={buildLeaderboardSocialProof(playActivity[0], 0)} />
               )}
 
               {/* — Rating carousel #0 — */}
@@ -5740,9 +5738,7 @@ export default function Feed() {
 
               {/* Leaderboard #1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 1 && (
-                <div className="mt-4">
-                  <SocialProofCard card={buildLeaderboardSocialProof(playActivity[1], 1)} />
-                </div>
+                <SocialProofCard card={buildLeaderboardSocialProof(playActivity[1], 1)} />
               )}
 
               {/* Ranks set 1 */}
@@ -5769,9 +5765,7 @@ export default function Feed() {
 
               {/* Leaderboard #2 + Points Glimpse */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 2 && (
-                <div className="mt-4">
-                  <SocialProofCard card={buildLeaderboardSocialProof(playActivity[2], 2)} />
-                </div>
+                <SocialProofCard card={buildLeaderboardSocialProof(playActivity[2], 2)} />
               )}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <PointsGlimpse />
@@ -5811,9 +5805,7 @@ export default function Feed() {
 
               {/* Leaderboard #3 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 3 && (
-                <div className="mt-4">
-                  <SocialProofCard card={buildLeaderboardSocialProof(playActivity[3], 3)} />
-                </div>
+                <SocialProofCard card={buildLeaderboardSocialProof(playActivity[3], 3)} />
               )}
 
               {/* Games trivia */}
