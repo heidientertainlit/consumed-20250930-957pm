@@ -3159,42 +3159,46 @@ export default function Feed() {
       }
     });
 
-    // Prioritise real users — put them first, then fill remaining slots with persona posts
+    // Real users come before persona (AI bot) posts
     const realItems = ratingItems.filter((item: any) =>
       !(item._rawPost?.user?.is_persona === true || item.user?.is_persona === true)
     );
     const personaItems = ratingItems.filter((item: any) =>
       item._rawPost?.user?.is_persona === true || item.user?.is_persona === true
     );
-    const ordered = [...realItems, ...personaItems];
+    const prioritised = [...realItems, ...personaItems];
 
-    // Cap total posts fed into carousels so the feed doesn't become endless
+    // Cap total posts
     const MAX_RATING_POSTS = 60;
-    const capped = ordered.slice(0, MAX_RATING_POSTS);
+    const capped = prioritised.slice(0, MAX_RATING_POSTS);
 
-    // Round-robin by user so no same person clusters together in a row
-    const byUser = new Map<string, any[]>();
+    // Group posts by media title to find "hot" items (multiple people rated same thing)
+    const byMedia = new Map<string, any[]>();
     capped.forEach((item: any) => {
-      const uid = item.user?.id || 'anon';
-      if (!byUser.has(uid)) byUser.set(uid, []);
-      byUser.get(uid)!.push(item);
+      const key = item.mediaTitle || item.externalId || `solo-${item.id}`;
+      if (!byMedia.has(key)) byMedia.set(key, []);
+      byMedia.get(key)!.push(item);
     });
-    const userQueues = Array.from(byUser.values());
-    const shuffled: any[] = [];
-    let changed = true;
-    while (changed) {
-      changed = false;
-      for (const queue of userQueues) {
-        if (queue.length > 0) { shuffled.push(queue.shift()); changed = true; }
-      }
+
+    // Sort media groups: most co-ratings first (hot items anchor the carousel front)
+    const sortedGroups = Array.from(byMedia.values())
+      .sort((a, b) => b.length - a.length);
+
+    // Within each group keep recency order; flatten into final ordered list
+    const finalOrder: any[] = [];
+    for (const group of sortedGroups) {
+      group.sort((a: any, b: any) =>
+        new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
+      );
+      finalOrder.push(...group);
     }
 
-    // 10 posts per carousel line — max 6 carousels total
+    // 10 posts per carousel — max 6 carousels total
     const batches: { id: string; type: string; posts: any[] }[] = [];
     const BATCH_SIZE = 10;
     const MAX_CAROUSELS = 6;
-    for (let i = 0; i < shuffled.length && batches.length < MAX_CAROUSELS; i += BATCH_SIZE) {
-      const batch = shuffled.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < finalOrder.length && batches.length < MAX_CAROUSELS; i += BATCH_SIZE) {
+      const batch = finalOrder.slice(i, i + BATCH_SIZE);
       if (batch.length > 0) {
         batches.push({ id: `rating-carousel-${i}`, type: 'rating_carousel', posts: batch });
       }
