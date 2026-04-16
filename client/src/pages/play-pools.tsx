@@ -1,18 +1,27 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { ChevronLeft, ChevronRight, Flame, Users, Zap, Share2 } from "lucide-react";
+import { ChevronLeft, Flame, Users, Zap, Share2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
 
 const POOL_EMOJIS: Record<string, string> = {
-  "Binge Watch Battle": "🎬",
   "Harry Potter": "⚡",
+  "Friends Pool": "☕",
+  "Friends": "☕",
   "Reelz True Crime": "🔍",
   "Reelz Official Room": "📺",
-  "The Traitors S3": "🗡️",
   "Stranger Things": "🔦",
 };
+
+// Pools to hide from this page
+const HIDDEN_POOL_NAMES = [
+  "The Traitors Season 2",
+  "The Traitors S2",
+  "The Traitors S3",
+  "Binge Watch Battle",
+  "The Bottom",
+];
 
 function poolEmoji(name: string) {
   return POOL_EMOJIS[name] || "🎮";
@@ -162,7 +171,7 @@ export default function PlayPoolsPage() {
           }
         });
 
-        setPools(enriched);
+        setPools(enriched.filter(p => !HIDDEN_POOL_NAMES.includes(p.name)));
         setFriendActivity(fa.slice(0, 6));
       } catch (err) {
         console.error("[PlayPools] load error:", err);
@@ -346,24 +355,6 @@ export default function PlayPoolsPage() {
           </div>
         </div>
 
-        {/* Challenge CTA */}
-        {!loading && (
-          <div className="mt-4">
-            <div
-              className="rounded-2xl px-4 py-3.5 flex items-center gap-3"
-              style={{ background: "rgba(124,58,237,0.05)", border: "0.5px dashed rgba(124,58,237,0.3)" }}
-            >
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(124,58,237,0.1)" }}>
-                <Share2 size={16} className="text-purple-500" />
-              </div>
-              <div className="flex-1">
-                <p className="text-purple-700 text-sm font-semibold">Challenge your friends</p>
-                <p className="text-purple-400 text-xs mt-0.5">Share a pool link and compete head-to-head</p>
-              </div>
-              <ChevronRight size={14} className="text-purple-400" />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
