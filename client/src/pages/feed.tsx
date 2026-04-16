@@ -3159,14 +3159,18 @@ export default function Feed() {
       }
     });
 
-    // Filter out persona (AI bot) posts — only real user content goes in carousels
-    const realRatingItems = ratingItems.filter((item: any) =>
+    // Prioritise real users — put them first, then fill remaining slots with persona posts
+    const realItems = ratingItems.filter((item: any) =>
       !(item._rawPost?.user?.is_persona === true || item.user?.is_persona === true)
     );
+    const personaItems = ratingItems.filter((item: any) =>
+      item._rawPost?.user?.is_persona === true || item.user?.is_persona === true
+    );
+    const ordered = [...realItems, ...personaItems];
 
     // Cap total posts fed into carousels so the feed doesn't become endless
-    const MAX_RATING_POSTS = 18;
-    const capped = realRatingItems.slice(0, MAX_RATING_POSTS);
+    const MAX_RATING_POSTS = 60;
+    const capped = ordered.slice(0, MAX_RATING_POSTS);
 
     // Round-robin by user so no same person clusters together in a row
     const byUser = new Map<string, any[]>();
@@ -3185,9 +3189,9 @@ export default function Feed() {
       }
     }
 
-    // Small batches of 3 per carousel line — max 6 carousels total
+    // 10 posts per carousel line — max 6 carousels total
     const batches: { id: string; type: string; posts: any[] }[] = [];
-    const BATCH_SIZE = 3;
+    const BATCH_SIZE = 10;
     const MAX_CAROUSELS = 6;
     for (let i = 0; i < shuffled.length && batches.length < MAX_CAROUSELS; i += BATCH_SIZE) {
       const batch = shuffled.slice(i, i + BATCH_SIZE);
@@ -5706,14 +5710,14 @@ export default function Feed() {
                 </div>
               )}
 
+              {/* — Rating carousel #0 — */}
+              {renderRatingCarousel(0)}
+
               {/* TV trivia — round 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') &&
                (!selectedCategory || selectedCategory === 'tv') && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="TV" />
               )}
-
-              {/* — Rating carousel #0 — */}
-              {renderRatingCarousel(0)}
 
               {/* — BLOCK 2 — */}
               {/* Movies Polls */}
