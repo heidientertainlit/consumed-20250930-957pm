@@ -131,14 +131,14 @@ serve(async (req) => {
         id: 'lb-leader',
         icon: 'trophy',
         text: `${leaderName} is leading the Overall Engagement leaderboard ${timeLabel} with ${leaderScore} pts — play Trivia to compete`,
-        link: '/leaderboard?tab=engagement',
+        link: '/play/trivia',
       });
     } else {
       items.push({
         id: 'lb-leader-you',
         icon: 'trophy',
         text: `You're leading the Overall Engagement leaderboard ${timeLabel} with ${leaderScore} pts — keep playing to hold your spot`,
-        link: '/leaderboard?tab=engagement',
+        link: '/play/trivia',
       });
     }
 
@@ -153,7 +153,7 @@ serve(async (req) => {
         id: 'lb-your-rank',
         icon: 'bar-chart',
         text: `You're ranked #${rank} ${timeLabel} — just ${gap} pts behind ${aboveName}. Play Trivia to move up`,
-        link: '/leaderboard?tab=engagement',
+        link: '/play/trivia',
       });
     } else if (currentUserRank === 0 && leaderboard.length > 1) {
       // You're #1, show who's chasing you
@@ -164,7 +164,7 @@ serve(async (req) => {
         id: 'lb-chaser',
         icon: 'bar-chart',
         text: `${secondName} is ${gap} pts behind you ${timeLabel} — stay active to hold #1`,
-        link: '/leaderboard?tab=engagement',
+        link: '/play/trivia',
       });
     }
 
@@ -178,7 +178,7 @@ serve(async (req) => {
         id: `lb-friend-${friendOnBoard.userId}`,
         icon: 'users',
         text: `${friendName} is ranked #${friendRank} ${timeLabel} with ${friendScore} pts — answer Trivia to pass them`,
-        link: '/leaderboard?tab=engagement',
+        link: '/play/trivia',
       });
     }
 
