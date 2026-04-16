@@ -1382,6 +1382,35 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </div>
             )
           )}
+          {/* Other raters for the same media — shown in NORMAL layout too */}
+          {relatedRatings.length > 0 && (
+            <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2">
+              <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">From your feed</p>
+              {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
+                <div key={r.userId}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
+                        {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
+                      </div>
+                      <span className="text-[11px] font-semibold text-gray-700">{r.displayName || r.userName}</span>
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5].map(s => (
+                        <Star key={s} size={10} className={s <= Math.floor(r.rating) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(r.rating) && r.rating % 1 >= 0.5 ? 'text-yellow-200 fill-yellow-200' : 'text-gray-200'} />
+                      ))}
+                    </div>
+                  </div>
+                  {ratingDiffLine(r.rating, 'mt-0.5')}
+                </div>
+              ))}
+              {relatedRatings.length > 2 && (
+                <button onClick={() => setShowAllRelated(v => !v)} className="text-[10px] text-violet-500 font-medium text-left">
+                  {showAllRelated ? 'Show less' : `+ ${relatedRatings.length - 2} more`}
+                </button>
+              )}
+            </div>
+          )}
           <div className="mt-3 pt-3 border-t border-gray-50">{actionBar}</div>
 
         {/* YOUR TURN / Post-rating section */}
