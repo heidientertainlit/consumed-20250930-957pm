@@ -113,6 +113,8 @@ Return ONLY a valid JSON array of 8 objects with these exact keys. No markdown, 
           fallback_emoji: pool.fallback_emoji || '🎮',
           accent_color: pool.accent_color || '#7c3aed',
           is_active: true,
+          media_external_id: pool.media_external_id || null,
+          media_external_source: pool.media_external_source || null,
         })
         .select('id')
         .single();

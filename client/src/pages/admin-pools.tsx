@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@supabase/supabase-js";
@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import {
   Sparkles, ArrowLeft, Loader2, Trash2, ChevronDown, ChevronUp,
   CheckCircle, Layers, Plus, Pencil, Save, RefreshCw, ArrowRight,
+  Search, Link2, X, LinkIcon,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -66,7 +67,26 @@ interface PoolRow {
   fallback_emoji: string | null;
   is_active: boolean;
   created_at: string;
+  media_external_id: string | null;
+  media_external_source: string | null;
 }
+
+interface LinkedMedia {
+  external_id: string;
+  external_source: string;
+  title: string;
+  poster_url: string;
+  type: string;
+  year?: string;
+}
+
+const CATEGORY_TO_MEDIA_TYPE: Record<string, string> = {
+  "TV Shows": "tv",
+  "Movies": "movie",
+  "Music": "music",
+  "Books": "books",
+  "Pop Culture": "",
+};
 
 // ── Question editor (inline) ──────────────────────────────────────────────────
 function QuestionEditor({
@@ -160,6 +180,13 @@ export default function AdminPoolsPage() {
   // When set, we're adding more questions to an existing pool (not creating new)
   const [appendTarget, setAppendTarget] = useState<{ id: string; title: string; category: string } | null>(null);
 
+  // Media item linking
+  const [linkedMedia, setLinkedMedia] = useState<LinkedMedia | null>(null);
+  const [mediaQuery, setMediaQuery] = useState("");
+  const [mediaResults, setMediaResults] = useState<LinkedMedia[]>([]);
+  const [mediaSearching, setMediaSearching] = useState(false);
+  const mediaDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Suggestion state
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [suggestLoading, setSuggestLoading] = useState(false);
@@ -234,6 +261,41 @@ export default function AdminPoolsPage() {
     }
   }
 
+  const searchMedia = useCallback(async (query: string, cat: string) => {
+    if (!query.trim() || !session?.access_token) { setMediaResults([]); return; }
+    setMediaSearching(true);
+    try {
+      const mediaType = CATEGORY_TO_MEDIA_TYPE[cat] || "";
+      const body: Record<string, string> = { query };
+      if (mediaType) body.type = mediaType;
+      const resp = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) { setMediaResults([]); return; }
+      const data = await resp.json();
+      const results: LinkedMedia[] = (data.results || []).slice(0, 6).map((r: any) => ({
+        external_id: r.external_id,
+        external_source: r.external_source,
+        title: r.title,
+        poster_url: r.image_url || r.poster_url || r.image || "",
+        type: r.type || "",
+        year: r.year || "",
+      }));
+      setMediaResults(results);
+    } catch {
+      setMediaResults([]);
+    } finally {
+      setMediaSearching(false);
+    }
+  }, [session?.access_token]);
+
+  function triggerMediaSearch(query: string, cat: string) {
+    if (mediaDebounceRef.current) clearTimeout(mediaDebounceRef.current);
+    mediaDebounceRef.current = setTimeout(() => searchMedia(query, cat), 400);
+  }
+
   function selectSuggestion(s: Suggestion) {
     setPoolName(s.title);
     setDescription(s.description);
@@ -241,13 +303,19 @@ export default function AdminPoolsPage() {
     setTopic(s.topic_context);
     setEmoji(s.emoji || CATEGORY_EMOJIS[s.category as Category] || "🎮");
     setPosterUrl("");
+    setLinkedMedia(null);
+    setMediaQuery(s.title);
+    setMediaResults([]);
     setStep("form");
+    // Auto-trigger search with the suggestion title
+    triggerMediaSearch(s.title, s.category);
   }
 
   function startCustom() {
     setAppendTarget(null);
     setPoolName(""); setDescription(""); setTopic(""); setPosterUrl("");
     setCategory("TV Shows"); setEmoji("📺");
+    setLinkedMedia(null); setMediaQuery(""); setMediaResults([]);
     setStep("form");
   }
 
@@ -259,6 +327,15 @@ export default function AdminPoolsPage() {
     setTopic("");
     setPosterUrl("");
     setGeneratedQuestions(null);
+    // Pre-fill existing media link if any
+    if (pool.media_external_id && pool.media_external_source) {
+      setLinkedMedia({ external_id: pool.media_external_id, external_source: pool.media_external_source, title: pool.title, poster_url: pool.poster_url || "", type: "" });
+    } else {
+      setLinkedMedia(null);
+      setMediaQuery(pool.title);
+      triggerMediaSearch(pool.title, pool.category || "TV Shows");
+    }
+    setMediaResults([]);
     setStep("form");
     setActiveTab("create");
   }
@@ -298,12 +375,23 @@ export default function AdminPoolsPage() {
         // Create brand-new pool
         await callEdgeFunction({
           action: "save",
-          pool: { show_tag: poolName.trim(), title: poolName.trim(), description: description.trim() || null, category, poster_url: posterUrl.trim() || null, fallback_emoji: emoji, accent_color: "#7c3aed" },
+          pool: {
+            show_tag: poolName.trim(),
+            title: poolName.trim(),
+            description: description.trim() || null,
+            category,
+            poster_url: posterUrl.trim() || linkedMedia?.poster_url || null,
+            fallback_emoji: emoji,
+            accent_color: "#7c3aed",
+            media_external_id: linkedMedia?.external_id || null,
+            media_external_source: linkedMedia?.external_source || null,
+          },
           questions: generatedQuestions,
         });
         toast({ title: `"${poolName}" saved!`, description: "It will now appear in the Pools list for players." });
       }
       setPoolName(""); setDescription(""); setTopic(""); setPosterUrl(""); setGeneratedQuestions(null);
+      setLinkedMedia(null); setMediaQuery(""); setMediaResults([]);
       setStep("suggest"); setSuggestions([]); setAppendTarget(null);
       refetchPools();
       setActiveTab("manage");
@@ -491,6 +579,62 @@ export default function AdminPoolsPage() {
                       className="bg-gray-800/50 border-gray-700 text-white min-h-[80px]" />
                   </div>
 
+                  {/* ── Media item link ── */}
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1.5 flex items-center gap-1.5">
+                      <Link2 size={11} />
+                      Link to media item
+                      <span className="text-gray-600">— connects engagement to your media database</span>
+                    </label>
+
+                    {linkedMedia ? (
+                      <div className="flex items-center gap-3 rounded-xl bg-emerald-900/20 border border-emerald-700/30 px-3 py-2.5">
+                        {linkedMedia.poster_url
+                          ? <img src={linkedMedia.poster_url} alt={linkedMedia.title} className="w-8 h-10 object-cover rounded shrink-0" />
+                          : <div className="w-8 h-10 bg-gray-800 rounded shrink-0" />}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-emerald-300 text-sm font-medium truncate">{linkedMedia.title}</p>
+                          <p className="text-gray-500 text-xs">{linkedMedia.external_source} · {linkedMedia.external_id}</p>
+                        </div>
+                        <button onClick={() => { setLinkedMedia(null); setMediaResults([]); }} className="p-1 text-gray-500 hover:text-gray-300 transition-colors">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <div className="relative">
+                          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                          <Input
+                            value={mediaQuery}
+                            onChange={e => { setMediaQuery(e.target.value); triggerMediaSearch(e.target.value, category); }}
+                            placeholder={`Search ${category}...`}
+                            className="pl-8 bg-gray-800/50 border-gray-700 text-white text-sm"
+                          />
+                          {mediaSearching && <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-gray-500" />}
+                        </div>
+                        {mediaResults.length > 0 && (
+                          <div className="rounded-xl border border-gray-700 overflow-hidden divide-y divide-gray-700/50">
+                            {mediaResults.map((r, i) => (
+                              <button key={i} onClick={() => { setLinkedMedia(r); setMediaResults([]); }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-gray-800/60 transition-colors text-left">
+                                {r.poster_url
+                                  ? <img src={r.poster_url} alt={r.title} className="w-7 h-9 object-cover rounded shrink-0" />
+                                  : <div className="w-7 h-9 bg-gray-700 rounded shrink-0" />}
+                                <div className="min-w-0">
+                                  <p className="text-white text-sm truncate">{r.title}</p>
+                                  <p className="text-gray-500 text-xs">{r.external_source}{r.year ? ` · ${r.year}` : ""}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {!linkedMedia && (
+                          <p className="text-xs text-gray-600">Optional — but highly recommended so analytics can track engagement per title.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Advanced (hidden by default) */}
                   <button onClick={() => setShowAdvanced(a => !a)} className="text-gray-500 text-xs flex items-center gap-1 hover:text-gray-400 transition-colors">
                     {showAdvanced ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -614,7 +758,12 @@ function PoolCard({ pool, onDelete, onAddQuestions }: { pool: PoolRow; onDelete:
         <div className="flex-1 min-w-0">
           <p className="text-white font-semibold truncate">{pool.title}</p>
           <p className="text-gray-400 text-xs truncate">{pool.description || "No description"}</p>
-          <p className="text-gray-600 text-xs mt-0.5">{pool.category}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className="text-gray-600 text-xs">{pool.category}</p>
+            {pool.media_external_id
+              ? <span className="flex items-center gap-1 text-emerald-500/80 text-xs"><LinkIcon size={9} />{pool.media_external_source}</span>
+              : <span className="flex items-center gap-1 text-amber-600/60 text-xs"><LinkIcon size={9} />not linked</span>}
+          </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <button
