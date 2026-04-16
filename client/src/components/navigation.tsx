@@ -415,7 +415,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               <Input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search friends or media..."
+                placeholder="Search friends or to add media..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-white/10 border-white/20 text-white placeholder:text-gray-400 rounded-xl"
