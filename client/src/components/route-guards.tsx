@@ -24,7 +24,7 @@ export function ProtectedRoute({ children }: RouteGuardProps) {
 
   useEffect(() => {
     if (!loading && !user) {
-      const fullPath = window.location.pathname + window.location.hash;
+      const fullPath = window.location.pathname + window.location.search + window.location.hash;
       if (fullPath !== '/login') {
         sessionStorage.setItem('returnUrl', fullPath);
       }
