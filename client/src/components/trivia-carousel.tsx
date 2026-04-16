@@ -42,7 +42,8 @@ interface TriviaItem {
   options: string[];
   correctAnswer?: string;
   category?: string;
-  mediaTitle?: string;
+  showTag?: string;      // explicit show/media name from DB — used for the category pill
+  mediaTitle?: string;   // for rating strip search — may include heuristic extraction
   pointsReward: number;
   isChallenge: boolean;
   questionCount: number;
@@ -201,6 +202,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                   options: q.options,
                   correctAnswer: q.answer || pool.correct_answer,
                   category: normalizeCategory(pool.category),
+                  showTag: (pool.show_tag as string | undefined) || undefined,
                   mediaTitle: mediaTitle,
                   pointsReward: 10,
                   isChallenge: false,
@@ -249,6 +251,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 options: optionsList,
                 correctAnswer: pool.correct_answer,
                 category: normalizeCategory(pool.category),
+                showTag: (pool.show_tag as string | undefined) || undefined,
                 mediaTitle: singleMediaTitle,
                 pointsReward: 10,
                 isChallenge: false,
@@ -766,10 +769,10 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
             
             return (
               <div key={item.id} ref={(el) => { slideRefs.current[idx] = el; }} className="flex-shrink-0 w-full snap-center h-auto relative">
-                {item.mediaTitle && (
+                {item.showTag && (
                   <div className="mb-2">
                     <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 border border-purple-200">
-                      <span className="text-[10px] text-purple-700 font-medium">{item.mediaTitle}</span>
+                      <span className="text-[10px] text-purple-700 font-medium">{item.showTag}</span>
                     </div>
                   </div>
                 )}
