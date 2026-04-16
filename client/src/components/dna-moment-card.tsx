@@ -211,7 +211,13 @@ export function DnaMomentCard() {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <Card className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="w-5 h-5 animate-spin text-teal-500 opacity-40" />
+        </div>
+      </Card>
+    );
   }
 
   if (isError || !data?.moments || data.moments.length === 0) {

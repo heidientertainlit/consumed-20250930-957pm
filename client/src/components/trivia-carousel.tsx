@@ -686,7 +686,13 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   if (!session) return null;
 
   if (isLoading || !answeredLoaded) {
-    return null;
+    return (
+      <div className="bg-white border border-gray-100 shadow rounded-2xl p-4 pb-2 overflow-hidden">
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="w-5 h-5 animate-spin text-purple-500 opacity-40" />
+        </div>
+      </div>
+    );
   }
 
   if (isError || !data || data.length === 0) {

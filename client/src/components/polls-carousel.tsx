@@ -392,7 +392,13 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
 
   if (!session) return null;
   if (isLoading || !votedLoaded) {
-    return null;
+    return (
+      <div className="bg-white border border-gray-100 shadow rounded-2xl p-4 overflow-hidden">
+        <div className="flex items-center justify-center py-4">
+          <Loader2 className="w-5 h-5 animate-spin text-blue-500 opacity-40" />
+        </div>
+      </div>
+    );
   }
   if (isError || !data || data.length === 0) return null;
 
