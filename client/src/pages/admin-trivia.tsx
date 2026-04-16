@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@supabase/supabase-js";
@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth";
 import {
   Sparkles, Check, X, Clock, ArrowLeft, Loader2, Trash2, Pencil,
   ChevronDown, ChevronUp, Calendar, Star, Zap, Brain, Vote, Dna,
-  RefreshCw, Send, ListChecks, TrendingUp, AlertCircle,
+  RefreshCw, Send, ListChecks, TrendingUp, AlertCircle, Search, Link2, LinkIcon,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -28,6 +28,8 @@ type Draft = {
   show_tag: string | null;
   media_title: string | null;
   media_type: string | null;
+  media_external_id: string | null;
+  media_external_source: string | null;
   difficulty: string | null;
   points_reward: number;
   partner_tag: string | null;
@@ -42,6 +44,14 @@ type Draft = {
   created_at: string;
   approved_at: string | null;
   published_at: string | null;
+};
+
+type LinkedMedia = {
+  external_id: string;
+  external_source: string;
+  title: string;
+  poster_url: string;
+  year?: string;
 };
 
 const CONTENT_TYPE_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode; description: string }> = {
@@ -152,7 +162,7 @@ function autoScheduleBatch(items: Draft[], startDate: Date): Record<string, stri
 }
 
 export default function AdminTriviaPage() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -186,6 +196,44 @@ export default function AdminTriviaPage() {
   const [editShowTag, setEditShowTag] = useState<string>("");
   const [editMediaTitle, setEditMediaTitle] = useState<string>("");
   const [editPointsReward, setEditPointsReward] = useState<number>(10);
+
+  // Media linking in edit panel
+  const [editLinkedMedia, setEditLinkedMedia] = useState<LinkedMedia | null>(null);
+  const [editMediaQuery, setEditMediaQuery] = useState<string>("");
+  const [editMediaResults, setEditMediaResults] = useState<LinkedMedia[]>([]);
+  const [editMediaSearching, setEditMediaSearching] = useState(false);
+  const editMediaDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const searchEditMedia = useCallback(async (query: string) => {
+    if (!query.trim() || !session?.access_token) { setEditMediaResults([]); return; }
+    setEditMediaSearching(true);
+    try {
+      const resp = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      if (!resp.ok) { setEditMediaResults([]); return; }
+      const data = await resp.json();
+      const results: LinkedMedia[] = (data.results || []).slice(0, 6).map((r: any) => ({
+        external_id: r.external_id,
+        external_source: r.external_source,
+        title: r.title,
+        poster_url: r.image_url || r.poster_url || r.image || "",
+        year: r.year || "",
+      }));
+      setEditMediaResults(results);
+    } catch {
+      setEditMediaResults([]);
+    } finally {
+      setEditMediaSearching(false);
+    }
+  }, [session?.access_token]);
+
+  function triggerEditMediaSearch(query: string) {
+    if (editMediaDebounceRef.current) clearTimeout(editMediaDebounceRef.current);
+    editMediaDebounceRef.current = setTimeout(() => searchEditMedia(query), 400);
+  }
 
   // Reject state
   const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -305,6 +353,17 @@ export default function AdminTriviaPage() {
     setEditShowTag(draft.show_tag || "");
     setEditMediaTitle(draft.media_title || draft.show_tag || "");
     setEditPointsReward(draft.points_reward || 10);
+    // Restore linked media if already saved on draft
+    if (draft.media_external_id && draft.media_external_source) {
+      setEditLinkedMedia({ external_id: draft.media_external_id, external_source: draft.media_external_source, title: draft.media_title || draft.show_tag || "", poster_url: "" });
+      setEditMediaQuery("");
+    } else {
+      setEditLinkedMedia(null);
+      const q = draft.media_title || draft.show_tag || "";
+      setEditMediaQuery(q);
+      if (q) triggerEditMediaSearch(q);
+    }
+    setEditMediaResults([]);
   }
 
   async function saveEdit(draft: Draft) {
@@ -317,12 +376,16 @@ export default function AdminTriviaPage() {
         category: editCategory,
         show_tag: editMediaTitle || editShowTag || null,
         points_reward: editPointsReward,
+        media_external_id: editLinkedMedia?.external_id || null,
+        media_external_source: editLinkedMedia?.external_source || null,
       })
       .eq("id", draft.id);
     if (error) {
       toast({ title: "Save failed", description: error.message, variant: "destructive" });
     } else {
       setEditingId(null);
+      setEditLinkedMedia(null);
+      setEditMediaResults([]);
       queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
     }
   }
@@ -418,10 +481,12 @@ export default function AdminTriviaPage() {
           category: draft.category || "Pop Culture",
           show_tag: draft.show_tag || null,
           media_title: draft.media_title || draft.show_tag || null,
-          media_external_source: draft.media_type === "tv" || draft.media_type === "movie" ? "tmdb"
+          media_external_id: draft.media_external_id || null,
+          media_external_source: draft.media_external_source
+            || (draft.media_type === "tv" || draft.media_type === "movie" ? "tmdb"
             : draft.media_type === "book" ? "googlebooks"
             : draft.media_type === "music" ? "spotify"
-            : null,
+            : null),
           points_reward: draft.points_reward || 10,
           status: "open",
           origin_type: "consumed",
@@ -891,6 +956,12 @@ export default function AdminTriviaPage() {
                         setEditMediaTitle={setEditMediaTitle}
                         setEditPointsReward={setEditPointsReward}
                         setRejectFeedback={setRejectFeedback}
+                        editLinkedMedia={editLinkedMedia}
+                        editMediaQuery={editMediaQuery}
+                        editMediaResults={editMediaResults}
+                        editMediaSearching={editMediaSearching}
+                        setEditLinkedMedia={setEditLinkedMedia}
+                        setEditMediaQuery={(q: string) => { setEditMediaQuery(q); triggerEditMediaSearch(q); }}
                       />
                     ))}
                   </>
@@ -1065,6 +1136,7 @@ function DraftCard({
   rejectFeedback, expandedNotes,
   onEdit, onSaveEdit, onCancelEdit, onApprove, onStartReject, onConfirmReject, onCancelReject, onDelete, onToggleNotes,
   setEditTitle, setEditOptions, setEditCorrectAnswer, setEditCategory, setEditShowTag, setEditMediaTitle, setEditPointsReward, setRejectFeedback,
+  editLinkedMedia, editMediaQuery, editMediaResults, editMediaSearching, setEditLinkedMedia, setEditMediaQuery,
 }: any) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
@@ -1076,6 +1148,9 @@ function DraftCard({
             {draft.category && <span className="text-xs text-gray-500">{draft.category}</span>}
             {draft.show_tag && <span className="text-xs text-purple-400">{draft.show_tag}</span>}
             {draft.partner_tag && <span className="text-xs bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded-full">{draft.partner_tag}</span>}
+            {draft.media_external_id
+              ? <span className="flex items-center gap-1 text-[10px] text-emerald-500/70"><LinkIcon size={9} />{draft.media_external_source}</span>
+              : <span className="flex items-center gap-1 text-[10px] text-amber-600/50"><LinkIcon size={9} />unlinked</span>}
           </div>
 
           {editing ? (
@@ -1144,6 +1219,60 @@ function DraftCard({
                   </p>
                 )}
               </div>
+
+              {/* ── Media item link ── */}
+              <div>
+                <label className="text-xs text-gray-500 mb-1.5 flex items-center gap-1">
+                  <Link2 size={10} />
+                  Link to media item
+                  <span className="text-gray-700 ml-1">— stores the exact external ID for analytics</span>
+                </label>
+                {editLinkedMedia ? (
+                  <div className="flex items-center gap-2 rounded-lg bg-emerald-900/20 border border-emerald-700/30 px-2.5 py-2">
+                    {editLinkedMedia.poster_url && <img src={editLinkedMedia.poster_url} alt="" className="w-6 h-8 object-cover rounded shrink-0" />}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-emerald-300 text-xs font-medium truncate">{editLinkedMedia.title}</p>
+                      <p className="text-gray-600 text-[10px]">{editLinkedMedia.external_source} · {editLinkedMedia.external_id}</p>
+                    </div>
+                    <button onClick={() => { setEditLinkedMedia(null); setEditMediaResults([]); }} className="p-0.5 text-gray-600 hover:text-gray-400">
+                      <X size={12} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="relative">
+                      <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-600" />
+                      <Input
+                        value={editMediaQuery}
+                        onChange={e => { setEditMediaQuery(e.target.value); triggerEditMediaSearch(e.target.value); }}
+                        placeholder="Search media to link…"
+                        className="pl-7 bg-gray-800 border-gray-700 text-white text-xs h-8"
+                      />
+                      {editMediaSearching && <Loader2 size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 animate-spin text-gray-600" />}
+                    </div>
+                    {editMediaResults.length > 0 && (
+                      <div className="rounded-lg border border-gray-700 overflow-hidden divide-y divide-gray-700/40">
+                        {editMediaResults.map((r, i) => (
+                          <button key={i} onClick={() => { setEditLinkedMedia(r); setEditMediaResults([]); }}
+                            className="w-full flex items-center gap-2 px-2.5 py-1.5 hover:bg-gray-800/60 transition-colors text-left">
+                            {r.poster_url
+                              ? <img src={r.poster_url} alt="" className="w-5 h-7 object-cover rounded shrink-0" />
+                              : <div className="w-5 h-7 bg-gray-700 rounded shrink-0" />}
+                            <div className="min-w-0">
+                              <p className="text-white text-xs truncate">{r.title}</p>
+                              <p className="text-gray-600 text-[10px]">{r.external_source}{r.year ? ` · ${r.year}` : ""}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {!editLinkedMedia && !editMediaResults.length && !editMediaSearching && (
+                      <p className="text-[10px] text-gray-700">Optional — links engagement to a specific title in your media database.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-2">
                 <Button onClick={onSaveEdit} size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">Save</Button>
                 <Button onClick={onCancelEdit} variant="outline" size="sm" className="border-gray-700 text-gray-400">Cancel</Button>
