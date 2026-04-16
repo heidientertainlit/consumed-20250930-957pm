@@ -5578,9 +5578,6 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'books' && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
               )}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'sports' && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Sports" />
-              )}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'podcasts' && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Podcasts" />
               )}
@@ -5752,10 +5749,6 @@ export default function Feed() {
               {renderPostBatchByIndex(30)}
               {renderPostBatchByIndex(31)}
 
-              {/* TRIVIA - Sports category */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Sports" />
-              )}
 
               {renderPostBatchByIndex(32)}
 
@@ -7435,7 +7428,6 @@ export default function Feed() {
                       <TriviaCarousel category="TV" />
                       <TriviaCarousel category="Books" />
                       <TriviaCarousel category="Music" />
-                      <TriviaCarousel category="Sports" />
                       <TriviaCarousel category="Podcasts" />
                       <TriviaCarousel category="Games" />
                       <TriviaCarousel category="Other" />
@@ -7459,7 +7451,6 @@ export default function Feed() {
                       <TriviaCarousel category="TV" challengesOnly />
                       <TriviaCarousel category="Books" challengesOnly />
                       <TriviaCarousel category="Music" challengesOnly />
-                      <TriviaCarousel category="Sports" challengesOnly />
                       <TriviaCarousel category="Podcasts" challengesOnly />
                       <TriviaCarousel category="Games" challengesOnly />
                     </>
