@@ -3184,13 +3184,20 @@ export default function Feed() {
     const sortedGroups = Array.from(byMedia.values())
       .sort((a, b) => b.length - a.length);
 
-    // Within each group keep recency order; flatten into final ordered list
+    // Within each group keep recency order; take only ONE post per media title
+    // (the most recent real-user post, or the first if all are personas)
+    // Other raters for the same media are shown via relatedRatings inside UGCGroupCard
     const finalOrder: any[] = [];
     for (const group of sortedGroups) {
       group.sort((a: any, b: any) =>
         new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
       );
-      finalOrder.push(...group);
+      // Prefer a real (non-persona, non-self) user's post as the representative card
+      const representative =
+        group.find((p: any) => p.user?.id !== currentAppUserId && !p.user?.is_persona) ||
+        group.find((p: any) => !p.user?.is_persona) ||
+        group[0];
+      finalOrder.push(representative);
     }
 
     // 10 posts per carousel — max 6 carousels total
