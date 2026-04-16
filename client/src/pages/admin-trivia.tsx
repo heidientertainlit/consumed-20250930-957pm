@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@supabase/supabase-js";
@@ -252,6 +252,21 @@ export default function AdminTriviaPage() {
       return data || [];
     },
   });
+
+  // Auto-advance batchStartDate to the day after the last scheduled Daily Call
+  // so new batches always append rather than collide with existing schedule
+  useEffect(() => {
+    if (!upcoming || upcoming.length === 0) return;
+    const featuredDates = upcoming
+      .filter(u => u.type === "predict" && u.featured_date)
+      .map(u => u.featured_date as string)
+      .sort();
+    if (featuredDates.length === 0) return;
+    const lastDate = featuredDates[featuredDates.length - 1];
+    const next = new Date(lastDate + "T12:00:00");
+    next.setDate(next.getDate() + 1);
+    setBatchStartDate(toLocalDateStr(next));
+  }, [upcoming]);
 
   async function handleGenerate() {
     setGenerating(true);
@@ -894,6 +909,9 @@ export default function AdminTriviaPage() {
             ) : (
               <>
                 <p className="text-xs text-gray-500">{upcoming.length} item{upcoming.length !== 1 ? "s" : ""} scheduled — already live in the app, appearing on their assigned dates.</p>
+                {upcoming.filter(u => u.type === "predict").length > 0 && (
+                  <p className="text-xs text-yellow-600/70">Next batch will start from: <strong>{new Date(batchStartDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</strong></p>
+                )}
 
                 {/* Featured Plays / Daily Calls section */}
                 {upcoming.filter(u => u.type === "predict").length > 0 && (() => {
