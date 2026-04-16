@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ChevronLeft, Lock, ChevronRight, Trophy, X, Loader2 } from "lucide-react";
+import { ChevronLeft, Lock, ChevronRight, Trophy, X, Loader2, Share2 } from "lucide-react";
 import Navigation from "@/components/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -239,6 +239,7 @@ function LeaderboardSheet({ pool, onClose }: { pool: Pool; onClose: () => void }
 
 export default function PlayPoolsPage() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const [leaderboardPool, setLeaderboardPool] = useState<Pool | null>(null);
   const [, forceUpdate] = useState(0);
   const [dbPools, setDbPools] = useState<Pool[]>([]);
@@ -365,11 +366,9 @@ export default function PlayPoolsPage() {
                   const completed = isCompleted(pool.showTag, round.difficulty);
 
                   return (
-                    <button
+                    <div
                       key={round.difficulty}
-                      disabled={!unlocked}
-                      onClick={() => setLocation(`/play/challenge/${encodeURIComponent(pool.showTag)}/${round.difficulty}`)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all active:scale-[0.98]"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all"
                       style={{
                         background: unlocked ? round.color + "0f" : "#f9fafb",
                         border: `1px solid ${unlocked ? round.color + "25" : "#e5e7eb"}`,
@@ -377,25 +376,47 @@ export default function PlayPoolsPage() {
                       }}
                     >
                       <div
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ background: unlocked ? round.color : "#d1d5db" }}
-                      />
-                      <div className="flex-1 text-left">
-                        <span className="text-gray-900 text-[13px] font-semibold">{round.label}</span>
-                        <span className="text-gray-400 text-[11px] ml-1.5">
-                          {round.questionCount} questions · {round.pointsEach} pts each
-                        </span>
+                        className={`flex-1 flex items-center gap-3 min-w-0 ${unlocked ? "cursor-pointer active:scale-[0.98]" : "cursor-not-allowed"}`}
+                        onClick={() => unlocked && setLocation(`/play/challenge/${encodeURIComponent(pool.showTag)}/${round.difficulty}`)}
+                      >
+                        <div
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ background: unlocked ? round.color : "#d1d5db" }}
+                        />
+                        <div className="flex-1 text-left">
+                          <span className="text-gray-900 text-[13px] font-semibold">{round.label}</span>
+                          <span className="text-gray-400 text-[11px] ml-1.5">
+                            {round.questionCount} questions · {round.pointsEach} pts each
+                          </span>
+                        </div>
+                        {!unlocked && <Lock size={12} className="text-gray-300 shrink-0" />}
+                        {completed && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0" style={{ background: round.color + "15", color: round.color }}>
+                            Done
+                          </span>
+                        )}
+                        {unlocked && !completed && <ChevronRight size={14} className="text-gray-400 shrink-0" />}
                       </div>
-                      {completed ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: round.color + "15", color: round.color }}>
-                          Done
-                        </span>
-                      ) : unlocked ? (
-                        <ChevronRight size={14} className="text-gray-400 shrink-0" />
-                      ) : (
-                        <Lock size={12} className="text-gray-300 shrink-0" />
+                      {unlocked && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const url = `${window.location.origin}/play/challenge/${encodeURIComponent(pool.showTag)}/${round.difficulty}${user?.id ? `?from=${user.id}` : ""}`;
+                            const text = `Can you beat me on ${pool.title} (${round.label}) on Consumed?`;
+                            if (navigator.share) {
+                              navigator.share({ title: "Challenge me on Consumed", text, url }).catch(() => {});
+                            } else {
+                              navigator.clipboard.writeText(`${text} ${url}`);
+                            }
+                          }}
+                          className="shrink-0 p-1.5 rounded-lg transition-colors"
+                          style={{ color: round.color, background: round.color + "15" }}
+                          title="Challenge a friend"
+                        >
+                          <Share2 size={13} />
+                        </button>
                       )}
-                    </button>
+                    </div>
                   );
                 })}
               </div>
