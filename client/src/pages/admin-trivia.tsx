@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth";
 import {
   Sparkles, Check, X, Clock, ArrowLeft, Loader2, Trash2, Pencil,
   ChevronDown, ChevronUp, Calendar, Star, Zap, Brain, Vote, Dna,
-  RefreshCw, Send, ListChecks, TrendingUp,
+  RefreshCw, Send, ListChecks, TrendingUp, AlertCircle,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -504,6 +504,33 @@ export default function AdminTriviaPage() {
     queryClient.invalidateQueries({ queryKey: ["trivia-poll-published"] });
   }
 
+  // Reschedule all featured plays — spread one per day starting from tomorrow
+  const [rescheduling, setRescheduling] = useState(false);
+  async function handleRescheduleFeaturedPlays() {
+    const featuredItems = upcoming
+      .filter(u => u.type === "predict")
+      .sort((a, b) => (a.featured_date || "").localeCompare(b.featured_date || ""));
+    if (featuredItems.length === 0) return;
+    setRescheduling(true);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let succeeded = 0;
+    let failed = 0;
+    for (let i = 0; i < featuredItems.length; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const dateStr = toLocalDateStr(d);
+      const { error } = await supabase
+        .from("prediction_pools")
+        .update({ featured_date: dateStr })
+        .eq("id", featuredItems[i].id);
+      if (error) failed++; else succeeded++;
+    }
+    setRescheduling(false);
+    toast({ title: `Rescheduled ${succeeded} Daily Calls${failed ? ` (${failed} failed)` : ""}`, description: "Dates spread one per day starting today." });
+    queryClient.invalidateQueries({ queryKey: ["trivia-poll-upcoming"] });
+  }
+
   const totalDraftCount = drafts.length + legacyApproved.length;
   const tabs = [
     { id: "generate", label: "Generate", icon: <Sparkles size={14} /> },
@@ -868,23 +895,49 @@ export default function AdminTriviaPage() {
               <>
                 <p className="text-xs text-gray-500">{upcoming.length} item{upcoming.length !== 1 ? "s" : ""} scheduled — already live in the app, appearing on their assigned dates.</p>
 
-                {/* Featured Plays section */}
-                {upcoming.filter(u => u.type === "predict").length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-yellow-400 uppercase tracking-wide mb-2">Featured Plays — 1 per day</p>
-                    <div className="space-y-1.5">
-                      {upcoming.filter(u => u.type === "predict").sort((a, b) => (a.featured_date || "").localeCompare(b.featured_date || "")).map(item => (
-                        <div key={item.id} className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2.5 flex items-center gap-3">
-                          <span className="text-xs text-yellow-600 font-mono w-20 shrink-0">
-                            {item.featured_date ? new Date(item.featured_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
-                          </span>
-                          <p className="text-sm text-white flex-1 truncate">{item.title}</p>
-                          {item.category && <span className="text-xs text-gray-500 shrink-0">{item.category}</span>}
+                {/* Featured Plays / Daily Calls section */}
+                {upcoming.filter(u => u.type === "predict").length > 0 && (() => {
+                  const featuredSorted = upcoming.filter(u => u.type === "predict").sort((a, b) => (a.featured_date || "").localeCompare(b.featured_date || ""));
+                  const dateCounts: Record<string, number> = {};
+                  featuredSorted.forEach(f => { const d = f.featured_date || "none"; dateCounts[d] = (dateCounts[d] || 0) + 1; });
+                  const hasDuplicates = Object.values(dateCounts).some(c => c > 1);
+                  return (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-semibold text-yellow-400 uppercase tracking-wide">Daily Calls — 1 per day</p>
+                        <button
+                          onClick={handleRescheduleFeaturedPlays}
+                          disabled={rescheduling}
+                          className="text-xs bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 border border-yellow-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                        >
+                          {rescheduling ? <Loader2 size={11} className="animate-spin" /> : <Calendar size={11} />}
+                          Spread Dates
+                        </button>
+                      </div>
+                      {hasDuplicates && (
+                        <div className="mb-2 bg-orange-900/30 border border-orange-500/40 rounded-lg px-3 py-2 flex items-start gap-2">
+                          <AlertCircle size={14} className="text-orange-400 mt-0.5 shrink-0" />
+                          <p className="text-xs text-orange-300">Multiple Daily Calls share the same date — only one will show per day. Tap <strong>Spread Dates</strong> to fix this.</p>
                         </div>
-                      ))}
+                      )}
+                      <div className="space-y-1.5">
+                        {featuredSorted.map(item => {
+                          const isDupe = item.featured_date && (dateCounts[item.featured_date] || 0) > 1;
+                          return (
+                            <div key={item.id} className={`border rounded-lg px-3 py-2.5 flex items-center gap-3 ${isDupe ? "bg-orange-900/20 border-orange-500/30" : "bg-gray-900 border-gray-800"}`}>
+                              <span className={`text-xs font-mono w-20 shrink-0 ${isDupe ? "text-orange-400" : "text-yellow-600"}`}>
+                                {item.featured_date ? new Date(item.featured_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "no date"}
+                              </span>
+                              <p className="text-sm text-white flex-1 truncate">{item.title}</p>
+                              {item.category && <span className="text-xs text-gray-500 shrink-0">{item.category}</span>}
+                              {isDupe && <AlertCircle size={12} className="text-orange-400 shrink-0" />}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Trivia section */}
                 {upcoming.filter(u => u.type === "trivia").length > 0 && (
