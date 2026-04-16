@@ -215,6 +215,33 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
             // Simple string options format - single question
             const optionsList = pool.options.filter((o: any) => typeof o === 'string');
             if (optionsList.length > 0) {
+              // Try to extract a media title from the question text when pool.media_title is absent
+              let singleMediaTitle = pool.media_title as string | undefined;
+              if (!singleMediaTitle && pool.title) {
+                const q = pool.title as string;
+                // Pattern: single-quoted title e.g. 'The Matrix'
+                const singleQuote = q.match(/['']([^'']+)['']/);
+                // Pattern: double-quoted title e.g. "The Matrix"
+                const doubleQuote = q.match(/"([^"]+)"/);
+                // Pattern: dash separator e.g. "The Matrix - question?"
+                const dashMatch = q.match(/^(.+?)\s*[-–—]\s*.+\??$/);
+                // Pattern: was/is/did ... released/from etc. e.g. "Was Interstellar released in..."
+                const wasMatch = q.match(/^(?:Was|Is|Does|Did|Which)\s+([A-Z][^?]+?)\s+(?:released|from|win|star|feature|made|based)/i);
+                // Pattern: "In [Title]," opener e.g. "In Inception, who..."
+                const inMatch = q.match(/^In\s+(?:the movie\s+|the show\s+|the film\s+)?['"]?([A-Z][A-Za-z0-9 :!?'-]+?)['"]?,/);
+                // Pattern: parenthetical movie name e.g. "...in The Matrix (1999)?"
+                const parenMatch = q.match(/\b([A-Z][A-Za-z0-9 :!'-]+?)\s+\(\d{4}\)/);
+
+                singleMediaTitle =
+                  singleQuote?.[1] ||
+                  doubleQuote?.[1] ||
+                  inMatch?.[1] ||
+                  parenMatch?.[1] ||
+                  dashMatch?.[1]?.trim() ||
+                  wasMatch?.[1]?.trim() ||
+                  undefined;
+              }
+
               items.push({
                 id: pool.id,
                 title: pool.title,
@@ -222,7 +249,7 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
                 options: optionsList,
                 correctAnswer: pool.correct_answer,
                 category: normalizeCategory(pool.category),
-                mediaTitle: pool.media_title,
+                mediaTitle: singleMediaTitle,
                 pointsReward: 10,
                 isChallenge: false,
                 questionCount: 1,
