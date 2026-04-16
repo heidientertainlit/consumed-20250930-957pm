@@ -119,7 +119,7 @@ export default function PlayPoolsPage() {
       <div className="px-4 pt-5 pb-28 space-y-4">
 
         <p className="text-purple-600 text-[11px] font-bold uppercase tracking-widest">
-          Start a new challenge
+          Pick a Pool
         </p>
 
         {POOLS.map((pool) => {
