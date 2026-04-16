@@ -86,7 +86,10 @@ export function ChallengePoolsFeedBanner() {
         <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5 border-b border-gray-50">
           <div className="flex items-center gap-2">
             <Users size={14} className="text-purple-500" />
-            <span className="text-[13px] font-bold text-gray-900">Play with Friends</span>
+            <div>
+              <span className="text-[13px] font-bold text-gray-900">Play with Friends</span>
+              <p className="text-[10px] text-gray-400 font-medium mt-0 leading-tight">Who knows more?</p>
+            </div>
           </div>
           <button
             onClick={() => setLocation("/play/pools")}
