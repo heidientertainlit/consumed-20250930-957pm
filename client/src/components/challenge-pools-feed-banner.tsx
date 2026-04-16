@@ -88,7 +88,7 @@ export function ChallengePoolsFeedBanner() {
             <Users size={14} className="text-purple-500" />
             <div>
               <span className="text-[13px] font-bold text-gray-900">Play with Friends</span>
-              <p className="text-[10px] text-gray-400 font-medium mt-0 leading-tight">Who knows more?</p>
+              <p className="text-[10px] text-gray-400 font-medium mt-0 leading-tight">Think you know more?</p>
             </div>
           </div>
           <button
