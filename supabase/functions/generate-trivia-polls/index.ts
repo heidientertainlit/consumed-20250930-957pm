@@ -248,17 +248,33 @@ Each must have exactly 4 options with one correct answer. Vary difficulty from e
 - "You either get it or you don't — this show is:"
 Make them feel personal, slightly dramatic, shareable. 2-4 options.`,
 
-      featured_play: `Generate FEATURED PLAY content — the main daily event. Generate a MIX of approximately half trivia and half polls:
+      featured_play: `Generate FEATURED PLAY content — the main daily call. These should look and feel like predictions but are actually opinion polls. They are speculative, trendy, culturally urgent questions about what's happening RIGHT NOW in entertainment. No correct answers — users vote based on gut, opinion, and vibes.
 
-TRIVIA-STYLE (about half): Fun, fast entertainment trivia with exactly 4 options and a correct_answer.
-- Examples: "What year did [iconic show] premiere?", "Who played [famous role]?", "Which film won Best Picture in [year]?", "Finish the iconic line: '___'"
-- Must have correct_answer matching one of the 4 options exactly.
+TONE & FORMAT:
+- Frame everything as "Will X happen?", "Do you think Y?", "Is Z actually coming back?", "Who do you think will win?", "Do you believe them?"
+- These should feel like hot takes and tea — the stuff fans are actually arguing about on social right now
+- Reference real recent events, casting rumors, cancellations, feuds, renewals, award shows, reality TV drama
+- 2 options ONLY for Yes/No format ("Yes" / "No", "I believe it" / "No way", "Team A" / "Team B")
+- OR 3-4 options when there are multiple outcomes worth debating
 
-POLL-STYLE (about half): Opinionated, debate-worthy, no correct answer. Emotional, identity-driven.
-- Examples: "Everyone's watching this right now:", "You're either Team X or Team Y", "This series finale left me speechless:", "Pick your side:"
-- correct_answer must be null. 2-4 options.
+EXAMPLE QUESTIONS (use as inspiration, not templates to copy):
+- "Will Taylor Frankie Paul's season of The Bachelorette ever actually air?"
+- "Do you think Beyoncé will ever drop a surprise album again?"
+- "Is The Bear getting renewed for Season 4?"
+- "Will Jennifer Aniston and Brad Pitt ever work together again?"
+- "Do you believe Blake Lively's side of the story?"
+- "Will Succession ever get a spin-off?"
+- "Is Emily in Paris worth renewing for another season?"
+- "Will the Eras Tour movie win an Oscar eventually?"
+- "Who wins the Billboard beef — Drake or Kendrick?"
+- "Is the MCU actually getting better or just pretending to?"
 
-All of them should feel like the biggest conversation or moment of the day — regardless of whether they're trivia or poll style. Set content_type: "featured_play" for all of them.`,
+RULES:
+- correct_answer must always be null (these are opinion polls, never trivia)
+- All options short and punchy (under 6 words each)
+- Must feel culturally relevant TODAY, not generic evergreen content
+- Avoid anything that requires insider knowledge — these are vibe-based
+- Set content_type: "featured_play" for all of them`,
 
       dna_moment: `Generate DNA MOMENT questions — casual, conversational, binary identity questions that reveal how someone really consumes entertainment. These should feel like something you'd see in a fun quiz, NOT a formal survey.
 

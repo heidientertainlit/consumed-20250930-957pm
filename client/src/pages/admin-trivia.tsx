@@ -58,10 +58,10 @@ const CONTENT_TYPE_CONFIG: Record<string, { label: string; color: string; icon: 
     description: "Opinion questions — no right answer",
   },
   featured_play: {
-    label: "Featured Play",
+    label: "Daily Call",
     color: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
     icon: <Star size={12} />,
-    description: "Main daily event — the biggest conversation",
+    description: "Speculative prediction-polls — trending hot takes, will-it-happen questions",
   },
   dna_moment: {
     label: "DNA Moment",
@@ -564,7 +564,7 @@ export default function AdminTriviaPage() {
                   { id: "mixed", label: "Mixed Batch", desc: "Trivia + polls for weekly drops", icon: <Zap size={16} /> },
                   { id: "trivia", label: "Trivia Only", desc: "4 options, 1 correct", icon: <Brain size={16} /> },
                   { id: "poll", label: "Polls Only", desc: "Opinion, no right answer", icon: <Vote size={16} /> },
-                  { id: "featured_play", label: "Featured Play", desc: "1 per day · generate 31 at a time", icon: <Star size={16} /> },
+                  { id: "featured_play", label: "Daily Call", desc: "Speculative polls · 1 per day · generate 31 at a time", icon: <Star size={16} /> },
                   { id: "dna_moment", label: "DNA Moments", desc: "Binary identity questions", icon: <Dna size={16} /> },
                 ].map(opt => (
                   <button
