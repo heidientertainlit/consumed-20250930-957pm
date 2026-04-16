@@ -254,20 +254,20 @@ serve(async (req) => {
       }
     }
 
-    // --- Rating comparison cards (tiebreaker edition) ---
-    // Find pairs of FRIENDS who disagree on the same media, and only show to the current user
-    // if they haven't rated that media yet — so they become the deciding vote
-    if (friendIds.length >= 2) {
-      const { data: allFriendRatings } = await adminClient
+    // --- Rating tiebreaker cards ---
+    // Find ANY two public users who disagree on the same media, and only show to the current user
+    // if they haven't rated that media yet — they become the deciding vote
+    {
+      const { data: publicRatings } = await adminClient
         .from('social_posts')
-        .select('user_id, media_external_id, media_title, rating')
-        .in('user_id', friendIds)
+        .select('user_id, media_external_id, media_external_source, media_title, media_image_url, media_type, rating')
         .not('rating', 'is', null)
         .not('media_external_id', 'is', null)
+        .neq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(200);
 
-      if (allFriendRatings && allFriendRatings.length > 0) {
+      if (publicRatings && publicRatings.length > 0) {
         // Fetch current user's rated media to exclude already-rated titles
         const { data: myRatings } = await adminClient
           .from('social_posts')
@@ -276,25 +276,45 @@ serve(async (req) => {
           .not('rating', 'is', null);
         const myRatedIds = new Set((myRatings || []).map((r: any) => r.media_external_id));
 
-        // Group friend ratings by media
-        const byMedia: Record<string, Array<{ userId: string; rating: number; title: string }>> = {};
-        for (const r of allFriendRatings) {
-          if (!byMedia[r.media_external_id]) byMedia[r.media_external_id] = [];
-          // Keep the most recent rating per user per media
-          if (!byMedia[r.media_external_id].find((x) => x.userId === r.user_id)) {
-            byMedia[r.media_external_id].push({ userId: r.user_id, rating: r.rating, title: r.media_title });
+        // Fetch names for all raters we don't have yet
+        const raterIds = [...new Set(publicRatings.map((r: any) => r.user_id))];
+        const missingRaterIds = raterIds.filter((id: string) => !userMap[id]);
+        if (missingRaterIds.length > 0) {
+          const { data: raterUsers } = await adminClient
+            .from('users')
+            .select('id, user_name, display_name')
+            .in('id', missingRaterIds);
+          for (const u of raterUsers || []) {
+            userMap[u.id] = cleanName(u.display_name, u.user_name);
           }
         }
 
-        // Find friend-vs-friend conflicts where the current user hasn't weighed in yet
-        type Conflict = { mediaId: string; mediaTitle: string; friendA: string; ratingA: number; friendB: string; ratingB: number };
+        // Group by media, keep most recent rating per user
+        type RaterEntry = { userId: string; rating: number; title: string; externalSource: string; imageUrl: string; mediaType: string };
+        const byMedia: Record<string, RaterEntry[]> = {};
+        for (const r of publicRatings) {
+          if (!byMedia[r.media_external_id]) byMedia[r.media_external_id] = [];
+          if (!byMedia[r.media_external_id].find((x) => x.userId === r.user_id)) {
+            byMedia[r.media_external_id].push({
+              userId: r.user_id,
+              rating: r.rating,
+              title: r.media_title,
+              externalSource: r.media_external_source || 'tmdb',
+              imageUrl: r.media_image_url || '',
+              mediaType: r.media_type || 'movie',
+            });
+          }
+        }
+
+        type Conflict = {
+          mediaId: string; mediaTitle: string; externalSource: string; imageUrl: string; mediaType: string;
+          friendA: string; ratingA: number; friendB: string; ratingB: number;
+        };
         const conflicts: Conflict[] = [];
-        const agreements: Array<{ mediaId: string; mediaTitle: string; friendA: string; friendB: string; rating: number }> = [];
 
         for (const [mediaId, raters] of Object.entries(byMedia)) {
-          if (myRatedIds.has(mediaId)) continue; // skip — current user already rated
+          if (myRatedIds.has(mediaId)) continue;
           if (raters.length < 2) continue;
-
           for (let i = 0; i < raters.length; i++) {
             for (let j = i + 1; j < raters.length; j++) {
               const diff = Math.abs(raters[i].rating - raters[j].rating);
@@ -302,19 +322,13 @@ serve(async (req) => {
                 conflicts.push({
                   mediaId,
                   mediaTitle: raters[i].title || raters[j].title || 'this',
+                  externalSource: raters[i].externalSource,
+                  imageUrl: raters[i].imageUrl || raters[j].imageUrl,
+                  mediaType: raters[i].mediaType,
                   friendA: userMap[raters[i].userId] || 'Someone',
                   ratingA: raters[i].rating,
                   friendB: userMap[raters[j].userId] || 'Someone',
                   ratingB: raters[j].rating,
-                });
-                break;
-              } else if (diff === 0 && raters[i].rating >= 4) {
-                agreements.push({
-                  mediaId,
-                  mediaTitle: raters[i].title || raters[j].title || 'this',
-                  friendA: userMap[raters[i].userId] || 'Someone',
-                  friendB: userMap[raters[j].userId] || 'Someone',
-                  rating: raters[i].rating,
                 });
                 break;
               }
@@ -322,7 +336,6 @@ serve(async (req) => {
           }
         }
 
-        // Add up to 2 tiebreaker conflict cards
         const shuffledConflicts = conflicts.sort(() => Math.random() - 0.5);
         for (const c of shuffledConflicts.slice(0, 2)) {
           const higher = c.ratingA >= c.ratingB ? { name: c.friendA, stars: c.ratingA } : { name: c.friendB, stars: c.ratingB };
@@ -333,19 +346,18 @@ serve(async (req) => {
             id: `rating-clash-${c.mediaId}`,
             icon: 'flame',
             text: `${higher.name} gave ${c.mediaTitle} ${highStr} stars. ${lower.name} gave it ${lowStr}. Who's right?`,
-            link: '/play/polls',
-          });
-        }
-
-        // Add up to 1 agreement card (still shows friend-vs-friend agreement)
-        const shuffledAgreements = agreements.sort(() => Math.random() - 0.5);
-        for (const a of shuffledAgreements.slice(0, 1)) {
-          const stars = a.rating % 1 === 0 ? a.rating.toFixed(0) : a.rating.toFixed(1);
-          items.push({
-            id: `rating-agree-${a.mediaId}`,
-            icon: 'users',
-            text: `${a.friendA} and ${a.friendB} both gave ${a.mediaTitle} ${stars} stars — see if you agree`,
-            link: '/leaderboard',
+            link: null,
+            conflictData: {
+              mediaExternalId: c.mediaId,
+              mediaExternalSource: c.externalSource,
+              mediaTitle: c.mediaTitle,
+              mediaImage: c.imageUrl,
+              mediaType: c.mediaType,
+              friendAName: higher.name,
+              friendARating: higher.stars,
+              friendBName: lower.name,
+              friendBRating: lower.stars,
+            },
           });
         }
       }

@@ -2922,6 +2922,43 @@ export default function Feed() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Tiebreaker rating sheet — "Who's right?" conflict cards
+  const [activeTiebreaker, setActiveTiebreaker] = useState<{
+    mediaExternalId: string;
+    mediaExternalSource: string;
+    mediaTitle: string;
+    mediaImage: string;
+    mediaType: string;
+    friendAName: string;
+    friendARating: number;
+    friendBName: string;
+    friendBRating: number;
+  } | null>(null);
+  const [tiebreakerHover, setTiebreakerHover] = useState(0);
+  const [tiebreakerRating, setTiebreakerRating] = useState(0);
+  const [tiebreakerSubmitted, setTiebreakerSubmitted] = useState(false);
+
+  const handleTiebreakerRate = async (rating: number) => {
+    if (!session?.access_token || !activeTiebreaker) return;
+    setTiebreakerRating(rating);
+    setTiebreakerSubmitted(true);
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/rate-media`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          media_external_id: activeTiebreaker.mediaExternalId,
+          media_external_source: activeTiebreaker.mediaExternalSource,
+          media_title: activeTiebreaker.mediaTitle,
+          media_type: activeTiebreaker.mediaType,
+          media_image_url: activeTiebreaker.mediaImage,
+          rating,
+          skip_social_post: false,
+        }),
+      });
+    } catch { /* best effort */ }
+  };
 
   const { 
     data: infinitePosts, 
@@ -3261,6 +3298,31 @@ export default function Feed() {
       play:        { Icon: Play,      iconColor: 'text-purple-500', bgColor: 'bg-purple-400/20' },
     };
     const { Icon, iconColor, bgColor } = iconConfig[item.icon] || iconConfig.trophy;
+
+    // "Who's right?" conflict cards open the tiebreaker rating sheet
+    if (item.icon === 'flame' && item.conflictData) {
+      return (
+        <button
+          key={item.id}
+          onClick={() => {
+            setActiveTiebreaker(item.conflictData);
+            setTiebreakerRating(0);
+            setTiebreakerHover(0);
+            setTiebreakerSubmitted(false);
+          }}
+          className="w-full text-left"
+        >
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-orange-50/80 border border-orange-100 mb-2 active:opacity-75 transition-opacity">
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${bgColor}`}>
+              <Icon size={15} className={iconColor} />
+            </div>
+            <p className="text-sm text-orange-900/80 flex-1 leading-snug">{item.text}</p>
+            <ChevronRight size={14} className="text-orange-300 shrink-0" />
+          </div>
+        </button>
+      );
+    }
+
     const dest = item.link || '/leaderboard?tab=engagement';
     return (
       <Link key={item.id} to={dest}>
@@ -7694,6 +7756,111 @@ export default function Feed() {
         </div>
       </div>
 
+
+      {/* Tiebreaker Rating Sheet — "Who's right?" conflict cards */}
+      {activeTiebreaker && (
+        <div
+          className="fixed inset-0 z-50 flex items-end"
+          onClick={() => setActiveTiebreaker(null)}
+        >
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="relative w-full bg-white rounded-t-3xl px-5 pt-5 pb-10 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[11px] font-bold tracking-widest uppercase text-purple-600">What's Your Take?</p>
+              <button onClick={() => setActiveTiebreaker(null)} className="text-gray-400 hover:text-gray-600">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Media info */}
+            <div className="flex gap-3 items-start mb-4">
+              {activeTiebreaker.mediaImage && activeTiebreaker.mediaImage.startsWith('http') && (
+                <img
+                  src={activeTiebreaker.mediaImage}
+                  alt={activeTiebreaker.mediaTitle}
+                  className="w-14 h-[84px] rounded-xl object-cover shadow-md flex-shrink-0"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900 text-base leading-tight mb-3">{activeTiebreaker.mediaTitle}</p>
+                {/* The two sides of the conflict */}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-700">{activeTiebreaker.friendAName}</span>
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5].map(s => (
+                        <Star key={s} size={11} className={s <= Math.floor(activeTiebreaker.friendARating) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(activeTiebreaker.friendARating) && activeTiebreaker.friendARating % 1 >= 0.5 ? 'text-yellow-200 fill-yellow-200' : 'text-gray-200'} />
+                      ))}
+                      <span className="text-[10px] text-gray-500 ml-1">{activeTiebreaker.friendARating}/5</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-700">{activeTiebreaker.friendBName}</span>
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5].map(s => (
+                        <Star key={s} size={11} className={s <= Math.floor(activeTiebreaker.friendBRating) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(activeTiebreaker.friendBRating) && activeTiebreaker.friendBRating % 1 >= 0.5 ? 'text-yellow-200 fill-yellow-200' : 'text-gray-200'} />
+                      ))}
+                      <span className="text-[10px] text-gray-500 ml-1">{activeTiebreaker.friendBRating}/5</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Star rating or success state */}
+            {tiebreakerSubmitted ? (
+              <div className="text-center py-4">
+                <div className="flex items-center justify-center gap-0.5 mb-2">
+                  {[1,2,3,4,5].map(s => (
+                    <Star key={s} size={24} className={s <= Math.floor(tiebreakerRating) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(tiebreakerRating) && tiebreakerRating % 1 >= 0.5 ? 'text-yellow-200 fill-yellow-200' : 'text-gray-200'} />
+                  ))}
+                </div>
+                <p className="text-sm font-semibold text-gray-800">You gave it {tiebreakerRating}/5 — verdict in!</p>
+                <p className="text-xs text-gray-500 mt-1">Your rating has been added to the feed</p>
+                <button onClick={() => setActiveTiebreaker(null)} className="mt-4 bg-purple-600 text-white text-sm font-semibold px-6 py-2 rounded-full">Done</button>
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs text-gray-500 text-center mb-3">Tap a star to cast your vote</p>
+                <div className="flex items-center justify-center gap-2 touch-none select-none"
+                  onMouseLeave={() => setTiebreakerHover(0)}
+                >
+                  {[1,2,3,4,5].map(star => {
+                    const displayVal = tiebreakerHover || tiebreakerRating;
+                    return (
+                      <div key={star} className="relative" style={{ width: 44, height: 44 }}>
+                        <Star size={44} className="absolute inset-0 text-gray-200" />
+                        <div className="absolute inset-0 overflow-hidden pointer-events-none"
+                          style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
+                          <Star size={44} className={tiebreakerHover > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
+                        </div>
+                        <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }}
+                          onMouseEnter={() => setTiebreakerHover(star - 0.5)}
+                          onClick={() => handleTiebreakerRate(star - 0.5)}
+                          aria-label={`Rate ${star - 0.5}`}
+                        />
+                        <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }}
+                          onMouseEnter={() => setTiebreakerHover(star)}
+                          onClick={() => handleTiebreakerRate(star)}
+                          aria-label={`Rate ${star}`}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                {tiebreakerHover > 0 && (
+                  <p className="text-center text-sm text-gray-500 mt-2">{tiebreakerHover}/5</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <QuickAddModal
         isOpen={isTrackModalOpen}
