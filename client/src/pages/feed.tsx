@@ -1671,7 +1671,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   }, [post.externalId, post.externalSource, currentUserId]);
 
   useEffect(() => {
-    const isRating = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review';
+    const isRating = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review' || post.type === 'thought';
     if (!isRating) return;
     const externalId = post.externalId || post.mediaItems?.[0]?.externalId;
     const externalSource = post.externalSource || post.mediaItems?.[0]?.externalSource;
@@ -1698,7 +1698,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   useEffect(() => {
     const postUserId = post.user?.id;
     if (!postUserId || !currentUserId || postUserId === currentUserId) return;
-    const isRating = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review';
+    const isRating = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review' || post.type === 'thought';
     if (!isRating) return;
     supabase
       .from('media_ratings')
@@ -1834,7 +1834,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     ? { label: 'Leaderboard', color: 'text-purple-500', bg: 'bg-purple-50', icon: Trophy }
     : getTypeInfo(post.type);
   const TypeIcon = typeInfo.icon;
-  const isRatingType = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review';
+  const isRatingType = post.type === 'rating' || post.type === 'rate-review' || post.type === 'review' || post.type === 'thought';
   // Normalize media type for case-insensitive icon checks (handles 'Movie', 'TV Show', 'Podcast', etc.)
   const spMediaTypeNorm = (() => {
     const t = (post.mediaType || '').toLowerCase();
@@ -1847,6 +1847,40 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     if (spMediaTypeNorm === 'book') return { idle: 'Read it', done: 'Read!' };
     return { idle: 'Seen it', done: 'Seen!' };
   })();
+
+  const spIsOtherUser = post.user?.id !== currentUserId;
+  const spIsActionFirst = isRatingType && spIsOtherUser && !ratingSubmitted && !!session?.access_token;
+
+  const spRatingDiffLine = (rating: number, extraClass = '') => {
+    const ref = externalRating !== null ? externalRating / 2 : communityRating;
+    if (ref === null) return null;
+    const diff = rating - ref;
+    if (Math.abs(diff) <= 0.3) return <p className={`text-[11px] text-gray-400 ${extraClass}`}>= Average rating</p>;
+    if (diff > 0) return <p className={`text-[11px] text-green-600 ${extraClass}`}>↑ {diff.toFixed(1)} above avg</p>;
+    return <p className={`text-[11px] text-orange-500 ${extraClass}`}>↓ {Math.abs(diff).toFixed(1)} below avg</p>;
+  };
+
+  const spPosterEl = post.mediaImage && post.mediaImage.startsWith('http') ? (
+    <div className="relative flex-shrink-0 self-start w-16 h-[96px]">
+      {post.externalId && post.externalSource ? (
+        <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
+          <img src={post.mediaImage} alt={post.mediaTitle} className="w-16 h-[96px] rounded-xl object-cover shadow-md cursor-pointer hover:opacity-90 transition-opacity" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        </Link>
+      ) : (
+        <img src={post.mediaImage} alt={post.mediaTitle} className="w-16 h-[96px] rounded-xl object-cover shadow-md" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+      )}
+      {spMediaTypeNorm && (
+        <div className="absolute bottom-1 left-1 bg-purple-600/50 backdrop-blur-sm rounded-md p-1">
+          {spMediaTypeNorm === 'tv' && <Tv2 size={9} className="text-white" />}
+          {spMediaTypeNorm === 'movie' && <Film size={9} className="text-white" />}
+          {spMediaTypeNorm === 'book' && <Book size={9} className="text-white" />}
+          {spMediaTypeNorm === 'music' && <Music size={9} className="text-white" />}
+          {spMediaTypeNorm === 'podcast' && <Headphones size={9} className="text-white" />}
+          {spMediaTypeNorm === 'game' && <Gamepad2 size={9} className="text-white" />}
+        </div>
+      )}
+    </div>
+  ) : null;
 
   const timeAgo = (dateStr?: string) => {
     if (!dateStr) return '';
@@ -1887,404 +1921,348 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   return (
     <>
     <div className="bg-white rounded-2xl border border-gray-100 shadow overflow-hidden mb-3">
-      <div className="px-4 pt-4 pb-3">
-        {/* Header: avatar · name · timestamp · type pill · actions */}
-        <div className="flex items-center gap-2 mb-2.5">
-          <Link href={`/user/${post.user?.id || ''}`}>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer flex-shrink-0">
-              {post.user?.avatar ? (
-                <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-              ) : avatarLetter}
+      {spIsActionFirst ? (
+        // ACTION FIRST layout — gray WHAT'S YOUR TAKE section, then FROM YOUR FEED + friend's content
+        <>
+          <div className="px-4 pt-4 pb-4 bg-gray-50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase">What's Your Take?</p>
+              <span className="text-[10px] font-bold text-gray-500 px-2 py-0.5 rounded-full bg-white border border-gray-200">+10 pts</span>
             </div>
-          </Link>
-          <div className="flex-1 min-w-0">
-            <Link href={`/user/${post.user?.id || ''}`}>
-              <span className="font-medium text-sm text-gray-900 hover:text-purple-600 cursor-pointer">
-                {isRatingType ? `${displayName}'s Take` : displayName}
-              </span>
-            </Link>
-            {!isRatingType && (
-              <span className="text-xs text-gray-400"> · {timeAgo(post.timestamp)}</span>
-            )}
-          </div>
-          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 ${typeInfo.bg} ${typeInfo.color}`}>
-            {typeInfo.label}
-          </span>
-          {currentUserId && post.user?.id === currentUserId && onDeletePost && (
-            <button onClick={() => onDeletePost(post.id)} className="text-gray-300 hover:text-red-500 p-1 shrink-0">
-              <Trash2 size={14} />
-            </button>
-          )}
-          {currentUserId && post.user?.id !== currentUserId && (
-            <button
-              onClick={() => setIsReportOpen(true)}
-              className="text-gray-300 hover:text-orange-400 p-1 shrink-0 transition-colors"
-            >
-              <Flag size={13} />
-            </button>
-          )}
-        </div>
-
-        {!post.mediaTitle && post.rating && post.rating > 0 && (
-          <div className="flex items-center gap-0.5 mb-1">
-            {[1, 2, 3, 4, 5].map(s => {
-              const r = post.rating!;
-              if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
-              if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
-              return <Star key={s} size={13} className="text-gray-200" />;
-            })}
-          </div>
-        )}
-
-        {displayContent && !post.mediaTitle && (
-          <p className="text-gray-700 text-sm leading-relaxed">{displayContent}</p>
-        )}
-
-        {post.mediaTitle && (
-          <div className="flex gap-3 mt-2">
-            {post.mediaImage && post.mediaImage.startsWith('http') && (
-              post.externalId && post.externalSource ? (
-                <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-                  <div className="relative flex-shrink-0 self-start w-20 h-[120px]">
-                    <img
-                      src={post.mediaImage}
-                      alt={post.mediaTitle}
-                      className="w-20 h-[120px] rounded-xl object-cover shadow-md cursor-pointer hover:opacity-90 transition-opacity"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                    {spMediaTypeNorm && (
-                      <div className="absolute bottom-1.5 left-1.5 bg-purple-600/50 backdrop-blur-sm rounded-md p-1">
-                        {spMediaTypeNorm === 'tv' && <Tv2 size={10} className="text-white" />}
-                        {spMediaTypeNorm === 'movie' && <Film size={10} className="text-white" />}
-                        {spMediaTypeNorm === 'book' && <Book size={10} className="text-white" />}
-                        {spMediaTypeNorm === 'music' && <Music size={10} className="text-white" />}
-                        {spMediaTypeNorm === 'podcast' && <Headphones size={10} className="text-white" />}
-                        {spMediaTypeNorm === 'game' && <Gamepad2 size={10} className="text-white" />}
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              ) : (
-                <div className="relative flex-shrink-0 self-start w-20 h-[120px]">
-                  <img
-                    src={post.mediaImage}
-                    alt={post.mediaTitle}
-                    className="w-20 h-[120px] rounded-xl object-cover shadow-md"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                  {spMediaTypeNorm && (
-                    <div className="absolute bottom-1.5 left-1.5 bg-purple-600/50 backdrop-blur-sm rounded-md p-1">
-                      {spMediaTypeNorm === 'tv' && <Tv2 size={10} className="text-white" />}
-                      {spMediaTypeNorm === 'movie' && <Film size={10} className="text-white" />}
-                      {spMediaTypeNorm === 'book' && <Book size={10} className="text-white" />}
-                      {spMediaTypeNorm === 'music' && <Music size={10} className="text-white" />}
-                      {spMediaTypeNorm === 'podcast' && <Headphones size={10} className="text-white" />}
-                      {spMediaTypeNorm === 'game' && <Gamepad2 size={10} className="text-white" />}
-                    </div>
-                  )}
-                </div>
-              )
-            )}
-            <div className="min-w-0 flex-1 flex flex-col justify-center">
-              {post.externalId && post.externalSource ? (
-                <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-                  <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{post.mediaTitle}</p>
-                </Link>
-              ) : (
-                <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
-              )}
-              {post.rating && post.rating > 0 && (
-                <div className="flex items-center gap-0.5 mt-1">
-                  {[1, 2, 3, 4, 5].map(s => {
-                    const r = post.rating!;
-                    if (s <= Math.floor(r)) return <Star key={s} size={14} className="text-yellow-400 fill-yellow-400" />;
-                    if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={14} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={14} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                    return <Star key={s} size={14} className="text-gray-200" />;
-                  })}
-                </div>
-              )}
-              {post.rating && post.rating > 0 && (() => {
-                const refRating = externalRating ?? communityRating;
-                if (refRating === null) return null;
-                const ratingDiff = post.rating - refRating;
-                if (Math.abs(ratingDiff) <= 0.3) return <p className="text-[11px] text-gray-400 mt-0.5">On par with average</p>;
-                if (ratingDiff > 0) return <p className="text-[11px] text-green-600 mt-0.5">↑ {ratingDiff.toFixed(1)} above average</p>;
-                return <p className="text-[11px] text-orange-500 mt-0.5">↓ {Math.abs(ratingDiff).toFixed(1)} below average</p>;
-              })()}
-              {tasteAlignment !== null && post.user?.id !== currentUserId && (
-                <p className="text-[11px] text-purple-500 mt-0.5">
-                  You're {tasteAlignment}% aligned with {displayName}'s taste overall
-                </p>
-              )}
-              {displayContent && (
-                post.containsSpoilers && !isSpoilerRevealed ? (
-                  <div className="relative mt-1.5">
-                    <p className="text-gray-700 text-sm leading-relaxed blur-md select-none line-clamp-3">{displayContent}</p>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setIsSpoilerRevealed(true); }}
-                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg transition-all flex items-center gap-1"
-                      >
-                        <Eye size={12} />
-                        <span>Show Spoiler</span>
-                      </button>
-                    </div>
-                  </div>
+            <div className="flex items-center gap-3 mb-3">
+              {spPosterEl}
+              <div className="flex-1 min-w-0">
+                {post.externalId && post.externalSource ? (
+                  <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
+                    <p className="text-sm font-bold text-gray-900 hover:text-purple-600 line-clamp-2">{post.mediaTitle}</p>
+                  </Link>
                 ) : (
-                  <div onClick={() => setContentExpanded(e => !e)} className="cursor-pointer">
-                    <p className={`text-gray-700 text-sm leading-relaxed mt-1.5 ${contentExpanded ? '' : 'line-clamp-3'}`}>{displayContent}</p>
-                    {!contentExpanded && displayContent.length > 120 && (
-                      <span className="text-purple-500 text-xs font-medium">Read more</span>
-                    )}
-                  </div>
-                )
-              )}
-            </div>
-          </div>
-        )}
-        {post.mediaTitle && !(post.mediaImage && post.mediaImage.startsWith('http')) && displayContent && (
-          post.containsSpoilers && !isSpoilerRevealed ? (
-            <div className="relative mt-2">
-              <p className="text-gray-800 text-sm leading-relaxed blur-md select-none">{displayContent}</p>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <button
-                  onClick={(e) => { e.stopPropagation(); setIsSpoilerRevealed(true); }}
-                  className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg transition-all flex items-center gap-1"
-                >
-                  <Eye size={12} />
-                  <span>Show Spoiler</span>
-                </button>
+                  <p className="text-sm font-bold text-gray-900 line-clamp-2">{post.mediaTitle || 'Untitled'}</p>
+                )}
+                <p className="text-[11px] text-gray-400 mt-0.5">Have you seen it? Rate it.</p>
+                {tasteAlignment !== null && (
+                  <p className="text-[11px] text-violet-600 italic mt-0.5">
+                    You're {tasteAlignment}% aligned with {displayName}'s taste overall
+                  </p>
+                )}
               </div>
             </div>
-          ) : (
-            <p className="text-gray-800 text-sm leading-relaxed mt-2">{displayContent}</p>
-          )
-        )}
-
-        {/* Your Turn — inline star rating for rating/review posts */}
-        {(post.mediaTitle || resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId) && currentUserId && post.user?.id !== currentUserId && (showStarPicker || (isRatingType && !ratingSubmitted)) && (
-          <div className="border-t border-gray-100 mt-3 pt-3">
-            {true && (
-              <>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-[10px] font-bold text-purple-600 tracking-widest uppercase">{showStarPicker && ratingSubmitted ? 'Change Rating' : 'Your Turn'}</p>
-                  {showStarPicker && ratingSubmitted && (
-                    <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove rating</button>
-                  )}
+            <div
+              ref={starsRef}
+              className="flex items-center gap-1.5 touch-none select-none"
+              onMouseLeave={() => setHoverRating(0)}
+              onTouchMove={(e) => {
+                e.stopPropagation();
+                if (!starsRef.current) return;
+                const touch = e.touches[0];
+                const rect = starsRef.current.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const starWidth = rect.width / 5;
+                const starIndex = Math.floor(x / starWidth);
+                const withinStar = (x % starWidth) / starWidth;
+                const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
+                setHoverRating(Math.round(val * 2) / 2);
+              }}
+              onTouchEnd={(e) => {
+                e.stopPropagation();
+                if (hoverRating > 0) handleSubmitRating(hoverRating);
+                setHoverRating(0);
+              }}
+            >
+              {[1, 2, 3, 4, 5].map(star => (
+                <div key={star} className="relative" style={{ width: 38, height: 38 }}>
+                  <Star size={38} className="absolute inset-0 text-violet-200" />
+                  <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: hoverRating >= star ? '100%' : hoverRating >= star - 0.5 ? '50%' : '0%' }}>
+                    <Star size={38} className="fill-yellow-400 text-yellow-400" />
+                  </div>
+                  <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
+                  <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
                 </div>
-                <div
-                  ref={starsRef}
-                  className="flex items-center gap-0.5 touch-none select-none"
-                  onMouseLeave={() => setHoverRating(0)}
-                  onTouchMove={(e) => {
-                    e.stopPropagation();
-                    if (!starsRef.current) return;
-                    const touch = e.touches[0];
-                    const rect = starsRef.current.getBoundingClientRect();
-                    const x = touch.clientX - rect.left;
-                    const starWidth = rect.width / 5;
-                    const starIndex = Math.floor(x / starWidth);
-                    const withinStar = (x % starWidth) / starWidth;
-                    const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
-                    setHoverRating(Math.round(val * 2) / 2);
-                  }}
-                  onTouchEnd={(e) => {
-                    e.stopPropagation();
-                    if (hoverRating > 0) handleSubmitRating(hoverRating);
-                    setHoverRating(0);
-                  }}
-                >
-                  {[1, 2, 3, 4, 5].map(star => {
-                    const displayVal = hoverRating || ratingValue;
-                    return (
-                      <div key={star} className="relative" style={{ width: 30, height: 30 }}>
-                        <Star size={30} className="absolute inset-0 text-gray-200" />
-                        <div className="absolute inset-0 overflow-hidden pointer-events-none"
-                             style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
-                          <Star size={30} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
+              ))}
+              {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
+            </div>
+          </div>
+          <div className="px-4 pt-3 pb-1">
+            <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">From your feed</p>
+          </div>
+          <div className="px-4 pb-3">
+            <div className="flex items-center justify-between mb-2">
+              <Link href={`/user/${post.user?.id || ''}`} className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold overflow-hidden flex-shrink-0">
+                  {post.user?.avatar ? <img src={post.user.avatar} alt="" className="w-full h-full object-cover" /> : avatarLetter}
+                </div>
+                <span className="text-xs font-semibold text-gray-900 hover:text-purple-600">{displayName}</span>
+              </Link>
+              <div className="flex items-center gap-2">
+                {post.rating && post.rating > 0 && (
+                  <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5].map(s => {
+                        const r = post.rating!;
+                        if (s <= Math.floor(r)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
+                        if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={12} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                        return <Star key={s} size={12} className="text-gray-200" />;
+                      })}
+                    </div>
+                    {spRatingDiffLine(post.rating, 'text-right')}
+                  </div>
+                )}
+                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 ${typeInfo.bg} ${typeInfo.color}`}>{typeInfo.label}</span>
+                <span className="text-[11px] text-gray-400">{timeAgo(post.timestamp)}</span>
+                {currentUserId && post.user?.id !== currentUserId && (
+                  <button onClick={() => setIsReportOpen(true)} className="text-gray-300 hover:text-orange-400 p-1 shrink-0 transition-colors"><Flag size={13} /></button>
+                )}
+              </div>
+            </div>
+            {displayContent && (
+              <div onClick={() => setContentExpanded(e => !e)} className="cursor-pointer mb-2">
+                <p className={`text-gray-600 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-3'}`}>{displayContent}</p>
+                {!contentExpanded && displayContent.length > 120 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
+              </div>
+            )}
+            <div className="flex items-center gap-4 mt-2 pt-2.5 border-t border-gray-50">
+              {onLike && (
+                <button onClick={() => onLike(post.id)} className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}>
+                  <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
+                  <span className="text-xs">{post.likes || 0}</span>
+                </button>
+              )}
+              <button onClick={() => onComment?.(post.id)} className={`flex items-center gap-1.5 text-sm ${isCommentsActive ? 'text-purple-500' : 'text-gray-400 hover:text-gray-600'} transition-colors`}>
+                <MessageCircle size={15} />
+                <span className="text-xs">{post.comments || 0}</span>
+              </button>
+              {onAddToList && post.mediaTitle && (
+                <button onClick={() => onAddToList({ title: post.mediaTitle || '', externalId: resolvedExternalId || post.externalId || '', externalSource: resolvedExternalSource || post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' })} className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"><Plus size={15} /></button>
+              )}
+              {post.mediaTitle && currentUserId && (
+                <button onClick={() => handleSeenIt({ title: post.mediaTitle || '', externalId: resolvedExternalId || post.externalId || '', externalSource: resolvedExternalSource || post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' })} className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`} disabled={seenItDone}>
+                  <Check size={15} /><span className="text-xs">{seenItDone ? spSeenItLabel.done : spSeenItLabel.idle}</span>
+                </button>
+              )}
+            </div>
+            <p className="text-[10px] text-gray-400 mt-2">Counts toward your entertainment DNA</p>
+            {isCommentsActive && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                {loadingComments ? <p className="text-xs text-gray-400 text-center py-2">Loading...</p> : comments.length === 0 ? <p className="text-xs text-gray-400 text-center py-2">No comments yet</p> : (
+                  <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto mb-2">
+                    {comments.slice(0, 5).map((comment: any) => {
+                      const commenterName = comment.user?.username || comment.user?.displayName || 'User';
+                      const isLikedByMe = localLikedComments.has(String(comment.id)) || comment.likedByCurrentUser;
+                      const likeCount = comment.likesCount || 0;
+                      return (
+                        <div key={comment.id} className="flex items-start gap-2">
+                          <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5"><User size={12} className="text-gray-400" /></div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-semibold text-gray-800">{commenterName}</span>
+                              <span className="text-[10px] text-gray-400">{timeAgo(comment.createdAt)}</span>
+                              {currentUserId && comment.user?.id === currentUserId && onDeleteComment ? <button onClick={() => { onDeleteComment(String(comment.id), post.id); setComments(prev => prev.filter(c => c.id !== comment.id)); }} className="text-gray-400 hover:text-red-500 ml-auto p-1"><Trash2 size={12} /></button> : currentUserId && comment.user?.id && comment.user.id !== currentUserId ? <button onClick={() => setReportCommentLocal({ commentId: String(comment.id), userId: comment.user.id, userName: comment.user.username || commenterName })} className="text-gray-300 hover:text-orange-500 transition-colors ml-auto p-1" title="Report comment"><Flag size={12} /></button> : null}
+                            </div>
+                            <p className="text-xs text-gray-600 leading-tight mb-1">{comment.content}</p>
+                            <div className="flex items-center gap-3">
+                              <button onClick={() => handleCommentLike(String(comment.id), likeCount)} className={`flex items-center gap-1 transition-colors ${isLikedByMe ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}><Heart size={12} fill={isLikedByMe ? 'currentColor' : 'none'} />{likeCount > 0 && <span className="text-[10px]">{likeCount}</span>}</button>
+                              <button onClick={() => handleReplyTo(String(comment.id), commenterName)} className="flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors"><MessageCircle size={12} /><span className="text-[10px]">Reply</span></button>
+                            </div>
+                          </div>
                         </div>
-                        <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }}
-                                onMouseEnter={() => setHoverRating(star - 0.5)}
-                                onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
-                        <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }}
-                                onMouseEnter={() => setHoverRating(star)}
-                                onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
-                      </div>
-                    );
-                  })}
-                  <span className="ml-2 text-xs text-gray-400">
-                    {hoverRating > 0 ? `${hoverRating}/5` : ratingValue > 0 ? `${ratingValue}/5` : ''}
-                  </span>
-                </div>
-              </>
+                      );
+                    })}
+                  </div>
+                )}
+                {session && (
+                  <div className="flex items-center gap-2">
+                    {replyingTo && <div className="flex items-center gap-1 text-[10px] text-purple-500 px-1"><span>@{replyingTo.name}</span><button onClick={() => { setReplyingTo(null); setCommentText(''); }} className="text-gray-400 hover:text-red-400 ml-1">×</button></div>}
+                    <input ref={commentInputRef} type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitComment(); }} placeholder="Add comment..." className="flex-1 text-xs bg-gray-50 border border-gray-200 rounded-full px-3 py-2 outline-none focus:border-purple-300 placeholder-gray-400" />
+                    <button onClick={handleSubmitComment} disabled={!commentText.trim() || isSubmitting} className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white disabled:opacity-40 flex-shrink-0"><Send size={14} /></button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
-        )}
+        </>
+      ) : (
+        // NORMAL layout — own posts or already-rated
+        <div className="px-4 pt-4 pb-3">
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-2.5">
+            <Link href={`/user/${post.user?.id || ''}`}>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer flex-shrink-0">
+                {post.user?.avatar ? (
+                  <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
+                ) : avatarLetter}
+              </div>
+            </Link>
+            <div className="flex-1 min-w-0">
+              <Link href={`/user/${post.user?.id || ''}`}>
+                <span className="font-medium text-sm text-gray-900 hover:text-purple-600 cursor-pointer">
+                  {isRatingType ? `${displayName}'s Take` : displayName}
+                </span>
+              </Link>
+              {!isRatingType && <span className="text-xs text-gray-400"> · {timeAgo(post.timestamp)}</span>}
+            </div>
+            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 ${typeInfo.bg} ${typeInfo.color}`}>{typeInfo.label}</span>
+            {isRatingType && <span className="text-[11px] text-gray-400 shrink-0">{timeAgo(post.timestamp)}</span>}
+            {currentUserId && post.user?.id === currentUserId && onDeletePost && (
+              <button onClick={() => onDeletePost(post.id)} className="text-gray-300 hover:text-red-500 p-1 shrink-0"><Trash2 size={14} /></button>
+            )}
+            {currentUserId && post.user?.id !== currentUserId && (
+              <button onClick={() => setIsReportOpen(true)} className="text-gray-300 hover:text-orange-400 p-1 shrink-0 transition-colors"><Flag size={13} /></button>
+            )}
+          </div>
 
-        {/* Action bar — Comment | Add | Seen it */}
-        <div className="flex items-center gap-4 mt-2.5 pt-2.5 border-t border-gray-50">
-          {onLike && (
-            <button
-              onClick={() => onLike(post.id)}
-              className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
-            >
-              <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
-              <span className="text-xs">{post.likes || 0}</span>
-            </button>
+          {!post.mediaTitle && post.rating && post.rating > 0 && (
+            <div className="flex items-center gap-0.5 mb-1">
+              {[1, 2, 3, 4, 5].map(s => {
+                const r = post.rating!;
+                if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
+                if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                return <Star key={s} size={13} className="text-gray-200" />;
+              })}
+            </div>
           )}
-          <button
-            onClick={() => onComment?.(post.id)}
-            className={`flex items-center gap-1.5 text-sm ${isCommentsActive ? 'text-purple-500' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
-          >
-            <MessageCircle size={15} />
-            <span className="text-xs">{post.comments || 0}</span>
-          </button>
-          {(post.externalId || post.mediaItems?.[0]?.externalId || post.mediaTitle) && (() => {
-            const media = {
-              title: post.mediaTitle || post.mediaItems?.[0]?.title || '',
-              externalId: resolvedExternalId || post.mediaItems?.[0]?.externalId || '',
-              externalSource: resolvedExternalSource || post.mediaItems?.[0]?.externalSource || 'tmdb',
-              imageUrl: post.mediaImage || post.mediaItems?.[0]?.imageUrl || post.mediaItems?.[0]?.poster_url || '',
-              type: post.mediaType || post.mediaItems?.[0]?.type || 'movie',
-            };
-            return (
-              <>
-                {onAddToList && (
-                  <button
-                    onClick={() => onAddToList(media)}
-                    className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
-                    title="Add to list"
-                  >
-                    <Plus size={15} />
-                  </button>
-                )}
-                {media.title && currentUserId && post.user?.id !== currentUserId && (
-                  <button
-                    onClick={handleStarClick}
-                    disabled={isSearchingMedia}
-                    className={`flex items-center gap-1 active:scale-110 transition-all ${ratingSubmitted ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'} disabled:opacity-50`}
-                    title={ratingSubmitted ? 'Change your rating' : 'Rate this'}
-                  >
-                    {isSearchingMedia ? (
-                      <div className="w-[15px] h-[15px] border-2 border-gray-300 border-t-yellow-400 rounded-full animate-spin" />
+          {displayContent && !post.mediaTitle && <p className="text-gray-700 text-sm leading-relaxed">{displayContent}</p>}
+
+          {post.mediaTitle && (
+            <div className="flex gap-3 items-start">
+              {spPosterEl}
+              <div className="min-w-0 flex-1 flex flex-col justify-center">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    {post.externalId && post.externalSource ? (
+                      <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
+                        <p className="text-sm font-semibold text-gray-900 hover:text-purple-600 cursor-pointer line-clamp-2">{post.mediaTitle}</p>
+                      </Link>
                     ) : (
-                      <Star size={15} fill={ratingSubmitted ? 'currentColor' : 'none'} />
+                      <p className="text-sm font-semibold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
                     )}
-                    {ratingSubmitted && <span className="text-xs font-medium text-yellow-500">{ratingValue}</span>}
-                  </button>
+                  </div>
+                  {post.rating && post.rating > 0 && isRatingType && (
+                    <div className="flex flex-col items-end flex-shrink-0">
+                      <div className="flex items-center gap-0.5">
+                        {[1,2,3,4,5].map(s => {
+                          const r = post.rating!;
+                          if (s <= Math.floor(r)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
+                          if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={13} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                          return <Star key={s} size={13} className="text-gray-200" />;
+                        })}
+                      </div>
+                      {spRatingDiffLine(post.rating, 'text-right')}
+                    </div>
+                  )}
+                </div>
+                {displayContent && (
+                  post.containsSpoilers && !isSpoilerRevealed ? (
+                    <div className="relative mt-1.5">
+                      <p className="text-gray-700 text-sm leading-relaxed blur-md select-none line-clamp-3">{displayContent}</p>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <button onClick={(e) => { e.stopPropagation(); setIsSpoilerRevealed(true); }} className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg transition-all flex items-center gap-1">
+                          <Eye size={12} /><span>Show Spoiler</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div onClick={() => setContentExpanded(e => !e)} className="cursor-pointer">
+                      <p className={`text-gray-700 text-sm leading-relaxed mt-1.5 ${contentExpanded ? '' : 'line-clamp-3'}`}>{displayContent}</p>
+                      {!contentExpanded && displayContent.length > 120 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
+                    </div>
+                  )
                 )}
-                <button
-                  onClick={() => handleSeenIt(media)}
-                  className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`}
-                  title={spSeenItLabel.idle}
-                  disabled={seenItDone}
-                >
-                  <Check size={15} />
-                  <span className="text-xs">{seenItDone ? spSeenItLabel.done : spSeenItLabel.idle}</span>
-                </button>
-              </>
-            );
-          })()}
-        </div>
-
-        {/* DNA footer */}
-        {isRatingType && (
-          <p className="text-[10px] text-gray-400 mt-2">Counts toward your entertainment DNA</p>
-        )}
-
-        {isCommentsActive && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
-            {loadingComments ? (
-              <p className="text-xs text-gray-400 text-center py-2">Loading...</p>
-            ) : comments.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-2">No comments yet</p>
-            ) : (
-              <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto mb-2">
-                {comments.slice(0, 5).map((comment: any) => {
-                  const commenterName = comment.user?.username || comment.user?.displayName || 'User';
-                  const isLikedByMe = localLikedComments.has(String(comment.id)) || comment.likedByCurrentUser;
-                  const likeCount = comment.likesCount || 0;
+              </div>
+            </div>
+          )}
+          {(post.mediaTitle || resolvedExternalId || post.externalId) && currentUserId && post.user?.id !== currentUserId && showStarPicker && (
+            <div className="border-t border-gray-100 mt-3 pt-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[10px] font-bold text-purple-600 tracking-widest uppercase">{ratingSubmitted ? 'Change Rating' : 'Your Turn'}</p>
+                {ratingSubmitted && <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove rating</button>}
+              </div>
+              <div ref={starsRef} className="flex items-center gap-0.5 touch-none select-none" onMouseLeave={() => setHoverRating(0)} onTouchMove={(e) => { e.stopPropagation(); if (!starsRef.current) return; const touch = e.touches[0]; const rect = starsRef.current.getBoundingClientRect(); const x = touch.clientX - rect.left; const starWidth = rect.width / 5; const starIndex = Math.floor(x / starWidth); const withinStar = (x % starWidth) / starWidth; const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1))); setHoverRating(Math.round(val * 2) / 2); }} onTouchEnd={(e) => { e.stopPropagation(); if (hoverRating > 0) handleSubmitRating(hoverRating); setHoverRating(0); }}>
+                {[1,2,3,4,5].map(star => {
+                  const displayVal = hoverRating || ratingValue;
                   return (
-                    <div key={comment.id} className="flex items-start gap-2">
-                      <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <User size={12} className="text-gray-400" />
+                    <div key={star} className="relative" style={{ width: 30, height: 30 }}>
+                      <Star size={30} className="absolute inset-0 text-gray-200" />
+                      <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
+                        <Star size={30} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-semibold text-gray-800">{commenterName}</span>
-                          <span className="text-[10px] text-gray-400">{timeAgo(comment.createdAt)}</span>
-                          {currentUserId && comment.user?.id === currentUserId && onDeleteComment ? (
-                            <button
-                              onClick={() => {
-                                onDeleteComment(String(comment.id), post.id);
-                                setComments(prev => prev.filter(c => c.id !== comment.id));
-                              }}
-                              className="text-gray-400 hover:text-red-500 ml-auto p-1"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          ) : currentUserId && comment.user?.id && comment.user.id !== currentUserId ? (
-                            <button
-                              onClick={() => setReportCommentLocal({ commentId: String(comment.id), userId: comment.user.id, userName: comment.user.username || commenterName })}
-                              className="text-gray-300 hover:text-orange-500 transition-colors ml-auto p-1"
-                              title="Report comment"
-                            >
-                              <Flag size={12} />
-                            </button>
-                          ) : null}
-                        </div>
-                        <p className="text-xs text-gray-600 leading-tight mb-1">{comment.content}</p>
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => handleCommentLike(String(comment.id), likeCount)}
-                            className={`flex items-center gap-1 transition-colors ${isLikedByMe ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
-                          >
-                            <Heart size={12} fill={isLikedByMe ? 'currentColor' : 'none'} />
-                            {likeCount > 0 && <span className="text-[10px]">{likeCount}</span>}
-                          </button>
-                          <button
-                            onClick={() => handleReplyTo(String(comment.id), commenterName)}
-                            className="flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors"
-                          >
-                            <MessageCircle size={12} />
-                            <span className="text-[10px]">Reply</span>
-                          </button>
-                        </div>
-                      </div>
+                      <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
+                      <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
                     </div>
                   );
                 })}
+                <span className="ml-2 text-xs text-gray-400">{hoverRating > 0 ? `${hoverRating}/5` : ratingValue > 0 ? `${ratingValue}/5` : ''}</span>
               </div>
+            </div>
+          )}
+          <div className="flex items-center gap-4 mt-2.5 pt-2.5 border-t border-gray-50">
+            {onLike && (
+              <button onClick={() => onLike(post.id)} className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}>
+                <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
+                <span className="text-xs">{post.likes || 0}</span>
+              </button>
             )}
-            {session && (
-              <div className="flex items-center gap-2">
-                {replyingTo && (
-                  <div className="flex items-center gap-1 text-[10px] text-purple-500 px-1">
-                    <span>@{replyingTo.name}</span>
-                    <button onClick={() => { setReplyingTo(null); setCommentText(''); }} className="text-gray-400 hover:text-red-400 ml-1">×</button>
-                  </div>
-                )}
-                <input
-                  ref={commentInputRef}
-                  type="text"
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitComment(); }}
-                  placeholder="Add comment..."
-                  className="flex-1 text-xs bg-gray-50 border border-gray-200 rounded-full px-3 py-2 outline-none focus:border-purple-300 placeholder-gray-400"
-                />
-                <button
-                  onClick={handleSubmitComment}
-                  disabled={!commentText.trim() || isSubmitting}
-                  className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white disabled:opacity-40 flex-shrink-0"
-                >
-                  <Send size={14} />
-                </button>
-              </div>
-            )}
+            <button onClick={() => onComment?.(post.id)} className={`flex items-center gap-1.5 text-sm ${isCommentsActive ? 'text-purple-500' : 'text-gray-400 hover:text-gray-600'} transition-colors`}>
+              <MessageCircle size={15} />
+              <span className="text-xs">{post.comments || 0}</span>
+            </button>
+            {(post.externalId || post.mediaItems?.[0]?.externalId || post.mediaTitle) && (() => {
+              const media = { title: post.mediaTitle || post.mediaItems?.[0]?.title || '', externalId: resolvedExternalId || post.mediaItems?.[0]?.externalId || '', externalSource: resolvedExternalSource || post.mediaItems?.[0]?.externalSource || 'tmdb', imageUrl: post.mediaImage || post.mediaItems?.[0]?.imageUrl || post.mediaItems?.[0]?.poster_url || '', type: post.mediaType || post.mediaItems?.[0]?.type || 'movie' };
+              return (
+                <>
+                  {onAddToList && <button onClick={() => onAddToList(media)} className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all" title="Add to list"><Plus size={15} /></button>}
+                  {media.title && currentUserId && post.user?.id !== currentUserId && (
+                    <button onClick={handleStarClick} disabled={isSearchingMedia} className={`flex items-center gap-1 active:scale-110 transition-all ${ratingSubmitted ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-400'} disabled:opacity-50`} title={ratingSubmitted ? 'Change your rating' : 'Rate this'}>
+                      {isSearchingMedia ? <div className="w-[15px] h-[15px] border-2 border-gray-300 border-t-yellow-400 rounded-full animate-spin" /> : <Star size={15} fill={ratingSubmitted ? 'currentColor' : 'none'} />}
+                      {ratingSubmitted && <span className="text-xs font-medium text-yellow-500">{ratingValue}</span>}
+                    </button>
+                  )}
+                  <button onClick={() => handleSeenIt(media)} className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`} title={spSeenItLabel.idle} disabled={seenItDone}>
+                    <Check size={15} /><span className="text-xs">{seenItDone ? spSeenItLabel.done : spSeenItLabel.idle}</span>
+                  </button>
+                </>
+              );
+            })()}
           </div>
-        )}
-      </div>
+          {isRatingType && <p className="text-[10px] text-gray-400 mt-2">Counts toward your entertainment DNA</p>}
+          {isCommentsActive && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              {loadingComments ? <p className="text-xs text-gray-400 text-center py-2">Loading...</p> : comments.length === 0 ? <p className="text-xs text-gray-400 text-center py-2">No comments yet</p> : (
+                <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto mb-2">
+                  {comments.slice(0, 5).map((comment: any) => {
+                    const commenterName = comment.user?.username || comment.user?.displayName || 'User';
+                    const isLikedByMe = localLikedComments.has(String(comment.id)) || comment.likedByCurrentUser;
+                    const likeCount = comment.likesCount || 0;
+                    return (
+                      <div key={comment.id} className="flex items-start gap-2">
+                        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5"><User size={12} className="text-gray-400" /></div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-semibold text-gray-800">{commenterName}</span>
+                            <span className="text-[10px] text-gray-400">{timeAgo(comment.createdAt)}</span>
+                            {currentUserId && comment.user?.id === currentUserId && onDeleteComment ? <button onClick={() => { onDeleteComment(String(comment.id), post.id); setComments(prev => prev.filter(c => c.id !== comment.id)); }} className="text-gray-400 hover:text-red-500 ml-auto p-1"><Trash2 size={12} /></button> : currentUserId && comment.user?.id && comment.user.id !== currentUserId ? <button onClick={() => setReportCommentLocal({ commentId: String(comment.id), userId: comment.user.id, userName: comment.user.username || commenterName })} className="text-gray-300 hover:text-orange-500 transition-colors ml-auto p-1" title="Report comment"><Flag size={12} /></button> : null}
+                          </div>
+                          <p className="text-xs text-gray-600 leading-tight mb-1">{comment.content}</p>
+                          <div className="flex items-center gap-3">
+                            <button onClick={() => handleCommentLike(String(comment.id), likeCount)} className={`flex items-center gap-1 transition-colors ${isLikedByMe ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}><Heart size={12} fill={isLikedByMe ? 'currentColor' : 'none'} />{likeCount > 0 && <span className="text-[10px]">{likeCount}</span>}</button>
+                            <button onClick={() => handleReplyTo(String(comment.id), commenterName)} className="flex items-center gap-1 text-gray-400 hover:text-purple-500 transition-colors"><MessageCircle size={12} /><span className="text-[10px]">Reply</span></button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {session && (
+                <div className="flex items-center gap-2">
+                  {replyingTo && <div className="flex items-center gap-1 text-[10px] text-purple-500 px-1"><span>@{replyingTo.name}</span><button onClick={() => { setReplyingTo(null); setCommentText(''); }} className="text-gray-400 hover:text-red-400 ml-1">×</button></div>}
+                  <input ref={commentInputRef} type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') handleSubmitComment(); }} placeholder="Add comment..." className="flex-1 text-xs bg-gray-50 border border-gray-200 rounded-full px-3 py-2 outline-none focus:border-purple-300 placeholder-gray-400" />
+                  <button onClick={handleSubmitComment} disabled={!commentText.trim() || isSubmitting} className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white disabled:opacity-40 flex-shrink-0"><Send size={14} /></button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
     <ReportSheet
       isOpen={isReportOpen}
