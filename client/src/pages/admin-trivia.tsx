@@ -519,7 +519,7 @@ export default function AdminTriviaPage() {
     queryClient.invalidateQueries({ queryKey: ["trivia-poll-published"] });
   }
 
-  // Reschedule all featured plays — spread one per day starting from tomorrow
+  // Reschedule all featured plays — spread one per day via edge function (service role)
   const [rescheduling, setRescheduling] = useState(false);
   async function handleRescheduleFeaturedPlays() {
     const featuredItems = upcoming
@@ -529,20 +529,24 @@ export default function AdminTriviaPage() {
     setRescheduling(true);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    let succeeded = 0;
-    let failed = 0;
-    for (let i = 0; i < featuredItems.length; i++) {
+    const updates = featuredItems.map((item, i) => {
       const d = new Date(today);
       d.setDate(d.getDate() + i);
-      const dateStr = toLocalDateStr(d);
-      const { error } = await supabase
-        .from("prediction_pools")
-        .update({ featured_date: dateStr })
-        .eq("id", featuredItems[i].id);
-      if (error) failed++; else succeeded++;
+      return { id: item.id, featured_date: toLocalDateStr(d) };
+    });
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ action: "reschedule_featured", updates }),
+      });
+      const result = await resp.json();
+      toast({ title: `Rescheduled ${result.succeeded} Daily Calls${result.failed ? ` (${result.failed} failed)` : ""}`, description: "Dates spread one per day starting today." });
+    } catch (err: any) {
+      toast({ title: "Reschedule failed", description: err.message, variant: "destructive" });
     }
     setRescheduling(false);
-    toast({ title: `Rescheduled ${succeeded} Daily Calls${failed ? ` (${failed} failed)` : ""}`, description: "Dates spread one per day starting today." });
     queryClient.invalidateQueries({ queryKey: ["trivia-poll-upcoming"] });
   }
 

@@ -62,6 +62,28 @@ serve(async (req) => {
       });
     }
 
+    // --- Reschedule featured plays — bulk update featured_date using service role ---
+    if (body.action === 'reschedule_featured') {
+      const { updates } = body; // Array of { id: string, featured_date: string }
+      if (!Array.isArray(updates) || updates.length === 0) {
+        return new Response(JSON.stringify({ error: 'Missing updates array' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      let succeeded = 0;
+      let failed = 0;
+      for (const { id, featured_date } of updates) {
+        const { error } = await supabaseAdmin
+          .from('prediction_pools')
+          .update({ featured_date })
+          .eq('id', id);
+        if (error) failed++; else succeeded++;
+      }
+      return new Response(JSON.stringify({ succeeded, failed }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // --- DNA publish action: insert into dna_moments + mark draft published ---
     if (body.action === 'publish_dna') {
       const { dnaData, draftId } = body;
