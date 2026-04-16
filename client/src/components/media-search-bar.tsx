@@ -159,7 +159,7 @@ export function MediaSearchBar({
       <QuickAddModal
         isOpen={isComposerOpen}
         onClose={() => { setIsComposerOpen(false); setComposerMedia(null); }}
-        initialPostType="react"
+        initialPostType="review"
         preSelectedMedia={composerMedia}
         skipToComposer={!!composerMedia}
         searchToCompose={!composerMedia}

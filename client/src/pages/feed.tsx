@@ -5391,7 +5391,7 @@ export default function Feed() {
             ))}
           </div>
         )}
-        {/* Today's Play - Daily Challenge at top of light feed area */}
+        {/* Daily Call - Daily Challenge at top of light feed area */}
         <div className="mb-4">
           <DailyChallengeCard />
         </div>
