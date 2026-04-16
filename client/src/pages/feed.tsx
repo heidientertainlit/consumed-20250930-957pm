@@ -5561,8 +5561,8 @@ export default function Feed() {
           {/* Composer Trigger - dark hero zone */}
           <div>
 
-            <h1 className="text-2xl font-bold text-white mb-6 text-center" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Now
+            <h1 className="text-lg font-semibold text-white/80 mb-4 text-center tracking-wide" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              What People Are Playing Now
             </h1>
 
             <DailyChallengeCard />
