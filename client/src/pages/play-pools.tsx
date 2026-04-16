@@ -397,8 +397,7 @@ export default function PlayPoolsPage() {
                         )}
                         {unlocked && !completed && <ChevronRight size={14} className="text-gray-400 shrink-0" />}
                       </div>
-                      {unlocked && (
-                        <button
+                      <button
                           onClick={(e) => {
                             e.stopPropagation();
                             const url = `${window.location.origin}/play/challenge/${encodeURIComponent(pool.showTag)}/${round.difficulty}${user?.id ? `?from=${user.id}` : ""}`;
@@ -415,7 +414,6 @@ export default function PlayPoolsPage() {
                         >
                           <Share2 size={13} />
                         </button>
-                      )}
                     </div>
                   );
                 })}
