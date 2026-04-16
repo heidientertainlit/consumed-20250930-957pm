@@ -19,7 +19,7 @@ const HARDCODED_POOLS: Pool[] = [
   {
     id: "harry-potter",
     show_tag: "Harry Potter",
-    title: "Harry Potter",
+    title: "Harry Potter Trivia",
     poster_url: "https://image.tmdb.org/t/p/w200/wuMc08IPKEatf9rnMNXvIDxqP4W.jpg",
     fallback_emoji: "⚡",
     accent_color: "#7c3aed",
@@ -29,7 +29,7 @@ const HARDCODED_POOLS: Pool[] = [
   {
     id: "friends",
     show_tag: "Friends",
-    title: "Friends",
+    title: "Friends Trivia",
     poster_url: "https://image.tmdb.org/t/p/w200/f496cm9enuEsZkSPzCwnTESEK5s.jpg",
     fallback_emoji: "☕",
     accent_color: "#f59e0b",
