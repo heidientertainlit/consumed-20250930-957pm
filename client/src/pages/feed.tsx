@@ -5807,6 +5807,11 @@ export default function Feed() {
                 <SocialProofCard card={buildLeaderboardSocialProof(playActivity[0], 0)} />
               )}
 
+              {/* Challenge Pools banner #1 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
+                <ChallengePoolsFeedBanner />
+              )}
+
               {/* — Rating carousel #0 — */}
               {renderRatingCarousel(0)}
 
@@ -5849,11 +5854,6 @@ export default function Feed() {
               {/* TV Polls — round 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && !selectedCategory && (
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="TV" />
-              )}
-
-              {/* Challenge Pools banner #1 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <ChallengePoolsFeedBanner />
               )}
 
               {/* — Rating carousel #1 — */}
