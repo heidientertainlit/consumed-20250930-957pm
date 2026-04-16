@@ -20,6 +20,7 @@ import { FeatureFlagsProvider, useFeatureFlags } from "@/lib/feature-flags";
 import AdminPage from "@/pages/admin";
 import AdminPersonasPage from "@/pages/admin-personas";
 import AdminTriviaPage from "@/pages/admin-trivia";
+import AdminPoolsPage from "@/pages/admin-pools";
 import Feed from "@/pages/feed";
 import GameFirstFeed from "@/pages/game-first-feed";
 import QuickLog from "@/pages/quick-log";
@@ -569,6 +570,12 @@ function Router() {
           <Route path="/admin/trivia-polls">
             <ProtectedRoute>
               <AdminTriviaPage />
+            </ProtectedRoute>
+          </Route>
+
+          <Route path="/admin/pools">
+            <ProtectedRoute>
+              <AdminPoolsPage />
             </ProtectedRoute>
           </Route>
 

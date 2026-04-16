@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
-import { ChevronLeft, CheckCircle2, XCircle, Trophy, Brain, Lock, Star, Users } from "lucide-react";
+import { ChevronLeft, CheckCircle2, XCircle, Trophy, Brain, Lock, Star, Users, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
@@ -170,7 +170,6 @@ export default function PlayChallengePage() {
 
   const showTag = decodeURIComponent(params.showTag || "");
   const difficulty: Difficulty = (params.difficulty as Difficulty) || "easy";
-  const config = getConfig(showTag);
   const diffConfig = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.easy;
   const [posterFailed, setPosterFailed] = useState(false);
 
@@ -178,17 +177,72 @@ export default function PlayChallengePage() {
     ? new URLSearchParams(window.location.search).get("from")
     : null;
 
-  const bankForShow = CHALLENGE_BANKS[showTag];
-  const rawQuestions = bankForShow?.[difficulty] || [];
-  const questions: Question[] = useMemo(() =>
-    rawQuestions.map((q, i) => ({
-      ...q,
-      options: shuffleOptions(q.options, q.correctAnswer),
-      id: `${showTag.replace(/\s+/g, "-").toLowerCase()}-${difficulty}-q${i}`,
-      points: diffConfig.points,
-    })),
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  [showTag, difficulty]);
+  // DB-driven question loading with hardcoded fallback
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
+  const [poolConfig, setPoolConfig] = useState(getConfig(showTag));
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadQuestions() {
+      setQuestionsLoading(true);
+      try {
+        const { data: poolData } = await supabase
+          .from("challenge_pools")
+          .select("id, poster_url, fallback_emoji, accent_color")
+          .eq("show_tag", showTag)
+          .single();
+
+        if (poolData?.id && !cancelled) {
+          setPoolConfig({
+            accentColor: poolData.accent_color || "#7c3aed",
+            posterUrl: poolData.poster_url || "",
+            fallbackEmoji: poolData.fallback_emoji || "🎮",
+          });
+
+          const { data: qData } = await supabase
+            .from("challenge_questions")
+            .select("id, question_text, options, correct_answer")
+            .eq("pool_id", poolData.id)
+            .eq("difficulty", difficulty)
+            .order("sort_order");
+
+          if (qData && qData.length > 0 && !cancelled) {
+            const mapped: Question[] = qData.map((q) => ({
+              id: q.id,
+              text: q.question_text,
+              options: shuffleOptions(q.options as string[], q.correct_answer),
+              correctAnswer: q.correct_answer,
+              points: diffConfig.points,
+            }));
+            setQuestions(mapped);
+            setQuestionsLoading(false);
+            return;
+          }
+        }
+      } catch (e) {
+        // fall through to hardcoded fallback
+      }
+
+      // Fallback to hardcoded CHALLENGE_BANKS
+      if (!cancelled) {
+        const bankForShow = CHALLENGE_BANKS[showTag];
+        const rawQuestions = bankForShow?.[difficulty] || [];
+        const mapped: Question[] = rawQuestions.map((q, i) => ({
+          ...q,
+          options: shuffleOptions(q.options, q.correctAnswer),
+          id: `${showTag.replace(/\s+/g, "-").toLowerCase()}-${difficulty}-q${i}`,
+          points: diffConfig.points,
+        }));
+        setQuestions(mapped);
+        setQuestionsLoading(false);
+      }
+    }
+    loadQuestions();
+    return () => { cancelled = true; };
+  }, [showTag, difficulty]);
+
+  const config = poolConfig;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -315,6 +369,17 @@ export default function PlayChallengePage() {
     medium: "hard",
     hard: null,
   };
+
+  if (questionsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 size={28} className="animate-spin text-purple-500 mx-auto mb-3" />
+          <p className="text-gray-500 text-sm">Loading questions...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (questions.length === 0) {
     return (

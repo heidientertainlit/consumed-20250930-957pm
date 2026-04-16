@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ChevronLeft, Lock, ChevronRight, Trophy, X } from "lucide-react";
+import { ChevronLeft, Lock, ChevronRight, Trophy, X, Loader2 } from "lucide-react";
 import Navigation from "@/components/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -241,9 +241,51 @@ export default function PlayPoolsPage() {
   const [, setLocation] = useLocation();
   const [leaderboardPool, setLeaderboardPool] = useState<Pool | null>(null);
   const [, forceUpdate] = useState(0);
+  const [dbPools, setDbPools] = useState<Pool[]>([]);
+  const [poolsLoading, setPoolsLoading] = useState(true);
 
   useEffect(() => {
     forceUpdate(n => n + 1);
+  }, []);
+
+  // Fetch pools from DB, fall back to hardcoded POOLS for any not in DB
+  useEffect(() => {
+    async function loadPools() {
+      setPoolsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("challenge_pools")
+          .select("*")
+          .eq("is_active", true)
+          .order("created_at", { ascending: true });
+
+        if (!error && data && data.length > 0) {
+          const dbShowTags = new Set(data.map((p: any) => p.show_tag));
+          const dbMapped: Pool[] = data.map((p: any) => ({
+            id: p.id,
+            showTag: p.show_tag,
+            title: p.title,
+            description: p.description || "",
+            fallbackEmoji: p.fallback_emoji || "🎮",
+            posterUrl: p.poster_url || "",
+            category: p.category || "TV & Movies",
+            playersThisWeek: 0,
+            rounds: ROUNDS,
+          }));
+          // Append any hardcoded pools not already in DB
+          const hardcodedExtras = POOLS.filter(p => !dbShowTags.has(p.showTag));
+          setDbPools([...dbMapped, ...hardcodedExtras]);
+        } else {
+          // No DB pools — use hardcoded
+          setDbPools(POOLS);
+        }
+      } catch (e) {
+        setDbPools(POOLS);
+      } finally {
+        setPoolsLoading(false);
+      }
+    }
+    loadPools();
   }, []);
 
   return (
@@ -274,7 +316,13 @@ export default function PlayPoolsPage() {
           Pick a Pool
         </p>
 
-        {POOLS.map((pool) => {
+        {poolsLoading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 size={24} className="animate-spin text-purple-400" />
+          </div>
+        )}
+
+        {!poolsLoading && dbPools.map((pool) => {
           const completedCount = pool.rounds.filter(r => isCompleted(pool.showTag, r.difficulty)).length;
 
           return (

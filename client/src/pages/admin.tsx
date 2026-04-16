@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "@/lib/auth";
-import { Loader2, Users, ListChecks, ChevronRight } from "lucide-react";
+import { Loader2, Users, ListChecks, ChevronRight, Layers } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -27,6 +27,15 @@ const TOOLS = [
     color: "from-blue-900/40 to-blue-800/20 border-blue-700/40",
     iconColor: "text-blue-400",
     iconBg: "bg-blue-900/50",
+  },
+  {
+    path: "/admin/pools",
+    icon: Layers,
+    title: "Challenge Pools",
+    description: "AI-generate trivia pools for any show, movie, or franchise. Questions stored in the database — no code deploy needed.",
+    color: "from-emerald-900/40 to-emerald-800/20 border-emerald-700/40",
+    iconColor: "text-emerald-400",
+    iconBg: "bg-emerald-900/50",
   },
 ];
 
