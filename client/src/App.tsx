@@ -365,6 +365,11 @@ function Router() {
             </ProtectedRoute>
           </Route>
 
+          <Route path="/play/challenge/:showTag/:difficulty">
+            <ProtectedRoute>
+              <PlayChallenge />
+            </ProtectedRoute>
+          </Route>
           <Route path="/play/challenge/:showTag">
             <ProtectedRoute>
               <PlayChallenge />
