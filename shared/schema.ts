@@ -831,3 +831,28 @@ export const triviaPollDrafts = pgTable("trivia_poll_drafts", {
 export const insertTriviaPollDraftSchema = createInsertSchema(triviaPollDrafts).omit({ id: true, createdAt: true, approvedAt: true, publishedAt: true });
 export type TriviaPollDraft = typeof triviaPollDrafts.$inferSelect;
 export type InsertTriviaPollDraft = z.infer<typeof insertTriviaPollDraftSchema>;
+
+// Binge Battles — 1-on-1 consumption races
+export const bingeBattles = pgTable("binge_battles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  challengerId: varchar("challenger_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  opponentId: varchar("opponent_id").references(() => users.id, { onDelete: "set null" }),
+  mediaExternalId: text("media_external_id").notNull(),
+  mediaExternalSource: text("media_external_source").notNull(),
+  mediaTitle: text("media_title").notNull(),
+  mediaType: text("media_type").notNull(),
+  mediaPoster: text("media_poster"),
+  mediaSub: text("media_sub"),
+  mediaTotal: integer("media_total").notNull(),
+  mediaUnit: text("media_unit").notNull(),
+  status: text("status").notNull().default("pending"), // pending | active | completed
+  challengerProgress: integer("challenger_progress").notNull().default(0),
+  opponentProgress: integer("opponent_progress").notNull().default(0),
+  winnerId: varchar("winner_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertBingeBattleSchema = createInsertSchema(bingeBattles).omit({ id: true, createdAt: true, updatedAt: true });
+export type BingeBattle = typeof bingeBattles.$inferSelect;
+export type InsertBingeBattle = z.infer<typeof insertBingeBattleSchema>;

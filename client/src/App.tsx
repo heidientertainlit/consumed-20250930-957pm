@@ -32,6 +32,7 @@ import Leaderboard from "@/pages/leaderboard";
 
 import PlayPage from "@/pages/play";
 import PlayBingeBattle from "@/pages/play-binge-battle";
+import PlayBingeBattleAccept from "@/pages/play-binge-battle-accept";
 import PlayPools from "@/pages/play-pools";
 import PlayPoolsDetail from "@/pages/play-pools-detail";
 import PlayChallenge from "@/pages/play-challenge";
@@ -353,6 +354,10 @@ function Router() {
             <ProtectedRoute>
               <PlayPage />
             </ProtectedRoute>
+          </Route>
+
+          <Route path="/play/binge-battle/accept/:battleId">
+            <PlayBingeBattleAccept />
           </Route>
 
           <Route path="/play/binge-battle">
