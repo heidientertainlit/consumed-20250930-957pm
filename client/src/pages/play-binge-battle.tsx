@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, MessageCircle, Loader2, Clock } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
@@ -92,6 +93,7 @@ const EXAMPLE_MEDIA: MediaItem[] = [
 export default function PlayBingeBattle() {
   const [, setLocation] = useLocation();
   const { user, session } = useAuth();
+  const { toast } = useToast();
 
   const [view, setView] = useState<View>("hub");
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
@@ -218,6 +220,11 @@ export default function PlayBingeBattle() {
     setCreating(false);
     if (error || !data) {
       console.error("[BingeBattle] insert error:", JSON.stringify(error));
+      toast({
+        title: "Couldn't start battle",
+        description: error?.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
       return;
     }
     setCreatedBattleId(data.id);
@@ -263,11 +270,19 @@ export default function PlayBingeBattle() {
     setMyProgress(newProgress);
     setUpdating(true);
     const field = isChallenger ? "challenger_progress" : "opponent_progress";
-    await supabase
+    const { error } = await supabase
       .from("binge_battles")
       .update({ [field]: newProgress, updated_at: new Date().toISOString() })
       .eq("id", currentBattle.id);
     setUpdating(false);
+    if (error) {
+      toast({
+        title: "Couldn't save progress",
+        description: "Your progress wasn't saved. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
     // Refresh battle data to get opponent's latest progress
     const { data } = await supabase.from("binge_battles").select("*").eq("id", currentBattle.id).single();
     if (data) setCurrentBattle(data);
@@ -280,7 +295,7 @@ export default function PlayBingeBattle() {
     const isChallenger = currentBattle.challenger_id === user.id;
     const field = isChallenger ? "challenger_progress" : "opponent_progress";
     const total = currentBattle.media_total;
-    await supabase
+    const { error } = await supabase
       .from("binge_battles")
       .update({
         [field]: total,
@@ -289,6 +304,15 @@ export default function PlayBingeBattle() {
         updated_at: new Date().toISOString(),
       })
       .eq("id", currentBattle.id);
+    if (error) {
+      setFinishing(false);
+      toast({
+        title: "Couldn't finish battle",
+        description: "Something went wrong marking the winner. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
     setMyProgress(total);
     const { data } = await supabase.from("binge_battles").select("*").eq("id", currentBattle.id).single();
     if (data) setCurrentBattle(data);
@@ -551,9 +575,13 @@ export default function PlayBingeBattle() {
 
     function sendChallenge() {
       if (navigator.share) {
-        navigator.share({ title: "Binge Battle Challenge", text: shareText, url: battleUrl }).catch(() => {});
+        navigator.share({ title: "Binge Battle Challenge", text: shareText, url: battleUrl }).catch(() => {
+          navigator.clipboard.writeText(`${shareText} ${battleUrl}`);
+          toast({ title: "Link copied!", description: "Paste it in a text or DM to challenge your friend." });
+        });
       } else {
         navigator.clipboard.writeText(`${shareText} ${battleUrl}`);
+        toast({ title: "Link copied!", description: "Paste it in a text or DM to challenge your friend." });
       }
     }
 
@@ -813,9 +841,13 @@ export default function PlayBingeBattle() {
         ? `I just beat ${opponent?.name || "my opponent"} in a Binge Battle on ${battle!.media_title} on Consumed!`
         : `${opponent?.name || "My opponent"} beat me in a Binge Battle on ${battle!.media_title} on Consumed — rematch time!`;
       if (navigator.share) {
-        navigator.share({ title: "Binge Battle Result", text }).catch(() => {});
+        navigator.share({ title: "Binge Battle Result", text }).catch(() => {
+          navigator.clipboard.writeText(text);
+          toast({ title: "Result copied!", description: "Share it with your friends." });
+        });
       } else {
         navigator.clipboard.writeText(text);
+        toast({ title: "Result copied!", description: "Share it with your friends." });
       }
     }
 
