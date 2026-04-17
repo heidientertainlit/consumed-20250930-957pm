@@ -8,49 +8,72 @@ export function ChallengeFriend() {
         </button>
         <div>
           <h1 className="text-[17px] font-bold text-gray-900">Binge Battle</h1>
-          <p className="text-[11px] text-gray-400">See who watches, reads, or listens to it first</p>
+          <p className="text-[11px] text-gray-400 leading-snug">First to the finish, wins... choose a friend,<br/>set the terms, pick the media, and go.</p>
         </div>
       </div>
 
-      {/* Selected Media */}
-      <div className="mx-4 mb-5">
-        <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold">Racing on</p>
-        <div className="bg-white rounded-2xl p-3 flex items-center gap-3 border border-gray-200 shadow-sm">
-          <img
-            src="https://image.tmdb.org/t/p/w200/b9EkMX6fFJ8oMkFhTiKmLPAOGqH.jpg"
-            alt="The White Lotus"
-            className="w-14 h-20 rounded-lg object-cover shrink-0"
-          />
-          <div>
-            <p className="text-[15px] font-bold text-gray-900">The White Lotus</p>
-            <p className="text-[12px] text-gray-400 mt-0.5">Season 3 · HBO · 8 episodes</p>
-            <div className="mt-2 flex items-center gap-1.5">
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-600 border border-purple-200">TV Show</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500">Drama</span>
+      {/* Step 1 — Pick the Media */}
+      <div className="mx-4 mb-4">
+        <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold">1 · Pick the media</p>
+
+        {/* Search bar */}
+        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 mb-3 shadow-sm">
+          <svg width="14" height="14" fill="none" stroke="#9ca3af" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span className="text-[13px] text-gray-400">Search shows, movies, books, podcasts...</span>
+        </div>
+
+        {/* Suggestions */}
+        <div className="space-y-2">
+          {[
+            { title: "The White Lotus", sub: "Season 3 · HBO · 8 eps", type: "TV", poster: "https://image.tmdb.org/t/p/w200/b9EkMX6fFJ8oMkFhTiKmLPAOGqH.jpg", selected: true },
+            { title: "Severance", sub: "Season 2 · Apple TV+ · 10 eps", type: "TV", poster: "https://image.tmdb.org/t/p/w200/yTD6vPMQuoTBv4TFJNzFLEwtTmo.jpg", selected: false },
+            { title: "Intermezzo", sub: "Sally Rooney · 2024", type: "Book", poster: "https://covers.openlibrary.org/b/id/14633854-M.jpg", selected: false },
+          ].map((item) => (
+            <div
+              key={item.title}
+              className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                item.selected
+                  ? "bg-purple-50 border-purple-200"
+                  : "bg-white border-gray-150"
+              }`}
+              style={{ borderColor: item.selected ? undefined : "#ececf0" }}
+            >
+              <img src={item.poster} alt={item.title} className="w-10 h-14 rounded-lg object-cover shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-gray-900 truncate">{item.title}</p>
+                <p className="text-[11px] text-gray-400 truncate">{item.sub}</p>
+                <span className={`inline-block mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+                  item.selected ? "bg-purple-100 text-purple-600" : "bg-gray-100 text-gray-500"
+                }`}>{item.type}</span>
+              </div>
+              <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center ${
+                item.selected ? "bg-purple-600 border-purple-600" : "border-gray-300"
+              }`}>
+                {item.selected && (
+                  <svg width="10" height="10" fill="none" stroke="white" strokeWidth="3" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                )}
+              </div>
             </div>
-          </div>
-          <button className="ml-auto p-2 rounded-xl bg-gray-100 text-gray-400">
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
+          ))}
         </div>
       </div>
 
-      {/* Race Type */}
-      <div className="mx-4 mb-5">
-        <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold">Battle type</p>
+      {/* Step 2 — Battle Type */}
+      <div className="mx-4 mb-4">
+        <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold">2 · Set the terms</p>
         <div className="flex gap-2">
           <button className="flex-1 py-2.5 rounded-xl text-[12px] font-bold bg-purple-600 text-white border border-purple-600 shadow-sm">
             First to finish
           </button>
           <button className="flex-1 py-2.5 rounded-xl text-[12px] font-bold bg-white text-gray-400 border border-gray-200">
-            Most progress in 7 days
+            Most in 7 days
           </button>
         </div>
       </div>
 
-      {/* Challenge Friends */}
+      {/* Step 3 — Challenge Friends */}
       <div className="mx-4 mb-5">
-        <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-3 font-semibold">Challenge</p>
+        <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold">3 · Choose a friend</p>
         <div className="space-y-2">
           {[
             { name: "Seth", handle: "@seth_watches", avatar: "S", color: "#7c3aed", active: true },
@@ -59,10 +82,8 @@ export function ChallengeFriend() {
           ].map((friend) => (
             <div
               key={friend.name}
-              className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                friend.active
-                  ? "bg-purple-50 border-purple-200"
-                  : "bg-white border-gray-150"
+              className={`flex items-center gap-3 p-3 rounded-xl border ${
+                friend.active ? "bg-purple-50 border-purple-200" : "bg-white"
               }`}
               style={{ borderColor: friend.active ? undefined : "#ececf0" }}
             >
