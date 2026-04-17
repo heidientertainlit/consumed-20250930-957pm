@@ -1,13 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
-import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, ChevronRight, Send, Users, Loader2 } from "lucide-react";
+import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, ChevronRight, MessageCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
 type View = "hub" | "new" | "sent" | "active" | "finished";
-type BattleType = "first_to_finish" | "most_in_7_days";
 
 type MediaItem = {
   id: string;
@@ -20,16 +18,6 @@ type MediaItem = {
   external_id?: string;
   external_source?: string;
 };
-
-type FriendItem = {
-  id: string;
-  name: string;
-  handle: string;
-  avatar: string;
-  color: string;
-};
-
-const FRIEND_COLORS = ["#7c3aed", "#0891b2", "#d97706", "#059669", "#db2777", "#dc2626", "#7c3aed"];
 
 const EXAMPLE_MEDIA: MediaItem[] = [
   {
@@ -63,10 +51,9 @@ const EXAMPLE_MEDIA: MediaItem[] = [
 
 const DEMO_ACTIVE_BATTLE = {
   media: EXAMPLE_MEDIA[0],
-  friend: { id: "f1", name: "Seth", handle: "@Seth", avatar: "S", color: "#7c3aed" },
+  opponent: { name: "Seth", avatar: "S", color: "#7c3aed" },
   myProgress: 6,
   friendProgress: 3,
-  battleType: "first_to_finish" as BattleType,
   startedAgo: "3 days ago",
 };
 
@@ -76,51 +63,12 @@ export default function PlayBingeBattle() {
 
   const [view, setView] = useState<View>("hub");
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
-  const [selectedFriend, setSelectedFriend] = useState<FriendItem | null>(null);
   const [search, setSearch] = useState("");
-  const [friendSearch, setFriendSearch] = useState("");
   const [myProgress, setMyProgress] = useState(6);
 
   const [mediaResults, setMediaResults] = useState<MediaItem[]>([]);
   const [mediaLoading, setMediaLoading] = useState(false);
   const mediaDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const [allFriends, setAllFriends] = useState<FriendItem[]>([]);
-  const [friendsLoading, setFriendsLoading] = useState(false);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    setFriendsLoading(true);
-    (async () => {
-      try {
-        const { data: friendships } = await supabase
-          .from("friendships")
-          .select("user_id, friend_id")
-          .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
-          .eq("status", "accepted");
-        if (!friendships?.length) { setAllFriends([]); setFriendsLoading(false); return; }
-        const friendIds = friendships.map((f: any) =>
-          f.user_id === user.id ? f.friend_id : f.user_id
-        );
-        const { data: usersData } = await supabase
-          .from("users")
-          .select("id, user_name, display_name, avatar")
-          .in("id", friendIds);
-        const mapped: FriendItem[] = (usersData || []).map((u: any, i: number) => ({
-          id: u.id,
-          name: u.display_name || u.user_name || "Friend",
-          handle: `@${u.user_name || "friend"}`,
-          avatar: (u.display_name || u.user_name || "F")[0].toUpperCase(),
-          color: FRIEND_COLORS[i % FRIEND_COLORS.length],
-        }));
-        setAllFriends(mapped);
-      } catch {
-        setAllFriends([]);
-      } finally {
-        setFriendsLoading(false);
-      }
-    })();
-  }, [user?.id]);
 
   const doMediaSearch = useCallback(async (query: string) => {
     if (!query.trim() || !session?.access_token) { setMediaResults([]); return; }
@@ -160,17 +108,11 @@ export default function PlayBingeBattle() {
 
   const displayMedia = search.trim() ? mediaResults : EXAMPLE_MEDIA;
 
-  const filteredFriends = allFriends.filter(f =>
-    !friendSearch.trim() ||
-    f.name.toLowerCase().includes(friendSearch.toLowerCase()) ||
-    f.handle.toLowerCase().includes(friendSearch.toLowerCase())
-  );
-
   const activeBattle = DEMO_ACTIVE_BATTLE;
   const leadAmount = activeBattle.myProgress - activeBattle.friendProgress;
 
   function handleSendChallenge() {
-    if (!selectedMedia || !selectedFriend) return;
+    if (!selectedMedia) return;
     setView("sent");
   }
 
@@ -192,7 +134,7 @@ export default function PlayBingeBattle() {
             <h1 className="text-2xl font-bold text-white">Binge Battle</h1>
           </div>
           <p className="text-sm text-white/50 ml-10.5">
-            First to the finish, wins. Choose a friend, set the terms, pick the media, and go.
+            Pick the media, share the challenge via text, and race to finish first.
           </p>
         </div>
 
@@ -231,7 +173,7 @@ export default function PlayBingeBattle() {
 
               <div className="p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[12px] text-gray-500">vs <span className="font-semibold text-gray-900">{activeBattle.friend.name}</span> · First to finish</p>
+                  <p className="text-[12px] text-gray-500">vs <span className="font-semibold text-gray-900">{activeBattle.opponent.name}</span> · First to finish</p>
                   <p className="text-[11px] text-gray-400">Started {activeBattle.startedAgo}</p>
                 </div>
 
@@ -251,9 +193,9 @@ export default function PlayBingeBattle() {
                   <div className="flex items-center gap-2">
                     <div
                       className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-                      style={{ background: activeBattle.friend.color }}
+                      style={{ background: activeBattle.opponent.color }}
                     >
-                      {activeBattle.friend.avatar}
+                      {activeBattle.opponent.avatar}
                     </div>
                     <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div className="h-full rounded-full bg-gray-300" style={{ width: `${(activeBattle.friendProgress / activeBattle.media.total) * 100}%` }} />
@@ -309,14 +251,13 @@ export default function PlayBingeBattle() {
             <h1 className="text-2xl font-bold text-white">New Battle</h1>
           </div>
           <p className="text-sm text-white/50 ml-10.5">
-            First to finish wins — pick the media, choose a friend, and go.
+            Pick the media below, then we'll send the challenge via text.
           </p>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 pt-5 pb-10 space-y-5">
-          {/* Step 1 — Pick the Media */}
           <div>
-            <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold">1 · Pick the media</p>
+            <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold">Pick the media</p>
             <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 mb-2 shadow-sm">
               <Search size={14} className="text-gray-400 shrink-0" />
               <input
@@ -382,84 +323,22 @@ export default function PlayBingeBattle() {
             </div>
           </div>
 
-          {/* Step 2 — Choose a Friend */}
-          <div>
-            <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold">2 · Choose a friend</p>
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 mb-3 shadow-sm">
-              <Users size={14} className="text-gray-400 shrink-0" />
-              <input
-                className="flex-1 text-[13px] text-gray-700 bg-transparent outline-none placeholder:text-gray-400"
-                placeholder="Search friends..."
-                value={friendSearch}
-                onChange={e => setFriendSearch(e.target.value)}
-              />
-            </div>
-            {friendsLoading && (
-              <div className="flex items-center justify-center py-5 gap-2 text-gray-400">
-                <Loader2 size={15} className="animate-spin" />
-                <span className="text-[12px]">Loading friends...</span>
-              </div>
-            )}
-            <div className="space-y-2">
-              {!friendsLoading && filteredFriends.length === 0 && allFriends.length === 0 && (
-                <p className="text-center text-[12px] text-gray-400 py-4">No friends yet — add friends on your profile</p>
-              )}
-              {!friendsLoading && filteredFriends.length === 0 && allFriends.length > 0 && (
-                <p className="text-center text-[12px] text-gray-400 py-4">No friends match that search</p>
-              )}
-              {!friendsLoading && filteredFriends.map(friend => (
-                <button
-                  key={friend.id}
-                  onClick={() => setSelectedFriend(selectedFriend?.id === friend.id ? null : friend)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
-                    selectedFriend?.id === friend.id
-                      ? "bg-purple-50 border-purple-200"
-                      : "bg-white"
-                  }`}
-                  style={{ borderColor: selectedFriend?.id === friend.id ? undefined : "#ececf0" }}
-                >
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold text-white shrink-0"
-                    style={{ background: friend.color }}
-                  >
-                    {friend.avatar}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[13px] font-semibold text-gray-900">{friend.name}</p>
-                    <p className="text-[11px] text-gray-400">{friend.handle}</p>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    selectedFriend?.id === friend.id ? "bg-purple-600 border-purple-600" : "border-gray-300"
-                  }`}>
-                    {selectedFriend?.id === friend.id && (
-                      <CheckCircle2 size={11} className="text-white fill-white" />
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* CTA */}
         <div className="px-4 pb-10 pt-3 bg-[#f8f8fb] border-t border-gray-100">
           <button
-            disabled={!selectedMedia || !selectedFriend}
+            disabled={!selectedMedia}
             onClick={handleSendChallenge}
             className={`w-full py-4 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 transition-all ${
-              selectedMedia && selectedFriend
+              selectedMedia
                 ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
                 : "bg-gray-200 text-gray-400"
             }`}
           >
-            <Send size={15} />
-            {selectedFriend ? `Challenge ${selectedFriend.name}` : "Challenge a Friend"}
+            <Zap size={15} />
+            {selectedMedia ? "Start Battle" : "Pick media first"}
           </button>
-          {(!selectedMedia || !selectedFriend) && (
-            <p className="text-center text-[11px] text-gray-400 mt-2">
-              {!selectedMedia ? "Pick media to race on" : "Choose a friend to challenge"}
-            </p>
-          )}
         </div>
       </div>
     );
@@ -467,35 +346,31 @@ export default function PlayBingeBattle() {
 
   if (view === "sent") {
     const media = selectedMedia!;
-    const friend = selectedFriend!;
-    const shareText = `Hey! I'm challenging you to a Binge Battle on Consumed — first to finish ${media.title} wins. Accept here: consumed.app`;
+    const battleUrl = `${window.location.origin}/play/binge-battle${user?.id ? `?from=${user.id}` : ""}`;
+    const shareText = `Can you beat me? I'm challenging you to a Binge Battle on ${media.title} — first to finish wins. Join me on Consumed`;
+
+    function sendChallenge() {
+      if (navigator.share) {
+        navigator.share({ title: "Binge Battle Challenge", text: shareText, url: battleUrl }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(`${shareText} ${battleUrl}`);
+      }
+    }
 
     return (
       <div className="min-h-screen bg-[#f8f8fb] flex flex-col">
         <div className="flex items-center gap-3 px-4 pt-14 pb-3 bg-white border-b border-gray-100">
-          <button onClick={() => setView("hub")} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
+          <button onClick={() => setView("new")} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
             <ChevronLeft size={16} className="text-gray-600" />
           </button>
-          <h1 className="text-[16px] font-bold text-gray-900">Challenge Sent</h1>
+          <h1 className="text-[16px] font-bold text-gray-900">Send Challenge</h1>
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 gap-5 pb-16">
-          {/* Success icon */}
-          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-            <CheckCircle2 size={40} className="text-green-500" />
-          </div>
-
-          <div className="text-center">
-            <h2 className="text-[22px] font-black text-gray-900 mb-1">Challenge Sent!</h2>
-            <p className="text-[14px] text-gray-500">
-              {friend.name} has been challenged to a Binge Battle on <span className="font-semibold text-gray-700">{media.title}</span>.
-            </p>
-          </div>
-
-          {/* Summary pill */}
-          <div className="flex items-center gap-3 bg-white rounded-2xl border border-gray-200 px-4 py-3 shadow-sm w-full">
-            <div className="w-9 h-12 rounded-lg overflow-hidden bg-purple-100 flex items-center justify-center relative shrink-0">
-              <span className="text-[10px] font-black text-purple-300">{media.type[0]}</span>
+          {/* Media summary */}
+          <div className="flex items-center gap-3 bg-white rounded-2xl border border-gray-200 px-4 py-3.5 shadow-sm w-full">
+            <div className="w-10 h-14 rounded-lg overflow-hidden bg-purple-100 flex items-center justify-center relative shrink-0">
+              <span className="text-[11px] font-black text-purple-300">{media.type[0]}</span>
               {media.poster && (
                 <img src={media.poster} alt={media.title} className="absolute inset-0 w-full h-full object-cover"
                   onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -503,39 +378,36 @@ export default function PlayBingeBattle() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-semibold text-gray-900 truncate">{media.title}</p>
-              <p className="text-[11px] text-gray-400">vs {friend.name} · First to finish</p>
-            </div>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0" style={{ background: friend.color }}>
-              {friend.avatar}
+              <p className="text-[11px] text-gray-500 mt-0.5">{media.sub}</p>
+              <p className="text-[11px] text-purple-600 font-semibold mt-0.5">First to finish wins</p>
             </div>
           </div>
 
-          {/* Text share nudge */}
-          <div className="w-full bg-blue-50 border border-blue-200 rounded-2xl p-4">
-            <p className="text-[13px] text-blue-800 font-semibold mb-1 text-center">Want to send it via text too?</p>
-            <p className="text-[11px] text-blue-600 text-center mb-3">Give {friend.name} a heads-up so they don't miss it</p>
+          {/* Main share CTA — matches Pools pattern */}
+          <div className="w-full space-y-3">
             <button
-              onClick={() => {
-                const sms = `sms:&body=${encodeURIComponent(shareText)}`;
-                if (navigator.share) {
-                  navigator.share({ text: shareText }).catch(() => {});
-                } else {
-                  window.open(sms);
-                }
-              }}
-              className="w-full py-2.5 rounded-xl bg-blue-500 text-white font-bold text-[13px] flex items-center justify-center gap-2"
+              onClick={sendChallenge}
+              className="w-full py-4 rounded-2xl font-bold text-[15px] bg-purple-600 text-white flex items-center justify-center gap-2.5 shadow-lg shadow-purple-200"
             >
-              <Send size={13} /> Send a Text
+              <MessageCircle size={17} />
+              Send Challenge via Text
             </button>
+            <p className="text-center text-[11px] text-gray-400">
+              Your friend gets a link to join and start competing
+            </p>
           </div>
-        </div>
 
-        <div className="px-4 pb-10 pt-3 border-t border-gray-100">
+          <div className="w-full flex items-center gap-3">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-[11px] text-gray-400">or</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
           <button
             onClick={() => setView("active")}
-            className="w-full py-4 rounded-2xl font-bold text-[15px] bg-purple-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-purple-200"
+            className="w-full py-3.5 rounded-2xl font-bold text-[14px] border border-gray-200 text-gray-600 bg-white flex items-center justify-center gap-2"
           >
-            <Zap size={15} /> Go to the Battle
+            <Zap size={14} className="text-purple-500" /> Go to My Battle
           </button>
         </div>
       </div>
@@ -544,7 +416,7 @@ export default function PlayBingeBattle() {
 
   if (view === "active") {
     const media = selectedMedia || activeBattle.media;
-    const friend = selectedFriend || activeBattle.friend;
+    const opponent = activeBattle.opponent;
     const friendProgress = selectedMedia ? 0 : activeBattle.friendProgress;
     const lead = myProgress - friendProgress;
 
@@ -628,17 +500,17 @@ export default function PlayBingeBattle() {
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
-          {/* Friend */}
+          {/* Opponent */}
           <div className="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
             <div className="flex items-center gap-3 mb-3">
               <div
                 className="w-10 h-10 rounded-full flex items-center justify-center text-[14px] font-bold text-white"
-                style={{ background: friend.color }}
+                style={{ background: opponent.color }}
               >
-                {friend.avatar}
+                {opponent.avatar}
               </div>
               <div className="flex-1">
-                <p className="text-[13px] font-bold text-gray-900">{friend.name}</p>
+                <p className="text-[13px] font-bold text-gray-900">{opponent.name}</p>
                 <p className="text-[11px] text-gray-400">
                   {media.unit === "episodes" ? `Ep ${friendProgress} of ${media.total}` : `${friendProgress}% done`}
                   {" · "}{Math.round((friendProgress / media.total) * 100)}% done
@@ -658,14 +530,14 @@ export default function PlayBingeBattle() {
           {lead > 0 && (
             <div className="p-3 rounded-xl bg-amber-50 border border-amber-200">
               <p className="text-[12px] text-amber-700 text-center">
-                You're <span className="font-bold">{lead} {media.unit} ahead</span> of {friend.name} — keep going!
+                You're <span className="font-bold">{lead} {media.unit} ahead</span> of {opponent.name} — keep going!
               </p>
             </div>
           )}
           {lead < 0 && (
             <div className="p-3 rounded-xl bg-red-50 border border-red-200">
               <p className="text-[12px] text-red-600 text-center">
-                {friend.name} is <span className="font-bold">{Math.abs(lead)} {media.unit} ahead</span> — pick it up!
+                {opponent.name} is <span className="font-bold">{Math.abs(lead)} {media.unit} ahead</span> — pick it up!
               </p>
             </div>
           )}
@@ -699,7 +571,7 @@ export default function PlayBingeBattle() {
 
   if (view === "finished") {
     const media = selectedMedia || activeBattle.media;
-    const friend = selectedFriend || activeBattle.friend;
+    const opponent = activeBattle.opponent;
     const friendFinalProgress = selectedMedia ? 0 : activeBattle.friendProgress;
 
     return (
@@ -728,10 +600,12 @@ export default function PlayBingeBattle() {
               background: "radial-gradient(circle at 50% 0%, rgba(255,255,255,0.5), transparent 70%)"
             }} />
             <div className="relative">
-              <div className="text-[48px] mb-2">🏆</div>
+              <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-2">
+                <Trophy size={30} className="text-amber-300" />
+              </div>
               <p className="text-[11px] text-purple-200 uppercase tracking-widest font-bold mb-1">Battle won</p>
               <h2 className="text-[26px] font-black text-white mb-1">First to Finish!</h2>
-              <p className="text-[13px] text-purple-200">You beat {friend.name}</p>
+              <p className="text-[13px] text-purple-200">You beat {opponent.name}</p>
             </div>
           </div>
 
@@ -757,12 +631,12 @@ export default function PlayBingeBattle() {
                 <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-[12px] font-bold text-gray-400">2</div>
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold text-white"
-                  style={{ background: friend.color }}
+                  style={{ background: opponent.color }}
                 >
-                  {friend.avatar}
+                  {opponent.avatar}
                 </div>
                 <div className="flex-1">
-                  <p className="text-[13px] font-bold text-gray-500">{friend.name}</p>
+                  <p className="text-[13px] font-bold text-gray-500">{opponent.name}</p>
                   <p className="text-[11px] text-gray-400">Still watching · {media.unit === "episodes" ? `Ep ${friendFinalProgress}` : `${friendFinalProgress}%`}</p>
                 </div>
                 <div className="text-right">
@@ -788,15 +662,15 @@ export default function PlayBingeBattle() {
         {/* Actions */}
         <div className="px-4 pb-10 pt-3 bg-[#f8f8fb] border-t border-gray-100 space-y-2.5">
           <button
-            onClick={() => { setSelectedMedia(null); setSelectedFriend(null); setMyProgress(6); setView("new"); }}
+            onClick={() => { setSelectedMedia(null); setMyProgress(6); setView("new"); }}
             className="w-full py-3.5 rounded-2xl font-bold text-[14px] bg-purple-600 text-white flex items-center justify-center gap-2 shadow-md shadow-purple-100"
           >
             <RotateCcw size={14} />
-            Rematch {friend.name}
+            Rematch {opponent.name}
           </button>
           <button
             onClick={() => {
-              const text = `I just beat ${friend.name} on ${media.title} in a Binge Battle on Consumed!`;
+              const text = `I just beat ${opponent.name} on ${media.title} in a Binge Battle on Consumed!`;
               if (navigator.share) {
                 navigator.share({ title: "Binge Battle Result", text }).catch(() => {});
               } else {
