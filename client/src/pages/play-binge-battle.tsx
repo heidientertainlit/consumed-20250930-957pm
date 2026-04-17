@@ -216,7 +216,10 @@ export default function PlayBingeBattle() {
       .single();
 
     setCreating(false);
-    if (error || !data) return;
+    if (error || !data) {
+      console.error("[BingeBattle] insert error:", JSON.stringify(error));
+      return;
+    }
     setCreatedBattleId(data.id);
     setCurrentBattle(data);
     setMyProgress(0);
