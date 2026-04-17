@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
-type View = "hub" | "new" | "active" | "finished";
+type View = "hub" | "new" | "sent" | "active" | "finished";
 type BattleType = "first_to_finish" | "most_in_7_days";
 
 type MediaItem = {
@@ -77,7 +77,6 @@ export default function PlayBingeBattle() {
   const [view, setView] = useState<View>("hub");
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [selectedFriend, setSelectedFriend] = useState<FriendItem | null>(null);
-  const [battleType, setBattleType] = useState<BattleType>("first_to_finish");
   const [search, setSearch] = useState("");
   const [friendSearch, setFriendSearch] = useState("");
   const [myProgress, setMyProgress] = useState(6);
@@ -172,7 +171,7 @@ export default function PlayBingeBattle() {
 
   function handleSendChallenge() {
     if (!selectedMedia || !selectedFriend) return;
-    setView("active");
+    setView("sent");
   }
 
   if (view === "hub") {
@@ -310,7 +309,7 @@ export default function PlayBingeBattle() {
             <h1 className="text-2xl font-bold text-white">New Battle</h1>
           </div>
           <p className="text-sm text-white/50 ml-10.5">
-            First to the finish, wins — pick the media, set the terms, choose a friend, and go.
+            First to finish wins — pick the media, choose a friend, and go.
           </p>
         </div>
 
@@ -353,7 +352,17 @@ export default function PlayBingeBattle() {
                   }`}
                   style={{ borderColor: selectedMedia?.id === item.id ? undefined : "#ececf0" }}
                 >
-                  <img src={item.poster} alt={item.title} className="w-10 h-14 rounded-lg object-cover shrink-0" />
+                  <div className="w-10 h-14 rounded-lg shrink-0 overflow-hidden bg-purple-100 flex items-center justify-center relative">
+                    <span className="text-[11px] font-black text-purple-300">{item.type[0]}</span>
+                    {item.poster && (
+                      <img
+                        src={item.poster}
+                        alt={item.title}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-semibold text-gray-900 truncate">{item.title}</p>
                     <p className="text-[11px] text-gray-400 truncate">{item.sub}</p>
@@ -373,36 +382,9 @@ export default function PlayBingeBattle() {
             </div>
           </div>
 
-          {/* Step 2 — Set the Terms */}
+          {/* Step 2 — Choose a Friend */}
           <div>
-            <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold">2 · Set the terms</p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setBattleType("first_to_finish")}
-                className={`flex-1 py-2.5 rounded-xl text-[12px] font-bold border transition-all ${
-                  battleType === "first_to_finish"
-                    ? "bg-purple-600 text-white border-purple-600 shadow-sm"
-                    : "bg-white text-gray-400 border-gray-200"
-                }`}
-              >
-                First to finish
-              </button>
-              <button
-                onClick={() => setBattleType("most_in_7_days")}
-                className={`flex-1 py-2.5 rounded-xl text-[12px] font-bold border transition-all ${
-                  battleType === "most_in_7_days"
-                    ? "bg-purple-600 text-white border-purple-600 shadow-sm"
-                    : "bg-white text-gray-400 border-gray-200"
-                }`}
-              >
-                Most in 7 days
-              </button>
-            </div>
-          </div>
-
-          {/* Step 3 — Choose a Friend */}
-          <div>
-            <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold">3 · Choose a friend</p>
+            <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold">2 · Choose a friend</p>
             <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 mb-3 shadow-sm">
               <Users size={14} className="text-gray-400 shrink-0" />
               <input
@@ -483,6 +465,83 @@ export default function PlayBingeBattle() {
     );
   }
 
+  if (view === "sent") {
+    const media = selectedMedia!;
+    const friend = selectedFriend!;
+    const shareText = `Hey! I'm challenging you to a Binge Battle on Consumed — first to finish ${media.title} wins. Accept here: consumed.app`;
+
+    return (
+      <div className="min-h-screen bg-[#f8f8fb] flex flex-col">
+        <div className="flex items-center gap-3 px-4 pt-14 pb-3 bg-white border-b border-gray-100">
+          <button onClick={() => setView("hub")} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
+            <ChevronLeft size={16} className="text-gray-600" />
+          </button>
+          <h1 className="text-[16px] font-bold text-gray-900">Challenge Sent</h1>
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center px-6 gap-5 pb-16">
+          {/* Success icon */}
+          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+            <CheckCircle2 size={40} className="text-green-500" />
+          </div>
+
+          <div className="text-center">
+            <h2 className="text-[22px] font-black text-gray-900 mb-1">Challenge Sent!</h2>
+            <p className="text-[14px] text-gray-500">
+              {friend.name} has been challenged to a Binge Battle on <span className="font-semibold text-gray-700">{media.title}</span>.
+            </p>
+          </div>
+
+          {/* Summary pill */}
+          <div className="flex items-center gap-3 bg-white rounded-2xl border border-gray-200 px-4 py-3 shadow-sm w-full">
+            <div className="w-9 h-12 rounded-lg overflow-hidden bg-purple-100 flex items-center justify-center relative shrink-0">
+              <span className="text-[10px] font-black text-purple-300">{media.type[0]}</span>
+              {media.poster && (
+                <img src={media.poster} alt={media.title} className="absolute inset-0 w-full h-full object-cover"
+                  onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold text-gray-900 truncate">{media.title}</p>
+              <p className="text-[11px] text-gray-400">vs {friend.name} · First to finish</p>
+            </div>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0" style={{ background: friend.color }}>
+              {friend.avatar}
+            </div>
+          </div>
+
+          {/* Text share nudge */}
+          <div className="w-full bg-blue-50 border border-blue-200 rounded-2xl p-4">
+            <p className="text-[13px] text-blue-800 font-semibold mb-1 text-center">Want to send it via text too?</p>
+            <p className="text-[11px] text-blue-600 text-center mb-3">Give {friend.name} a heads-up so they don't miss it</p>
+            <button
+              onClick={() => {
+                const sms = `sms:&body=${encodeURIComponent(shareText)}`;
+                if (navigator.share) {
+                  navigator.share({ text: shareText }).catch(() => {});
+                } else {
+                  window.open(sms);
+                }
+              }}
+              className="w-full py-2.5 rounded-xl bg-blue-500 text-white font-bold text-[13px] flex items-center justify-center gap-2"
+            >
+              <Send size={13} /> Send a Text
+            </button>
+          </div>
+        </div>
+
+        <div className="px-4 pb-10 pt-3 border-t border-gray-100">
+          <button
+            onClick={() => setView("active")}
+            className="w-full py-4 rounded-2xl font-bold text-[15px] bg-purple-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-purple-200"
+          >
+            <Zap size={15} /> Go to the Battle
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (view === "active") {
     const media = selectedMedia || activeBattle.media;
     const friend = selectedFriend || activeBattle.friend;
@@ -509,15 +568,15 @@ export default function PlayBingeBattle() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 pt-4 pb-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-4 pt-4 pb-10 space-y-4">
           {/* Media banner */}
-          <div className="rounded-2xl overflow-hidden relative h-[110px] bg-gray-200">
-            <img
-              src="https://image.tmdb.org/t/p/w780/kjQBrc00fB2RjHZB3PGR4w9ibpz.jpg"
-              alt={media.title}
-              className="w-full h-full object-cover opacity-60"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent p-4 flex items-end">
+          <div className="rounded-2xl overflow-hidden relative h-[90px] bg-gray-800">
+            {media.poster && (
+              <img src={media.poster} alt={media.title}
+                className="absolute inset-0 w-full h-full object-cover opacity-50"
+                onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-4 flex items-end">
               <div>
                 <p className="text-white font-bold text-[15px]">{media.title}</p>
                 <p className="text-white/70 text-[11px]">{media.sub}</p>
@@ -615,24 +674,24 @@ export default function PlayBingeBattle() {
               <p className="text-[12px] text-gray-600 text-center font-medium">You're neck and neck — anyone's game!</p>
             </div>
           )}
-        </div>
 
-        {/* Actions */}
-        <div className="px-4 pb-10 pt-3 bg-[#f8f8fb] border-t border-gray-100 space-y-2.5">
-          <button
-            onClick={() => setMyProgress(p => Math.min(p + 1, media.total))}
-            className="w-full py-3.5 rounded-2xl font-bold text-[14px] bg-purple-600 text-white flex items-center justify-center gap-2 shadow-md shadow-purple-100"
-          >
-            <ChevronLeft size={15} className="rotate-180" />
-            Update My Progress
-          </button>
-          <button
-            onClick={() => { setMyProgress(media.total); setView("finished"); }}
-            className="w-full py-3.5 rounded-2xl font-bold text-[14px] border border-green-300 text-green-600 bg-green-50 flex items-center justify-center gap-2"
-          >
-            <CheckCircle2 size={15} />
-            I Finished — Done!
-          </button>
+          {/* Actions — in scroll area so they're visible immediately */}
+          <div className="space-y-2.5 pt-1">
+            <button
+              onClick={() => setMyProgress(p => Math.min(p + 1, media.total))}
+              className="w-full py-4 rounded-2xl font-bold text-[15px] bg-purple-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-purple-200"
+            >
+              <ChevronLeft size={15} className="rotate-180" />
+              Update My Progress
+            </button>
+            <button
+              onClick={() => { setMyProgress(media.total); setView("finished"); }}
+              className="w-full py-3.5 rounded-2xl font-bold text-[14px] border border-green-300 text-green-600 bg-green-50 flex items-center justify-center gap-2"
+            >
+              <CheckCircle2 size={15} />
+              I Finished — Done!
+            </button>
+          </div>
         </div>
       </div>
     );
