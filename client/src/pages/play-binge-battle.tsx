@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
-import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, MessageCircle, Loader2, Clock } from "lucide-react";
+import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, MessageCircle, Loader2, Clock, Minus, Plus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -794,23 +794,50 @@ export default function PlayBingeBattle() {
 
           {/* Actions */}
           <div className="space-y-2.5 pt-1">
-            <div className="flex items-center gap-2">
+            {/* Progress stepper */}
+            <div className="bg-white rounded-2xl border border-gray-200 px-4 py-3 flex items-center gap-3">
               <button
                 onClick={() => handleUpdateProgress(Math.max(0, myProgress - 1))}
                 disabled={myProgress === 0 || updating}
-                className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-500 disabled:opacity-30"
+                className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 disabled:opacity-30 shrink-0"
               >
-                <ChevronLeft size={16} />
+                <Minus size={16} />
               </button>
+              <div className="flex-1 text-center">
+                <p className="text-[20px] font-black text-gray-900 leading-none">{myProgress}<span className="text-[13px] font-medium text-gray-400">/{battle.media_total}</span></p>
+                <p className="text-[11px] text-gray-400 mt-0.5">{battle.media_unit} completed</p>
+              </div>
               <button
                 onClick={() => handleUpdateProgress(Math.min(myProgress + 1, battle.media_total))}
-                disabled={updating}
-                className="flex-1 py-4 rounded-2xl font-bold text-[15px] bg-purple-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-purple-200 disabled:opacity-60"
+                disabled={myProgress >= battle.media_total || updating}
+                className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center text-white disabled:opacity-40 shrink-0"
               >
-                {updating ? <Loader2 size={15} className="animate-spin" /> : <ChevronLeft size={15} className="rotate-180" />}
-                Update My Progress
+                {updating ? <Loader2 size={15} className="animate-spin" /> : <Plus size={16} />}
               </button>
             </div>
+
+            {/* Resend challenge link — only shown while waiting for opponent */}
+            {isPending && isChallenger && (
+              <button
+                onClick={() => {
+                  const battleUrl = `${window.location.origin}/play/binge-battle/accept/${battle.id}`;
+                  const shareText = `Can you beat me? I'm challenging you to a Binge Battle on ${battle.media_title} — first to finish wins. Join me on Consumed`;
+                  if (navigator.share) {
+                    navigator.share({ title: "Binge Battle Challenge", text: shareText, url: battleUrl }).catch(() => {
+                      navigator.clipboard.writeText(`${shareText} ${battleUrl}`);
+                      toast({ title: "Link copied!", description: "Paste it in a text or DM." });
+                    });
+                  } else {
+                    navigator.clipboard.writeText(`${shareText} ${battleUrl}`);
+                    toast({ title: "Link copied!", description: "Paste it in a text or DM." });
+                  }
+                }}
+                className="w-full py-3.5 rounded-2xl font-bold text-[14px] bg-purple-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-purple-200"
+              >
+                <Share2 size={14} /> Resend Challenge Link
+              </button>
+            )}
+
             <button
               disabled={finishing}
               onClick={handleFinishBattle}
