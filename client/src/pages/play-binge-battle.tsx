@@ -1,14 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
-import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, ChevronRight, Send, Users } from "lucide-react";
+import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, ChevronRight, Send, Users, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
 type View = "hub" | "new" | "active" | "finished";
 type BattleType = "first_to_finish" | "most_in_7_days";
 
-const DEMO_MEDIA = [
+type MediaItem = {
+  id: string;
+  title: string;
+  sub: string;
+  type: string;
+  poster: string;
+  total: number;
+  unit: string;
+  external_id?: string;
+  external_source?: string;
+};
+
+type FriendItem = {
+  id: string;
+  name: string;
+  handle: string;
+  avatar: string;
+  color: string;
+};
+
+const FRIEND_COLORS = ["#7c3aed", "#0891b2", "#d97706", "#059669", "#db2777", "#dc2626", "#7c3aed"];
+
+const EXAMPLE_MEDIA: MediaItem[] = [
   {
-    id: "friends",
+    id: "friends-tv",
     title: "Friends",
     sub: "Full Series · NBC · 10 seasons",
     type: "TV",
@@ -26,25 +51,19 @@ const DEMO_MEDIA = [
     unit: "books",
   },
   {
-    id: "emma-grede",
-    title: "Emma Grede Podcast",
-    sub: "Good American · Business",
+    id: "good-hang",
+    title: "Good Hang with Amy Poehler",
+    sub: "Amy Poehler · Comedy · iHeart",
     type: "Podcast",
-    poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts116/v4/ec/ec/ec/ececec00-0000-0000-0000-000000000000/mza_default.jpg/200x200bb.jpg",
-    total: 20,
+    poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts211/v4/f8/96/e8/f896e808-3b6c-bada-d3e6-39e51c7dbf00/mza_6234927437259781246.jpg/200x200bb.jpg",
+    total: 50,
     unit: "episodes",
   },
 ];
 
-const DEMO_FRIENDS = [
-  { id: "f1", name: "Seth", handle: "@seth_watches", avatar: "S", color: "#7c3aed" },
-  { id: "f2", name: "Trey", handle: "@treyvibes", avatar: "T", color: "#0891b2" },
-  { id: "f3", name: "Kendall", handle: "@kendall", avatar: "K", color: "#d97706" },
-];
-
 const DEMO_ACTIVE_BATTLE = {
-  media: DEMO_MEDIA[0],
-  friend: DEMO_FRIENDS[0],
+  media: EXAMPLE_MEDIA[0],
+  friend: { id: "f1", name: "Seth", handle: "@Seth", avatar: "S", color: "#7c3aed" },
   myProgress: 6,
   friendProgress: 3,
   battleType: "first_to_finish" as BattleType,
@@ -53,22 +72,97 @@ const DEMO_ACTIVE_BATTLE = {
 
 export default function PlayBingeBattle() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   const [view, setView] = useState<View>("hub");
-  const [selectedMedia, setSelectedMedia] = useState<typeof DEMO_MEDIA[0] | null>(null);
-  const [selectedFriend, setSelectedFriend] = useState<typeof DEMO_FRIENDS[0] | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
+  const [selectedFriend, setSelectedFriend] = useState<FriendItem | null>(null);
   const [battleType, setBattleType] = useState<BattleType>("first_to_finish");
   const [search, setSearch] = useState("");
   const [friendSearch, setFriendSearch] = useState("");
   const [myProgress, setMyProgress] = useState(6);
-  const [done, setDone] = useState(false);
 
-  const filteredMedia = DEMO_MEDIA.filter(m =>
-    m.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const [mediaResults, setMediaResults] = useState<MediaItem[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
+  const mediaDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const filteredFriends = DEMO_FRIENDS.filter(f =>
+  const [allFriends, setAllFriends] = useState<FriendItem[]>([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    setFriendsLoading(true);
+    (async () => {
+      try {
+        const { data: friendships } = await supabase
+          .from("friendships")
+          .select("user_id, friend_id")
+          .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
+          .eq("status", "accepted");
+        if (!friendships?.length) { setAllFriends([]); setFriendsLoading(false); return; }
+        const friendIds = friendships.map((f: any) =>
+          f.user_id === user.id ? f.friend_id : f.user_id
+        );
+        const { data: usersData } = await supabase
+          .from("users")
+          .select("id, user_name, display_name, avatar")
+          .in("id", friendIds);
+        const mapped: FriendItem[] = (usersData || []).map((u: any, i: number) => ({
+          id: u.id,
+          name: u.display_name || u.user_name || "Friend",
+          handle: `@${u.user_name || "friend"}`,
+          avatar: (u.display_name || u.user_name || "F")[0].toUpperCase(),
+          color: FRIEND_COLORS[i % FRIEND_COLORS.length],
+        }));
+        setAllFriends(mapped);
+      } catch {
+        setAllFriends([]);
+      } finally {
+        setFriendsLoading(false);
+      }
+    })();
+  }, [user?.id]);
+
+  const doMediaSearch = useCallback(async (query: string) => {
+    if (!query.trim() || !session?.access_token) { setMediaResults([]); return; }
+    setMediaLoading(true);
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      const data = await resp.json();
+      const mapped: MediaItem[] = (data.results || []).slice(0, 6).map((r: any) => ({
+        id: r.external_id || r.id || r.title,
+        title: r.title,
+        sub: [r.creator || r.artist, r.year, r.network || r.platform].filter(Boolean).join(" · "),
+        type: r.type ? (r.type.charAt(0).toUpperCase() + r.type.slice(1)) : "Media",
+        poster: r.image_url || r.poster_url || r.image || "",
+        total: r.type === "book" ? 100 : r.type === "podcast" ? 20 : r.episodes || 10,
+        unit: r.type === "book" ? "% read" : "episodes",
+        external_id: r.external_id,
+        external_source: r.external_source,
+      }));
+      setMediaResults(mapped);
+    } catch {
+      setMediaResults([]);
+    } finally {
+      setMediaLoading(false);
+    }
+  }, [session?.access_token]);
+
+  useEffect(() => {
+    if (!search.trim()) { setMediaResults([]); return; }
+    if (mediaDebounce.current) clearTimeout(mediaDebounce.current);
+    mediaDebounce.current = setTimeout(() => doMediaSearch(search), 400);
+    return () => { if (mediaDebounce.current) clearTimeout(mediaDebounce.current); };
+  }, [search, doMediaSearch]);
+
+  const displayMedia = search.trim() ? mediaResults : EXAMPLE_MEDIA;
+
+  const filteredFriends = allFriends.filter(f =>
+    !friendSearch.trim() ||
     f.name.toLowerCase().includes(friendSearch.toLowerCase()) ||
     f.handle.toLowerCase().includes(friendSearch.toLowerCase())
   );
@@ -233,13 +327,22 @@ export default function PlayBingeBattle() {
                 onChange={e => setSearch(e.target.value)}
               />
             </div>
-            {!search && (
+            {!search.trim() && (
               <p className="text-[11px] text-gray-400 mb-2.5 px-0.5">
-                <span className="font-semibold text-gray-500">Examples</span> — tap one to pick it
+                <span className="font-semibold text-gray-500">Examples</span> — tap one to pick it, or search above
               </p>
             )}
+            {mediaLoading && (
+              <div className="flex items-center justify-center py-5 gap-2 text-gray-400">
+                <Loader2 size={15} className="animate-spin" />
+                <span className="text-[12px]">Searching...</span>
+              </div>
+            )}
+            {search.trim() && !mediaLoading && mediaResults.length === 0 && (
+              <p className="text-center text-[12px] text-gray-400 py-4">No results found — try a different search</p>
+            )}
             <div className="space-y-2">
-              {filteredMedia.map(item => (
+              {!mediaLoading && displayMedia.map(item => (
                 <button
                   key={item.id}
                   onClick={() => setSelectedMedia(selectedMedia?.id === item.id ? null : item)}
@@ -309,11 +412,20 @@ export default function PlayBingeBattle() {
                 onChange={e => setFriendSearch(e.target.value)}
               />
             </div>
+            {friendsLoading && (
+              <div className="flex items-center justify-center py-5 gap-2 text-gray-400">
+                <Loader2 size={15} className="animate-spin" />
+                <span className="text-[12px]">Loading friends...</span>
+              </div>
+            )}
             <div className="space-y-2">
-              {filteredFriends.length === 0 && (
-                <p className="text-center text-[12px] text-gray-400 py-4">No friends found</p>
+              {!friendsLoading && filteredFriends.length === 0 && allFriends.length === 0 && (
+                <p className="text-center text-[12px] text-gray-400 py-4">No friends yet — add friends on your profile</p>
               )}
-              {filteredFriends.map(friend => (
+              {!friendsLoading && filteredFriends.length === 0 && allFriends.length > 0 && (
+                <p className="text-center text-[12px] text-gray-400 py-4">No friends match that search</p>
+              )}
+              {!friendsLoading && filteredFriends.map(friend => (
                 <button
                   key={friend.id}
                   onClick={() => setSelectedFriend(selectedFriend?.id === friend.id ? null : friend)}
