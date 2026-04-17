@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { supabase } from "@/lib/supabase";
-import { Target, HelpCircle, Vote, BarChart2, UserPlus, Trophy, ChevronRight, ArrowRight, Layers } from "lucide-react";
+import { Target, HelpCircle, Vote, BarChart2, UserPlus, Trophy, ChevronRight, ArrowRight, Layers, Zap } from "lucide-react";
 
 const gameModes = [
   {
@@ -51,6 +51,15 @@ const gameModes = [
     color: "bg-purple-50 border-purple-100",
     iconColor: "text-purple-600",
     href: "/play/pools",
+  },
+  {
+    id: "binge-battle",
+    label: "Binge Battle",
+    description: "First to finish wins — race a friend",
+    icon: Zap,
+    color: "bg-green-50 border-green-100",
+    iconColor: "text-green-600",
+    href: "/play/binge-battle",
   },
 ];
 
