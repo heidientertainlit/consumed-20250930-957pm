@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, ChevronRight, Send } from "lucide-react";
+import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, ChevronRight, Send, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 
 type View = "hub" | "new" | "active" | "finished";
@@ -8,31 +8,31 @@ type BattleType = "first_to_finish" | "most_in_7_days";
 
 const DEMO_MEDIA = [
   {
-    id: "wl-s3",
-    title: "The White Lotus",
-    sub: "Season 3 · HBO · 8 episodes",
+    id: "friends",
+    title: "Friends",
+    sub: "Full Series · NBC · 10 seasons",
     type: "TV",
-    poster: "https://image.tmdb.org/t/p/w200/b9EkMX6fFJ8oMkFhTiKmLPAOGqH.jpg",
-    total: 8,
+    poster: "https://image.tmdb.org/t/p/w200/f496cm9enuEsZkSPzCwnTESEK5s.jpg",
+    total: 236,
     unit: "episodes",
   },
   {
-    id: "sev-s2",
-    title: "Severance",
-    sub: "Season 2 · Apple TV+ · 10 episodes",
-    type: "TV",
-    poster: "https://image.tmdb.org/t/p/w200/yTD6vPMQuoTBv4TFJNzFLEwtTmo.jpg",
-    total: 10,
-    unit: "episodes",
-  },
-  {
-    id: "intermezzo",
-    title: "Intermezzo",
-    sub: "Sally Rooney · 2024",
+    id: "hp-books",
+    title: "Harry Potter Series",
+    sub: "J.K. Rowling · 7 books",
     type: "Book",
-    poster: "https://covers.openlibrary.org/b/id/14633854-M.jpg",
-    total: 100,
-    unit: "% read",
+    poster: "https://covers.openlibrary.org/b/id/10110415-M.jpg",
+    total: 7,
+    unit: "books",
+  },
+  {
+    id: "emma-grede",
+    title: "Emma Grede Podcast",
+    sub: "Good American · Business",
+    type: "Podcast",
+    poster: "https://is1-ssl.mzstatic.com/image/thumb/Podcasts116/v4/ec/ec/ec/ececec00-0000-0000-0000-000000000000/mza_default.jpg/200x200bb.jpg",
+    total: 20,
+    unit: "episodes",
   },
 ];
 
@@ -60,11 +60,17 @@ export default function PlayBingeBattle() {
   const [selectedFriend, setSelectedFriend] = useState<typeof DEMO_FRIENDS[0] | null>(null);
   const [battleType, setBattleType] = useState<BattleType>("first_to_finish");
   const [search, setSearch] = useState("");
+  const [friendSearch, setFriendSearch] = useState("");
   const [myProgress, setMyProgress] = useState(6);
   const [done, setDone] = useState(false);
 
   const filteredMedia = DEMO_MEDIA.filter(m =>
     m.title.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredFriends = DEMO_FRIENDS.filter(f =>
+    f.name.toLowerCase().includes(friendSearch.toLowerCase()) ||
+    f.handle.toLowerCase().includes(friendSearch.toLowerCase())
   );
 
   const activeBattle = DEMO_ACTIVE_BATTLE;
@@ -195,27 +201,30 @@ export default function PlayBingeBattle() {
   if (view === "new") {
     return (
       <div className="min-h-screen bg-[#f8f8fb] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center gap-3 px-4 pt-14 pb-4 bg-white border-b border-gray-100">
+        {/* Header — purple gradient matching hub */}
+        <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] px-4 pt-14 pb-5">
           <button
             onClick={() => setView("hub")}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100"
+            className="flex items-center gap-1.5 text-white/60 text-sm mb-4"
           >
-            <ChevronLeft size={16} className="text-gray-600" />
+            <ChevronLeft size={16} /> Binge Battle
           </button>
-          <div>
-            <h1 className="text-[17px] font-bold text-gray-900">Binge Battle</h1>
-            <p className="text-[11px] text-gray-400 leading-snug">
-              First to the finish, wins... choose a friend, set the terms, pick the media, and go.
-            </p>
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="w-8 h-8 rounded-xl bg-green-500/20 flex items-center justify-center">
+              <Zap size={16} className="text-green-400" />
+            </div>
+            <h1 className="text-2xl font-bold text-white">New Battle</h1>
           </div>
+          <p className="text-sm text-white/50 ml-10.5">
+            First to the finish, wins — pick the media, set the terms, choose a friend, and go.
+          </p>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 pt-5 pb-10 space-y-5">
           {/* Step 1 — Pick the Media */}
           <div>
             <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold">1 · Pick the media</p>
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 mb-3 shadow-sm">
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 mb-2 shadow-sm">
               <Search size={14} className="text-gray-400 shrink-0" />
               <input
                 className="flex-1 text-[13px] text-gray-700 bg-transparent outline-none placeholder:text-gray-400"
@@ -224,6 +233,11 @@ export default function PlayBingeBattle() {
                 onChange={e => setSearch(e.target.value)}
               />
             </div>
+            {!search && (
+              <p className="text-[11px] text-gray-400 mb-2.5 px-0.5">
+                <span className="font-semibold text-gray-500">Examples</span> — tap one to pick it
+              </p>
+            )}
             <div className="space-y-2">
               {filteredMedia.map(item => (
                 <button
@@ -286,8 +300,20 @@ export default function PlayBingeBattle() {
           {/* Step 3 — Choose a Friend */}
           <div>
             <p className="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold">3 · Choose a friend</p>
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 mb-3 shadow-sm">
+              <Users size={14} className="text-gray-400 shrink-0" />
+              <input
+                className="flex-1 text-[13px] text-gray-700 bg-transparent outline-none placeholder:text-gray-400"
+                placeholder="Search friends..."
+                value={friendSearch}
+                onChange={e => setFriendSearch(e.target.value)}
+              />
+            </div>
             <div className="space-y-2">
-              {DEMO_FRIENDS.map(friend => (
+              {filteredFriends.length === 0 && (
+                <p className="text-center text-[12px] text-gray-400 py-4">No friends found</p>
+              )}
+              {filteredFriends.map(friend => (
                 <button
                   key={friend.id}
                   onClick={() => setSelectedFriend(selectedFriend?.id === friend.id ? null : friend)}
