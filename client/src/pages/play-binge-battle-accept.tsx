@@ -82,7 +82,7 @@ export default function PlayBingeBattleAccept() {
       user.email?.split("@")[0] ||
       "Someone";
 
-    await supabase.from("social_posts").insert({
+    const { error: postErr } = await supabase.from("social_posts").insert({
       user_id: user.id,
       post_type: "binge_battle",
       content: `${opponentName} and ${challengerName} just started a Binge Battle on ${battle.media_title} — who will finish first?`,
@@ -92,6 +92,7 @@ export default function PlayBingeBattleAccept() {
       media_external_id: battleId,
       media_external_source: "binge_battle",
     });
+    if (postErr) console.error("[BingeBattle] failed to post feed card on accept:", postErr.message);
 
     setLocation("/play/binge-battle");
   }
