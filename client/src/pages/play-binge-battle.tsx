@@ -316,6 +316,25 @@ export default function PlayBingeBattle() {
     setMyProgress(total);
     const { data } = await supabase.from("binge_battles").select("*").eq("id", currentBattle.id).single();
     if (data) setCurrentBattle(data);
+
+    // Insert social_posts entry so friends can see who won
+    const opponentId = isChallenger ? currentBattle.opponent_id : currentBattle.challenger_id;
+    const opponentInfo = opponentId ? userMap[opponentId] : null;
+    const myInfo = userMap[user.id];
+    const myName = myInfo?.name || user.user_metadata?.full_name || user.user_metadata?.display_name || user.email?.split("@")[0] || "Someone";
+    const opponentName = opponentInfo?.name || "their opponent";
+
+    await supabase.from("social_posts").insert({
+      user_id: user.id,
+      post_type: "binge_battle",
+      content: `${myName} just beat ${opponentName} in a Binge Battle on ${currentBattle.media_title}!`,
+      media_title: currentBattle.media_title,
+      media_type: currentBattle.media_type || null,
+      image_url: currentBattle.media_poster || null,
+      media_external_id: currentBattle.id,
+      media_external_source: "binge_battle",
+    });
+
     setFinishing(false);
     setView("finished");
   }

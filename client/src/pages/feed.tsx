@@ -55,6 +55,7 @@ import { copyLink } from "@/lib/share";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { GameMomentCard } from "@/components/game-moment-card";
 import { SocialProofCard, buildGameMomentSocialProof, buildLeaderboardSocialProof } from "@/components/social-proof-card";
+import BingeBattleFeedCard from "@/components/binge-battle-feed-card";
 
 interface SocialPost {
   id: string;
@@ -3456,6 +3457,24 @@ export default function Feed() {
       );
     }
 
+    // Binge Battle posts — render dedicated card
+    if (item?.type === 'binge_battle') {
+      const raw = item._rawPost || item;
+      return (
+        <BingeBattleFeedCard
+          key={`binge-battle-${item.id}`}
+          post={{
+            id: item.id,
+            content: raw.content || item.content || '',
+            image_url: raw.mediaItems?.[0]?.imageUrl || raw.image_url || '',
+            media_title: raw.mediaItems?.[0]?.title || raw.media_title || '',
+            timestamp: raw.timestamp || raw.created_at || '',
+            user: raw.user || item.user,
+          }}
+        />
+      );
+    }
+
     // Prediction posts — render as interactive voting card
     if ((item?.type === 'predict' || item?.type === 'poll') && (item._rawPost || item.options?.length > 0)) {
       const raw = item._rawPost || item;
@@ -6146,6 +6165,23 @@ export default function Feed() {
                 // User polls are rendered in dedicated carousel higher up in feed
                 if (post.type === 'poll' && (post as any).question) {
                   return null;
+                }
+
+                if (post.type === 'binge_battle') {
+                  return (
+                    <div key={`binge-battle-${post.id}`} id={`post-${post.id}`}>
+                      <BingeBattleFeedCard
+                        post={{
+                          id: post.id,
+                          content: post.content || '',
+                          image_url: (post as any).mediaItems?.[0]?.imageUrl || (post as any).image_url || '',
+                          media_title: (post as any).mediaItems?.[0]?.title || (post as any).media_title || '',
+                          timestamp: post.timestamp,
+                          user: post.user,
+                        }}
+                      />
+                    </div>
+                  );
                 }
 
                 if (post.type === 'rank_share') {

@@ -74,6 +74,25 @@ export default function PlayBingeBattleAccept() {
       return;
     }
 
+    // Insert social_posts entry so friends can see the battle started
+    const opponentName =
+      user.user_metadata?.full_name ||
+      user.user_metadata?.display_name ||
+      user.user_metadata?.name ||
+      user.email?.split("@")[0] ||
+      "Someone";
+
+    await supabase.from("social_posts").insert({
+      user_id: user.id,
+      post_type: "binge_battle",
+      content: `${opponentName} and ${challengerName} just started a Binge Battle on ${battle.media_title} — who will finish first?`,
+      media_title: battle.media_title,
+      media_type: battle.media_type || null,
+      image_url: battle.media_poster || null,
+      media_external_id: battleId,
+      media_external_source: "binge_battle",
+    });
+
     setLocation("/play/binge-battle");
   }
 
