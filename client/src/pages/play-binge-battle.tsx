@@ -365,36 +365,48 @@ export default function PlayBingeBattle() {
             }
           }}
         >
-          <div className="h-[70px] relative bg-gray-200 overflow-hidden">
-            {battle.media_poster && (
-              <img src={battle.media_poster} alt={battle.media_title}
-                className="w-full h-full object-cover opacity-60"
-                onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent px-4 flex items-end pb-2">
-              <p className="text-white font-bold text-[13px]">{battle.media_title}</p>
+          <div className="flex gap-3 p-3">
+            {/* Poster thumbnail */}
+            <div className="w-12 h-[72px] rounded-lg overflow-hidden bg-gray-100 shrink-0 relative">
+              {battle.media_poster ? (
+                <img
+                  src={battle.media_poster}
+                  alt={battle.media_title}
+                  className="w-full h-full object-cover"
+                  onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-[11px] font-black text-gray-300">{battle.media_type?.[0]}</span>
+                </div>
+              )}
             </div>
-            <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full border" style={{
-              background: battle.status === "active" ? "rgba(34,197,94,0.15)" : battle.status === "pending" ? "rgba(251,191,36,0.15)" : "rgba(0,0,0,0.15)",
-              borderColor: battle.status === "active" ? "rgba(34,197,94,0.4)" : battle.status === "pending" ? "rgba(251,191,36,0.4)" : "rgba(0,0,0,0.2)",
-            }}>
-              {battle.status === "active" && <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
-              {battle.status === "pending" && <Clock size={8} className="text-amber-400" />}
-              {battle.status === "completed" && <Trophy size={8} className="text-gray-400" />}
-              <span className="text-[9px] font-bold" style={{
-                color: battle.status === "active" ? "#4ade80" : battle.status === "pending" ? "#fbbf24" : "#9ca3af"
-              }}>
-                {battle.status === "active" ? "LIVE" : battle.status === "pending" ? "PENDING" : "DONE"}
-              </span>
-            </div>
-          </div>
 
-          <div className="p-3">
-            <p className="text-[11px] text-gray-500 mb-2">
-              {battle.status === "pending"
-                ? "Waiting for opponent to accept your link"
-                : `vs ${opponent?.name || "Opponent"} · First to finish`}
-            </p>
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <p className="text-[13px] font-bold text-gray-900 leading-snug truncate">{battle.media_title}</p>
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full border shrink-0" style={{
+                  background: battle.status === "active" ? "rgba(34,197,94,0.12)" : battle.status === "pending" ? "rgba(251,191,36,0.12)" : "rgba(0,0,0,0.06)",
+                  borderColor: battle.status === "active" ? "rgba(34,197,94,0.35)" : battle.status === "pending" ? "rgba(251,191,36,0.35)" : "rgba(0,0,0,0.15)",
+                }}>
+                  {battle.status === "active" && <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
+                  {battle.status === "pending" && <Clock size={8} className="text-amber-400" />}
+                  {battle.status === "completed" && <Trophy size={8} className="text-gray-400" />}
+                  <span className="text-[9px] font-bold" style={{
+                    color: battle.status === "active" ? "#16a34a" : battle.status === "pending" ? "#d97706" : "#9ca3af"
+                  }}>
+                    {battle.status === "active" ? "LIVE" : battle.status === "pending" ? "PENDING" : "DONE"}
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-gray-400 mb-2">
+                {battle.status === "pending"
+                  ? "Waiting for opponent to accept your link"
+                  : `vs ${opponent?.name || "Opponent"} · First to finish`}
+              </p>
+
             {battle.status !== "pending" && (
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
@@ -415,7 +427,8 @@ export default function PlayBingeBattle() {
                 </div>
               </div>
             )}
-          </div>
+            </div>{/* end flex-1 content */}
+          </div>{/* end flex gap-3 p-3 */}
         </div>
       );
     }
