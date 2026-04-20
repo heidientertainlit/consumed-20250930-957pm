@@ -2,9 +2,9 @@ import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'wouter';
 import {
-  Zap, Sparkles, Flame, CheckCircle, XCircle,
-  ChevronRight, Trophy, X, Loader2, Star, Users, Radio, Share2,
-  Film, Tv, Music, BookOpen, Mic2, Gamepad2, Target,
+  Flame, CheckCircle, XCircle,
+  Trophy, X, Loader2, Star, Users, Radio, Share2, Check,
+  Film, Tv, Music, BookOpen, Mic2, Gamepad2,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -937,140 +937,176 @@ export function DailyHeroSection() {
     ? truncateWords(dailyCall.title, 32)
     : 'Loading today\'s call…';
 
+  const bothCompleted = playCompleted && callCompleted;
+
   return (
     <>
-      <div className="grid grid-cols-2 gap-2.5">
-        {/* ══ TODAY'S PLAY ══ */}
-        <div
-          className="rounded-2xl p-3.5 flex flex-col min-h-[200px]"
-          style={{
-            background: 'linear-gradient(145deg,#1e0a4a 0%,#150838 60%,#0d0d22 100%)',
-            border: '1px solid rgba(139,92,246,0.28)',
-          }}
-        >
-          {/* Label row */}
-          <div className="flex items-center justify-between mb-0.5">
-            <div className="flex items-center gap-1.5">
-              <span
-                className="text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded leading-none tracking-wider"
-                style={{ background: '#7c3aed' }}
-              >
-                LIVE
-              </span>
-              <span className="text-[9px] font-extrabold text-purple-400 uppercase tracking-widest">Today's Play</span>
-            </div>
-            {streak && streak > 0 && (
-              <span className="flex items-center gap-0.5 text-[9px] font-bold text-orange-400">
-                <Flame size={9} />
-                {streak}
-              </span>
-            )}
-          </div>
-          <p className="text-[9px] text-white/35 mb-3">3 Questions · Trivia</p>
-
-          {/* Icon */}
+      {/* ══ POST-GAME: Collapsed pill (both done) ══ */}
+      {bothCompleted ? (
+        <div>
           <div
-            className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3"
-            style={{ background: 'rgba(124,58,237,0.18)', border: '1px solid rgba(124,58,237,0.3)' }}
-          >
-            <Zap size={20} className="text-purple-400" fill="currentColor" />
-          </div>
-
-          {/* Question preview or score */}
-          {playCompleted && playScore ? (
-            <div className="text-center mb-3">
-              <p className="text-[20px] font-black text-white leading-none">
-                {playScore.correct}<span className="text-white/30 text-[14px] font-bold">/{playScore.total}</span>
-              </p>
-              <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">correct</p>
-            </div>
-          ) : (
-            <p className="text-[12px] font-semibold text-white text-center mb-3 leading-snug px-1" style={{ minHeight: 36 }}>
-              {firstQPreview}
-            </p>
-          )}
-
-          <button
-            onClick={() => {
-              if (playCompleted) { setShowPlayShare(true); }
-              else if (hasTodaysPlay) { setShowPlayGame(true); }
-            }}
-            className="w-full py-2.5 rounded-xl text-[13px] font-bold transition-all mt-auto"
+            className="rounded-2xl overflow-hidden"
             style={{
-              background: playCompleted ? 'rgba(124,58,237,0.2)' : hasTodaysPlay ? '#7c3aed' : 'rgba(255,255,255,0.08)',
-              color: playCompleted ? '#c4b5fd' : '#fff',
-              border: playCompleted ? '1px solid rgba(124,58,237,0.35)' : 'none',
+              background: 'linear-gradient(135deg,#1a0a36 0%,#0d1a38 100%)',
+              border: '1px solid rgba(255,255,255,0.08)',
             }}
           >
-            {playCompleted
-              ? <span className="flex items-center justify-center gap-1.5"><Share2 size={12} />Share Score</span>
-              : 'Play'}
-          </button>
-        </div>
-
-        {/* ══ DAILY CALL ══ */}
-        <div
-          className="rounded-2xl p-3.5 flex flex-col min-h-[200px]"
-          style={{
-            background: 'linear-gradient(145deg,#0a1e4a 0%,#081530 60%,#0d0d22 100%)',
-            border: '1px solid rgba(59,130,246,0.28)',
-          }}
-        >
-          {/* Label row */}
-          <div className="flex items-center justify-between mb-0.5">
-            <div className="flex items-center gap-1.5">
-              <span
-                className="text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded leading-none tracking-wider"
-                style={{ background: '#3b82f6' }}
+            <div className="flex items-stretch">
+              {/* Today's Play result */}
+              <button
+                className="flex-1 flex items-center gap-2.5 px-4 py-3.5 text-left"
+                onClick={() => setShowPlayShare(true)}
               >
-                LIVE
-              </span>
-              <span className="text-[9px] font-extrabold text-blue-400 uppercase tracking-widest">Daily Call</span>
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: 'rgba(139,92,246,0.25)' }}
+                >
+                  <Check size={13} className="text-purple-400" strokeWidth={2.5} />
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-purple-300/70">Today's Play</p>
+                  <p className="text-white text-[15px] font-bold leading-none mt-0.5">
+                    {playScore?.correct ?? '–'}
+                    <span className="text-white/30 font-normal text-[11px]"> / {playScore?.total ?? 3}</span>
+                  </p>
+                </div>
+              </button>
+
+              {/* Divider */}
+              <div className="w-px self-stretch" style={{ background: 'rgba(255,255,255,0.08)' }} />
+
+              {/* Daily Call result */}
+              <button
+                className="flex-1 flex items-center gap-2.5 px-4 py-3.5 text-left"
+                onClick={() => setShowCallShare(true)}
+              >
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: 'rgba(59,130,246,0.2)' }}
+                >
+                  <Check size={13} className="text-blue-400" strokeWidth={2.5} />
+                </div>
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-blue-300/70">Daily Call</p>
+                  <p className="text-white text-[12px] font-semibold leading-none mt-0.5">Locked In</p>
+                </div>
+              </button>
+
+              {/* Share button */}
+              <div className="flex items-center px-3.5" style={{ borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
+                <button
+                  onClick={() => setShowPlayShare(true)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(255,255,255,0.07)' }}
+                >
+                  <Share2 size={13} className="text-white/60" />
+                </button>
+              </div>
             </div>
-            <ChevronRight size={12} className="text-white/25" />
           </div>
-          <p className="text-[9px] text-white/35 mb-3">Make your prediction</p>
-
-          {/* Icon */}
-          <div
-            className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3"
-            style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.28)' }}
-          >
-            <Sparkles size={20} className="text-blue-400" />
-          </div>
-
-          {/* Question preview or answer */}
-          {callCompleted && callAnswer ? (
-            <div className="text-center mb-3 px-1">
-              <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold mb-0.5">Your Call</p>
-              <p className="text-[12px] font-bold text-white leading-snug line-clamp-2">{callAnswer}</p>
-            </div>
-          ) : (
-            <p className="text-[12px] font-semibold text-white text-center mb-3 leading-snug px-1" style={{ minHeight: 36 }}>
-              {callPreview}
-            </p>
-          )}
-
-          <button
-            onClick={() => {
-              if (callCompleted) { setShowCallShare(true); }
-              else if (hasDailyCall) { setShowCallOverlay(true); }
-            }}
-            className="w-full py-2.5 rounded-xl text-[13px] font-bold transition-all mt-auto"
-            style={{
-              background: 'transparent',
-              color: callCompleted ? '#93c5fd' : '#93c5fd',
-              border: callCompleted
-                ? '1px solid rgba(59,130,246,0.3)'
-                : hasDailyCall ? '1px solid rgba(96,165,250,0.55)' : '1px solid rgba(255,255,255,0.12)',
-            }}
-          >
-            {callCompleted
-              ? <span className="flex items-center justify-center gap-1.5"><Share2 size={12} />Share Score</span>
-              : 'Make Your Call'}
-          </button>
+          <p className="text-center text-[10px] text-white/25 tracking-wide mt-2">Come back tomorrow for new games</p>
         </div>
-      </div>
+      ) : (
+        /* ══ PRE-GAME: Two cards ══ */
+        <div className="grid grid-cols-2 gap-2.5">
+
+          {/* TODAY'S PLAY */}
+          <div
+            className="rounded-2xl p-4 flex flex-col"
+            style={{
+              background: 'linear-gradient(160deg,#4c1d95 0%,#3b0764 100%)',
+              minHeight: 190,
+            }}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-purple-300/80">
+                Today's Play
+              </span>
+              <span className="flex items-center gap-1 rounded-full px-1.5 py-0.5" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400" style={{ animation: 'pulse 2s infinite' }} />
+                <span className="text-[8px] font-bold text-white/70">LIVE</span>
+              </span>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-center pb-3">
+              {playCompleted && playScore ? (
+                <div>
+                  <p className="text-[22px] font-black text-white leading-none">
+                    {playScore.correct}
+                    <span className="text-white/30 text-[14px] font-bold"> / {playScore.total}</span>
+                  </p>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold mt-0.5">correct</p>
+                </div>
+              ) : (
+                <p className="text-white text-[13px] font-semibold leading-snug line-clamp-3">
+                  {firstQPreview}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between mt-auto">
+              <span className="text-[10px] text-purple-200/50 font-medium">3 questions</span>
+              <button
+                onClick={() => {
+                  if (playCompleted) setShowPlayShare(true);
+                  else if (hasTodaysPlay) setShowPlayGame(true);
+                }}
+                className="text-[11px] font-bold px-3 py-1.5 rounded-full"
+                style={{ background: '#fff', color: '#4c1d95' }}
+              >
+                {playCompleted ? 'Share' : 'Play'}
+              </button>
+            </div>
+          </div>
+
+          {/* DAILY CALL */}
+          <div
+            className="rounded-2xl p-4 flex flex-col"
+            style={{
+              background: 'linear-gradient(160deg,#1e3a8a 0%,#1e1b4b 100%)',
+              minHeight: 190,
+            }}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-blue-300/80">
+                Daily Call
+              </span>
+              <span className="flex items-center gap-1 rounded-full px-1.5 py-0.5" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400" style={{ animation: 'pulse 2s infinite' }} />
+                <span className="text-[8px] font-bold text-white/70">LIVE</span>
+              </span>
+            </div>
+
+            <div className="flex-1 flex flex-col justify-center pb-3">
+              {callCompleted && callAnswer ? (
+                <div>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold mb-1">Your Call</p>
+                  <p className="text-[13px] font-bold text-white leading-snug line-clamp-2">{callAnswer}</p>
+                </div>
+              ) : (
+                <p className="text-white text-[13px] font-semibold leading-snug line-clamp-3">
+                  {callPreview}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between mt-auto">
+              <span className="text-[10px] text-blue-200/50 font-medium">1 prediction</span>
+              <button
+                onClick={() => {
+                  if (callCompleted) setShowCallShare(true);
+                  else if (hasDailyCall) setShowCallOverlay(true);
+                }}
+                className="text-[11px] font-bold px-3 py-1.5 rounded-full"
+                style={{ background: '#fff', color: '#1e3a8a' }}
+              >
+                {callCompleted ? 'Share' : 'Call It'}
+              </button>
+            </div>
+          </div>
+
+        </div>
+      )}
 
       {/* Game overlay */}
       {showPlayGame && readyQuestions.length > 0 && (
