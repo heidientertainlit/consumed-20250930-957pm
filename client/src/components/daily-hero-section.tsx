@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'wouter';
 import {
   Zap, Sparkles, Flame, CheckCircle, XCircle,
-  ChevronRight, Trophy, X, Loader2, Star, Users, Radio,
+  ChevronRight, Trophy, X, Loader2, Star, Users, Radio, Share2,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -31,6 +31,8 @@ type DailyCallData = {
   status: string;
 };
 
+type PlayScore = { correct: number; total: number; totalPoints: number };
+
 const DIFFICULTY = ['Easy', 'Medium', 'Hard'] as const;
 const DIFFICULTY_COLOR = ['#4ade80', '#facc15', '#f87171'] as const;
 
@@ -40,10 +42,174 @@ const getTodayPlayKey = () =>
 const getDailyCallKey = () =>
   `daily-call-fallback-${new Date().toISOString().split('T')[0]}`;
 
+// Truncate text to N words then "…"
+function truncateWords(text: string, maxChars = 28): string {
+  if (!text || text.length <= maxChars) return text;
+  return text.slice(0, maxChars).trimEnd() + '…';
+}
+
+// ─────────────────────────────────────────────
+// Share Score Card (screenshotable overlay)
+// ─────────────────────────────────────────────
+function ScoreShareCard({
+  open,
+  type,
+  playScore,
+  callAnswer,
+  onClose,
+}: {
+  open: boolean;
+  type: 'play' | 'call';
+  playScore?: PlayScore | null;
+  callAnswer?: string | null;
+  onClose: () => void;
+}) {
+  const { toast } = useToast();
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  if (!open) return null;
+
+  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  const handleShare = async () => {
+    const appUrl = window.location.origin;
+    let text = '';
+    if (type === 'play' && playScore) {
+      const emojis = Array.from({ length: playScore.total }, (_, i) =>
+        i < playScore.correct ? '✅' : '❌'
+      ).join(' ');
+      text = `I scored ${playScore.correct}/${playScore.total} on Today's Play on Consumed! ${emojis}\n\nThink you can beat me? Play at ${appUrl}`;
+    } else {
+      text = `I just made my Daily Call on Consumed — join me!\n${appUrl}`;
+    }
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ text, url: appUrl });
+      } else {
+        await navigator.clipboard.writeText(text);
+        toast({ title: 'Copied to clipboard!', description: 'Paste it anywhere to share.' });
+      }
+    } catch { /* cancelled */ }
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-[210] flex items-center justify-center px-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+
+      <div className="relative w-full max-w-sm">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute -top-4 -right-2 z-10 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
+        >
+          <X size={15} className="text-white" />
+        </button>
+
+        {/* ─── Score card (screenshotable) ─── */}
+        <div
+          ref={cardRef}
+          className="rounded-3xl overflow-hidden"
+          style={{ background: 'linear-gradient(145deg,#1a0840 0%,#0d0d20 50%,#0a1535 100%)' }}
+        >
+          {/* Top stripe */}
+          <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg,#7c3aed,#3b82f6)' }} />
+
+          <div className="px-6 pt-6 pb-7 text-center">
+            {/* Brand */}
+            <p
+              className="text-[11px] font-extrabold tracking-[0.22em] uppercase mb-4"
+              style={{ color: 'rgba(255,255,255,0.3)' }}
+            >
+              consumed
+            </p>
+
+            {type === 'play' && playScore ? (
+              <>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-2">Today's Play</p>
+                {/* Big score */}
+                <div className="mb-3">
+                  <span className="text-[72px] font-black text-white leading-none">{playScore.correct}</span>
+                  <span className="text-[36px] font-bold text-white/40 leading-none">/{playScore.total}</span>
+                </div>
+                <p className="text-[13px] font-semibold text-white/50 uppercase tracking-widest mb-4">Correct</p>
+
+                {/* Answer dots */}
+                <div className="flex justify-center gap-3 mb-4">
+                  {Array.from({ length: playScore.total }, (_, i) => (
+                    <div
+                      key={i}
+                      className="w-11 h-11 rounded-xl flex items-center justify-center"
+                      style={{
+                        background: i < playScore.correct ? 'rgba(74,222,128,0.15)' : 'rgba(248,113,113,0.12)',
+                        border: `1px solid ${i < playScore.correct ? 'rgba(74,222,128,0.4)' : 'rgba(248,113,113,0.3)'}`,
+                      }}
+                    >
+                      {i < playScore.correct
+                        ? <CheckCircle size={20} className="text-green-400" />
+                        : <XCircle size={20} className="text-red-400" />}
+                    </div>
+                  ))}
+                </div>
+
+                {playScore.totalPoints > 0 && (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-2" style={{ background: 'rgba(250,204,21,0.12)', border: '1px solid rgba(250,204,21,0.25)' }}>
+                    <Star size={12} className="text-yellow-400" fill="currentColor" />
+                    <span className="text-[12px] font-bold text-yellow-400">+{playScore.totalPoints} pts earned</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-2">Daily Call</p>
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)' }}>
+                  <Sparkles size={26} className="text-blue-400" />
+                </div>
+                <p className="text-white font-bold text-[16px] mb-1">Call locked in!</p>
+                {callAnswer && (
+                  <p className="text-white/40 text-[13px]">"{callAnswer}"</p>
+                )}
+              </>
+            )}
+
+            {/* Date + tagline */}
+            <p className="text-[10px] text-white/25 mt-4 font-medium tracking-wide">{today} · consumed.app</p>
+          </div>
+        </div>
+
+        {/* ─── Share button (below card so not in screenshot) ─── */}
+        <button
+          onClick={handleShare}
+          className="w-full mt-3 py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 shadow-lg"
+          style={{ background: 'linear-gradient(90deg,#7c3aed,#4f46e5)' }}
+        >
+          <Share2 size={17} />
+          Share Your Score
+        </button>
+
+        <p className="text-center text-[11px] text-white/30 mt-2">
+          Screenshot the card above to share it
+        </p>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 // ─────────────────────────────────────────────
 // After-game bottom sheet
 // ─────────────────────────────────────────────
-function AfterGameSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+function AfterGameSheet({
+  open,
+  onClose,
+  onShareScore,
+  type,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onShareScore: () => void;
+  type: 'play' | 'call';
+}) {
   const [, setLocation] = useLocation();
   if (!open) return null;
 
@@ -56,16 +222,26 @@ function AfterGameSheet({ open, onClose }: { open: boolean; onClose: () => void 
           <Trophy size={26} className="text-yellow-300" />
         </div>
         <h3 className="text-xl font-bold text-gray-900 text-center mb-1">Nice work!</h3>
-        <p className="text-sm text-gray-400 text-center mb-6">What do you want to do next?</p>
+        <p className="text-sm text-gray-400 text-center mb-5">What do you want to do next?</p>
+
+        {/* Share score — highlighted */}
+        <button
+          onClick={() => { onClose(); onShareScore(); }}
+          className="w-full py-4 px-5 rounded-2xl font-bold text-[15px] flex items-center justify-between mb-3 shadow-md"
+          style={{ background: 'linear-gradient(90deg,#7c3aed,#4f46e5)', color: '#fff' }}
+        >
+          <span>Share Your Score</span>
+          <Share2 size={16} className="opacity-80" />
+        </button>
 
         <button
           onClick={() => { onClose(); setLocation('/add'); }}
-          className="w-full py-4 px-5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-bold text-[15px] flex items-center justify-between mb-3 shadow-lg shadow-purple-200/60"
+          className="w-full py-4 px-5 border border-gray-200 bg-gray-50 text-gray-800 rounded-2xl font-semibold text-[14px] flex items-center justify-between mb-3"
         >
           <span>Share a Take</span>
-          <div className="flex items-center gap-1 opacity-80">
+          <div className="flex items-center gap-1 text-gray-400">
             <Star size={13} fill="currentColor" />
-            <ChevronRight size={15} />
+            <ChevronRight size={14} />
           </div>
         </button>
 
@@ -100,7 +276,7 @@ function TodaysPlayGame({
   onClose,
 }: {
   questions: TriviaQuestion[];
-  onComplete: () => void;
+  onComplete: (score: PlayScore) => void;
   onClose: () => void;
 }) {
   const [qIndex, setQIndex] = useState(0);
@@ -148,11 +324,18 @@ function TodaysPlayGame({
       setSocialProof(null);
     } else {
       setPhase('done');
+      const finalAnswers = [...answers];
+      const score: PlayScore = {
+        correct: finalAnswers.filter(a => a.correct).length,
+        total: questions.length,
+        totalPoints: finalAnswers.reduce((s, a) => s + a.points, 0),
+      };
       localStorage.setItem(getTodayPlayKey(), JSON.stringify({
         completed: true,
         date: new Date().toISOString().split('T')[0],
+        score,
       }));
-      setTimeout(onComplete, 1200);
+      setTimeout(() => onComplete(score), 1200);
     }
   };
 
@@ -162,7 +345,7 @@ function TodaysPlayGame({
       <div className="flex items-center justify-between px-5 pt-14 pb-4 border-b border-white/10">
         <div>
           <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-0.5">Today's Play</p>
-          <p className="text-sm font-bold" style={{ color: DIFFICULTY_COLOR[qIndex] }}>
+          <p className="text-sm font-bold" style={{ color: phase === 'done' ? '#fff' : DIFFICULTY_COLOR[qIndex] }}>
             {phase === 'done'
               ? 'Complete!'
               : `${DIFFICULTY[qIndex]} · Q${qIndex + 1} of ${questions.length}`}
@@ -281,7 +464,7 @@ function TodaysPlayGame({
             </div>
           )}
 
-          {/* CTA button */}
+          {/* CTA */}
           {phase === 'playing' ? (
             <button
               onClick={handleConfirm}
@@ -317,7 +500,7 @@ function DailyCallOverlay({
 }: {
   challenge: DailyCallData;
   session: any;
-  onComplete: () => void;
+  onComplete: (answer: string) => void;
   onClose: () => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
@@ -347,7 +530,7 @@ function DailyCallOverlay({
       setSubmitted(true);
       localStorage.setItem(getDailyCallKey(), JSON.stringify({ completed: true, result: { userAnswer: selected } }));
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
-      setTimeout(onComplete, 1000);
+      setTimeout(() => onComplete(selected!), 1000);
     } catch (e: any) {
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
     } finally {
@@ -423,19 +606,32 @@ function DailyCallOverlay({
 export function DailyHeroSection() {
   const { user, session } = useAuth();
 
+  // ── Today's Play state ──
   const [showPlayGame, setShowPlayGame] = useState(false);
   const [showPlayAfter, setShowPlayAfter] = useState(false);
-  const [playCompleted, setPlayCompleted] = useState(() => {
+  const [showPlayShare, setShowPlayShare] = useState(false);
+  const [playScore, setPlayScore] = useState<PlayScore | null>(() => {
     try {
       const s = localStorage.getItem(getTodayPlayKey());
-      if (!s) return false;
+      if (!s) return null;
       const d = JSON.parse(s);
-      return d.completed && d.date === new Date().toISOString().split('T')[0];
-    } catch { return false; }
+      if (d.completed && d.date === new Date().toISOString().split('T')[0]) return d.score ?? null;
+      return null;
+    } catch { return null; }
   });
+  const [playCompleted, setPlayCompleted] = useState(() => playScore !== null);
 
+  // ── Daily Call state ──
   const [showCallOverlay, setShowCallOverlay] = useState(false);
   const [showCallAfter, setShowCallAfter] = useState(false);
+  const [showCallShare, setShowCallShare] = useState(false);
+  const [callAnswer, setCallAnswer] = useState<string | null>(() => {
+    try {
+      const s = localStorage.getItem(getDailyCallKey());
+      if (!s) return null;
+      return JSON.parse(s).result?.userAnswer ?? null;
+    } catch { return null; }
+  });
   const [callCompleted, setCallCompleted] = useState(() => {
     try {
       const s = localStorage.getItem(getDailyCallKey());
@@ -443,7 +639,7 @@ export function DailyHeroSection() {
     } catch { return false; }
   });
 
-  // Fetch trivia questions
+  // ── Fetch trivia questions ──
   const { data: questions = [] } = useQuery<TriviaQuestion[]>({
     queryKey: ['todays-play-questions'],
     queryFn: async () => {
@@ -471,7 +667,7 @@ export function DailyHeroSection() {
     },
   });
 
-  // Fetch daily call
+  // ── Fetch daily call ──
   const { data: dailyCall } = useQuery<DailyCallData | null>({
     queryKey: ['daily-call-hero'],
     queryFn: async () => {
@@ -491,7 +687,7 @@ export function DailyHeroSection() {
     },
   });
 
-  // Streak
+  // ── Streak ──
   const { data: streak } = useQuery<number | null>({
     queryKey: ['play-streak-hero', user?.id],
     queryFn: async () => {
@@ -510,21 +706,36 @@ export function DailyHeroSection() {
   const hasTodaysPlay = readyQuestions.length >= 1;
   const hasDailyCall = !!dailyCall && (dailyCall.options?.length ?? 0) > 0;
 
+  // First question preview (truncated)
+  const firstQPreview = readyQuestions[0]?.title
+    ? truncateWords(readyQuestions[0].title, 30)
+    : 'Think you know your stuff?';
+
+  // Daily call preview (truncated)
+  const callPreview = dailyCall?.title
+    ? truncateWords(dailyCall.title, 32)
+    : 'Loading today\'s call…';
+
   return (
     <>
       <div className="grid grid-cols-2 gap-2.5">
-        {/* ── TODAY'S PLAY ── */}
+        {/* ══ TODAY'S PLAY ══ */}
         <div
-          className="rounded-2xl p-3.5 flex flex-col"
+          className="rounded-2xl p-3.5 flex flex-col min-h-[200px]"
           style={{
             background: 'linear-gradient(145deg,#1e0a4a 0%,#150838 60%,#0d0d22 100%)',
-            border: '1px solid rgba(139,92,246,0.25)',
+            border: '1px solid rgba(139,92,246,0.28)',
           }}
         >
           {/* Label row */}
           <div className="flex items-center justify-between mb-0.5">
-            <div className="flex items-center gap-1">
-              <Zap size={10} className="text-purple-400" fill="currentColor" />
+            <div className="flex items-center gap-1.5">
+              <span
+                className="text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded leading-none tracking-wider"
+                style={{ background: '#7c3aed' }}
+              >
+                LIVE
+              </span>
               <span className="text-[9px] font-extrabold text-purple-400 uppercase tracking-widest">Today's Play</span>
             </div>
             {streak && streak > 0 && (
@@ -544,47 +755,55 @@ export function DailyHeroSection() {
             <Zap size={20} className="text-purple-400" fill="currentColor" />
           </div>
 
-          <p className="text-[13px] font-bold text-white text-center mb-4 leading-snug">
-            {playCompleted ? 'Completed today!' : 'Think you know your stuff?'}
-          </p>
+          {/* Question preview or score */}
+          {playCompleted && playScore ? (
+            <div className="text-center mb-3">
+              <p className="text-[20px] font-black text-white leading-none">
+                {playScore.correct}<span className="text-white/30 text-[14px] font-bold">/{playScore.total}</span>
+              </p>
+              <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold">correct</p>
+            </div>
+          ) : (
+            <p className="text-[12px] font-semibold text-white text-center mb-3 leading-snug px-1" style={{ minHeight: 36 }}>
+              {firstQPreview}
+            </p>
+          )}
 
           <button
-            onClick={() => { if (hasTodaysPlay && !playCompleted) setShowPlayGame(true); }}
-            disabled={!hasTodaysPlay || playCompleted}
+            onClick={() => {
+              if (playCompleted) { setShowPlayShare(true); }
+              else if (hasTodaysPlay) { setShowPlayGame(true); }
+            }}
             className="w-full py-2.5 rounded-xl text-[13px] font-bold transition-all mt-auto"
             style={{
-              background: playCompleted
-                ? 'rgba(74,222,128,0.12)'
-                : hasTodaysPlay ? '#7c3aed' : 'rgba(255,255,255,0.08)',
-              color: playCompleted ? '#4ade80' : '#fff',
-              border: playCompleted ? '1px solid rgba(74,222,128,0.3)' : 'none',
+              background: playCompleted ? 'rgba(124,58,237,0.2)' : hasTodaysPlay ? '#7c3aed' : 'rgba(255,255,255,0.08)',
+              color: playCompleted ? '#c4b5fd' : '#fff',
+              border: playCompleted ? '1px solid rgba(124,58,237,0.35)' : 'none',
             }}
           >
             {playCompleted
-              ? <span className="flex items-center justify-center gap-1.5"><CheckCircle size={13} />Done</span>
+              ? <span className="flex items-center justify-center gap-1.5"><Share2 size={12} />Share Score</span>
               : 'Play'}
           </button>
         </div>
 
-        {/* ── DAILY CALL ── */}
+        {/* ══ DAILY CALL ══ */}
         <div
-          className="rounded-2xl p-3.5 flex flex-col"
+          className="rounded-2xl p-3.5 flex flex-col min-h-[200px]"
           style={{
             background: 'linear-gradient(145deg,#0a1e4a 0%,#081530 60%,#0d0d22 100%)',
-            border: '1px solid rgba(59,130,246,0.25)',
+            border: '1px solid rgba(59,130,246,0.28)',
           }}
         >
           {/* Label row */}
           <div className="flex items-center justify-between mb-0.5">
             <div className="flex items-center gap-1.5">
-              {!callCompleted && (
-                <span
-                  className="text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded leading-none tracking-wider"
-                  style={{ background: '#3b82f6' }}
-                >
-                  LIVE
-                </span>
-              )}
+              <span
+                className="text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded leading-none tracking-wider"
+                style={{ background: '#3b82f6' }}
+              >
+                LIVE
+              </span>
               <span className="text-[9px] font-extrabold text-blue-400 uppercase tracking-widest">Daily Call</span>
             </div>
             <ChevronRight size={12} className="text-white/25" />
@@ -599,28 +818,34 @@ export function DailyHeroSection() {
             <Sparkles size={20} className="text-blue-400" />
           </div>
 
-          <p className="text-[13px] font-bold text-white text-center mb-4 leading-snug line-clamp-2 min-h-[40px]">
-            {dailyCall
-              ? dailyCall.title
-              : 'Loading today\'s call…'}
-          </p>
+          {/* Question preview or answer */}
+          {callCompleted && callAnswer ? (
+            <div className="text-center mb-3 px-1">
+              <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold mb-0.5">Your Call</p>
+              <p className="text-[12px] font-bold text-white leading-snug line-clamp-2">{callAnswer}</p>
+            </div>
+          ) : (
+            <p className="text-[12px] font-semibold text-white text-center mb-3 leading-snug px-1" style={{ minHeight: 36 }}>
+              {callPreview}
+            </p>
+          )}
 
           <button
-            onClick={() => { if (hasDailyCall && !callCompleted) setShowCallOverlay(true); }}
-            disabled={!hasDailyCall || callCompleted}
+            onClick={() => {
+              if (callCompleted) { setShowCallShare(true); }
+              else if (hasDailyCall) { setShowCallOverlay(true); }
+            }}
             className="w-full py-2.5 rounded-xl text-[13px] font-bold transition-all mt-auto"
             style={{
-              background: callCompleted
-                ? 'rgba(74,222,128,0.12)'
-                : 'transparent',
-              color: callCompleted ? '#4ade80' : '#93c5fd',
+              background: 'transparent',
+              color: callCompleted ? '#93c5fd' : '#93c5fd',
               border: callCompleted
-                ? '1px solid rgba(74,222,128,0.3)'
-                : hasDailyCall ? '1px solid rgba(96,165,250,0.5)' : '1px solid rgba(255,255,255,0.12)',
+                ? '1px solid rgba(59,130,246,0.3)'
+                : hasDailyCall ? '1px solid rgba(96,165,250,0.55)' : '1px solid rgba(255,255,255,0.12)',
             }}
           >
             {callCompleted
-              ? <span className="flex items-center justify-center gap-1.5"><CheckCircle size={13} />Done</span>
+              ? <span className="flex items-center justify-center gap-1.5"><Share2 size={12} />Share Score</span>
               : 'Make Your Call'}
           </button>
         </div>
@@ -630,7 +855,8 @@ export function DailyHeroSection() {
       {showPlayGame && readyQuestions.length > 0 && (
         <TodaysPlayGame
           questions={readyQuestions}
-          onComplete={() => {
+          onComplete={(score) => {
+            setPlayScore(score);
             setPlayCompleted(true);
             setShowPlayGame(false);
             setShowPlayAfter(true);
@@ -644,7 +870,8 @@ export function DailyHeroSection() {
         <DailyCallOverlay
           challenge={dailyCall}
           session={session}
-          onComplete={() => {
+          onComplete={(answer) => {
+            setCallAnswer(answer);
             setCallCompleted(true);
             setShowCallOverlay(false);
             setShowCallAfter(true);
@@ -654,8 +881,32 @@ export function DailyHeroSection() {
       )}
 
       {/* After-game sheets */}
-      <AfterGameSheet open={showPlayAfter} onClose={() => setShowPlayAfter(false)} />
-      <AfterGameSheet open={showCallAfter} onClose={() => setShowCallAfter(false)} />
+      <AfterGameSheet
+        open={showPlayAfter}
+        onClose={() => setShowPlayAfter(false)}
+        onShareScore={() => setShowPlayShare(true)}
+        type="play"
+      />
+      <AfterGameSheet
+        open={showCallAfter}
+        onClose={() => setShowCallAfter(false)}
+        onShareScore={() => setShowCallShare(true)}
+        type="call"
+      />
+
+      {/* Share score cards */}
+      <ScoreShareCard
+        open={showPlayShare}
+        type="play"
+        playScore={playScore}
+        onClose={() => setShowPlayShare(false)}
+      />
+      <ScoreShareCard
+        open={showCallShare}
+        type="call"
+        callAnswer={callAnswer}
+        onClose={() => setShowCallShare(false)}
+      />
     </>
   );
 }
