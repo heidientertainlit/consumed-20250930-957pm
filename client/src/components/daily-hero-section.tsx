@@ -941,70 +941,69 @@ export function DailyHeroSection() {
 
   return (
     <>
-      {/* ══ POST-GAME: Collapsed pill (both done) ══ */}
+      {/* ══ POST-GAME: Mini badge pair (both done) ══ */}
       {bothCompleted ? (
-        <div>
-          <div
-            className="rounded-2xl overflow-hidden"
-            style={{
-              background: 'linear-gradient(135deg,#1a0a36 0%,#0d1a38 100%)',
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
-          >
-            <div className="flex items-stretch">
-              {/* Today's Play result */}
-              <button
-                className="flex-1 flex items-center gap-2.5 px-4 py-3.5 text-left"
-                onClick={() => setShowPlayShare(true)}
-              >
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 gap-2.5">
+
+            {/* TODAY'S PLAY — completed mini card */}
+            <button
+              onClick={() => setShowPlayShare(true)}
+              className="rounded-2xl p-3.5 flex flex-col gap-2 text-left"
+              style={{
+                background: 'linear-gradient(150deg,#2e1065 0%,#1a0a36 100%)',
+                border: '1px solid rgba(139,92,246,0.25)',
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-purple-300/60">Today's Play</span>
                 <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                  style={{ background: 'rgba(139,92,246,0.25)' }}
+                  className="w-4 h-4 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(139,92,246,0.3)' }}
                 >
-                  <Check size={13} className="text-purple-400" strokeWidth={2.5} />
+                  <Check size={9} className="text-purple-300" strokeWidth={3} />
                 </div>
-                <div>
-                  <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-purple-300/70">Today's Play</p>
-                  <p className="text-white text-[15px] font-bold leading-none mt-0.5">
-                    {playScore?.correct ?? '–'}
-                    <span className="text-white/30 font-normal text-[11px]"> / {playScore?.total ?? 3}</span>
-                  </p>
-                </div>
-              </button>
-
-              {/* Divider */}
-              <div className="w-px self-stretch" style={{ background: 'rgba(255,255,255,0.08)' }} />
-
-              {/* Daily Call result */}
-              <button
-                className="flex-1 flex items-center gap-2.5 px-4 py-3.5 text-left"
-                onClick={() => setShowCallShare(true)}
-              >
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                  style={{ background: 'rgba(59,130,246,0.2)' }}
-                >
-                  <Check size={13} className="text-blue-400" strokeWidth={2.5} />
-                </div>
-                <div>
-                  <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-blue-300/70">Daily Call</p>
-                  <p className="text-white text-[12px] font-semibold leading-none mt-0.5">Locked In</p>
-                </div>
-              </button>
-
-              {/* Share button */}
-              <div className="flex items-center px-3.5" style={{ borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
-                <button
-                  onClick={() => setShowPlayShare(true)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(255,255,255,0.07)' }}
-                >
-                  <Share2 size={13} className="text-white/60" />
-                </button>
               </div>
-            </div>
+              <div>
+                <p className="text-white text-[26px] font-black leading-none">{playScore?.correct ?? '–'}</p>
+                <p className="text-white/30 text-[11px] font-medium">out of {playScore?.total ?? 3}</p>
+              </div>
+              <span className="flex items-center gap-1 text-purple-300/60 text-[10px] font-semibold">
+                <Share2 size={10} />
+                Share score
+              </span>
+            </button>
+
+            {/* DAILY CALL — completed mini card */}
+            <button
+              onClick={() => setShowCallShare(true)}
+              className="rounded-2xl p-3.5 flex flex-col gap-2 text-left"
+              style={{
+                background: 'linear-gradient(150deg,#1e3a8a 0%,#0d1a38 100%)',
+                border: '1px solid rgba(59,130,246,0.25)',
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-blue-300/60">Daily Call</span>
+                <div
+                  className="w-4 h-4 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(59,130,246,0.25)' }}
+                >
+                  <Check size={9} className="text-blue-300" strokeWidth={3} />
+                </div>
+              </div>
+              <div>
+                <p className="text-white text-[15px] font-bold leading-tight mt-1">Locked{'\n'}In</p>
+                <p className="text-white/30 text-[11px] font-medium mt-1">Pending result</p>
+              </div>
+              <span className="flex items-center gap-1 text-blue-300/60 text-[10px] font-semibold">
+                <Share2 size={10} />
+                Share call
+              </span>
+            </button>
+
           </div>
-          <p className="text-center text-[10px] text-white/25 tracking-wide mt-2">Come back tomorrow for new games</p>
+          <p className="text-center text-[10px] text-white/25 tracking-wide">Come back tomorrow for new games</p>
         </div>
       ) : (
         /* ══ PRE-GAME: Two cards ══ */
@@ -1018,7 +1017,7 @@ export function DailyHeroSection() {
               minHeight: 190,
             }}
           >
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-2">
               <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-purple-300/80">
                 Today's Play
               </span>
@@ -1028,7 +1027,7 @@ export function DailyHeroSection() {
               </span>
             </div>
 
-            <div className="flex-1 flex flex-col justify-center pb-3">
+            <div className="flex-1 flex flex-col justify-start pb-2">
               {playCompleted && playScore ? (
                 <div>
                   <p className="text-[22px] font-black text-white leading-none">
@@ -1067,7 +1066,7 @@ export function DailyHeroSection() {
               minHeight: 190,
             }}
           >
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex items-start justify-between mb-2">
               <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-blue-300/80">
                 Daily Call
               </span>
@@ -1077,7 +1076,7 @@ export function DailyHeroSection() {
               </span>
             </div>
 
-            <div className="flex-1 flex flex-col justify-center pb-3">
+            <div className="flex-1 flex flex-col justify-start pb-2">
               {callCompleted && callAnswer ? (
                 <div>
                   <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold mb-1">Your Call</p>
