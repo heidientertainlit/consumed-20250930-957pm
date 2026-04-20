@@ -274,20 +274,22 @@ function TodaysPlayGame({
   questions,
   onComplete,
   onClose,
+  onShare,
 }: {
   questions: TriviaQuestion[];
   onComplete: (score: PlayScore) => void;
   onClose: () => void;
+  onShare: () => void;
 }) {
+  const [, setLocation] = useLocation();
   const [qIndex, setQIndex] = useState(0);
   const [phase, setPhase] = useState<'playing' | 'result' | 'done'>('playing');
   const [selected, setSelected] = useState<string | null>(null);
   const [answers, setAnswers] = useState<{ correct: boolean; points: number }[]>([]);
   const [socialProof, setSocialProof] = useState<number | null>(null);
+  const [doneScore, setDoneScore] = useState<PlayScore | null>(null);
 
   const q = questions[qIndex];
-  const totalPoints = answers.reduce((s, a) => s + a.points, 0);
-  const correctCount = answers.filter(a => a.correct).length;
 
   const handleConfirm = async () => {
     if (!selected || phase !== 'playing') return;
@@ -323,43 +325,45 @@ function TodaysPlayGame({
       setPhase('playing');
       setSocialProof(null);
     } else {
-      setPhase('done');
-      const finalAnswers = [...answers];
+      // Build score from current answers + the last answer that was just added
+      const allAnswers = answers; // state updated by handleConfirm before this runs
       const score: PlayScore = {
-        correct: finalAnswers.filter(a => a.correct).length,
+        correct: allAnswers.filter(a => a.correct).length,
         total: questions.length,
-        totalPoints: finalAnswers.reduce((s, a) => s + a.points, 0),
+        totalPoints: allAnswers.reduce((s, a) => s + a.points, 0),
       };
       localStorage.setItem(getTodayPlayKey(), JSON.stringify({
         completed: true,
         date: new Date().toISOString().split('T')[0],
         score,
       }));
-      setTimeout(() => onComplete(score), 1200);
+      setDoneScore(score);
+      onComplete(score); // update parent card immediately
+      setPhase('done');
     }
   };
 
   return createPortal(
     <div className="fixed inset-0 z-[190] flex items-end">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={phase === 'playing' ? onClose : undefined} />
 
-      {/* Bottom sheet */}
+      {/* Bottom sheet — fixed height so it always sits well above nav */}
       <div
-        className="relative w-full rounded-t-3xl overflow-y-auto"
+        className="relative w-full rounded-t-3xl flex flex-col"
         style={{
           background: 'linear-gradient(170deg,#1e0a4a 0%,#120730 60%,#0f0627 100%)',
-          maxHeight: '92vh',
+          height: '88vh',
         }}
       >
         {/* Drag handle */}
-        <div className="w-10 h-1 rounded-full mx-auto mt-4 mb-1" style={{ background: 'rgba(255,255,255,0.18)' }} />
+        <div className="w-10 h-1 rounded-full mx-auto mt-4 mb-1 shrink-0" style={{ background: 'rgba(255,255,255,0.18)' }} />
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-3 pb-4 border-b border-white/10">
+        <div className="flex items-center justify-between px-5 pt-3 pb-4 border-b border-white/10 shrink-0">
           <div>
             <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-0.5">Today's Play</p>
-            <p className="text-sm font-bold" style={{ color: phase === 'done' ? '#fff' : DIFFICULTY_COLOR[qIndex] }}>
+            <p className="text-sm font-bold" style={{ color: phase === 'done' ? '#4ade80' : DIFFICULTY_COLOR[qIndex] }}>
               {phase === 'done'
                 ? 'Complete!'
                 : `${DIFFICULTY[qIndex]} · Q${qIndex + 1} of ${questions.length}`}
@@ -373,131 +377,182 @@ function TodaysPlayGame({
           </button>
         </div>
 
-        {phase === 'done' ? (
-          // ── Done screen ──
-          <div className="flex flex-col items-center px-6 pt-8 pb-10 text-center">
-            <div
-              className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5 shadow-lg"
-              style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}
-            >
-              <Trophy size={34} className="text-yellow-300" />
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">You're done!</h2>
-            <p className="text-white/50 text-sm mb-8">
-              {correctCount} of {questions.length} correct · +{totalPoints} pts
-            </p>
-            <div className="flex gap-3">
-              {questions.map((_, i) => (
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto">
+          {phase === 'done' && doneScore ? (
+            // ── Combined done + share screen ──
+            <div className="flex flex-col px-5 pt-6 pb-10">
+              {/* Score */}
+              <div className="flex flex-col items-center text-center mb-6">
                 <div
-                  key={i}
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center border"
-                  style={{
-                    background: answers[i]?.correct ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
-                    borderColor: answers[i]?.correct ? 'rgba(74,222,128,0.4)' : 'rgba(248,113,113,0.3)',
-                  }}
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-lg"
+                  style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}
                 >
-                  {answers[i]?.correct
-                    ? <CheckCircle size={24} className="text-green-400" />
-                    : <XCircle size={24} className="text-red-400" />}
+                  <Trophy size={28} className="text-yellow-300" />
                 </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          // ── Question screen ──
-          <div className="flex flex-col px-5 pt-5 pb-28">
-            {/* Progress bar */}
-            <div className="flex gap-1.5 mb-6">
-              {questions.map((_, i) => (
-                <div
-                  key={i}
-                  className="h-[3px] flex-1 rounded-full transition-all"
-                  style={{
-                    background: i < qIndex
-                      ? '#7c3aed'
-                      : i === qIndex
-                        ? 'rgba(255,255,255,0.8)'
-                        : 'rgba(255,255,255,0.15)',
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Category + question */}
-            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">{q.category}</p>
-            <h2 className="text-[19px] font-bold text-white leading-snug mb-5">{q.title}</h2>
-
-            {/* Answer options */}
-            <div className="space-y-2.5 mb-4">
-              {q.options.map((option, idx) => {
-                const isSelected = selected === option;
-                const isCorrect = option === q.correct_answer;
-                const showResult = phase === 'result';
-                let bg = 'rgba(255,255,255,0.08)';
-                let border = 'rgba(255,255,255,0.14)';
-                let textColor = 'rgba(255,255,255,0.9)';
-
-                if (showResult) {
-                  if (isCorrect) { bg = 'rgba(74,222,128,0.15)'; border = 'rgba(74,222,128,0.5)'; }
-                  else if (isSelected) { bg = 'rgba(248,113,113,0.15)'; border = 'rgba(248,113,113,0.4)'; textColor = 'rgba(255,255,255,0.5)'; }
-                  else { bg = 'rgba(255,255,255,0.04)'; border = 'rgba(255,255,255,0.08)'; textColor = 'rgba(255,255,255,0.3)'; }
-                } else if (isSelected) {
-                  bg = '#7c3aed'; border = '#a78bfa'; textColor = '#fff';
-                }
-
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => { if (phase === 'playing') setSelected(option); }}
-                    disabled={phase === 'result'}
-                    className="w-full py-4 px-5 rounded-2xl text-left text-[15px] flex items-center justify-between transition-all"
-                    style={{ background: bg, border: `1px solid ${border}`, color: textColor }}
-                  >
-                    <span className="font-medium">{option}</span>
-                    {showResult && isCorrect && <CheckCircle size={17} className="text-green-400 shrink-0" />}
-                    {showResult && isSelected && !isCorrect && <XCircle size={17} className="text-red-400 shrink-0" />}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Social proof */}
-            {phase === 'result' && (
-              <div
-                className="flex items-center justify-center gap-2 py-3 rounded-2xl mb-3"
-                style={{ background: 'rgba(255,255,255,0.06)' }}
-              >
-                <Users size={13} className="text-white/40" />
-                {socialProof !== null ? (
-                  <p className="text-[13px] text-white/60">
-                    <span className="font-bold text-white">{socialProof}%</span> of players got this right
-                  </p>
-                ) : (
-                  <Loader2 size={13} className="animate-spin text-white/40" />
-                )}
+                <h2 className="text-2xl font-bold text-white mb-1">You're done!</h2>
+                <p className="text-white/50 text-sm mb-4">
+                  {doneScore.correct} of {doneScore.total} correct
+                  {doneScore.totalPoints > 0 && ` · +${doneScore.totalPoints} pts`}
+                </p>
+                {/* Answer indicators */}
+                <div className="flex gap-2.5">
+                  {questions.map((_, i) => (
+                    <div
+                      key={i}
+                      className="w-12 h-12 rounded-xl flex items-center justify-center border"
+                      style={{
+                        background: answers[i]?.correct ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
+                        borderColor: answers[i]?.correct ? 'rgba(74,222,128,0.4)' : 'rgba(248,113,113,0.3)',
+                      }}
+                    >
+                      {answers[i]?.correct
+                        ? <CheckCircle size={20} className="text-green-400" />
+                        : <XCircle size={20} className="text-red-400" />}
+                    </div>
+                  ))}
+                </div>
               </div>
-            )}
 
-            {/* CTA */}
-            {phase === 'playing' ? (
+              {/* Divider */}
+              <div className="w-full h-px mb-5" style={{ background: 'rgba(255,255,255,0.1)' }} />
+
+              {/* Share score — primary */}
               <button
-                onClick={handleConfirm}
-                disabled={!selected}
-                className="w-full py-4 rounded-2xl font-bold text-[15px] text-white transition-opacity disabled:opacity-35"
-                style={{ background: '#7c3aed' }}
+                onClick={() => { onClose(); onShare(); }}
+                className="w-full py-4 px-5 rounded-2xl font-bold text-[15px] text-white flex items-center justify-between mb-3 shadow-lg"
+                style={{ background: 'linear-gradient(90deg,#7c3aed,#4f46e5)' }}
               >
-                Lock In Answer
+                <span>Share Your Score</span>
+                <Share2 size={16} className="opacity-80" />
               </button>
-            ) : (
+
+              {/* Share a Take */}
               <button
-                onClick={handleNext}
-                className="w-full py-4 rounded-2xl font-bold text-[15px] bg-white text-gray-900"
+                onClick={() => { onClose(); setLocation('/add'); }}
+                className="w-full py-3.5 px-5 rounded-2xl font-semibold text-[14px] flex items-center justify-between mb-3"
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.85)' }}
               >
-                {qIndex < questions.length - 1 ? 'Next Question' : 'See Results'}
+                <span>Share a Take</span>
+                <ChevronRight size={15} className="opacity-50" />
               </button>
-            )}
-          </div>
-        )}
+
+              {/* Play More / Call More */}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => { onClose(); setLocation('/play'); }}
+                  className="py-4 px-4 rounded-2xl font-semibold text-[13px] flex flex-col items-center gap-1.5"
+                  style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: '#c4b5fd' }}
+                >
+                  <Zap size={18} className="text-purple-400" fill="currentColor" />
+                  Play More
+                </button>
+                <button
+                  onClick={() => { onClose(); setLocation('/play/predictions'); }}
+                  className="py-4 px-4 rounded-2xl font-semibold text-[13px] flex flex-col items-center gap-1.5"
+                  style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', color: '#93c5fd' }}
+                >
+                  <Radio size={18} className="text-blue-400" />
+                  Call More
+                </button>
+              </div>
+            </div>
+          ) : (
+            // ── Question screen ──
+            <div className="flex flex-col px-5 pt-5 pb-10">
+              {/* Progress bar */}
+              <div className="flex gap-1.5 mb-6">
+                {questions.map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-[3px] flex-1 rounded-full transition-all"
+                    style={{
+                      background: i < qIndex
+                        ? '#7c3aed'
+                        : i === qIndex
+                          ? 'rgba(255,255,255,0.8)'
+                          : 'rgba(255,255,255,0.15)',
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* Category + question */}
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">{q.category}</p>
+              <h2 className="text-[19px] font-bold text-white leading-snug mb-5">{q.title}</h2>
+
+              {/* Answer options */}
+              <div className="space-y-2.5 mb-4">
+                {q.options.map((option, idx) => {
+                  const isSelected = selected === option;
+                  const isCorrect = option === q.correct_answer;
+                  const showResult = phase === 'result';
+                  let bg = 'rgba(255,255,255,0.08)';
+                  let border = 'rgba(255,255,255,0.14)';
+                  let textColor = 'rgba(255,255,255,0.9)';
+
+                  if (showResult) {
+                    if (isCorrect) { bg = 'rgba(74,222,128,0.15)'; border = 'rgba(74,222,128,0.5)'; }
+                    else if (isSelected) { bg = 'rgba(248,113,113,0.15)'; border = 'rgba(248,113,113,0.4)'; textColor = 'rgba(255,255,255,0.5)'; }
+                    else { bg = 'rgba(255,255,255,0.04)'; border = 'rgba(255,255,255,0.08)'; textColor = 'rgba(255,255,255,0.3)'; }
+                  } else if (isSelected) {
+                    bg = '#7c3aed'; border = '#a78bfa'; textColor = '#fff';
+                  }
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => { if (phase === 'playing') setSelected(option); }}
+                      disabled={phase === 'result'}
+                      className="w-full py-4 px-5 rounded-2xl text-left text-[15px] flex items-center justify-between transition-all"
+                      style={{ background: bg, border: `1px solid ${border}`, color: textColor }}
+                    >
+                      <span className="font-medium">{option}</span>
+                      {showResult && isCorrect && <CheckCircle size={17} className="text-green-400 shrink-0" />}
+                      {showResult && isSelected && !isCorrect && <XCircle size={17} className="text-red-400 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Social proof */}
+              {phase === 'result' && (
+                <div
+                  className="flex items-center justify-center gap-2 py-3 rounded-2xl mb-3"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
+                >
+                  <Users size={13} className="text-white/40" />
+                  {socialProof !== null ? (
+                    <p className="text-[13px] text-white/60">
+                      <span className="font-bold text-white">{socialProof}%</span> of players got this right
+                    </p>
+                  ) : (
+                    <Loader2 size={13} className="animate-spin text-white/40" />
+                  )}
+                </div>
+              )}
+
+              {/* CTA */}
+              {phase === 'playing' ? (
+                <button
+                  onClick={handleConfirm}
+                  disabled={!selected}
+                  className="w-full py-4 rounded-2xl font-bold text-[15px] text-white transition-opacity disabled:opacity-35"
+                  style={{ background: '#7c3aed' }}
+                >
+                  Lock In Answer
+                </button>
+              ) : (
+                <button
+                  onClick={handleNext}
+                  className="w-full py-4 rounded-2xl font-bold text-[15px] bg-white text-gray-900"
+                >
+                  {qIndex < questions.length - 1 ? 'Next Question' : 'See Your Score'}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>,
     document.body
@@ -623,7 +678,6 @@ export function DailyHeroSection() {
 
   // ── Today's Play state ──
   const [showPlayGame, setShowPlayGame] = useState(false);
-  const [showPlayAfter, setShowPlayAfter] = useState(false);
   const [showPlayShare, setShowPlayShare] = useState(false);
   const [playScore, setPlayScore] = useState<PlayScore | null>(() => {
     try {
@@ -873,10 +927,10 @@ export function DailyHeroSection() {
           onComplete={(score) => {
             setPlayScore(score);
             setPlayCompleted(true);
-            setShowPlayGame(false);
-            setShowPlayAfter(true);
+            // sheet stays open showing the combined done+share screen
           }}
           onClose={() => setShowPlayGame(false)}
+          onShare={() => { setShowPlayGame(false); setShowPlayShare(true); }}
         />
       )}
 
@@ -895,13 +949,7 @@ export function DailyHeroSection() {
         />
       )}
 
-      {/* After-game sheets */}
-      <AfterGameSheet
-        open={showPlayAfter}
-        onClose={() => setShowPlayAfter(false)}
-        onShareScore={() => setShowPlayShare(true)}
-        type="play"
-      />
+      {/* After-game sheet — Daily Call only */}
       <AfterGameSheet
         open={showCallAfter}
         onClose={() => setShowCallAfter(false)}
