@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Link, useLocation } from "wouter";
 import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home, Star, DoorOpen } from "lucide-react";
 import { FeedbackDialog } from "./feedback-dialog";
@@ -549,64 +550,31 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
         )}
       </div>
 
-      {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50">
-        {/* Thin nav bar */}
-        <div className="flex justify-around items-center px-2" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', paddingBottom: 'max(env(safe-area-inset-bottom, 8px), 8px)', paddingTop: '8px' }}>
-          {/* Activity Feed */}
-          <Link
-            href="/activity"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/activity" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`}
-            data-testid="nav-activity"
-          >
-            <div className="h-[22px] flex items-center justify-center">
-              <Activity className="text-white" size={22} />
-            </div>
-            <span className="text-white text-[10px] mt-0.5">Now</span>
-          </Link>
-
-          {/* Play */}
-          <Link
-            href="/play"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location.startsWith("/play") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`}
-            data-testid="nav-play"
-          >
-            <div className="h-[22px] flex items-center justify-center">
-              <Trophy size={20} className="text-white" strokeWidth={1.4} />
-            </div>
-            <span className="text-white text-[10px] mt-0.5">Play</span>
-          </Link>
-
-          {/* Rooms — hidden until rooms_enabled = 'true', always visible to admin */}
-          {(roomsEnabled || user?.id === "88bfb2a0-e8ce-4081-b731-2a49567ff093") && (
-            <Link
-              href="/rooms"
-              className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/rooms" || location.startsWith("/room/") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`}
-              data-testid="nav-rooms"
-            >
-              <div className="h-[22px] flex items-center justify-center">
-                <DoorOpen className="text-white" size={21} />
-              </div>
-              <span className="text-white text-[10px] mt-0.5">Rooms</span>
+      {createPortal(
+        <nav className="fixed bottom-0 left-0 right-0 z-[9999]" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
+          <div className="flex justify-around items-center px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 8px), 8px)', paddingTop: '8px' }}>
+            <Link href="/activity" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/activity" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-activity">
+              <div className="h-[22px] flex items-center justify-center"><Activity className="text-white" size={22} /></div>
+              <span className="text-white text-[10px] mt-0.5">Now</span>
             </Link>
-          )}
-
-          {/* Library */}
-          <Link
-            href="/my-library"
-            className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/my-library" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`}
-            data-testid="nav-library"
-            onTouchStart={prefetchCollections}
-            onMouseEnter={prefetchCollections}
-          >
-            <div className="h-[22px] flex items-center justify-center">
-              <Library className="text-white" size={22} />
-            </div>
-            <span className="text-white text-[10px] mt-0.5">Library</span>
-          </Link>
-
-        </div>
-      </nav>
+            <Link href="/play" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location.startsWith("/play") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-play">
+              <div className="h-[22px] flex items-center justify-center"><Trophy size={20} className="text-white" strokeWidth={1.4} /></div>
+              <span className="text-white text-[10px] mt-0.5">Play</span>
+            </Link>
+            {(roomsEnabled || user?.id === "88bfb2a0-e8ce-4081-b731-2a49567ff093") && (
+              <Link href="/rooms" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/rooms" || location.startsWith("/room/") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-rooms">
+                <div className="h-[22px] flex items-center justify-center"><DoorOpen className="text-white" size={21} /></div>
+                <span className="text-white text-[10px] mt-0.5">Rooms</span>
+              </Link>
+            )}
+            <Link href="/my-library" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/my-library" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-library" onTouchStart={prefetchCollections} onMouseEnter={prefetchCollections}>
+              <div className="h-[22px] flex items-center justify-center"><Library className="text-white" size={22} /></div>
+              <span className="text-white text-[10px] mt-0.5">Library</span>
+            </Link>
+          </div>
+        </nav>,
+        document.body
+      )}
 
       {/* Quick Action Sheet */}
       <QuickActionSheet
