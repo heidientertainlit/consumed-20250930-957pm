@@ -12,6 +12,7 @@ import PointsAchievementCard from "@/components/points-achievement-card";
 import MediaCarousel from "@/components/media-carousel";
 import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
+import { DailyHeroSection } from "@/components/daily-hero-section";
 import { DnaMomentCard } from "@/components/dna-moment-card";
 import { TriviaCarousel } from "@/components/trivia-carousel";
 import CastApprovalCard from "@/components/cast-approval-card";
@@ -5585,7 +5586,7 @@ export default function Feed() {
               Trending Now
             </h1>
 
-            <DailyChallengeCard />
+            <DailyHeroSection />
 
           </div>
           

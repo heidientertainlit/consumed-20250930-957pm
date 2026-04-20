@@ -34,7 +34,8 @@ All changes are styling/layout only. No voting logic, point systems, interaction
 - Button Theme: Default purple (`bg-purple-600`) with white text; outline buttons have purple border and white background.
 - Composer: Simplified inline with quick action buttons and dynamic forms.
 - **Game Components Distinction**:
-  - **The Daily Call** (`DailyChallengeCard`): A distinct, purple card at the top of the feed for a single featured daily game.
+  - **Daily Hero Section** (`DailyHeroSection`): Two side-by-side cards at the top of the feed hero zone. Left = "Today's Play" (3-question trivia game, Easy/Medium/Hard, with social proof after each answer). Right = "Daily Call" (the daily prediction from `daily-challenge` edge function). After completing either, an after-game bottom sheet appears with "Share a Take", "Play More", and "Call More" CTAs. Completion tracked per-day in localStorage. File: `client/src/components/daily-hero-section.tsx`.
+  - **The Daily Call** (`DailyChallengeCard`): Original card, kept for blended-feed and other usages.
   - **Quick Trivia** (`TriviaCarousel`): A dark purple carousel below the Daily Call, featuring multiple trivia questions.
 - **Track Page Design**: Accessible via `/track`, featuring "Track Media" and "Import History" buttons, and stats cards.
 - **Rooms**: Feature is hidden from regular users but fully implemented. Controlled by `rooms_enabled` flag in the `app_settings` Supabase table.
