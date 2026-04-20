@@ -340,150 +340,165 @@ function TodaysPlayGame({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[190] flex flex-col" style={{ background: '#0d0d1a' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-14 pb-4 border-b border-white/10">
-        <div>
-          <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-0.5">Today's Play</p>
-          <p className="text-sm font-bold" style={{ color: phase === 'done' ? '#fff' : DIFFICULTY_COLOR[qIndex] }}>
-            {phase === 'done'
-              ? 'Complete!'
-              : `${DIFFICULTY[qIndex]} · Q${qIndex + 1} of ${questions.length}`}
-          </p>
-        </div>
-        <button
-          onClick={onClose}
-          className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:bg-white/20"
-        >
-          <X size={15} className="text-white" />
-        </button>
-      </div>
+    <div className="fixed inset-0 z-[190] flex items-end">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      {phase === 'done' ? (
-        // ── Done screen ──
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <div
-            className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5 shadow-lg"
-            style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}
+      {/* Bottom sheet */}
+      <div
+        className="relative w-full rounded-t-3xl overflow-y-auto"
+        style={{
+          background: 'linear-gradient(170deg,#1a0840 0%,#0d0d1a 100%)',
+          maxHeight: '88vh',
+        }}
+      >
+        {/* Drag handle */}
+        <div className="w-10 h-1 rounded-full mx-auto mt-4 mb-1" style={{ background: 'rgba(255,255,255,0.18)' }} />
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-3 pb-4 border-b border-white/10">
+          <div>
+            <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-0.5">Today's Play</p>
+            <p className="text-sm font-bold" style={{ color: phase === 'done' ? '#fff' : DIFFICULTY_COLOR[qIndex] }}>
+              {phase === 'done'
+                ? 'Complete!'
+                : `${DIFFICULTY[qIndex]} · Q${qIndex + 1} of ${questions.length}`}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:bg-white/20"
           >
-            <Trophy size={34} className="text-yellow-300" />
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-2">You're done!</h2>
-          <p className="text-white/50 text-sm mb-8">
-            {correctCount} of {questions.length} correct · +{totalPoints} pts
-          </p>
-          <div className="flex gap-3">
-            {questions.map((_, i) => (
-              <div
-                key={i}
-                className="w-14 h-14 rounded-2xl flex items-center justify-center border"
-                style={{
-                  background: answers[i]?.correct ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
-                  borderColor: answers[i]?.correct ? 'rgba(74,222,128,0.4)' : 'rgba(248,113,113,0.3)',
-                }}
-              >
-                {answers[i]?.correct
-                  ? <CheckCircle size={24} className="text-green-400" />
-                  : <XCircle size={24} className="text-red-400" />}
-              </div>
-            ))}
-          </div>
+            <X size={15} className="text-white" />
+          </button>
         </div>
-      ) : (
-        // ── Question screen ──
-        <div className="flex-1 flex flex-col px-5 py-5">
-          {/* Progress bar */}
-          <div className="flex gap-1.5 mb-7">
-            {questions.map((_, i) => (
-              <div
-                key={i}
-                className="h-[3px] flex-1 rounded-full transition-all"
-                style={{
-                  background: i < qIndex
-                    ? '#7c3aed'
-                    : i === qIndex
-                      ? 'rgba(255,255,255,0.8)'
-                      : 'rgba(255,255,255,0.15)',
-                }}
-              />
-            ))}
-          </div>
 
-          {/* Category + question */}
-          <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">{q.category}</p>
-          <h2 className="text-[19px] font-bold text-white leading-snug mb-6 flex-1">{q.title}</h2>
-
-          {/* Answer options */}
-          <div className="space-y-2.5 mb-4">
-            {q.options.map((option, idx) => {
-              const isSelected = selected === option;
-              const isCorrect = option === q.correct_answer;
-              const showResult = phase === 'result';
-              let bg = 'rgba(255,255,255,0.08)';
-              let border = 'rgba(255,255,255,0.14)';
-              let textColor = 'rgba(255,255,255,0.9)';
-
-              if (showResult) {
-                if (isCorrect) { bg = 'rgba(74,222,128,0.15)'; border = 'rgba(74,222,128,0.5)'; }
-                else if (isSelected) { bg = 'rgba(248,113,113,0.15)'; border = 'rgba(248,113,113,0.4)'; textColor = 'rgba(255,255,255,0.5)'; }
-                else { bg = 'rgba(255,255,255,0.04)'; border = 'rgba(255,255,255,0.08)'; textColor = 'rgba(255,255,255,0.3)'; }
-              } else if (isSelected) {
-                bg = '#7c3aed'; border = '#a78bfa'; textColor = '#fff';
-              }
-
-              return (
-                <button
-                  key={idx}
-                  onClick={() => { if (phase === 'playing') setSelected(option); }}
-                  disabled={phase === 'result'}
-                  className="w-full py-4 px-5 rounded-2xl text-left text-[15px] flex items-center justify-between transition-all"
-                  style={{ background: bg, border: `1px solid ${border}`, color: textColor }}
-                >
-                  <span className="font-medium">{option}</span>
-                  {showResult && isCorrect && <CheckCircle size={17} className="text-green-400 shrink-0" />}
-                  {showResult && isSelected && !isCorrect && <XCircle size={17} className="text-red-400 shrink-0" />}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Social proof */}
-          {phase === 'result' && (
+        {phase === 'done' ? (
+          // ── Done screen ──
+          <div className="flex flex-col items-center px-6 pt-8 pb-10 text-center">
             <div
-              className="flex items-center justify-center gap-2 py-3 rounded-2xl mb-3"
-              style={{ background: 'rgba(255,255,255,0.06)' }}
+              className="w-20 h-20 rounded-3xl flex items-center justify-center mb-5 shadow-lg"
+              style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}
             >
-              <Users size={13} className="text-white/40" />
-              {socialProof !== null ? (
-                <p className="text-[13px] text-white/60">
-                  <span className="font-bold text-white">{socialProof}%</span> of players got this right
-                </p>
-              ) : (
-                <Loader2 size={13} className="animate-spin text-white/40" />
-              )}
+              <Trophy size={34} className="text-yellow-300" />
             </div>
-          )}
+            <h2 className="text-2xl font-bold text-white mb-2">You're done!</h2>
+            <p className="text-white/50 text-sm mb-8">
+              {correctCount} of {questions.length} correct · +{totalPoints} pts
+            </p>
+            <div className="flex gap-3">
+              {questions.map((_, i) => (
+                <div
+                  key={i}
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center border"
+                  style={{
+                    background: answers[i]?.correct ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
+                    borderColor: answers[i]?.correct ? 'rgba(74,222,128,0.4)' : 'rgba(248,113,113,0.3)',
+                  }}
+                >
+                  {answers[i]?.correct
+                    ? <CheckCircle size={24} className="text-green-400" />
+                    : <XCircle size={24} className="text-red-400" />}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          // ── Question screen ──
+          <div className="flex flex-col px-5 pt-5 pb-10">
+            {/* Progress bar */}
+            <div className="flex gap-1.5 mb-6">
+              {questions.map((_, i) => (
+                <div
+                  key={i}
+                  className="h-[3px] flex-1 rounded-full transition-all"
+                  style={{
+                    background: i < qIndex
+                      ? '#7c3aed'
+                      : i === qIndex
+                        ? 'rgba(255,255,255,0.8)'
+                        : 'rgba(255,255,255,0.15)',
+                  }}
+                />
+              ))}
+            </div>
 
-          {/* CTA */}
-          {phase === 'playing' ? (
-            <button
-              onClick={handleConfirm}
-              disabled={!selected}
-              className="w-full py-4 rounded-2xl font-bold text-[15px] text-white transition-opacity disabled:opacity-35"
-              style={{ background: '#7c3aed' }}
-            >
-              Lock In Answer
-            </button>
-          ) : (
-            <button
-              onClick={handleNext}
-              className="w-full py-4 rounded-2xl font-bold text-[15px] bg-white text-gray-900"
-            >
-              {qIndex < questions.length - 1 ? 'Next Question' : 'See Results'}
-            </button>
-          )}
-        </div>
-      )}
+            {/* Category + question */}
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">{q.category}</p>
+            <h2 className="text-[19px] font-bold text-white leading-snug mb-5">{q.title}</h2>
+
+            {/* Answer options */}
+            <div className="space-y-2.5 mb-4">
+              {q.options.map((option, idx) => {
+                const isSelected = selected === option;
+                const isCorrect = option === q.correct_answer;
+                const showResult = phase === 'result';
+                let bg = 'rgba(255,255,255,0.08)';
+                let border = 'rgba(255,255,255,0.14)';
+                let textColor = 'rgba(255,255,255,0.9)';
+
+                if (showResult) {
+                  if (isCorrect) { bg = 'rgba(74,222,128,0.15)'; border = 'rgba(74,222,128,0.5)'; }
+                  else if (isSelected) { bg = 'rgba(248,113,113,0.15)'; border = 'rgba(248,113,113,0.4)'; textColor = 'rgba(255,255,255,0.5)'; }
+                  else { bg = 'rgba(255,255,255,0.04)'; border = 'rgba(255,255,255,0.08)'; textColor = 'rgba(255,255,255,0.3)'; }
+                } else if (isSelected) {
+                  bg = '#7c3aed'; border = '#a78bfa'; textColor = '#fff';
+                }
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => { if (phase === 'playing') setSelected(option); }}
+                    disabled={phase === 'result'}
+                    className="w-full py-4 px-5 rounded-2xl text-left text-[15px] flex items-center justify-between transition-all"
+                    style={{ background: bg, border: `1px solid ${border}`, color: textColor }}
+                  >
+                    <span className="font-medium">{option}</span>
+                    {showResult && isCorrect && <CheckCircle size={17} className="text-green-400 shrink-0" />}
+                    {showResult && isSelected && !isCorrect && <XCircle size={17} className="text-red-400 shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Social proof */}
+            {phase === 'result' && (
+              <div
+                className="flex items-center justify-center gap-2 py-3 rounded-2xl mb-3"
+                style={{ background: 'rgba(255,255,255,0.06)' }}
+              >
+                <Users size={13} className="text-white/40" />
+                {socialProof !== null ? (
+                  <p className="text-[13px] text-white/60">
+                    <span className="font-bold text-white">{socialProof}%</span> of players got this right
+                  </p>
+                ) : (
+                  <Loader2 size={13} className="animate-spin text-white/40" />
+                )}
+              </div>
+            )}
+
+            {/* CTA */}
+            {phase === 'playing' ? (
+              <button
+                onClick={handleConfirm}
+                disabled={!selected}
+                className="w-full py-4 rounded-2xl font-bold text-[15px] text-white transition-opacity disabled:opacity-35"
+                style={{ background: '#7c3aed' }}
+              >
+                Lock In Answer
+              </button>
+            ) : (
+              <button
+                onClick={handleNext}
+                className="w-full py-4 rounded-2xl font-bold text-[15px] bg-white text-gray-900"
+              >
+                {qIndex < questions.length - 1 ? 'Next Question' : 'See Results'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>,
     document.body
   );
