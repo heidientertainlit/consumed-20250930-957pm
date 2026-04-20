@@ -348,8 +348,8 @@ function TodaysPlayGame({
       <div
         className="relative w-full rounded-t-3xl overflow-y-auto"
         style={{
-          background: 'linear-gradient(170deg,#1a0840 0%,#0d0d1a 100%)',
-          maxHeight: '88vh',
+          background: 'linear-gradient(170deg,#1e0a4a 0%,#120730 60%,#0f0627 100%)',
+          maxHeight: '92vh',
         }}
       >
         {/* Drag handle */}
@@ -405,7 +405,7 @@ function TodaysPlayGame({
           </div>
         ) : (
           // ── Question screen ──
-          <div className="flex flex-col px-5 pt-5 pb-10">
+          <div className="flex flex-col px-5 pt-5 pb-28">
             {/* Progress bar */}
             <div className="flex gap-1.5 mb-6">
               {questions.map((_, i) => (
@@ -557,8 +557,8 @@ function DailyCallOverlay({
     <div className="fixed inset-0 z-[190] flex items-end">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div
-        className="relative w-full rounded-t-3xl px-5 pt-6 pb-10"
-        style={{ background: 'linear-gradient(170deg,#1a1040 0%,#0d0d1a 100%)' }}
+        className="relative w-full rounded-t-3xl px-5 pt-6 pb-28"
+        style={{ background: 'linear-gradient(170deg,#1e0a4a 0%,#120730 60%,#0f0627 100%)' }}
       >
         <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: 'rgba(255,255,255,0.18)' }} />
 
