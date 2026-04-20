@@ -4,6 +4,7 @@ import { useLocation } from 'wouter';
 import {
   Zap, Sparkles, Flame, CheckCircle, XCircle,
   ChevronRight, Trophy, X, Loader2, Star, Users, Radio, Share2,
+  Film, Tv, Music, BookOpen, Mic2, Gamepad2, Target,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -48,6 +49,15 @@ function truncateWords(text: string, maxChars = 28): string {
   return text.slice(0, maxChars).trimEnd() + '…';
 }
 
+const CATEGORIES = [
+  { label: 'FILM', Icon: Film },
+  { label: 'TV', Icon: Tv },
+  { label: 'MUSIC', Icon: Music },
+  { label: 'BOOKS', Icon: BookOpen },
+  { label: 'PODS', Icon: Mic2 },
+  { label: 'GAMING', Icon: Gamepad2 },
+] as const;
+
 // ─────────────────────────────────────────────
 // Share Score Card (screenshotable overlay)
 // ─────────────────────────────────────────────
@@ -56,36 +66,62 @@ function ScoreShareCard({
   type,
   playScore,
   callAnswer,
+  streak,
+  userId,
+  answers,
   onClose,
 }: {
   open: boolean;
   type: 'play' | 'call';
   playScore?: PlayScore | null;
   callAnswer?: string | null;
+  streak?: number | null;
+  userId?: string;
+  answers?: { correct: boolean }[];
   onClose: () => void;
 }) {
   const { toast } = useToast();
-  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Fetch today's activity (ratings + predictions)
+  const { data: todayActivity } = useQuery({
+    queryKey: ['today-activity-share', userId],
+    queryFn: async () => {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const iso = todayStart.toISOString();
+      const [ratingRes, predRes] = await Promise.all([
+        supabase
+          .from('social_posts')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId!)
+          .in('post_type', ['rate-review', 'rating', 'rate_review'])
+          .gte('created_at', iso),
+        supabase
+          .from('user_predictions')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId!)
+          .gte('created_at', iso),
+      ]);
+      return { ratings: ratingRes.count ?? 0, predictions: predRes.count ?? 0 };
+    },
+    enabled: !!userId && open,
+  });
 
   if (!open) return null;
 
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   const handleShare = async () => {
-    const appUrl = window.location.origin;
+    const appUrl = 'consumed.app';
     let text = '';
     if (type === 'play' && playScore) {
-      const emojis = Array.from({ length: playScore.total }, (_, i) =>
-        i < playScore.correct ? '✅' : '❌'
-      ).join(' ');
-      text = `I scored ${playScore.correct}/${playScore.total} on Today's Play on Consumed! ${emojis}\n\nThink you can beat me? Play at ${appUrl}`;
+      text = `My entertainment score on Consumed Today's Play: ${playScore.correct}/${playScore.total} correct! Think you can beat me? consumed.app`;
     } else {
-      text = `I just made my Daily Call on Consumed — join me!\n${appUrl}`;
+      text = `I just made my Daily Call on Consumed — join me! consumed.app`;
     }
-
     try {
       if (navigator.share) {
-        await navigator.share({ text, url: appUrl });
+        await navigator.share({ text });
       } else {
         await navigator.clipboard.writeText(text);
         toast({ title: 'Copied to clipboard!', description: 'Paste it anywhere to share.' });
@@ -94,101 +130,209 @@ function ScoreShareCard({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[210] flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-[210] flex items-center justify-center px-5 py-6">
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-sm">
+      <div className="relative w-full max-w-sm flex flex-col gap-3">
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute -top-4 -right-2 z-10 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
+          className="absolute -top-2 right-0 z-10 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
         >
           <X size={15} className="text-white" />
         </button>
 
-        {/* ─── Score card (screenshotable) ─── */}
-        <div
-          ref={cardRef}
-          className="rounded-3xl overflow-hidden"
-          style={{ background: 'linear-gradient(145deg,#1a0840 0%,#0d0d20 50%,#0a1535 100%)' }}
-        >
-          {/* Top stripe */}
-          <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg,#7c3aed,#3b82f6)' }} />
+        {/* ══ Screenshotable card ══ */}
+        <div className="rounded-3xl overflow-hidden shadow-2xl">
 
-          <div className="px-6 pt-6 pb-7 text-center">
-            {/* Brand */}
-            <p
-              className="text-[11px] font-extrabold tracking-[0.22em] uppercase mb-4"
-              style={{ color: 'rgba(255,255,255,0.3)' }}
-            >
-              consumed
-            </p>
+          {/* ── Purple gradient header ── */}
+          <div
+            className="px-5 pt-5 pb-4"
+            style={{ background: 'linear-gradient(135deg,#5b21b6 0%,#4c1d95 40%,#3b0764 100%)' }}
+          >
+            <div className="flex items-start justify-between">
+              {/* Logo */}
+              <div>
+                <p className="text-[26px] font-black text-white leading-none tracking-tight">
+                  <span
+                    className="inline-block w-[22px] h-[22px] rounded-full border-[3px] border-white mr-0.5 align-middle"
+                    style={{ marginBottom: 2 }}
+                  />
+                  onsumed
+                </p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/60 mt-1">
+                  {type === 'play' ? "Today's Play" : 'Daily Call'}
+                </p>
+              </div>
+              <p className="text-[11px] font-semibold text-white/50 mt-1">{today}</p>
+            </div>
+          </div>
+
+          {/* ── White body ── */}
+          <div className="bg-white px-5 pt-4 pb-4">
 
             {type === 'play' && playScore ? (
               <>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-2">Today's Play</p>
-                {/* Big score */}
-                <div className="mb-3">
-                  <span className="text-[72px] font-black text-white leading-none">{playScore.correct}</span>
-                  <span className="text-[36px] font-bold text-white/40 leading-none">/{playScore.total}</span>
-                </div>
-                <p className="text-[13px] font-semibold text-white/50 uppercase tracking-widest mb-4">Correct</p>
-
-                {/* Answer dots */}
-                <div className="flex justify-center gap-3 mb-4">
-                  {Array.from({ length: playScore.total }, (_, i) => (
+                {/* Score row */}
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">My Entertainment Score</p>
+                    <div className="flex items-end gap-1 leading-none">
+                      <span className="text-[56px] font-black text-gray-900 leading-none">{playScore.correct}</span>
+                      <span className="text-[28px] font-bold text-gray-300 leading-none mb-1">/{playScore.total}</span>
+                    </div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-0.5">Correct</p>
+                  </div>
+                  {streak && streak > 0 ? (
                     <div
-                      key={i}
-                      className="w-11 h-11 rounded-xl flex items-center justify-center"
-                      style={{
-                        background: i < playScore.correct ? 'rgba(74,222,128,0.15)' : 'rgba(248,113,113,0.12)',
-                        border: `1px solid ${i < playScore.correct ? 'rgba(74,222,128,0.4)' : 'rgba(248,113,113,0.3)'}`,
-                      }}
+                      className="rounded-2xl px-3 py-2 flex flex-col items-center gap-0.5 min-w-[68px]"
+                      style={{ background: '#f5f0ff', border: '1px solid #e9d5ff' }}
                     >
-                      {i < playScore.correct
-                        ? <CheckCircle size={20} className="text-green-400" />
-                        : <XCircle size={20} className="text-red-400" />}
+                      <div className="flex items-center gap-1">
+                        <Flame size={16} className="text-orange-500" fill="currentColor" />
+                        <span className="text-[22px] font-black text-gray-900 leading-none">{streak}</span>
+                      </div>
+                      <p className="text-[8px] font-bold uppercase tracking-wider text-purple-600">Day Streak</p>
+                    </div>
+                  ) : null}
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-gray-100 mb-3" />
+
+                {/* Easy / Medium / Hard blocks */}
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  {['Easy', 'Medium', 'Hard'].map((label, i) => {
+                    const correct = answers?.[i]?.correct ?? (i < playScore.correct);
+                    return (
+                      <div
+                        key={label}
+                        className="flex flex-col items-center gap-1.5 py-2.5 rounded-2xl"
+                        style={{
+                          background: correct ? '#f0fdf4' : '#fff1f2',
+                          border: `1px solid ${correct ? '#bbf7d0' : '#fecdd3'}`,
+                        }}
+                      >
+                        <div
+                          className="w-8 h-8 rounded-xl flex items-center justify-center"
+                          style={{ background: correct ? '#dcfce7' : '#ffe4e6' }}
+                        >
+                          {correct
+                            ? <CheckCircle size={17} className="text-green-500" />
+                            : <XCircle size={17} className="text-red-500" />}
+                        </div>
+                        <p
+                          className="text-[9px] font-bold uppercase tracking-wider"
+                          style={{ color: correct ? '#16a34a' : '#dc2626' }}
+                        >
+                          {label}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-gray-100 mb-3" />
+
+                {/* Also Today */}
+                {(todayActivity?.ratings || todayActivity?.predictions) ? (
+                  <>
+                    <div
+                      className="flex items-center gap-3 px-3 py-2 rounded-xl mb-3"
+                      style={{ background: '#f9f9f9', border: '1px solid #f0f0f0' }}
+                    >
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mr-1">Also Today</p>
+                      {todayActivity.ratings > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Star size={11} className="text-yellow-500" fill="currentColor" />
+                          <span className="text-[11px] font-semibold text-gray-700">Rated {todayActivity.ratings}</span>
+                        </div>
+                      )}
+                      {todayActivity.ratings > 0 && todayActivity.predictions > 0 && (
+                        <span className="text-gray-300">·</span>
+                      )}
+                      {todayActivity.predictions > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Target size={11} className="text-purple-500" />
+                          <span className="text-[11px] font-semibold text-gray-700">{todayActivity.predictions} prediction{todayActivity.predictions !== 1 ? 's' : ''}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="h-px bg-gray-100 mb-3" />
+                  </>
+                ) : null}
+
+                {/* Category icons */}
+                <div className="grid grid-cols-6 gap-1.5 mb-4">
+                  {CATEGORIES.map(({ label, Icon }) => (
+                    <div key={label} className="flex flex-col items-center gap-1">
+                      <div
+                        className="w-9 h-9 rounded-xl flex items-center justify-center"
+                        style={{ background: '#f3f0ff' }}
+                      >
+                        <Icon size={16} className="text-purple-600" />
+                      </div>
+                      <p className="text-[7px] font-bold uppercase tracking-wide text-gray-400">{label}</p>
                     </div>
                   ))}
                 </div>
-
-                {playScore.totalPoints > 0 && (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full mb-2" style={{ background: 'rgba(250,204,21,0.12)', border: '1px solid rgba(250,204,21,0.25)' }}>
-                    <Star size={12} className="text-yellow-400" fill="currentColor" />
-                    <span className="text-[12px] font-bold text-yellow-400">+{playScore.totalPoints} pts earned</span>
-                  </div>
-                )}
               </>
             ) : (
+              /* Daily Call body */
               <>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-2">Daily Call</p>
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)' }}>
-                  <Sparkles size={26} className="text-blue-400" />
+                <div className="flex flex-col items-center text-center py-4">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style={{ background: '#f3f0ff' }}>
+                    <Sparkles size={26} className="text-purple-600" />
+                  </div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">My Daily Call</p>
+                  {callAnswer && (
+                    <p className="text-[17px] font-bold text-gray-900 mb-1">"{callAnswer}"</p>
+                  )}
+                  {streak && streak > 0 ? (
+                    <div className="flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-full" style={{ background: '#f5f0ff' }}>
+                      <Flame size={13} className="text-orange-500" fill="currentColor" />
+                      <span className="text-[12px] font-bold text-purple-700">{streak} day streak</span>
+                    </div>
+                  ) : null}
                 </div>
-                <p className="text-white font-bold text-[16px] mb-1">Call locked in!</p>
-                {callAnswer && (
-                  <p className="text-white/40 text-[13px]">"{callAnswer}"</p>
-                )}
+
+                {/* Category icons */}
+                <div className="h-px bg-gray-100 mb-3 mt-1" />
+                <div className="grid grid-cols-6 gap-1.5 mb-4">
+                  {CATEGORIES.map(({ label, Icon }) => (
+                    <div key={label} className="flex flex-col items-center gap-1">
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#f3f0ff' }}>
+                        <Icon size={16} className="text-purple-600" />
+                      </div>
+                      <p className="text-[7px] font-bold uppercase tracking-wide text-gray-400">{label}</p>
+                    </div>
+                  ))}
+                </div>
               </>
             )}
 
-            {/* Date + tagline */}
-            <p className="text-[10px] text-white/25 mt-4 font-medium tracking-wide">{today} · consumed.app</p>
+            {/* Footer tagline */}
+            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+              <p className="text-[10px] font-semibold text-purple-600">Rate · Predict · Play · @consumedapp</p>
+              <p className="text-[10px] font-semibold text-gray-400">consumed.app</p>
+            </div>
+            <p className="text-[9px] text-gray-300 mt-0.5">where entertainment gets played</p>
           </div>
         </div>
 
-        {/* ─── Share button (below card so not in screenshot) ─── */}
+        {/* Share button (outside the card, not screenshotted) */}
         <button
           onClick={handleShare}
-          className="w-full mt-3 py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 shadow-lg"
+          className="w-full py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 shadow-lg"
           style={{ background: 'linear-gradient(90deg,#7c3aed,#4f46e5)' }}
         >
           <Share2 size={17} />
           Share Your Score
         </button>
 
-        <p className="text-center text-[11px] text-white/30 mt-2">
-          Screenshot the card above to share it
+        <p className="text-center text-[11px] text-white/30">
+          Screenshot the card above to share on social
         </p>
       </div>
     </div>,
@@ -279,7 +423,7 @@ function TodaysPlayGame({
   questions: TriviaQuestion[];
   onComplete: (score: PlayScore) => void;
   onClose: () => void;
-  onShare: () => void;
+  onShare: (answers: { correct: boolean }[]) => void;
 }) {
   const [, setLocation] = useLocation();
   const [qIndex, setQIndex] = useState(0);
@@ -336,6 +480,7 @@ function TodaysPlayGame({
         completed: true,
         date: new Date().toISOString().split('T')[0],
         score,
+        answers: allAnswers.map(a => ({ correct: a.correct })),
       }));
       setDoneScore(score);
       onComplete(score); // update parent card immediately
@@ -419,7 +564,7 @@ function TodaysPlayGame({
 
               {/* Share score — primary */}
               <button
-                onClick={() => { onClose(); onShare(); }}
+                onClick={() => { onClose(); onShare(answers); }}
                 className="w-full py-4 px-5 rounded-2xl font-bold text-[15px] text-white flex items-center justify-between mb-3 shadow-lg"
                 style={{ background: 'linear-gradient(90deg,#7c3aed,#4f46e5)' }}
               >
@@ -679,6 +824,15 @@ export function DailyHeroSection() {
   // ── Today's Play state ──
   const [showPlayGame, setShowPlayGame] = useState(false);
   const [showPlayShare, setShowPlayShare] = useState(false);
+  const [playAnswers, setPlayAnswers] = useState<{ correct: boolean }[] | null>(() => {
+    try {
+      const s = localStorage.getItem(getTodayPlayKey());
+      if (!s) return null;
+      const d = JSON.parse(s);
+      const today = new Date().toISOString().split('T')[0];
+      return d.completed && d.date === today && d.answers ? d.answers : null;
+    } catch { return null; }
+  });
   const [playScore, setPlayScore] = useState<PlayScore | null>(() => {
     try {
       const s = localStorage.getItem(getTodayPlayKey());
@@ -930,7 +1084,7 @@ export function DailyHeroSection() {
             // sheet stays open showing the combined done+share screen
           }}
           onClose={() => setShowPlayGame(false)}
-          onShare={() => { setShowPlayGame(false); setShowPlayShare(true); }}
+          onShare={(ans) => { setPlayAnswers(ans); setShowPlayGame(false); setShowPlayShare(true); }}
         />
       )}
 
@@ -962,12 +1116,17 @@ export function DailyHeroSection() {
         open={showPlayShare}
         type="play"
         playScore={playScore}
+        answers={playAnswers ?? undefined}
+        streak={streak}
+        userId={user?.id}
         onClose={() => setShowPlayShare(false)}
       />
       <ScoreShareCard
         open={showCallShare}
         type="call"
         callAnswer={callAnswer}
+        streak={streak}
+        userId={user?.id}
         onClose={() => setShowCallShare(false)}
       />
     </>
