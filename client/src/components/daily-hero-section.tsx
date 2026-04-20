@@ -153,14 +153,12 @@ function ScoreShareCard({
             <div className="flex items-start justify-between">
               {/* Logo */}
               <div>
-                <p className="text-[26px] font-black text-white leading-none tracking-tight">
-                  <span
-                    className="inline-block w-[22px] h-[22px] rounded-full border-[3px] border-white mr-0.5 align-middle"
-                    style={{ marginBottom: 2 }}
-                  />
-                  onsumed
-                </p>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/60 mt-1">
+                <img
+                  src="/consumed-logo-white.png"
+                  alt="Consumed"
+                  className="h-7 w-auto mb-1"
+                />
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">
                   {type === 'play' ? "Today's Play" : 'Daily Call'}
                 </p>
               </div>
