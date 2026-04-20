@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
-import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, MessageCircle, Loader2, Clock, Minus, Plus } from "lucide-react";
+import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, MessageCircle, Loader2, Clock, Minus, Plus, Trash2, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import Navigation from "@/components/navigation";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
@@ -340,6 +341,20 @@ export default function PlayBingeBattle() {
     setView("finished");
   }
 
+  // --- Cancel / delete battle ---
+  async function handleDeleteBattle(battleId: string) {
+    const { error } = await supabase.from("binge_battles").delete().eq("id", battleId);
+    if (error) {
+      toast({ title: "Couldn't remove battle", description: error.message, variant: "destructive" });
+      return;
+    }
+    setBattles(prev => prev.filter(b => b.id !== battleId));
+    if (currentBattle?.id === battleId) {
+      setCurrentBattle(null);
+      setView("hub");
+    }
+  }
+
   // --- View: Hub ---
   if (view === "hub") {
     const activeBattles = battles.filter(b => b.status === "active");
@@ -354,18 +369,18 @@ export default function PlayBingeBattle() {
       const opponent = opponentId ? userMap[opponentId] : null;
 
       return (
-        <div
-          className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden cursor-pointer active:opacity-80"
-          onClick={async () => {
-            await loadBattle(battle.id);
-            if (battle.status === "completed") {
-              setView("finished");
-            } else {
-              setView("active");
-            }
-          }}
-        >
-          <div className="flex gap-3 p-3">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div
+            className="flex gap-3 p-3 cursor-pointer active:opacity-80"
+            onClick={async () => {
+              await loadBattle(battle.id);
+              if (battle.status === "completed") {
+                setView("finished");
+              } else {
+                setView("active");
+              }
+            }}
+          >
             {/* Poster thumbnail */}
             <div className="w-12 h-[72px] rounded-lg overflow-hidden bg-gray-100 shrink-0 relative">
               {battle.media_poster ? (
@@ -429,6 +444,21 @@ export default function PlayBingeBattle() {
             )}
             </div>{/* end flex-1 content */}
           </div>{/* end flex gap-3 p-3 */}
+          {/* Cancel / remove button */}
+          {battle.status !== "completed" && (
+            <div className="border-t border-gray-100 px-3 py-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteBattle(battle.id);
+                }}
+                className="flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-red-500 transition-colors"
+              >
+                <Trash2 size={12} />
+                {battle.status === "pending" ? "Cancel battle" : "Remove battle"}
+              </button>
+            </div>
+          )}
         </div>
       );
     }
@@ -503,6 +533,7 @@ export default function PlayBingeBattle() {
             </div>
           )}
         </div>
+        <Navigation />
       </div>
     );
   }
@@ -878,6 +909,13 @@ export default function PlayBingeBattle() {
             >
               {finishing ? <Loader2 size={14} className="animate-spin" /> : <Trophy size={14} className="text-amber-500" />}
               {finishing ? "Saving..." : "I Finished First!"}
+            </button>
+
+            <button
+              onClick={() => handleDeleteBattle(battle.id)}
+              className="w-full py-2.5 text-[13px] text-gray-400 flex items-center justify-center gap-1.5"
+            >
+              <X size={13} /> Give up &amp; remove battle
             </button>
           </div>
         </div>
