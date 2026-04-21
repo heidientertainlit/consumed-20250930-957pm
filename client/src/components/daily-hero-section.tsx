@@ -1014,7 +1014,6 @@ export function DailyHeroSection() {
             className="rounded-2xl p-4 flex flex-col"
             style={{
               background: 'linear-gradient(160deg,#4c1d95 0%,#3b0764 100%)',
-              minHeight: 190,
             }}
           >
             <div className="flex items-start justify-between mb-2">
@@ -1050,7 +1049,7 @@ export function DailyHeroSection() {
                   if (playCompleted) setShowPlayShare(true);
                   else if (hasTodaysPlay) setShowPlayGame(true);
                 }}
-                className="text-[11px] font-bold px-3 py-1.5 rounded-full"
+                className="text-[10px] font-bold px-2.5 py-1 rounded-full"
                 style={{ background: '#fff', color: '#4c1d95' }}
               >
                 {playCompleted ? 'Share' : 'Play'}
@@ -1063,7 +1062,6 @@ export function DailyHeroSection() {
             className="rounded-2xl p-4 flex flex-col"
             style={{
               background: 'linear-gradient(160deg,#1e3a8a 0%,#1e1b4b 100%)',
-              minHeight: 190,
             }}
           >
             <div className="flex items-start justify-between mb-2">
@@ -1096,7 +1094,7 @@ export function DailyHeroSection() {
                   if (callCompleted) setShowCallShare(true);
                   else if (hasDailyCall) setShowCallOverlay(true);
                 }}
-                className="text-[11px] font-bold px-3 py-1.5 rounded-full"
+                className="text-[10px] font-bold px-2.5 py-1 rounded-full"
                 style={{ background: '#fff', color: '#1e3a8a' }}
               >
                 {callCompleted ? 'Share' : 'Call It'}
