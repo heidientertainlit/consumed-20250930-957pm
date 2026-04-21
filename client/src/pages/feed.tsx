@@ -3214,7 +3214,7 @@ export default function Feed() {
     item.type === 'prediction'
   );
 
-  const feedRatingCarousels: { id: string; type: string; posts: any[] }[] = (() => {
+  const { feedRatingCarousels, promotedRatings } = (() => {
     const ratingItems: any[] = [];
     standaloneUGCPosts.forEach((item: any) => {
       if (item.type === 'ugc_group') {
@@ -3269,27 +3269,89 @@ export default function Feed() {
       finalOrder.push(representative);
     }
 
+    // PROMOTION: pull a small number of high-signal real-user ratings out of the
+    // carousel pool to show as standalone cards interleaved with play slots.
+    // Criteria: real user (not persona, not current user), most recent, one per author.
+    // Cap at 4 so play stays dominant in the feed.
+    const MAX_PROMOTED = 4;
+    const recencySorted = [...finalOrder].sort((a: any, b: any) =>
+      new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
+    );
+    const seenAuthors = new Set<string>();
+    const promoted: any[] = [];
+    for (const item of recencySorted) {
+      if (promoted.length >= MAX_PROMOTED) break;
+      const authorId = item.user?.id || item._rawPost?.user?.id;
+      if (!authorId || authorId === currentAppUserId) continue;
+      if (item.user?.is_persona || item._rawPost?.user?.is_persona) continue;
+      if (seenAuthors.has(authorId)) continue;
+      seenAuthors.add(authorId);
+      promoted.push(item);
+    }
+    const promotedIdSet = new Set(promoted.map((p: any) => p.id));
+    const carouselOrder = finalOrder.filter((p: any) => !promotedIdSet.has(p.id));
+
     // 10 posts per carousel — max 6 carousels total
     const batches: { id: string; type: string; posts: any[] }[] = [];
     const BATCH_SIZE = 10;
     const MAX_CAROUSELS = 6;
-    for (let i = 0; i < finalOrder.length && batches.length < MAX_CAROUSELS; i += BATCH_SIZE) {
-      const batch = finalOrder.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < carouselOrder.length && batches.length < MAX_CAROUSELS; i += BATCH_SIZE) {
+      const batch = carouselOrder.slice(i, i + BATCH_SIZE);
       if (batch.length > 0) {
         batches.push({ id: `rating-carousel-${i}`, type: 'rating_carousel', posts: batch });
       }
     }
-    return batches;
+    return { feedRatingCarousels: batches, promotedRatings: promoted };
   })();
+
+  // Interleave play slots with promoted standalone ratings and binge battle promo cards.
+  // Pattern (1-indexed): every 3 play items inserts one promoted rating; positions 5 and 11
+  // insert binge-battle promo cards (max 2). Play stays the dominant rhythm of the feed.
+  const mixedFeedSlots = useMemo(() => {
+    const out: any[] = [];
+    let promotedIdx = 0;
+    let bingePromoCount = 0;
+    feedPlaySlots.forEach((item: any, i: number) => {
+      out.push(item);
+      // After every 3rd play item, surface a promoted rating if we still have one
+      if ((i + 1) % 3 === 0 && promotedIdx < promotedRatings.length) {
+        out.push({
+          ...promotedRatings[promotedIdx],
+          type: 'promoted_rating',
+          _promotedKey: `promoted-${promotedIdx}`,
+        });
+        promotedIdx++;
+      }
+      // Sprinkle 2 binge-battle promo cards across the feed (positions 5 and 11)
+      if ((i === 4 || i === 10) && bingePromoCount < 2) {
+        out.push({
+          type: 'binge_battle_promo',
+          id: `binge-promo-${bingePromoCount}`,
+          _variant: bingePromoCount === 0 ? 'start' : 'compete',
+        });
+        bingePromoCount++;
+      }
+    });
+    // Append any leftover promoted ratings so they don't get dropped on short feeds
+    while (promotedIdx < promotedRatings.length) {
+      out.push({
+        ...promotedRatings[promotedIdx],
+        type: 'promoted_rating',
+        _promotedKey: `promoted-${promotedIdx}`,
+      });
+      promotedIdx++;
+    }
+    return out;
+  }, [feedPlaySlots, promotedRatings]);
 
   // Map each play slot to a sequential index for renderPostBatchByIndex
   const slotAssignments = useMemo(() => {
     const map = new Map<number, any>();
-    feedPlaySlots.forEach((item, i) => {
+    mixedFeedSlots.forEach((item, i) => {
       map.set(i, item);
     });
     return map;
-  }, [feedPlaySlots]);
+  }, [mixedFeedSlots]);
 
   // Compact play activity card — leaderboard nudges and friend activity
   const renderPlayActivityCard = (item: any) => {
@@ -3455,6 +3517,45 @@ export default function Feed() {
             )}
           </div>
         </div>
+      );
+    }
+
+    // Promoted standalone rating — a high-signal real-user rating pulled out of the
+    // compressed rating carousel and shown as a single full card between play items.
+    if (item?.type === 'promoted_rating') {
+      return (
+        <div key={`${keyPrefix}-promoted-${item.id}`} className="mb-4">
+          <div className="flex">
+            <UGCGroupCard
+              post={item}
+              onLike={handleLike}
+              isLiked={likedPosts.has(item.id)}
+              session={session}
+              fetchComments={fetchComments}
+              currentUserId={currentAppUserId || undefined}
+              onDeletePost={handleDeletePost}
+              onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // Binge Battle promo card — synthetic CTA encouraging users to start a battle.
+    // Reuses BingeBattleFeedCard with synthetic content; two variants alternate.
+    if (item?.type === 'binge_battle_promo') {
+      const isStart = item._variant === 'start';
+      return (
+        <BingeBattleFeedCard
+          key={`${keyPrefix}-${item.id}`}
+          post={{
+            id: item.id,
+            content: isStart
+              ? "Race a friend through a show. First to finish wins."
+              : "Think you binge faster? Challenge someone and prove it.",
+            media_title: isStart ? "Pick a show, pick a friend" : "Binge Battle",
+          }}
+        />
       );
     }
 
@@ -3645,7 +3746,7 @@ export default function Feed() {
 
   const renderPostBatchByIndex = (batchIndex: number) => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
-    const len = feedPlaySlots.length;
+    const len = mixedFeedSlots.length;
     if (len === 0 || batchIndex >= len) return null;
     const item = slotAssignments.get(batchIndex);
     if (!item) return null;
@@ -3679,7 +3780,7 @@ export default function Feed() {
 
   const renderRemainingPosts = () => {
     if (selectedFilter !== 'All' && selectedFilter !== 'all') return null;
-    const remaining = feedPlaySlots.slice(7);
+    const remaining = mixedFeedSlots.slice(7);
     const remainingRatings = feedRatingCarousels.slice(4);
     if (remaining.length === 0 && remainingRatings.length === 0) return null;
     return (

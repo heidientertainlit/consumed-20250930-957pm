@@ -1,7 +1,7 @@
 # Consumed - Where Fans Come to Play
 
 ## Overview
-Consumed is a mobile-first platform that transforms entertainment consumption into an interactive, game-like experience. It enables users to actively engage with entertainment through ranking, voting, predicting, and knowledge testing. The platform aims to foster engagement, social comparison, and personalization, moving users from passive consumption to active participation in the entertainment they love. The project envisions significant market potential by creating a dynamic and engaging space for entertainment enthusiasts.
+Consumed is a mobile-first platform designed to transform entertainment consumption into an interactive, game-like experience. It encourages active engagement through ranking, voting, predicting, and knowledge testing, moving users from passive consumption to active participation. The platform aims to foster engagement, social comparison, and personalization, envisioning significant market potential by creating a dynamic and engaging space for entertainment enthusiasts.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -17,64 +17,55 @@ Preferred communication style: Simple, everyday language.
 ### Feed UI Redesign Plan (COSMETIC ONLY — no functional changes)
 All changes are styling/layout only. No voting logic, point systems, interaction handlers, or data pipelines may change.
 **Next steps (in order):**
-1. ~~Game Moments (SocialProofCard)~~ — DONE. White card, type pill top-right, italic question, 3px progress bar, gray-50 footer. Leaderboard cards → purple strip. Zero functional changes.
-2. **Individual post cards** (reviews, ratings, thoughts) — tighten to compact card shell with type pill in top-right, subtle bottom bar with likes/comments.
-3. **Trivia/poll cards** — same card shell, keep all answer options + voting logic untouched, only tighten wrapper styling.
-
-**Design reference:** `attached_assets/consumed_branded_cards_*.html` and `consumed_feed_v2_*.html`
-**Card shell spec:** white bg, `border: 0.5px solid border-tertiary`, `border-radius-lg`, compact 14px padding, type pill top-right, subtle off-white footer bar for actions.
+1. **Individual post cards** (reviews, ratings, thoughts) — tighten to compact card shell with type pill in top-right, subtle bottom bar with likes/comments.
+2. **Trivia/poll cards** — same card shell, keep all answer options + voting logic untouched, only tighten wrapper styling.
 
 ## System Architecture
 
 ### UI/UX Decisions
-- Mobile-first design with a dark gradient theme utilizing shadcn/ui (Radix UI, Tailwind CSS).
-- Bottom Navigation: Activity, Play, Library, Leaders, with a floating center Plus button for adding content. "Play" links to `/play/predictions`.
-- Top Navigation: Search, Notifications, Profile.
-- Profile Section Navigation: Sticky pills for Friends, DNA, Media History (own profile); Overview, DNA (friend profiles). DNA tab includes "My DNA" and "Compare" sub-tabs.
-- Button Theme: Default purple (`bg-purple-600`) with white text; outline buttons have purple border and white background.
+- Mobile-first design with a dark gradient theme using shadcn/ui (Radix UI, Tailwind CSS).
+- Persistent bottom navigation: Activity, Play, Library, Leaders, with a floating center Plus button for content addition.
+- Top navigation: Search, Notifications, Profile.
+- Profile section navigation: Sticky pills for Friends, DNA, Media History (own profile); Overview, DNA (friend profiles). DNA tab includes "My DNA" and "Compare" sub-tabs.
+- Default button theme: Purple background with white text; outline buttons have a purple border and white background.
 - Composer: Simplified inline with quick action buttons and dynamic forms.
-- **Game Components Distinction**:
-  - **Daily Hero Section** (`DailyHeroSection`): Two side-by-side cards at the top of the feed hero zone. Left = "Today's Play" (3-question trivia game, Easy/Medium/Hard, with social proof after each answer). Right = "Daily Call" (the daily prediction from `daily-challenge` edge function). After completing either, an after-game bottom sheet appears with "Share a Take", "Play More", and "Call More" CTAs. Completion tracked per-day in localStorage. File: `client/src/components/daily-hero-section.tsx`.
-  - **The Daily Call** (`DailyChallengeCard`): Original card, kept for blended-feed and other usages.
-  - **Quick Trivia** (`TriviaCarousel`): A dark purple carousel below the Daily Call, featuring multiple trivia questions.
-- **Track Page Design**: Accessible via `/track`, featuring "Track Media" and "Import History" buttons, and stats cards.
-- **Rooms**: Feature is hidden from regular users but fully implemented. Controlled by `rooms_enabled` flag in the `app_settings` Supabase table.
-  - **Admin (HeidiIsConsumed, ID `88bfb2a0-e8ce-4081-b731-2a49567ff093`) always sees Rooms** regardless of the flag — both the nav tab and all `/rooms`/`/room/*` routes.
-  - **Turn Rooms ON for everyone**: `UPDATE app_settings SET value = 'true', updated_at = now() WHERE key = 'rooms_enabled';`
-  - **Turn Rooms OFF for everyone**: `UPDATE app_settings SET value = 'false', updated_at = now() WHERE key = 'rooms_enabled';`
-  - Flag is read by `client/src/lib/feature-flags.tsx` (`FeatureFlagsProvider`). Admin bypass lives in `RoomsGuard` (App.tsx) and navigation.tsx. No code deploy needed to toggle.
-- **Navigation**: Bottom navigation includes 4 items: Activity, DNA, Library, and Leaders. The floating Plus button always links to `/add`. Play page combines game tiles with embedded leaderboard content. Collections page at `/collections` has 3 tabs: Lists, Ranks, and History. Leaderboard, Discover, and Track pages exist as backpages. Creator profile at `/creator-profile` shows Follow/Inner Circle buttons and external links.
-- **Play > Pools**: `/play/pools` is a dark-themed browse page showing all public pools as gradient cards. Friends strip at top shows friends who are in pools. Each pool card links to `/room/:id`. Challenge Friends share CTA at bottom. Pools tile added to Play page game modes grid.
-- **Profile Page Organization**: Profile includes sticky section navigation pills (Stats, DNA, Friends, Collections, History).
-- **Collections System**: Collections tab contains sub-navigation for Lists and Ranks. Ranks feature supports drag-and-drop ordering, position-based ranking, and collaboration.
-- **Search Page**: AI-powered search at `/search` with unified results showing Conversations, AI Recommendations, and Media Results. Uses custom AI icon in navigation.
+- **Game Components**:
+    - **Daily Hero Section**: Two side-by-side cards at the top of the feed for "Today's Play" (3-question trivia) and "Daily Call" (daily prediction).
+    - **The Daily Call**: Original card for blended-feed and other usages.
+    - **Quick Trivia**: A dark purple carousel below the Daily Call featuring multiple trivia questions.
+- **Rooms**: Feature controlled by `rooms_enabled` flag in `app_settings` Supabase table. Admin user (`HeidiIsConsumed`) always sees Rooms. Toggling the flag enables/disables Rooms for all other users without a code deploy.
+- **Navigation**: Bottom navigation includes Activity, DNA, Library, and Leaders. Floating Plus button links to `/add`. Play page combines game tiles with embedded leaderboard content. Collections page at `/collections` has Lists, Ranks, and History tabs.
+- **Play > Pools**: `/play/pools` is a dark-themed browse page for public pools.
+- **Profile Page Organization**: Includes sticky section navigation pills (Stats, DNA, Friends, Collections, History).
+- **Collections System**: Collections tab has sub-navigation for Lists and Ranks. Ranks support drag-and-drop ordering and collaboration.
+- **Search Page**: AI-powered unified search at `/search` for Conversations, AI Recommendations, and Media Results.
 
 ### Technical Implementations
 - Frontend: React 18, TypeScript, Wouter, TanStack Query, Vite.
 - Backend: Supabase Edge Functions (Deno runtime).
 - Database: Supabase PostgreSQL.
 - Authentication: Supabase Auth.
-- Unified API Search: Integration with Spotify, TMDB, YouTube, Open Library via Edge Functions.
-- Netflix Import Fix: Uses TMDB API for movie/TV detection, with rate limiting and caching.
+- Unified API Search: Integrates Spotify, TMDB, YouTube, Open Library via Edge Functions.
+- Netflix Import Fix: Uses TMDB API for media detection with rate limiting and caching.
 - Real-time unified Notification System.
-- Engagement-focused Leaderboard System with 5 categories and 'Your Circle'/Global tabs.
+- Engagement-focused Leaderboard System with 5 categories.
 - Unified Voting System for polls, predictions, and trivia.
-- Comprehensive User Points System for various actions.
+- Comprehensive User Points System.
 - Smart Recommendations: GPT-4o powered with caching.
 - Creator Follow System.
 - Spoiler Protection: Blurs content until revealed.
-- Consumed vs User-Generated Content: Differentiates with a "🏆 Consumed" badge.
+- Consumed vs User-Generated Content: Differentiated by a "🏆 Consumed" badge.
 - Prediction Resolution: Supports timed/open-ended predictions with scoring.
 - AI Builder (`/library-ai`): Customization of lists and tracking via visual builder and AI chat.
-- DNA Levels System: Two-tier "Entertainment DNA" (survey-based) with friend comparison and unified insights.
-- DNA Moments: Quick binary questions in the feed that build Entertainment DNA, stored in `dna_moments` and `dna_moment_responses` tables.
-- Game Moment Activity Posts: Auto-creation of `social_posts` entries with `post_type: 'game_moment'` when users interact with games.
-- **Daily Call System**: Featured daily game. Content from `prediction_pools` (where `featured_date` = today's date), user responses in `user_predictions`, and streak tracking in `login_streaks`. Managed by `daily-challenge` edge function.
-- **Bot Persona System**: 20 AI-powered persona users (`is_persona = true` in `public.users`) that post authentic entertainment content via Claude-driven admin workflow. Content generation and scheduling managed through `persona_post_drafts` and `scheduled_persona_posts` tables and related edge functions. Admin hub at `/admin`.
-- **Challenge Pools Admin** (`/admin/pools`): Admin tool to create trivia pools for any show/franchise via AI. Generates 36 questions (12 easy/medium/hard) via `generate-challenge-pool` edge function (OpenAI gpt-4o). Pool metadata stored in `challenge_pools` table; questions in `challenge_questions` table. `play-pools.tsx` and `play-challenge.tsx` fetch from DB first, fall back to hardcoded `CHALLENGE_BANKS` / `POOLS` constants for existing Harry Potter + Friends pools. New pools appear without any code deploys.
-- **Pools System**: Structured, round-based group competition engine. Architecture: Pool → Rounds → Prompts → Answers → Leaderboard. Host-controlled, invite-only. Tables: `pools`, `pool_members`, `pool_rounds`, `pool_prompts`, `pool_answers`. Several associated edge functions and routes.
-- **Room Discussion Posts**: `social_posts` has a `room_id text` column (nullable). Room-scoped posts are inserted with `room_id` set to the pool's ID. Query key `['room-posts', roomId]`. Posts without `room_id` are general feed posts.
-- **Partner Room Polls Architecture**: `prediction_pools` has `partner_tag text` column (e.g. `'reelz'`). Polls with `partner_tag` set are room-specific (shown only in that room's carousel via `get-pool-details` which filters by `partner_tag = pool.partner_name`). Polls with `partner_tag = null` go to the main activity feed. Main feed query uses `.is('partner_tag', null)` to exclude room polls.
+- DNA Levels System: Two-tier "Entertainment DNA" with friend comparison.
+- DNA Moments: Quick binary questions in the feed that build Entertainment DNA.
+- Game Moment Activity Posts: Auto-creation of social posts when users interact with games.
+- **Daily Call System**: Featured daily game. Content from `prediction_pools` (featured today), user responses in `user_predictions`, and streak tracking in `login_streaks`.
+- **Bot Persona System**: 20 AI-powered persona users (`is_persona = true`) that post entertainment content via Claude-driven admin workflow.
+- **Challenge Pools Admin** (`/admin/pools`): Admin tool to create trivia pools for any show/franchise via AI (OpenAI gpt-4o).
+- **Pools System**: Structured, round-based group competition engine with host-controlled, invite-only access.
+- **Room Discussion Posts**: `social_posts` table includes a `room_id` for room-scoped posts.
+- **Partner Room Polls Architecture**: `prediction_pools` includes `partner_tag` to scope polls to specific rooms.
 
 ### Feature Specifications
 - Friend Profile Viewing: Access to Stats, DNA, Collections.
@@ -93,26 +84,22 @@ All changes are styling/layout only. No voting logic, point systems, interaction
 - Polls/Surveys System: Real-time voting, duplicate prevention, points.
 - Discover Page: AI-powered recommendations and trending content.
 - Analytics Dashboard: Admin dashboard (`/admin`) for engagement, retention, activation, partnership, and behavioral analytics.
-- **Admin Content Creation (PLANNED — not yet built)**: Admin tool for creating trivia and polls at `/admin`. Key requirements:
-  - **Generate + Add**: AI-assisted creation of new trivia/polls with fields for title, options, correct answer (trivia), points, category, show_tag.
-  - **Add Existing**: Ability to browse and assign already-created `prediction_pools` records to a room or feed — NOT just generate new ones. Search/filter by title, category, partner_tag.
-  - **Partner tag field**: When creating/assigning a poll, set `partner_tag` (e.g. `'reelz'`) to scope it to a room carousel, OR leave blank for main feed.
-  - **Room assignment**: Assign polls to specific rooms by matching `partner_tag` to the room's `partner_name`.
-  - All content comes from approved sources (user spreadsheets or manual creation) — no AI-generated content seeded without approval.
+- **Admin Content Creation (PLANNED)**: Admin tool for creating trivia and polls at `/admin`. Includes AI-assisted generation and assignment of `prediction_pools` to rooms or the main feed, with `partner_tag` functionality.
 
 ### System Design Choices
 - Database Schema: Strict naming conventions and synced dev/prod environments.
 - Row Level Security (RLS): Strict RLS for data privacy.
 - Edge Functions: Adhere to schema, handle user auto-creation, accept `user_id`.
 - Privacy Toggle System: Controls list visibility.
-- **Media Data Requirements**: `image_url` (full HTTPS URL), `external_id`, `external_source`, `title` are REQUIRED for all media. Edge functions convert relative TMDB paths.
+- **Media Data Requirements**: `image_url`, `external_id`, `external_source`, `title` are REQUIRED for all media.
 - **Media Search Display Requirements**: `media-search` edge function MUST return `poster_url`, `image`, `creator`, `title`, `type`, `year`, `external_id`, `external_source`.
 - **Social Feed Architecture**:
-    - Feed fetch limit: `limit = 200;` in `fetchSocialFeed`.
+    - Feed fetch limit: `limit = 200;`.
     - Infinite scroll via `IntersectionObserver`.
     - UGC post rendering pipeline: Filters `socialPosts` into `ugcSlots`, deduplicates/groups, and assigns to `slotAssignments` for interleaved rendering.
-    - `predict`, `prediction`, `poll`, and `cast_approved` are EXEMPT from deduplication in `standaloneUGCPosts` to prevent silent erasure of thoughts/reviews.
-    - `rate-review` type: `social-feed` returns `type: 'rate-review'` for review posts, which must be explicitly checked.
+    - `predict`, `prediction`, `poll`, and `cast_approved` types are EXEMPT from deduplication to prevent silent erasure.
+    - `rate-review` type: `social-feed` returns `type: 'rate-review'` for review posts.
+    - **Feed mix**: `feedPlaySlots` (game_moments + predictions) is interleaved with up to 4 `promoted_rating` items and 2 `binge_battle_promo` cards.
 
 ## External Dependencies
 
