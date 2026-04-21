@@ -3311,15 +3311,19 @@ export default function Feed() {
     const out: any[] = [];
     let promotedIdx = 0;
     let bingePromoCount = 0;
+    // Wrap a promoted rating so we keep its original `type` (needed for the
+    // "WHAT'S YOUR TAKE?" action-first UGCGroupCard layout) but still tag it
+    // so renderFeedItem can route it through the standalone branch.
+    const wrapPromoted = (idx: number) => ({
+      ...promotedRatings[idx],
+      _isPromoted: true,
+      _promotedKey: `promoted-${idx}`,
+    });
     feedPlaySlots.forEach((item: any, i: number) => {
       out.push(item);
       // After every 3rd play item, surface a promoted rating if we still have one
       if ((i + 1) % 3 === 0 && promotedIdx < promotedRatings.length) {
-        out.push({
-          ...promotedRatings[promotedIdx],
-          type: 'promoted_rating',
-          _promotedKey: `promoted-${promotedIdx}`,
-        });
+        out.push(wrapPromoted(promotedIdx));
         promotedIdx++;
       }
       // Sprinkle 2 binge-battle promo cards across the feed (positions 5 and 11)
@@ -3334,11 +3338,7 @@ export default function Feed() {
     });
     // Append any leftover promoted ratings so they don't get dropped on short feeds
     while (promotedIdx < promotedRatings.length) {
-      out.push({
-        ...promotedRatings[promotedIdx],
-        type: 'promoted_rating',
-        _promotedKey: `promoted-${promotedIdx}`,
-      });
+      out.push(wrapPromoted(promotedIdx));
       promotedIdx++;
     }
     return out;
@@ -3522,12 +3522,15 @@ export default function Feed() {
 
     // Promoted standalone rating — a high-signal real-user rating pulled out of the
     // compressed rating carousel and shown as a single full card between play items.
-    if (item?.type === 'promoted_rating') {
+    // Strip the wrapper flag so UGCGroupCard sees the original post (with original
+    // type) and renders the "WHAT'S YOUR TAKE?" action-first layout.
+    if (item?._isPromoted) {
+      const { _isPromoted, _promotedKey, ...originalPost } = item;
       return (
-        <div key={`${keyPrefix}-promoted-${item.id}`} className="mb-4">
+        <div key={`${keyPrefix}-${_promotedKey || 'promoted'}-${item.id}`} className="mb-4">
           <div className="flex">
             <UGCGroupCard
-              post={item}
+              post={originalPost as any}
               onLike={handleLike}
               isLiked={likedPosts.has(item.id)}
               session={session}
