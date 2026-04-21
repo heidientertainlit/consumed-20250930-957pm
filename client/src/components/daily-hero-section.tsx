@@ -5,7 +5,7 @@ import {
   Flame, CheckCircle, XCircle,
   Trophy, X, Loader2, Star, Users, Radio, Share2, Check,
   Film, Tv, Music, BookOpen, Mic2, Gamepad2,
-  Zap, ArrowRight,
+  Zap, ArrowRight, Sparkles, MessageCircle,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -1010,97 +1010,119 @@ export function DailyHeroSection() {
         /* ══ PRE-GAME: Two cards (Today's Play larger + taller to signal "tap first") ══ */
         <div className="grid grid-cols-5 gap-2.5 items-start">
 
-          {/* TODAY'S PLAY — col-span-3 (60% width) + extra height so it visually leads */}
+          {/* TODAY'S PLAY — col-span-3 (60% width), tall, trophy illustration, big Play button */}
           <div
-            className="col-span-3 rounded-2xl p-4 flex flex-col min-h-[180px]"
+            className="col-span-3 rounded-2xl p-4 flex flex-col min-h-[260px] relative overflow-hidden"
             style={{
               background: 'linear-gradient(160deg,#4c1d95 0%,#3b0764 100%)',
             }}
           >
-            <div className="flex items-start justify-between mb-2">
-              <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-purple-300/80">
+            {/* Trophy illustration + sparkles in background right */}
+            <div className="absolute right-0 bottom-0 pointer-events-none">
+              <Trophy
+                size={150}
+                strokeWidth={1.4}
+                className="text-purple-300/45 absolute right-1 bottom-1 drop-shadow-[0_4px_12px_rgba(168,85,247,0.35)]"
+                fill="rgba(168,85,247,0.25)"
+              />
+              <Star size={10} className="text-purple-200/60 absolute right-[120px] top-[14px] fill-purple-200/60" />
+              <Sparkles size={12} className="text-purple-200/55 absolute right-[18px] top-[8px]" />
+              <Star size={8} className="text-purple-200/50 absolute right-[88px] top-[60px] fill-purple-200/50" />
+              <Sparkles size={10} className="text-purple-200/50 absolute right-[140px] top-[80px]" />
+              <Star size={7} className="text-purple-200/45 absolute right-[44px] bottom-[110px] fill-purple-200/45" />
+            </div>
+
+            {/* Header: gamepad icon + TODAY'S PLAY label + "Daily" pill */}
+            <div className="flex items-center gap-2 mb-3 relative z-10">
+              <div className="w-7 h-7 rounded-lg bg-purple-700/70 flex items-center justify-center shrink-0">
+                <Gamepad2 size={14} className="text-purple-100" />
+              </div>
+              <span className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-purple-100">
                 Today's Play
               </span>
-              <span className="flex items-center gap-1 rounded-full px-1.5 py-0.5" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400" style={{ animation: 'pulse 2s infinite' }} />
-                <span className="text-[8px] font-bold text-white/70">LIVE</span>
+              <span className="text-[10px] font-semibold text-white/95 px-2 py-0.5 rounded-full bg-purple-950/70">
+                Daily
               </span>
             </div>
 
-            <div className="flex-1 flex flex-col justify-start pb-2">
+            {/* Big bold question */}
+            <div className="flex-1 flex flex-col relative z-10 max-w-[62%]">
               {playCompleted && playScore ? (
                 <div>
-                  <p className="text-[22px] font-black text-white leading-none">
+                  <p className="text-[28px] font-black text-white leading-none">
                     {playScore.correct}
-                    <span className="text-white/30 text-[14px] font-bold"> / {playScore.total}</span>
+                    <span className="text-white/30 text-[18px] font-bold"> / {playScore.total}</span>
                   </p>
-                  <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold mt-0.5">correct</p>
+                  <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold mt-1">correct</p>
                 </div>
               ) : (
-                <p className="text-white text-[16px] font-bold leading-tight line-clamp-3 mt-1">
+                <p className="text-white text-[20px] font-extrabold leading-[1.15] line-clamp-3">
                   {firstQPreview}
                 </p>
               )}
+              <p className="text-[12px] text-purple-200/60 font-medium mt-2">3 questions</p>
             </div>
 
-            <div className="flex items-center justify-between mt-auto">
-              <span className="text-[10px] text-purple-200/50 font-medium">3 questions</span>
-              <button
-                onClick={() => {
-                  if (playCompleted) setShowPlayShare(true);
-                  else if (hasTodaysPlay) setShowPlayGame(true);
-                }}
-                className="text-[10px] font-bold px-2.5 py-1 rounded-full"
-                style={{ background: '#fff', color: '#4c1d95' }}
-              >
-                {playCompleted ? 'Share' : 'Play'}
-              </button>
-            </div>
+            {/* Full-width white pill Play button */}
+            <button
+              onClick={() => {
+                if (playCompleted) setShowPlayShare(true);
+                else if (hasTodaysPlay) setShowPlayGame(true);
+              }}
+              className="mt-3 w-full py-3 rounded-full bg-white text-purple-700 font-bold text-[15px] flex items-center justify-center gap-2 relative z-10 shadow-lg shadow-purple-950/40 active:scale-[0.98] transition-transform"
+            >
+              {playCompleted ? 'Share' : 'Play'}
+              <ArrowRight size={16} strokeWidth={2.5} />
+            </button>
           </div>
 
-          {/* DAILY CALL — col-span-2 (40% width) so it sits as the secondary action */}
+          {/* DAILY CALL — col-span-2 (40% width), shorter, outlined Call It button */}
           <div
-            className="col-span-2 rounded-2xl p-4 flex flex-col relative"
+            className="col-span-2 rounded-2xl p-4 flex flex-col min-h-[230px] relative"
             style={{
               background: 'linear-gradient(160deg,#1e3a8a 0%,#1e1b4b 100%)',
             }}
           >
-            <div className="flex items-start justify-between mb-2">
-              <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-blue-300/80">
+            {/* Header: speech bubble icon + DAILY CALL + LIVE pill */}
+            <div className="flex items-center gap-1.5 mb-3">
+              <div className="w-7 h-7 rounded-lg bg-blue-800/70 flex items-center justify-center shrink-0">
+                <MessageCircle size={13} className="text-blue-100" />
+              </div>
+              <span className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-blue-200">
                 Daily Call
               </span>
-              <span className="flex items-center gap-1 rounded-full px-1.5 py-0.5" style={{ background: 'rgba(255,255,255,0.1)' }}>
+              <span className="ml-auto flex items-center gap-1 rounded-full px-1.5 py-0.5 bg-white/10">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400" style={{ animation: 'pulse 2s infinite' }} />
-                <span className="text-[8px] font-bold text-white/70">LIVE</span>
+                <span className="text-[9px] font-bold text-white/85">LIVE</span>
               </span>
             </div>
 
-            <div className="flex-1 flex flex-col justify-start pb-2">
+            {/* Question */}
+            <div className="flex-1 flex flex-col">
               {callCompleted && callAnswer ? (
                 <div>
                   <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold mb-1">Your Call</p>
-                  <p className="text-[13px] font-bold text-white leading-snug line-clamp-2">{callAnswer}</p>
+                  <p className="text-[15px] font-bold text-white leading-snug line-clamp-3">{callAnswer}</p>
                 </div>
               ) : (
-                <p className="text-white text-[13px] font-semibold leading-snug line-clamp-3">
+                <p className="text-white text-[15px] font-bold leading-tight line-clamp-3">
                   {callPreview}
                 </p>
               )}
+              <p className="text-[11px] text-blue-200/60 font-medium mt-2">1 prediction</p>
             </div>
 
-            <div className="flex items-center justify-between mt-auto">
-              <span className="text-[10px] text-blue-200/50 font-medium">1 prediction</span>
-              <button
-                onClick={() => {
-                  if (callCompleted) setShowCallShare(true);
-                  else if (hasDailyCall) setShowCallOverlay(true);
-                }}
-                className="text-[10px] font-bold px-2.5 py-1 rounded-full"
-                style={{ background: '#fff', color: '#1e3a8a' }}
-              >
-                {callCompleted ? 'Share' : 'Call It'}
-              </button>
-            </div>
+            {/* Outlined blue pill Call It button */}
+            <button
+              onClick={() => {
+                if (callCompleted) setShowCallShare(true);
+                else if (hasDailyCall) setShowCallOverlay(true);
+              }}
+              className="mt-3 w-full py-2.5 rounded-full border-2 border-blue-400/70 text-blue-300 font-bold text-[14px] flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            >
+              {callCompleted ? 'Share' : 'Call It'}
+              <ArrowRight size={14} strokeWidth={2.5} />
+            </button>
           </div>
 
           {/* Helper hint row — shows users to do Today's Play first, then Daily Call.
