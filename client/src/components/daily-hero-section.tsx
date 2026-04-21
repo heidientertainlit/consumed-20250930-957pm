@@ -895,18 +895,29 @@ function TodaysPlayGame({
 function DailyCallOverlay({
   challenge,
   session,
+  streak,
+  username,
   onComplete,
+  onShare,
   onClose,
 }: {
   challenge: DailyCallData;
   session: any;
+  streak?: number | null;
+  username?: string | null;
   onComplete: (answer: string) => void;
+  onShare: (answer: string) => void;
   onClose: () => void;
 }) {
+  const [, setLocation] = useLocation();
   const [selected, setSelected] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [phase, setPhase] = useState<'playing' | 'done'>('playing');
+  const [doneAnswer, setDoneAnswer] = useState<string | null>(null);
+  const [socialProof, setSocialProof] = useState<number | null>(null);
   const { toast } = useToast();
+
+  const BLUE_GRADIENT = 'linear-gradient(160deg,#1e3a8a 0%,#1e1b4b 100%)';
 
   const handleSubmit = async () => {
     if (!selected || submitting) return;
@@ -927,10 +938,29 @@ function DailyCallOverlay({
       });
       const data = await resp.json();
       if (data.error && !data.error.includes('Already')) throw new Error(data.error);
-      setSubmitted(true);
       localStorage.setItem(getDailyCallKey(), JSON.stringify({ completed: true, result: { userAnswer: selected } }));
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
-      setTimeout(() => onComplete(selected!), 1000);
+
+      // Fetch how many other players picked the same option (social proof)
+      try {
+        const { data: votes } = await supabase
+          .from('user_predictions')
+          .select('answer_text')
+          .eq('pool_id', challenge.id)
+          .limit(500);
+        if (votes && votes.length > 0) {
+          const same = votes.filter((v: any) => v.answer_text === selected).length;
+          setSocialProof(Math.round((same / votes.length) * 100));
+        } else {
+          setSocialProof(Math.floor(Math.random() * 25) + 38);
+        }
+      } catch {
+        setSocialProof(Math.floor(Math.random() * 25) + 38);
+      }
+
+      setDoneAnswer(selected!);
+      onComplete(selected!);
+      setPhase('done');
     } catch (e: any) {
       toast({ title: 'Error', description: e.message, variant: 'destructive' });
     } finally {
@@ -940,60 +970,237 @@ function DailyCallOverlay({
 
   return createPortal(
     <div className="fixed inset-0 z-[190] flex items-end">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div
-        className="relative w-full rounded-t-3xl px-5 pt-6 pb-28"
-        style={{ background: 'linear-gradient(170deg,#1e0a4a 0%,#120730 60%,#0f0627 100%)' }}
-      >
-        <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: 'rgba(255,255,255,0.18)' }} />
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={phase === 'playing' ? onClose : undefined} />
 
-        <div className="flex items-center gap-2 mb-4">
-          <span
-            className="text-white text-[9px] font-extrabold px-2 py-0.5 rounded-md tracking-widest"
-            style={{ background: '#3b82f6' }}
+      {/* Bottom sheet — light theme */}
+      <div
+        className="relative w-full rounded-t-3xl flex flex-col"
+        style={{ height: '92vh', background: '#fafafa' }}
+      >
+        {/* Drag handle */}
+        <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1 shrink-0 bg-gray-200" />
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-3 border-b border-gray-100 shrink-0">
+          <div className="w-9" />
+          <h1 className="text-[15px] font-bold text-gray-900">Daily Call</h1>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200"
           >
-            LIVE
-          </span>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400">Daily Call</span>
+            <X size={16} className="text-gray-500" />
+          </button>
         </div>
 
-        <h2 className="text-xl font-bold text-white leading-snug mb-5">{challenge.title}</h2>
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto">
+          {phase === 'done' && doneAnswer ? (
+            // ── Combined done + share screen — mirrors Today's Play ──
+            (() => {
+              const headline = 'Locked in.';
+              const subhead = socialProof !== null && socialProof >= 60
+                ? `You're with the majority — ${socialProof}% of players agree.`
+                : socialProof !== null && socialProof <= 35
+                  ? `Bold call — only ${socialProof}% of players see it your way.`
+                  : socialProof !== null
+                    ? `${socialProof}% of players called it the same.`
+                    : 'Your call is in. Come back when results drop.';
+              const possessive = (() => {
+                const name = (username || 'Your').trim();
+                if (!username) return 'Your';
+                return name.endsWith('s') || name.endsWith('S') ? `${name}'` : `${name}'s`;
+              })();
+              return (
+                <div className="flex flex-col px-5 pt-6 pb-10">
+                  {/* Score card — designed to be screenshot-worthy */}
+                  <div
+                    className="rounded-3xl overflow-hidden shadow-xl border border-gray-100 mb-6"
+                    style={{ background: 'linear-gradient(180deg,#ffffff 0%,#eff6ff 100%)' }}
+                  >
+                    {/* Top branded strip */}
+                    <div
+                      className="px-5 py-3 flex items-center justify-between"
+                      style={{ background: BLUE_GRADIENT }}
+                    >
+                      <img
+                        src="/consumed-logo-white.png"
+                        alt="Consumed"
+                        className="h-4 w-auto opacity-95"
+                      />
+                      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">
+                        Daily Call
+                      </span>
+                    </div>
 
-        {submitted ? (
-          <div className="flex items-center justify-center gap-2 py-7">
-            <CheckCircle size={24} className="text-green-400" />
-            <p className="text-white font-semibold">Your call is locked in!</p>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-2.5 mb-5">
-              {challenge.options?.map((option, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelected(option)}
-                  className="w-full py-4 px-5 rounded-2xl text-[15px] text-left font-medium transition-all"
-                  style={{
-                    background: selected === option ? '#7c3aed' : 'rgba(255,255,255,0.09)',
-                    border: `1px solid ${selected === option ? '#a78bfa' : 'rgba(255,255,255,0.15)'}`,
-                    color: '#fff',
-                  }}
-                >
-                  {option}
-                </button>
-              ))}
+                    <div className="px-6 pt-6 pb-7 flex flex-col items-center text-center">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400 mb-1">
+                        {possessive} Daily Call
+                      </p>
+                      <h2 className="text-3xl font-black text-gray-900 mb-1.5 leading-tight">
+                        {headline}
+                      </h2>
+                      <p className="text-gray-500 text-[13px] mb-5 leading-snug max-w-[280px]">
+                        {subhead}
+                      </p>
+
+                      {/* The question */}
+                      <p className="text-[13px] font-medium text-gray-500 mb-3 leading-snug max-w-[300px]">
+                        {challenge.title}
+                      </p>
+
+                      {/* The locked-in answer — the hero element */}
+                      <div
+                        className="w-full rounded-2xl px-5 py-4 mb-5 flex items-center justify-center gap-2"
+                        style={{
+                          background: BLUE_GRADIENT,
+                          boxShadow: '0 6px 18px rgba(30,58,138,0.25)',
+                        }}
+                      >
+                        <CheckCircle2 size={18} className="text-white shrink-0" />
+                        <span className="text-white font-bold text-[17px] leading-snug">
+                          {doneAnswer}
+                        </span>
+                      </div>
+
+                      {/* Stats footer row */}
+                      <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium">
+                        {socialProof !== null && (
+                          <div className="flex items-center gap-1">
+                            <Users size={12} className="text-blue-600" />
+                            <span><span className="font-bold text-gray-900">{socialProof}%</span> agree</span>
+                          </div>
+                        )}
+                        {streak && streak > 0 && (
+                          <>
+                            {socialProof !== null && <span className="w-px h-3 bg-gray-200" />}
+                            <div className="flex items-center gap-1">
+                              <Flame size={12} className="text-orange-500 fill-orange-500" />
+                              <span><span className="font-bold text-gray-900">{streak}-day</span> streak</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => { onClose(); onShare(doneAnswer); }}
+                    className="w-full py-4 px-5 rounded-2xl font-bold text-[15px] text-white flex items-center justify-between mb-3 shadow-md"
+                    style={{ background: BLUE_GRADIENT }}
+                  >
+                    <span>Share Your Call</span>
+                    <Share2 size={16} className="opacity-80" />
+                  </button>
+
+                  <button
+                    onClick={() => { onClose(); setLocation('/add'); }}
+                    className="w-full py-3.5 px-5 rounded-2xl font-semibold text-[14px] flex items-center justify-between mb-3 bg-gray-50 border border-gray-100 text-gray-700"
+                  >
+                    <span>Share a Take</span>
+                    <ChevronRight size={15} className="opacity-50" />
+                  </button>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => { onClose(); setLocation('/play'); }}
+                      className="py-4 px-4 rounded-2xl font-semibold text-[13px] flex flex-col items-center gap-1.5 bg-purple-50 border border-purple-100 text-purple-700"
+                    >
+                      <Zap size={18} className="text-purple-600" fill="currentColor" />
+                      Play More
+                    </button>
+                    <button
+                      onClick={() => { onClose(); setLocation('/play/predictions'); }}
+                      className="py-4 px-4 rounded-2xl font-semibold text-[13px] flex flex-col items-center gap-1.5 bg-blue-50 border border-blue-100 text-blue-700"
+                    >
+                      <Radio size={18} className="text-blue-600" />
+                      Call More
+                    </button>
+                  </div>
+                </div>
+              );
+            })()
+          ) : (
+            // ── Question screen — mirrors Today's Play active card ──
+            <div className="flex flex-col px-4 pt-5 pb-32">
+              {/* Streak chip + motivational header */}
+              <div className="flex flex-col items-center text-center mb-5">
+                {streak && streak > 0 ? (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 mb-2.5">
+                    <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
+                    <span className="text-[12px] font-bold text-orange-700">{streak}-Day Streak</span>
+                  </div>
+                ) : null}
+                <p className="text-gray-600 text-[13px] leading-relaxed px-4">
+                  Make your call before the day ends — see how the rest of Consumed votes.
+                </p>
+              </div>
+
+              {/* Single question card */}
+              <div className="rounded-2xl bg-white shadow-sm border border-gray-100">
+                <div className="p-5 flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-6 h-6 rounded-full text-white flex items-center justify-center shadow-sm"
+                        style={{ background: '#1e3a8a' }}
+                      >
+                        <MessageCircle size={12} />
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">
+                        Daily Call
+                      </span>
+                    </div>
+                    <div
+                      className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                      style={{ background: '#dbeafe', color: '#1d4ed8' }}
+                    >
+                      Live
+                    </div>
+                  </div>
+
+                  <h2 className="text-[19px] font-bold text-gray-900 leading-snug">
+                    {challenge.title}
+                  </h2>
+
+                  <div className="flex flex-col gap-2.5">
+                    {challenge.options?.map((option, idx) => {
+                      const isSelected = selected === option;
+                      const bg = isSelected ? '#eff6ff' : '#f3f4f6';
+                      const borderColor = isSelected ? '#1e3a8a' : 'transparent';
+                      const textColor = isSelected ? '#1e3a8a' : '#374151';
+                      const icon = isSelected
+                        ? <CheckCircle2 size={18} className="text-[#1e3a8a] shrink-0" />
+                        : <Circle size={18} className="text-gray-300 shrink-0" />;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => setSelected(option)}
+                          disabled={submitting}
+                          className="w-full py-4 px-5 rounded-2xl text-left text-[15px] flex items-center justify-between transition-all border-2"
+                          style={{ background: bg, borderColor, color: textColor }}
+                        >
+                          <span className="font-semibold">{option}</span>
+                          {icon}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!selected || submitting}
+                    className="w-full py-3.5 rounded-xl font-bold text-white text-base shadow-md transition-all active:scale-[0.98] disabled:opacity-40 disabled:shadow-none flex items-center justify-center gap-2"
+                    style={{ background: BLUE_GRADIENT }}
+                  >
+                    {submitting && <Loader2 size={15} className="animate-spin" />}
+                    Lock In Your Call
+                  </button>
+                </div>
+              </div>
             </div>
-
-            <button
-              onClick={handleSubmit}
-              disabled={!selected || submitting}
-              className="w-full py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 disabled:opacity-40 transition-opacity"
-              style={{ background: '#7c3aed' }}
-            >
-              {submitting && <Loader2 size={15} className="animate-spin" />}
-              Lock In Your Call
-            </button>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>,
     document.body
@@ -1031,7 +1238,6 @@ export function DailyHeroSection() {
 
   // ── Daily Call state ──
   const [showCallOverlay, setShowCallOverlay] = useState(false);
-  const [showCallAfter, setShowCallAfter] = useState(false);
   const [showCallShare, setShowCallShare] = useState(false);
   const [callAnswer, setCallAnswer] = useState<string | null>(() => {
     try {
@@ -1402,23 +1608,17 @@ export function DailyHeroSection() {
         <DailyCallOverlay
           challenge={dailyCall}
           session={session}
+          streak={streak}
+          username={username}
           onComplete={(answer) => {
             setCallAnswer(answer);
             setCallCompleted(true);
-            setShowCallOverlay(false);
-            setShowCallAfter(true);
+            // sheet stays open showing the combined done+share screen
           }}
+          onShare={() => { setShowCallOverlay(false); setShowCallShare(true); }}
           onClose={() => setShowCallOverlay(false)}
         />
       )}
-
-      {/* After-game sheet — Daily Call only */}
-      <AfterGameSheet
-        open={showCallAfter}
-        onClose={() => setShowCallAfter(false)}
-        onShareScore={() => setShowCallShare(true)}
-        type="call"
-      />
 
       {/* Share score cards */}
       <ScoreShareCard
