@@ -2,10 +2,11 @@ import { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'wouter';
 import {
-  Flame, CheckCircle, XCircle,
+  Flame, CheckCircle, CheckCircle2, Circle, XCircle,
   Trophy, X, Loader2, Star, Users, Radio, Share2, Check,
   Film, Tv, Music, BookOpen, Mic2, Gamepad2,
   Zap, ArrowRight, Sparkles, MessageCircle,
+  ChevronRight, ChevronDown, Lock,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -415,11 +416,13 @@ function AfterGameSheet({
 // ─────────────────────────────────────────────
 function TodaysPlayGame({
   questions,
+  streak,
   onComplete,
   onClose,
   onShare,
 }: {
   questions: TriviaQuestion[];
+  streak?: number | null;
   onComplete: (score: PlayScore) => void;
   onClose: () => void;
   onShare: (answers: { correct: boolean }[]) => void;
@@ -487,37 +490,35 @@ function TodaysPlayGame({
     }
   };
 
+  const PURPLE_GRADIENT = 'linear-gradient(160deg,#4c1d95 0%,#3b0764 100%)';
+  const DIFFICULTY_PILL = [
+    { label: 'Easy', bg: '#dcfce7', text: '#15803d' },
+    { label: 'Medium', bg: '#fef3c7', text: '#a16207' },
+    { label: 'Hard', bg: '#fee2e2', text: '#b91c1c' },
+  ];
+
   return createPortal(
     <div className="fixed inset-0 z-[190] flex items-end">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={phase === 'playing' ? onClose : undefined} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={phase === 'playing' ? onClose : undefined} />
 
-      {/* Bottom sheet — fixed height so it always sits well above nav */}
+      {/* Bottom sheet — light theme */}
       <div
-        className="relative w-full rounded-t-3xl flex flex-col"
-        style={{
-          background: 'linear-gradient(170deg,#1e0a4a 0%,#120730 60%,#0f0627 100%)',
-          height: '88vh',
-        }}
+        className="relative w-full rounded-t-3xl flex flex-col bg-white"
+        style={{ height: '92vh' }}
       >
         {/* Drag handle */}
-        <div className="w-10 h-1 rounded-full mx-auto mt-4 mb-1 shrink-0" style={{ background: 'rgba(255,255,255,0.18)' }} />
+        <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1 shrink-0 bg-gray-200" />
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-3 pb-4 border-b border-white/10 shrink-0">
-          <div>
-            <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold mb-0.5">Today's Play</p>
-            <p className="text-sm font-bold" style={{ color: phase === 'done' ? '#4ade80' : DIFFICULTY_COLOR[qIndex] }}>
-              {phase === 'done'
-                ? 'Complete!'
-                : `${DIFFICULTY[qIndex]} · Q${qIndex + 1} of ${questions.length}`}
-            </p>
-          </div>
+        <div className="flex items-center justify-between px-4 pt-3 pb-3 border-b border-gray-100 shrink-0">
+          <div className="w-9" />
+          <h1 className="text-[15px] font-bold text-gray-900">Today's Play</h1>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:bg-white/20"
+            className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200"
           >
-            <X size={15} className="text-white" />
+            <X size={16} className="text-gray-500" />
           </button>
         </div>
 
@@ -525,175 +526,281 @@ function TodaysPlayGame({
         <div className="flex-1 overflow-y-auto">
           {phase === 'done' && doneScore ? (
             // ── Combined done + share screen ──
-            <div className="flex flex-col px-5 pt-6 pb-10">
-              {/* Score */}
+            <div className="flex flex-col px-5 pt-8 pb-10">
               <div className="flex flex-col items-center text-center mb-6">
                 <div
                   className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-lg"
-                  style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}
+                  style={{ background: PURPLE_GRADIENT }}
                 >
                   <Trophy size={28} className="text-yellow-300" />
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-1">You're done!</h2>
-                <p className="text-white/50 text-sm mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 mb-1">You're done!</h2>
+                <p className="text-gray-500 text-sm mb-4">
                   {doneScore.correct} of {doneScore.total} correct
                   {doneScore.totalPoints > 0 && ` · +${doneScore.totalPoints} pts`}
                 </p>
-                {/* Answer indicators */}
                 <div className="flex gap-2.5">
                   {questions.map((_, i) => (
                     <div
                       key={i}
-                      className="w-12 h-12 rounded-xl flex items-center justify-center border"
+                      className="w-12 h-12 rounded-xl flex items-center justify-center"
                       style={{
-                        background: answers[i]?.correct ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
-                        borderColor: answers[i]?.correct ? 'rgba(74,222,128,0.4)' : 'rgba(248,113,113,0.3)',
+                        background: answers[i]?.correct ? '#dcfce7' : '#fee2e2',
                       }}
                     >
                       {answers[i]?.correct
-                        ? <CheckCircle size={20} className="text-green-400" />
-                        : <XCircle size={20} className="text-red-400" />}
+                        ? <CheckCircle size={20} className="text-green-600" />
+                        : <XCircle size={20} className="text-red-500" />}
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Divider */}
-              <div className="w-full h-px mb-5" style={{ background: 'rgba(255,255,255,0.1)' }} />
+              <div className="w-full h-px mb-5 bg-gray-100" />
 
-              {/* Share score — primary */}
               <button
                 onClick={() => { onClose(); onShare(answers); }}
-                className="w-full py-4 px-5 rounded-2xl font-bold text-[15px] text-white flex items-center justify-between mb-3 shadow-lg"
-                style={{ background: 'linear-gradient(90deg,#7c3aed,#4f46e5)' }}
+                className="w-full py-4 px-5 rounded-2xl font-bold text-[15px] text-white flex items-center justify-between mb-3 shadow-md"
+                style={{ background: PURPLE_GRADIENT }}
               >
                 <span>Share Your Score</span>
                 <Share2 size={16} className="opacity-80" />
               </button>
 
-              {/* Share a Take */}
               <button
                 onClick={() => { onClose(); setLocation('/add'); }}
-                className="w-full py-3.5 px-5 rounded-2xl font-semibold text-[14px] flex items-center justify-between mb-3"
-                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.85)' }}
+                className="w-full py-3.5 px-5 rounded-2xl font-semibold text-[14px] flex items-center justify-between mb-3 bg-gray-50 border border-gray-100 text-gray-700"
               >
                 <span>Share a Take</span>
                 <ChevronRight size={15} className="opacity-50" />
               </button>
 
-              {/* Play More / Call More */}
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => { onClose(); setLocation('/play'); }}
-                  className="py-4 px-4 rounded-2xl font-semibold text-[13px] flex flex-col items-center gap-1.5"
-                  style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: '#c4b5fd' }}
+                  className="py-4 px-4 rounded-2xl font-semibold text-[13px] flex flex-col items-center gap-1.5 bg-purple-50 border border-purple-100 text-purple-700"
                 >
-                  <Zap size={18} className="text-purple-400" fill="currentColor" />
+                  <Zap size={18} className="text-purple-600" fill="currentColor" />
                   Play More
                 </button>
                 <button
                   onClick={() => { onClose(); setLocation('/play/predictions'); }}
-                  className="py-4 px-4 rounded-2xl font-semibold text-[13px] flex flex-col items-center gap-1.5"
-                  style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)', color: '#93c5fd' }}
+                  className="py-4 px-4 rounded-2xl font-semibold text-[13px] flex flex-col items-center gap-1.5 bg-blue-50 border border-blue-100 text-blue-700"
                 >
-                  <Radio size={18} className="text-blue-400" />
+                  <Radio size={18} className="text-blue-600" />
                   Call More
                 </button>
               </div>
             </div>
           ) : (
-            // ── Question screen ──
-            <div className="flex flex-col px-5 pt-5 pb-10">
-              {/* Progress bar */}
-              <div className="flex gap-1.5 mb-6">
-                {questions.map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[3px] flex-1 rounded-full transition-all"
-                    style={{
-                      background: i < qIndex
-                        ? '#7c3aed'
-                        : i === qIndex
-                          ? 'rgba(255,255,255,0.8)'
-                          : 'rgba(255,255,255,0.15)',
-                    }}
-                  />
-                ))}
+            // ── Question screen — Q1 expanded, Q2/Q3 collapsed below ──
+            <div className="flex flex-col px-4 pt-5 pb-10">
+              {/* Streak chip + motivational header */}
+              <div className="flex flex-col items-center text-center mb-5">
+                {streak && streak > 0 ? (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 mb-2.5">
+                    <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
+                    <span className="text-[12px] font-bold text-orange-700">{streak}-Day Streak</span>
+                  </div>
+                ) : null}
+                <p className="text-gray-600 text-[13px] leading-relaxed px-4">
+                  {streak && streak > 0
+                    ? 'Keep your streak alive — answer all 3 then challenge a friend.'
+                    : 'Answer all 3 then challenge a friend to beat your score.'}
+                </p>
               </div>
 
-              {/* Category + question */}
-              <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-2">{q.category}</p>
-              <h2 className="text-[19px] font-bold text-white leading-snug mb-5">{q.title}</h2>
+              {/* Question stack */}
+              <div className="flex flex-col gap-3">
+                {questions.map((qq, i) => {
+                  const isActive = i === qIndex;
+                  const isPast = i < qIndex;
+                  const isFuture = i > qIndex;
+                  const diff = DIFFICULTY_PILL[i] ?? DIFFICULTY_PILL[2];
+                  const pastAnswer = answers[i];
 
-              {/* Answer options */}
-              <div className="space-y-2.5 mb-4">
-                {q.options.map((option, idx) => {
-                  const isSelected = selected === option;
-                  const isCorrect = option === q.correct_answer;
-                  const showResult = phase === 'result';
-                  let bg = 'rgba(255,255,255,0.08)';
-                  let border = 'rgba(255,255,255,0.14)';
-                  let textColor = 'rgba(255,255,255,0.9)';
+                  // ── Active card (expanded) ──
+                  if (isActive) {
+                    return (
+                      <div
+                        key={i}
+                        className="rounded-2xl border-2 shadow-sm overflow-hidden bg-white"
+                        style={{ borderColor: '#4c1d95' }}
+                      >
+                        <div className="h-1.5 w-full" style={{ background: PURPLE_GRADIENT }} />
+                        <div className="p-5 flex flex-col gap-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-6 h-6 rounded-full text-white flex items-center justify-center text-[11px] font-bold shadow-sm"
+                                style={{ background: '#4c1d95' }}
+                              >
+                                {i + 1}
+                              </div>
+                              <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">
+                                {qq.category}
+                              </span>
+                            </div>
+                            <div
+                              className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                              style={{ background: diff.bg, color: diff.text }}
+                            >
+                              {diff.label}
+                            </div>
+                          </div>
 
-                  if (showResult) {
-                    if (isCorrect) { bg = 'rgba(74,222,128,0.15)'; border = 'rgba(74,222,128,0.5)'; }
-                    else if (isSelected) { bg = 'rgba(248,113,113,0.15)'; border = 'rgba(248,113,113,0.4)'; textColor = 'rgba(255,255,255,0.5)'; }
-                    else { bg = 'rgba(255,255,255,0.04)'; border = 'rgba(255,255,255,0.08)'; textColor = 'rgba(255,255,255,0.3)'; }
-                  } else if (isSelected) {
-                    bg = '#7c3aed'; border = '#a78bfa'; textColor = '#fff';
+                          <h2 className="text-[19px] font-bold text-gray-900 leading-snug">
+                            {qq.title}
+                          </h2>
+
+                          <div className="flex flex-col gap-2.5">
+                            {qq.options.map((option, idx) => {
+                              const isSelected = selected === option;
+                              const isCorrect = option === qq.correct_answer;
+                              const showResult = phase === 'result';
+
+                              let bg = '#fff';
+                              let borderColor = '#f3f4f6';
+                              let textColor = '#374151';
+                              let icon: React.ReactNode = null;
+
+                              if (showResult) {
+                                if (isCorrect) {
+                                  bg = '#f0fdf4'; borderColor = '#86efac'; textColor = '#15803d';
+                                  icon = <CheckCircle size={18} className="text-green-600 shrink-0" />;
+                                } else if (isSelected) {
+                                  bg = '#fef2f2'; borderColor = '#fca5a5'; textColor = '#b91c1c';
+                                  icon = <XCircle size={18} className="text-red-500 shrink-0" />;
+                                } else {
+                                  textColor = '#9ca3af';
+                                  icon = <Circle size={18} className="text-gray-200 shrink-0" />;
+                                }
+                              } else if (isSelected) {
+                                bg = 'rgba(124,58,237,0.06)'; borderColor = '#4c1d95'; textColor = '#4c1d95';
+                                icon = <CheckCircle2 size={18} className="text-[#4c1d95] shrink-0" fill="rgba(124,58,237,0.12)" />;
+                              } else {
+                                icon = <Circle size={18} className="text-gray-200 shrink-0" />;
+                              }
+
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => { if (phase === 'playing') setSelected(option); }}
+                                  disabled={phase === 'result'}
+                                  className="w-full py-3.5 px-4 rounded-xl text-left text-[15px] flex items-center justify-between transition-all border-2"
+                                  style={{ background: bg, borderColor, color: textColor }}
+                                >
+                                  <span className="font-semibold">{option}</span>
+                                  {icon}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Social proof */}
+                          {phase === 'result' && (
+                            <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-50">
+                              <Users size={13} className="text-gray-400" />
+                              {socialProof !== null ? (
+                                <p className="text-[13px] text-gray-600">
+                                  <span className="font-bold text-gray-900">{socialProof}%</span> of players got this right
+                                </p>
+                              ) : (
+                                <Loader2 size={13} className="animate-spin text-gray-400" />
+                              )}
+                            </div>
+                          )}
+
+                          {/* CTA */}
+                          {phase === 'playing' ? (
+                            <button
+                              onClick={handleConfirm}
+                              disabled={!selected}
+                              className="w-full py-3.5 rounded-xl font-bold text-white text-base shadow-md transition-all active:scale-[0.98] disabled:opacity-40 disabled:shadow-none"
+                              style={{ background: PURPLE_GRADIENT }}
+                            >
+                              Lock In Answer
+                            </button>
+                          ) : (
+                            <button
+                              onClick={handleNext}
+                              className="w-full py-3.5 rounded-xl font-bold text-white text-base shadow-md active:scale-[0.98]"
+                              style={{ background: PURPLE_GRADIENT }}
+                            >
+                              {qIndex < questions.length - 1 ? 'Next Question' : 'See Your Score'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
                   }
 
+                  // ── Past (completed) card — collapsed with check/X ──
+                  if (isPast) {
+                    const wasCorrect = pastAnswer?.correct;
+                    return (
+                      <div
+                        key={i}
+                        className="rounded-xl border border-gray-200 bg-white p-4 flex items-center gap-3"
+                      >
+                        <div
+                          className="w-8 h-8 rounded-full flex shrink-0 items-center justify-center"
+                          style={{ background: wasCorrect ? '#dcfce7' : '#fee2e2' }}
+                        >
+                          {wasCorrect
+                            ? <CheckCircle size={16} className="text-green-600" />
+                            : <XCircle size={16} className="text-red-500" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">
+                              {qq.category}
+                            </span>
+                            <span
+                              className="text-[10px] font-bold"
+                              style={{ color: diff.text }}
+                            >
+                              {diff.label}
+                            </span>
+                          </div>
+                          <p className="text-[13px] font-medium text-gray-500 truncate">
+                            {qq.title}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // ── Future (locked) card — collapsed ──
                   return (
-                    <button
-                      key={idx}
-                      onClick={() => { if (phase === 'playing') setSelected(option); }}
-                      disabled={phase === 'result'}
-                      className="w-full py-4 px-5 rounded-2xl text-left text-[15px] flex items-center justify-between transition-all"
-                      style={{ background: bg, border: `1px solid ${border}`, color: textColor }}
+                    <div
+                      key={i}
+                      className="rounded-xl border border-gray-200 bg-gray-50/60 p-4 flex items-center gap-3"
                     >
-                      <span className="font-medium">{option}</span>
-                      {showResult && isCorrect && <CheckCircle size={17} className="text-green-400 shrink-0" />}
-                      {showResult && isSelected && !isCorrect && <XCircle size={17} className="text-red-400 shrink-0" />}
-                    </button>
+                      <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex shrink-0 items-center justify-center">
+                        <Lock className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">
+                            {qq.category}
+                          </span>
+                          <span
+                            className="text-[10px] font-bold"
+                            style={{ color: diff.text }}
+                          >
+                            {diff.label}
+                          </span>
+                        </div>
+                        <p className="text-[13px] font-medium text-gray-500 truncate">
+                          {qq.title}
+                        </p>
+                      </div>
+                      <ChevronDown className="w-5 h-5 text-gray-300" />
+                    </div>
                   );
                 })}
               </div>
-
-              {/* Social proof */}
-              {phase === 'result' && (
-                <div
-                  className="flex items-center justify-center gap-2 py-3 rounded-2xl mb-3"
-                  style={{ background: 'rgba(255,255,255,0.06)' }}
-                >
-                  <Users size={13} className="text-white/40" />
-                  {socialProof !== null ? (
-                    <p className="text-[13px] text-white/60">
-                      <span className="font-bold text-white">{socialProof}%</span> of players got this right
-                    </p>
-                  ) : (
-                    <Loader2 size={13} className="animate-spin text-white/40" />
-                  )}
-                </div>
-              )}
-
-              {/* CTA */}
-              {phase === 'playing' ? (
-                <button
-                  onClick={handleConfirm}
-                  disabled={!selected}
-                  className="w-full py-4 rounded-2xl font-bold text-[15px] text-white transition-opacity disabled:opacity-35"
-                  style={{ background: '#7c3aed' }}
-                >
-                  Lock In Answer
-                </button>
-              ) : (
-                <button
-                  onClick={handleNext}
-                  className="w-full py-4 rounded-2xl font-bold text-[15px] bg-white text-gray-900"
-                >
-                  {qIndex < questions.length - 1 ? 'Next Question' : 'See Your Score'}
-                </button>
-              )}
             </div>
           )}
         </div>
@@ -1147,6 +1254,7 @@ export function DailyHeroSection() {
       {showPlayGame && readyQuestions.length > 0 && (
         <TodaysPlayGame
           questions={readyQuestions}
+          streak={streak}
           onComplete={(score) => {
             setPlayScore(score);
             setPlayCompleted(true);
