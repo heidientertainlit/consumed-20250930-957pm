@@ -412,25 +412,20 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           {category && (
-            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 tracking-wide">
+            <span className="inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-full bg-blue-100 text-blue-700 text-[11px] font-bold tracking-wide">
               {category}
             </span>
           )}
           <p className="text-sm font-semibold text-gray-900">Cast Your Vote</p>
         </div>
-        
-        <div className="flex items-center gap-1">
-          {currentIndex > 0 && (
-            <button onClick={scrollToPrev} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">
-              <ChevronLeft className="w-4 h-4 text-gray-600" />
-            </button>
-          )}
+
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-gray-400 font-medium">{currentIndex + 1}/{filteredData.length}</span>
           {currentIndex < filteredData.length - 1 && (
             <button onClick={scrollToNext} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200">
               <ChevronRight className="w-4 h-4 text-gray-600" />
             </button>
           )}
-          <span className="text-xs text-gray-400 ml-1">{currentIndex + 1}/{filteredData.length}</span>
         </div>
       </div>
 
@@ -444,14 +439,14 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
               <h3 className="text-gray-900 font-semibold text-base mb-3">{poll.title}</h3>
               
               {!voted ? (
-                <div className="flex flex-col gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   {poll.options.slice(0, 4).map((option, idx) => (
                     <button
                       key={idx}
-                      className={`py-3 px-4 rounded-full border text-sm font-medium transition-all text-left ${
-                        selected === option 
-                          ? 'bg-gradient-to-r from-slate-800 via-blue-900 to-cyan-900 border-blue-500/50 text-white shadow-lg' 
-                          : 'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200 hover:border-gray-300'
+                      className={`min-h-[78px] py-3 px-2 rounded-2xl border text-[13px] font-medium transition-all flex items-center justify-center text-center leading-tight ${
+                        selected === option
+                          ? 'bg-gradient-to-br from-slate-800 to-blue-900 border-blue-500/50 text-white shadow-lg'
+                          : 'bg-gray-50 border-gray-200/80 text-gray-700 hover:bg-gray-100'
                       }`}
                       onClick={() => handleSelectAndVote(poll, option)}
                       disabled={voteMutation.isPending}
@@ -459,54 +454,45 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                       {option}
                     </button>
                   ))}
-                  
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {poll.options.slice(0, 4).map((option, idx) => {
-                    const isUserVote = voted.vote === option;
-                    const percentage = voted.stats[option] || 0;
-                    
-                    return (
-                      <div 
-                        key={idx}
-                        className={`relative py-3 px-4 rounded-full border overflow-hidden ${
-                          isUserVote 
-                            ? 'border-blue-500 bg-gradient-to-r from-slate-800 via-blue-900 to-cyan-900' 
-                            : 'border-gray-200 bg-gray-50'
-                        }`}
-                      >
-                        <div className="relative flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            {isUserVote && <Check className="w-4 h-4 text-white" />}
-                            <span className={`text-sm ${isUserVote ? 'text-white font-medium' : 'text-gray-700'}`}>{option}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Users className={`w-3 h-3 ${isUserVote ? 'text-white/70' : 'text-gray-400'}`} />
-                            <span className={`text-sm ${isUserVote ? 'text-white font-bold' : 'text-gray-400'}`}>{percentage}%</span>
-                          </div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {poll.options.slice(0, 4).map((option, idx) => {
+                      const isUserVote = voted.vote === option;
+                      const percentage = voted.stats[option] || 0;
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`relative min-h-[78px] py-2 px-2 rounded-2xl border flex flex-col items-center justify-center text-center leading-tight ${
+                            isUserVote
+                              ? 'border-blue-500 bg-gradient-to-br from-slate-800 to-blue-900'
+                              : 'border-gray-200/80 bg-gray-50'
+                          }`}
+                        >
+                          {isUserVote && (
+                            <Check className="w-3 h-3 text-white absolute top-1.5 right-1.5" />
+                          )}
+                          <span className={`text-[12px] ${isUserVote ? 'text-white font-medium' : 'text-gray-700'}`}>{option}</span>
+                          <span className={`text-[11px] font-bold mt-1 ${isUserVote ? 'text-white' : 'text-gray-400'}`}>{percentage}%</span>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                   {(voted.stats['Other'] > 0 || voted.vote === 'Other') && (
-                    <div 
-                      className={`relative py-3 px-4 rounded-full border overflow-hidden ${
-                        voted.vote === 'Other' 
-                          ? 'border-blue-500 bg-gradient-to-r from-slate-800 via-blue-900 to-cyan-900' 
+                    <div
+                      className={`relative py-2.5 px-4 rounded-full border flex justify-between items-center ${
+                        voted.vote === 'Other'
+                          ? 'border-blue-500 bg-gradient-to-r from-slate-800 to-blue-900'
                           : 'border-gray-200 bg-gray-50'
                       }`}
                     >
-                      <div className="relative flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          {voted.vote === 'Other' && <Check className="w-4 h-4 text-white" />}
-                          <span className={`text-sm ${voted.vote === 'Other' ? 'text-white font-medium' : 'text-gray-700'}`}>Other</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Users className={`w-3 h-3 ${voted.vote === 'Other' ? 'text-white/70' : 'text-gray-400'}`} />
-                          <span className={`text-sm ${voted.vote === 'Other' ? 'text-white font-bold' : 'text-gray-400'}`}>{voted.stats['Other'] || 0}%</span>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        {voted.vote === 'Other' && <Check className="w-4 h-4 text-white" />}
+                        <span className={`text-sm ${voted.vote === 'Other' ? 'text-white font-medium' : 'text-gray-700'}`}>Other</span>
                       </div>
+                      <span className={`text-sm font-bold ${voted.vote === 'Other' ? 'text-white' : 'text-gray-400'}`}>{voted.stats['Other'] || 0}%</span>
                     </div>
                   )}
                   {currentIndex < filteredData.length - 1 && (
