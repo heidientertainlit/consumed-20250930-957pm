@@ -1008,13 +1008,14 @@ export function DailyHeroSection() {
         </div>
       ) : (
         /* ══ PRE-GAME: Two cards (Today's Play larger + taller to signal "tap first") ══ */
-        <div className="grid grid-cols-5 gap-2.5 items-start">
+        <div className="grid grid-cols-5 gap-2.5 items-end">
 
-          {/* TODAY'S PLAY — col-span-3 (60% width), tall, trophy illustration, big Play button */}
+          {/* TODAY'S PLAY — col-span-3 (60% width), tall, trophy illustration, glowing outline = "tap me first" */}
           <div
-            className="col-span-3 rounded-2xl p-4 flex flex-col min-h-[260px] relative overflow-hidden"
+            className="col-span-3 rounded-2xl p-4 flex flex-col min-h-[260px] relative overflow-hidden ring-1 ring-purple-300/40"
             style={{
               background: 'linear-gradient(160deg,#4c1d95 0%,#3b0764 100%)',
+              boxShadow: '0 0 0 1px rgba(196,181,253,0.18), 0 8px 24px -4px rgba(124,58,237,0.55), 0 0 32px rgba(168,85,247,0.25)',
             }}
           >
             {/* Trophy illustration + sparkles in background right */}
@@ -1040,8 +1041,9 @@ export function DailyHeroSection() {
               <span className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-purple-100">
                 Today's Play
               </span>
-              <span className="text-[10px] font-semibold text-white/95 px-2 py-0.5 rounded-full bg-purple-950/70">
-                Daily
+              <span className="flex items-center gap-1 rounded-full px-2 py-0.5 bg-purple-950/70">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400" style={{ animation: 'pulse 2s infinite' }} />
+                <span className="text-[9px] font-bold text-white/90">LIVE</span>
               </span>
             </div>
 
@@ -1090,10 +1092,6 @@ export function DailyHeroSection() {
               </div>
               <span className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-blue-200">
                 Daily Call
-              </span>
-              <span className="ml-auto flex items-center gap-1 rounded-full px-1.5 py-0.5 bg-white/10">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400" style={{ animation: 'pulse 2s infinite' }} />
-                <span className="text-[9px] font-bold text-white/85">LIVE</span>
               </span>
             </div>
 
