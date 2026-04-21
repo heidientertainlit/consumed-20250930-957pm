@@ -1,10 +1,10 @@
-import { Play, TrendingUp } from "lucide-react";
+import { Play, TrendingUp, ArrowRight } from "lucide-react";
 
 export default function DeckLayered() {
   return (
     <div className="flex items-start justify-center min-h-screen bg-[#0f0a1a] p-4 pt-6">
       <div className="w-full max-w-[380px] flex flex-col gap-3">
-        
+
         {/* Header with Counter */}
         <div className="flex items-center justify-between px-1 mb-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
@@ -19,20 +19,21 @@ export default function DeckLayered() {
           </div>
         </div>
 
-        {/* Deck Container */}
-        <div className="relative mt-4">
-          
-          {/* BACK CARD (Daily Call) */}
-          <div 
-            className="absolute top-0 left-0 right-0 rounded-2xl p-4 flex flex-col justify-between min-h-[210px] opacity-80 border border-white/5"
-            style={{ 
+        {/* Deck Container — give room for the back card to extend bottom-right */}
+        <div className="relative pr-6 pb-12">
+
+          {/* BACK CARD (Daily Call) — offset down + right so its bottom-right corner is clearly its own card */}
+          <div
+            className="absolute top-0 left-0 right-0 rounded-2xl p-4 flex flex-col justify-between min-h-[210px] border border-white/10"
+            style={{
               background: "linear-gradient(160deg,#1e3a8a 0%,#1e1b4b 100%)",
-              transform: "translateY(-16px) scale(0.92)",
+              transform: "translate(24px, 32px) rotate(2.5deg)",
+              transformOrigin: "top left",
               zIndex: 0,
-              boxShadow: "0 -4px 20px rgba(0,0,0,0.5)"
+              boxShadow: "0 12px 28px rgba(0,0,0,0.55)"
             }}
           >
-            <div className="flex items-start justify-between opacity-80">
+            <div className="flex items-start justify-between">
               <div className="flex items-center gap-1.5">
                 <TrendingUp className="w-3.5 h-3.5 text-blue-300" />
                 <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-blue-300">
@@ -45,26 +46,30 @@ export default function DeckLayered() {
               </span>
             </div>
 
-            {/* Hidden content just to maintain height matching */}
-            <div className="flex-1 flex flex-col justify-center pt-3 pb-2 opacity-0">
-              <p className="text-white text-[13px] font-semibold leading-snug line-clamp-3">
+            <div className="flex-1 flex flex-col justify-center pt-3 pb-2">
+              <p className="text-white/90 text-[13px] font-semibold leading-snug line-clamp-3">
                 Will The Bear win Best Drama at the 2026 Emmys?
               </p>
             </div>
-            <div className="flex items-center justify-between opacity-0">
-              <span className="text-[10px] text-blue-200/50 font-medium">1 prediction</span>
-              <button className="bg-white text-blue-900 text-[11px] font-bold px-3 py-1.5 rounded-full">
+
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-blue-200/60 font-medium">1 prediction</span>
+              <button className="bg-white/95 text-blue-900 text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
                 Call It
+                <ArrowRight className="w-3 h-3" />
               </button>
             </div>
           </div>
 
-          {/* FRONT CARD (Today's Play) */}
-          <div 
-            className="relative rounded-2xl p-5 flex flex-col justify-between min-h-[210px] border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.8)]"
-            style={{ 
+          {/* FRONT CARD (Today's Play) — sits on top, slightly tilted the other way */}
+          <div
+            className="relative rounded-2xl p-5 flex flex-col justify-between min-h-[210px] border border-white/10"
+            style={{
               background: "linear-gradient(160deg,#4c1d95 0%,#3b0764 100%)",
-              zIndex: 10
+              transform: "rotate(-1.5deg)",
+              transformOrigin: "top right",
+              zIndex: 10,
+              boxShadow: "0 14px 36px rgba(0,0,0,0.7)"
             }}
           >
             <div className="flex items-start justify-between mb-4">
@@ -95,6 +100,11 @@ export default function DeckLayered() {
             </div>
           </div>
         </div>
+
+        {/* Hint copy under the deck */}
+        <p className="text-[10px] text-white/35 text-center mt-1">
+          Play first → your Daily Call is queued up next
+        </p>
 
       </div>
     </div>
