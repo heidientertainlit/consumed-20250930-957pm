@@ -246,7 +246,7 @@ function ScoreShareCard({
                       {todayActivity.ratings > 0 && (
                         <div className="flex items-center gap-1">
                           <Star size={11} className="text-yellow-500" fill="currentColor" />
-                          <span className="text-[11px] font-semibold text-gray-700">Rated {todayActivity.ratings}</span>
+                          <span className="text-[11px] font-semibold text-gray-700">{todayActivity.ratings} rating{todayActivity.ratings !== 1 ? 's' : ''}</span>
                         </div>
                       )}
                       {todayActivity.ratings > 0 && todayActivity.predictions > 0 && (
@@ -1208,126 +1208,177 @@ export function DailyHeroSection() {
           <p className="text-center text-[10px] text-white/25 tracking-wide">Come back tomorrow for new games</p>
         </div>
       ) : (
-        /* ══ PRE-GAME: Deck-layered cards — Daily Call peeks out bottom-right of Today's Play ══ */
-        <div className="flex flex-col gap-2">
+        /* ══ PRE-GAME: Deck-layered cards — front + back peek, swap when one is done ══ */
+        (() => {
+          // When Today's Play is done but Daily Call isn't, swap: Daily Call comes to front,
+          // Today's Play moves to the back peek slot showing its DONE state.
+          const playOnFront = !playCompleted || callCompleted;
 
-          {/* Deck container — extra padding so back card can extend bottom-right */}
-          <div className="relative pr-6 pb-12">
+          const frontPosClass = "relative w-full rounded-2xl p-5 flex flex-col justify-between min-h-[210px] border border-white/10 text-left active:scale-[0.99] transition-transform";
+          const backPosClass  = "absolute top-0 left-0 right-0 rounded-2xl p-4 flex flex-col justify-between min-h-[210px] border border-white/10 text-left active:scale-[0.99] transition-transform";
 
-            {/* BACK CARD — DAILY CALL (peeks down + right, slight rotation) */}
+          const frontPosStyle = {
+            transform: 'rotate(-1.5deg)',
+            transformOrigin: 'top right' as const,
+            zIndex: 10,
+            boxShadow: '0 14px 36px rgba(0,0,0,0.7)',
+          };
+          const backPosStyle = {
+            transform: 'translate(24px, 32px) rotate(2.5deg)',
+            transformOrigin: 'top left' as const,
+            zIndex: 0,
+            boxShadow: '0 12px 28px rgba(0,0,0,0.55)',
+          };
+
+          const todaysPlayCard = (front: boolean) => (
             <button
-              type="button"
-              onClick={() => {
-                if (callCompleted) setShowCallShare(true);
-                else if (hasDailyCall) setShowCallOverlay(true);
-              }}
-              className="absolute top-0 left-0 right-0 rounded-2xl p-4 flex flex-col justify-between min-h-[210px] border border-white/10 text-left active:scale-[0.99] transition-transform"
-              style={{
-                background: 'linear-gradient(160deg,#1e3a8a 0%,#1e1b4b 100%)',
-                transform: 'translate(24px, 32px) rotate(2.5deg)',
-                transformOrigin: 'top left',
-                zIndex: 0,
-                boxShadow: '0 12px 28px rgba(0,0,0,0.55)',
-              }}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-1.5">
-                  <MessageCircle size={13} className="text-blue-300" />
-                  <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-blue-300">
-                    Daily Call
-                  </span>
-                </div>
-                <span className="flex items-center gap-1 bg-white/10 rounded-full px-1.5 py-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                  <span className="text-[8px] font-bold text-white/70">LIVE</span>
-                </span>
-              </div>
-
-              <div className="flex-1 flex flex-col justify-center pt-3 pb-2">
-                {callCompleted && callAnswer ? (
-                  <>
-                    <p className="text-[9px] text-white/40 uppercase tracking-wider font-semibold mb-1">Your Call</p>
-                    <p className="text-white/90 text-[13px] font-semibold leading-snug line-clamp-3">{callAnswer}</p>
-                  </>
-                ) : (
-                  <p className="text-white/90 text-[13px] font-semibold leading-snug line-clamp-3">
-                    {callPreview}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-blue-200/60 font-medium">1 prediction</span>
-                <span className="bg-white/95 text-blue-900 text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
-                  {callCompleted ? 'Share' : 'Call It'}
-                  <ArrowRight size={12} strokeWidth={2.5} />
-                </span>
-              </div>
-            </button>
-
-            {/* FRONT CARD — TODAY'S PLAY (sits on top, slightly tilted opposite) */}
-            <button
+              key="play"
               type="button"
               onClick={() => {
                 if (playCompleted) setShowPlayShare(true);
                 else if (hasTodaysPlay) setShowPlayGame(true);
               }}
-              className="relative w-full rounded-2xl p-5 flex flex-col justify-between min-h-[210px] border border-white/10 text-left active:scale-[0.99] transition-transform"
+              className={front ? frontPosClass : backPosClass}
               style={{
                 background: 'linear-gradient(160deg,#4c1d95 0%,#3b0764 100%)',
-                transform: 'rotate(-1.5deg)',
-                transformOrigin: 'top right',
-                zIndex: 10,
-                boxShadow: '0 14px 36px rgba(0,0,0,0.7)',
+                ...(front ? frontPosStyle : backPosStyle),
               }}
             >
-              <div className="flex items-start justify-between mb-4">
+              <div className={`flex items-start justify-between ${front ? 'mb-4' : ''}`}>
                 <div className="flex items-center gap-1.5">
-                  <Gamepad2 size={14} className="text-purple-300" />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-purple-300/90">
+                  <Gamepad2 size={front ? 14 : 13} className="text-purple-300" />
+                  <span className={`${front ? 'text-[10px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-purple-300/90`}>
                     Today's Play
                   </span>
                 </div>
-                <span className="flex items-center gap-1 bg-white/10 rounded-full px-1.5 py-0.5 border border-white/5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]" style={{ animation: 'pulse 2s infinite' }} />
-                  <span className="text-[8px] font-bold text-white/80">LIVE</span>
-                </span>
+                {playCompleted ? (
+                  <span className="flex items-center gap-1 bg-green-400/15 rounded-full px-1.5 py-0.5 border border-green-400/30">
+                    <Check size={9} className="text-green-300" strokeWidth={3} />
+                    <span className="text-[8px] font-bold text-green-200">DONE</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 bg-white/10 rounded-full px-1.5 py-0.5 border border-white/5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]" style={{ animation: 'pulse 2s infinite' }} />
+                    <span className="text-[8px] font-bold text-white/80">LIVE</span>
+                  </span>
+                )}
               </div>
 
-              <div className="flex-1 flex flex-col justify-center py-2">
+              <div className={`flex-1 flex flex-col justify-center ${front ? 'py-2' : 'pt-3 pb-2'}`}>
                 {playCompleted && playScore ? (
                   <div>
-                    <p className="text-[28px] font-black text-white leading-none">
+                    <p className={`${front ? 'text-[28px]' : 'text-[22px]'} font-black text-white leading-none`}>
                       {playScore.correct}
-                      <span className="text-white/30 text-[18px] font-bold"> / {playScore.total}</span>
+                      <span className={`text-white/30 ${front ? 'text-[18px]' : 'text-[14px]'} font-bold`}> / {playScore.total}</span>
                     </p>
-                    <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold mt-1">correct</p>
+                    <p className={`${front ? 'text-[10px]' : 'text-[9px]'} text-white/40 uppercase tracking-wider font-semibold mt-1`}>correct</p>
                   </div>
                 ) : (
-                  <p className="text-white text-xl font-bold leading-tight drop-shadow-sm line-clamp-3">
+                  <p className={`text-white ${front ? 'text-xl' : 'text-[13px]'} font-bold leading-tight drop-shadow-sm line-clamp-3`}>
                     {firstQPreview}
                   </p>
                 )}
               </div>
 
-              <div className="flex items-center justify-between mt-4">
-                <span className="text-xs text-purple-200/60 font-medium">3 questions</span>
-                <span className="bg-white text-purple-950 text-sm font-bold px-6 py-2.5 rounded-full shadow-lg flex items-center gap-1.5">
-                  {playCompleted ? 'Share' : 'Play'}
-                  <ArrowRight size={14} strokeWidth={2.5} />
-                </span>
+              <div className={`flex items-center justify-between ${front ? 'mt-4' : ''}`}>
+                <span className={`${front ? 'text-xs' : 'text-[10px]'} text-purple-200/60 font-medium`}>3 questions</span>
+                {front ? (
+                  <span className="bg-white text-purple-950 text-sm font-bold px-6 py-2.5 rounded-full shadow-lg flex items-center gap-1.5">
+                    {playCompleted ? 'Share' : 'Play'}
+                    <ArrowRight size={14} strokeWidth={2.5} />
+                  </span>
+                ) : (
+                  <span className="bg-white/95 text-purple-900 text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
+                    {playCompleted ? 'Share' : 'Play'}
+                    <ArrowRight size={12} strokeWidth={2.5} />
+                  </span>
+                )}
               </div>
             </button>
-          </div>
+          );
 
-          {/* Hint copy under the deck */}
-          {(!playCompleted || !callCompleted) && (
-            <p className="text-[10px] text-white/35 text-center mt-1">
-              Play first {'\u2192'} your Daily Call is queued up next
-            </p>
-          )}
+          const dailyCallCard = (front: boolean) => (
+            <button
+              key="call"
+              type="button"
+              onClick={() => {
+                if (callCompleted) setShowCallShare(true);
+                else if (hasDailyCall) setShowCallOverlay(true);
+              }}
+              className={front ? frontPosClass : backPosClass}
+              style={{
+                background: 'linear-gradient(160deg,#1e3a8a 0%,#1e1b4b 100%)',
+                ...(front ? frontPosStyle : backPosStyle),
+              }}
+            >
+              <div className={`flex items-start justify-between ${front ? 'mb-4' : ''}`}>
+                <div className="flex items-center gap-1.5">
+                  <MessageCircle size={front ? 14 : 13} className="text-blue-300" />
+                  <span className={`${front ? 'text-[10px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-blue-300`}>
+                    Daily Call
+                  </span>
+                </div>
+                {callCompleted ? (
+                  <span className="flex items-center gap-1 bg-green-400/15 rounded-full px-1.5 py-0.5 border border-green-400/30">
+                    <Check size={9} className="text-green-300" strokeWidth={3} />
+                    <span className="text-[8px] font-bold text-green-200">DONE</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 bg-white/10 rounded-full px-1.5 py-0.5 border border-white/5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]" style={{ animation: 'pulse 2s infinite' }} />
+                    <span className="text-[8px] font-bold text-white/80">LIVE</span>
+                  </span>
+                )}
+              </div>
 
-        </div>
+              <div className={`flex-1 flex flex-col justify-center ${front ? 'py-2' : 'pt-3 pb-2'}`}>
+                {callCompleted && callAnswer ? (
+                  <>
+                    <p className={`${front ? 'text-[10px]' : 'text-[9px]'} text-white/40 uppercase tracking-wider font-semibold mb-1`}>Your Call</p>
+                    <p className={`text-white/90 ${front ? 'text-xl font-bold' : 'text-[13px] font-semibold'} leading-snug line-clamp-3`}>{callAnswer}</p>
+                  </>
+                ) : (
+                  <p className={`text-white ${front ? 'text-xl font-bold' : 'text-[13px] font-semibold'} leading-snug line-clamp-3`}>
+                    {callPreview}
+                  </p>
+                )}
+              </div>
+
+              <div className={`flex items-center justify-between ${front ? 'mt-4' : ''}`}>
+                <span className={`${front ? 'text-xs' : 'text-[10px]'} text-blue-200/60 font-medium`}>1 prediction</span>
+                {front ? (
+                  <span className="bg-white text-blue-950 text-sm font-bold px-6 py-2.5 rounded-full shadow-lg flex items-center gap-1.5">
+                    {callCompleted ? 'Share' : 'Call It'}
+                    <ArrowRight size={14} strokeWidth={2.5} />
+                  </span>
+                ) : (
+                  <span className="bg-white/95 text-blue-900 text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
+                    {callCompleted ? 'Share' : 'Call It'}
+                    <ArrowRight size={12} strokeWidth={2.5} />
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+
+          const hintCopy = playCompleted && !callCompleted
+            ? "Now lock in your Daily Call \u2192"
+            : "Play first \u2192 your Daily Call is queued up next";
+
+          return (
+            <div className="flex flex-col gap-2">
+              <div className="relative pr-6 pb-12">
+                {/* Render back first (absolute), then front (relative establishes height) */}
+                {playOnFront ? dailyCallCard(false) : todaysPlayCard(false)}
+                {playOnFront ? todaysPlayCard(true)  : dailyCallCard(true)}
+              </div>
+
+              {(!playCompleted || !callCompleted) && (
+                <p className="text-[10px] text-white/35 text-center mt-1">{hintCopy}</p>
+              )}
+            </div>
+          );
+        })()
       )}
 
       {/* Game overlay */}
