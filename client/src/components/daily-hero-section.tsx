@@ -5,6 +5,7 @@ import {
   Flame, CheckCircle, XCircle,
   Trophy, X, Loader2, Star, Users, Radio, Share2, Check,
   Film, Tv, Music, BookOpen, Mic2, Gamepad2,
+  Zap, ArrowRight,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -1059,7 +1060,7 @@ export function DailyHeroSection() {
 
           {/* DAILY CALL */}
           <div
-            className="rounded-2xl p-4 flex flex-col"
+            className="rounded-2xl p-4 flex flex-col relative"
             style={{
               background: 'linear-gradient(160deg,#1e3a8a 0%,#1e1b4b 100%)',
             }}
@@ -1101,6 +1102,68 @@ export function DailyHeroSection() {
               </button>
             </div>
           </div>
+
+          {/* Helper hint row — shows users to do Today's Play first, then Daily Call.
+              Only renders pre-game when at least one game is still incomplete. */}
+          {(!playCompleted || !callCompleted) && (
+            <div className="col-span-2 relative grid grid-cols-2 gap-2.5 -mt-0.5">
+              {/* Curved dotted arrow connecting the two chips */}
+              <svg
+                className="absolute pointer-events-none z-10"
+                style={{
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -55%)',
+                  width: '46px',
+                  height: '24px',
+                }}
+                viewBox="0 0 46 24"
+                fill="none"
+              >
+                <path
+                  d="M 3 6 Q 23 26, 41 6"
+                  stroke="rgba(168,85,247,0.55)"
+                  strokeWidth="1.3"
+                  strokeDasharray="2.5 3"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M 38 3 L 42 6 L 38 9"
+                  stroke="rgba(168,85,247,0.7)"
+                  strokeWidth="1.3"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+
+              {/* Quick win chip — under Today's Play */}
+              <div
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg overflow-hidden"
+                style={{ background: 'rgba(76,29,149,0.55)' }}
+              >
+                <Zap size={10} className="text-purple-200/90 shrink-0 fill-purple-200/90" />
+                <span className="text-[9.5px] font-medium text-white/75 leading-tight truncate">
+                  Quick win. Big bragging rights.
+                </span>
+              </div>
+
+              {/* Make your call next chip — under Daily Call */}
+              <div
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg overflow-hidden"
+                style={{ background: 'rgba(30,58,138,0.55)' }}
+              >
+                <ArrowRight size={10} className="text-blue-200/90 shrink-0" />
+                <span className="text-[9.5px] font-medium text-white/75 leading-tight truncate">
+                  Make your call{' '}
+                  {!playCompleted && !callCompleted && (
+                    <span className="text-blue-300 font-bold">next</span>
+                  )}
+                </span>
+              </div>
+            </div>
+          )}
 
         </div>
       )}
