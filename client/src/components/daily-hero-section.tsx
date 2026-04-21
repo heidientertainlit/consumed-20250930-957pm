@@ -1117,20 +1117,6 @@ export function DailyHeroSection() {
         /* ══ PRE-GAME: Deck-layered cards — Daily Call peeks out bottom-right of Today's Play ══ */
         <div className="flex flex-col gap-2">
 
-          {/* Top counter row — "1 / 2" + pagination dots */}
-          <div className="flex items-center justify-between px-1 mb-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">
-              Today's Games
-            </p>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-medium text-white/40 tracking-wider">1 / 2</span>
-              <div className="flex gap-1 ml-1">
-                <div className="w-3 h-1 rounded-full bg-white/80" />
-                <div className="w-1.5 h-1 rounded-full bg-white/20" />
-              </div>
-            </div>
-          </div>
-
           {/* Deck container — extra padding so back card can extend bottom-right */}
           <div className="relative pr-6 pb-12">
 
