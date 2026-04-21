@@ -443,7 +443,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                   {poll.options.slice(0, 4).map((option, idx) => (
                     <button
                       key={idx}
-                      className={`min-h-[78px] py-3 px-2 rounded-2xl border text-[13px] font-medium transition-all flex items-center justify-center text-center leading-tight ${
+                      className={`min-h-[96px] py-3 px-2 rounded-2xl border text-[13px] font-medium transition-all flex items-center justify-center text-center leading-tight ${
                         selected === option
                           ? 'bg-gradient-to-br from-slate-800 to-blue-900 border-blue-500/50 text-white shadow-lg'
                           : 'bg-gray-50 border-gray-200/80 text-gray-700 hover:bg-gray-100'
@@ -465,7 +465,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
                       return (
                         <div
                           key={idx}
-                          className={`relative min-h-[78px] py-2 px-2 rounded-2xl border flex flex-col items-center justify-center text-center leading-tight ${
+                          className={`relative min-h-[96px] py-2 px-2 rounded-2xl border flex flex-col items-center justify-center text-center leading-tight ${
                             isUserVote
                               ? 'border-blue-500 bg-gradient-to-br from-slate-800 to-blue-900'
                               : 'border-gray-200/80 bg-gray-50'
