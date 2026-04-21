@@ -504,8 +504,8 @@ function TodaysPlayGame({
 
       {/* Bottom sheet — light theme */}
       <div
-        className="relative w-full rounded-t-3xl flex flex-col bg-white"
-        style={{ height: '92vh' }}
+        className="relative w-full rounded-t-3xl flex flex-col"
+        style={{ height: '92vh', background: '#fafafa' }}
       >
         {/* Drag handle */}
         <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1 shrink-0 bg-gray-200" />
@@ -594,7 +594,7 @@ function TodaysPlayGame({
             </div>
           ) : (
             // ── Question screen — Q1 expanded, Q2/Q3 collapsed below ──
-            <div className="flex flex-col px-4 pt-5 pb-10">
+            <div className="flex flex-col px-4 pt-5 pb-32">
               {/* Streak chip + motivational header */}
               <div className="flex flex-col items-center text-center mb-5">
                 {streak && streak > 0 ? (
@@ -624,10 +624,8 @@ function TodaysPlayGame({
                     return (
                       <div
                         key={i}
-                        className="rounded-2xl border-2 shadow-sm overflow-hidden bg-white"
-                        style={{ borderColor: '#4c1d95' }}
+                        className="rounded-2xl bg-white shadow-sm border border-gray-100"
                       >
-                        <div className="h-1.5 w-full" style={{ background: PURPLE_GRADIENT }} />
                         <div className="p-5 flex flex-col gap-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -659,27 +657,27 @@ function TodaysPlayGame({
                               const isCorrect = option === qq.correct_answer;
                               const showResult = phase === 'result';
 
-                              let bg = '#fff';
-                              let borderColor = '#f3f4f6';
+                              let bg = '#f3f4f6';
+                              let borderColor = 'transparent';
                               let textColor = '#374151';
                               let icon: React.ReactNode = null;
 
                               if (showResult) {
                                 if (isCorrect) {
-                                  bg = '#f0fdf4'; borderColor = '#86efac'; textColor = '#15803d';
+                                  bg = '#dcfce7'; borderColor = '#86efac'; textColor = '#15803d';
                                   icon = <CheckCircle size={18} className="text-green-600 shrink-0" />;
                                 } else if (isSelected) {
-                                  bg = '#fef2f2'; borderColor = '#fca5a5'; textColor = '#b91c1c';
+                                  bg = '#fee2e2'; borderColor = '#fca5a5'; textColor = '#b91c1c';
                                   icon = <XCircle size={18} className="text-red-500 shrink-0" />;
                                 } else {
-                                  textColor = '#9ca3af';
-                                  icon = <Circle size={18} className="text-gray-200 shrink-0" />;
+                                  bg = '#f3f4f6'; textColor = '#9ca3af';
+                                  icon = <Circle size={18} className="text-gray-300 shrink-0" />;
                                 }
                               } else if (isSelected) {
-                                bg = 'rgba(124,58,237,0.06)'; borderColor = '#4c1d95'; textColor = '#4c1d95';
-                                icon = <CheckCircle2 size={18} className="text-[#4c1d95] shrink-0" fill="rgba(124,58,237,0.12)" />;
+                                bg = '#faf5ff'; borderColor = '#4c1d95'; textColor = '#4c1d95';
+                                icon = <CheckCircle2 size={18} className="text-[#4c1d95] shrink-0" />;
                               } else {
-                                icon = <Circle size={18} className="text-gray-200 shrink-0" />;
+                                icon = <Circle size={18} className="text-gray-300 shrink-0" />;
                               }
 
                               return (
@@ -687,7 +685,7 @@ function TodaysPlayGame({
                                   key={idx}
                                   onClick={() => { if (phase === 'playing') setSelected(option); }}
                                   disabled={phase === 'result'}
-                                  className="w-full py-3.5 px-4 rounded-xl text-left text-[15px] flex items-center justify-between transition-all border-2"
+                                  className="w-full py-4 px-5 rounded-2xl text-left text-[15px] flex items-center justify-between transition-all border-2"
                                   style={{ background: bg, borderColor, color: textColor }}
                                 >
                                   <span className="font-semibold">{option}</span>
