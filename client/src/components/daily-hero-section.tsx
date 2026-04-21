@@ -1007,12 +1007,12 @@ export function DailyHeroSection() {
           <p className="text-center text-[10px] text-white/25 tracking-wide">Come back tomorrow for new games</p>
         </div>
       ) : (
-        /* ══ PRE-GAME: Two cards (Today's Play larger to signal "tap first") ══ */
-        <div className="grid grid-cols-5 gap-2.5">
+        /* ══ PRE-GAME: Two cards (Today's Play larger + taller to signal "tap first") ══ */
+        <div className="grid grid-cols-5 gap-2.5 items-start">
 
-          {/* TODAY'S PLAY — col-span-3 (60% width) so it visually leads */}
+          {/* TODAY'S PLAY — col-span-3 (60% width) + extra height so it visually leads */}
           <div
-            className="col-span-3 rounded-2xl p-4 flex flex-col"
+            className="col-span-3 rounded-2xl p-4 flex flex-col min-h-[180px]"
             style={{
               background: 'linear-gradient(160deg,#4c1d95 0%,#3b0764 100%)',
             }}
@@ -1037,7 +1037,7 @@ export function DailyHeroSection() {
                   <p className="text-[10px] text-white/40 uppercase tracking-wider font-semibold mt-0.5">correct</p>
                 </div>
               ) : (
-                <p className="text-white text-[13px] font-semibold leading-snug line-clamp-3">
+                <p className="text-white text-[16px] font-bold leading-tight line-clamp-3 mt-1">
                   {firstQPreview}
                 </p>
               )}
