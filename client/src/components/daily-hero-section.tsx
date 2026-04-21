@@ -1007,12 +1007,12 @@ export function DailyHeroSection() {
           <p className="text-center text-[10px] text-white/25 tracking-wide">Come back tomorrow for new games</p>
         </div>
       ) : (
-        /* ══ PRE-GAME: Two cards ══ */
-        <div className="grid grid-cols-2 gap-2.5">
+        /* ══ PRE-GAME: Two cards (Today's Play larger to signal "tap first") ══ */
+        <div className="grid grid-cols-5 gap-2.5">
 
-          {/* TODAY'S PLAY */}
+          {/* TODAY'S PLAY — col-span-3 (60% width) so it visually leads */}
           <div
-            className="rounded-2xl p-4 flex flex-col"
+            className="col-span-3 rounded-2xl p-4 flex flex-col"
             style={{
               background: 'linear-gradient(160deg,#4c1d95 0%,#3b0764 100%)',
             }}
@@ -1058,9 +1058,9 @@ export function DailyHeroSection() {
             </div>
           </div>
 
-          {/* DAILY CALL */}
+          {/* DAILY CALL — col-span-2 (40% width) so it sits as the secondary action */}
           <div
-            className="rounded-2xl p-4 flex flex-col relative"
+            className="col-span-2 rounded-2xl p-4 flex flex-col relative"
             style={{
               background: 'linear-gradient(160deg,#1e3a8a 0%,#1e1b4b 100%)',
             }}
@@ -1104,9 +1104,10 @@ export function DailyHeroSection() {
           </div>
 
           {/* Helper hint row — shows users to do Today's Play first, then Daily Call.
-              Only renders pre-game when at least one game is still incomplete. */}
+              Only renders pre-game when at least one game is still incomplete.
+              Mirrors the 3:2 grid above so each chip sits under its card. */}
           {(!playCompleted || !callCompleted) && (
-            <div className="col-span-2 relative grid grid-cols-2 gap-2.5 -mt-0.5">
+            <div className="col-span-5 relative grid grid-cols-5 gap-2.5 -mt-0.5">
               {/* Curved dotted arrow connecting the two chips */}
               <svg
                 className="absolute pointer-events-none z-10"
@@ -1138,9 +1139,9 @@ export function DailyHeroSection() {
                 />
               </svg>
 
-              {/* Quick win chip — under Today's Play */}
+              {/* Quick win chip — under Today's Play (col-span-3 to match) */}
               <div
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg overflow-hidden"
+                className="col-span-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg overflow-hidden"
                 style={{ background: 'rgba(76,29,149,0.55)' }}
               >
                 <Zap size={10} className="text-purple-200/90 shrink-0 fill-purple-200/90" />
@@ -1149,9 +1150,9 @@ export function DailyHeroSection() {
                 </span>
               </div>
 
-              {/* Make your call next chip — under Daily Call */}
+              {/* Make your call next chip — under Daily Call (col-span-2 to match) */}
               <div
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg overflow-hidden"
+                className="col-span-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg overflow-hidden"
                 style={{ background: 'rgba(30,58,138,0.55)' }}
               >
                 <ArrowRight size={10} className="text-blue-200/90 shrink-0" />
