@@ -76,7 +76,7 @@ export function ChallengePoolsFeedBanner() {
   }
 
   return (
-    <div className="mx-4 my-3">
+    <div className="my-3">
       {/* Outer card */}
       <div
         className="bg-white rounded-2xl overflow-hidden"
