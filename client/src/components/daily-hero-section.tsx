@@ -417,12 +417,14 @@ function AfterGameSheet({
 function TodaysPlayGame({
   questions,
   streak,
+  username,
   onComplete,
   onClose,
   onShare,
 }: {
   questions: TriviaQuestion[];
   streak?: number | null;
+  username?: string | null;
   onComplete: (score: PlayScore) => void;
   onClose: () => void;
   onShare: (answers: { correct: boolean }[]) => void;
@@ -526,37 +528,114 @@ function TodaysPlayGame({
         <div className="flex-1 overflow-y-auto">
           {phase === 'done' && doneScore ? (
             // ── Combined done + share screen ──
-            <div className="flex flex-col px-5 pt-8 pb-10">
-              <div className="flex flex-col items-center text-center mb-6">
+            (() => {
+              const ratio = doneScore.correct / doneScore.total;
+              const headline =
+                doneScore.correct === doneScore.total ? 'Untouchable.'
+                : ratio >= 0.66 ? 'Look at you go!'
+                : ratio >= 0.34 ? 'Solid round.'
+                : 'Tomorrow\u2019s yours.';
+              const subhead =
+                doneScore.correct === doneScore.total
+                  ? 'A perfect score. Time to flex.'
+                  : ratio >= 0.66
+                    ? 'Nice. Most folks didn\u2019t do that well.'
+                    : ratio >= 0.34
+                      ? 'Decent showing — try to top it tomorrow.'
+                      : 'It happens. Streak\u2019s still alive though.';
+              const possessive = (() => {
+                const name = (username || 'Your').trim();
+                if (!username) return 'Your';
+                return name.endsWith('s') || name.endsWith('S') ? `${name}'` : `${name}'s`;
+              })();
+              return (
+            <div className="flex flex-col px-5 pt-6 pb-10">
+              {/* Score card — designed to be screenshot-worthy */}
+              <div
+                className="rounded-3xl overflow-hidden shadow-xl border border-gray-100 mb-6"
+                style={{ background: 'linear-gradient(180deg,#ffffff 0%,#faf5ff 100%)' }}
+              >
+                {/* Top branded strip */}
                 <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 shadow-lg"
+                  className="px-5 py-3 flex items-center justify-between"
                   style={{ background: PURPLE_GRADIENT }}
                 >
-                  <Trophy size={28} className="text-yellow-300" />
+                  <img
+                    src="/consumed-logo-white.png"
+                    alt="Consumed"
+                    className="h-4 w-auto opacity-95"
+                  />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">
+                    Today's Play
+                  </span>
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-1">You're done!</h2>
-                <p className="text-gray-500 text-sm mb-4">
-                  {doneScore.correct} of {doneScore.total} correct
-                  {doneScore.totalPoints > 0 && ` · +${doneScore.totalPoints} pts`}
-                </p>
-                <div className="flex gap-2.5">
-                  {questions.map((_, i) => (
-                    <div
-                      key={i}
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
+
+                <div className="px-6 pt-6 pb-7 flex flex-col items-center text-center">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400 mb-1">
+                    {possessive} Today's Play Score
+                  </p>
+                  <h2 className="text-3xl font-black text-gray-900 mb-1.5 leading-tight">
+                    {headline}
+                  </h2>
+                  <p className="text-gray-500 text-[13px] mb-5 leading-snug max-w-[280px]">
+                    {subhead}
+                  </p>
+
+                  {/* Big score */}
+                  <div className="flex items-baseline gap-2 mb-5">
+                    <span
+                      className="text-[64px] font-black leading-none"
                       style={{
-                        background: answers[i]?.correct ? '#dcfce7' : '#fee2e2',
+                        background: PURPLE_GRADIENT,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
                       }}
                     >
-                      {answers[i]?.correct
-                        ? <CheckCircle size={20} className="text-green-600" />
-                        : <XCircle size={20} className="text-red-500" />}
-                    </div>
-                  ))}
+                      {doneScore.correct}
+                    </span>
+                    <span className="text-[28px] font-bold text-gray-300">
+                      / {doneScore.total}
+                    </span>
+                  </div>
+
+                  {/* Per-question chips */}
+                  <div className="flex gap-2 mb-5">
+                    {questions.map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-11 h-11 rounded-xl flex items-center justify-center"
+                        style={{
+                          background: answers[i]?.correct ? '#dcfce7' : '#fee2e2',
+                        }}
+                      >
+                        {answers[i]?.correct
+                          ? <CheckCircle size={18} className="text-green-600" />
+                          : <XCircle size={18} className="text-red-500" />}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Stats footer row */}
+                  <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium">
+                    {doneScore.totalPoints > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Zap size={12} className="text-purple-600" fill="currentColor" />
+                        <span><span className="font-bold text-gray-900">+{doneScore.totalPoints}</span> pts</span>
+                      </div>
+                    )}
+                    {streak && streak > 0 && (
+                      <>
+                        {doneScore.totalPoints > 0 && <span className="w-px h-3 bg-gray-200" />}
+                        <div className="flex items-center gap-1">
+                          <Flame size={12} className="text-orange-500 fill-orange-500" />
+                          <span><span className="font-bold text-gray-900">{streak}-day</span> streak</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-
-              <div className="w-full h-px mb-5 bg-gray-100" />
 
               <button
                 onClick={() => { onClose(); onShare(answers); }}
@@ -592,6 +671,8 @@ function TodaysPlayGame({
                 </button>
               </div>
             </div>
+              );
+            })()
           ) : (
             // ── Question screen — Q1 expanded, Q2/Q3 collapsed below ──
             <div className="flex flex-col px-4 pt-5 pb-32">
@@ -1029,6 +1110,21 @@ export function DailyHeroSection() {
     enabled: !!user?.id,
   });
 
+  // ── Username (for the score card) ──
+  const { data: username } = useQuery<string | null>({
+    queryKey: ['play-username-hero', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('users')
+        .select('user_name, display_name')
+        .eq('id', user.id)
+        .single();
+      return data?.display_name || data?.user_name || null;
+    },
+    enabled: !!user?.id,
+  });
+
   const readyQuestions = questions.slice(0, 3);
   const hasTodaysPlay = readyQuestions.length >= 1;
   const hasDailyCall = !!dailyCall && (dailyCall.options?.length ?? 0) > 0;
@@ -1239,6 +1335,7 @@ export function DailyHeroSection() {
         <TodaysPlayGame
           questions={readyQuestions}
           streak={streak}
+          username={username}
           onComplete={(score) => {
             setPlayScore(score);
             setPlayCompleted(true);
