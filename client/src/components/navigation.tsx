@@ -399,13 +399,6 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               {isSearchExpanded ? <X className="text-white" size={20} /> : <Search className="text-white" size={20} />}
             </button>
             <NotificationBell />
-            <Link
-              href="/me?tab=dna"
-              className="flex items-center justify-center hover:opacity-70 transition-opacity"
-              aria-label="Profile"
-            >
-              <User className="text-white h-5 w-5" />
-            </Link>
           </div>
         </div>
 
@@ -561,15 +554,13 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               <div className="h-[22px] flex items-center justify-center"><Trophy size={20} className="text-white" strokeWidth={1.4} /></div>
               <span className="text-white text-[10px] mt-0.5">Play</span>
             </Link>
-            {(roomsEnabled || user?.id === "88bfb2a0-e8ce-4081-b731-2a49567ff093") && (
-              <Link href="/rooms" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/rooms" || location.startsWith("/room/") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-rooms">
-                <div className="h-[22px] flex items-center justify-center"><DoorOpen className="text-white" size={21} /></div>
-                <span className="text-white text-[10px] mt-0.5">Rooms</span>
-              </Link>
-            )}
             <Link href="/my-library" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/my-library" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-library" onTouchStart={prefetchCollections} onMouseEnter={prefetchCollections}>
               <div className="h-[22px] flex items-center justify-center"><Library className="text-white" size={22} /></div>
               <span className="text-white text-[10px] mt-0.5">Library</span>
+            </Link>
+            <Link href="/me?tab=dna" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/me" || location.startsWith("/me?") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-profile">
+              <div className="h-[22px] flex items-center justify-center"><User className="text-white" size={22} /></div>
+              <span className="text-white text-[10px] mt-0.5">Profile</span>
             </Link>
           </div>
         </nav>,

@@ -68,6 +68,7 @@ function ScoreShareCard({
   type,
   playScore,
   callAnswer,
+  callQuestion,
   streak,
   userId,
   answers,
@@ -77,6 +78,7 @@ function ScoreShareCard({
   type: 'play' | 'call';
   playScore?: PlayScore | null;
   callAnswer?: string | null;
+  callQuestion?: string | null;
   streak?: number | null;
   userId?: string;
   answers?: { correct: boolean }[];
@@ -286,6 +288,9 @@ function ScoreShareCard({
                     <Sparkles size={26} className="text-purple-600" />
                   </div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">My Daily Call</p>
+                  {callQuestion && (
+                    <p className="text-[13px] font-medium text-gray-600 mb-2 leading-snug px-2">{callQuestion}</p>
+                  )}
                   {callAnswer && (
                     <p className="text-[17px] font-bold text-gray-900 mb-1">"{callAnswer}"</p>
                   )}
@@ -1357,7 +1362,7 @@ export function DailyHeroSection() {
             {/* TODAY'S PLAY — completed mini card */}
             <button
               onClick={() => setShowPlayShare(true)}
-              className="rounded-2xl p-3.5 flex flex-col gap-2 text-left"
+              className="rounded-xl px-3 py-2.5 flex flex-col gap-1.5 text-left"
               style={{
                 background: 'linear-gradient(150deg,#2e1065 0%,#1a0a36 100%)',
                 border: '1px solid rgba(139,92,246,0.25)',
@@ -1365,19 +1370,22 @@ export function DailyHeroSection() {
             >
               <div className="flex items-center justify-between">
                 <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-purple-300/60">Today's Play</span>
-                <div
-                  className="w-4 h-4 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(139,92,246,0.3)' }}
-                >
-                  <Check size={9} className="text-purple-300" strokeWidth={3} />
-                </div>
+                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-purple-300/80 flex items-center gap-0.5">
+                  <Check size={9} strokeWidth={3} />
+                  Done
+                </span>
               </div>
-              <div>
-                <p className="text-white text-[26px] font-black leading-none">{playScore?.correct ?? '–'}</p>
-                <p className="text-white/30 text-[11px] font-medium">out of {playScore?.total ?? 3}</p>
+              <div className="flex items-end gap-2">
+                <p className="text-white text-[18px] font-black leading-none">{playScore?.correct ?? '–'}<span className="text-white/30 text-[12px] font-bold">/{playScore?.total ?? 3}</span></p>
+                {streak && streak > 0 ? (
+                  <span className="flex items-center gap-0.5 text-orange-400 text-[11px] font-bold leading-none">
+                    <Flame size={11} fill="currentColor" />
+                    {streak}
+                  </span>
+                ) : null}
               </div>
-              <span className="flex items-center gap-1 text-purple-300/60 text-[10px] font-semibold">
-                <Share2 size={10} />
+              <span className="flex items-center gap-1 text-purple-300/60 text-[9px] font-semibold">
+                <Share2 size={9} />
                 Share score
               </span>
             </button>
@@ -1385,7 +1393,7 @@ export function DailyHeroSection() {
             {/* DAILY CALL — completed mini card */}
             <button
               onClick={() => setShowCallShare(true)}
-              className="rounded-2xl p-3.5 flex flex-col gap-2 text-left"
+              className="rounded-xl px-3 py-2.5 flex flex-col gap-1.5 text-left"
               style={{
                 background: 'linear-gradient(150deg,#1e3a8a 0%,#0d1a38 100%)',
                 border: '1px solid rgba(59,130,246,0.25)',
@@ -1393,19 +1401,22 @@ export function DailyHeroSection() {
             >
               <div className="flex items-center justify-between">
                 <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-blue-300/60">Daily Call</span>
-                <div
-                  className="w-4 h-4 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(59,130,246,0.25)' }}
-                >
-                  <Check size={9} className="text-blue-300" strokeWidth={3} />
-                </div>
+                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-blue-300/80 flex items-center gap-0.5">
+                  <Check size={9} strokeWidth={3} />
+                  Done
+                </span>
               </div>
-              <div>
-                <p className="text-white text-[15px] font-bold leading-tight mt-1">Locked{'\n'}In</p>
-                <p className="text-white/30 text-[11px] font-medium mt-1">Pending result</p>
+              <div className="flex items-end gap-2">
+                <p className="text-white text-[13px] font-bold leading-none">Locked In</p>
+                {streak && streak > 0 ? (
+                  <span className="flex items-center gap-0.5 text-orange-400 text-[11px] font-bold leading-none">
+                    <Flame size={11} fill="currentColor" />
+                    {streak}
+                  </span>
+                ) : null}
               </div>
-              <span className="flex items-center gap-1 text-blue-300/60 text-[10px] font-semibold">
-                <Share2 size={10} />
+              <span className="flex items-center gap-1 text-blue-300/60 text-[9px] font-semibold">
+                <Share2 size={9} />
                 Share call
               </span>
             </button>
@@ -1634,6 +1645,7 @@ export function DailyHeroSection() {
         open={showCallShare}
         type="call"
         callAnswer={callAnswer}
+        callQuestion={dailyCall?.title}
         streak={streak}
         userId={user?.id}
         onClose={() => setShowCallShare(false)}
