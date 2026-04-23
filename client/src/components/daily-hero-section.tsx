@@ -1441,7 +1441,7 @@ export function DailyHeroSection() {
             boxShadow: '0 14px 36px rgba(0,0,0,0.7)',
           };
           const backPosStyle = {
-            transform: 'translate(24px, 32px) rotate(2.5deg)',
+            transform: 'translate(6px, 28px) rotate(2.5deg)',
             transformOrigin: 'top left' as const,
             zIndex: 0,
             boxShadow: '0 12px 28px rgba(0,0,0,0.55)',
@@ -1584,7 +1584,7 @@ export function DailyHeroSection() {
 
           return (
             <div className="flex flex-col gap-2">
-              <div className="relative pr-6 pb-12">
+              <div className="relative pr-1 pb-12">
                 {/* Render back first (absolute), then front (relative establishes height) */}
                 {playOnFront ? dailyCallCard(false) : todaysPlayCard(false)}
                 {playOnFront ? todaysPlayCard(true)  : dailyCallCard(true)}
