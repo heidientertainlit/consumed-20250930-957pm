@@ -358,41 +358,14 @@ export default function AdminTodaysPlayPage() {
         slotIdx++;
       }
 
-      // Phase 2b: if draft-state groups are exhausted, target future scheduled (DB) days.
-      // Every 3rd future scheduled day gets an extra — user will need to remove one
-      // primary from that day before publishing (the extra shows up in that day's group).
-      if (ei < extraDrafts.length) {
-        const today = toLocalDateStr(new Date());
-        const futureScheduled = scheduled
-          .filter(s => s.date > today)
-          .sort((a, b) => a.date.localeCompare(b.date));
-
-        let sIdx = 0;
-        for (const s of futureScheduled) {
-          if (ei >= extraDrafts.length) break;
-          // Every 3rd scheduled day gets an extra
-          if (sIdx % 3 !== 2) { sIdx++; continue; }
-          // Skip if this date already has a draft extra assigned
-          const alreadyExtra = Object.entries(newDates).some(([id, d]) => {
-            if (d !== s.date) return false;
-            const dr = drafts.find(x => x.id === id);
-            return dr ? !["movie", "book", "tv"].includes(typeMeta(dr).mediaType) : false;
-          });
-          if (!alreadyExtra) {
-            newDates[extraDrafts[ei++].id] = s.date;
-          }
-          sIdx++;
-        }
-      }
-
-      // Phase 2c: any still-remaining extras get the next available free date each
+      // Phase 2b: any still-remaining extras get the next free date that has NO existing content
       if (ei < extraDrafts.length) {
         const assignedSet = new Set(Object.values(newDates).filter(Boolean));
         const cur2 = new Date();
         cur2.setDate(cur2.getDate() + 1);
         while (ei < extraDrafts.length) {
           const ds = toLocalDateStr(cur2);
-          if (!assignedSet.has(ds)) {
+          if (!fullDates.has(ds) && !assignedSet.has(ds)) {
             newDates[extraDrafts[ei++].id] = ds;
             assignedSet.add(ds);
           }
