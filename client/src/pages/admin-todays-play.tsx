@@ -465,27 +465,32 @@ export default function AdminTodaysPlayPage() {
     }
 
     setMovingDate(true);
-    const { data: updated, error } = await supabase
-      .from("prediction_pools")
-      .update({ featured_date: newDate })
-      .in("id", ids)
-      .select("id");
-    setMovingDate(false);
-
-    if (error) {
-      toast({ title: "Move failed", description: error.message, variant: "destructive" });
-    } else if (!updated || updated.length === 0) {
-      toast({
-        title: "Move blocked",
-        description: "The database didn't update anything — check RLS permissions.",
-        variant: "destructive",
+    try {
+      const { data: { session: s } } = await supabase.auth.getSession();
+      const updates = ids.map(id => ({ id, featured_date: newDate }));
+      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${s?.access_token}`,
+          "apikey": supabaseAnonKey,
+        },
+        body: JSON.stringify({ action: "reschedule_featured", updates }),
       });
-    } else {
-      toast({ title: `Moved ${updated.length} question${updated.length !== 1 ? "s" : ""} to ${newDate}` });
-      setEditingScheduledDate(null);
-      setNewDateForEdit("");
-      await refetchScheduled();
-      queryClient.invalidateQueries({ queryKey: ["todays-play-scheduled"] });
+      const result = await resp.json();
+      if (!resp.ok || result.error) {
+        toast({ title: "Move failed", description: result.error || "Unknown error", variant: "destructive" });
+      } else {
+        toast({ title: `Moved ${ids.length} question${ids.length !== 1 ? "s" : ""} to ${newDate}` });
+        setEditingScheduledDate(null);
+        setNewDateForEdit("");
+        await refetchScheduled();
+        queryClient.invalidateQueries({ queryKey: ["todays-play-scheduled"] });
+      }
+    } catch (err: any) {
+      toast({ title: "Move failed", description: err.message, variant: "destructive" });
+    } finally {
+      setMovingDate(false);
     }
   }
 
