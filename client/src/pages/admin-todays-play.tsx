@@ -202,14 +202,24 @@ export default function AdminTodaysPlayPage() {
   const scheduledDates = new Set(scheduled.map(s => s.date));
 
   function suggestDates() {
-    const movieDrafts = [...drafts.filter(d => typeMeta(d).mediaType === "movie")];
-    const bookDrafts  = [...drafts.filter(d => typeMeta(d).mediaType === "book")];
-    const tvDrafts    = [...drafts.filter(d => typeMeta(d).mediaType === "tv")];
-    const extraDrafts = [...drafts.filter(d => !["movie", "book", "tv"].includes(typeMeta(d).mediaType))];
+    // Only assign to drafts that don't already have a date pending
+    const unassigned = drafts.filter(d => !dates[d.id]);
+    const movieDrafts = [...unassigned.filter(d => typeMeta(d).mediaType === "movie")];
+    const bookDrafts  = [...unassigned.filter(d => typeMeta(d).mediaType === "book")];
+    const tvDrafts    = [...unassigned.filter(d => typeMeta(d).mediaType === "tv")];
+    const extraDrafts = [...unassigned.filter(d => !["movie", "book", "tv"].includes(typeMeta(d).mediaType))];
     const maxSets = Math.max(movieDrafts.length, bookDrafts.length, tvDrafts.length);
 
-    // Find sequential dates starting tomorrow that don't already have 3 questions
-    const fullDates = new Set(scheduled.filter(s => s.questions.length >= 3).map(s => s.date));
+    // Count pending (state) assignments per date
+    const pendingCount: Record<string, number> = {};
+    Object.values(dates).forEach(ds => { if (ds) pendingCount[ds] = (pendingCount[ds] ?? 0) + 1; });
+
+    // A date is "full" if it has 3+ scheduled (DB) OR 3+ pending draft assignments (state)
+    const fullDates = new Set([
+      ...scheduled.filter(s => s.questions.length >= 3).map(s => s.date),
+      ...Object.entries(pendingCount).filter(([, c]) => c >= 3).map(([d]) => d),
+    ]);
+
     const freeDates: string[] = [];
     const cursor = new Date();
     cursor.setDate(cursor.getDate() + 1);
@@ -834,7 +844,39 @@ export default function AdminTodaysPlayPage() {
                               </>
                             )}
                             {!showDatePicker && (
-                              <Button onClick={() => deleteDraft(draft.id)} size="sm" variant="ghost" className="text-red-400 hover:text-red-300 hover:bg-red-500/10 w-full justify-start"><X size={13} className="mr-1" /> Remove from group</Button>
+                              <div className="flex items-center gap-2">
+                                <select
+                                  defaultValue=""
+                                  onChange={e => {
+                                    const val = e.target.value;
+                                    if (!val) return;
+                                    if (val === "__ungroup__") {
+                                      setDates(d => { const u = { ...d }; delete u[draft.id]; return u; });
+                                    } else {
+                                      setDates(d => ({ ...d, [draft.id]: val }));
+                                    }
+                                    e.currentTarget.value = "";
+                                  }}
+                                  className="flex-1 bg-gray-800 border border-gray-700 text-xs text-gray-300 rounded-lg px-2 py-1.5 h-8"
+                                >
+                                  <option value="">Move to another day...</option>
+                                  {sortedDates.filter(d => d !== dates[draft.id]).map(d => (
+                                    <option key={d} value={d}>
+                                      {new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+                                    </option>
+                                  ))}
+                                  <option value="__ungroup__">Remove from group (unassign)</option>
+                                </select>
+                                <Button
+                                  onClick={() => deleteDraft(draft.id)}
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10 flex-shrink-0"
+                                  title="Delete question"
+                                >
+                                  <X size={13} />
+                                </Button>
+                              </div>
                             )}
                           </div>
                         )}
