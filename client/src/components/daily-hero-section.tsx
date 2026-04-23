@@ -604,29 +604,72 @@ function TodaysPlayGame({
                     </span>
                   </div>
 
-                  {/* Per-question chips */}
-                  <div className="flex gap-2 mb-5">
-                    {questions.map((_, i) => (
-                      <div
-                        key={i}
-                        className="w-11 h-11 rounded-xl flex items-center justify-center"
-                        style={{
-                          background: answers[i]?.correct ? '#dcfce7' : '#fee2e2',
-                        }}
-                      >
-                        {answers[i]?.correct
-                          ? <CheckCircle size={18} className="text-green-600" />
-                          : <XCircle size={18} className="text-red-500" />}
-                      </div>
-                    ))}
-                  </div>
+                  {/* Per-question category chips */}
+                  {(() => {
+                    const CAT_EMOJI: Record<string, string> = {
+                      Movies: '🎬', Movie: '🎬',
+                      TV: '📺', Television: '📺',
+                      Music: '🎵',
+                      Books: '📚', Book: '📚',
+                      'Pop Culture': '⭐',
+                      Sports: '🏆',
+                      Games: '🎮', Gaming: '🎮',
+                      Podcasts: '🎙️', Podcast: '🎙️',
+                    };
+                    const correctQs = questions.filter((_, i) => answers[i]?.correct);
+                    const wrongQs = questions.filter((_, i) => answers[i] && !answers[i].correct);
+                    const strongestCat = correctQs.length > 0 ? correctQs[0].category : null;
+                    const weakestCat = wrongQs.length > 0 ? wrongQs[0].category : null;
+
+                    const insightLine = (() => {
+                      if (doneScore.correct === doneScore.total) return 'Perfect across every category. Untouchable.';
+                      if (strongestCat && weakestCat && strongestCat !== weakestCat)
+                        return `Strong in ${strongestCat}. ${weakestCat} got you.`;
+                      if (weakestCat) return `${weakestCat} tripped you up — worth a revisit.`;
+                      return null;
+                    })();
+
+                    return (
+                      <>
+                        <div className="flex gap-2 mb-3 flex-wrap justify-center">
+                          {questions.map((q, i) => {
+                            const correct = answers[i]?.correct;
+                            const cat = q.category || 'General';
+                            const emoji = CAT_EMOJI[cat] || '🎯';
+                            return (
+                              <div
+                                key={i}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold"
+                                style={{
+                                  background: correct ? '#f0fdf4' : '#fff1f2',
+                                  color: correct ? '#16a34a' : '#dc2626',
+                                  border: `1px solid ${correct ? '#bbf7d0' : '#fecdd3'}`,
+                                }}
+                              >
+                                <span>{emoji}</span>
+                                <span>{cat}</span>
+                                {correct
+                                  ? <CheckCircle size={10} className="ml-0.5" />
+                                  : <XCircle size={10} className="ml-0.5" />}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {insightLine && (
+                          <p className="text-[12px] text-gray-500 font-medium mb-4 leading-snug px-2">
+                            {insightLine}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
 
                   {/* Stats footer row */}
                   <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium">
                     {doneScore.totalPoints > 0 && (
                       <div className="flex items-center gap-1">
                         <Zap size={12} className="text-purple-600" fill="currentColor" />
-                        <span><span className="font-bold text-gray-900">+{doneScore.totalPoints}</span> pts</span>
+                        <span><span className="font-bold text-gray-900">+{doneScore.totalPoints}</span> pts — keep climbing</span>
                       </div>
                     )}
                     {streak && streak > 0 && (
