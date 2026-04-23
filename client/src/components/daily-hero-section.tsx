@@ -1264,6 +1264,7 @@ export function DailyHeroSection() {
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef(0);
   const wasDragRef = useRef(false); // true if pointer moved enough to count as a swipe, not a click
+  const wheelCooldown = useRef(false); // debounce trackpad wheel swipes
 
   // Auto-promote Daily Call to front once Today's Play is completed
   useEffect(() => {
@@ -1675,6 +1676,20 @@ export function DailyHeroSection() {
                     else if (dragOffset > THRESHOLD && swipeIndex === 1) setSwipeIndex(0);
                     setDragOffset(0);
                     setIsDragging(false);
+                  }
+                }}
+                onWheel={(e) => {
+                  // Horizontal trackpad swipe — only trigger if moving mostly sideways
+                  if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+                  if (wheelCooldown.current) return;
+                  if (e.deltaX > 30 && swipeIndex === 0) {
+                    setSwipeIndex(1);
+                    wheelCooldown.current = true;
+                    setTimeout(() => { wheelCooldown.current = false; }, 600);
+                  } else if (e.deltaX < -30 && swipeIndex === 1) {
+                    setSwipeIndex(0);
+                    wheelCooldown.current = true;
+                    setTimeout(() => { wheelCooldown.current = false; }, 600);
                   }
                 }}
               >
