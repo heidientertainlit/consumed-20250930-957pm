@@ -456,17 +456,32 @@ export default function AdminTodaysPlayPage() {
       });
       return;
     }
+
+    // Get the specific question IDs for this date — updating by ID avoids RLS issues
+    const ids = scheduled.find(s => s.date === oldDate)?.questions.map(q => q.id) ?? [];
+    if (ids.length === 0) {
+      toast({ title: "No questions found for that date", variant: "destructive" });
+      return;
+    }
+
     setMovingDate(true);
-    const { error } = await supabase
+    const { data: updated, error } = await supabase
       .from("prediction_pools")
       .update({ featured_date: newDate })
-      .eq("featured_date", oldDate)
-      .eq("type", "trivia");
+      .in("id", ids)
+      .select("id");
     setMovingDate(false);
+
     if (error) {
       toast({ title: "Move failed", description: error.message, variant: "destructive" });
+    } else if (!updated || updated.length === 0) {
+      toast({
+        title: "Move blocked",
+        description: "The database didn't update anything — check RLS permissions.",
+        variant: "destructive",
+      });
     } else {
-      toast({ title: `Moved to ${newDate}` });
+      toast({ title: `Moved ${updated.length} question${updated.length !== 1 ? "s" : ""} to ${newDate}` });
       setEditingScheduledDate(null);
       setNewDateForEdit("");
       await refetchScheduled();
