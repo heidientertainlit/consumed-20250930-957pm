@@ -1462,11 +1462,16 @@ export function DailyHeroSection() {
               }}
             >
               <div className={`flex items-start justify-between ${front ? 'mb-4' : ''}`}>
-                <div className="flex items-center gap-1.5">
-                  <Gamepad2 size={front ? 14 : 13} className="text-cyan-200" />
-                  <span className={`${front ? 'text-[10px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-cyan-100/90`}>
-                    Today's Play
-                  </span>
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <Gamepad2 size={front ? 14 : 13} className="text-cyan-200" />
+                    <span className={`${front ? 'text-[10px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-cyan-100/90`}>
+                      Today's Play
+                    </span>
+                  </div>
+                  {front && (
+                    <p className="text-[10px] text-white/50 font-medium ml-0.5">Start here → Answer today's trivia</p>
+                  )}
                 </div>
                 {playCompleted ? (
                   <span className="flex items-center gap-1 bg-green-400/15 rounded-full px-1.5 py-0.5 border border-green-400/30">
@@ -1590,9 +1595,6 @@ export function DailyHeroSection() {
                 {playOnFront ? todaysPlayCard(true)  : dailyCallCard(true)}
               </div>
 
-              {(!playCompleted || !callCompleted) && (
-                <p className="text-[10px] text-white/35 text-center mt-1">{hintCopy}</p>
-              )}
             </div>
           );
         })()
