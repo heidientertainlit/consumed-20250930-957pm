@@ -36,7 +36,7 @@ export default function AdminDailyCallPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [tab, setTab] = useState<"generate" | "queue">("generate");
+  const [tab, setTab] = useState<"generate" | "drafts" | "scheduled" | "published">("generate");
   const [generating, setGenerating] = useState(false);
   const [topic, setTopic] = useState("");
   const [count, setCount] = useState(14);
@@ -64,11 +64,27 @@ export default function AdminDailyCallPage() {
       const today = toLocalDateStr(new Date());
       const { data } = await supabase
         .from("prediction_pools")
-        .select("id, title, featured_date, options")
+        .select("id, title, featured_date, options, category")
         .eq("type", "predict")
         .gte("featured_date", today)
         .order("featured_date", { ascending: true })
-        .limit(30);
+        .limit(60);
+      return data || [];
+    },
+  });
+
+  const { data: pastPublished = [] } = useQuery<any[]>({
+    queryKey: ["daily-call-published"],
+    queryFn: async () => {
+      const today = toLocalDateStr(new Date());
+      const { data } = await supabase
+        .from("prediction_pools")
+        .select("id, title, featured_date, category")
+        .eq("type", "predict")
+        .not("featured_date", "is", null)
+        .lt("featured_date", today)
+        .order("featured_date", { ascending: false })
+        .limit(60);
       return data || [];
     },
   });
@@ -94,9 +110,9 @@ export default function AdminDailyCallPage() {
       });
       const result = await resp.json();
       if (!resp.ok || !result.success) throw new Error(result.error || "Generation failed");
-      toast({ title: `Generated ${result.generated} Daily Calls`, description: "Review them in the Queue tab." });
+      toast({ title: `Generated ${result.generated} Daily Calls`, description: "Review them in the Drafts tab." });
       queryClient.invalidateQueries({ queryKey: ["daily-call-drafts"] });
-      setTab("queue");
+      setTab("drafts");
     } catch (err: any) {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
     } finally {
@@ -174,13 +190,18 @@ export default function AdminDailyCallPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-gray-900 rounded-xl p-1">
-          {(["generate", "queue"] as const).map(t => (
+          {[
+            { key: "generate" as const, label: "Generate" },
+            { key: "drafts" as const, label: `Drafts (${drafts.length})` },
+            { key: "scheduled" as const, label: `Scheduled (${upcoming.length})` },
+            { key: "published" as const, label: "Published" },
+          ].map(t => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium capitalize transition-all ${tab === t ? "bg-yellow-500/20 text-yellow-300" : "text-gray-400 hover:text-gray-200"}`}
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === t.key ? "bg-yellow-500/20 text-yellow-300" : "text-gray-400 hover:text-gray-200"}`}
             >
-              {t === "queue" ? `Queue (${drafts.length} pending)` : "Generate"}
+              {t.label}
             </button>
           ))}
         </div>
@@ -237,22 +258,6 @@ export default function AdminDailyCallPage() {
               </div>
             </div>
 
-            {/* Upcoming schedule preview */}
-            {upcoming.length > 0 && (
-              <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Already Scheduled ({upcoming.length})</p>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {upcoming.map(u => (
-                    <div key={u.id} className="flex items-center justify-between py-1.5">
-                      <p className="text-sm text-gray-200 line-clamp-1 flex-1 mr-3">{u.title}</p>
-                      <span className="text-xs text-yellow-400 font-medium flex-shrink-0">{u.featured_date}</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-3">Next free slot: <span className="text-yellow-400 font-medium">{nextFreeDate}</span></p>
-              </div>
-            )}
-
             <Button
               onClick={handleGenerate}
               disabled={generating}
@@ -263,7 +268,7 @@ export default function AdminDailyCallPage() {
           </div>
         )}
 
-        {tab === "queue" && (
+        {tab === "drafts" && (
           <div className="space-y-3">
             {isLoading && <div className="text-center py-8"><Loader2 size={20} className="animate-spin text-gray-400 mx-auto" /></div>}
             {!isLoading && drafts.length === 0 && (
@@ -342,6 +347,64 @@ export default function AdminDailyCallPage() {
             ))}
           </div>
         )}
+
+        {/* ─── SCHEDULED TAB ─── */}
+        {tab === "scheduled" && (
+          <div className="space-y-3">
+            {upcoming.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <p className="font-medium">Nothing scheduled yet</p>
+                <p className="text-sm mt-1">Assign dates to drafts and publish them</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{upcoming.length} upcoming</p>
+                  <p className="text-xs text-yellow-400 font-medium">Next free: {nextFreeDate}</p>
+                </div>
+                {upcoming.map(u => (
+                  <div key={u.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center justify-between">
+                    <p className="text-sm text-white font-medium line-clamp-2 flex-1 mr-3">{u.title}</p>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span className="text-xs text-yellow-400 font-semibold">{u.featured_date}</span>
+                      {u.category && (
+                        <span className="text-[10px] font-medium text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">{u.category}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ─── PUBLISHED TAB ─── */}
+        {tab === "published" && (
+          <div className="space-y-3">
+            {pastPublished.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <p className="font-medium">No past Daily Calls yet</p>
+                <p className="text-sm mt-1">Completed Daily Calls will appear here</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{pastPublished.length} completed</p>
+                {pastPublished.map(u => (
+                  <div key={u.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center justify-between opacity-70">
+                    <p className="text-sm text-gray-300 line-clamp-2 flex-1 mr-3">{u.title}</p>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span className="text-xs text-gray-500 font-semibold">{u.featured_date}</span>
+                      {u.category && (
+                        <span className="text-[10px] font-medium text-gray-600 bg-gray-800 px-2 py-0.5 rounded-full">{u.category}</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );

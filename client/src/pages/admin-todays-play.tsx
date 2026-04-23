@@ -120,7 +120,7 @@ export default function AdminTodaysPlayPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [tab, setTab] = useState<"generate" | "queue">("generate");
+  const [tab, setTab] = useState<"generate" | "drafts" | "scheduled" | "published">("generate");
   const [genStage, setGenStage] = useState<string>("idle");
   const [extrasStage, setExtrasStage] = useState<string>("idle");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -145,6 +145,29 @@ export default function AdminTodaysPlayPage() {
         .order("created_at", { ascending: false })
         .limit(90);
       return data || [];
+    },
+  });
+
+  // Published (past scheduled) trivia
+  const { data: published = [] } = useQuery<{ date: string; questions: any[] }[]>({
+    queryKey: ["todays-play-published"],
+    queryFn: async () => {
+      const today = toLocalDateStr(new Date());
+      const { data } = await supabase
+        .from("prediction_pools")
+        .select("id, title, category, featured_date")
+        .eq("type", "trivia")
+        .not("featured_date", "is", null)
+        .lt("featured_date", today)
+        .order("featured_date", { ascending: false })
+        .limit(60);
+      if (!data) return [];
+      const byDate: Record<string, any[]> = {};
+      for (const row of data) {
+        if (!byDate[row.featured_date]) byDate[row.featured_date] = [];
+        byDate[row.featured_date].push(row);
+      }
+      return Object.entries(byDate).map(([date, questions]) => ({ date, questions }));
     },
   });
 
@@ -265,7 +288,7 @@ export default function AdminTodaysPlayPage() {
         description: `${movieCount} Movie · ${bookCount} Book · ${tvCount} TV · ${popCount} Pop Culture — review in Queue.`,
       });
       await refetchDrafts();
-      setTab("queue");
+      setTab("drafts");
     } catch (err: any) {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
     } finally {
@@ -292,7 +315,7 @@ export default function AdminTodaysPlayPage() {
         description: `${musicCount} Music · ${podcastCount} Podcast · ${gamingCount} Gaming — review in Queue.`,
       });
       await refetchDrafts();
-      setTab("queue");
+      setTab("drafts");
     } catch (err: any) {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
     } finally {
@@ -400,7 +423,9 @@ export default function AdminTodaysPlayPage() {
         <div className="flex gap-1 mb-6 bg-gray-900 rounded-xl p-1">
           {[
             { key: "generate" as const, label: "Generate" },
-            { key: "queue" as const, label: `Queue (${drafts.length})` },
+            { key: "drafts" as const, label: `Drafts (${drafts.length})` },
+            { key: "scheduled" as const, label: `Scheduled (${scheduled.length})` },
+            { key: "published" as const, label: "Published" },
           ].map(t => (
             <button
               key={t.key}
@@ -551,8 +576,8 @@ export default function AdminTodaysPlayPage() {
           </div>
         )}
 
-        {/* ─── QUEUE TAB ─── */}
-        {tab === "queue" && (
+        {/* ─── DRAFTS TAB ─── */}
+        {tab === "drafts" && (
           <div className="space-y-4">
             {drafts.length === 0 && (
               <div className="text-center py-12 text-gray-500">
@@ -716,10 +741,28 @@ export default function AdminTodaysPlayPage() {
               </>
             )}
 
-            {/* Already scheduled */}
-            {scheduled.length > 0 && (
-              <div className="mt-6 space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Scheduled</p>
+          </div>
+        )}
+
+        {/* ─── SCHEDULED TAB ─── */}
+        {tab === "scheduled" && (
+          <div className="space-y-4">
+            {scheduled.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <p className="font-medium">Nothing scheduled yet</p>
+                <p className="text-sm mt-1">Assign dates to drafts and publish them</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{scheduled.length} dates scheduled</p>
+                  <button
+                    onClick={suggestDates}
+                    className="text-xs font-semibold text-teal-400 hover:text-teal-300 flex items-center gap-1.5 transition-colors"
+                  >
+                    <CalendarDays size={12} /> Suggest Dates
+                  </button>
+                </div>
                 {scheduled.map(({ date, questions }) => (
                   <div key={date} className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
                     <div className="flex items-center justify-between mb-2">
@@ -738,7 +781,41 @@ export default function AdminTodaysPlayPage() {
                     </div>
                   </div>
                 ))}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ─── PUBLISHED TAB ─── */}
+        {tab === "published" && (
+          <div className="space-y-4">
+            {published.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <p className="font-medium">No published sets yet</p>
+                <p className="text-sm mt-1">Past scheduled dates will appear here</p>
               </div>
+            ) : (
+              <>
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{published.length} dates played</p>
+                {published.map(({ date, questions }) => (
+                  <div key={date} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 opacity-70">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-bold text-white">{date}</p>
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-700 text-gray-400">
+                        {questions.length} played
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {questions.map(q => (
+                        <div key={q.id} className="flex items-start gap-2">
+                          <span className="text-xs text-gray-600 bg-gray-800 px-2 py-0.5 rounded flex-shrink-0">{q.category || "?"}</span>
+                          <p className="text-xs text-gray-500 line-clamp-1">{q.title}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </>
             )}
           </div>
         )}
