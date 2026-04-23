@@ -633,24 +633,44 @@ export default function AdminTodaysPlayPage() {
               <>
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{drafts.length} Pending Questions</p>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={reshuffleAnswers}
-                      className="text-xs font-semibold text-orange-400 hover:text-orange-300 flex items-center gap-1.5 transition-colors"
-                    >
-                      <Shuffle size={12} />
-                      Reshuffle Answers
-                    </button>
+                  <button
+                    onClick={reshuffleAnswers}
+                    className="text-xs font-semibold text-orange-400 hover:text-orange-300 flex items-center gap-1.5 transition-colors"
+                  >
+                    <Shuffle size={12} />
+                    Reshuffle Answers
+                  </button>
+                </div>
+
+                {/* Step prompt — only shown when nothing has been grouped yet */}
+                {Object.keys(dates).length === 0 && (
+                  <div className="bg-teal-500/10 border border-teal-500/30 rounded-2xl p-4 flex items-start gap-3">
+                    <CalendarDays size={18} className="text-teal-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-teal-300">Ready to schedule?</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Hit "Suggest Dates" and we'll group your questions into day sets — one Movie, Book, TV, and Pop Culture per day. Then one tap schedules the whole day.</p>
+                    </div>
                     <button
                       onClick={suggestDates}
-                      className="text-xs font-semibold text-teal-400 hover:text-teal-300 flex items-center gap-1.5 transition-colors"
+                      className="flex-shrink-0 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
                     >
                       <CalendarDays size={12} />
                       Suggest Dates
                     </button>
                   </div>
-                </div>
-                <p className="text-xs text-gray-600 -mt-2">Suggest Dates auto-fills one Movie + Book + TV + Pop Culture per day — all editable before scheduling.</p>
+                )}
+
+                {/* When dates are assigned, show a small re-suggest link */}
+                {Object.keys(dates).length > 0 && (
+                  <div className="flex items-center justify-end">
+                    <button
+                      onClick={suggestDates}
+                      className="text-xs text-gray-600 hover:text-teal-400 flex items-center gap-1 transition-colors"
+                    >
+                      <CalendarDays size={11} /> Re-suggest dates
+                    </button>
+                  </div>
+                )}
                 {(() => {
                   // Group drafts by assigned date
                   const grouped: Record<string, Draft[]> = {};
