@@ -152,7 +152,7 @@ function ScoreShareCard({
           {/* ── Purple gradient header ── */}
           <div
             className="px-5 pt-5 pb-4"
-            style={{ background: 'linear-gradient(135deg,#5b21b6 0%,#4c1d95 40%,#3b0764 100%)' }}
+            style={{ background: type === 'play' ? 'linear-gradient(135deg,#3b82f6 0%,#06b6d4 50%,#10b981 100%)' : 'linear-gradient(135deg,#1e3a8a 0%,#1e1b4b 100%)' }}
           >
             <div className="flex items-start justify-between">
               {/* Logo */}
@@ -497,7 +497,7 @@ function TodaysPlayGame({
     }
   };
 
-  const PURPLE_GRADIENT = 'linear-gradient(160deg,#4c1d95 0%,#3b0764 100%)';
+  const PURPLE_GRADIENT = 'linear-gradient(160deg,#3b82f6 0%,#06b6d4 45%,#10b981 100%)';
   const DIFFICULTY_PILL = [
     { label: 'Easy', bg: '#dcfce7', text: '#15803d' },
     { label: 'Medium', bg: '#fef3c7', text: '#a16207' },
@@ -1364,13 +1364,13 @@ export function DailyHeroSection() {
               onClick={() => setShowPlayShare(true)}
               className="rounded-xl px-3 py-2.5 flex flex-col gap-1.5 text-left"
               style={{
-                background: 'linear-gradient(150deg,#2e1065 0%,#1a0a36 100%)',
-                border: '1px solid rgba(139,92,246,0.25)',
+                background: 'linear-gradient(150deg,#1d4ed8 0%,#0e7490 60%,#065f46 100%)',
+                border: '1px solid rgba(6,182,212,0.25)',
               }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-purple-300/60">Today's Play</span>
-                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-purple-300/80 flex items-center gap-0.5">
+                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-cyan-300/70">Today's Play</span>
+                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-cyan-200/90 flex items-center gap-0.5">
                   <Check size={9} strokeWidth={3} />
                   Done
                 </span>
@@ -1457,14 +1457,14 @@ export function DailyHeroSection() {
               }}
               className={front ? frontPosClass : backPosClass}
               style={{
-                background: 'linear-gradient(160deg,#4c1d95 0%,#3b0764 100%)',
+                background: 'linear-gradient(160deg,#3b82f6 0%,#06b6d4 45%,#10b981 100%)',
                 ...(front ? frontPosStyle : backPosStyle),
               }}
             >
               <div className={`flex items-start justify-between ${front ? 'mb-4' : ''}`}>
                 <div className="flex items-center gap-1.5">
-                  <Gamepad2 size={front ? 14 : 13} className="text-purple-300" />
-                  <span className={`${front ? 'text-[10px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-purple-300/90`}>
+                  <Gamepad2 size={front ? 14 : 13} className="text-cyan-200" />
+                  <span className={`${front ? 'text-[10px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-cyan-100/90`}>
                     Today's Play
                   </span>
                 </div>
