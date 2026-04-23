@@ -243,6 +243,8 @@ export default function AdminTriviaPage() {
   const [scheduleDates, setScheduleDates] = useState<Record<string, string>>({});
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [batchPublishing, setBatchPublishing] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [batchStartDate, setBatchStartDate] = useState(toLocalDateStr((() => { const d = new Date(); d.setDate(d.getDate() + 1); return d; })()));
 
   // Expanded notes
@@ -435,6 +437,21 @@ export default function AdminTriviaPage() {
     } else {
       queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
       queryClient.invalidateQueries({ queryKey: ["trivia-poll-published"] });
+    }
+  }
+
+  async function deleteAllDrafts() {
+    setDeletingAll(true);
+    setConfirmDeleteAll(false);
+    const ids = drafts.map(d => d.id);
+    if (ids.length === 0) { setDeletingAll(false); return; }
+    const { error } = await supabase.from("trivia_poll_drafts").delete().in("id", ids);
+    setDeletingAll(false);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `Removed ${ids.length} draft${ids.length !== 1 ? "s" : ""}` });
+      queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
     }
   }
 
@@ -914,6 +931,22 @@ export default function AdminTriviaPage() {
                             className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white"
                           />
                         </div>
+                        {confirmDeleteAll ? (
+                          <div className="flex items-center gap-1">
+                            <Button onClick={deleteAllDrafts} disabled={deletingAll} size="sm" className="text-xs bg-red-700 hover:bg-red-600 text-white whitespace-nowrap">
+                              {deletingAll ? <Loader2 size={12} className="animate-spin mr-1" /> : <Trash2 size={12} className="mr-1" />}
+                              Confirm Remove All
+                            </Button>
+                            <Button onClick={() => setConfirmDeleteAll(false)} size="sm" variant="ghost" className="text-xs text-gray-400 px-2">
+                              Cancel
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button onClick={() => setConfirmDeleteAll(true)} size="sm" variant="ghost" className="text-xs text-red-400 hover:text-red-300 hover:bg-red-900/20 border border-red-800/40 whitespace-nowrap">
+                            <Trash2 size={12} className="mr-1" />
+                            Remove All
+                          </Button>
+                        )}
                         <Button onClick={approveAll} disabled={batchPublishing} size="sm" className="text-xs bg-green-700 hover:bg-green-600 text-white whitespace-nowrap">
                           {batchPublishing ? <Loader2 size={12} className="animate-spin mr-1" /> : <Check size={12} className="mr-1" />}
                           Approve &amp; Publish All
