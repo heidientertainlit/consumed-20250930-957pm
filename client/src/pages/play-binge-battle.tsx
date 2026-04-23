@@ -465,6 +465,7 @@ export default function PlayBingeBattle() {
 
     return (
       <div className="min-h-screen bg-[#f8f8fb]">
+        <Navigation />
         <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] px-4 pt-14 pb-6">
           <button onClick={() => setLocation("/play")} className="flex items-center gap-1.5 text-white/60 text-sm mb-4">
             <ChevronLeft size={16} /> Play
@@ -533,7 +534,6 @@ export default function PlayBingeBattle() {
             </div>
           )}
         </div>
-        <Navigation />
       </div>
     );
   }
