@@ -208,7 +208,7 @@ export default function AdminTodaysPlayPage() {
         .select("id, title, category, featured_date")
         .eq("type", "trivia")
         .not("featured_date", "is", null)
-        .lte("featured_date", today)
+        .eq("featured_date", today)
         .order("featured_date", { ascending: false })
         .limit(60);
       if (!data) return [];
@@ -1271,18 +1271,18 @@ export default function AdminTodaysPlayPage() {
           <div className="space-y-4">
             {published.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
-                <p className="font-medium">No published sets yet</p>
-                <p className="text-sm mt-1">Past scheduled dates will appear here</p>
+                <p className="font-medium">Nothing live today</p>
+                <p className="text-sm mt-1">Today's 3-question set will appear here once published</p>
               </div>
             ) : (
               <>
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{published.length} dates played</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">Today's live set</p>
                 {published.map(({ date, questions }) => (
                   <div key={date} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 opacity-70">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm font-bold text-white">{date}</p>
                       <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-700 text-gray-400">
-                        {questions.length} played
+                        {questions.length} questions
                       </span>
                     </div>
                     <div className="space-y-1">
