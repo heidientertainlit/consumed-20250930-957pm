@@ -128,6 +128,9 @@ export default function AdminTodaysPlayPage() {
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [publishingGroup, setPublishingGroup] = useState<string | null>(null);
   const [addingToDate, setAddingToDate] = useState<string | null>(null);
+  const [editingScheduledDate, setEditingScheduledDate] = useState<string | null>(null);
+  const [newDateForEdit, setNewDateForEdit] = useState<string>("");
+  const [movingDate, setMovingDate] = useState(false);
 
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -369,6 +372,17 @@ export default function AdminTodaysPlayPage() {
   }
 
   async function scheduleGroup(dateStr: string, groupDrafts: Draft[]) {
+    // Block if this date already has a full set
+    const existingCount = scheduled.find(s => s.date === dateStr)?.questions.length ?? 0;
+    if (existingCount >= 3) {
+      toast({
+        title: "Date already has 3 questions",
+        description: `${dateStr} is full. Change the date in the group header before scheduling.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setPublishingGroup(dateStr);
     let succeeded = 0;
     for (const draft of groupDrafts) {
@@ -407,6 +421,35 @@ export default function AdminTodaysPlayPage() {
     await refetchDrafts();
     await refetchScheduled();
     queryClient.invalidateQueries({ queryKey: ["todays-play-scheduled"] });
+  }
+
+  async function moveScheduledDate(oldDate: string, newDate: string) {
+    if (!newDate || newDate === oldDate) return;
+    const conflict = scheduled.find(s => s.date === newDate);
+    if (conflict) {
+      toast({
+        title: "Date already has questions",
+        description: `${newDate} already has ${conflict.questions.length} question(s) scheduled. Pick a free date.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setMovingDate(true);
+    const { error } = await supabase
+      .from("prediction_pools")
+      .update({ featured_date: newDate })
+      .eq("featured_date", oldDate)
+      .eq("type", "trivia");
+    setMovingDate(false);
+    if (error) {
+      toast({ title: "Move failed", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `Moved to ${newDate}` });
+      setEditingScheduledDate(null);
+      setNewDateForEdit("");
+      await refetchScheduled();
+      queryClient.invalidateQueries({ queryKey: ["todays-play-scheduled"] });
+    }
   }
 
   function startEdit(draft: Draft) {
@@ -884,24 +927,69 @@ export default function AdminTodaysPlayPage() {
                     <CalendarDays size={12} /> Suggest Dates
                   </button>
                 </div>
-                {scheduled.map(({ date, questions }) => (
-                  <div key={date} className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-bold text-white">{date}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 3 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
-                        {questions.length}/3
-                      </span>
-                    </div>
-                    <div className="space-y-1">
-                      {questions.map(q => (
-                        <div key={q.id} className="flex items-start gap-2">
-                          <span className="text-xs text-gray-600 bg-gray-800 px-2 py-0.5 rounded flex-shrink-0">{q.category || "?"}</span>
-                          <p className="text-xs text-gray-400 line-clamp-1">{q.title}</p>
+                {scheduled.map(({ date, questions }) => {
+                  const isEditingThis = editingScheduledDate === date;
+                  return (
+                    <div key={date} className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-bold text-white">{date}</p>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 3 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
+                            {questions.length}/3
+                          </span>
+                          <button
+                            onClick={() => {
+                              if (isEditingThis) {
+                                setEditingScheduledDate(null);
+                                setNewDateForEdit("");
+                              } else {
+                                setEditingScheduledDate(date);
+                                setNewDateForEdit(date);
+                              }
+                            }}
+                            className="text-gray-500 hover:text-teal-400 transition-colors"
+                            title="Change date"
+                          >
+                            <Pencil size={12} />
+                          </button>
                         </div>
-                      ))}
+                      </div>
+
+                      {/* Inline date editor */}
+                      {isEditingThis && (
+                        <div className="flex items-center gap-2 mb-3 p-2 bg-gray-800/60 rounded-lg">
+                          <CalendarDays size={13} className="text-teal-400 flex-shrink-0" />
+                          <Input
+                            type="date"
+                            value={newDateForEdit}
+                            onChange={e => setNewDateForEdit(e.target.value)}
+                            className="bg-gray-900 border-gray-700 text-white h-7 text-xs flex-1"
+                          />
+                          <Button
+                            onClick={() => moveScheduledDate(date, newDateForEdit)}
+                            disabled={movingDate || !newDateForEdit || newDateForEdit === date}
+                            size="sm"
+                            className="bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold h-7 px-3 whitespace-nowrap"
+                          >
+                            {movingDate ? <Loader2 size={11} className="animate-spin" /> : "Move"}
+                          </Button>
+                          <button onClick={() => { setEditingScheduledDate(null); setNewDateForEdit(""); }} className="text-gray-500 hover:text-white transition-colors">
+                            <X size={13} />
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="space-y-1">
+                        {questions.map(q => (
+                          <div key={q.id} className="flex items-start gap-2">
+                            <span className="text-xs text-gray-600 bg-gray-800 px-2 py-0.5 rounded flex-shrink-0">{q.category || "?"}</span>
+                            <p className="text-xs text-gray-400 line-clamp-1">{q.title}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </>
             )}
           </div>
