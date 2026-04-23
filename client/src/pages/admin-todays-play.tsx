@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, Sparkles, Loader2, Check, X, CalendarDays, Send,
   ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, Film, BookOpen, Zap, Pencil,
+  Tv, Music2, Headphones, Gamepad2, Shuffle,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -40,10 +41,10 @@ type SlotMeta = {
   pillClass: string;
 };
 
-const SLOT_METAS: SlotMeta[] = [
+const PRIMARY_SLOTS: SlotMeta[] = [
   {
     mediaType: "movie",
-    focusTopic: "movies, films, cinema, box office, directors, actors",
+    focusTopic: "movies, films, cinema, box office, directors, actors, film franchises, movie history",
     categoryHint: "Movies",
     label: "Movie",
     icon: <Film size={11} />,
@@ -51,15 +52,23 @@ const SLOT_METAS: SlotMeta[] = [
   },
   {
     mediaType: "book",
-    focusTopic: "books, novels, authors, literature, bestsellers, book adaptations",
+    focusTopic: "books, novels, authors, literature, bestsellers, literary adaptations, book series",
     categoryHint: "Books",
     label: "Book",
     icon: <BookOpen size={11} />,
     pillClass: "bg-emerald-500/20 text-emerald-300",
   },
   {
+    mediaType: "tv",
+    focusTopic: "TV shows, streaming series, reality TV, sitcoms, drama series, TV finales, iconic TV moments, binge-worthy shows",
+    categoryHint: "TV",
+    label: "TV / Shows",
+    icon: <Tv size={11} />,
+    pillClass: "bg-amber-500/20 text-amber-300",
+  },
+  {
     mediaType: "mixed",
-    focusTopic: "pop culture, music, celebrity, viral moments, award shows, TV, streaming",
+    focusTopic: "viral internet moments, celebrity news & tabloid drama (feuds, trials, controversies), fashion & consumer brand crazes (Stanley cups, Dupe culture, limited-edition drops), cultural mashup events (Barbenheimer, etc.), memes & phrases that defined a year, award show drama & moments, 'you had to be there' cultural events. IMPORTANT: only ask about things SO big that any casual pop culture fan would know the answer — no deep-cut niche knowledge. These are about The Conversation, not The Craft.",
     categoryHint: "Pop Culture",
     label: "Pop Culture",
     icon: <Zap size={11} />,
@@ -67,10 +76,43 @@ const SLOT_METAS: SlotMeta[] = [
   },
 ];
 
+const EXTRA_SLOTS: SlotMeta[] = [
+  {
+    mediaType: "music",
+    focusTopic: "music artists, hit songs, albums, chart records, Grammy moments, music videos, iconic performances, band history",
+    categoryHint: "Music",
+    label: "Music",
+    icon: <Music2 size={11} />,
+    pillClass: "bg-pink-500/20 text-pink-300",
+  },
+  {
+    mediaType: "podcast",
+    focusTopic: "popular podcasts, podcast hosts, true crime podcasts, comedy podcasts, famous podcast moments and episodes, widely-known podcast culture",
+    categoryHint: "Podcast",
+    label: "Podcast",
+    icon: <Headphones size={11} />,
+    pillClass: "bg-sky-500/20 text-sky-300",
+  },
+  {
+    mediaType: "gaming",
+    focusTopic: "video games, iconic game characters, gaming milestones, Nintendo, PlayStation, Xbox, esports moments, widely-known game franchises",
+    categoryHint: "Gaming",
+    label: "Gaming",
+    icon: <Gamepad2 size={11} />,
+    pillClass: "bg-violet-500/20 text-violet-300",
+  },
+];
+
+const SLOT_METAS = [...PRIMARY_SLOTS, ...EXTRA_SLOTS];
+
 function typeMeta(draft: Draft): SlotMeta {
-  if (draft.category === "Books") return SLOT_METAS[1];
-  if (draft.category === "Pop Culture") return SLOT_METAS[2];
-  return SLOT_METAS[0];
+  if (draft.category === "Books") return PRIMARY_SLOTS[1];
+  if (draft.category === "TV") return PRIMARY_SLOTS[2];
+  if (draft.category === "Pop Culture") return PRIMARY_SLOTS[3];
+  if (draft.category === "Music") return EXTRA_SLOTS[0];
+  if (draft.category === "Podcast") return EXTRA_SLOTS[1];
+  if (draft.category === "Gaming") return EXTRA_SLOTS[2];
+  return PRIMARY_SLOTS[0];
 }
 
 export default function AdminTodaysPlayPage() {
@@ -79,7 +121,8 @@ export default function AdminTodaysPlayPage() {
   const queryClient = useQueryClient();
 
   const [tab, setTab] = useState<"generate" | "queue">("generate");
-  const [genStage, setGenStage] = useState<"idle" | "movie" | "book" | "pop" | "done">("idle");
+  const [genStage, setGenStage] = useState<string>("idle");
+  const [extrasStage, setExtrasStage] = useState<string>("idle");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dates, setDates] = useState<Record<string, string>>({});
   const [publishingId, setPublishingId] = useState<string | null>(null);
@@ -133,11 +176,12 @@ export default function AdminTodaysPlayPage() {
   function suggestDates() {
     const movieDrafts = drafts.filter(d => typeMeta(d).mediaType === "movie");
     const bookDrafts  = drafts.filter(d => typeMeta(d).mediaType === "book");
+    const tvDrafts    = drafts.filter(d => typeMeta(d).mediaType === "tv");
     const popDrafts   = drafts.filter(d => typeMeta(d).mediaType === "mixed");
-    const maxSets = Math.max(movieDrafts.length, bookDrafts.length, popDrafts.length);
+    const maxSets = Math.max(movieDrafts.length, bookDrafts.length, tvDrafts.length, popDrafts.length);
 
-    // Find sequential dates starting tomorrow that don't already have a full 3/3 set
-    const fullDates = new Set(scheduled.filter(s => s.questions.length >= 3).map(s => s.date));
+    // Find sequential dates starting tomorrow that don't already have a full 4/4 set
+    const fullDates = new Set(scheduled.filter(s => s.questions.length >= 4).map(s => s.date));
     const freeDates: string[] = [];
     const cursor = new Date();
     cursor.setDate(cursor.getDate() + 1);
@@ -151,12 +195,13 @@ export default function AdminTodaysPlayPage() {
     for (let i = 0; i < freeDates.length; i++) {
       if (movieDrafts[i]) newDates[movieDrafts[i].id] = freeDates[i];
       if (bookDrafts[i])  newDates[bookDrafts[i].id]  = freeDates[i];
+      if (tvDrafts[i])    newDates[tvDrafts[i].id]    = freeDates[i];
       if (popDrafts[i])   newDates[popDrafts[i].id]   = freeDates[i];
     }
     setDates(newDates);
   }
 
-  async function callGenerate(slot: SlotMeta) {
+  async function callGenerate(slot: SlotMeta, count = 14) {
     const { data: { session: s } } = await supabase.auth.getSession();
     const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
       method: "POST",
@@ -167,7 +212,7 @@ export default function AdminTodaysPlayPage() {
       },
       body: JSON.stringify({
         contentType: "trivia",
-        count: 14,
+        count,
         mediaType: slot.mediaType,
         focusTopic: slot.focusTopic,
         difficulty: "medium",
@@ -178,24 +223,46 @@ export default function AdminTodaysPlayPage() {
     return result;
   }
 
+  async function reshuffleAnswers() {
+    let updated = 0;
+    for (const draft of drafts) {
+      if (!draft.correct_answer || !draft.options?.length) continue;
+      const opts = [...draft.options];
+      const correctIdx = opts.indexOf(draft.correct_answer);
+      if (correctIdx === -1) continue;
+      // Bias toward C (index 2) or D (index 3)
+      const targets = [2, 3];
+      const targetIdx = targets[Math.floor(Math.random() * targets.length)];
+      if (correctIdx === targetIdx) continue;
+      [opts[correctIdx], opts[targetIdx]] = [opts[targetIdx], opts[correctIdx]];
+      await supabase.from("trivia_poll_drafts").update({ options: opts }).eq("id", draft.id);
+      updated++;
+    }
+    await refetchDrafts();
+    toast({ title: `Reshuffled ${updated} question${updated !== 1 ? "s" : ""}`, description: "Correct answers moved to C or D positions." });
+  }
+
   async function handleGenerate() {
     setGenStage("movie");
-    let movieCount = 0, bookCount = 0, popCount = 0;
+    let movieCount = 0, bookCount = 0, tvCount = 0, popCount = 0;
     try {
-      const r1 = await callGenerate(SLOT_METAS[0]);
+      const r1 = await callGenerate(PRIMARY_SLOTS[0]);
       movieCount = r1.generated ?? 0;
       setGenStage("book");
-      const r2 = await callGenerate(SLOT_METAS[1]);
+      const r2 = await callGenerate(PRIMARY_SLOTS[1]);
       bookCount = r2.generated ?? 0;
+      setGenStage("tv");
+      const r3 = await callGenerate(PRIMARY_SLOTS[2]);
+      tvCount = r3.generated ?? 0;
       setGenStage("pop");
-      const r3 = await callGenerate(SLOT_METAS[2]);
-      popCount = r3.generated ?? 0;
+      const r4 = await callGenerate(PRIMARY_SLOTS[3]);
+      popCount = r4.generated ?? 0;
       setGenStage("done");
 
-      const total = movieCount + bookCount + popCount;
+      const total = movieCount + bookCount + tvCount + popCount;
       toast({
         title: `Generated ${total} questions`,
-        description: `${movieCount} Movie · ${bookCount} Book · ${popCount} Pop Culture — review them in the Queue.`,
+        description: `${movieCount} Movie · ${bookCount} Book · ${tvCount} TV · ${popCount} Pop Culture — review in Queue.`,
       });
       await refetchDrafts();
       setTab("queue");
@@ -203,6 +270,33 @@ export default function AdminTodaysPlayPage() {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
     } finally {
       setGenStage("idle");
+    }
+  }
+
+  async function handleGenerateExtras() {
+    setExtrasStage("music");
+    let musicCount = 0, podcastCount = 0, gamingCount = 0;
+    try {
+      const r1 = await callGenerate(EXTRA_SLOTS[0], 6);
+      musicCount = r1.generated ?? 0;
+      setExtrasStage("podcast");
+      const r2 = await callGenerate(EXTRA_SLOTS[1], 6);
+      podcastCount = r2.generated ?? 0;
+      setExtrasStage("gaming");
+      const r3 = await callGenerate(EXTRA_SLOTS[2], 6);
+      gamingCount = r3.generated ?? 0;
+      setExtrasStage("done");
+      const total = musicCount + podcastCount + gamingCount;
+      toast({
+        title: `Generated ${total} extra questions`,
+        description: `${musicCount} Music · ${podcastCount} Podcast · ${gamingCount} Gaming — review in Queue.`,
+      });
+      await refetchDrafts();
+      setTab("queue");
+    } catch (err: any) {
+      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
+    } finally {
+      setExtrasStage("idle");
     }
   }
 
@@ -271,12 +365,20 @@ export default function AdminTodaysPlayPage() {
     await refetchDrafts();
   }
 
-  const generating = genStage !== "idle" && genStage !== "done";
+  const generating = !["idle", "done"].includes(genStage);
+  const generatingExtras = !["idle", "done"].includes(extrasStage);
+
+  const PRIMARY_STAGE_ORDER = ["movie", "book", "tv", "pop"];
+  const EXTRA_STAGE_ORDER = ["music", "podcast", "gaming"];
 
   const STAGE_LABELS: Record<string, string> = {
     movie: "Generating Movie questions...",
     book: "Generating Book questions...",
+    tv: "Generating TV / Shows questions...",
     pop: "Generating Pop Culture questions...",
+    music: "Generating Music questions...",
+    podcast: "Generating Podcast questions...",
+    gaming: "Generating Gaming questions...",
   };
 
   return (
@@ -290,7 +392,7 @@ export default function AdminTodaysPlayPage() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-white">Today's Play Generator</h1>
-            <p className="text-gray-400 text-sm mt-0.5">3-question trivia sets — movie, book, pop culture</p>
+            <p className="text-gray-400 text-sm mt-0.5">4-question trivia sets — movie, book, TV, pop culture</p>
           </div>
         </div>
 
@@ -323,23 +425,22 @@ export default function AdminTodaysPlayPage() {
               </div>
             </div>
 
-            {/* What gets generated */}
+            {/* Primary slots */}
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">What gets generated</p>
-              {SLOT_METAS.map(meta => (
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Daily core (14 each)</p>
+              {PRIMARY_SLOTS.map(meta => (
                 <div key={meta.mediaType} className="flex items-center justify-between">
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${meta.pillClass}`}>
-                    {meta.icon}
-                    {meta.label}
+                    {meta.icon} {meta.label}
                   </span>
-                  <span className="text-xs text-gray-500">14 questions → pending drafts</span>
+                  <span className="text-xs text-gray-500">14 questions</span>
                 </div>
               ))}
-              <p className="text-xs text-gray-500 pt-1 border-t border-gray-800">42 total questions go into the Queue where you assign dates and publish them.</p>
+              <p className="text-xs text-gray-500 pt-1 border-t border-gray-800">56 total — 4 per day: Movie + Book + TV + Pop Culture</p>
             </div>
 
-            {/* Generate button */}
-            {!generating && (
+            {/* Generate primary button */}
+            {!generating && !generatingExtras && (
               <Button
                 onClick={handleGenerate}
                 className="w-full py-4 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-base"
@@ -349,7 +450,7 @@ export default function AdminTodaysPlayPage() {
               </Button>
             )}
 
-            {/* Progress */}
+            {/* Primary progress */}
             {generating && (
               <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-5">
                 <div className="text-center">
@@ -357,8 +458,8 @@ export default function AdminTodaysPlayPage() {
                   <p className="text-sm font-semibold text-white">{STAGE_LABELS[genStage] || "Working..."}</p>
                 </div>
                 <div className="space-y-2">
-                  {SLOT_METAS.map((meta, i) => {
-                    const stageIdx = { movie: 0, book: 1, pop: 2 }[genStage] ?? -1;
+                  {PRIMARY_SLOTS.map((meta, i) => {
+                    const stageIdx = PRIMARY_STAGE_ORDER.indexOf(genStage);
                     const isDone = i < stageIdx;
                     const isActive = i === stageIdx;
                     return (
@@ -377,6 +478,60 @@ export default function AdminTodaysPlayPage() {
               </div>
             )}
 
+            {/* Extra slots */}
+            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Extras — less frequent (6 each)</p>
+              {EXTRA_SLOTS.map(meta => (
+                <div key={meta.mediaType} className="flex items-center justify-between">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${meta.pillClass}`}>
+                    {meta.icon} {meta.label}
+                  </span>
+                  <span className="text-xs text-gray-500">6 questions</span>
+                </div>
+              ))}
+              <p className="text-xs text-gray-500 pt-1 border-t border-gray-800">Mix into the schedule manually — swap in occasionally for variety.</p>
+            </div>
+
+            {/* Generate extras button */}
+            {!generating && !generatingExtras && (
+              <Button
+                onClick={handleGenerateExtras}
+                variant="outline"
+                className="w-full py-3 border-gray-700 text-gray-300 hover:text-white hover:border-gray-500 rounded-xl"
+              >
+                <Sparkles size={15} className="mr-2" />
+                Generate Extras (Music · Podcast · Gaming)
+              </Button>
+            )}
+
+            {/* Extras progress */}
+            {generatingExtras && (
+              <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800 space-y-5">
+                <div className="text-center">
+                  <Loader2 size={28} className="animate-spin text-purple-400 mx-auto mb-3" />
+                  <p className="text-sm font-semibold text-white">{STAGE_LABELS[extrasStage] || "Working..."}</p>
+                </div>
+                <div className="space-y-2">
+                  {EXTRA_SLOTS.map((meta, i) => {
+                    const stageIdx = EXTRA_STAGE_ORDER.indexOf(extrasStage);
+                    const isDone = i < stageIdx;
+                    const isActive = i === stageIdx;
+                    return (
+                      <div key={meta.mediaType} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${isActive ? "bg-purple-500/10 border border-purple-500/30" : isDone ? "opacity-50" : "opacity-30"}`}>
+                        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${meta.pillClass}`}>
+                          {meta.icon} {meta.label}
+                        </span>
+                        <span className="flex-1 text-xs text-gray-500">6 questions</span>
+                        {isDone && <Check size={14} className="text-teal-400" />}
+                        {isActive && <Loader2 size={14} className="animate-spin text-purple-400" />}
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-center text-gray-600">Don't close this page while generating</p>
+              </div>
+            )}
+
             {/* Scheduled queue preview */}
             {scheduled.length > 0 && (
               <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
@@ -385,8 +540,8 @@ export default function AdminTodaysPlayPage() {
                   {scheduled.map(({ date, questions }) => (
                     <div key={date} className="flex items-center justify-between">
                       <span className="text-sm text-gray-300">{date}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 3 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
-                        {questions.length}/3
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 4 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
+                        {questions.length}/4
                       </span>
                     </div>
                   ))}
@@ -411,15 +566,24 @@ export default function AdminTodaysPlayPage() {
               <>
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{drafts.length} Pending Questions</p>
-                  <button
-                    onClick={suggestDates}
-                    className="text-xs font-semibold text-teal-400 hover:text-teal-300 flex items-center gap-1.5 transition-colors"
-                  >
-                    <CalendarDays size={12} />
-                    Suggest Dates
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={reshuffleAnswers}
+                      className="text-xs font-semibold text-orange-400 hover:text-orange-300 flex items-center gap-1.5 transition-colors"
+                    >
+                      <Shuffle size={12} />
+                      Reshuffle Answers
+                    </button>
+                    <button
+                      onClick={suggestDates}
+                      className="text-xs font-semibold text-teal-400 hover:text-teal-300 flex items-center gap-1.5 transition-colors"
+                    >
+                      <CalendarDays size={12} />
+                      Suggest Dates
+                    </button>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-600 -mt-2">Suggest Dates auto-fills one Movie + Book + Pop Culture per day — all editable before scheduling.</p>
+                <p className="text-xs text-gray-600 -mt-2">Suggest Dates auto-fills one Movie + Book + TV + Pop Culture per day — all editable before scheduling.</p>
                 {drafts.map(draft => {
                   const meta = typeMeta(draft);
                   const isEditing = editingId === draft.id;
@@ -560,8 +724,8 @@ export default function AdminTodaysPlayPage() {
                   <div key={date} className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm font-bold text-white">{date}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 3 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
-                        {questions.length}/3
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 4 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
+                        {questions.length}/4
                       </span>
                     </div>
                     <div className="space-y-1">

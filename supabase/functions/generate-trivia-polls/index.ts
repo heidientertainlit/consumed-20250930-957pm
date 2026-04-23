@@ -342,6 +342,9 @@ CATEGORY ACCURACY RULES — these are strict, not suggestions:
 - category "Music" = songs, albums, artists, lyrics, bands. "Finish the lyric" questions MUST use category "Music", not "Books".
 - category "TV" = television series only. Not movies, not songs.
 - category "Movies" = theatrical or streaming films only. Not TV shows.
+- category "Pop Culture" = viral internet moments, celebrity news & tabloid drama, fashion/brand crazes, cultural crossover events, award show drama, memes — "The Conversation, not The Craft". If the question is about a specific show's plot, it's "TV". If it's about a movie's details, it's "Movies". If it's about who won a pop culture feud or what brand went viral, it's "Pop Culture".
+- category "Podcast" = podcast shows, hosts, episodes, podcast culture only.
+- category "Gaming" = video games, game characters, gaming culture, esports only.
 - "It's a Small World" is a Disney RIDE SONG — category: "Music", media_type: "music". NOT a book.
 - If a "finish the lyric/line" question is about a song or theme song, it MUST be Music. If it's about dialogue from a movie, category is Movies. If it's about dialogue from a show, category is TV.
 - Never ask "From which book?" when the lyric/quote is from a song or movie.
