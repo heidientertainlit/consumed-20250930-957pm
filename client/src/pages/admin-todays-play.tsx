@@ -205,9 +205,10 @@ export default function AdminTodaysPlayPage() {
     const movieDrafts = drafts.filter(d => typeMeta(d).mediaType === "movie");
     const bookDrafts  = drafts.filter(d => typeMeta(d).mediaType === "book");
     const tvDrafts    = drafts.filter(d => typeMeta(d).mediaType === "tv");
+    const extraDrafts = drafts.filter(d => !["movie", "book", "tv"].includes(typeMeta(d).mediaType));
     const maxSets = Math.max(movieDrafts.length, bookDrafts.length, tvDrafts.length);
 
-    // Find sequential dates starting tomorrow that don't already have a full 3/3 set
+    // Find sequential dates starting tomorrow that don't already have a full 3/3 primary set
     const fullDates = new Set(scheduled.filter(s => s.questions.length >= 3).map(s => s.date));
     const freeDates: string[] = [];
     const cursor = new Date();
@@ -219,11 +220,22 @@ export default function AdminTodaysPlayPage() {
     }
 
     const newDates: Record<string, string> = { ...dates };
+
+    // Assign primary slots (one per day)
     for (let i = 0; i < freeDates.length; i++) {
       if (movieDrafts[i]) newDates[movieDrafts[i].id] = freeDates[i];
       if (bookDrafts[i])  newDates[bookDrafts[i].id]  = freeDates[i];
       if (tvDrafts[i])    newDates[tvDrafts[i].id]    = freeDates[i];
     }
+
+    // Distribute extras round-robin across the same days
+    const assignedDays = freeDates.slice(0, maxSets);
+    if (assignedDays.length > 0) {
+      extraDrafts.forEach((draft, i) => {
+        newDates[draft.id] = assignedDays[i % assignedDays.length];
+      });
+    }
+
     setDates(newDates);
   }
 
@@ -372,12 +384,16 @@ export default function AdminTodaysPlayPage() {
   }
 
   async function scheduleGroup(dateStr: string, groupDrafts: Draft[]) {
-    // Block if this date already has a full set
-    const existingCount = scheduled.find(s => s.date === dateStr)?.questions.length ?? 0;
-    if (existingCount >= 3) {
+    // Block if this date already has any of the same categories (true duplicate prevention)
+    const existingCategories = new Set(
+      scheduled.find(s => s.date === dateStr)?.questions.map(q => q.category) ?? []
+    );
+    const incomingCategories = groupDrafts.map(d => typeMeta(d).categoryHint);
+    const dupes = incomingCategories.filter(c => existingCategories.has(c));
+    if (dupes.length > 0) {
       toast({
-        title: "Date already has 3 questions",
-        description: `${dateStr} is full. Change the date in the group header before scheduling.`,
+        title: "Duplicate categories on this date",
+        description: `${dateStr} already has: ${dupes.join(", ")}. Change the date or remove the duplicates.`,
         variant: "destructive",
       });
       return;
