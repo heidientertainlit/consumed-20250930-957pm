@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, Sparkles, Loader2, Check, X, CalendarDays, RefreshCw,
-  Film, BookOpen, Zap, Send, ChevronDown, ChevronUp, Pencil,
+  Film, BookOpen, Zap, Send, ChevronDown, ChevronUp, Pencil, AlertTriangle, ShieldCheck,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -104,6 +104,7 @@ export default function AdminTodaysPlayPage() {
   const [generatingSlot, setGeneratingSlot] = useState<string | null>(null);
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
   const [publishingSet, setPublishingSet] = useState(false);
+  const [forceOverwrite, setForceOverwrite] = useState(false);
 
   // Editing state per slot
   const [editingSlot, setEditingSlot] = useState<string | null>(null);
@@ -302,6 +303,10 @@ export default function AdminTodaysPlayPage() {
 
   const allGenerating = generatingSlot !== null;
 
+  // Check if selected date already has a scheduled set
+  const dateHasSet = scheduledSets.some(s => s.date === selectedDate);
+  const dateSetCount = scheduledSets.find(s => s.date === selectedDate)?.questions.length ?? 0;
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <div className="max-w-2xl mx-auto px-4 py-8">
@@ -332,6 +337,20 @@ export default function AdminTodaysPlayPage() {
 
         {tab === "generate" && (
           <div className="space-y-5">
+            {/* Safeguards info */}
+            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 flex items-start gap-3">
+              <ShieldCheck size={16} className="text-teal-400 flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-teal-300">Active safeguards</p>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  <span className="text-gray-300 font-medium">Dedup:</span> AI is shown all existing questions and blocked from repeating them. A second post-generation filter removes near-duplicates.
+                </p>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  <span className="text-gray-300 font-medium">Rejection learning:</span> Recently rejected questions (and their rejection reasons) are fed to the AI so it doesn't repeat the same mistakes.
+                </p>
+              </div>
+            </div>
+
             {/* Date picker */}
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
               <p className="text-xs font-semibold uppercase tracking-wider text-teal-400 mb-3">Schedule Date</p>
@@ -340,11 +359,28 @@ export default function AdminTodaysPlayPage() {
                 <Input
                   type="date"
                   value={selectedDate}
-                  onChange={e => setSelectedDate(e.target.value)}
+                  onChange={e => { setSelectedDate(e.target.value); setForceOverwrite(false); }}
                   className="bg-gray-800 border-gray-700 text-white h-9 text-sm flex-1"
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2">All 3 questions will be scheduled for this date</p>
+
+              {/* Date collision warning */}
+              {dateHasSet && (
+                <div className="mt-3 flex items-start gap-2 bg-orange-500/10 border border-orange-500/30 rounded-xl px-3 py-2.5">
+                  <AlertTriangle size={14} className="text-orange-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-orange-300">Date already has {dateSetCount} question{dateSetCount !== 1 ? "s" : ""}</p>
+                    <p className="text-xs text-orange-400/80 mt-0.5">Publishing will add more questions on top. Pick a different date or confirm to overwrite.</p>
+                    <button
+                      onClick={() => setForceOverwrite(f => !f)}
+                      className={`mt-2 text-xs font-semibold px-3 py-1 rounded-lg transition-all ${forceOverwrite ? "bg-orange-500/30 text-orange-200" : "bg-orange-500/10 text-orange-400 hover:bg-orange-500/20"}`}
+                    >
+                      {forceOverwrite ? "Overwrite confirmed — proceed with caution" : "I understand, publish anyway"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Generate buttons */}
@@ -474,14 +510,17 @@ export default function AdminTodaysPlayPage() {
             {reviewDrafts.length > 0 && (
               <Button
                 onClick={publishSet}
-                disabled={publishingSet || reviewDrafts.length === 0}
-                className="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl text-base"
+                disabled={publishingSet || reviewDrafts.length === 0 || (dateHasSet && !forceOverwrite)}
+                className={`w-full py-3 font-bold rounded-xl text-base text-white ${dateHasSet && !forceOverwrite ? "bg-gray-700 cursor-not-allowed opacity-60" : "bg-teal-600 hover:bg-teal-500"}`}
               >
                 {publishingSet
                   ? <><Loader2 size={18} className="animate-spin mr-2" /> Publishing...</>
                   : <><Send size={18} className="mr-2" /> Publish {reviewDrafts.length} Question{reviewDrafts.length !== 1 ? "s" : ""} for {selectedDate}</>
                 }
               </Button>
+            )}
+            {reviewDrafts.length > 0 && dateHasSet && !forceOverwrite && (
+              <p className="text-center text-xs text-orange-400">Confirm the date collision above before publishing</p>
             )}
 
             {reviewDrafts.length > 0 && reviewDrafts.length < 3 && (

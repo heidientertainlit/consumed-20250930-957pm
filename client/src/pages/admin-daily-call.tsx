@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, Sparkles, Loader2, Check, X, CalendarDays, ChevronDown, ChevronUp, Send,
+  ShieldCheck, AlertTriangle,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -186,6 +187,23 @@ export default function AdminDailyCallPage() {
 
         {tab === "generate" && (
           <div className="space-y-5">
+            {/* Safeguards info */}
+            <div className="bg-gray-900 rounded-2xl p-4 border border-gray-800 flex items-start gap-3">
+              <ShieldCheck size={16} className="text-yellow-400 flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-yellow-300">Active safeguards</p>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  <span className="text-gray-300 font-medium">Dedup:</span> AI is shown all existing prediction pool questions and blocked from repeating any of them. A post-generation filter removes near-duplicates.
+                </p>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  <span className="text-gray-300 font-medium">Rejection learning:</span> Recently rejected content (with rejection reasons) is passed to the AI so the same mistakes aren't repeated.
+                </p>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  <span className="text-gray-300 font-medium">Date collision:</span> A warning appears in the queue if you try to schedule two Daily Calls on the same date.
+                </p>
+              </div>
+            </div>
+
             <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
               <p className="text-xs font-semibold uppercase tracking-wider text-yellow-400 mb-4">Generate Daily Calls</p>
 
@@ -275,15 +293,29 @@ export default function AdminDailyCallPage() {
                       ))}
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <CalendarDays size={14} className="text-gray-400" />
-                      <Input
-                        type="date"
-                        value={dates[draft.id] || ""}
-                        onChange={e => setDates(d => ({ ...d, [draft.id]: e.target.value }))}
-                        className="bg-gray-800 border-gray-700 text-white h-8 text-sm flex-1"
-                      />
-                    </div>
+                    {(() => {
+                      const pickedDate = dates[draft.id];
+                      const dateTaken = pickedDate ? upcoming.some(u => u.featured_date === pickedDate) : false;
+                      return (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <CalendarDays size={14} className="text-gray-400" />
+                            <Input
+                              type="date"
+                              value={pickedDate || ""}
+                              onChange={e => setDates(d => ({ ...d, [draft.id]: e.target.value }))}
+                              className={`bg-gray-800 border-gray-700 text-white h-8 text-sm flex-1 ${dateTaken ? "border-orange-500/60" : ""}`}
+                            />
+                          </div>
+                          {dateTaken && (
+                            <div className="flex items-center gap-1.5 text-orange-400">
+                              <AlertTriangle size={12} />
+                              <p className="text-xs">A Daily Call is already scheduled for {pickedDate}. Pick a different date or publish to stack.</p>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
 
                     <div className="flex gap-2">
                       <Button
