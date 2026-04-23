@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'wouter';
 import {
@@ -1258,6 +1258,17 @@ export function DailyHeroSection() {
     } catch { return false; }
   });
 
+  // ── Swipe / deck navigation ──
+  const [swipeIndex, setSwipeIndex] = useState(0); // 0 = Today's Play front, 1 = Daily Call front
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const touchStartX = useRef(0);
+
+  // Auto-promote Daily Call to front once Today's Play is completed
+  useEffect(() => {
+    if (playCompleted && !callCompleted) setSwipeIndex(1);
+  }, [playCompleted]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Fetch trivia questions ──
   const { data: questions = [] } = useQuery<TriviaQuestion[]>({
     queryKey: ['todays-play-questions'],
@@ -1456,18 +1467,18 @@ export function DailyHeroSection() {
       ) : (
         /* ══ PRE-GAME: Deck-layered cards — front + back peek, swap when one is done ══ */
         (() => {
-          // When Today's Play is done but Daily Call isn't, swap: Daily Call comes to front,
-          // Today's Play moves to the back peek slot showing its DONE state.
-          const playOnFront = !playCompleted || callCompleted;
+          const playOnFront = swipeIndex === 0;
 
-          const frontPosClass = "relative w-full rounded-2xl p-5 flex flex-col justify-between min-h-[210px] text-left active:scale-[0.99] transition-transform";
-          const backPosClass  = "absolute top-0 left-0 right-0 rounded-2xl p-4 flex flex-col justify-between min-h-[210px] text-left active:scale-[0.99] transition-transform";
+          const frontPosClass = "relative w-full rounded-2xl p-5 flex flex-col justify-between min-h-[210px] text-left";
+          const backPosClass  = "absolute top-0 left-0 right-0 rounded-2xl p-4 flex flex-col justify-between min-h-[210px] text-left";
 
+          const clampedDrag = isDragging ? Math.max(-90, Math.min(90, dragOffset * 0.45)) : 0;
           const frontPosStyle = {
-            transform: 'rotate(-1.5deg)',
+            transform: `rotate(-1.5deg) translateX(${clampedDrag}px)`,
             transformOrigin: 'top right' as const,
             zIndex: 10,
             boxShadow: '0 14px 36px rgba(0,0,0,0.7)',
+            transition: isDragging ? 'none' : 'transform 0.28s cubic-bezier(0.34,1.56,0.64,1)',
           };
           const backPosStyle = {
             transform: 'translate(6px, 28px) rotate(2.5deg)',
@@ -1612,18 +1623,44 @@ export function DailyHeroSection() {
             </button>
           );
 
-          const hintCopy = playCompleted && !callCompleted
-            ? "Now lock in your Daily Call \u2192"
-            : "Play first \u2192 your Daily Call is queued up next";
-
           return (
             <div className="flex flex-col gap-2">
-              <div className="relative pr-1 pb-12">
+              <div
+                className="relative pr-1 pb-12 select-none"
+                onTouchStart={(e) => {
+                  touchStartX.current = e.touches[0].clientX;
+                  setIsDragging(true);
+                  setDragOffset(0);
+                }}
+                onTouchMove={(e) => {
+                  setDragOffset(e.touches[0].clientX - touchStartX.current);
+                }}
+                onTouchEnd={() => {
+                  const THRESHOLD = 48;
+                  if (dragOffset < -THRESHOLD && swipeIndex === 0) setSwipeIndex(1);
+                  else if (dragOffset > THRESHOLD && swipeIndex === 1) setSwipeIndex(0);
+                  setDragOffset(0);
+                  setIsDragging(false);
+                }}
+              >
                 {/* Render back first (absolute), then front (relative establishes height) */}
                 {playOnFront ? dailyCallCard(false) : todaysPlayCard(false)}
                 {playOnFront ? todaysPlayCard(true)  : dailyCallCard(true)}
               </div>
 
+              {/* Swipe dot indicators */}
+              <div className="flex justify-center items-center gap-1.5 -mt-1">
+                <button
+                  onClick={() => setSwipeIndex(0)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${swipeIndex === 0 ? 'w-4 bg-white/70' : 'w-1.5 bg-white/25'}`}
+                  aria-label="Today's Play"
+                />
+                <button
+                  onClick={() => setSwipeIndex(1)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${swipeIndex === 1 ? 'w-4 bg-white/70' : 'w-1.5 bg-white/25'}`}
+                  aria-label="Daily Call"
+                />
+              </div>
             </div>
           );
         })()
