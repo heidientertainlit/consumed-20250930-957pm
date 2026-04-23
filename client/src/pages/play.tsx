@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { supabase } from "@/lib/supabase";
-import { Target, HelpCircle, Vote, BarChart2, UserPlus, Trophy, ChevronRight, ArrowRight, Layers, Zap } from "lucide-react";
+import { Target, Brain, Vote, BarChart2, UserPlus, Trophy, ChevronRight, ArrowRight, Layers, Zap } from "lucide-react";
 
 const gameModes = [
   {
     id: "trivia",
     label: "Trivia",
-    description: "Test your knowledge",
-    icon: HelpCircle,
+    description: "Think you know it? Prove it.",
+    icon: Brain,
     color: "bg-blue-50 border-blue-100",
     iconColor: "text-blue-500",
     href: "/play/trivia",
@@ -17,7 +17,7 @@ const gameModes = [
   {
     id: "polls",
     label: "Cast Your Vote",
-    description: "Vote and see what others think",
+    description: "Pick your side. See who agrees.",
     icon: Vote,
     color: "bg-violet-50 border-violet-100",
     iconColor: "text-violet-500",
@@ -26,7 +26,7 @@ const gameModes = [
   {
     id: "ranks",
     label: "Debate the Rank",
-    description: "Challenge each other's rankings",
+    description: "Rank your favorites. See who agrees.",
     icon: BarChart2,
     color: "bg-amber-50 border-amber-100",
     iconColor: "text-amber-500",
@@ -37,7 +37,7 @@ const gameModes = [
   {
     id: "predictions",
     label: "Predictions",
-    description: "Predict what happens next",
+    description: "Call it. Are you right?",
     icon: Target,
     color: "bg-rose-50 border-rose-100",
     iconColor: "text-rose-500",
@@ -46,7 +46,7 @@ const gameModes = [
   {
     id: "pools",
     label: "Pools",
-    description: "Play rounds, compete with friends",
+    description: "Play and compete with friends or the world.",
     icon: Layers,
     color: "bg-purple-50 border-purple-100",
     iconColor: "text-purple-600",
@@ -55,7 +55,7 @@ const gameModes = [
   {
     id: "binge-battle",
     label: "Binge Battle",
-    description: "First to finish wins — race a friend",
+    description: "Finish it first? Race to beat your friends.",
     icon: Zap,
     color: "bg-green-50 border-green-100",
     iconColor: "text-green-600",
