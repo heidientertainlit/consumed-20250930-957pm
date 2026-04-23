@@ -522,7 +522,7 @@ export default function AdminTodaysPlayPage() {
               <Button
                 onClick={handleGenerateExtras}
                 variant="outline"
-                className="w-full py-3 border-gray-700 text-gray-300 hover:text-white hover:border-gray-500 rounded-xl"
+                className="w-full py-3 border-purple-600 bg-purple-950/60 text-purple-200 hover:bg-purple-900/60 hover:text-white hover:border-purple-500 rounded-xl"
               >
                 <Sparkles size={15} className="mr-2" />
                 Generate Extras (Music · Podcast · Gaming)

@@ -551,7 +551,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               <span className="text-white text-[10px] mt-0.5">Now</span>
             </Link>
             <Link href="/play" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location.startsWith("/play") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-play">
-              <div className="h-[22px] flex items-center justify-center"><Dices size={20} className="text-white" strokeWidth={1.4} /></div>
+              <div className="h-[22px] flex items-center justify-center"><Dices size={23} className="text-white" strokeWidth={1.4} /></div>
               <span className="text-white text-[10px] mt-0.5">Play</span>
             </Link>
             <Link href="/my-library" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/my-library" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-library" onTouchStart={prefetchCollections} onMouseEnter={prefetchCollections}>
