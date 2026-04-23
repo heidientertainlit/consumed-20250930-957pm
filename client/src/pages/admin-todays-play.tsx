@@ -105,6 +105,25 @@ const EXTRA_SLOTS: SlotMeta[] = [
 
 const SLOT_METAS = [...PRIMARY_SLOTS, ...EXTRA_SLOTS];
 
+// ── Duplicate detection helpers ───────────────────────────────────────────────
+const STOPWORDS = new Set([
+  "who","what","when","where","which","how","the","a","an","in","of","did",
+  "does","was","is","are","were","has","had","have","for","on","at","to","by",
+  "do","with","from","that","this","these","those","and","or","but","year",
+  "first","name","many","much","played","won","created","wrote","directed",
+]);
+function normWords(title: string): string[] {
+  return title.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(
+    w => w.length > 2 && !STOPWORDS.has(w),
+  );
+}
+function titlesSimilar(a: string, b: string, threshold = 2): boolean {
+  if (a.toLowerCase().trim() === b.toLowerCase().trim()) return true;
+  const wa = new Set(normWords(a));
+  return normWords(b).filter(w => wa.has(w)).length >= threshold;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function typeMeta(draft: Draft): SlotMeta {
   if (draft.category === "Books") return PRIMARY_SLOTS[1];
   if (draft.category === "TV") return PRIMARY_SLOTS[2];
@@ -200,6 +219,31 @@ export default function AdminTodaysPlayPage() {
   });
 
   const scheduledDates = new Set(scheduled.map(s => s.date));
+
+  // Build duplicate map: draftId → description of the conflicting question
+  const duplicateMap = new Map<string, string>();
+  const existingQuestions: { title: string; date: string }[] = [
+    ...scheduled.flatMap(s => s.questions.map((q: any) => ({ title: q.title, date: s.date }))),
+    ...published.flatMap(p => p.questions.map((q: any) => ({ title: q.title, date: p.date }))),
+  ];
+  drafts.forEach((draft, i) => {
+    if (duplicateMap.has(draft.id)) return;
+    // Check against already-scheduled/published
+    for (const eq of existingQuestions) {
+      if (titlesSimilar(draft.title, eq.title)) {
+        duplicateMap.set(draft.id, `Already scheduled on ${new Date(eq.date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}: "${eq.title}"`);
+        return;
+      }
+    }
+    // Check against other drafts in this batch
+    for (let j = 0; j < drafts.length; j++) {
+      if (j === i) continue;
+      if (titlesSimilar(draft.title, drafts[j].title)) {
+        duplicateMap.set(draft.id, `Similar to another draft: "${drafts[j].title}"`);
+        return;
+      }
+    }
+  });
 
   function suggestDates() {
     // Only assign to drafts that don't already have a date pending
@@ -780,8 +824,9 @@ export default function AdminTodaysPlayPage() {
                     const pickedDate = dates[draft.id] || "";
                     const dateTaken = pickedDate ? scheduledDates.has(pickedDate) : false;
                     const dateSetCount = pickedDate ? (scheduled.find(s => s.date === pickedDate)?.questions.length ?? 0) : 0;
+                    const dupWarning = duplicateMap.get(draft.id);
                     return (
-                      <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+                      <div className={`bg-gray-900 border rounded-2xl overflow-hidden ${dupWarning ? "border-orange-500/40" : "border-gray-800"}`}>
                         <button
                           onClick={() => setExpandedId(expandedId === draft.id ? null : draft.id)}
                           className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-800/40 transition-colors"
@@ -791,6 +836,11 @@ export default function AdminTodaysPlayPage() {
                               {meta.icon} {meta.label}
                             </span>
                             <p className="text-sm text-white font-medium line-clamp-1 flex-1">{draft.title}</p>
+                            {dupWarning && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/30 flex-shrink-0">
+                                <AlertTriangle size={9} /> Dup
+                              </span>
+                            )}
                           </div>
                           {expandedId === draft.id ? <ChevronUp size={14} className="text-gray-400 flex-shrink-0 ml-2" /> : <ChevronDown size={14} className="text-gray-400 flex-shrink-0 ml-2" />}
                         </button>
@@ -798,6 +848,12 @@ export default function AdminTodaysPlayPage() {
                           <div className="px-4 pb-4 border-t border-gray-800 pt-3 space-y-3">
                             {!isEditing ? (
                               <>
+                                {dupWarning && (
+                                  <div className="flex items-start gap-1.5 bg-orange-500/10 border border-orange-500/30 rounded-lg px-3 py-2">
+                                    <AlertTriangle size={12} className="text-orange-400 flex-shrink-0 mt-px" />
+                                    <p className="text-xs text-orange-300 leading-snug">{dupWarning}</p>
+                                  </div>
+                                )}
                                 <div className="flex flex-wrap gap-1.5">
                                   {draft.options.map((opt, i) => (
                                     <span key={i} className={`text-xs px-2.5 py-1 rounded-full ${opt === draft.correct_answer ? "bg-teal-500/30 text-teal-200 border border-teal-500/40" : "bg-gray-800 text-gray-300"}`}>
