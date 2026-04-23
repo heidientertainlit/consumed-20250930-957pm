@@ -535,19 +535,52 @@ function TodaysPlayGame({
             // ── Combined done + share screen ──
             (() => {
               const ratio = doneScore.correct / doneScore.total;
-              const headline =
-                doneScore.correct === doneScore.total ? 'Untouchable.'
-                : ratio >= 0.66 ? 'Look at you go!'
-                : ratio >= 0.34 ? 'Solid round.'
-                : 'Tomorrow\u2019s yours.';
-              const subhead =
-                doneScore.correct === doneScore.total
-                  ? 'A perfect score. Time to flex.'
-                  : ratio >= 0.66
-                    ? 'Nice. Most folks didn\u2019t do that well.'
-                    : ratio >= 0.34
-                      ? 'Decent showing — try to top it tomorrow.'
-                      : 'It happens. Streak\u2019s still alive though.';
+
+              // Day-based seed so lines rotate daily but stay consistent within a day
+              const daySeed = parseInt(new Date().toISOString().split('T')[0].replace(/-/g, ''), 10) % 97;
+              const pick = <T,>(arr: T[]): T => arr[daySeed % arr.length];
+
+              // Category data from actual answers
+              const correctCats = questions.filter((_, i) => answers[i]?.correct).map(q => q.category).filter(Boolean);
+              const wrongCats = questions.filter((_, i) => answers[i] && !answers[i].correct).map(q => q.category).filter(Boolean);
+              const strongCat = correctCats[0] ?? null;
+              const weakCat = wrongCats[0] ?? null;
+
+              // Category name → friendly label
+              const catLabel = (c: string) => {
+                const map: Record<string, string> = { Movies: 'Film', Movie: 'Film', TV: 'TV', Television: 'TV', Music: 'Music', Books: 'Books', Book: 'Books', 'Pop Culture': 'Pop Culture', Sports: 'Sports', Games: 'Gaming', Gaming: 'Gaming', Podcasts: 'Podcasts' };
+                return map[c] || c;
+              };
+
+              // Perfect score
+              const perfectOptions: [string, string][] = [
+                ['Untouchable today. The feed knows it.', 'Perfect across every category. Screenshot-worthy.'],
+                ['Perfect. The algorithm is taking notes.', 'You didn\u2019t miss once. Come back tomorrow.'],
+                [`${doneScore.correct}/${doneScore.total}. Your Entertainment DNA just leveled up.`, 'That\u2019s the energy. Do it again tomorrow.'],
+                ...(strongCat ? [[`${catLabel(strongCat)} is your home. Everything else is a guest.`, 'And today, everyone behaved.'] as [string, string]] : []),
+              ];
+
+              // Good score (≥ 66%)
+              const goodOptions: [string, string][] = [
+                ...(strongCat && weakCat ? [[`Strong in ${catLabel(strongCat)}. ${catLabel(weakCat)} got you.`, 'One slip doesn\u2019t change the story.'] as [string, string]] : []),
+                ['Almost perfect. One answer away from dangerous.', 'Close enough to flex — sharp enough to come back.'],
+                [`${doneScore.correct}/${doneScore.total}. Close enough to be dangerous, not enough to be quiet about it.`, 'Build on this.'],
+                ...(weakCat ? [[`${catLabel(weakCat)} is your blind spot. You know it.`, 'Work on it. It\u2019s fixable.'] as [string, string]] : []),
+              ];
+
+              // Weak score (< 34%)
+              const weakOptions: [string, string][] = [
+                ['Today humbled you. Tomorrow\u2019s yours.', 'The streak is still breathing. Don\u2019t kill it.'],
+                ['The hard ones always hit different.', 'Knowing that is already half the battle.'],
+                [`${doneScore.correct}/${doneScore.total}. Respect the difficulty. Come back swinging.`, 'Nobody goes perfect every day.'],
+                ...(weakCat ? [[`${catLabel(weakCat)} let you down today.`, 'It won\u2019t next time.'] as [string, string]] : []),
+              ];
+
+              const [headline, subhead] =
+                doneScore.correct === doneScore.total ? pick(perfectOptions)
+                : ratio >= 0.5 ? pick(goodOptions)
+                : pick(weakOptions);
+
               const possessive = (() => {
                 const name = (username || 'Your').trim();
                 if (!username) return 'Your';
