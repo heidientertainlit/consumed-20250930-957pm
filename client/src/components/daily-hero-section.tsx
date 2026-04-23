@@ -922,7 +922,7 @@ function DailyCallOverlay({
   const [socialProof, setSocialProof] = useState<number | null>(null);
   const { toast } = useToast();
 
-  const BLUE_GRADIENT = 'linear-gradient(160deg,#1e3a8a 0%,#1e1b4b 100%)';
+  const BLUE_GRADIENT = 'linear-gradient(160deg,#1e40af 0%,#1d4ed8 45%,#1e3a8a 100%)';
 
   const handleSubmit = async () => {
     if (!selected || submitting) return;
@@ -1395,7 +1395,7 @@ export function DailyHeroSection() {
               onClick={() => setShowCallShare(true)}
               className="rounded-xl px-3 py-2.5 flex flex-col gap-1.5 text-left"
               style={{
-                background: 'linear-gradient(150deg,#1e3a8a 0%,#0d1a38 100%)',
+                background: 'linear-gradient(150deg,#1e40af 0%,#1e3a8a 100%)',
                 border: '1px solid rgba(59,130,246,0.25)',
               }}
             >
@@ -1524,7 +1524,7 @@ export function DailyHeroSection() {
               }}
               className={front ? frontPosClass : backPosClass}
               style={{
-                background: 'linear-gradient(160deg,#1e3a8a 0%,#1e1b4b 100%)',
+                background: 'linear-gradient(160deg,#1e40af 0%,#1d4ed8 45%,#1e3a8a 100%)',
                 ...(front ? frontPosStyle : backPosStyle),
               }}
             >
