@@ -1464,13 +1464,13 @@ export function DailyHeroSection() {
               <div className={`flex items-start justify-between ${front ? 'mb-4' : ''}`}>
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-1.5">
-                    <Gamepad2 size={front ? 14 : 13} className="text-cyan-200" />
-                    <span className={`${front ? 'text-[10px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-cyan-100/90`}>
+                    <Gamepad2 size={front ? 15 : 13} className="text-cyan-200" />
+                    <span className={`${front ? 'text-[13px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-cyan-100/90`}>
                       Today's Play
                     </span>
                   </div>
                   {front && (
-                    <p className="text-[10px] text-white/50 font-medium ml-0.5">Start here → Answer today's trivia</p>
+                    <p className="text-[12px] text-white/55 font-medium ml-0.5">Start here → Answer today's trivia</p>
                   )}
                 </div>
                 {playCompleted ? (
