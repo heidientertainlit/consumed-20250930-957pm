@@ -152,7 +152,7 @@ function ScoreShareCard({
           {/* ── Purple gradient header ── */}
           <div
             className="px-5 pt-5 pb-4"
-            style={{ background: type === 'play' ? 'linear-gradient(135deg,#1d4ed8 0%,#0284c7 55%,#0e7490 100%)' : 'linear-gradient(135deg,#1e3a8a 0%,#1e1b4b 100%)' }}
+            style={{ background: type === 'play' ? 'linear-gradient(135deg,#312e81 0%,#1d4ed8 40%,#0284c7 70%,#0e7490 100%)' : 'linear-gradient(135deg,#1e3a8a 0%,#1e1b4b 100%)' }}
           >
             <div className="flex items-start justify-between">
               {/* Logo */}
@@ -497,7 +497,7 @@ function TodaysPlayGame({
     }
   };
 
-  const PURPLE_GRADIENT = 'linear-gradient(160deg,#1d4ed8 0%,#0284c7 55%,#0e7490 100%)';
+  const PURPLE_GRADIENT = 'linear-gradient(160deg,#312e81 0%,#1d4ed8 35%,#0284c7 65%,#0e7490 100%)';
   const DIFFICULTY_PILL = [
     { label: 'Easy', bg: '#dcfce7', text: '#15803d' },
     { label: 'Medium', bg: '#fef3c7', text: '#a16207' },
@@ -1364,7 +1364,7 @@ export function DailyHeroSection() {
               onClick={() => setShowPlayShare(true)}
               className="rounded-xl px-3 py-2.5 flex flex-col gap-1.5 text-left"
               style={{
-                background: 'linear-gradient(150deg,#1e3a8a 0%,#1d4ed8 55%,#0369a1 100%)',
+                background: 'linear-gradient(150deg,#312e81 0%,#1e3a8a 40%,#0369a1 100%)',
                 border: '1px solid rgba(29,78,216,0.3)',
               }}
             >
@@ -1457,7 +1457,7 @@ export function DailyHeroSection() {
               }}
               className={front ? frontPosClass : backPosClass}
               style={{
-                background: 'linear-gradient(160deg,#1d4ed8 0%,#0284c7 55%,#0e7490 100%)',
+                background: 'linear-gradient(160deg,#312e81 0%,#1d4ed8 35%,#0284c7 65%,#0e7490 100%)',
                 ...(front ? frontPosStyle : backPosStyle),
               }}
             >
