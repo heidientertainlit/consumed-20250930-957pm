@@ -122,6 +122,32 @@ function titlesSimilar(a: string, b: string, threshold = 2): boolean {
   const wa = new Set(normWords(a));
   return normWords(b).filter(w => wa.has(w)).length >= threshold;
 }
+function computeDuplicateIds(
+  draftList: Draft[],
+  scheduledList: { questions: { title: string }[] }[],
+  publishedList: { questions: { title: string }[] }[],
+): string[] {
+  const existing = [
+    ...scheduledList.flatMap(s => s.questions),
+    ...publishedList.flatMap(p => p.questions),
+  ];
+  const toDelete: string[] = [];
+  const seenTitles: string[] = [];
+  for (const draft of draftList) {
+    let isDup = false;
+    for (const eq of existing) {
+      if (titlesSimilar(draft.title, eq.title)) { isDup = true; break; }
+    }
+    if (!isDup) {
+      for (const seen of seenTitles) {
+        if (titlesSimilar(draft.title, seen)) { isDup = true; break; }
+      }
+    }
+    if (isDup) toDelete.push(draft.id);
+    else seenTitles.push(draft.title);
+  }
+  return toDelete;
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 function typeMeta(draft: Draft): SlotMeta {
@@ -246,8 +272,9 @@ export default function AdminTodaysPlayPage() {
   });
 
   function suggestDates() {
-    // Only assign to drafts that don't already have a date pending
-    const unassigned = drafts.filter(d => !dates[d.id]);
+    // Only assign to drafts that don't already have a date pending and aren't duplicates
+    const dupIds = new Set(computeDuplicateIds(drafts, scheduled, published));
+    const unassigned = drafts.filter(d => !dates[d.id] && !dupIds.has(d.id));
     const movieDrafts = [...unassigned.filter(d => typeMeta(d).mediaType === "movie")];
     const bookDrafts  = [...unassigned.filter(d => typeMeta(d).mediaType === "book")];
     const tvDrafts    = [...unassigned.filter(d => typeMeta(d).mediaType === "tv")];
@@ -340,6 +367,14 @@ export default function AdminTodaysPlayPage() {
     toast({ title: `Reshuffled ${updated} question${updated !== 1 ? "s" : ""}`, description: "Correct answers moved to C or D positions." });
   }
 
+  async function purgeDuplicates(freshDrafts: Draft[]): Promise<number> {
+    const ids = computeDuplicateIds(freshDrafts, scheduled, published);
+    if (ids.length === 0) return 0;
+    await supabase.from("trivia_poll_drafts").delete().in("id", ids);
+    await refetchDrafts();
+    return ids.length;
+  }
+
   async function handleGenerate() {
     setGenStage("movie");
     let movieCount = 0, bookCount = 0, tvCount = 0;
@@ -354,12 +389,13 @@ export default function AdminTodaysPlayPage() {
       tvCount = r3.generated ?? 0;
       setGenStage("done");
 
+      const refetchResult = await refetchDrafts();
+      const removed = await purgeDuplicates(refetchResult.data ?? []);
       const total = movieCount + bookCount + tvCount;
       toast({
-        title: `Generated ${total} questions`,
+        title: `Generated ${total} questions${removed > 0 ? `, removed ${removed} duplicate${removed !== 1 ? "s" : ""}` : ""}`,
         description: `${movieCount} Movie · ${bookCount} Book · ${tvCount} TV — review in Drafts.`,
       });
-      await refetchDrafts();
       setTab("drafts");
     } catch (err: any) {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
@@ -381,12 +417,13 @@ export default function AdminTodaysPlayPage() {
       const r3 = await callGenerate(EXTRA_SLOTS[2], 6);
       gamingCount = r3.generated ?? 0;
       setExtrasStage("done");
+      const refetchResult = await refetchDrafts();
+      const removed = await purgeDuplicates(refetchResult.data ?? []);
       const total = musicCount + podcastCount + gamingCount;
       toast({
-        title: `Generated ${total} extra questions`,
+        title: `Generated ${total} extra questions${removed > 0 ? `, removed ${removed} duplicate${removed !== 1 ? "s" : ""}` : ""}`,
         description: `${musicCount} Music · ${podcastCount} Podcast · ${gamingCount} Gaming — review in Queue.`,
       });
-      await refetchDrafts();
       setTab("drafts");
     } catch (err: any) {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
@@ -766,15 +803,30 @@ export default function AdminTodaysPlayPage() {
             {/* Pending drafts */}
             {drafts.length > 0 && (
               <>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{drafts.length} Pending Questions</p>
-                  <button
-                    onClick={reshuffleAnswers}
-                    className="text-xs font-semibold text-orange-400 hover:text-orange-300 flex items-center gap-1.5 transition-colors"
-                  >
-                    <Shuffle size={12} />
-                    Reshuffle Answers
-                  </button>
+                  <div className="flex items-center gap-3">
+                    {duplicateMap.size > 0 && (
+                      <button
+                        onClick={async () => {
+                          const removed = await purgeDuplicates(drafts);
+                          if (removed > 0) toast({ title: `Removed ${removed} duplicate${removed !== 1 ? "s" : ""}` });
+                          else toast({ title: "No duplicates to remove" });
+                        }}
+                        className="text-xs font-semibold text-orange-400 hover:text-orange-300 flex items-center gap-1.5 transition-colors"
+                      >
+                        <X size={12} />
+                        Remove {duplicateMap.size} Duplicate{duplicateMap.size !== 1 ? "s" : ""}
+                      </button>
+                    )}
+                    <button
+                      onClick={reshuffleAnswers}
+                      className="text-xs font-semibold text-gray-500 hover:text-gray-300 flex items-center gap-1.5 transition-colors"
+                    >
+                      <Shuffle size={12} />
+                      Reshuffle Answers
+                    </button>
+                  </div>
                 </div>
 
                 {/* Step prompt — only shown when nothing has been grouped yet */}
