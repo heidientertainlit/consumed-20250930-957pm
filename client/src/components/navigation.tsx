@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation } from "wouter";
-import { Trophy, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home, Star, DoorOpen } from "lucide-react";
+import { Dices, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Library, Gamepad2, MessageSquarePlus, Home, Star, DoorOpen } from "lucide-react";
 import { FeedbackDialog } from "./feedback-dialog";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
@@ -551,7 +551,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               <span className="text-white text-[10px] mt-0.5">Now</span>
             </Link>
             <Link href="/play" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location.startsWith("/play") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-play">
-              <div className="h-[22px] flex items-center justify-center"><Trophy size={20} className="text-white" strokeWidth={1.4} /></div>
+              <div className="h-[22px] flex items-center justify-center"><Dices size={20} className="text-white" strokeWidth={1.4} /></div>
               <span className="text-white text-[10px] mt-0.5">Play</span>
             </Link>
             <Link href="/my-library" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/my-library" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-library" onTouchStart={prefetchCollections} onMouseEnter={prefetchCollections}>
