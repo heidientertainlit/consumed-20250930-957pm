@@ -202,13 +202,13 @@ export default function AdminTodaysPlayPage() {
   const scheduledDates = new Set(scheduled.map(s => s.date));
 
   function suggestDates() {
-    const movieDrafts = drafts.filter(d => typeMeta(d).mediaType === "movie");
-    const bookDrafts  = drafts.filter(d => typeMeta(d).mediaType === "book");
-    const tvDrafts    = drafts.filter(d => typeMeta(d).mediaType === "tv");
-    const extraDrafts = drafts.filter(d => !["movie", "book", "tv"].includes(typeMeta(d).mediaType));
+    const movieDrafts = [...drafts.filter(d => typeMeta(d).mediaType === "movie")];
+    const bookDrafts  = [...drafts.filter(d => typeMeta(d).mediaType === "book")];
+    const tvDrafts    = [...drafts.filter(d => typeMeta(d).mediaType === "tv")];
+    const extraDrafts = [...drafts.filter(d => !["movie", "book", "tv"].includes(typeMeta(d).mediaType))];
     const maxSets = Math.max(movieDrafts.length, bookDrafts.length, tvDrafts.length);
 
-    // Find sequential dates starting tomorrow that don't already have a full 3/3 primary set
+    // Find sequential dates starting tomorrow that don't already have 3 questions
     const fullDates = new Set(scheduled.filter(s => s.questions.length >= 3).map(s => s.date));
     const freeDates: string[] = [];
     const cursor = new Date();
@@ -220,20 +220,26 @@ export default function AdminTodaysPlayPage() {
     }
 
     const newDates: Record<string, string> = { ...dates };
+    let mi = 0, bi = 0, ti = 0, ei = 0;
 
-    // Assign primary slots (one per day)
-    for (let i = 0; i < freeDates.length; i++) {
-      if (movieDrafts[i]) newDates[movieDrafts[i].id] = freeDates[i];
-      if (bookDrafts[i])  newDates[bookDrafts[i].id]  = freeDates[i];
-      if (tvDrafts[i])    newDates[tvDrafts[i].id]    = freeDates[i];
-    }
+    for (let dayIdx = 0; dayIdx < freeDates.length; dayIdx++) {
+      const dateStr = freeDates[dayIdx];
+      // Every 3rd day (dayIdx 2, 5, 8…) swap one primary slot out for an extra
+      const useExtra = extraDrafts.length > 0 && ei < extraDrafts.length && dayIdx % 3 === 2;
 
-    // Distribute extras round-robin across the same days
-    const assignedDays = freeDates.slice(0, maxSets);
-    if (assignedDays.length > 0) {
-      extraDrafts.forEach((draft, i) => {
-        newDates[draft.id] = assignedDays[i % assignedDays.length];
-      });
+      if (useExtra) {
+        // Which primary to drop rotates: 0=movie, 1=book, 2=tv
+        const dropSlot = Math.floor(dayIdx / 3) % 3;
+        newDates[extraDrafts[ei++].id] = dateStr;
+        if (dropSlot !== 0 && movieDrafts[mi]) newDates[movieDrafts[mi++].id] = dateStr;
+        if (dropSlot !== 1 && bookDrafts[bi])  newDates[bookDrafts[bi++].id]  = dateStr;
+        if (dropSlot !== 2 && tvDrafts[ti])    newDates[tvDrafts[ti++].id]    = dateStr;
+      } else {
+        // Standard day: one of each primary
+        if (movieDrafts[mi]) newDates[movieDrafts[mi++].id] = dateStr;
+        if (bookDrafts[bi])  newDates[bookDrafts[bi++].id]  = dateStr;
+        if (tvDrafts[ti])    newDates[tvDrafts[ti++].id]    = dateStr;
+      }
     }
 
     setDates(newDates);
