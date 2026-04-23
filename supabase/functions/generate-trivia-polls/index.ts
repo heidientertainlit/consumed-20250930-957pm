@@ -347,6 +347,8 @@ CATEGORY ACCURACY RULES — these are strict, not suggestions:
 - If a "finish the lyric/line" question is about a song or theme song, it MUST be Music. If it's about dialogue from a movie, category is Movies. If it's about dialogue from a show, category is TV.
 - Never ask "From which book?" when the lyric/quote is from a song or movie.
 
+ANSWER POSITION RULE (trivia only): The correct answer must NOT always be the first option. Deliberately randomize which position (A/B/C/D) holds the correct answer across questions. Aim for an even spread — roughly equal numbers of questions where the correct answer is 1st, 2nd, 3rd, or 4th in the options array. Never put the correct answer in the same position for consecutive questions.
+
 Return ONLY a valid JSON array. Each item must have these exact fields:
 - content_type: "trivia" | "poll" | "featured_play" | "dna_moment"
 - title: the question text (compelling, concise)
@@ -403,6 +405,19 @@ Return ONLY the JSON array. No markdown, no explanation, no code blocks.`;
       return new Response(JSON.stringify({ error: 'GPT returned 0 items', raw: rawText.slice(0, 500) }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
+    }
+
+    // ── Shuffle trivia options server-side so correct answer is never always first ──
+    for (const item of items) {
+      if (item.correct_answer && Array.isArray(item.options) && item.options.length > 1) {
+        // Fisher-Yates shuffle
+        const opts = [...item.options];
+        for (let i = opts.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [opts[i], opts[j]] = [opts[j], opts[i]];
+        }
+        item.options = opts;
+      }
     }
 
     // ── Post-generation dedup: drop any item whose title too closely matches an existing one ──
