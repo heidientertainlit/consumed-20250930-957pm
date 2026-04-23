@@ -7,6 +7,14 @@ Consumed is a mobile-first platform designed to transform entertainment consumpt
 Preferred communication style: Simple, everyday language.
 - When user asks "give me the code to push to git", provide `git push origin main` command. User deploys from their own git repo.
 
+### Edge Function Deployment
+- **Deploy command** (from Replit — must use `--use-api` flag to avoid Docker DNS issues):
+  ```
+  npx supabase functions deploy <function-name> --project-ref mahpgcogwpawvviapqza --use-api
+  ```
+- Use a temporary console workflow to run this command — workflows have access to `SUPABASE_ACCESS_TOKEN` (the bash tool does not).
+- The `SUPABASE_ACCESS_TOKEN` is a **personal access token** from supabase.com → Account → Access Tokens (not a project API key).
+
 ### CRITICAL Rules
 - **NEVER PUBLISH / DEPLOY the app.** User handles deployment themselves. Do not suggest or trigger publishing under any circumstances.
 - **NEVER add, seed, or modify data in Supabase without explicit user approval first.** Always double-check with the user before inserting, updating, or seeding any content (trivia, polls, predictions, etc.) to the production database.
