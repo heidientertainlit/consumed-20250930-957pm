@@ -470,14 +470,9 @@ export default function PlayBingeBattle() {
           <button onClick={() => setLocation("/play")} className="flex items-center gap-1.5 text-white/60 text-sm mb-4">
             <ChevronLeft size={16} /> Play
           </button>
-          <div className="flex items-center gap-2.5 mb-1">
-            <div className="w-8 h-8 rounded-xl bg-green-500/20 flex items-center justify-center">
-              <Zap size={16} className="text-green-400" />
-            </div>
-            <h1 className="text-2xl font-bold text-white">Binge Battle</h1>
-          </div>
-          <p className="text-sm text-white/50 ml-10.5">
-            Pick the media, share the challenge via text, and race to finish first.
+          <h1 className="text-2xl font-bold text-white text-center mb-1">Binge Battle</h1>
+          <p className="text-sm text-white/50 text-center">
+            Compete against friends for who finished the book, movie, podcast, album or game first.
           </p>
         </div>
 

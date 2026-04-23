@@ -279,7 +279,7 @@ export default function PlayRanks() {
             <ChevronLeft size={20} />
           </button>
           <div className="flex flex-col items-center gap-4 pt-1">
-            <h1 className="text-2xl font-semibold text-white tracking-tight" data-testid="ranks-title">Ranks</h1>
+            <h1 className="text-2xl font-semibold text-white tracking-tight" data-testid="ranks-title">Debate The Rank</h1>
             <button
               onClick={() => setIsCreateRankOpen(true)}
               className="flex items-center gap-1.5 bg-gradient-to-r from-blue-500 to-green-400 hover:from-blue-600 hover:to-green-500 text-white rounded-full px-5 py-2 text-sm font-semibold shadow-lg"

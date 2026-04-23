@@ -25,6 +25,7 @@ interface Pool {
   category: string;
   playersThisWeek: number;
   rounds: Round[];
+  poolType: 'trivia' | 'poll' | 'prediction' | 'rank';
 }
 
 interface LeaderboardEntry {
@@ -51,6 +52,7 @@ const POOLS: Pool[] = [
     category: "Movies & TV",
     playersThisWeek: 1204,
     rounds: ROUNDS,
+    poolType: "trivia",
   },
   {
     id: "friends",
@@ -62,6 +64,7 @@ const POOLS: Pool[] = [
     category: "TV",
     playersThisWeek: 847,
     rounds: ROUNDS,
+    poolType: "trivia",
   },
 ];
 
@@ -272,6 +275,7 @@ export default function PlayPoolsPage() {
             category: p.category || "TV & Movies",
             playersThisWeek: 0,
             rounds: ROUNDS,
+            poolType: (p.pool_type || 'trivia') as Pool['poolType'],
           }));
           // Append any hardcoded pools not already in DB
           const hardcodedExtras = POOLS.filter(p => !dbShowTags.has(p.showTag));
@@ -306,8 +310,8 @@ export default function PlayPoolsPage() {
             <ChevronLeft size={14} className="text-white/60" />
           </button>
         </div>
-        <h1 className="text-white text-[28px] font-bold leading-tight">Pools</h1>
-        <p className="text-white/50 text-sm mt-1">Join the pool—compete with everyone or your friends</p>
+        <h1 className="text-white text-[28px] font-bold leading-tight text-center">Pools</h1>
+        <p className="text-white/50 text-sm mt-1 text-center">Play against friends or the world.</p>
       </div>
 
       {/* Pool List */}
@@ -343,7 +347,16 @@ export default function PlayPoolsPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-gray-900 text-[15px] font-bold leading-tight">{pool.title}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-gray-900 text-[15px] font-bold leading-tight">{pool.title}</p>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize shrink-0 ${
+                      pool.poolType === 'trivia' ? 'bg-blue-50 text-blue-600' :
+                      pool.poolType === 'poll' ? 'bg-violet-50 text-violet-600' :
+                      pool.poolType === 'prediction' ? 'bg-rose-50 text-rose-600' :
+                      pool.poolType === 'rank' ? 'bg-amber-50 text-amber-600' :
+                      'bg-gray-100 text-gray-500'
+                    }`}>{pool.poolType}</span>
+                  </div>
                   <p className="text-gray-400 text-xs mt-0.5">
                     {pool.rounds.length * pool.rounds[0].questionCount} questions · {pool.category}
                   </p>
