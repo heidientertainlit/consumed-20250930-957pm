@@ -51,7 +51,7 @@ export default function AdminDailyCallPage() {
         .from("trivia_poll_drafts")
         .select("id, title, options, category, featured_date, status, created_at")
         .eq("content_type", "featured_play")
-        .eq("status", "pending")
+        .in("status", ["draft", "pending"])
         .order("created_at", { ascending: false })
         .limit(60);
       return data || [];

@@ -98,7 +98,7 @@ export default function AdminTodaysPlayPage() {
         .from("trivia_poll_drafts")
         .select("id, title, options, correct_answer, category, media_type, featured_date, status, created_at")
         .eq("content_type", "trivia")
-        .eq("status", "pending")
+        .in("status", ["draft", "pending"])
         .order("created_at", { ascending: false })
         .limit(90);
       return data || [];
