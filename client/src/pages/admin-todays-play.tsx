@@ -126,6 +126,7 @@ export default function AdminTodaysPlayPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dates, setDates] = useState<Record<string, string>>({});
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [publishingGroup, setPublishingGroup] = useState<string | null>(null);
 
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -371,6 +372,47 @@ export default function AdminTodaysPlayPage() {
     await refetchDrafts();
   }
 
+  async function scheduleGroup(dateStr: string, groupDrafts: Draft[]) {
+    setPublishingGroup(dateStr);
+    let succeeded = 0;
+    for (const draft of groupDrafts) {
+      try {
+        const { data: { session: s } } = await supabase.auth.getSession();
+        const meta = typeMeta(draft);
+        const poolData = {
+          id: crypto.randomUUID(),
+          title: draft.title,
+          type: "trivia",
+          options: draft.options,
+          correct_answer: draft.correct_answer || null,
+          category: meta.categoryHint,
+          featured_date: dateStr,
+          status: "open",
+          origin_type: "consumed",
+          inline: true,
+          icon: "help-circle",
+          points_reward: 10,
+        };
+        const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${s?.access_token}`,
+            "apikey": supabaseAnonKey,
+          },
+          body: JSON.stringify({ action: "publish", poolData, draftId: draft.id }),
+        });
+        const result = await resp.json();
+        if (resp.ok && !result.error) succeeded++;
+      } catch { /* continue */ }
+    }
+    setPublishingGroup(null);
+    toast({ title: `Scheduled ${succeeded}/${groupDrafts.length} questions for ${dateStr}` });
+    await refetchDrafts();
+    await refetchScheduled();
+    queryClient.invalidateQueries({ queryKey: ["todays-play-scheduled"] });
+  }
+
   function startEdit(draft: Draft) {
     setEditingId(draft.id);
     setEditTitle(draft.title);
@@ -609,135 +651,158 @@ export default function AdminTodaysPlayPage() {
                   </div>
                 </div>
                 <p className="text-xs text-gray-600 -mt-2">Suggest Dates auto-fills one Movie + Book + TV + Pop Culture per day — all editable before scheduling.</p>
-                {drafts.map(draft => {
-                  const meta = typeMeta(draft);
-                  const isEditing = editingId === draft.id;
-                  const pickedDate = dates[draft.id] || "";
-                  const dateTaken = pickedDate ? scheduledDates.has(pickedDate) : false;
-                  const dateSetCount = pickedDate ? (scheduled.find(s => s.date === pickedDate)?.questions.length ?? 0) : 0;
+                {(() => {
+                  // Group drafts by assigned date
+                  const grouped: Record<string, Draft[]> = {};
+                  const ungrouped: Draft[] = [];
+                  drafts.forEach(d => {
+                    const ds = dates[d.id];
+                    if (ds) { if (!grouped[ds]) grouped[ds] = []; grouped[ds].push(d); }
+                    else ungrouped.push(d);
+                  });
+                  const sortedDates = Object.keys(grouped).sort();
+
+                  // Reusable question card (expanded/edit)
+                  const DraftCard = ({ draft, showDatePicker }: { draft: Draft; showDatePicker?: boolean }) => {
+                    const meta = typeMeta(draft);
+                    const isEditing = editingId === draft.id;
+                    const pickedDate = dates[draft.id] || "";
+                    const dateTaken = pickedDate ? scheduledDates.has(pickedDate) : false;
+                    const dateSetCount = pickedDate ? (scheduled.find(s => s.date === pickedDate)?.questions.length ?? 0) : 0;
+                    return (
+                      <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+                        <button
+                          onClick={() => setExpandedId(expandedId === draft.id ? null : draft.id)}
+                          className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-800/40 transition-colors"
+                        >
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${meta.pillClass}`}>
+                              {meta.icon} {meta.label}
+                            </span>
+                            <p className="text-sm text-white font-medium line-clamp-1 flex-1">{draft.title}</p>
+                          </div>
+                          {expandedId === draft.id ? <ChevronUp size={14} className="text-gray-400 flex-shrink-0 ml-2" /> : <ChevronDown size={14} className="text-gray-400 flex-shrink-0 ml-2" />}
+                        </button>
+                        {expandedId === draft.id && (
+                          <div className="px-4 pb-4 border-t border-gray-800 pt-3 space-y-3">
+                            {!isEditing ? (
+                              <>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {draft.options.map((opt, i) => (
+                                    <span key={i} className={`text-xs px-2.5 py-1 rounded-full ${opt === draft.correct_answer ? "bg-teal-500/30 text-teal-200 border border-teal-500/40" : "bg-gray-800 text-gray-300"}`}>
+                                      {opt === draft.correct_answer && <Check size={9} className="inline mr-0.5 mb-px" />}
+                                      {opt}
+                                    </span>
+                                  ))}
+                                </div>
+                                <button onClick={() => startEdit(draft)} className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1 transition-colors">
+                                  <Pencil size={11} /> Edit question
+                                </button>
+                              </>
+                            ) : (
+                              <div className="space-y-3">
+                                <Textarea value={editTitle} onChange={e => setEditTitle(e.target.value)} className="bg-black/30 border-white/10 text-white text-sm resize-none h-16" />
+                                <div className="space-y-1.5">
+                                  {editOptions.map((opt, i) => (
+                                    <div key={i} className="flex items-center gap-2">
+                                      <button onClick={() => setEditAnswer(opt)} className={`w-4 h-4 rounded-full border-2 flex-shrink-0 transition-all ${editAnswer === opt ? "border-teal-400 bg-teal-400" : "border-gray-600"}`} />
+                                      <Input value={opt} onChange={e => { const o = [...editOptions]; o[i] = e.target.value; setEditOptions(o); }} className="bg-black/30 border-white/10 text-white text-xs h-7" />
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button onClick={() => saveEdit(draft)} size="sm" className="bg-teal-600 hover:bg-teal-500 text-white flex-1"><Check size={12} className="mr-1" /> Save</Button>
+                                  <Button onClick={() => setEditingId(null)} size="sm" variant="ghost" className="text-gray-400">Cancel</Button>
+                                </div>
+                              </div>
+                            )}
+                            {showDatePicker && (
+                              <>
+                                <div className="flex items-center gap-2">
+                                  <CalendarDays size={14} className="text-gray-400 flex-shrink-0" />
+                                  <Input type="date" value={pickedDate} onChange={e => setDates(d => ({ ...d, [draft.id]: e.target.value }))} className={`bg-gray-800 border-gray-700 text-white h-8 text-sm flex-1 ${dateTaken ? "border-orange-500/50" : ""}`} />
+                                </div>
+                                {dateTaken && <div className="flex items-center gap-1.5 text-orange-400"><AlertTriangle size={11} /><p className="text-xs">{dateSetCount} question{dateSetCount !== 1 ? "s" : ""} already on {pickedDate}</p></div>}
+                                <div className="flex gap-2">
+                                  <Button onClick={() => publishDraft(draft)} disabled={publishingId === draft.id || !pickedDate} size="sm" className="bg-teal-600 hover:bg-teal-500 text-white font-semibold flex-1">
+                                    {publishingId === draft.id ? <Loader2 size={13} className="animate-spin mr-1" /> : <Send size={13} className="mr-1" />}
+                                    Schedule
+                                  </Button>
+                                  <Button onClick={() => deleteDraft(draft.id)} size="sm" variant="ghost" className="text-red-400 hover:text-red-300 hover:bg-red-500/10"><X size={13} /></Button>
+                                </div>
+                              </>
+                            )}
+                            {!showDatePicker && (
+                              <Button onClick={() => deleteDraft(draft.id)} size="sm" variant="ghost" className="text-red-400 hover:text-red-300 hover:bg-red-500/10 w-full justify-start"><X size={13} className="mr-1" /> Remove from group</Button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  };
 
                   return (
-                    <div key={draft.id} className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
-                      {/* Header row */}
-                      <button
-                        onClick={() => setExpandedId(expandedId === draft.id ? null : draft.id)}
-                        className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-800/40 transition-colors"
-                      >
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${meta.pillClass}`}>
-                            {meta.icon} {meta.label}
-                          </span>
-                          <p className="text-sm text-white font-medium line-clamp-1 flex-1">{draft.title}</p>
-                        </div>
-                        {expandedId === draft.id ? <ChevronUp size={14} className="text-gray-400 flex-shrink-0 ml-2" /> : <ChevronDown size={14} className="text-gray-400 flex-shrink-0 ml-2" />}
-                      </button>
-
-                      {expandedId === draft.id && (
-                        <div className="px-4 pb-4 border-t border-gray-800 pt-3 space-y-3">
-
-                          {/* View mode */}
-                          {!isEditing && (
-                            <>
-                              <div className="flex flex-wrap gap-1.5">
-                                {draft.options.map((opt, i) => (
-                                  <span
-                                    key={i}
-                                    className={`text-xs px-2.5 py-1 rounded-full ${opt === draft.correct_answer ? "bg-teal-500/30 text-teal-200 border border-teal-500/40" : "bg-gray-800 text-gray-300"}`}
-                                  >
-                                    {opt === draft.correct_answer && <Check size={9} className="inline mr-0.5 mb-px" />}
-                                    {opt}
-                                  </span>
-                                ))}
+                    <>
+                      {/* ── Day Groups ── */}
+                      {sortedDates.map(dateStr => {
+                        const group = grouped[dateStr];
+                        const isSchedulingGroup = publishingGroup === dateStr;
+                        const dateLabel = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' });
+                        const alreadyCount = scheduled.find(s => s.date === dateStr)?.questions.length ?? 0;
+                        return (
+                          <div key={dateStr} className="bg-gray-900/60 border border-teal-500/20 rounded-2xl overflow-hidden">
+                            {/* Day header */}
+                            <div className="flex items-center justify-between px-4 py-3 bg-teal-500/10 border-b border-teal-500/20">
+                              <div>
+                                <p className="text-sm font-bold text-teal-300">{dateLabel}</p>
+                                <p className="text-xs text-gray-500">{group.length} question{group.length !== 1 ? "s" : ""}{alreadyCount > 0 ? ` · ${alreadyCount} already on this date` : ""}</p>
                               </div>
-                              <button
-                                onClick={() => startEdit(draft)}
-                                className="text-xs text-gray-500 hover:text-gray-300 flex items-center gap-1 transition-colors"
-                              >
-                                <Pencil size={11} /> Edit question
-                              </button>
-                            </>
-                          )}
-
-                          {/* Edit mode */}
-                          {isEditing && (
-                            <div className="space-y-3">
-                              <Textarea
-                                value={editTitle}
-                                onChange={e => setEditTitle(e.target.value)}
-                                className="bg-black/30 border-white/10 text-white text-sm resize-none h-16"
-                              />
-                              <div className="space-y-1.5">
-                                {editOptions.map((opt, i) => (
-                                  <div key={i} className="flex items-center gap-2">
-                                    <button
-                                      onClick={() => setEditAnswer(opt)}
-                                      className={`w-4 h-4 rounded-full border-2 flex-shrink-0 transition-all ${editAnswer === opt ? "border-teal-400 bg-teal-400" : "border-gray-600"}`}
-                                    />
-                                    <Input
-                                      value={opt}
-                                      onChange={e => {
-                                        const o = [...editOptions];
-                                        o[i] = e.target.value;
-                                        setEditOptions(o);
-                                      }}
-                                      className="bg-black/30 border-white/10 text-white text-xs h-7"
-                                    />
-                                  </div>
-                                ))}
-                              </div>
-                              <div className="flex gap-2">
-                                <Button onClick={() => saveEdit(draft)} size="sm" className="bg-teal-600 hover:bg-teal-500 text-white flex-1">
-                                  <Check size={12} className="mr-1" /> Save
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="date"
+                                  value={dateStr}
+                                  onChange={e => {
+                                    const newDate = e.target.value;
+                                    if (!newDate) return;
+                                    setDates(d => {
+                                      const updated = { ...d };
+                                      group.forEach(dr => { updated[dr.id] = newDate; });
+                                      return updated;
+                                    });
+                                  }}
+                                  className="bg-gray-800 border-gray-700 text-white h-7 text-xs w-36"
+                                />
+                                <Button
+                                  onClick={() => scheduleGroup(dateStr, group)}
+                                  disabled={isSchedulingGroup}
+                                  size="sm"
+                                  className="bg-teal-600 hover:bg-teal-500 text-white font-bold whitespace-nowrap"
+                                >
+                                  {isSchedulingGroup ? <Loader2 size={13} className="animate-spin mr-1" /> : <Send size={13} className="mr-1" />}
+                                  Schedule Day
                                 </Button>
-                                <Button onClick={() => setEditingId(null)} size="sm" variant="ghost" className="text-gray-400">Cancel</Button>
                               </div>
                             </div>
-                          )}
-
-                          {/* Date picker */}
-                          <div className="flex items-center gap-2">
-                            <CalendarDays size={14} className="text-gray-400 flex-shrink-0" />
-                            <Input
-                              type="date"
-                              value={pickedDate}
-                              onChange={e => setDates(d => ({ ...d, [draft.id]: e.target.value }))}
-                              className={`bg-gray-800 border-gray-700 text-white h-8 text-sm flex-1 ${dateTaken ? "border-orange-500/50" : ""}`}
-                            />
-                          </div>
-                          {dateTaken && (
-                            <div className="flex items-center gap-1.5 text-orange-400">
-                              <AlertTriangle size={11} />
-                              <p className="text-xs">{dateSetCount} question{dateSetCount !== 1 ? "s" : ""} already scheduled for {pickedDate}</p>
+                            {/* Questions in group */}
+                            <div className="p-3 space-y-2">
+                              {group.map(draft => <DraftCard key={draft.id} draft={draft} showDatePicker={false} />)}
                             </div>
-                          )}
-
-                          {/* Actions */}
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={() => publishDraft(draft)}
-                              disabled={publishingId === draft.id || !pickedDate}
-                              size="sm"
-                              className="bg-teal-600 hover:bg-teal-500 text-white font-semibold flex-1"
-                            >
-                              {publishingId === draft.id
-                                ? <Loader2 size={13} className="animate-spin mr-1" />
-                                : <Send size={13} className="mr-1" />}
-                              Schedule
-                            </Button>
-                            <Button
-                              onClick={() => deleteDraft(draft.id)}
-                              size="sm"
-                              variant="ghost"
-                              className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                            >
-                              <X size={13} />
-                            </Button>
                           </div>
-                        </div>
+                        );
+                      })}
+
+                      {/* ── Ungrouped (no date assigned yet) ── */}
+                      {ungrouped.length > 0 && (
+                        <>
+                          {sortedDates.length > 0 && (
+                            <p className="text-xs text-gray-600 uppercase tracking-wider font-semibold pt-2">Unassigned questions</p>
+                          )}
+                          {ungrouped.map(draft => <DraftCard key={draft.id} draft={draft} showDatePicker={true} />)}
+                        </>
                       )}
-                    </div>
+                    </>
                   );
-                })}
+                })()}
               </>
             )}
 
