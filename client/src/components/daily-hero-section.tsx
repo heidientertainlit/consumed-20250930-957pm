@@ -1476,7 +1476,7 @@ export function DailyHeroSection() {
 
           const clampedDrag = isDragging ? Math.max(-90, Math.min(90, dragOffset * 0.45)) : 0;
           const frontPosStyle = {
-            transform: `rotate(-1.5deg) translateX(${clampedDrag}px)`,
+            transform: clampedDrag !== 0 ? `translateX(${clampedDrag}px)` : 'none',
             transformOrigin: 'top right' as const,
             zIndex: 10,
             boxShadow: '0 14px 36px rgba(0,0,0,0.7)',
