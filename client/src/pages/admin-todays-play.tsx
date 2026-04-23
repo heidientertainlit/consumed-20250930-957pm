@@ -130,6 +130,32 @@ export default function AdminTodaysPlayPage() {
 
   const scheduledDates = new Set(scheduled.map(s => s.date));
 
+  function suggestDates() {
+    const movieDrafts = drafts.filter(d => typeMeta(d).mediaType === "movie");
+    const bookDrafts  = drafts.filter(d => typeMeta(d).mediaType === "book");
+    const popDrafts   = drafts.filter(d => typeMeta(d).mediaType === "mixed");
+    const maxSets = Math.max(movieDrafts.length, bookDrafts.length, popDrafts.length);
+
+    // Find sequential dates starting tomorrow that don't already have a full 3/3 set
+    const fullDates = new Set(scheduled.filter(s => s.questions.length >= 3).map(s => s.date));
+    const freeDates: string[] = [];
+    const cursor = new Date();
+    cursor.setDate(cursor.getDate() + 1);
+    while (freeDates.length < maxSets && freeDates.length < 60) {
+      const ds = toLocalDateStr(cursor);
+      if (!fullDates.has(ds)) freeDates.push(ds);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    const newDates: Record<string, string> = { ...dates };
+    for (let i = 0; i < freeDates.length; i++) {
+      if (movieDrafts[i]) newDates[movieDrafts[i].id] = freeDates[i];
+      if (bookDrafts[i])  newDates[bookDrafts[i].id]  = freeDates[i];
+      if (popDrafts[i])   newDates[popDrafts[i].id]   = freeDates[i];
+    }
+    setDates(newDates);
+  }
+
   async function callGenerate(slot: SlotMeta) {
     const { data: { session: s } } = await supabase.auth.getSession();
     const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
@@ -383,7 +409,17 @@ export default function AdminTodaysPlayPage() {
             {/* Pending drafts */}
             {drafts.length > 0 && (
               <>
-                <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{drafts.length} Pending Questions</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{drafts.length} Pending Questions</p>
+                  <button
+                    onClick={suggestDates}
+                    className="text-xs font-semibold text-teal-400 hover:text-teal-300 flex items-center gap-1.5 transition-colors"
+                  >
+                    <CalendarDays size={12} />
+                    Suggest Dates
+                  </button>
+                </div>
+                <p className="text-xs text-gray-600 -mt-2">Suggest Dates auto-fills one Movie + Book + Pop Culture per day — all editable before scheduling.</p>
                 {drafts.map(draft => {
                   const meta = typeMeta(draft);
                   const isEditing = editingId === draft.id;
