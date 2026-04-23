@@ -5680,8 +5680,8 @@ export default function Feed() {
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-9 -mt-px">
-        <div className="max-w-4xl mx-auto px-4 pt-8">
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] pb-3 -mt-px">
+        <div className="max-w-4xl mx-auto px-4 pt-6">
           
           {/* Composer Trigger - dark hero zone */}
           <div>
