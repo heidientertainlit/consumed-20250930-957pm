@@ -1470,7 +1470,7 @@ export function DailyHeroSection() {
                     </span>
                   </div>
                   {front && (
-                    <p className="text-[12px] text-white/55 font-medium ml-0.5">Start here → Answer today's trivia</p>
+                    <p className="text-[12px] text-white/55 font-medium ml-0.5">Start here → Answer today's questions</p>
                   )}
                 </div>
                 {playCompleted ? (
