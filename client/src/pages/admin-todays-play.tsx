@@ -303,6 +303,7 @@ export default function AdminTodaysPlayPage() {
     const newDates: Record<string, string> = { ...dates };
     let mi = 0, bi = 0, ti = 0, ei = 0;
 
+    // Phase 1: assign primaries + sprinkle extras every 3rd day
     for (let dayIdx = 0; dayIdx < freeDates.length; dayIdx++) {
       const dateStr = freeDates[dayIdx];
       // Every 3rd day (dayIdx 2, 5, 8…) swap one primary slot out for an extra
@@ -320,6 +321,55 @@ export default function AdminTodaysPlayPage() {
         if (movieDrafts[mi]) newDates[movieDrafts[mi++].id] = dateStr;
         if (bookDrafts[bi])  newDates[bookDrafts[bi++].id]  = dateStr;
         if (tvDrafts[ti])    newDates[tvDrafts[ti++].id]    = dateStr;
+      }
+    }
+
+    // Phase 2: place any remaining extras into existing day groups (every 3rd group),
+    // replacing a primary from that group so the day still has exactly 3 questions.
+    if (ei < extraDrafts.length) {
+      // Tally how many drafts are pending per date (after Phase 1)
+      const countByDate: Record<string, number> = {};
+      Object.values(newDates).forEach(ds => { if (ds) countByDate[ds] = (countByDate[ds] ?? 0) + 1; });
+
+      // Candidate dates are those with exactly 3 primary drafts, sorted chronologically
+      const candidateDates = Object.entries(countByDate)
+        .filter(([, c]) => c === 3)
+        .map(([ds]) => ds)
+        .sort();
+
+      let slotIdx = 0;
+      for (const ds of candidateDates) {
+        if (ei >= extraDrafts.length) break;
+        // Only take every 3rd candidate date
+        if (slotIdx % 3 !== 2) { slotIdx++; continue; }
+
+        // Find a primary in this group to evict (rotating: movie → book → tv)
+        const dropType = ["movie", "book", "tv"][Math.floor(slotIdx / 3) % 3];
+        const evictId = Object.entries(newDates).find(([id, d]) => {
+          if (d !== ds) return false;
+          const dr = drafts.find(x => x.id === id);
+          return dr ? typeMeta(dr).mediaType === dropType : false;
+        })?.[0];
+        if (evictId) delete newDates[evictId];
+
+        newDates[extraDrafts[ei++].id] = ds;
+        slotIdx++;
+      }
+
+      // If extras still remain (not enough existing groups), give them new free dates
+      if (ei < extraDrafts.length) {
+        const assignedSet = new Set(Object.values(newDates).filter(Boolean));
+        const cur2 = new Date();
+        cur2.setDate(cur2.getDate() + 1);
+        while (ei < extraDrafts.length) {
+          const ds = toLocalDateStr(cur2);
+          if (!fullDates.has(ds) && !assignedSet.has(ds)) {
+            newDates[extraDrafts[ei++].id] = ds;
+            assignedSet.add(ds);
+          }
+          cur2.setDate(cur2.getDate() + 1);
+          if (cur2.getFullYear() > 2027) break;
+        }
       }
     }
 
