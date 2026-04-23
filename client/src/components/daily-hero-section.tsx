@@ -1263,6 +1263,7 @@ export function DailyHeroSection() {
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef(0);
+  const wasDragRef = useRef(false); // true if pointer moved enough to count as a swipe, not a click
 
   // Auto-promote Daily Call to front once Today's Play is completed
   useEffect(() => {
@@ -1626,14 +1627,20 @@ export function DailyHeroSection() {
           return (
             <div className="flex flex-col gap-2">
               <div
-                className="relative pr-1 pb-12 select-none"
+                className="relative pr-1 pb-12 select-none cursor-grab active:cursor-grabbing"
+                onClickCapture={(e) => {
+                  if (wasDragRef.current) { wasDragRef.current = false; e.stopPropagation(); e.preventDefault(); }
+                }}
                 onTouchStart={(e) => {
                   touchStartX.current = e.touches[0].clientX;
+                  wasDragRef.current = false;
                   setIsDragging(true);
                   setDragOffset(0);
                 }}
                 onTouchMove={(e) => {
-                  setDragOffset(e.touches[0].clientX - touchStartX.current);
+                  const delta = e.touches[0].clientX - touchStartX.current;
+                  if (Math.abs(delta) > 8) wasDragRef.current = true;
+                  setDragOffset(delta);
                 }}
                 onTouchEnd={() => {
                   const THRESHOLD = 48;
@@ -1641,6 +1648,34 @@ export function DailyHeroSection() {
                   else if (dragOffset > THRESHOLD && swipeIndex === 1) setSwipeIndex(0);
                   setDragOffset(0);
                   setIsDragging(false);
+                }}
+                onMouseDown={(e) => {
+                  touchStartX.current = e.clientX;
+                  wasDragRef.current = false;
+                  setIsDragging(true);
+                  setDragOffset(0);
+                }}
+                onMouseMove={(e) => {
+                  if (!isDragging) return;
+                  const delta = e.clientX - touchStartX.current;
+                  if (Math.abs(delta) > 8) wasDragRef.current = true;
+                  setDragOffset(delta);
+                }}
+                onMouseUp={() => {
+                  const THRESHOLD = 48;
+                  if (dragOffset < -THRESHOLD && swipeIndex === 0) setSwipeIndex(1);
+                  else if (dragOffset > THRESHOLD && swipeIndex === 1) setSwipeIndex(0);
+                  setDragOffset(0);
+                  setIsDragging(false);
+                }}
+                onMouseLeave={() => {
+                  if (isDragging) {
+                    const THRESHOLD = 48;
+                    if (dragOffset < -THRESHOLD && swipeIndex === 0) setSwipeIndex(1);
+                    else if (dragOffset > THRESHOLD && swipeIndex === 1) setSwipeIndex(0);
+                    setDragOffset(0);
+                    setIsDragging(false);
+                  }
                 }}
               >
                 {/* Render back first (absolute), then front (relative establishes height) */}
