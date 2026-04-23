@@ -17,6 +17,14 @@ Preferred communication style: Simple, everyday language.
 
 ### CRITICAL Rules
 - **NEVER PUBLISH / DEPLOY the app.** User handles deployment themselves. Do not suggest or trigger publishing under any circumstances.
+- **Security vulnerability notifications — always query first.** Before writing any RLS fix SQL, run these two queries in the Supabase SQL Editor to get the real schema and existing policies. NEVER guess which tables exist or what policies are already in place:
+  ```sql
+  -- Which tables have RLS disabled?
+  SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public' AND rowsecurity = false ORDER BY tablename;
+  -- What policies already exist?
+  SELECT tablename, policyname, cmd, qual, with_check FROM pg_policies WHERE schemaname = 'public' ORDER BY tablename, policyname;
+  ```
+  Only write the fix SQL after reviewing the actual results. `supabase_rls_fix.sql` in the project root is kept as the canonical fix file.
 - **NEVER add, seed, or modify data in Supabase without explicit user approval first.** Always double-check with the user before inserting, updating, or seeding any content (trivia, polls, predictions, etc.) to the production database.
 - All content data comes from user's spreadsheets - do not create fake/placeholder content.
 - **Room trivia/poll media type requirement**: When building or inserting trivia/polls for any room, always ensure `media_external_source`, `category`, and/or `show_tag` are set on the `prediction_pools` record so the `MediaTypePill` component (in pool-detail.tsx) can display the correct media type (TV / Movie / Music / Book). Do not insert records where all three fields are blank — the pill will fall back to "TV" as a default, which may be incorrect.
