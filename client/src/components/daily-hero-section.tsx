@@ -1431,8 +1431,8 @@ export function DailyHeroSection() {
           // Today's Play moves to the back peek slot showing its DONE state.
           const playOnFront = !playCompleted || callCompleted;
 
-          const frontPosClass = "relative w-full rounded-2xl p-5 flex flex-col justify-between min-h-[210px] border border-white/10 text-left active:scale-[0.99] transition-transform";
-          const backPosClass  = "absolute top-0 left-0 right-0 rounded-2xl p-4 flex flex-col justify-between min-h-[210px] border border-white/10 text-left active:scale-[0.99] transition-transform";
+          const frontPosClass = "relative w-full rounded-2xl p-5 flex flex-col justify-between min-h-[210px] text-left active:scale-[0.99] transition-transform";
+          const backPosClass  = "absolute top-0 left-0 right-0 rounded-2xl p-4 flex flex-col justify-between min-h-[210px] text-left active:scale-[0.99] transition-transform";
 
           const frontPosStyle = {
             transform: 'rotate(-1.5deg)',
