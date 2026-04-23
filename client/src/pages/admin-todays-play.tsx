@@ -66,6 +66,9 @@ const PRIMARY_SLOTS: SlotMeta[] = [
     icon: <Tv size={11} />,
     pillClass: "bg-amber-500/20 text-amber-300",
   },
+];
+
+const EXTRA_SLOTS: SlotMeta[] = [
   {
     mediaType: "mixed",
     focusTopic: "viral internet moments, celebrity news & tabloid drama (feuds, trials, controversies), fashion & consumer brand crazes (Stanley cups, Dupe culture, limited-edition drops), cultural mashup events (Barbenheimer, etc.), memes & phrases that defined a year, award show drama & moments, 'you had to be there' cultural events. IMPORTANT: only ask about things SO big that any casual pop culture fan would know the answer — no deep-cut niche knowledge. These are about The Conversation, not The Craft.",
@@ -74,9 +77,6 @@ const PRIMARY_SLOTS: SlotMeta[] = [
     icon: <Zap size={11} />,
     pillClass: "bg-purple-500/20 text-purple-300",
   },
-];
-
-const EXTRA_SLOTS: SlotMeta[] = [
   {
     mediaType: "music",
     focusTopic: "music artists, hit songs, albums, chart records, Grammy moments, music videos, iconic performances, band history",
@@ -108,10 +108,10 @@ const SLOT_METAS = [...PRIMARY_SLOTS, ...EXTRA_SLOTS];
 function typeMeta(draft: Draft): SlotMeta {
   if (draft.category === "Books") return PRIMARY_SLOTS[1];
   if (draft.category === "TV") return PRIMARY_SLOTS[2];
-  if (draft.category === "Pop Culture") return PRIMARY_SLOTS[3];
-  if (draft.category === "Music") return EXTRA_SLOTS[0];
-  if (draft.category === "Podcast") return EXTRA_SLOTS[1];
-  if (draft.category === "Gaming") return EXTRA_SLOTS[2];
+  if (draft.category === "Pop Culture") return EXTRA_SLOTS[0];
+  if (draft.category === "Music") return EXTRA_SLOTS[1];
+  if (draft.category === "Podcast") return EXTRA_SLOTS[2];
+  if (draft.category === "Gaming") return EXTRA_SLOTS[3];
   return PRIMARY_SLOTS[0];
 }
 
@@ -201,11 +201,10 @@ export default function AdminTodaysPlayPage() {
     const movieDrafts = drafts.filter(d => typeMeta(d).mediaType === "movie");
     const bookDrafts  = drafts.filter(d => typeMeta(d).mediaType === "book");
     const tvDrafts    = drafts.filter(d => typeMeta(d).mediaType === "tv");
-    const popDrafts   = drafts.filter(d => typeMeta(d).mediaType === "mixed");
-    const maxSets = Math.max(movieDrafts.length, bookDrafts.length, tvDrafts.length, popDrafts.length);
+    const maxSets = Math.max(movieDrafts.length, bookDrafts.length, tvDrafts.length);
 
-    // Find sequential dates starting tomorrow that don't already have a full 4/4 set
-    const fullDates = new Set(scheduled.filter(s => s.questions.length >= 4).map(s => s.date));
+    // Find sequential dates starting tomorrow that don't already have a full 3/3 set
+    const fullDates = new Set(scheduled.filter(s => s.questions.length >= 3).map(s => s.date));
     const freeDates: string[] = [];
     const cursor = new Date();
     cursor.setDate(cursor.getDate() + 1);
@@ -220,7 +219,6 @@ export default function AdminTodaysPlayPage() {
       if (movieDrafts[i]) newDates[movieDrafts[i].id] = freeDates[i];
       if (bookDrafts[i])  newDates[bookDrafts[i].id]  = freeDates[i];
       if (tvDrafts[i])    newDates[tvDrafts[i].id]    = freeDates[i];
-      if (popDrafts[i])   newDates[popDrafts[i].id]   = freeDates[i];
     }
     setDates(newDates);
   }
@@ -268,7 +266,7 @@ export default function AdminTodaysPlayPage() {
 
   async function handleGenerate() {
     setGenStage("movie");
-    let movieCount = 0, bookCount = 0, tvCount = 0, popCount = 0;
+    let movieCount = 0, bookCount = 0, tvCount = 0;
     try {
       const r1 = await callGenerate(PRIMARY_SLOTS[0]);
       movieCount = r1.generated ?? 0;
@@ -278,15 +276,12 @@ export default function AdminTodaysPlayPage() {
       setGenStage("tv");
       const r3 = await callGenerate(PRIMARY_SLOTS[2]);
       tvCount = r3.generated ?? 0;
-      setGenStage("pop");
-      const r4 = await callGenerate(PRIMARY_SLOTS[3]);
-      popCount = r4.generated ?? 0;
       setGenStage("done");
 
-      const total = movieCount + bookCount + tvCount + popCount;
+      const total = movieCount + bookCount + tvCount;
       toast({
         title: `Generated ${total} questions`,
-        description: `${movieCount} Movie · ${bookCount} Book · ${tvCount} TV · ${popCount} Pop Culture — review in Queue.`,
+        description: `${movieCount} Movie · ${bookCount} Book · ${tvCount} TV — review in Drafts.`,
       });
       await refetchDrafts();
       setTab("drafts");
@@ -433,7 +428,7 @@ export default function AdminTodaysPlayPage() {
   const generating = !["idle", "done"].includes(genStage);
   const generatingExtras = !["idle", "done"].includes(extrasStage);
 
-  const PRIMARY_STAGE_ORDER = ["movie", "book", "tv", "pop"];
+  const PRIMARY_STAGE_ORDER = ["movie", "book", "tv"];
   const EXTRA_STAGE_ORDER = ["music", "podcast", "gaming"];
 
   const STAGE_LABELS: Record<string, string> = {
@@ -457,7 +452,7 @@ export default function AdminTodaysPlayPage() {
           </button>
           <div>
             <h1 className="text-2xl font-bold text-white">Today's Play Generator</h1>
-            <p className="text-gray-400 text-sm mt-0.5">4-question trivia sets — movie, book, TV, pop culture</p>
+            <p className="text-gray-400 text-sm mt-0.5">3-question trivia sets — movie, book, TV</p>
           </div>
         </div>
 
@@ -607,8 +602,8 @@ export default function AdminTodaysPlayPage() {
                   {scheduled.map(({ date, questions }) => (
                     <div key={date} className="flex items-center justify-between">
                       <span className="text-sm text-gray-300">{date}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 4 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
-                        {questions.length}/4
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 3 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
+                        {questions.length}/3
                       </span>
                     </div>
                   ))}
@@ -648,7 +643,7 @@ export default function AdminTodaysPlayPage() {
                     <CalendarDays size={18} className="text-teal-400 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-teal-300">Ready to schedule?</p>
-                      <p className="text-xs text-gray-400 mt-0.5">Hit "Suggest Dates" and we'll group your questions into day sets — one Movie, Book, TV, and Pop Culture per day. Then one tap schedules the whole day.</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Hit "Suggest Dates" and we'll group your questions into day sets — one Movie, Book, and TV per day. Then one tap schedules the whole day.</p>
                     </div>
                     <button
                       onClick={suggestDates}
@@ -852,8 +847,8 @@ export default function AdminTodaysPlayPage() {
                   <div key={date} className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm font-bold text-white">{date}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 4 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
-                        {questions.length}/4
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${questions.length >= 3 ? "bg-teal-500/20 text-teal-300" : "bg-yellow-500/20 text-yellow-300"}`}>
+                        {questions.length}/3
                       </span>
                     </div>
                     <div className="space-y-1">
