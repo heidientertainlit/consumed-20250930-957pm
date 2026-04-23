@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, Sparkles, Loader2, Check, X, CalendarDays, Send,
   ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, Film, BookOpen, Zap, Pencil,
-  Tv, Music2, Headphones, Gamepad2, Shuffle,
+  Tv, Music2, Headphones, Gamepad2, Shuffle, Plus,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -127,6 +127,7 @@ export default function AdminTodaysPlayPage() {
   const [dates, setDates] = useState<Record<string, string>>({});
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [publishingGroup, setPublishingGroup] = useState<string | null>(null);
+  const [addingToDate, setAddingToDate] = useState<string | null>(null);
 
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -801,6 +802,46 @@ export default function AdminTodaysPlayPage() {
                             {/* Questions in group */}
                             <div className="p-3 space-y-2">
                               {group.map(draft => <DraftCard key={draft.id} draft={draft} showDatePicker={false} />)}
+
+                              {/* Add question to group */}
+                              {ungrouped.length > 0 && addingToDate !== dateStr && (
+                                <button
+                                  onClick={() => setAddingToDate(dateStr)}
+                                  className="w-full flex items-center justify-center gap-1.5 py-2 mt-1 rounded-xl border border-dashed border-gray-700 text-xs text-gray-500 hover:text-teal-400 hover:border-teal-500/40 transition-colors"
+                                >
+                                  <Plus size={12} /> Add question to this day
+                                </button>
+                              )}
+
+                              {/* Picker — shows ungrouped drafts to assign */}
+                              {addingToDate === dateStr && (
+                                <div className="border border-teal-500/30 rounded-xl bg-gray-900/80 overflow-hidden mt-1">
+                                  <div className="flex items-center justify-between px-3 py-2 border-b border-gray-800">
+                                    <p className="text-xs font-semibold text-teal-300">Pick a question to add</p>
+                                    <button onClick={() => setAddingToDate(null)} className="text-gray-500 hover:text-white transition-colors"><X size={13} /></button>
+                                  </div>
+                                  <div className="p-2 space-y-1 max-h-48 overflow-y-auto">
+                                    {ungrouped.map(ud => {
+                                      const um = typeMeta(ud);
+                                      return (
+                                        <button
+                                          key={ud.id}
+                                          onClick={() => {
+                                            setDates(d => ({ ...d, [ud.id]: dateStr }));
+                                            setAddingToDate(null);
+                                          }}
+                                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-800 text-left transition-colors"
+                                        >
+                                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${um.pillClass}`}>
+                                            {um.icon} {um.label}
+                                          </span>
+                                          <p className="text-xs text-gray-300 line-clamp-1 flex-1">{ud.title}</p>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           </div>
                         );
