@@ -3,13 +3,31 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "@/lib/auth";
-import { Loader2, Users, ListChecks, ChevronRight, Layers } from "lucide-react";
+import { Loader2, Users, ListChecks, ChevronRight, Layers, Star, Gamepad2 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const TOOLS = [
+  {
+    path: "/admin/daily-call",
+    icon: Star,
+    title: "Daily Call Generator",
+    description: "Generate speculative prediction-polls — trending hot takes and will-it-happen questions. One per day.",
+    color: "from-yellow-900/40 to-yellow-800/20 border-yellow-700/40",
+    iconColor: "text-yellow-400",
+    iconBg: "bg-yellow-900/50",
+  },
+  {
+    path: "/admin/todays-play",
+    icon: Gamepad2,
+    title: "Today's Play Generator",
+    description: "Generate 3-question trivia sets (movie + book + pop culture) scheduled per day for the Today's Play card.",
+    color: "from-teal-900/40 to-teal-800/20 border-teal-700/40",
+    iconColor: "text-teal-400",
+    iconBg: "bg-teal-900/50",
+  },
   {
     path: "/admin/personas",
     icon: Users,

@@ -1262,11 +1262,40 @@ export function DailyHeroSection() {
   const { data: questions = [] } = useQuery<TriviaQuestion[]>({
     queryKey: ['todays-play-questions'],
     queryFn: async () => {
+      const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+
+      // First: try to get today's scheduled set (featured_date = today)
+      const { data: todayData } = await supabase
+        .from('prediction_pools')
+        .select('id, title, options, correct_answer, category, points_reward')
+        .eq('type', 'trivia')
+        .eq('status', 'open')
+        .eq('featured_date', today)
+        .not('correct_answer', 'is', null)
+        .not('options', 'is', null)
+        .limit(3);
+
+      const todaySet = (todayData || []).filter((q: any) => Array.isArray(q.options) && q.options.length > 1);
+
+      // If we have a scheduled set for today, use it
+      if (todaySet.length >= 1) {
+        return todaySet.map((q: any) => ({
+          id: q.id,
+          title: q.title,
+          options: q.options as string[],
+          correct_answer: q.correct_answer as string,
+          category: q.category || 'General',
+          points_reward: q.points_reward || 10,
+        }));
+      }
+
+      // Fallback: most recent trivia questions with no featured_date (legacy content)
       const { data, error } = await supabase
         .from('prediction_pools')
         .select('id, title, options, correct_answer, category, points_reward')
         .eq('type', 'trivia')
         .eq('status', 'open')
+        .is('featured_date', null)
         .not('correct_answer', 'is', null)
         .not('options', 'is', null)
         .order('created_at', { ascending: false })

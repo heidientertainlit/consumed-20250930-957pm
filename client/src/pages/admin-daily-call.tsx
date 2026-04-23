@@ -1,0 +1,316 @@
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createClient } from "@supabase/supabase-js";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  ArrowLeft, Sparkles, Loader2, Check, X, CalendarDays, ChevronDown, ChevronUp, Send,
+} from "lucide-react";
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+type Draft = {
+  id: string;
+  title: string;
+  options: string[];
+  category: string;
+  featured_date: string | null;
+  status: string;
+  created_at: string;
+};
+
+function toLocalDateStr(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export default function AdminDailyCallPage() {
+  const { user, session } = useAuth();
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const [tab, setTab] = useState<"generate" | "queue">("generate");
+  const [generating, setGenerating] = useState(false);
+  const [topic, setTopic] = useState("");
+  const [count, setCount] = useState(14);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [dates, setDates] = useState<Record<string, string>>({});
+
+  const { data: drafts = [], isLoading } = useQuery<Draft[]>({
+    queryKey: ["daily-call-drafts"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("trivia_poll_drafts")
+        .select("id, title, options, category, featured_date, status, created_at")
+        .eq("content_type", "featured_play")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(60);
+      return data || [];
+    },
+  });
+
+  const { data: upcoming = [] } = useQuery<any[]>({
+    queryKey: ["daily-call-upcoming"],
+    queryFn: async () => {
+      const today = toLocalDateStr(new Date());
+      const { data } = await supabase
+        .from("prediction_pools")
+        .select("id, title, featured_date, options")
+        .eq("type", "predict")
+        .gte("featured_date", today)
+        .order("featured_date", { ascending: true })
+        .limit(30);
+      return data || [];
+    },
+  });
+
+  async function handleGenerate() {
+    setGenerating(true);
+    try {
+      const { data: { session: s } } = await supabase.auth.getSession();
+      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${s?.access_token}`,
+          "apikey": supabaseAnonKey,
+        },
+        body: JSON.stringify({
+          contentType: "featured_play",
+          count,
+          mediaType: "mixed",
+          focusTopic: topic || "hot entertainment takes, trending drama, cultural moments",
+          useTrending: true,
+        }),
+      });
+      const result = await resp.json();
+      if (!resp.ok || !result.success) throw new Error(result.error || "Generation failed");
+      toast({ title: `Generated ${result.generated} Daily Calls`, description: "Review them in the Queue tab." });
+      queryClient.invalidateQueries({ queryKey: ["daily-call-drafts"] });
+      setTab("queue");
+    } catch (err: any) {
+      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function publishDraft(draft: Draft) {
+    const dateStr = dates[draft.id];
+    if (!dateStr) {
+      toast({ title: "Pick a date first", variant: "destructive" });
+      return;
+    }
+    setPublishingId(draft.id);
+    try {
+      const { data: { session: s } } = await supabase.auth.getSession();
+      const poolData = {
+        id: crypto.randomUUID(),
+        title: draft.title,
+        type: "predict",
+        options: draft.options,
+        correct_answer: null,
+        category: draft.category || "Pop Culture",
+        featured_date: dateStr,
+        status: "open",
+        origin_type: "consumed",
+        inline: false,
+        icon: "⭐",
+        points_reward: 10,
+      };
+      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${s?.access_token}` },
+        body: JSON.stringify({ action: "publish", poolData, draftId: draft.id }),
+      });
+      const result = await resp.json();
+      if (!resp.ok || result.error) throw new Error(result.error || "Publish failed");
+      toast({ title: "Published!", description: `Daily Call scheduled for ${dateStr}` });
+      queryClient.invalidateQueries({ queryKey: ["daily-call-drafts"] });
+      queryClient.invalidateQueries({ queryKey: ["daily-call-upcoming"] });
+    } catch (err: any) {
+      toast({ title: "Publish failed", description: err.message, variant: "destructive" });
+    } finally {
+      setPublishingId(null);
+    }
+  }
+
+  async function deleteDraft(id: string) {
+    await supabase.from("trivia_poll_drafts").delete().eq("id", id);
+    queryClient.invalidateQueries({ queryKey: ["daily-call-drafts"] });
+  }
+
+  const nextFreeDate = (() => {
+    if (upcoming.length === 0) return toLocalDateStr(new Date());
+    const last = upcoming[upcoming.length - 1].featured_date;
+    const d = new Date(last + "T12:00:00");
+    d.setDate(d.getDate() + 1);
+    return toLocalDateStr(d);
+  })();
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white">
+      <div className="max-w-2xl mx-auto px-4 py-8">
+
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8">
+          <button onClick={() => setLocation("/admin")} className="text-gray-400 hover:text-white transition-colors">
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Daily Call Generator</h1>
+            <p className="text-gray-400 text-sm mt-0.5">Predictive / opinion polls — one per day</p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 bg-gray-900 rounded-xl p-1">
+          {(["generate", "queue"] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium capitalize transition-all ${tab === t ? "bg-yellow-500/20 text-yellow-300" : "text-gray-400 hover:text-gray-200"}`}
+            >
+              {t === "queue" ? `Queue (${drafts.length} pending)` : "Generate"}
+            </button>
+          ))}
+        </div>
+
+        {tab === "generate" && (
+          <div className="space-y-5">
+            <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+              <p className="text-xs font-semibold uppercase tracking-wider text-yellow-400 mb-4">Generate Daily Calls</p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-300 mb-1.5 block">Topic / Vibe (optional)</label>
+                  <Textarea
+                    value={topic}
+                    onChange={e => setTopic(e.target.value)}
+                    placeholder="e.g. reality TV drama, Oscar predictions, streaming wars..."
+                    className="bg-gray-800 border-gray-700 text-white resize-none h-20 text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Leave blank for mixed trending entertainment takes</p>
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-300 mb-1.5 block">Number to generate</label>
+                  <div className="flex gap-2">
+                    {[7, 14, 21, 30].map(n => (
+                      <button
+                        key={n}
+                        onClick={() => setCount(n)}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${count === n ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/40" : "bg-gray-800 text-gray-400 border border-gray-700 hover:text-gray-200"}`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">{count} questions = ~{count} days of Daily Calls</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Upcoming schedule preview */}
+            {upcoming.length > 0 && (
+              <div className="bg-gray-900 rounded-2xl p-5 border border-gray-800">
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Already Scheduled ({upcoming.length})</p>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {upcoming.map(u => (
+                    <div key={u.id} className="flex items-center justify-between py-1.5">
+                      <p className="text-sm text-gray-200 line-clamp-1 flex-1 mr-3">{u.title}</p>
+                      <span className="text-xs text-yellow-400 font-medium flex-shrink-0">{u.featured_date}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-3">Next free slot: <span className="text-yellow-400 font-medium">{nextFreeDate}</span></p>
+              </div>
+            )}
+
+            <Button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-xl text-base"
+            >
+              {generating ? <><Loader2 size={18} className="animate-spin mr-2" /> Generating...</> : <><Sparkles size={18} className="mr-2" /> Generate {count} Daily Calls</>}
+            </Button>
+          </div>
+        )}
+
+        {tab === "queue" && (
+          <div className="space-y-3">
+            {isLoading && <div className="text-center py-8"><Loader2 size={20} className="animate-spin text-gray-400 mx-auto" /></div>}
+            {!isLoading && drafts.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                <p className="font-medium">No pending drafts</p>
+                <p className="text-sm mt-1">Generate some Daily Calls first</p>
+              </div>
+            )}
+            {drafts.map(draft => (
+              <div key={draft.id} className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+                <button
+                  onClick={() => setExpandedId(expandedId === draft.id ? null : draft.id)}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-800/40 transition-colors"
+                >
+                  <p className="text-sm text-white font-medium line-clamp-2 flex-1 mr-3">{draft.title}</p>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-[10px] font-semibold uppercase text-yellow-400 bg-yellow-500/10 px-2 py-0.5 rounded-full">Daily Call</span>
+                    {expandedId === draft.id ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+                  </div>
+                </button>
+
+                {expandedId === draft.id && (
+                  <div className="px-4 pb-4 border-t border-gray-800 pt-3 space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      {draft.options.map((opt, i) => (
+                        <span key={i} className="bg-gray-800 text-gray-300 text-sm px-3 py-1 rounded-full">{opt}</span>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <CalendarDays size={14} className="text-gray-400" />
+                      <Input
+                        type="date"
+                        value={dates[draft.id] || ""}
+                        onChange={e => setDates(d => ({ ...d, [draft.id]: e.target.value }))}
+                        className="bg-gray-800 border-gray-700 text-white h-8 text-sm flex-1"
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => publishDraft(draft)}
+                        disabled={publishingId === draft.id || !dates[draft.id]}
+                        size="sm"
+                        className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold flex-1"
+                      >
+                        {publishingId === draft.id ? <Loader2 size={14} className="animate-spin mr-1" /> : <Send size={14} className="mr-1" />}
+                        Schedule
+                      </Button>
+                      <Button
+                        onClick={() => deleteDraft(draft.id)}
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      >
+                        <X size={14} />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
