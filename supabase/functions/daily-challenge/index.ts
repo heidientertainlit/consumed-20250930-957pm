@@ -177,6 +177,14 @@ serve(async (req) => {
           });
         }
 
+        const streakMilestones = [
+          { days: 3, points: 25 },
+          { days: 7, points: 75 },
+          { days: 14, points: 150 },
+          { days: 30, points: 500 },
+        ];
+        let bonusPoints = 0;
+
         if (existing) {
           const lastLogin = existing.last_login;
           if (lastLogin === todayDate) {
@@ -184,11 +192,14 @@ serve(async (req) => {
             return new Response(JSON.stringify({
               currentStreak: existing.current_streak,
               longestStreak: existing.longest_streak,
+              bonusPoints: 0,
               alreadyUpdated: true
             }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
           } else if (lastLogin === yesterdayDate) {
             currentStreak = (existing.current_streak || 0) + 1;
             longestStreak = Math.max(currentStreak, existing.longest_streak || 1);
+            const milestone = streakMilestones.find(m => m.days === currentStreak);
+            bonusPoints = milestone?.points || 0;
           } else {
             currentStreak = 1;
             longestStreak = existing.longest_streak || 1;
@@ -207,7 +218,21 @@ serve(async (req) => {
           });
         }
 
-        return new Response(JSON.stringify({ currentStreak, longestStreak }), {
+        // Award bonus points for streak milestones
+        if (bonusPoints > 0) {
+          const { data: currentUser } = await supabaseAdmin
+            .from('users').select('points').eq('id', user.id).single();
+          if (currentUser) {
+            await supabaseAdmin.from('users')
+              .update({ points: (currentUser.points || 0) + bonusPoints })
+              .eq('id', user.id);
+          }
+        }
+
+        const milestoneDays = [3, 7, 14, 30];
+        const nextMilestone = milestoneDays.find(m => m > currentStreak) || 30;
+
+        return new Response(JSON.stringify({ currentStreak, longestStreak, bonusPoints, nextMilestone }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       } catch (e) {
