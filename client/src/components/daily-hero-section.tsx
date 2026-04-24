@@ -39,11 +39,21 @@ type PlayScore = { correct: number; total: number; totalPoints: number };
 const DIFFICULTY = ['Easy', 'Medium', 'Hard'] as const;
 const DIFFICULTY_COLOR = ['#4ade80', '#facc15', '#f87171'] as const;
 
-const getTodayPlayKey = () =>
-  `todays-play-${new Date().toISOString().split('T')[0]}`;
+// Read user ID synchronously from Supabase's auth token so useState lazy inits are user-scoped
+const getStoredUserId = (): string => {
+  try {
+    const raw = localStorage.getItem('sb-mahpgcogwpawvviapqza-auth-token');
+    if (!raw) return 'anon';
+    const parsed = JSON.parse(raw);
+    return parsed?.user?.id ?? parsed?.[0]?.user?.id ?? 'anon';
+  } catch { return 'anon'; }
+};
 
-const getDailyCallKey = () =>
-  `daily-call-fallback-${new Date().toISOString().split('T')[0]}`;
+const getTodayPlayKey = (userId?: string) =>
+  `todays-play-${new Date().toISOString().split('T')[0]}-${userId ?? getStoredUserId()}`;
+
+const getDailyCallKey = (userId?: string) =>
+  `daily-call-fallback-${new Date().toISOString().split('T')[0]}-${userId ?? getStoredUserId()}`;
 
 // Truncate text to N words then "…"
 function truncateWords(text: string, maxChars = 28): string {
@@ -131,7 +141,7 @@ function ScoreShareCard({
           {/* ── Purple gradient header ── */}
           <div
             className="px-5 pt-5 pb-4"
-            style={{ background: type === 'play' ? 'linear-gradient(135deg,#312e81 0%,#1d4ed8 40%,#0284c7 70%,#0e7490 100%)' : 'linear-gradient(135deg,#1e3a8a 0%,#1e1b4b 100%)' }}
+            style={{ background: type === 'play' ? 'linear-gradient(135deg,#1e40af 0%,#2563eb 35%,#0ea5e9 75%,#38bdf8 100%)' : 'linear-gradient(135deg,#1e3a8a 0%,#1e1b4b 100%)' }}
           >
             <div className="flex items-start justify-between">
               {/* Logo */}
@@ -508,7 +518,7 @@ function TodaysPlayGame({
         total: questions.length,
         totalPoints: allAnswers.reduce((s, a) => s + a.points, 0),
       };
-      localStorage.setItem(getTodayPlayKey(), JSON.stringify({
+      localStorage.setItem(getTodayPlayKey(session?.user?.id), JSON.stringify({
         completed: true,
         date: new Date().toISOString().split('T')[0],
         score,
@@ -1074,7 +1084,7 @@ function DailyCallOverlay({
       });
       const data = await resp.json();
       if (data.error && !data.error.includes('Already')) throw new Error(data.error);
-      localStorage.setItem(getDailyCallKey(), JSON.stringify({ completed: true, result: { userAnswer: selected } }));
+      localStorage.setItem(getDailyCallKey(user?.id), JSON.stringify({ completed: true, result: { userAnswer: selected } }));
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
 
       // Fetch how many other players picked the same option (social proof)
@@ -1396,6 +1406,37 @@ export function DailyHeroSection() {
   const touchStartX = useRef(0);
   const wasDragRef = useRef(false); // true if pointer moved enough to count as a swipe, not a click
   const wheelCooldown = useRef(false); // debounce trackpad wheel swipes
+
+  // Re-sync play/call state when the logged-in user changes (so switching accounts clears stale state)
+  useEffect(() => {
+    if (!user?.id) return;
+    const today = new Date().toISOString().split('T')[0];
+    try {
+      const ps = localStorage.getItem(getTodayPlayKey(user.id));
+      if (ps) {
+        const d = JSON.parse(ps);
+        if (d.completed && d.date === today) {
+          setPlayScore(d.score ?? null);
+          setPlayAnswers(d.answers ?? null);
+          setPlayCompleted(true);
+        } else {
+          setPlayScore(null); setPlayAnswers(null); setPlayCompleted(false);
+        }
+      } else {
+        setPlayScore(null); setPlayAnswers(null); setPlayCompleted(false);
+      }
+    } catch { /* ignore */ }
+    try {
+      const cs = localStorage.getItem(getDailyCallKey(user.id));
+      if (cs) {
+        const d = JSON.parse(cs);
+        setCallCompleted(d.completed ?? false);
+        setCallAnswer(d.result?.userAnswer ?? null);
+      } else {
+        setCallCompleted(false); setCallAnswer(null);
+      }
+    } catch { /* ignore */ }
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-promote Daily Call to front once Today's Play is completed
   useEffect(() => {
