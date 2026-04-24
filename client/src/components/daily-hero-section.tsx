@@ -72,6 +72,7 @@ function ScoreShareCard({
   streak,
   userId,
   answers,
+  username,
   onClose,
 }: {
   open: boolean;
@@ -82,6 +83,7 @@ function ScoreShareCard({
   streak?: number | null;
   userId?: string;
   answers?: { correct: boolean; category?: string }[];
+  username?: string | null;
   onClose: () => void;
 }) {
   const { toast } = useToast();
@@ -150,34 +152,7 @@ function ScoreShareCard({
 
             {type === 'play' && playScore ? (
               <>
-                {/* Score row */}
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-0.5">My Entertainment Score</p>
-                    <div className="flex items-end gap-1 leading-none">
-                      <span className="text-[56px] font-black text-gray-900 leading-none">{playScore.correct}</span>
-                      <span className="text-[28px] font-bold text-gray-300 leading-none mb-1">/{playScore.total}</span>
-                    </div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mt-0.5">Correct</p>
-                  </div>
-                  {streak && streak > 0 ? (
-                    <div
-                      className="rounded-2xl px-3 py-2 flex flex-col items-center gap-0.5 min-w-[68px]"
-                      style={{ background: '#f5f0ff', border: '1px solid #e9d5ff' }}
-                    >
-                      <div className="flex items-center gap-1">
-                        <Flame size={16} className="text-orange-500" fill="currentColor" />
-                        <span className="text-[22px] font-black text-gray-900 leading-none">{streak}</span>
-                      </div>
-                      <p className="text-[8px] font-bold uppercase tracking-wider text-purple-600">Day Streak</p>
-                    </div>
-                  ) : null}
-                </div>
-
-                {/* Divider */}
-                <div className="h-px bg-gray-100 mb-3" />
-
-                {/* Per-question category chips */}
+                {/* DNA copy — same logic as done screen */}
                 {(() => {
                   const CAT_EMOJI: Record<string, string> = {
                     Movies: '🎬', Movie: '🎬',
@@ -188,63 +163,123 @@ function ScoreShareCard({
                     Sports: '🏆',
                     Games: '🎮', Gaming: '🎮',
                     Podcasts: '🎙️', Podcast: '🎙️',
-                    General: '🎯',
                   };
-                  const qCount = playScore.total;
+                  const ratio = playScore.correct / playScore.total;
+                  const daySeed = parseInt(new Date().toISOString().split('T')[0].replace(/-/g, ''), 10) % 97;
+                  const pick = <T,>(arr: T[]): T => arr[daySeed % arr.length];
+
+                  const correctCats = (answers || []).filter(a => a.correct).map(a => a.category).filter(Boolean) as string[];
+                  const wrongCats = (answers || []).filter(a => !a.correct).map(a => a.category).filter(Boolean) as string[];
+                  const strongCat = correctCats[0] ?? null;
+                  const weakCat = wrongCats[0] ?? null;
+
+                  const perfectHeadlines: [string, string][] = [
+                    ['Perfect. You\u2019ve got elite entertainment instincts.', 'Added to your Entertainment DNA.'],
+                    ['Untouchable today.', 'Your Entertainment DNA just got stronger.'],
+                    [`${playScore.correct}/${playScore.total}. Every category. Not easy.`, 'Added to your Entertainment DNA.'],
+                  ];
+                  const goodHeadlines: [string, string][] = [
+                    ...(strongCat && weakCat ? [[`Strong in ${strongCat}. ${weakCat} got you.`, 'Your Entertainment DNA is building.'] as [string, string]] : []),
+                    ['Almost perfect. One away from dangerous.', 'Your Entertainment DNA just got stronger.'],
+                    [`${playScore.correct}/${playScore.total}. Close enough to flex.`, 'Keep building your Entertainment DNA.'],
+                  ];
+                  const weakHeadlines: [string, string][] = [
+                    ['Today humbled you. Tomorrow\u2019s yours.', 'Every play builds your Entertainment DNA.'],
+                    ['The hard ones hit different.', 'Come back and strengthen your DNA.'],
+                  ];
+
+                  const [headline, subhead] =
+                    playScore.correct === playScore.total ? pick(perfectHeadlines)
+                    : ratio >= 0.5 ? pick(goodHeadlines)
+                    : pick(weakHeadlines);
+
+                  const insightLine = (() => {
+                    if (playScore.correct === playScore.total) return pick([
+                      'Strong across everything. No weak spots today.',
+                      'Balanced taste. That\u2019s rare.',
+                      'Perfect across the board. Most people don\u2019t pull that off.',
+                    ]);
+                    if (strongCat && weakCat && strongCat !== weakCat)
+                      return `Strong in ${strongCat}. ${weakCat} got you.`;
+                    if (weakCat) return `${weakCat} tripped you up \u2014 worth a revisit.`;
+                    return null;
+                  })();
+
+                  const tomorrowLine = pick([
+                    'Think you can do it again tomorrow?',
+                    'Let\u2019s see if you can stay perfect.',
+                    'Tomorrow might not be this easy.',
+                  ]);
+
                   return (
-                    <div className={`grid gap-2 mb-3`} style={{ gridTemplateColumns: `repeat(${qCount}, 1fr)` }}>
-                      {Array.from({ length: qCount }).map((_, i) => {
-                        const correct = answers?.[i]?.correct ?? (i < playScore.correct);
-                        const cat = answers?.[i]?.category || 'General';
-                        const emoji = CAT_EMOJI[cat] || '🎯';
-                        return (
-                          <div
-                            key={i}
-                            className="flex flex-col items-center gap-1.5 py-2.5 rounded-2xl"
-                            style={{
-                              background: correct ? '#f0fdf4' : '#fff1f2',
-                              border: `1px solid ${correct ? '#bbf7d0' : '#fecdd3'}`,
-                            }}
-                          >
+                    <div className="flex flex-col items-center text-center">
+                      {/* Headline */}
+                      <h2 className="text-[17px] font-black text-gray-900 leading-tight mb-0.5">{headline}</h2>
+                      <p className="text-[12px] text-purple-600 font-semibold mb-3 leading-snug">{subhead}</p>
+
+                      {/* Big score */}
+                      <div className="flex items-baseline gap-1.5 mb-4">
+                        <span className="text-[52px] font-black leading-none text-gray-900">{playScore.correct}</span>
+                        <span className="text-[24px] font-bold text-gray-300">/{playScore.total}</span>
+                      </div>
+
+                      {/* Per-question category chips */}
+                      <div className="flex gap-2 mb-2 flex-wrap justify-center">
+                        {Array.from({ length: playScore.total }).map((_, i) => {
+                          const correct = answers?.[i]?.correct ?? (i < playScore.correct);
+                          const rawCat = answers?.[i]?.category;
+                          const cat = rawCat && rawCat !== 'General' ? rawCat : null;
+                          const emoji = cat ? (CAT_EMOJI[cat] || '🎯') : (correct ? '✅' : '❌');
+                          return (
                             <div
-                              className="w-8 h-8 rounded-xl flex items-center justify-center text-lg"
-                              style={{ background: correct ? '#dcfce7' : '#ffe4e6' }}
+                              key={i}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-bold"
+                              style={{
+                                background: correct ? '#f0fdf4' : '#fff1f2',
+                                color: correct ? '#16a34a' : '#dc2626',
+                                border: `1px solid ${correct ? '#bbf7d0' : '#fecdd3'}`,
+                              }}
                             >
-                              {emoji}
+                              <span>{emoji}</span>
+                              {cat && <span>{cat}</span>}
                             </div>
-                            <p
-                              className="text-[9px] font-bold uppercase tracking-wider text-center leading-tight px-0.5"
-                              style={{ color: correct ? '#16a34a' : '#dc2626' }}
-                            >
-                              {cat}
-                            </p>
-                            {correct
-                              ? <CheckCircle size={12} className="text-green-500" />
-                              : <XCircle size={12} className="text-red-500" />}
+                          );
+                        })}
+                      </div>
+
+                      {/* Insight line */}
+                      {insightLine && (
+                        <p className="text-[11px] text-gray-500 font-medium mb-3 leading-snug">{insightLine}</p>
+                      )}
+
+                      {/* Points + streak */}
+                      <div className="flex items-center gap-3 text-[11px] text-gray-500 font-medium mb-3">
+                        {playScore.totalPoints > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Zap size={11} className="text-purple-600" fill="currentColor" />
+                            <span><span className="font-bold text-gray-900">+{playScore.totalPoints}</span> pts — climbing the leaderboard</span>
                           </div>
-                        );
-                      })}
+                        )}
+                        {streak && streak > 0 && (
+                          <>
+                            {playScore.totalPoints > 0 && <span className="w-px h-3 bg-gray-200" />}
+                            <div className="flex items-center gap-1">
+                              <Flame size={11} className="text-orange-500 fill-orange-500" />
+                              <span>
+                                {streak === 1
+                                  ? <><span className="font-bold text-gray-900">🔥</span> streak started</>
+                                  : <><span className="font-bold text-gray-900">🔥 {streak}-day</span> streak</>}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Tomorrow tension */}
+                      <p className="text-[11px] text-purple-500 font-semibold leading-snug">{tomorrowLine}</p>
                     </div>
                   );
                 })()}
-
-                {/* Divider */}
-                <div className="h-px bg-gray-100 mb-3" />
-
-                {/* Category icons */}
-                <div className="grid grid-cols-6 gap-1.5 mb-4">
-                  {CATEGORIES.map(({ label, Icon }) => (
-                    <div key={label} className="flex flex-col items-center gap-1">
-                      <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center"
-                        style={{ background: '#f3f0ff' }}
-                      >
-                        <Icon size={16} className="text-purple-600" />
-                      </div>
-                      <p className="text-[7px] font-bold uppercase tracking-wide text-gray-400">{label}</p>
-                    </div>
-                  ))}
-                </div>
               </>
             ) : (
               /* Daily Call body */
@@ -285,7 +320,7 @@ function ScoreShareCard({
 
             {/* Footer tagline */}
             <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-              <p className="text-[10px] font-semibold text-purple-600">Rate · Predict · Play · @consumedapp</p>
+              <p className="text-[10px] font-semibold text-purple-600">Play · Connect · Discover · @consumedapp</p>
               <p className="text-[10px] font-semibold text-gray-400">consumed.app</p>
             </div>
             <p className="text-[9px] text-gray-300 mt-0.5">where entertainment gets played</p>
@@ -1832,6 +1867,7 @@ export function DailyHeroSection() {
         answers={playAnswers ?? undefined}
         streak={streak}
         userId={user?.id}
+        username={username ?? null}
         onClose={() => setShowPlayShare(false)}
       />
       <ScoreShareCard
