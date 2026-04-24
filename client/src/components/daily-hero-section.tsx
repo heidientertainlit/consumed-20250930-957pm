@@ -150,7 +150,7 @@ function ScoreShareCard({
           </div>
 
           {/* ── White body ── */}
-          <div className="bg-white px-6 pt-10 pb-10">
+          <div className="bg-white px-6 pt-12 pb-12">
 
             {type === 'play' && playScore ? (
               <>
@@ -216,6 +216,11 @@ function ScoreShareCard({
                   return (
                     <div className="flex flex-col items-center text-center gap-4">
 
+                      {/* Display name */}
+                      {username && (
+                        <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">{username}</p>
+                      )}
+
                       {/* Headline block */}
                       <div>
                         <h2 className="text-[15px] font-black text-gray-900 leading-snug mb-1">{headline}</h2>
@@ -259,6 +264,9 @@ function ScoreShareCard({
                           );
                         })}
                       </div>
+
+                      {/* Everyone's playing line */}
+                      <p className="text-[11px] font-semibold text-gray-400 leading-snug">Everyone's playing. Where do you rank?</p>
 
                       {/* Insight line */}
                       {insightLine && (
