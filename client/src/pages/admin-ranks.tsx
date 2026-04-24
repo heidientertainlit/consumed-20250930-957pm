@@ -42,6 +42,11 @@ interface RankItem {
   mediaType: string;
 }
 
+interface RankIdea {
+  title: string;
+  description: string;
+}
+
 interface ExistingRank {
   id: string;
   title: string;
@@ -75,7 +80,11 @@ export default function AdminRanksPage() {
   const [newItemTitle, setNewItemTitle] = useState("");
   const [newItemCreator, setNewItemCreator] = useState("");
 
-  // AI generation
+  // AI idea suggestions (step 1)
+  const [ideasGenerating, setIdeasGenerating] = useState(false);
+  const [suggestedIdeas, setSuggestedIdeas] = useState<RankIdea[]>([]);
+
+  // AI item generation (step 2)
   const [aiGenerating, setAiGenerating] = useState(false);
 
   // Publish
@@ -162,6 +171,50 @@ export default function AdminRanksPage() {
       [next[index], next[target]] = [next[target], next[index]];
       return next;
     });
+  }
+
+  async function handleSuggestIdeas() {
+    setIdeasGenerating(true);
+    setSuggestedIdeas([]);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const catLabel = CATEGORIES.find((c) => c.value === category)?.label || category;
+      const prompt = `You are helping create "Debate the Rank" content for an entertainment platform. Generate 6 compelling, opinionated rank ideas for the ${catLabel} category. Each should be a title that sparks debate (e.g. "Best 90s Movies", "Most Overrated TV Shows of All Time", "GOAT Hip-Hop Albums"). Return a JSON array of exactly 6 objects with keys "title" (string, catchy and debate-worthy) and "description" (string, 1 sentence max explaining the rank). Only return the JSON array, no other text.`;
+
+      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+          apikey: supabaseAnonKey,
+        },
+        body: JSON.stringify({ action: "ai_rank_ideas", prompt }),
+      });
+
+      const raw = await resp.json();
+      let ideas: RankIdea[] = [];
+      try {
+        const content = raw?.content || raw?.result || raw?.ideas || raw;
+        if (typeof content === "string") {
+          const match = content.match(/\[[\s\S]*\]/);
+          if (match) ideas = JSON.parse(match[0]);
+        } else if (Array.isArray(content)) {
+          ideas = content;
+        }
+      } catch {
+        // ignore parse error
+      }
+
+      if (ideas.length > 0) {
+        setSuggestedIdeas(ideas.slice(0, 6));
+      } else {
+        toast({ title: "Couldn't generate ideas", description: "Try again or enter your own title.", variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "AI suggestion failed", description: err.message, variant: "destructive" });
+    } finally {
+      setIdeasGenerating(false);
+    }
   }
 
   async function handleAiGenerate() {
@@ -348,6 +401,49 @@ export default function AdminRanksPage() {
             {/* Step 1: Setup */}
             {step === "setup" && (
               <div className="space-y-5">
+
+                {/* AI Suggest Ideas */}
+                <div className="bg-gray-900/60 border border-purple-500/20 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-white">Need inspiration?</p>
+                      <p className="text-xs text-gray-400 mt-0.5">AI will suggest rank ideas for the selected category</p>
+                    </div>
+                    <button
+                      onClick={() => { setSuggestedIdeas([]); handleSuggestIdeas(); }}
+                      disabled={ideasGenerating}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/40 text-purple-300 text-xs font-semibold transition-all disabled:opacity-50 flex-shrink-0"
+                    >
+                      {ideasGenerating ? (
+                        <><Loader2 size={13} className="animate-spin" /> Thinking…</>
+                      ) : (
+                        <><Sparkles size={13} /> Suggest Ideas</>
+                      )}
+                    </button>
+                  </div>
+
+                  {suggestedIdeas.length > 0 && (
+                    <div className="grid grid-cols-1 gap-2">
+                      {suggestedIdeas.map((idea, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            setTitle(idea.title);
+                            setDescription(idea.description);
+                            setSuggestedIdeas([]);
+                          }}
+                          className="text-left px-3 py-2.5 rounded-xl bg-gray-800 hover:bg-purple-600/20 border border-gray-700 hover:border-purple-500/50 transition-all group"
+                        >
+                          <p className="text-white text-sm font-medium group-hover:text-purple-200 transition-colors">{idea.title}</p>
+                          {idea.description && (
+                            <p className="text-gray-500 text-xs mt-0.5 group-hover:text-gray-400">{idea.description}</p>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-300 mb-2">Rank Title *</label>
                   <Input
@@ -375,7 +471,7 @@ export default function AdminRanksPage() {
                     {CATEGORIES.map((cat) => (
                       <button
                         key={cat.value}
-                        onClick={() => setCategory(cat.value)}
+                        onClick={() => { setCategory(cat.value); setSuggestedIdeas([]); }}
                         className={`py-2.5 px-3 rounded-xl border text-sm font-medium transition-all flex flex-col items-center gap-1 ${
                           category === cat.value
                             ? "bg-purple-600/20 border-purple-500 text-purple-300"
