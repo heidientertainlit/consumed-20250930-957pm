@@ -36,8 +36,6 @@ type DailyCallData = {
 
 type PlayScore = { correct: number; total: number; totalPoints: number };
 
-const DIFFICULTY = ['Easy', 'Medium', 'Hard'] as const;
-const DIFFICULTY_COLOR = ['#4ade80', '#facc15', '#f87171'] as const;
 
 // Read user ID synchronously from Supabase's auth token so useState lazy inits are user-scoped
 const getStoredUserId = (): string => {
@@ -545,11 +543,6 @@ function TodaysPlayGame({
   };
 
   const PURPLE_GRADIENT = 'linear-gradient(160deg,#312e81 0%,#1d4ed8 35%,#0284c7 65%,#0e7490 100%)';
-  const DIFFICULTY_PILL = [
-    { label: 'Easy', bg: '#dcfce7', text: '#15803d' },
-    { label: 'Medium', bg: '#fef3c7', text: '#a16207' },
-    { label: 'Hard', bg: '#fee2e2', text: '#b91c1c' },
-  ];
 
   return createPortal(
     <div className="fixed inset-0 z-[190] flex items-end">
@@ -843,7 +836,6 @@ function TodaysPlayGame({
                   const isActive = i === qIndex;
                   const isPast = i < qIndex;
                   const isFuture = i > qIndex;
-                  const diff = DIFFICULTY_PILL[i] ?? DIFFICULTY_PILL[2];
                   const pastAnswer = answers[i];
 
                   // ── Active card (expanded) ──
@@ -865,12 +857,6 @@ function TodaysPlayGame({
                               <span className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">
                                 {qq.category}
                               </span>
-                            </div>
-                            <div
-                              className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
-                              style={{ background: diff.bg, color: diff.text }}
-                            >
-                              {diff.label}
                             </div>
                           </div>
 

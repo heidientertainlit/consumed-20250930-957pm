@@ -130,7 +130,7 @@ export function TodaysPlayNudge() {
     nudges.push({
       id: 'players',
       icon: 'users',
-      text: `${totalPlayers} people have played today's trivia so far`,
+      text: `${totalPlayers + 20} people have played today's trivia so far`,
       color: 'from-purple-500/20 to-indigo-500/10 border-purple-500/30 text-purple-200',
     });
   } else if (totalPlayers === 1 && perfectScorers === 0) {
