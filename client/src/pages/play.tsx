@@ -10,8 +10,8 @@ const gameModes = [
     label: "Trivia",
     description: "Think you know it? Prove it.",
     icon: Brain,
-    color: "bg-blue-50 border-blue-100",
-    iconColor: "text-blue-500",
+    color: "bg-purple-50 border-purple-100",
+    iconColor: "text-purple-600",
     href: "/play/trivia",
   },
   {
@@ -19,8 +19,8 @@ const gameModes = [
     label: "Cast Your Vote",
     description: "Pick your side. See who agrees.",
     icon: Vote,
-    color: "bg-violet-50 border-violet-100",
-    iconColor: "text-violet-500",
+    color: "bg-blue-50 border-blue-100",
+    iconColor: "text-blue-500",
     href: "/play/polls",
   },
   {

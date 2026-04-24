@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card } from '@/components/ui/card';
-import { Vote, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
+import { Vote, ChevronLeft, ChevronRight, CheckCircle, SquareCheckBig } from 'lucide-react';
 import Navigation from '@/components/navigation';
 import ConsumptionTracker from '@/components/consumption-tracker';
 import { queryClient } from '@/lib/queryClient';
@@ -247,7 +247,8 @@ export default function PlayPollsPage() {
                       {/* Card header — matches trivia style */}
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-violet-100 text-violet-700 tracking-wide shrink-0">
+                          <SquareCheckBig size={14} className="text-blue-500 shrink-0" />
+                          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 tracking-wide shrink-0">
                             {label}
                           </span>
                           <p className="text-sm font-semibold text-gray-900">Cast Your Vote</p>
