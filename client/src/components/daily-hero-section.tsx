@@ -150,7 +150,7 @@ function ScoreShareCard({
           </div>
 
           {/* ── White body ── */}
-          <div className="bg-white px-6 pt-12 pb-12">
+          <div className="bg-white px-6 pt-7 pb-12">
 
             {type === 'play' && playScore ? (
               <>
