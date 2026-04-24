@@ -46,6 +46,10 @@ author = "agent"
 task = "workflow.run"
 args = "Start application"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Deploy: daily-challenge"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -54,6 +58,17 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Deploy: daily-challenge"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx supabase functions deploy daily-challenge --project-ref mahpgcogwpawvviapqza --use-api"
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [agent]
 integrations = ["javascript_openai:1.0.0", "javascript_supabase:1.0.0"]
