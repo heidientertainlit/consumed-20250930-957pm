@@ -72,6 +72,7 @@ function ScoreShareCard({
   streak,
   userId,
   answers,
+  questions,
   username,
   onClose,
 }: {
@@ -83,6 +84,7 @@ function ScoreShareCard({
   streak?: number | null;
   userId?: string;
   answers?: { correct: boolean; category?: string }[];
+  questions?: { category?: string | null }[];
   username?: string | null;
   onClose: () => void;
 }) {
@@ -230,7 +232,7 @@ function ScoreShareCard({
                       <div className="flex gap-2 flex-wrap justify-center">
                         {Array.from({ length: playScore.total }).map((_, i) => {
                           const correct = answers?.[i]?.correct ?? (i < playScore.correct);
-                          const rawCat = answers?.[i]?.category;
+                          const rawCat = answers?.[i]?.category || questions?.[i]?.category;
                           const cat = rawCat && rawCat !== 'General' ? rawCat : null;
                           const emoji = cat ? (CAT_EMOJI[cat] || '🎯') : null;
                           const label = cat || `Q${i + 1}`;
@@ -1881,6 +1883,7 @@ export function DailyHeroSection() {
         type="play"
         playScore={playScore}
         answers={playAnswers ?? undefined}
+        questions={questions}
         streak={streak}
         userId={user?.id}
         username={username ?? null}
