@@ -837,6 +837,12 @@ function TodaysPlayGame({
                   const isPast = i < qIndex;
                   const isFuture = i > qIndex;
                   const pastAnswer = answers[i];
+                  const DIFF_MAP: Record<string, { text: string; label: string }> = {
+                    easy:   { text: '#16a34a', label: 'Easy' },
+                    medium: { text: '#d97706', label: 'Medium' },
+                    hard:   { text: '#dc2626', label: 'Hard' },
+                  };
+                  const diff = DIFF_MAP[(qq as any).difficulty?.toLowerCase?.() ?? ''] ?? { text: '#9ca3af', label: (qq as any).difficulty ?? '' };
 
                   // ── Active card (expanded) ──
                   if (isActive) {

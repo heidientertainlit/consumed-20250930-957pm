@@ -25,7 +25,7 @@ export const modules: ModuleMap = {
   "./components/mockups/post-cards/NoPosterCard.tsx": () => import("../components/mockups/post-cards/NoPosterCard.tsx"),
   "./components/mockups/post-cards/SmallPosterCard.tsx": () => import("../components/mockups/post-cards/SmallPosterCard.tsx"),
   "./components/mockups/room-feed/RoomFeedSection.tsx": () => import("../components/mockups/room-feed/RoomFeedSection.tsx"),
+  "./components/mockups/trivia-rating/TriviaCard.tsx": () => import("../components/mockups/trivia-rating/TriviaCard.tsx"),
   "./components/mockups/todays-play/AccordionStack.tsx": () => import("../components/mockups/todays-play/AccordionStack.tsx"),
-  "./components/mockups/todays-play/PreviewStack.tsx": () => import("../components/mockups/todays-play/PreviewStack.tsx"),
-  "./components/mockups/trivia-rating/TriviaCard.tsx": () => import("../components/mockups/trivia-rating/TriviaCard.tsx")
+  "./components/mockups/todays-play/PreviewStack.tsx": () => import("../components/mockups/todays-play/PreviewStack.tsx")
 };
