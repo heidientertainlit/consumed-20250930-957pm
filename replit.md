@@ -101,6 +101,7 @@ All changes are styling/layout only. No voting logic, point systems, interaction
 - Discover Page: AI-powered recommendations and trending content.
 - Analytics Dashboard: Admin dashboard (`/admin`) for engagement, retention, activation, partnership, and behavioral analytics.
 - **Admin Content Creation (PLANNED)**: Admin tool for creating trivia and polls at `/admin`. Includes AI-assisted generation and assignment of `prediction_pools` to rooms or the main feed, with `partner_tag` functionality.
+- **Debate the Rank Builder** (`/admin/ranks`): Admin tool to create platform-owned (`origin_type: 'consumed'`) ranked lists. Three-step flow: Setup (title, description, category, size) → Add Items (manual entry with up/down reorder + AI generate button) → Preview & Publish. Manage tab lists all published consumed ranks with delete option. Published ranks appear in the Debate the Rank carousel immediately.
 
 ### System Design Choices
 - Database Schema: Strict naming conventions and synced dev/prod environments.

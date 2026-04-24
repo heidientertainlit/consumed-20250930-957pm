@@ -21,6 +21,7 @@ import AdminPage from "@/pages/admin";
 import AdminPersonasPage from "@/pages/admin-personas";
 import AdminTriviaPage from "@/pages/admin-trivia";
 import AdminPoolsPage from "@/pages/admin-pools";
+import AdminRanksPage from "@/pages/admin-ranks";
 import AdminDailyCallPage from "@/pages/admin-daily-call";
 import AdminTodaysPlayPage from "@/pages/admin-todays-play";
 import Feed from "@/pages/feed";
@@ -584,6 +585,12 @@ function Router() {
           <Route path="/admin/trivia-polls">
             <ProtectedRoute>
               <AdminTriviaPage />
+            </ProtectedRoute>
+          </Route>
+
+          <Route path="/admin/ranks">
+            <ProtectedRoute>
+              <AdminRanksPage />
             </ProtectedRoute>
           </Route>
 
