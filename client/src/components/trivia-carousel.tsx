@@ -66,6 +66,15 @@ interface TriviaCarouselProps {
   challengesOnly?: boolean;
 }
 
+const STREAK_MILESTONES = [
+  { at: 3,  message: "Hat trick.",                                    sub: "Three in a row. You're on one." },
+  { at: 5,  message: "Your entertainment instincts are no joke.",     sub: "Five correct. Keep that energy." },
+  { at: 7,  message: "You are giving main character energy.",         sub: "All these right answers. We see you." },
+  { at: 10, message: "At this point you need your own trivia show.",  sub: "Ten in a row is not normal behavior." },
+  { at: 15, message: "Okay, actually iconic.",                        sub: "15 straight? That's a personality trait." },
+  { at: 20, message: "Are you even human?",                           sub: "Twenty correct. Truly unhinged (in the best way)." },
+];
+
 export function TriviaCarousel({ expanded = false, category, challengesOnly = false }: TriviaCarouselProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
@@ -79,6 +88,8 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
   const [lockedOrder, setLockedOrder] = useState<TriviaItem[] | null>(null);
   const [celebratingItems, setCelebratingItems] = useState<Record<string, number>>({});
   const [socialProofMap, setSocialProofMap] = useState<Record<string, { userName: string; option: string; pct: number; total: number }>>({});
+  const [correctStreak, setCorrectStreak] = useState(0);
+  const [streakBanner, setStreakBanner] = useState<{ message: string; sub: string; streak: number } | null>(null);
   const [triviaRatings, setTriviaRatings] = useState<Record<string, {
     ratingState: 'idle' | 'rated' | 'reviewed';
     rating: number;
@@ -525,6 +536,18 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         setTimeout(() => {
           setCelebratingItems(prev => { const next = { ...prev }; delete next[result.itemId]; return next; });
         }, 1600);
+
+        setCorrectStreak(prev => {
+          const newStreak = prev + 1;
+          const milestone = STREAK_MILESTONES.find(m => m.at === newStreak);
+          if (milestone) {
+            setStreakBanner({ message: milestone.message, sub: milestone.sub, streak: newStreak });
+            setTimeout(() => setStreakBanner(null), 3200);
+          }
+          return newStreak;
+        });
+      } else {
+        setCorrectStreak(0);
       }
       setAnsweredQuestions(prev => ({
         ...prev,
@@ -708,6 +731,25 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
 
   return (
     <>
+      {/* Streak banner — slides in from top when a milestone is hit */}
+      {streakBanner && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[200] w-[calc(100%-2rem)] max-w-sm pointer-events-none">
+          <div className="bg-gradient-to-r from-purple-700 via-purple-600 to-fuchsia-600 text-white rounded-2xl px-5 py-4 shadow-2xl border border-purple-500/40 animate-in slide-in-from-top-4 fade-in duration-300">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl shrink-0">
+                {streakBanner.streak >= 15 ? '🔥' : streakBanner.streak >= 10 ? '⚡' : streakBanner.streak >= 7 ? '💜' : streakBanner.streak >= 5 ? '🎯' : '✨'}
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-sm leading-tight">{streakBanner.message}</p>
+                <p className="text-purple-200 text-xs mt-0.5 leading-tight">{streakBanner.sub}</p>
+              </div>
+              <div className="ml-auto shrink-0 bg-white/20 rounded-full px-2 py-0.5 text-xs font-bold tabular-nums">
+                {streakBanner.streak}🔥
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="bg-white border border-gray-100 shadow rounded-2xl p-4 pb-2 overflow-hidden relative">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
