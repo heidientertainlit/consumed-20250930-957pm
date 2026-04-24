@@ -218,7 +218,7 @@ function ScoreShareCard({
 
                       {/* Display name */}
                       {username && (
-                        <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">{username}</p>
+                        <p className="text-[22px] font-bold uppercase tracking-widest text-gray-400">{username}</p>
                       )}
 
                       {/* Headline block */}
@@ -341,7 +341,7 @@ function ScoreShareCard({
             )}
 
             {/* Footer tagline */}
-            <div className="pt-2 border-t border-gray-100 text-center">
+            <div className="pt-5 border-t border-gray-100 text-center">
               <p className="text-[11px] font-bold text-purple-600">@consumedapp</p>
               <p className="text-[9px] text-gray-400 mt-0.5">where entertainment gets played</p>
             </div>
