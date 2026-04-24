@@ -435,6 +435,70 @@ Return ONLY the JSON array. No markdown, no explanation, no code blocks.`;
       });
     }
 
+    // ── Deterministic category guardian — runs after AI generation, cannot be hallucinated ──
+    // This is the permanent fix for AI mislabeling (e.g. podcasts tagged as TV).
+    // Rules are based on media_type (most reliable) then keyword patterns in title/show_tag.
+    // This runs BEFORE QC so QC can still catch other issues, and AFTER dedup so it applies to all items.
+    const PODCAST_SHOWS = new Set([
+      'serial', 'crime junkie', 'my favorite murder', 'hidden brain', 'stuff you should know',
+      'the daily', 'armchair expert', 'call her daddy', 'this american life', 'how i built this',
+      'conan obrien needs a friend', 'smartless', 'radiolab', 'freakonomics', 'npr', 'pod save america',
+      'fresh air', 'revisionist history', 'ologies', 'stuff they dont want you to know',
+      'last podcast on the left', 'true crime garage', 'sword and scale', 'up and vanished',
+      'dr death', 'dirty john', 'your own backyard', 'cold', 'casefile', 'morbid',
+    ]);
+    const GAME_TITLES = new Set([
+      'super mario', 'zelda', 'pokemon', 'minecraft', 'fortnite', 'call of duty', 'halo',
+      'the last of us', 'god of war', 'grand theft auto', 'gta', 'red dead redemption',
+      'world of warcraft', 'league of legends', 'overwatch', 'apex legends', 'valorant',
+      'animal crossing', 'among us', 'cyberpunk', 'elden ring', 'doom', 'pac-man',
+      'tetris', 'street fighter', 'mortal kombat', 'resident evil', 'final fantasy',
+      'assassins creed', 'the sims', 'battlefield', 'counter-strike', 'half-life',
+    ]);
+    function deterministicCategory(item: any): { category: string; media_type: string } | null {
+      const title = (item.title || '').toLowerCase();
+      const showTag = (item.show_tag || '').toLowerCase();
+      const mediaType = (item.media_type || '').toLowerCase();
+
+      // media_type is the most reliable signal — trust it first
+      if (mediaType === 'podcast') return { category: 'Podcasts', media_type: 'podcast' };
+      if (mediaType === 'game') return { category: 'Gaming', media_type: 'game' };
+
+      // Keyword match: podcast indicators in the question title
+      if (title.includes('podcast') || title.includes(' pod ') || title.includes(' pods ')) {
+        return { category: 'Podcasts', media_type: 'podcast' };
+      }
+
+      // Known podcast show names in show_tag or title
+      for (const show of PODCAST_SHOWS) {
+        if (showTag.includes(show) || title.includes(show)) {
+          return { category: 'Podcasts', media_type: 'podcast' };
+        }
+      }
+
+      // Known game titles in show_tag or title
+      for (const game of GAME_TITLES) {
+        if (showTag.includes(game) || title.includes(game)) {
+          return { category: 'Gaming', media_type: 'game' };
+        }
+      }
+
+      // "video game" phrase anywhere
+      if (title.includes('video game') || showTag.includes('video game')) {
+        return { category: 'Gaming', media_type: 'game' };
+      }
+
+      return null; // no override needed — trust AI's category
+    }
+
+    for (const item of items) {
+      const override = deterministicCategory(item);
+      if (override) {
+        item.category = override.category;
+        item.media_type = override.media_type;
+      }
+    }
+
     // ── Shuffle trivia options server-side so correct answer is never always first ──
     for (const item of items) {
       if (item.correct_answer && Array.isArray(item.options) && item.options.length > 1) {
