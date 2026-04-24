@@ -6,7 +6,7 @@ import {
   Trophy, X, Loader2, Star, Users, Radio, Share2, Check,
   Film, Tv, Music, BookOpen, Mic2, Gamepad2,
   Zap, ArrowRight, Sparkles, MessageCircle,
-  ChevronRight, ChevronDown, Lock,
+  ChevronRight, ChevronDown, Lock, Target,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
