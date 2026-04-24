@@ -212,36 +212,47 @@ function ScoreShareCard({
                   ]);
 
                   return (
-                    <div className="flex flex-col items-center text-center">
-                      {/* Headline */}
-                      <h2 className="text-[17px] font-black text-gray-900 leading-tight mb-0.5">{headline}</h2>
-                      <p className="text-[12px] text-purple-600 font-semibold mb-3 leading-snug">{subhead}</p>
+                    <div className="flex flex-col items-center text-center gap-3">
 
-                      {/* Big score */}
-                      <div className="flex items-baseline gap-1.5 mb-4">
-                        <span className="text-[52px] font-black leading-none text-gray-900">{playScore.correct}</span>
-                        <span className="text-[24px] font-bold text-gray-300">/{playScore.total}</span>
+                      {/* Headline block */}
+                      <div>
+                        <h2 className="text-[15px] font-black text-gray-900 leading-snug mb-1">{headline}</h2>
+                        <p className="text-[11px] font-semibold text-purple-600 leading-snug">{subhead}</p>
                       </div>
 
-                      {/* Per-question category chips */}
-                      <div className="flex gap-2 mb-2 flex-wrap justify-center">
+                      {/* Score */}
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-[44px] font-black leading-none text-gray-900">{playScore.correct}</span>
+                        <span className="text-[20px] font-bold text-gray-300 leading-none">/{playScore.total}</span>
+                      </div>
+
+                      {/* Per-question category pills */}
+                      <div className="flex gap-2 flex-wrap justify-center">
                         {Array.from({ length: playScore.total }).map((_, i) => {
                           const correct = answers?.[i]?.correct ?? (i < playScore.correct);
                           const rawCat = answers?.[i]?.category;
                           const cat = rawCat && rawCat !== 'General' ? rawCat : null;
-                          const emoji = cat ? (CAT_EMOJI[cat] || '🎯') : (correct ? '✅' : '❌');
+                          const emoji = cat ? (CAT_EMOJI[cat] || '🎯') : null;
+                          const label = cat || `Q${i + 1}`;
                           return (
                             <div
                               key={i}
-                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-bold"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
                               style={{
                                 background: correct ? '#f0fdf4' : '#fff1f2',
-                                color: correct ? '#16a34a' : '#dc2626',
                                 border: `1px solid ${correct ? '#bbf7d0' : '#fecdd3'}`,
                               }}
                             >
-                              <span>{emoji}</span>
-                              {cat && <span>{cat}</span>}
+                              {emoji && <span className="text-[13px] leading-none">{emoji}</span>}
+                              <span
+                                className="text-[10px] font-bold uppercase tracking-wide"
+                                style={{ color: correct ? '#15803d' : '#dc2626' }}
+                              >
+                                {label}
+                              </span>
+                              {correct
+                                ? <CheckCircle size={11} className="text-green-600" />
+                                : <XCircle size={11} className="text-red-500" />}
                             </div>
                           );
                         })}
@@ -249,26 +260,30 @@ function ScoreShareCard({
 
                       {/* Insight line */}
                       {insightLine && (
-                        <p className="text-[11px] text-gray-500 font-medium mb-3 leading-snug">{insightLine}</p>
+                        <p className="text-[11px] font-medium text-gray-500 leading-snug">{insightLine}</p>
                       )}
 
+                      {/* Divider */}
+                      <div className="w-full h-px bg-gray-100" />
+
                       {/* Points + streak */}
-                      <div className="flex items-center gap-3 text-[11px] text-gray-500 font-medium mb-3">
+                      <div className="flex items-center gap-2.5 text-[11px] text-gray-500 font-medium">
                         {playScore.totalPoints > 0 && (
                           <div className="flex items-center gap-1">
                             <Zap size={11} className="text-purple-600" fill="currentColor" />
-                            <span><span className="font-bold text-gray-900">+{playScore.totalPoints}</span> pts — climbing the leaderboard</span>
+                            <span>
+                              <span className="font-bold text-gray-900">+{playScore.totalPoints} pts</span>
+                              {' '}— climbing the leaderboard
+                            </span>
                           </div>
                         )}
                         {streak && streak > 0 && (
                           <>
-                            {playScore.totalPoints > 0 && <span className="w-px h-3 bg-gray-200" />}
+                            {playScore.totalPoints > 0 && <span className="text-gray-300">·</span>}
                             <div className="flex items-center gap-1">
                               <Flame size={11} className="text-orange-500 fill-orange-500" />
-                              <span>
-                                {streak === 1
-                                  ? <><span className="font-bold text-gray-900">🔥</span> streak started</>
-                                  : <><span className="font-bold text-gray-900">🔥 {streak}-day</span> streak</>}
+                              <span className="font-semibold text-gray-700">
+                                {streak === 1 ? 'streak started' : `${streak}-day streak`}
                               </span>
                             </div>
                           </>
@@ -276,7 +291,8 @@ function ScoreShareCard({
                       </div>
 
                       {/* Tomorrow tension */}
-                      <p className="text-[11px] text-purple-500 font-semibold leading-snug">{tomorrowLine}</p>
+                      <p className="text-[11px] font-semibold text-purple-500 leading-snug">{tomorrowLine}</p>
+
                     </div>
                   );
                 })()}
