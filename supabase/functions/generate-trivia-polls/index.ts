@@ -455,47 +455,46 @@ Return ONLY the JSON array. No markdown, no explanation, no code blocks.`;
       'tetris', 'street fighter', 'mortal kombat', 'resident evil', 'final fantasy',
       'assassins creed', 'the sims', 'battlefield', 'counter-strike', 'half-life',
     ]);
-    function deterministicCategory(item: any): { category: string; media_type: string } | null {
+    function deterministicCategory(item: any): string | null {
       const title = (item.title || '').toLowerCase();
       const showTag = (item.show_tag || '').toLowerCase();
-      const mediaType = (item.media_type || '').toLowerCase();
+      const mediaType = (item.media_type || '').toLowerCase(); // draft-level field only, not in prediction_pools
 
       // media_type is the most reliable signal — trust it first
-      if (mediaType === 'podcast') return { category: 'Podcasts', media_type: 'podcast' };
-      if (mediaType === 'game') return { category: 'Gaming', media_type: 'game' };
+      if (mediaType === 'podcast') return 'Podcasts';
+      if (mediaType === 'game') return 'Gaming';
 
       // Keyword match: podcast indicators in the question title
       if (title.includes('podcast') || title.includes(' pod ') || title.includes(' pods ')) {
-        return { category: 'Podcasts', media_type: 'podcast' };
+        return 'Podcasts';
       }
 
       // Known podcast show names in show_tag or title
       for (const show of PODCAST_SHOWS) {
         if (showTag.includes(show) || title.includes(show)) {
-          return { category: 'Podcasts', media_type: 'podcast' };
+          return 'Podcasts';
         }
       }
 
       // Known game titles in show_tag or title
       for (const game of GAME_TITLES) {
         if (showTag.includes(game) || title.includes(game)) {
-          return { category: 'Gaming', media_type: 'game' };
+          return 'Gaming';
         }
       }
 
       // "video game" phrase anywhere
       if (title.includes('video game') || showTag.includes('video game')) {
-        return { category: 'Gaming', media_type: 'game' };
+        return 'Gaming';
       }
 
       return null; // no override needed — trust AI's category
     }
 
     for (const item of items) {
-      const override = deterministicCategory(item);
-      if (override) {
-        item.category = override.category;
-        item.media_type = override.media_type;
+      const corrected = deterministicCategory(item);
+      if (corrected) {
+        item.category = corrected;
       }
     }
 

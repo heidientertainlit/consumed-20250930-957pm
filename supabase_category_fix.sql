@@ -3,26 +3,17 @@
 -- Run in Supabase SQL Editor:
 -- https://supabase.com/dashboard/project/mahpgcogwpawvviapqza/sql/new
 --
--- Root cause: GPT was generating "TV" for podcast questions because
--- "Podcasts" was missing from the allowed category list in the prompt.
--- Fixed going forward via deterministic guardian in the edge function.
--- This script fixes records already in the database.
+-- prediction_pools schema confirmed: NO media_type column.
+-- Columns used here: category, title, show_tag, type.
 --
--- ALWAYS run the SELECT preview first to confirm scope before UPDATE.
+-- ALWAYS run the SELECT preview first, then the UPDATE.
 -- ============================================================
 
 
 -- ──────────────────────────────────────────────────────────────
--- STEP 1: PREVIEW — Podcast questions mislabeled as TV
+-- STEP 1: PREVIEW — what podcast questions are mislabeled?
 -- ──────────────────────────────────────────────────────────────
-SELECT
-  id,
-  title,
-  category        AS current_category,
-  media_type      AS current_media_type,
-  show_tag,
-  type,
-  status
+SELECT id, title, category AS current_category, show_tag, media_external_source
 FROM prediction_pools
 WHERE (
   title    ILIKE '%podcast%'
@@ -44,7 +35,6 @@ WHERE (
   OR show_tag ILIKE '%morbid%'
   OR show_tag ILIKE '%casefile%'
   OR show_tag ILIKE '%true crime garage%'
-  OR media_type = 'podcast'
 )
 AND category != 'Podcasts'
 AND type IN ('trivia', 'vote')
@@ -52,13 +42,10 @@ ORDER BY created_at DESC;
 
 
 -- ──────────────────────────────────────────────────────────────
--- STEP 2: FIX — Podcast questions in prediction_pools
--- (Run only after reviewing Step 1 output above)
+-- STEP 2: FIX — update category only (no media_type column)
 -- ──────────────────────────────────────────────────────────────
 UPDATE prediction_pools
-SET
-  category   = 'Podcasts',
-  media_type = 'podcast'
+SET category = 'Podcasts'
 WHERE (
   title    ILIKE '%podcast%'
   OR show_tag ILIKE '%podcast%'
@@ -79,26 +66,18 @@ WHERE (
   OR show_tag ILIKE '%morbid%'
   OR show_tag ILIKE '%casefile%'
   OR show_tag ILIKE '%true crime garage%'
-  OR media_type = 'podcast'
 )
 AND category != 'Podcasts'
 AND type IN ('trivia', 'vote');
 
 
 -- ──────────────────────────────────────────────────────────────
--- STEP 3: PREVIEW — Gaming questions mislabeled
+-- STEP 3: PREVIEW — gaming questions mislabeled?
 -- ──────────────────────────────────────────────────────────────
-SELECT
-  id,
-  title,
-  category        AS current_category,
-  media_type      AS current_media_type,
-  show_tag,
-  type
+SELECT id, title, category AS current_category, show_tag
 FROM prediction_pools
 WHERE (
-  media_type = 'game'
-  OR title ILIKE '%video game%'
+  title    ILIKE '%video game%'
   OR show_tag ILIKE '%super mario%'
   OR show_tag ILIKE '%zelda%'
   OR show_tag ILIKE '%pokemon%'
@@ -113,15 +92,12 @@ ORDER BY created_at DESC;
 
 
 -- ──────────────────────────────────────────────────────────────
--- STEP 4: FIX — Gaming questions in prediction_pools
+-- STEP 4: FIX — gaming questions
 -- ──────────────────────────────────────────────────────────────
 UPDATE prediction_pools
-SET
-  category   = 'Gaming',
-  media_type = 'game'
+SET category = 'Gaming'
 WHERE (
-  media_type = 'game'
-  OR title ILIKE '%video game%'
+  title    ILIKE '%video game%'
   OR show_tag ILIKE '%super mario%'
   OR show_tag ILIKE '%zelda%'
   OR show_tag ILIKE '%pokemon%'
@@ -135,7 +111,7 @@ AND type IN ('trivia', 'vote');
 
 
 -- ──────────────────────────────────────────────────────────────
--- STEP 5: Verify — confirm fixed counts
+-- STEP 5: Final count by category — confirm everything looks right
 -- ──────────────────────────────────────────────────────────────
 SELECT category, COUNT(*) AS total
 FROM prediction_pools
