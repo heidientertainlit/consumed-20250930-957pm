@@ -220,7 +220,6 @@ function ScoreShareCard({
                       <div>
                         <h2 className="text-[15px] font-black text-gray-900 leading-snug mb-1">{headline}</h2>
                         <p className="text-[11px] font-semibold text-gray-500 leading-snug">{subhead}</p>
-                        <p className="text-[11px] font-semibold text-gray-500 leading-snug mt-0.5">{tomorrowLine} by playing again tomorrow.</p>
                       </div>
 
                       {/* Score */}
@@ -286,7 +285,7 @@ function ScoreShareCard({
                             <div className="flex items-center gap-1">
                               <Flame size={11} className="text-orange-500 fill-orange-500" />
                               <span className="font-semibold text-gray-700">
-                                {streak === 1 ? 'streak started' : `${streak}-day streak`}
+                                {streak === 1 ? 'streak started (play again tomorrow)' : `${streak}-day streak`}
                               </span>
                             </div>
                           </>
@@ -335,7 +334,7 @@ function ScoreShareCard({
             )}
 
             {/* Footer tagline */}
-            <div className="pt-2 border-t border-gray-100">
+            <div className="pt-2 border-t border-gray-100 text-center">
               <p className="text-[11px] font-bold text-purple-600">@consumedapp</p>
               <p className="text-[9px] text-gray-400 mt-0.5">where entertainment gets played</p>
             </div>
