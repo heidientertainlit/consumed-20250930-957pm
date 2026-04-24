@@ -23,6 +23,7 @@ type Draft = {
   correct_answer: string | null;
   category: string;
   show_tag: string | null;
+  media_tags: string[] | null;
   media_type: string | null;
   featured_date: string | null;
   status: string;
@@ -190,7 +191,7 @@ export default function AdminTodaysPlayPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("trivia_poll_drafts")
-        .select("id, title, options, correct_answer, category, show_tag, media_type, featured_date, status, created_at")
+        .select("id, title, options, correct_answer, category, show_tag, media_tags, media_type, featured_date, status, created_at")
         .eq("content_type", "trivia")
         .in("status", ["draft", "pending"])
         .order("created_at", { ascending: false })
@@ -500,6 +501,7 @@ export default function AdminTodaysPlayPage() {
         correct_answer: draft.correct_answer || null,
         category: meta.categoryHint,
         show_tag: draft.show_tag || null,
+        media_tags: draft.media_tags || (draft.show_tag ? [draft.show_tag] : null),
         media_type: draft.media_type || null,
         featured_date: dateStr,
         status: "open",
@@ -565,6 +567,7 @@ export default function AdminTodaysPlayPage() {
           correct_answer: draft.correct_answer || null,
           category: meta.categoryHint,
           show_tag: draft.show_tag || null,
+          media_tags: draft.media_tags || (draft.show_tag ? [draft.show_tag] : null),
           media_type: draft.media_type || null,
           featured_date: dateStr,
           status: "open",

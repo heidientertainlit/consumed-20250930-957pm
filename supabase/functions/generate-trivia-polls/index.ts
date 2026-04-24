@@ -44,6 +44,11 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Always ensure media_tags is populated — fall back to [show_tag] if not set
+      if (!poolData.media_tags && poolData.show_tag) {
+        poolData.media_tags = [poolData.show_tag];
+      }
+
       const { error: insertError } = await supabaseAdmin
         .from('prediction_pools')
         .insert(poolData);
@@ -392,7 +397,8 @@ Return ONLY a valid JSON array. Each item must have these exact fields:
 - options: array of strings (answer choices — 4 for trivia, 2-4 for polls/featured, exactly 2 for dna_moment)
 - correct_answer: string (trivia only — must exactly match one option) or null
 - category: "TV" | "Movies" | "Books" | "Music" | "Pop Culture" | "Podcasts" | "Gaming"
-- show_tag: REQUIRED for trivia — the specific show, movie, album, artist, or franchise the question is about (e.g. "Stranger Things", "Taylor Swift", "The Dark Knight"). NEVER null for trivia. For polls/dna_moment/featured_play: set if question references a specific title, otherwise null.
+- show_tag: REQUIRED for trivia — the PRIMARY media item this question is about (e.g. "Stranger Things", "Taylor Swift", "The Dark Knight"). NEVER null for trivia. For polls/dna_moment/featured_play: set if question references a specific title, otherwise null. When a question compares two items, set show_tag to the one the question is more "about" (or the first mentioned).
+- media_tags: array of ALL media titles referenced in this question. For single-media questions: ["Stranger Things"]. For comparisons or multi-media questions: ["Breaking Bad", "The Wire"] or ["Taylor Swift", "Beyoncé"]. REQUIRED for trivia — must always contain at least show_tag. For polls that compare two shows/movies/artists, list all of them. Never an empty array.
 - media_type: "tv" | "movie" | "book" | "music" | "podcast" | "game" | null
 - difficulty: "easy" | "medium" | "chaotic"
 - template_type: short label like "who_played", "what_year", "finish_the_line", "pick_side", "comfort_show", "dna_habit", etc.
@@ -658,16 +664,33 @@ ${dedupedItems.map((q: any, i: number) => {
       return null;
     }
 
-    // Resolve show_tag on every trivia item before saving
+    // Resolve show_tag + media_tags on every trivia item before saving
     const resolvedItems = dedupedItems.map(item => {
-      if ((item.content_type || contentType) !== 'trivia') return item;
-      if (item.show_tag) return item; // already set — nothing to do
-      const extracted = extractShowTag(item.title || '');
-      if (extracted) {
-        console.log(`Auto-extracted show_tag "${extracted}" from title: "${(item.title || '').substring(0, 80)}"`);
-        return { ...item, show_tag: extracted };
+      const isTrivia = (item.content_type || contentType) === 'trivia';
+
+      // Step 1: ensure show_tag is set (extract from title if AI omitted it)
+      let showTag = item.show_tag || null;
+      if (isTrivia && !showTag) {
+        const extracted = extractShowTag(item.title || '');
+        if (extracted) {
+          console.log(`Auto-extracted show_tag "${extracted}" from title: "${(item.title || '').substring(0, 80)}"`);
+          showTag = extracted;
+        }
       }
-      return item; // will be caught by the drop filter below
+
+      // Step 2: build media_tags array — must contain all referenced media titles
+      // If AI provided media_tags, validate it; otherwise build from show_tag
+      let mediaTags: string[] | null = null;
+      if (Array.isArray(item.media_tags) && item.media_tags.length > 0) {
+        // Deduplicate and ensure show_tag is always in the array
+        const tagSet = new Set<string>(item.media_tags.map((t: any) => String(t).trim()).filter(Boolean));
+        if (showTag) tagSet.add(showTag);
+        mediaTags = Array.from(tagSet);
+      } else if (showTag) {
+        mediaTags = [showTag];
+      }
+
+      return { ...item, show_tag: showTag, media_tags: mediaTags };
     });
 
     // Guard: drop any trivia still missing show_tag after extraction attempt
@@ -688,6 +711,7 @@ ${dedupedItems.map((q: any, i: number) => {
         correct_answer: item.correct_answer || null,
         category: safeCategory(item.category),
         show_tag: item.show_tag || null,
+        media_tags: item.media_tags || null,
         media_type: item.media_type || null,
         difficulty: item.difficulty || difficulty,
         points_reward: item.content_type === 'trivia' ? 10 : item.content_type === 'featured_play' ? 20 : item.content_type === 'dna_moment' ? 5 : 2,
