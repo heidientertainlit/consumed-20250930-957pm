@@ -572,22 +572,31 @@ export default function AdminTriviaPage() {
 
         const poolId = crypto.randomUUID();
 
-        // Normalize category to match DB convention used by legacy data + feed queries
+        // Normalize + whitelist category — rejects any value not in the allowed set
+        const ALLOWED_CATS = new Set([
+          "Books", "Movies", "TV", "TV / Reality", "True Crime",
+          "Music", "Sports", "Podcasts", "Pop Culture", "Gaming",
+        ]);
         const normalizeCategory = (c: string | null | undefined): string => {
           if (!c) return "Pop Culture";
+          // already valid — pass through unchanged
+          if (ALLOWED_CATS.has(c)) return c;
+          // alias map for common variants
           const m: Record<string, string> = {
-            // Podcast — DB + feed both use plural "Podcasts"
             podcast: "Podcasts", podcasts: "Podcasts",
-            // Gaming — DB uses "Gaming" singular; feed uses "Games" (mismatch noted)
             gaming: "Gaming", games: "Gaming", game: "Gaming",
-            // Standard categories
             music: "Music",
             movies: "Movies", movie: "Movies",
             tv: "TV", television: "TV", "tv shows": "TV",
             books: "Books", book: "Books",
             "pop culture": "Pop Culture",
+            sports: "Sports", sport: "Sports",
+            "true crime": "True Crime",
+            "tv / reality": "TV / Reality", reality: "TV / Reality",
           };
-          return m[c.toLowerCase()] ?? c;
+          const aliased = m[c.toLowerCase().trim()];
+          // hard fallback — never publish an unknown category to the DB
+          return aliased ?? "Pop Culture";
         };
 
         const poolData: Record<string, any> = {

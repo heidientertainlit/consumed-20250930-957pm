@@ -595,6 +595,31 @@ ${dedupedItems.map((q: any, i: number) => {
       // QC is best-effort — don't block if it fails
     }
 
+    // ── Final category whitelist — runs after QC, catches anything AI/QC still got wrong ──
+    const ALLOWED_CATEGORIES = new Set([
+      'Books', 'Movies', 'TV', 'TV / Reality', 'True Crime',
+      'Music', 'Sports', 'Podcasts', 'Pop Culture', 'Gaming',
+    ]);
+    const CATEGORY_ALIASES: Record<string, string> = {
+      podcast: 'Podcasts', podcasts: 'Podcasts',
+      gaming: 'Gaming', games: 'Gaming', game: 'Gaming',
+      music: 'Music',
+      movies: 'Movies', movie: 'Movies',
+      tv: 'TV', television: 'TV', 'tv shows': 'TV',
+      books: 'Books', book: 'Books',
+      'pop culture': 'Pop Culture',
+      sports: 'Sports', sport: 'Sports',
+      'true crime': 'True Crime',
+      'tv / reality': 'TV / Reality', reality: 'TV / Reality',
+    };
+    function safeCategory(raw: string | null | undefined): string {
+      if (!raw) return 'Pop Culture';
+      if (ALLOWED_CATEGORIES.has(raw)) return raw;
+      const alias = CATEGORY_ALIASES[raw.toLowerCase().trim()];
+      if (alias) return alias;
+      return 'Pop Culture'; // hard fallback — never let unknown values reach the DB
+    }
+
     const drafts: any[] = [];
     const errors: string[] = [];
 
@@ -604,7 +629,7 @@ ${dedupedItems.map((q: any, i: number) => {
         title: item.title || '',
         options: item.options || [],
         correct_answer: item.correct_answer || null,
-        category: item.category || 'Pop Culture',
+        category: safeCategory(item.category),
         show_tag: item.show_tag || null,
         media_type: item.media_type || null,
         difficulty: item.difficulty || difficulty,
