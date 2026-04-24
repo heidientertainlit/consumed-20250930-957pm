@@ -554,10 +554,10 @@ function TodaysPlayGame({
 
               // Perfect score
               const perfectOptions: [string, string][] = [
-                ['Untouchable today. The feed knows it.', 'Perfect across every category. Screenshot-worthy.'],
-                ['Perfect. The algorithm is taking notes.', 'You didn\u2019t miss once. Come back tomorrow.'],
-                [`${doneScore.correct}/${doneScore.total}. Your Entertainment DNA just leveled up.`, 'That\u2019s the energy. Do it again tomorrow.'],
-                ...(strongCat ? [[`${catLabel(strongCat)} is your home. Everything else is a guest.`, 'And today, everyone behaved.'] as [string, string]] : []),
+                ['Perfect. You\u2019ve got elite entertainment instincts.', 'Added to your Entertainment DNA.'],
+                ['Untouchable today. You\u2019ve got a gift for this.', 'This just leveled up your Entertainment DNA.'],
+                [`${doneScore.correct}/${doneScore.total}. You nailed every category. Not easy.`, 'Your Entertainment DNA just got stronger.'],
+                ...(strongCat ? [[`${catLabel(strongCat)} is your home. Perfect score to prove it.`, 'Your Entertainment DNA just got stronger.'] as [string, string]] : []),
               ];
 
               // Good score (≥ 66%)
@@ -655,7 +655,11 @@ function TodaysPlayGame({
                     const weakestCat = wrongQs.length > 0 ? wrongQs[0].category : null;
 
                     const insightLine = (() => {
-                      if (doneScore.correct === doneScore.total) return 'Perfect across every category. Untouchable.';
+                      if (doneScore.correct === doneScore.total) return pick([
+                        'Strong across everything. No weak spots today.',
+                        'Balanced taste. That\u2019s rare.',
+                        'Perfect across the board. Most people don\u2019t pull that off.',
+                      ]);
                       if (strongestCat && weakestCat && strongestCat !== weakestCat)
                         return `Strong in ${strongestCat}. ${weakestCat} got you.`;
                       if (weakestCat) return `${weakestCat} tripped you up — worth a revisit.`;
@@ -702,7 +706,7 @@ function TodaysPlayGame({
                     {doneScore.totalPoints > 0 && (
                       <div className="flex items-center gap-1">
                         <Zap size={12} className="text-purple-600" fill="currentColor" />
-                        <span><span className="font-bold text-gray-900">+{doneScore.totalPoints}</span> pts — keep climbing</span>
+                        <span><span className="font-bold text-gray-900">+{doneScore.totalPoints}</span> pts — climbing the leaderboard</span>
                       </div>
                     )}
                     {streak && streak > 0 && (
@@ -710,11 +714,25 @@ function TodaysPlayGame({
                         {doneScore.totalPoints > 0 && <span className="w-px h-3 bg-gray-200" />}
                         <div className="flex items-center gap-1">
                           <Flame size={12} className="text-orange-500 fill-orange-500" />
-                          <span><span className="font-bold text-gray-900">{streak}-day</span> streak</span>
+                          <span>
+                            {streak === 1
+                              ? <><span className="font-bold text-gray-900">🔥</span> streak started</>
+                              : <><span className="font-bold text-gray-900">🔥 {streak}-day</span> streak</>
+                            }
+                          </span>
                         </div>
                       </>
                     )}
                   </div>
+
+                  {/* Tomorrow tension */}
+                  <p className="text-[12px] text-purple-600 font-semibold mt-4 leading-snug">
+                    {pick([
+                      'Think you can do it again tomorrow?',
+                      'Let\u2019s see if you can stay perfect.',
+                      'Tomorrow might not be this easy.',
+                    ])}
+                  </p>
                 </div>
               </div>
 
