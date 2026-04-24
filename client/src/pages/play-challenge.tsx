@@ -1,6 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "wouter";
-import { ChevronLeft, CheckCircle2, XCircle, Trophy, Brain, Lock, Star, Users, Loader2 } from "lucide-react";
+import { ChevronLeft, CheckCircle2, XCircle, Trophy, Brain, Lock, Star, Users, Loader2, Flame } from "lucide-react";
+
+const STREAK_MILESTONES: Record<number, string> = {
+  3:  "3 in a row! 🔥 You're on fire!",
+  5:  "5 correct! ⚡ Unstoppable!",
+  7:  "7 straight! 🎯 Flawless!",
+  10: "10 in a row! 🏆 Legendary!",
+  15: "15 correct! 👑 Untouchable!",
+  20: "20 in a row! 🌟 GOAT status!",
+};
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
@@ -260,6 +269,9 @@ export default function PlayChallengePage() {
   const [done, setDone] = useState(false);
   const [rankInfo, setRankInfo] = useState<RankInfo | null>(null);
   const [challengerData, setChallengerData] = useState<ChallengerData | null>(null);
+  const [correctStreak, setCorrectStreak] = useState(0);
+  const [streakBanner, setStreakBanner] = useState<string | null>(null);
+  const streakTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset all game state when the round changes (e.g. navigating easy → medium → hard)
   useEffect(() => {
@@ -271,6 +283,9 @@ export default function PlayChallengePage() {
     setDone(false);
     setRankInfo(null);
     setChallengerData(null);
+    setCorrectStreak(0);
+    setStreakBanner(null);
+    if (streakTimerRef.current) clearTimeout(streakTimerRef.current);
   }, [showTag, difficulty]);
 
   const currentQuestion = questions[currentIndex];
@@ -286,6 +301,22 @@ export default function PlayChallengePage() {
     const isCorrect = option === currentQuestion.correctAnswer;
     const points = isCorrect ? currentQuestion.points : 0;
     setResults(prev => ({ ...prev, [currentQuestion.id]: { correct: isCorrect, points } }));
+
+    if (isCorrect) {
+      setCorrectStreak(prev => {
+        const next = prev + 1;
+        if (STREAK_MILESTONES[next]) {
+          if (streakTimerRef.current) clearTimeout(streakTimerRef.current);
+          setStreakBanner(STREAK_MILESTONES[next]);
+          streakTimerRef.current = setTimeout(() => setStreakBanner(null), 3200);
+        }
+        return next;
+      });
+    } else {
+      setCorrectStreak(0);
+      setStreakBanner(null);
+      if (streakTimerRef.current) clearTimeout(streakTimerRef.current);
+    }
 
     if (user?.id && points > 0) {
       setSubmitting(true);
@@ -565,7 +596,7 @@ export default function PlayChallengePage() {
             Back to Pools
           </button>
           <button
-            onClick={() => { setCurrentIndex(0); setSelectedAnswer(null); setAnswered(false); setResults({}); setDone(false); setRankInfo(null); setChallengerData(null); }}
+            onClick={() => { setCurrentIndex(0); setSelectedAnswer(null); setAnswered(false); setResults({}); setDone(false); setRankInfo(null); setChallengerData(null); setCorrectStreak(0); setStreakBanner(null); if (streakTimerRef.current) clearTimeout(streakTimerRef.current); }}
             className="mt-1.5 text-sm text-gray-400 underline"
           >
             Play again
@@ -581,6 +612,16 @@ export default function PlayChallengePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
+
+      {/* Streak milestone banner */}
+      {streakBanner && (
+        <div className="fixed top-16 left-0 right-0 z-[200] flex items-center justify-center px-4 pointer-events-none">
+          <div className="flex items-center gap-2.5 px-5 py-3 rounded-2xl shadow-lg animate-in slide-in-from-top-4 fade-in duration-300" style={{ background: "linear-gradient(135deg, #7c3aed, #9333ea)", maxWidth: 340 }}>
+            <Flame size={18} className="text-yellow-300 shrink-0" />
+            <span className="text-white font-bold text-sm">{streakBanner}</span>
+          </div>
+        </div>
+      )}
 
       <div className="px-4 pt-4 pb-28 max-w-lg mx-auto">
         {/* Header */}
