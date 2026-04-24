@@ -161,6 +161,47 @@ function autoScheduleBatch(items: Draft[], startDate: Date): Record<string, stri
   return dates;
 }
 
+// ── Duplicate detection helpers ───────────────────────────────────────────────
+const STOPWORDS = new Set([
+  "who","what","when","where","which","how","the","a","an","in","of","did",
+  "does","was","is","are","were","has","had","have","for","on","at","to","by",
+  "do","with","from","that","this","these","those","and","or","but","year",
+  "first","name","many","much","played","won","created","wrote","directed",
+]);
+function normWords(title: string): string[] {
+  return title.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(
+    w => w.length > 2 && !STOPWORDS.has(w),
+  );
+}
+function titlesSimilar(a: string, b: string, threshold = 2): boolean {
+  if (a.toLowerCase().trim() === b.toLowerCase().trim()) return true;
+  const wa = new Set(normWords(a));
+  return normWords(b).filter(w => wa.has(w)).length >= threshold;
+}
+function buildDuplicateMap(
+  draftList: Draft[],
+  existingTitles: string[],
+): Map<string, string> {
+  const map = new Map<string, string>();
+  const seenTitles: string[] = [];
+  for (const draft of draftList) {
+    if (map.has(draft.id)) { seenTitles.push(draft.title); continue; }
+    let conflict: string | null = null;
+    for (const et of existingTitles) {
+      if (titlesSimilar(draft.title, et)) { conflict = et; break; }
+    }
+    if (!conflict) {
+      for (const seen of seenTitles) {
+        if (titlesSimilar(draft.title, seen)) { conflict = seen; break; }
+      }
+    }
+    if (conflict) map.set(draft.id, conflict);
+    else seenTitles.push(draft.title);
+  }
+  return map;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function AdminTriviaPage() {
   const { user, session } = useAuth();
   const [, setLocation] = useLocation();
@@ -245,6 +286,7 @@ export default function AdminTriviaPage() {
   const [batchPublishing, setBatchPublishing] = useState(false);
   const [deletingAll, setDeletingAll] = useState(false);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [purging, setPurging] = useState(false);
   const [batchStartDate, setBatchStartDate] = useState(toLocalDateStr((() => { const d = new Date(); d.setDate(d.getDate() + 1); return d; })()));
 
   // Expanded notes
@@ -318,6 +360,29 @@ export default function AdminTriviaPage() {
     setBatchStartDate(toLocalDateStr(next));
   }, [upcoming]);
 
+  // Build duplicate map on every render — checks drafts vs upcoming schedule + published history
+  const existingTitles = [
+    ...upcoming.map(u => u.title),
+    ...published.map(p => p.title),
+  ];
+  const duplicateMap = buildDuplicateMap(drafts, existingTitles);
+  const dupCount = duplicateMap.size;
+
+  async function purgeDuplicates(freshDrafts: Draft[]): Promise<number> {
+    const ids = [...buildDuplicateMap(freshDrafts, existingTitles).keys()];
+    if (ids.length === 0) return 0;
+    await supabase.from("trivia_poll_drafts").delete().in("id", ids);
+    await queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
+    return ids.length;
+  }
+
+  async function handlePurgeDuplicates() {
+    setPurging(true);
+    const removed = await purgeDuplicates(drafts);
+    setPurging(false);
+    toast({ title: removed > 0 ? `Removed ${removed} duplicate${removed !== 1 ? "s" : ""}` : "No duplicates found" });
+  }
+
   async function handleGenerate() {
     setGenerating(true);
     try {
@@ -335,9 +400,17 @@ export default function AdminTriviaPage() {
       if (!resp.ok || !result.success) {
         throw new Error(result.error || "Generation failed");
       }
+      // Refresh drafts then auto-purge duplicates
+      await queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
+      const freshDrafts: Draft[] = await supabase
+        .from("trivia_poll_drafts").select("*").eq("status", "pending")
+        .then(r => r.data || []);
+      const removed = await purgeDuplicates(freshDrafts);
       const dedupMsg = result.dedupDropped ? ` (${result.dedupDropped} skipped as duplicates)` : "";
-      toast({ title: `Generated ${result.generated} items${dedupMsg}`, description: "Review them in the Drafts tab." });
-      queryClient.invalidateQueries({ queryKey: ["trivia-poll-drafts"] });
+      toast({
+        title: `Generated ${result.generated} items${dedupMsg}${removed > 0 ? `, removed ${removed} duplicate${removed !== 1 ? "s" : ""}` : ""}`,
+        description: "Review them in the Drafts tab.",
+      });
       setActiveTab("drafts");
     } catch (err: any) {
       toast({ title: "Generation failed", description: err.message, variant: "destructive" });
@@ -403,7 +476,14 @@ export default function AdminTriviaPage() {
   }
 
   async function approveDraft(draft: Draft) {
-    // Immediately publish — no separate "Publish" step needed
+    if (duplicateMap.has(draft.id)) {
+      toast({
+        title: "Duplicate detected",
+        description: `This question is too similar to an existing one. Delete it or edit the title first.`,
+        variant: "destructive",
+      });
+      return;
+    }
     const dateStr = getNextDropDate(draft.content_type);
     try {
       await publishDraft(draft, dateStr);
@@ -919,7 +999,19 @@ export default function AdminTriviaPage() {
                 {drafts.length > 0 && (
                   <>
                     <div className="flex items-center justify-between gap-3 mb-2">
-                      <p className="text-sm text-gray-400">{drafts.length} draft{drafts.length !== 1 ? "s" : ""} waiting for review</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-gray-400">{drafts.length} draft{drafts.length !== 1 ? "s" : ""} waiting for review</p>
+                        {dupCount > 0 && (
+                          <button
+                            onClick={handlePurgeDuplicates}
+                            disabled={purging}
+                            className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 transition-colors"
+                          >
+                            {purging ? <Loader2 size={10} className="animate-spin" /> : <AlertCircle size={10} />}
+                            Remove {dupCount} Duplicate{dupCount !== 1 ? "s" : ""}
+                          </button>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-1.5">
                           <label className="text-xs text-gray-500 whitespace-nowrap">Schedule from</label>
@@ -995,6 +1087,7 @@ export default function AdminTriviaPage() {
                         editMediaSearching={editMediaSearching}
                         setEditLinkedMedia={setEditLinkedMedia}
                         setEditMediaQuery={(q: string) => { setEditMediaQuery(q); triggerEditMediaSearch(q); }}
+                        dupInfo={duplicateMap.get(draft.id)}
                       />
                     ))}
                   </>
@@ -1164,7 +1257,7 @@ export default function AdminTriviaPage() {
 
 // Extracted draft card for cleanliness
 function DraftCard({
-  draft, editing, rejecting,
+  draft, editing, rejecting, dupInfo,
   editTitle, editOptions, editCorrectAnswer, editCategory, editShowTag, editMediaTitle, editPointsReward,
   rejectFeedback, expandedNotes,
   onEdit, onSaveEdit, onCancelEdit, onApprove, onStartReject, onConfirmReject, onCancelReject, onDelete, onToggleNotes,
@@ -1172,7 +1265,7 @@ function DraftCard({
   editLinkedMedia, editMediaQuery, editMediaResults, editMediaSearching, setEditLinkedMedia, setEditMediaQuery,
 }: any) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+    <div className={`bg-gray-900 border rounded-xl p-4 ${dupInfo ? "border-orange-600/50" : "border-gray-800"}`}>
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1.5">
@@ -1184,7 +1277,15 @@ function DraftCard({
             {draft.media_external_id
               ? <span className="flex items-center gap-1 text-[10px] text-emerald-500/70"><LinkIcon size={9} />{draft.media_external_source}</span>
               : <span className="flex items-center gap-1 text-[10px] text-amber-600/50"><LinkIcon size={9} />unlinked</span>}
+            {dupInfo && (
+              <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/30">
+                <AlertCircle size={9} /> Dup
+              </span>
+            )}
           </div>
+          {dupInfo && !editing && (
+            <p className="text-[10px] text-orange-400/70 mb-1.5 italic">Similar to: "{dupInfo.length > 60 ? dupInfo.slice(0, 60) + "…" : dupInfo}"</p>
+          )}
 
           {editing ? (
             <div className="space-y-2">
