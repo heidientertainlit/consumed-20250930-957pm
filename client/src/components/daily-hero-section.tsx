@@ -1702,7 +1702,7 @@ export function DailyHeroSection() {
           );
 
           return (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 md:max-w-lg md:mx-auto">
               <div
                 className="relative pr-1 pb-12 select-none cursor-grab active:cursor-grabbing"
                 onClickCapture={(e) => {
