@@ -146,6 +146,77 @@ serve(async (req) => {
       });
     }
 
+    // ── update_streak: called after Today's Play trivia completes ──
+    if (action === 'update_streak') {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const todayDate = params.localDate || new Date().toISOString().split('T')[0];
+      const [year, month, day] = todayDate.split('-').map(Number);
+      const yesterdayObj = new Date(year, month - 1, day - 1);
+      const yesterdayDate = yesterdayObj.toISOString().split('T')[0];
+
+      try {
+        const { data: existing, error: fetchErr } = await supabaseAdmin
+          .from('login_streaks')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        let currentStreak = 1;
+        let longestStreak = 1;
+
+        if (fetchErr && fetchErr.code !== 'PGRST116') {
+          // Unexpected error — still return gracefully
+          return new Response(JSON.stringify({ currentStreak: 1 }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        if (existing) {
+          const lastLogin = existing.last_login;
+          if (lastLogin === todayDate) {
+            // Already updated today — just return current value
+            return new Response(JSON.stringify({
+              currentStreak: existing.current_streak,
+              longestStreak: existing.longest_streak,
+              alreadyUpdated: true
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          } else if (lastLogin === yesterdayDate) {
+            currentStreak = (existing.current_streak || 0) + 1;
+            longestStreak = Math.max(currentStreak, existing.longest_streak || 1);
+          } else {
+            currentStreak = 1;
+            longestStreak = existing.longest_streak || 1;
+          }
+          await supabaseAdmin.from('login_streaks').update({
+            current_streak: currentStreak,
+            longest_streak: longestStreak,
+            last_login: todayDate
+          }).eq('user_id', user.id);
+        } else {
+          await supabaseAdmin.from('login_streaks').insert({
+            user_id: user.id,
+            current_streak: 1,
+            longest_streak: 1,
+            last_login: todayDate
+          });
+        }
+
+        return new Response(JSON.stringify({ currentStreak, longestStreak }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ currentStreak: 1, error: e.message }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
     if (action === 'submit') {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {

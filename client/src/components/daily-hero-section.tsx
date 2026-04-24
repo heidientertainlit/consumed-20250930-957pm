@@ -435,6 +435,7 @@ function TodaysPlayGame({
   onShare: (answers: { correct: boolean }[]) => void;
 }) {
   const [, setLocation] = useLocation();
+  const { session } = useAuth();
   const [qIndex, setQIndex] = useState(0);
   const [phase, setPhase] = useState<'playing' | 'result' | 'done'>('playing');
   const [selected, setSelected] = useState<string | null>(null);
@@ -494,6 +495,20 @@ function TodaysPlayGame({
       setDoneScore(score);
       onComplete(score); // update parent card immediately
       setPhase('done');
+
+      // Update streak for Today's Play completion — fire-and-forget
+      const localDate = new Date().toISOString().split('T')[0];
+      fetch(`${SUPABASE_URL}/functions/v1/daily-challenge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || ''}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ action: 'update_streak', localDate }),
+      }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['play-streak-hero'] });
+      }).catch(() => { /* non-critical */ });
     }
   };
 
