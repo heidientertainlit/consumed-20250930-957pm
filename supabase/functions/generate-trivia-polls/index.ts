@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
 
     const dedupBlock = existingTitles.size > 0
       ? `\n\nDO NOT REPEAT — these questions already exist in our database (do not generate anything similar):\n` +
-        Array.from(existingTitles).slice(0, 150).map((t, i) => `${i + 1}. ${t}`).join('\n')
+        Array.from(existingTitles).slice(0, 250).map((t, i) => `${i + 1}. ${t}`).join('\n')
       : '';
 
     // ── 2. Fetch recent rejections ──
@@ -256,7 +256,27 @@ Deno.serve(async (req) => {
 - "Finish the lyric/line: [partial quote]"
 - "Which of these released first?"
 - "What is the real name of [character/alias]?"
-Each must have exactly 4 options with one correct answer. Vary difficulty from easy pop culture to deeper fandom.`,
+- "What was the working title / original name of [title]?"
+- "Which actor was originally cast as [character] before [actor] took the role?"
+- "What is the name of [character]'s hometown / ship / company / band?"
+- "In [movie], what does [character] order at the diner / write on the note / say as their last line?"
+- "Which of these sequels came THIRD in the series?"
+- "Who composed the score for [movie]?"
+- "What year did [director] win their first Oscar?"
+Each must have exactly 4 options with one correct answer.
+
+DIFFICULTY RULES — enforce these strictly:
+- At least 40% of movie trivia questions must be MEDIUM or CHAOTIC difficulty (specific details, behind-the-scenes facts, character full names, sequel order, casting history, Oscar history, production trivia).
+- Easy questions are fine for TV and Pop Culture but Movie trivia should skew harder.
+- Avoid asking "Who starred in The Avengers / The Dark Knight / Titanic" type questions — these are over-exposed. If you do use a blockbuster, ask something non-obvious about it (original casting, deleted scene fact, behind-the-scenes detail).
+
+MOVIE DIVERSITY RULES — enforce these strictly:
+- Spread across MULTIPLE eras: 1960s–1980s classics, 1990s gems, 2000s cult hits, 2010s blockbusters, 2020s releases. Do NOT cluster in one decade.
+- Spread across MULTIPLE genres: horror, sci-fi, drama, romantic comedy, animated, documentary, foreign language, indie, action, thriller.
+- Spread across MULTIPLE countries and studios — don't only pull from Marvel/Disney/WB. Include A24, Pixar, Paramount, international films.
+- If you generated questions about a specific movie or franchise recently (see DO NOT REPEAT list), skip it entirely and pick a fresh title.
+- NEVER generate more than 1 question per movie in a single batch.
+- Avoid over-indexing on: Marvel, DC, Star Wars, Harry Potter, Fast & Furious, Avengers, The Dark Knight, Titanic, Jurassic Park — if they appear in the existing list, skip them. If they don't, you may use them ONCE max.`,
 
       poll: `Generate POLL questions only — opinion-based, no correct answer. Use these addictive templates:
 - "Which one are you picking right now?" (pick between 2 shows/movies)
@@ -319,7 +339,13 @@ Each must have exactly 2 options — short, punchy (e.g., "All at once" / "One e
       mixed: `Generate a MIXED batch of TRIVIA and POLLS only (no featured plays, no DNA moments — those are generated separately).
 Aim for: 55% trivia, 45% polls.
 Trivia: exactly 4 options, 1 correct answer. Use fun templates (who played, what year, finish the line, which came first, etc.)
-Polls: 2-4 options, no correct answer. Emotional, identity-driven, debate-worthy. Personal and slightly dramatic.`,
+Polls: 2-4 options, no correct answer. Emotional, identity-driven, debate-worthy. Personal and slightly dramatic.
+
+MOVIE TRIVIA DIVERSITY — apply to all trivia in this batch:
+- Spread across eras (1960s–2020s), genres (horror, sci-fi, drama, rom-com, animated, indie, foreign), and studios (A24, Pixar, Blumhouse, international, not just Marvel/Disney/WB).
+- At least 40% of movie trivia must be MEDIUM or CHAOTIC difficulty — behind-the-scenes, casting history, production facts, sequel order, character details.
+- NEVER generate more than 1 question about the same movie in a single batch.
+- If a title appears in the DO NOT REPEAT list, skip it entirely.`,
     };
 
     const systemPrompt = `You are a world-class entertainment content creator for Consumed, a social platform where fans actively engage with movies, TV, books, and music. You generate content that drives daily participation, feels culturally relevant, and is instantly shareable.
@@ -375,7 +401,7 @@ Return ONLY the JSON array. No markdown, no explanation, no code blocks.`;
       body: JSON.stringify({
         model: 'gpt-4o',
         max_tokens: 4096,
-        temperature: 0.85,
+        temperature: 0.92,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
