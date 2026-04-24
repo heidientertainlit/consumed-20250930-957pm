@@ -369,8 +369,8 @@ CATEGORY ACCURACY RULES — these are strict, not suggestions:
 - category "TV" = television series only. Not movies, not songs.
 - category "Movies" = theatrical or streaming films only. Not TV shows.
 - category "Pop Culture" = viral internet moments, celebrity news & tabloid drama, fashion/brand crazes, cultural crossover events, award show drama, memes — "The Conversation, not The Craft". If the question is about a specific show's plot, it's "TV". If it's about a movie's details, it's "Movies". If it's about who won a pop culture feud or what brand went viral, it's "Pop Culture".
-- category "Podcast" = podcast shows, hosts, episodes, podcast culture only.
-- category "Gaming" = video games, game characters, gaming culture, esports only.
+- category "Podcasts" = podcast shows, hosts, episodes, podcast culture ONLY. ANY question about a podcast (Serial, My Favorite Murder, Hidden Brain, Crime Junkie, etc.) MUST use category "Podcasts" and media_type "podcast". NEVER use "TV" for podcasts.
+- category "Gaming" = video games, game characters, gaming culture, esports ONLY. ANY question about a video game (Super Mario, Zelda, Call of Duty, etc.) MUST use category "Gaming" and media_type "game". NEVER use "Pop Culture" or "TV" for gaming.
 - "It's a Small World" is a Disney RIDE SONG — category: "Music", media_type: "music". NOT a book.
 - If a "finish the lyric/line" question is about a song or theme song, it MUST be Music. If it's about dialogue from a movie, category is Movies. If it's about dialogue from a show, category is TV.
 - Never ask "From which book?" when the lyric/quote is from a song or movie.
@@ -382,9 +382,9 @@ Return ONLY a valid JSON array. Each item must have these exact fields:
 - title: the question text (compelling, concise)
 - options: array of strings (answer choices — 4 for trivia, 2-4 for polls/featured, exactly 2 for dna_moment)
 - correct_answer: string (trivia only — must exactly match one option) or null
-- category: "TV" | "Movies" | "Books" | "Music" | "Pop Culture"
+- category: "TV" | "Movies" | "Books" | "Music" | "Pop Culture" | "Podcasts" | "Gaming"
 - show_tag: specific show/franchise name if applicable (e.g. "Stranger Things", "Taylor Swift") or null
-- media_type: "tv" | "movie" | "book" | "music" | null
+- media_type: "tv" | "movie" | "book" | "music" | "podcast" | "game" | null
 - difficulty: "easy" | "medium" | "chaotic"
 - template_type: short label like "who_played", "what_year", "finish_the_line", "pick_side", "comfort_show", "dna_habit", etc.
 - rotation_type: "evergreen" | "trending" | "seasonal"
@@ -471,8 +471,10 @@ For each item below, check ALL of the following and return corrections:
    - "Books" = ONLY actual written books (novels, memoirs, nonfiction). Songs, lyrics, Disney rides, movies, TV shows are NEVER "Books".
    - "Music" = songs, albums, artists, lyrics. "Finish the lyric" questions about songs MUST be "Music".
    - "TV" = TV series only. "Movies" = films only.
+   - "Podcasts" = podcast shows, episodes, hosts — NEVER mislabel as "TV". If the question mentions a podcast show, category MUST be "Podcasts".
+   - "Gaming" = video games, game characters, gaming culture, esports only — NEVER mislabel as "Pop Culture" or "TV".
    - Fix the category if it's wrong.
-3. MEDIA TYPE ACCURACY: Does media_type match? (song/lyric → "music", book → "book", TV show → "tv", film → "movie")
+3. MEDIA TYPE ACCURACY: Does media_type match? (song/lyric → "music", book → "book", TV show → "tv", film → "movie", podcast → "podcast", video game → "game")
 4. QUESTION WORDING: Does the question wording match the category? If a question says "From which book?" but it's about a song, fix the wording to match (e.g., "From which song?"). If a question is incoherent or factually absurd, set flag: true.
 
 Return ONLY a JSON array. One object per item (use the same idx). Only include fields that need changing — omit unchanged fields.

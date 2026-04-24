@@ -5889,7 +5889,7 @@ export default function Feed() {
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Podcasts" />
               )}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && selectedCategory === 'games' && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Gaming" />
               )}
 
               {/* POLLS - category-selected views */}
@@ -5903,7 +5903,7 @@ export default function Feed() {
                 <PollsCarousel expanded={selectedFilter === 'polls'} category="Podcasts" />
               )}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'polls') && selectedCategory === 'games' && (
-                <PollsCarousel expanded={selectedFilter === 'polls'} category="Games" />
+                <PollsCarousel expanded={selectedFilter === 'polls'} category="Gaming" />
               )}
 
               {/* — BLOCK 1 — */}
@@ -6034,7 +6034,7 @@ export default function Feed() {
 
               {/* Games trivia */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
-                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Games" />
+                <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Gaming" />
               )}
 
               {/* Movies Polls — round 2 */}
@@ -7774,7 +7774,7 @@ export default function Feed() {
                       <TriviaCarousel category="Books" />
                       <TriviaCarousel category="Music" />
                       <TriviaCarousel category="Podcasts" />
-                      <TriviaCarousel category="Games" />
+                      <TriviaCarousel category="Gaming" />
                       <TriviaCarousel category="Other" />
                     </>
                   )}
@@ -7797,7 +7797,7 @@ export default function Feed() {
                       <TriviaCarousel category="Books" challengesOnly />
                       <TriviaCarousel category="Music" challengesOnly />
                       <TriviaCarousel category="Podcasts" challengesOnly />
-                      <TriviaCarousel category="Games" challengesOnly />
+                      <TriviaCarousel category="Gaming" challengesOnly />
                     </>
                   )}
                 </div>
@@ -7890,8 +7890,8 @@ export default function Feed() {
                 selectedCategory === 'books' ? "Books" :
                 selectedCategory === 'sports' ? "Sports" :
                 selectedCategory === 'podcasts' ? "Podcasts" :
-                selectedCategory === 'gaming' ? "Games" :
-                mediaTypeFilter === "movie" ? "Movies" : mediaTypeFilter === "tv" ? "TV Shows" : mediaTypeFilter === "book" ? "Books" : mediaTypeFilter === "music" ? "Music" : mediaTypeFilter === "podcast" ? "Podcasts" : "Games"
+                selectedCategory === 'gaming' ? "Gaming" :
+                mediaTypeFilter === "movie" ? "Movies" : mediaTypeFilter === "tv" ? "TV Shows" : mediaTypeFilter === "book" ? "Books" : mediaTypeFilter === "music" ? "Music" : mediaTypeFilter === "podcast" ? "Podcasts" : "Gaming"
               } Activity Yet</h3>
               <p className="text-gray-600 max-w-sm mx-auto">
                 Try selecting a different category or check back later for updates.

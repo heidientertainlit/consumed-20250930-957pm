@@ -484,7 +484,10 @@ export default function AdminTriviaPage() {
       });
       return;
     }
-    const dateStr = getNextDropDate(draft.content_type);
+    // Featured plays need a date; trivia/polls publish immediately (no publish_at = live now)
+    const dateStr = draft.content_type === "featured_play"
+      ? getNextDropDate(draft.content_type)
+      : (scheduleDates[draft.id] || "");
     try {
       await publishDraft(draft, dateStr);
     } catch {
@@ -569,20 +572,38 @@ export default function AdminTriviaPage() {
 
         const poolId = crypto.randomUUID();
 
+        // Normalize category to match DB convention used by legacy data + feed queries
+        const normalizeCategory = (c: string | null | undefined): string => {
+          if (!c) return "Pop Culture";
+          const m: Record<string, string> = {
+            // Podcast — DB + feed both use plural "Podcasts"
+            podcast: "Podcasts", podcasts: "Podcasts",
+            // Gaming — DB uses "Gaming" singular; feed uses "Games" (mismatch noted)
+            gaming: "Gaming", games: "Gaming", game: "Gaming",
+            // Standard categories
+            music: "Music",
+            movies: "Movies", movie: "Movies",
+            tv: "TV", television: "TV", "tv shows": "TV",
+            books: "Books", book: "Books",
+            "pop culture": "Pop Culture",
+          };
+          return m[c.toLowerCase()] ?? c;
+        };
+
         const poolData: Record<string, any> = {
           id: poolId,
           title: draft.title,
           type: poolType,
           options: draft.options,
           correct_answer: draft.correct_answer || null,
-          category: draft.category || "Pop Culture",
+          category: normalizeCategory(draft.category),
           show_tag: draft.show_tag || null,
           media_title: draft.media_title || draft.show_tag || null,
           media_external_id: draft.media_external_id || null,
           media_external_source: draft.media_external_source
             || (draft.media_type === "tv" || draft.media_type === "movie" ? "tmdb"
             : draft.media_type === "book" ? "googlebooks"
-            : draft.media_type === "music" ? "spotify"
+            : draft.media_type === "music" || draft.media_type === "podcast" ? "spotify"
             : null),
           points_reward: draft.points_reward || 10,
           status: "open",
