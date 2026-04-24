@@ -150,7 +150,7 @@ function ScoreShareCard({
           </div>
 
           {/* ── White body ── */}
-          <div className="bg-white px-5 pt-4 pb-4">
+          <div className="bg-white px-6 pt-6 pb-6">
 
             {type === 'play' && playScore ? (
               <>
@@ -214,7 +214,7 @@ function ScoreShareCard({
                   ]);
 
                   return (
-                    <div className="flex flex-col items-center text-center gap-3">
+                    <div className="flex flex-col items-center text-center gap-4">
 
                       {/* Headline block */}
                       <div>
