@@ -275,7 +275,6 @@ function ScoreShareCard({
                             <Zap size={11} className="text-purple-600" fill="currentColor" />
                             <span>
                               <span className="font-bold text-gray-900">+{playScore.totalPoints} pts</span>
-                              {' '}— climbing the leaderboard
                             </span>
                           </div>
                         )}
@@ -285,7 +284,7 @@ function ScoreShareCard({
                             <div className="flex items-center gap-1">
                               <Flame size={11} className="text-orange-500 fill-orange-500" />
                               <span className="font-semibold text-gray-700">
-                                {streak === 1 ? 'streak started (play again tomorrow)' : `${streak}-day streak`}
+                                {streak === 1 ? 'streak started — play again tomorrow' : `${streak}-day streak`}
                               </span>
                             </div>
                           </>
