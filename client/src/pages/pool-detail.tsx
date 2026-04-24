@@ -1030,8 +1030,18 @@ function MediaTypePill({ poll }: { poll: any }) {
   );
 }
 
+/* ─── Streak milestones (same messages as trivia carousel) ──────────── */
+const POOL_STREAK_MILESTONES = [
+  { at: 3,  message: "Hat trick.",                                    sub: "Three in a row. You're on one." },
+  { at: 5,  message: "Your entertainment instincts are no joke.",     sub: "Five correct. Keep that energy." },
+  { at: 7,  message: "You are giving main character energy.",         sub: "All these right answers. We see you." },
+  { at: 10, message: "At this point you need your own trivia show.",  sub: "Ten in a row is not normal behavior." },
+  { at: 15, message: "Okay, actually iconic.",                        sub: "15 straight? That's a personality trait." },
+  { at: 20, message: "Are you even human?",                           sub: "Twenty correct. Truly unhinged (in the best way)." },
+];
+
 /* ─── Play Tab: Trivia card ──────────────────────────────────────────── */
-function PlayTriviaCard({ poll, token, onVoted }: { poll: any; token: string; onVoted: () => void }) {
+function PlayTriviaCard({ poll, token, onVoted }: { poll: any; token: string; onVoted: (isCorrect: boolean) => void }) {
   const { toast } = useToast();
   const [myVote, setMyVote] = useState<string | null>(poll.user_vote || null);
   const [counts, setCounts] = useState<Record<string, number>>(poll.vote_counts || {});
@@ -1060,7 +1070,8 @@ function PlayTriviaCard({ poll, token, onVoted }: { poll: any; token: string; on
         setCounts(prev => ({ ...prev, [option]: Math.max(0, (prev[option] || 1) - 1) }));
         toast({ title: data.error, variant: 'destructive' });
       } else {
-        onVoted();
+        const answeredCorrectly = !!correctAnswer && option.toLowerCase() === correctAnswer.toLowerCase();
+        onVoted(answeredCorrectly);
       }
     } catch {
       toast({ title: 'Network error', variant: 'destructive' });
@@ -1568,6 +1579,25 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, manag
   const isPartnerRoom = featuredPolls.length > 0;
   const [filter, setFilter] = useState<'all' | 'trivia' | 'vote' | 'dna'>('all');
   const [showSearch, setShowSearch] = useState('');
+  const [correctStreak, setCorrectStreak] = useState(0);
+  const [streakBanner, setStreakBanner] = useState<{ message: string; sub: string; streak: number } | null>(null);
+
+  const handleTriviaAnswered = (isCorrect: boolean) => {
+    onRefresh();
+    if (isCorrect) {
+      setCorrectStreak(prev => {
+        const newStreak = prev + 1;
+        const milestone = POOL_STREAK_MILESTONES.find(m => m.at === newStreak);
+        if (milestone) {
+          setStreakBanner({ message: milestone.message, sub: milestone.sub, streak: newStreak });
+          setTimeout(() => setStreakBanner(null), 3200);
+        }
+        return newStreak;
+      });
+    } else {
+      setCorrectStreak(0);
+    }
+  };
 
   if (!isPartnerRoom) {
     // Regular room: show host-created picks
@@ -1660,6 +1690,26 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, manag
   const showDna = filter === 'all' || filter === 'dna';
 
   return (
+    <>
+      {/* Streak banner — slides in from top when a milestone is hit */}
+      {streakBanner && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[200] w-[calc(100%-2rem)] max-w-sm pointer-events-none">
+          <div className="bg-gradient-to-r from-purple-700 via-purple-600 to-fuchsia-600 text-white rounded-2xl px-5 py-4 shadow-2xl border border-purple-500/40 animate-in slide-in-from-top-4 fade-in duration-300">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl shrink-0">
+                {streakBanner.streak >= 15 ? '🔥' : streakBanner.streak >= 10 ? '⚡' : streakBanner.streak >= 7 ? '💜' : streakBanner.streak >= 5 ? '🎯' : '✨'}
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-sm leading-tight">{streakBanner.message}</p>
+                <p className="text-purple-200 text-xs mt-0.5 leading-tight">{streakBanner.sub}</p>
+              </div>
+              <div className="ml-auto shrink-0 bg-white/20 rounded-full px-2 py-0.5 text-xs font-bold tabular-nums">
+                {streakBanner.streak}🔥
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     <div className="pb-4">
 
       {/* ── Filter pills ── */}
@@ -1725,7 +1775,7 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, manag
               )}
               <div className="space-y-2.5">
                 {questions.map(poll => (
-                  <PlayTriviaCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
+                  <PlayTriviaCard key={poll.id} poll={poll} token={token} onVoted={handleTriviaAnswered} />
                 ))}
               </div>
             </div>
@@ -1770,6 +1820,7 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, manag
       )}
 
     </div>
+    </>
   );
 }
 
