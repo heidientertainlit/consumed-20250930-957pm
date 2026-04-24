@@ -633,11 +633,48 @@ ${dedupedItems.map((q: any, i: number) => {
     const errors: string[] = [];
     let showTagDropped = 0;
 
-    // Guard: drop trivia with no show_tag — questions without a media anchor have no context for players
-    const validatedItems = dedupedItems.filter(item => {
+    // ── show_tag resolver ──────────────────────────────────────────────────────
+    // The AI prompt requires show_tag for trivia, but as a belt-and-suspenders
+    // fallback we auto-extract it from the question title when the AI omits it.
+    // The prompt enforces titles like "In The Shawshank Redemption, what item..."
+    // so patterns below reliably capture the media title.
+    function extractShowTag(title: string): string | null {
+      if (!title) return null;
+      // "In [Title], ..." / "In [Title]: ..."
+      let m = title.match(/^In\s+(.+?)[,:][\s]/i);
+      if (m && m[1].length >= 2) return m[1].trim();
+      // "On [Artist]'s [Album], ..." or "On [Title], ..."
+      m = title.match(/^On\s+(.+?),\s/i);
+      if (m && m[1].length >= 2) return m[1].trim();
+      // "...in [Title]?" — end of sentence
+      m = title.match(/\bin\s+([A-Z][A-Za-z0-9 :'\-&\.]{2,60})\?/);
+      if (m) return m[1].trim();
+      // "...from [Title]?"
+      m = title.match(/\bfrom\s+([A-Z][A-Za-z0-9 :'\-&\.]{2,60})\?/);
+      if (m) return m[1].trim();
+      // Single-quoted title: 'The Matrix'
+      m = title.match(/['\u2018\u2019]([A-Z][^'\u2018\u2019]{1,60})['\u2018\u2019]/);
+      if (m) return m[1].trim();
+      return null;
+    }
+
+    // Resolve show_tag on every trivia item before saving
+    const resolvedItems = dedupedItems.map(item => {
+      if ((item.content_type || contentType) !== 'trivia') return item;
+      if (item.show_tag) return item; // already set — nothing to do
+      const extracted = extractShowTag(item.title || '');
+      if (extracted) {
+        console.log(`Auto-extracted show_tag "${extracted}" from title: "${(item.title || '').substring(0, 80)}"`);
+        return { ...item, show_tag: extracted };
+      }
+      return item; // will be caught by the drop filter below
+    });
+
+    // Guard: drop any trivia still missing show_tag after extraction attempt
+    const validatedItems = resolvedItems.filter(item => {
       if ((item.content_type || contentType) === 'trivia' && !item.show_tag) {
         showTagDropped++;
-        console.warn(`Dropped trivia with null show_tag: "${(item.title || '').substring(0, 80)}"`);
+        console.warn(`Dropped trivia (no show_tag, extraction failed): "${(item.title || '').substring(0, 80)}"`);
         return false;
       }
       return true;
