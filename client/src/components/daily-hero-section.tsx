@@ -1856,19 +1856,6 @@ export function DailyHeroSection() {
                 {playOnFront ? todaysPlayCard(true)  : dailyCallCard(true)}
               </div>
 
-              {/* Swipe dot indicators — subtle, hidden to casual eye */}
-              <div className="flex justify-center items-center gap-1 mt-0.5 opacity-20">
-                <button
-                  onClick={() => setSwipeIndex(0)}
-                  className={`h-1 rounded-full transition-all duration-300 ${swipeIndex === 0 ? 'w-3 bg-white' : 'w-1 bg-white/50'}`}
-                  aria-label="Today's Play"
-                />
-                <button
-                  onClick={() => setSwipeIndex(1)}
-                  className={`h-1 rounded-full transition-all duration-300 ${swipeIndex === 1 ? 'w-3 bg-white' : 'w-1 bg-white/50'}`}
-                  aria-label="Daily Call"
-                />
-              </div>
             </div>
           );
         })()

@@ -379,7 +379,7 @@ ANSWER POSITION RULE (trivia only): The correct answer must NOT always be the fi
 
 Return ONLY a valid JSON array. Each item must have these exact fields:
 - content_type: "trivia" | "poll" | "featured_play" | "dna_moment"
-- title: the question text (compelling, concise)
+- title: the question text (compelling, concise). CRITICAL: whenever the question is about a specific movie, TV show, book, album, artist, or franchise, the title MUST include the name inline for context — e.g. "In The Shawshank Redemption, what item does Andy use to escape?" or "In Breaking Bad, what does Walter White's alias stand for?" or "On Taylor Swift's Folklore, which song samples another artist?". Never write a question that requires knowing the subject without stating it — players need the context to answer.
 - options: array of strings (answer choices — 4 for trivia, 2-4 for polls/featured, exactly 2 for dna_moment)
 - correct_answer: string (trivia only — must exactly match one option) or null
 - category: "TV" | "Movies" | "Books" | "Music" | "Pop Culture" | "Podcasts" | "Gaming"
