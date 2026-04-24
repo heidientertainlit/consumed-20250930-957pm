@@ -57,6 +57,7 @@ import { FeedbackDialog } from "@/components/feedback-dialog";
 import { GameMomentCard } from "@/components/game-moment-card";
 import { SocialProofCard, buildGameMomentSocialProof, buildLeaderboardSocialProof } from "@/components/social-proof-card";
 import BingeBattleFeedCard from "@/components/binge-battle-feed-card";
+import { TodaysPlayNudge } from "@/components/todays-play-nudge";
 
 interface SocialPost {
   id: string;
@@ -5691,6 +5692,7 @@ export default function Feed() {
             </h1>
 
             <DailyHeroSection />
+            <TodaysPlayNudge />
 
           </div>
           
