@@ -22,6 +22,7 @@ type Draft = {
   options: string[];
   correct_answer: string | null;
   category: string;
+  show_tag: string | null;
   media_type: string | null;
   featured_date: string | null;
   status: string;
@@ -189,7 +190,7 @@ export default function AdminTodaysPlayPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("trivia_poll_drafts")
-        .select("id, title, options, correct_answer, category, media_type, featured_date, status, created_at")
+        .select("id, title, options, correct_answer, category, show_tag, media_type, featured_date, status, created_at")
         .eq("content_type", "trivia")
         .in("status", ["draft", "pending"])
         .order("created_at", { ascending: false })
@@ -498,6 +499,8 @@ export default function AdminTodaysPlayPage() {
         options: draft.options,
         correct_answer: draft.correct_answer || null,
         category: meta.categoryHint,
+        show_tag: draft.show_tag || null,
+        media_type: draft.media_type || null,
         featured_date: dateStr,
         status: "open",
         origin_type: "consumed",
@@ -561,6 +564,8 @@ export default function AdminTodaysPlayPage() {
           options: draft.options,
           correct_answer: draft.correct_answer || null,
           category: meta.categoryHint,
+          show_tag: draft.show_tag || null,
+          media_type: draft.media_type || null,
           featured_date: dateStr,
           status: "open",
           origin_type: "consumed",
@@ -940,6 +945,11 @@ export default function AdminTodaysPlayPage() {
                               {meta.icon} {meta.label}
                             </span>
                             <p className="text-sm text-white font-medium line-clamp-1 flex-1">{draft.title}</p>
+                            {!draft.show_tag && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/20 text-red-300 border border-red-500/30 flex-shrink-0" title="No show_tag — cannot publish">
+                                <AlertTriangle size={9} /> No Media
+                              </span>
+                            )}
                             {dupWarning && (
                               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-semibold bg-orange-500/20 text-orange-300 border border-orange-500/30 flex-shrink-0">
                                 <AlertTriangle size={9} /> Dup
@@ -995,7 +1005,7 @@ export default function AdminTodaysPlayPage() {
                                 </div>
                                 {dateTaken && <div className="flex items-center gap-1.5 text-orange-400"><AlertTriangle size={11} /><p className="text-xs">{dateSetCount} question{dateSetCount !== 1 ? "s" : ""} already on {pickedDate}</p></div>}
                                 <div className="flex gap-2">
-                                  <Button onClick={() => publishDraft(draft)} disabled={publishingId === draft.id || !pickedDate} size="sm" className="bg-teal-600 hover:bg-teal-500 text-white font-semibold flex-1">
+                                  <Button onClick={() => publishDraft(draft)} disabled={publishingId === draft.id || !pickedDate || !draft.show_tag} size="sm" className={`text-white font-semibold flex-1 ${draft.show_tag ? "bg-teal-600 hover:bg-teal-500" : "bg-gray-600 cursor-not-allowed opacity-50"}`} title={!draft.show_tag ? "Cannot schedule — no media tag (show_tag missing)" : undefined}>
                                     {publishingId === draft.id ? <Loader2 size={13} className="animate-spin mr-1" /> : <Send size={13} className="mr-1" />}
                                     Schedule
                                   </Button>

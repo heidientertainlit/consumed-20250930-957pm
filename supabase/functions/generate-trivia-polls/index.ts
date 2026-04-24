@@ -35,6 +35,15 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Guard: trivia MUST have a show_tag — if it's missing the question has no context
+      if (poolData.type === 'trivia' && !poolData.show_tag) {
+        return new Response(JSON.stringify({
+          error: 'Cannot publish trivia without a show_tag. Every trivia question must be tied to a specific show, movie, album, or franchise.',
+        }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
       const { error: insertError } = await supabaseAdmin
         .from('prediction_pools')
         .insert(poolData);
@@ -383,7 +392,7 @@ Return ONLY a valid JSON array. Each item must have these exact fields:
 - options: array of strings (answer choices — 4 for trivia, 2-4 for polls/featured, exactly 2 for dna_moment)
 - correct_answer: string (trivia only — must exactly match one option) or null
 - category: "TV" | "Movies" | "Books" | "Music" | "Pop Culture" | "Podcasts" | "Gaming"
-- show_tag: specific show/franchise name if applicable (e.g. "Stranger Things", "Taylor Swift") or null
+- show_tag: REQUIRED for trivia — the specific show, movie, album, artist, or franchise the question is about (e.g. "Stranger Things", "Taylor Swift", "The Dark Knight"). NEVER null for trivia. For polls/dna_moment/featured_play: set if question references a specific title, otherwise null.
 - media_type: "tv" | "movie" | "book" | "music" | "podcast" | "game" | null
 - difficulty: "easy" | "medium" | "chaotic"
 - template_type: short label like "who_played", "what_year", "finish_the_line", "pick_side", "comfort_show", "dna_habit", etc.
@@ -622,8 +631,19 @@ ${dedupedItems.map((q: any, i: number) => {
 
     const drafts: any[] = [];
     const errors: string[] = [];
+    let showTagDropped = 0;
 
-    for (const item of dedupedItems) {
+    // Guard: drop trivia with no show_tag — questions without a media anchor have no context for players
+    const validatedItems = dedupedItems.filter(item => {
+      if ((item.content_type || contentType) === 'trivia' && !item.show_tag) {
+        showTagDropped++;
+        console.warn(`Dropped trivia with null show_tag: "${(item.title || '').substring(0, 80)}"`);
+        return false;
+      }
+      return true;
+    });
+
+    for (const item of validatedItems) {
       const draft = {
         content_type: item.content_type || contentType,
         title: item.title || '',
@@ -658,6 +678,7 @@ ${dedupedItems.map((q: any, i: number) => {
       success: true,
       generated: drafts.length,
       dedupDropped: dedupDropped > 0 ? dedupDropped : undefined,
+      showTagDropped: showTagDropped > 0 ? showTagDropped : undefined,
       drafts,
       errors: errors.length > 0 ? errors : undefined,
     }), {
