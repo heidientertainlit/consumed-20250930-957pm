@@ -337,11 +337,10 @@ function ScoreShareCard({
             )}
 
             {/* Footer tagline */}
-            <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-              <p className="text-[10px] font-semibold text-purple-600">Play · Connect · Discover · @consumedapp</p>
-              <p className="text-[10px] font-semibold text-gray-400">consumed.app</p>
+            <div className="pt-2 border-t border-gray-100">
+              <p className="text-[11px] font-bold text-purple-600">@consumedapp</p>
+              <p className="text-[9px] text-gray-400 mt-0.5">where entertainment gets played</p>
             </div>
-            <p className="text-[9px] text-gray-300 mt-0.5">where entertainment gets played</p>
           </div>
         </div>
 
