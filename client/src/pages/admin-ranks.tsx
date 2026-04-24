@@ -116,17 +116,31 @@ export default function AdminRanksPage() {
     enabled: !!user?.id,
   });
 
-  const { data: existingRanks = [], isLoading: ranksLoading, refetch: refetchRanks } = useQuery<ExistingRank[]>({
+  const { data: existingRanks = [], isLoading: ranksLoading, isError: ranksError, refetch: refetchRanks } = useQuery<ExistingRank[]>({
     queryKey: ["admin-consumed-ranks"],
     queryFn: async () => {
-      const { data: ranks, error } = await supabase
+      // Try with new columns first; fall back to base columns if schema cache hasn't updated
+      let ranks: any[] | null = null;
+      const { data: ranksNew, error: errNew } = await supabase
         .from("ranks")
         .select("id, title, description, category, max_items, created_at, status, scheduled_date")
         .eq("origin_type", "consumed")
         .order("created_at", { ascending: false });
-      if (error) throw error;
 
-      const rankIds = (ranks || []).map((r) => r.id);
+      if (errNew) {
+        // Fallback: query without new columns (schema cache may not have refreshed yet)
+        const { data: ranksFallback, error: errFallback } = await supabase
+          .from("ranks")
+          .select("id, title, description, category, max_items, created_at")
+          .eq("origin_type", "consumed")
+          .order("created_at", { ascending: false });
+        if (errFallback) throw errFallback;
+        ranks = (ranksFallback || []).map((r: any) => ({ ...r, status: "published", scheduled_date: null }));
+      } else {
+        ranks = ranksNew || [];
+      }
+
+      const rankIds = ranks.map((r: any) => r.id);
       if (rankIds.length === 0) return [];
 
       const { data: itemCounts } = await supabase
@@ -139,7 +153,7 @@ export default function AdminRanksPage() {
         countMap[i.rank_id] = (countMap[i.rank_id] || 0) + 1;
       });
 
-      return (ranks || []).map((r) => ({
+      return ranks.map((r: any) => ({
         ...r,
         status: r.status || "published",
         item_count: countMap[r.id] || 0,
@@ -367,11 +381,20 @@ export default function AdminRanksPage() {
   }
 
   async function loadRankItems(rankId: string): Promise<{ position: number; title: string; creator: string | null; year: string | null }[]> {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("rank_items")
       .select("position, title, creator, year")
       .eq("rank_id", rankId)
       .order("position", { ascending: true });
+    if (error) {
+      // Fallback without year column if schema cache hasn't refreshed
+      const { data: fallback } = await supabase
+        .from("rank_items")
+        .select("position, title, creator")
+        .eq("rank_id", rankId)
+        .order("position", { ascending: true });
+      return (fallback || []).map((i: any) => ({ ...i, year: null }));
+    }
     return data || [];
   }
 
@@ -843,6 +866,15 @@ export default function AdminRanksPage() {
             {ranksLoading && (
               <div className="flex items-center justify-center py-12">
                 <Loader2 size={24} className="animate-spin text-purple-400" />
+              </div>
+            )}
+
+            {ranksError && !ranksLoading && (
+              <div className="bg-red-900/20 border border-red-800 rounded-xl p-4 mb-4 flex items-center justify-between">
+                <p className="text-red-400 text-sm">Failed to load ranks</p>
+                <button onClick={() => refetchRanks()} className="text-red-300 hover:text-white text-xs font-medium flex items-center gap-1">
+                  <RefreshCw size={12} /> Retry
+                </button>
               </div>
             )}
 
