@@ -220,6 +220,7 @@ function ScoreShareCard({
                       <div>
                         <h2 className="text-[15px] font-black text-gray-900 leading-snug mb-1">{headline}</h2>
                         <p className="text-[11px] font-semibold text-gray-500 leading-snug">{subhead}</p>
+                        <p className="text-[11px] font-semibold text-gray-500 leading-snug mt-0.5">{tomorrowLine} by playing again tomorrow.</p>
                       </div>
 
                       {/* Score */}
@@ -268,29 +269,28 @@ function ScoreShareCard({
                       {/* Divider */}
                       <div className="w-full h-px bg-gray-100" />
 
-                      {/* Points */}
-                      {playScore.totalPoints > 0 && (
-                        <div className="flex items-center gap-1 text-[11px] text-gray-500 font-medium">
-                          <Zap size={11} className="text-purple-600" fill="currentColor" />
-                          <span>
-                            <span className="font-bold text-gray-900">+{playScore.totalPoints} pts</span>
-                            {' '}— climbing the leaderboard
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Streak + tomorrow tension on same line */}
-                      <div className="flex items-center gap-1.5 text-[11px] font-medium flex-wrap justify-center">
+                      {/* Points + streak side by side */}
+                      <div className="flex items-center gap-2.5 text-[11px] text-gray-500 font-medium">
+                        {playScore.totalPoints > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Zap size={11} className="text-purple-600" fill="currentColor" />
+                            <span>
+                              <span className="font-bold text-gray-900">+{playScore.totalPoints} pts</span>
+                              {' '}— climbing the leaderboard
+                            </span>
+                          </div>
+                        )}
                         {streak && streak > 0 && (
                           <>
-                            <Flame size={11} className="text-orange-500 fill-orange-500" />
-                            <span className="font-semibold text-gray-700">
-                              {streak === 1 ? 'streak started' : `${streak}-day streak`}
-                            </span>
-                            <span className="text-gray-300">·</span>
+                            {playScore.totalPoints > 0 && <span className="text-gray-300">·</span>}
+                            <div className="flex items-center gap-1">
+                              <Flame size={11} className="text-orange-500 fill-orange-500" />
+                              <span className="font-semibold text-gray-700">
+                                {streak === 1 ? 'streak started' : `${streak}-day streak`}
+                              </span>
+                            </div>
                           </>
                         )}
-                        <span className="text-purple-500 font-semibold">{tomorrowLine} by playing again tomorrow.</span>
                       </div>
 
                     </div>
