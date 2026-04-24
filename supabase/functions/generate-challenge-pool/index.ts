@@ -93,6 +93,108 @@ Return ONLY a valid JSON array of 8 objects with these exact keys. No markdown, 
       });
     }
 
+    // --- Suggest ranks action: AI generates Debate the Rank topic ideas ---
+    if (body.action === 'suggest_ranks') {
+      const { category = '' } = body;
+
+      const categoryClause = category
+        ? `Generate rank ideas specifically for the ${category} category.`
+        : 'Generate rank ideas across entertainment categories (movies, TV, music, books).';
+
+      const prompt = `You are creating "Debate the Rank" content for Consumed, an entertainment fan platform. Generate 6 compelling, debate-sparking ranked list ideas.
+
+${categoryClause}
+
+Each idea should have a title that is opinionated, specific, and invites debate (e.g. "Best 90s Movies", "Most Overrated TV Shows Ever", "GOAT Hip-Hop Albums of All Time", "Movies That Were Better Than the Book"). Avoid generic titles.
+
+Return ONLY a valid JSON array of 6 objects with exactly these keys:
+- title: string (catchy, debate-worthy rank title)
+- description: string (one sentence explaining what gets ranked and why it's debatable)
+
+No markdown, no explanation, just the JSON array.`;
+
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          max_tokens: 1000,
+          temperature: 0.95,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+
+      if (!openaiResponse.ok) {
+        const errText = await openaiResponse.text();
+        return new Response(JSON.stringify({ error: `OpenAI error: ${errText}` }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const openaiData = await openaiResponse.json();
+      const rawText = openaiData.choices?.[0]?.message?.content || '';
+      let ideas: any[] = [];
+      try {
+        const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+        ideas = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+      } catch (e) {
+        return new Response(JSON.stringify({ error: 'Failed to parse rank ideas', raw: rawText.slice(0, 300) }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true, ideas }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // --- Suggest ranks items: AI generates ranked items for a given title/category ---
+    if (body.action === 'suggest_rank_items') {
+      const { rankTitle = '', category = '', maxItems = 10 } = body;
+
+      const prompt = `Generate a ranked list of exactly ${maxItems} items for a "Debate the Rank" titled "${rankTitle}" in the ${category} category. Order them from #1 (best/most notable) to #${maxItems}. Each item should be a real, well-known title that fans would debate.
+
+Return ONLY a valid JSON array of ${maxItems} objects with exactly these keys:
+- title: string (the name of the movie/show/album/book/etc.)
+- creator: string (director, artist, author, band — empty string if not applicable)
+
+No markdown, no explanation, just the JSON array.`;
+
+      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          max_tokens: 1500,
+          temperature: 0.8,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+
+      if (!openaiResponse.ok) {
+        const errText = await openaiResponse.text();
+        return new Response(JSON.stringify({ error: `OpenAI error: ${errText}` }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const openaiData = await openaiResponse.json();
+      const rawText = openaiData.choices?.[0]?.message?.content || '';
+      let items: any[] = [];
+      try {
+        const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+        items = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+      } catch (e) {
+        return new Response(JSON.stringify({ error: 'Failed to parse rank items', raw: rawText.slice(0, 300) }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true, items }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // --- Save action: persist pool + questions to DB ---
     if (body.action === 'save') {
       const { pool, questions } = body;

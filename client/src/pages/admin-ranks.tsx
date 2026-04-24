@@ -179,36 +179,24 @@ export default function AdminRanksPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const catLabel = CATEGORIES.find((c) => c.value === category)?.label || category;
-      const prompt = `You are helping create "Debate the Rank" content for an entertainment platform. Generate 6 compelling, opinionated rank ideas for the ${catLabel} category. Each should be a title that sparks debate (e.g. "Best 90s Movies", "Most Overrated TV Shows of All Time", "GOAT Hip-Hop Albums"). Return a JSON array of exactly 6 objects with keys "title" (string, catchy and debate-worthy) and "description" (string, 1 sentence max explaining the rank). Only return the JSON array, no other text.`;
 
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-challenge-pool`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token}`,
           apikey: supabaseAnonKey,
         },
-        body: JSON.stringify({ action: "ai_rank_ideas", prompt }),
+        body: JSON.stringify({ action: "suggest_ranks", category: catLabel }),
       });
 
       const raw = await resp.json();
-      let ideas: RankIdea[] = [];
-      try {
-        const content = raw?.content || raw?.result || raw?.ideas || raw;
-        if (typeof content === "string") {
-          const match = content.match(/\[[\s\S]*\]/);
-          if (match) ideas = JSON.parse(match[0]);
-        } else if (Array.isArray(content)) {
-          ideas = content;
-        }
-      } catch {
-        // ignore parse error
-      }
+      const ideas: RankIdea[] = raw?.ideas || [];
 
       if (ideas.length > 0) {
         setSuggestedIdeas(ideas.slice(0, 6));
       } else {
-        toast({ title: "Couldn't generate ideas", description: "Try again or enter your own title.", variant: "destructive" });
+        toast({ title: "Couldn't generate ideas", description: raw?.error || "Try again or enter your own title.", variant: "destructive" });
       }
     } catch (err: any) {
       toast({ title: "AI suggestion failed", description: err.message, variant: "destructive" });
@@ -226,32 +214,19 @@ export default function AdminRanksPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const catLabel = CATEGORIES.find((c) => c.value === category)?.label || category;
-      const prompt = `Generate a ranked list of exactly ${maxItems} items for a "Debate the Rank" titled "${title}" in the ${catLabel} category. Return a JSON array of objects with keys "title" (string) and "creator" (string, can be empty string). Order them from best (#1) to last (#${maxItems}). Only return the JSON array, no other text.`;
 
-      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-challenge-pool`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token}`,
           apikey: supabaseAnonKey,
         },
-        body: JSON.stringify({ action: "ai_rank_items", prompt }),
+        body: JSON.stringify({ action: "suggest_rank_items", rankTitle: title, category: catLabel, maxItems }),
       });
 
       const raw = await resp.json();
-      // The edge function returns content — parse it
-      let generated: { title: string; creator: string }[] = [];
-      try {
-        const content = raw?.content || raw?.result || raw?.items || raw;
-        if (typeof content === "string") {
-          const match = content.match(/\[[\s\S]*\]/);
-          if (match) generated = JSON.parse(match[0]);
-        } else if (Array.isArray(content)) {
-          generated = content;
-        }
-      } catch {
-        // fallback: ignore parse error
-      }
+      const generated: { title: string; creator: string }[] = raw?.items || [];
 
       if (generated.length > 0) {
         const mediaType = MEDIA_TYPES[category] || "mixed";
@@ -264,7 +239,7 @@ export default function AdminRanksPage() {
         );
         toast({ title: `Generated ${generated.length} items`, description: "Review and adjust the list below." });
       } else {
-        toast({ title: "Couldn't parse AI response", description: "Try entering items manually.", variant: "destructive" });
+        toast({ title: "Couldn't generate items", description: raw?.error || "Try entering items manually.", variant: "destructive" });
       }
     } catch (err: any) {
       toast({ title: "AI generation failed", description: err.message, variant: "destructive" });
