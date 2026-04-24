@@ -6,7 +6,7 @@ import {
   Trophy, X, Loader2, Star, Users, Radio, Share2, Check,
   Film, Tv, Music, BookOpen, Mic2, Gamepad2,
   Zap, ArrowRight, Sparkles, MessageCircle,
-  ChevronRight, ChevronDown, Lock, Target,
+  ChevronRight, ChevronDown, Lock,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -81,35 +81,10 @@ function ScoreShareCard({
   callQuestion?: string | null;
   streak?: number | null;
   userId?: string;
-  answers?: { correct: boolean }[];
+  answers?: { correct: boolean; category?: string }[];
   onClose: () => void;
 }) {
   const { toast } = useToast();
-
-  // Fetch today's activity (ratings + predictions)
-  const { data: todayActivity } = useQuery({
-    queryKey: ['today-activity-share', userId],
-    queryFn: async () => {
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const iso = todayStart.toISOString();
-      const [ratingRes, predRes] = await Promise.all([
-        supabase
-          .from('social_posts')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId!)
-          .in('post_type', ['rate-review', 'rating', 'rate_review'])
-          .gte('created_at', iso),
-        supabase
-          .from('user_predictions')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId!)
-          .gte('created_at', iso),
-      ]);
-      return { ratings: ratingRes.count ?? 0, predictions: predRes.count ?? 0 };
-    },
-    enabled: !!userId && open,
-  });
 
   if (!open) return null;
 
@@ -202,68 +177,59 @@ function ScoreShareCard({
                 {/* Divider */}
                 <div className="h-px bg-gray-100 mb-3" />
 
-                {/* Easy / Medium / Hard blocks */}
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  {['Easy', 'Medium', 'Hard'].map((label, i) => {
-                    const correct = answers?.[i]?.correct ?? (i < playScore.correct);
-                    return (
-                      <div
-                        key={label}
-                        className="flex flex-col items-center gap-1.5 py-2.5 rounded-2xl"
-                        style={{
-                          background: correct ? '#f0fdf4' : '#fff1f2',
-                          border: `1px solid ${correct ? '#bbf7d0' : '#fecdd3'}`,
-                        }}
-                      >
-                        <div
-                          className="w-8 h-8 rounded-xl flex items-center justify-center"
-                          style={{ background: correct ? '#dcfce7' : '#ffe4e6' }}
-                        >
-                          {correct
-                            ? <CheckCircle size={17} className="text-green-500" />
-                            : <XCircle size={17} className="text-red-500" />}
-                        </div>
-                        <p
-                          className="text-[9px] font-bold uppercase tracking-wider"
-                          style={{ color: correct ? '#16a34a' : '#dc2626' }}
-                        >
-                          {label}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
+                {/* Per-question category chips */}
+                {(() => {
+                  const CAT_EMOJI: Record<string, string> = {
+                    Movies: '🎬', Movie: '🎬',
+                    TV: '📺', Television: '📺',
+                    Music: '🎵',
+                    Books: '📚', Book: '📚',
+                    'Pop Culture': '⭐',
+                    Sports: '🏆',
+                    Games: '🎮', Gaming: '🎮',
+                    Podcasts: '🎙️', Podcast: '🎙️',
+                    General: '🎯',
+                  };
+                  const qCount = playScore.total;
+                  return (
+                    <div className={`grid gap-2 mb-3`} style={{ gridTemplateColumns: `repeat(${qCount}, 1fr)` }}>
+                      {Array.from({ length: qCount }).map((_, i) => {
+                        const correct = answers?.[i]?.correct ?? (i < playScore.correct);
+                        const cat = answers?.[i]?.category || 'General';
+                        const emoji = CAT_EMOJI[cat] || '🎯';
+                        return (
+                          <div
+                            key={i}
+                            className="flex flex-col items-center gap-1.5 py-2.5 rounded-2xl"
+                            style={{
+                              background: correct ? '#f0fdf4' : '#fff1f2',
+                              border: `1px solid ${correct ? '#bbf7d0' : '#fecdd3'}`,
+                            }}
+                          >
+                            <div
+                              className="w-8 h-8 rounded-xl flex items-center justify-center text-lg"
+                              style={{ background: correct ? '#dcfce7' : '#ffe4e6' }}
+                            >
+                              {emoji}
+                            </div>
+                            <p
+                              className="text-[9px] font-bold uppercase tracking-wider text-center leading-tight px-0.5"
+                              style={{ color: correct ? '#16a34a' : '#dc2626' }}
+                            >
+                              {cat}
+                            </p>
+                            {correct
+                              ? <CheckCircle size={12} className="text-green-500" />
+                              : <XCircle size={12} className="text-red-500" />}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
 
                 {/* Divider */}
                 <div className="h-px bg-gray-100 mb-3" />
-
-                {/* Also Today */}
-                {(todayActivity?.ratings || todayActivity?.predictions) ? (
-                  <>
-                    <div
-                      className="flex items-center gap-3 px-3 py-2 rounded-xl mb-3"
-                      style={{ background: '#f9f9f9', border: '1px solid #f0f0f0' }}
-                    >
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mr-1">Also Today</p>
-                      {todayActivity.ratings > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Star size={11} className="text-yellow-500" fill="currentColor" />
-                          <span className="text-[11px] font-semibold text-gray-700">{todayActivity.ratings} rating{todayActivity.ratings !== 1 ? 's' : ''}</span>
-                        </div>
-                      )}
-                      {todayActivity.ratings > 0 && todayActivity.predictions > 0 && (
-                        <span className="text-gray-300">·</span>
-                      )}
-                      {todayActivity.predictions > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Target size={11} className="text-purple-500" />
-                          <span className="text-[11px] font-semibold text-gray-700">{todayActivity.predictions} prediction{todayActivity.predictions !== 1 ? 's' : ''}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="h-px bg-gray-100 mb-3" />
-                  </>
-                ) : null}
 
                 {/* Category icons */}
                 <div className="grid grid-cols-6 gap-1.5 mb-4">
@@ -432,14 +398,14 @@ function TodaysPlayGame({
   username?: string | null;
   onComplete: (score: PlayScore) => void;
   onClose: () => void;
-  onShare: (answers: { correct: boolean }[]) => void;
+  onShare: (answers: { correct: boolean; category?: string }[]) => void;
 }) {
   const [, setLocation] = useLocation();
   const { session } = useAuth();
   const [qIndex, setQIndex] = useState(0);
   const [phase, setPhase] = useState<'playing' | 'result' | 'done'>('playing');
   const [selected, setSelected] = useState<string | null>(null);
-  const [answers, setAnswers] = useState<{ correct: boolean; points: number }[]>([]);
+  const [answers, setAnswers] = useState<{ correct: boolean; points: number; category?: string }[]>([]);
   const [socialProof, setSocialProof] = useState<number | null>(null);
   const [doneScore, setDoneScore] = useState<PlayScore | null>(null);
 
@@ -468,7 +434,7 @@ function TodaysPlayGame({
       setSocialProof(Math.floor(Math.random() * 25) + 52);
     }
 
-    setAnswers(prev => [...prev, { correct: isCorrect, points }]);
+    setAnswers(prev => [...prev, { correct: isCorrect, points, category: q.category || 'General' }]);
     setPhase('result');
   };
 
@@ -490,7 +456,7 @@ function TodaysPlayGame({
         completed: true,
         date: new Date().toISOString().split('T')[0],
         score,
-        answers: allAnswers.map(a => ({ correct: a.correct })),
+        answers: allAnswers.map(a => ({ correct: a.correct, category: a.category })),
       }));
       setDoneScore(score);
       onComplete(score); // update parent card immediately
@@ -1330,7 +1296,7 @@ export function DailyHeroSection() {
   // ── Today's Play state ──
   const [showPlayGame, setShowPlayGame] = useState(false);
   const [showPlayShare, setShowPlayShare] = useState(false);
-  const [playAnswers, setPlayAnswers] = useState<{ correct: boolean }[] | null>(() => {
+  const [playAnswers, setPlayAnswers] = useState<{ correct: boolean; category?: string }[] | null>(() => {
     try {
       const s = localStorage.getItem(getTodayPlayKey());
       if (!s) return null;
