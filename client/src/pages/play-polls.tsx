@@ -302,37 +302,34 @@ export default function PlayPollsPage() {
                                   const isCelebrating = celebratingItems[game.id] !== undefined;
                                   return (
                                     <div className="relative">
-                                      <div className="flex flex-col gap-2">
+                                      <div className="grid grid-cols-2 gap-2">
                                         {options.map((opt, oi) => {
                                           const pct = stats ? (stats[opt] || 0) : 0;
                                           const isUserPick = opt === userAnswer;
                                           return (
                                             <div
                                               key={oi}
-                                              className={`relative py-3 px-4 rounded-full overflow-hidden transition-all ${isUserPick ? 'bg-purple-100' : 'bg-gray-100'}`}
+                                              className={`relative min-h-[72px] py-2 px-3 rounded-2xl border flex flex-col items-center justify-center text-center leading-tight ${
+                                                isUserPick
+                                                  ? 'border-blue-500 bg-gradient-to-br from-slate-800 to-blue-900'
+                                                  : 'border-gray-200/80 bg-gray-50'
+                                              }`}
                                             >
-                                              <div
-                                                className={`absolute inset-0 transition-all duration-1000 ease-out ${isUserPick ? 'bg-purple-200/60' : 'bg-gray-200/40'}`}
-                                                style={{ width: `${pct}%` }}
-                                              />
-                                              <div className="relative flex justify-between items-center">
-                                                <div className="flex items-center gap-2">
-                                                  {isUserPick && <CheckCircle className="w-4 h-4 text-purple-600 shrink-0" />}
-                                                  <span className={`text-sm font-medium ${isUserPick ? 'text-purple-800' : 'text-gray-800'}`}>{opt}</span>
-                                                  {isUserPick && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-200 text-purple-800">You</span>}
-                                                </div>
-                                                <span className="text-xs font-medium text-gray-600">{pct}%</span>
-                                              </div>
+                                              {isUserPick && (
+                                                <CheckCircle className="w-3 h-3 text-white absolute top-1.5 right-1.5" />
+                                              )}
+                                              <span className={`text-[12px] ${isUserPick ? 'text-white font-medium' : 'text-gray-700'}`}>{opt}</span>
+                                              <span className={`text-[11px] font-bold mt-1 ${isUserPick ? 'text-white' : 'text-gray-400'}`}>{pct}%</span>
                                             </div>
                                           );
                                         })}
-                                        <button
-                                          onClick={() => { if (gameIdx < categoryGames.length - 1) scrollCategoryTo(category, gameIdx + 1, categoryGames.length); }}
-                                          className="w-full mt-2 py-2.5 rounded-xl font-semibold text-sm text-white transition-all bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:opacity-90"
-                                        >
-                                          Next poll
-                                        </button>
                                       </div>
+                                      <button
+                                        onClick={() => { if (gameIdx < categoryGames.length - 1) scrollCategoryTo(category, gameIdx + 1, categoryGames.length); }}
+                                        className="w-full mt-2 py-2.5 rounded-xl font-semibold text-sm text-white transition-all bg-gradient-to-r from-blue-500 via-purple-500 to-purple-600 hover:opacity-90"
+                                      >
+                                        Next poll
+                                      </button>
 
                                       {/* Voted! overlay */}
                                       <div className={`absolute inset-0 rounded-xl flex flex-col items-center justify-center gap-3 transition-opacity duration-300 bg-black/60 ${isCelebrating ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
@@ -348,13 +345,13 @@ export default function PlayPollsPage() {
                                   );
                                 })()
                               ) : (
-                                <div className="flex flex-col gap-2">
+                                <div className="grid grid-cols-2 gap-2">
                                   {options.map((opt, idx) => (
                                     <button
                                       key={idx}
                                       onClick={() => handleTapAndVote(game, opt)}
                                       disabled={submitVote.isPending}
-                                      className="py-3 px-4 rounded-full text-sm font-medium transition-all text-left bg-gray-100 text-gray-800 hover:bg-gray-200 active:scale-[0.98]"
+                                      className="min-h-[72px] py-3 px-3 rounded-2xl text-sm font-medium transition-all text-center flex items-center justify-center leading-tight bg-gray-100 text-gray-800 hover:bg-gray-200 active:scale-[0.98]"
                                     >
                                       {opt}
                                     </button>
