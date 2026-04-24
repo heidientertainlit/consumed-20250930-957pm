@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import {
   ArrowLeft, Loader2, Trash2, Plus, ChevronUp, ChevronDown,
   CheckCircle, BarChart3, Sparkles, ChevronRight, RefreshCw,
+  Calendar, FileText, Globe,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -39,6 +40,7 @@ const MEDIA_TYPES: Record<string, string> = {
 interface RankItem {
   title: string;
   creator: string;
+  year: string;
   mediaType: string;
 }
 
@@ -54,11 +56,15 @@ interface ExistingRank {
   category: string | null;
   max_items: number | null;
   created_at: string;
+  status: string | null;
+  scheduled_date: string | null;
   item_count?: number;
+  items?: { position: number; title: string; creator: string | null; year: string | null }[];
 }
 
 type Step = "setup" | "items" | "preview";
 type Tab = "create" | "manage";
+type ManageSubTab = "published" | "scheduled" | "drafts";
 
 export default function AdminRanksPage() {
   const { user } = useAuth();
@@ -68,6 +74,7 @@ export default function AdminRanksPage() {
 
   const [activeTab, setActiveTab] = useState<Tab>("create");
   const [step, setStep] = useState<Step>("setup");
+  const [manageSubTab, setManageSubTab] = useState<ManageSubTab>("published");
 
   // Setup fields
   const [title, setTitle] = useState("");
@@ -79,6 +86,7 @@ export default function AdminRanksPage() {
   const [items, setItems] = useState<RankItem[]>([]);
   const [newItemTitle, setNewItemTitle] = useState("");
   const [newItemCreator, setNewItemCreator] = useState("");
+  const [newItemYear, setNewItemYear] = useState("");
 
   // AI idea suggestions (step 1)
   const [ideasGenerating, setIdeasGenerating] = useState(false);
@@ -87,8 +95,12 @@ export default function AdminRanksPage() {
   // AI item generation (step 2)
   const [aiGenerating, setAiGenerating] = useState(false);
 
-  // Publish
+  // Publish / scheduling
   const [publishing, setPublishing] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState("");
+
+  // Manage — expanded rank view
+  const [expandedRankId, setExpandedRankId] = useState<string | null>(null);
 
   const { data: currentProfile, isLoading: profileLoading } = useQuery({
     queryKey: ["admin-profile-check", user?.id],
@@ -109,7 +121,7 @@ export default function AdminRanksPage() {
     queryFn: async () => {
       const { data: ranks, error } = await supabase
         .from("ranks")
-        .select("id, title, description, category, max_items, created_at")
+        .select("id, title, description, category, max_items, created_at, status, scheduled_date")
         .eq("origin_type", "consumed")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -127,7 +139,11 @@ export default function AdminRanksPage() {
         countMap[i.rank_id] = (countMap[i.rank_id] || 0) + 1;
       });
 
-      return (ranks || []).map((r) => ({ ...r, item_count: countMap[r.id] || 0 }));
+      return (ranks || []).map((r) => ({
+        ...r,
+        status: r.status || "published",
+        item_count: countMap[r.id] || 0,
+      }));
     },
     enabled: activeTab === "manage",
   });
@@ -152,11 +168,13 @@ export default function AdminRanksPage() {
       {
         title: newItemTitle.trim(),
         creator: newItemCreator.trim(),
+        year: newItemYear.trim(),
         mediaType: MEDIA_TYPES[category] || "mixed",
       },
     ]);
     setNewItemTitle("");
     setNewItemCreator("");
+    setNewItemYear("");
   }
 
   function removeItem(index: number) {
@@ -226,7 +244,7 @@ export default function AdminRanksPage() {
       });
 
       const raw = await resp.json();
-      const generated: { title: string; creator: string }[] = raw?.items || [];
+      const generated: { title: string; creator: string; year?: string }[] = raw?.items || [];
 
       if (generated.length > 0) {
         const mediaType = MEDIA_TYPES[category] || "mixed";
@@ -234,6 +252,7 @@ export default function AdminRanksPage() {
           generated.slice(0, maxItems).map((g) => ({
             title: g.title || "",
             creator: g.creator || "",
+            year: g.year || "",
             mediaType,
           }))
         );
@@ -248,9 +267,13 @@ export default function AdminRanksPage() {
     }
   }
 
-  async function handlePublish() {
+  async function handlePublish(status: "published" | "scheduled" | "draft" = "published") {
     if (!title.trim() || items.length < 2) {
       toast({ title: "Need a title and at least 2 items", variant: "destructive" });
+      return;
+    }
+    if (status === "scheduled" && !scheduleDate) {
+      toast({ title: "Pick a schedule date first", variant: "destructive" });
       return;
     }
     setPublishing(true);
@@ -262,9 +285,11 @@ export default function AdminRanksPage() {
           title: title.trim(),
           description: description.trim() || null,
           category,
-          visibility: "public",
+          visibility: status === "draft" ? "private" : "public",
           origin_type: "consumed",
           max_items: maxItems,
+          status,
+          scheduled_date: status === "scheduled" ? scheduleDate : null,
         })
         .select("id")
         .single();
@@ -277,6 +302,7 @@ export default function AdminRanksPage() {
         position: idx + 1,
         title: item.title,
         creator: item.creator || null,
+        year: item.year || null,
         media_type: item.mediaType,
         up_vote_count: 0,
         down_vote_count: 0,
@@ -285,7 +311,12 @@ export default function AdminRanksPage() {
       const { error: itemsErr } = await supabase.from("rank_items").insert(itemRows);
       if (itemsErr) throw itemsErr;
 
-      toast({ title: "Rank published!", description: `"${title}" is now live in the Debate the Rank carousel.` });
+      const statusLabels = {
+        published: { title: "Rank published!", desc: `"${title}" is now live in the Debate the Rank carousel.` },
+        scheduled: { title: "Rank scheduled!", desc: `"${title}" will go live on ${new Date(scheduleDate).toLocaleDateString()}.` },
+        draft: { title: "Saved as draft", desc: `"${title}" is saved. Publish it from the Manage tab when ready.` },
+      };
+      toast({ title: statusLabels[status].title, description: statusLabels[status].desc });
       queryClient.invalidateQueries({ queryKey: ["consumed-ranks-carousel"] });
       queryClient.invalidateQueries({ queryKey: ["admin-consumed-ranks"] });
 
@@ -295,10 +326,12 @@ export default function AdminRanksPage() {
       setCategory("movies");
       setMaxItems(10);
       setItems([]);
+      setScheduleDate("");
       setStep("setup");
       setActiveTab("manage");
+      setManageSubTab(status === "scheduled" ? "scheduled" : status === "draft" ? "drafts" : "published");
     } catch (err: any) {
-      toast({ title: "Publish failed", description: err.message, variant: "destructive" });
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
     } finally {
       setPublishing(false);
     }
@@ -313,7 +346,46 @@ export default function AdminRanksPage() {
       toast({ title: "Rank deleted" });
       queryClient.invalidateQueries({ queryKey: ["admin-consumed-ranks"] });
       queryClient.invalidateQueries({ queryKey: ["consumed-ranks-carousel"] });
+      if (expandedRankId === rankId) setExpandedRankId(null);
       refetchRanks();
+    }
+  }
+
+  async function handlePublishDraft(rankId: string) {
+    const { error } = await supabase
+      .from("ranks")
+      .update({ status: "published", visibility: "public", scheduled_date: null })
+      .eq("id", rankId);
+    if (error) {
+      toast({ title: "Publish failed", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Rank published!" });
+      queryClient.invalidateQueries({ queryKey: ["admin-consumed-ranks"] });
+      queryClient.invalidateQueries({ queryKey: ["consumed-ranks-carousel"] });
+      refetchRanks();
+    }
+  }
+
+  async function loadRankItems(rankId: string): Promise<{ position: number; title: string; creator: string | null; year: string | null }[]> {
+    const { data } = await supabase
+      .from("rank_items")
+      .select("position, title, creator, year")
+      .eq("rank_id", rankId)
+      .order("position", { ascending: true });
+    return data || [];
+  }
+
+  async function toggleExpand(rank: ExistingRank) {
+    if (expandedRankId === rank.id) {
+      setExpandedRankId(null);
+      return;
+    }
+    setExpandedRankId(rank.id);
+    if (!rank.items) {
+      const loaded = await loadRankItems(rank.id);
+      queryClient.setQueryData(["admin-consumed-ranks"], (old: ExistingRank[] | undefined) =>
+        (old || []).map((r) => r.id === rank.id ? { ...r, items: loaded } : r)
+      );
     }
   }
 
@@ -535,13 +607,23 @@ export default function AdminRanksPage() {
                     placeholder="Title (e.g. Pulp Fiction)"
                     className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500"
                   />
-                  <Input
-                    value={newItemCreator}
-                    onChange={(e) => setNewItemCreator(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addItem()}
-                    placeholder="Creator (director, artist, author…) — optional"
-                    className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      value={newItemCreator}
+                      onChange={(e) => setNewItemCreator(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addItem()}
+                      placeholder="Creator — optional"
+                      className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500 flex-1"
+                    />
+                    <Input
+                      value={newItemYear}
+                      onChange={(e) => setNewItemYear(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addItem()}
+                      placeholder="Year"
+                      maxLength={4}
+                      className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500 w-20"
+                    />
+                  </div>
                   <Button
                     onClick={addItem}
                     disabled={!newItemTitle.trim()}
@@ -565,7 +647,9 @@ export default function AdminRanksPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-white text-sm font-medium truncate">{item.title}</p>
-                          {item.creator && <p className="text-gray-400 text-xs truncate">{item.creator}</p>}
+                          <p className="text-gray-400 text-xs truncate">
+                            {[item.creator, item.year].filter(Boolean).join(" · ")}
+                          </p>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
                           <button
@@ -662,28 +746,57 @@ export default function AdminRanksPage() {
                   </div>
                 </div>
 
-                <div className="bg-gray-900/60 border border-gray-700 rounded-xl p-4 text-sm text-gray-400">
-                  Publishing will add this rank to the <span className="text-white font-medium">Debate the Rank carousel</span> visible to all users immediately.
+                {/* Schedule date picker (only shown when scheduling) */}
+                <div className="bg-gray-900/60 border border-gray-700 rounded-xl p-4 space-y-3">
+                  <p className="text-sm text-gray-400">
+                    Choose how to save this rank:
+                  </p>
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500 font-medium">Schedule date (optional — for timed publish)</label>
+                    <Input
+                      type="datetime-local"
+                      value={scheduleDate}
+                      onChange={(e) => setScheduleDate(e.target.value)}
+                      className="bg-gray-800 border-gray-700 text-white focus:border-purple-500 text-sm"
+                    />
+                  </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-2">
                   <Button
                     variant="outline"
                     onClick={() => setStep("items")}
-                    className="flex-1 border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white rounded-xl"
+                    className="border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white rounded-xl px-3"
                   >
                     Back
                   </Button>
                   <Button
-                    onClick={handlePublish}
+                    onClick={() => handlePublish("draft")}
                     disabled={publishing}
-                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl"
+                    variant="outline"
+                    className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white rounded-xl text-sm"
+                  >
+                    <FileText size={14} className="mr-1.5" /> Save Draft
+                  </Button>
+                  <Button
+                    onClick={() => handlePublish("scheduled")}
+                    disabled={publishing || !scheduleDate}
+                    variant="outline"
+                    className="flex-1 border-blue-700 text-blue-300 hover:bg-blue-900/30 rounded-xl text-sm disabled:opacity-40"
+                  >
+                    <Calendar size={14} className="mr-1.5" /> Schedule
+                  </Button>
+                  <Button
+                    onClick={() => handlePublish("published")}
+                    disabled={publishing}
+                    className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-sm"
                   >
                     {publishing ? (
-                      <><Loader2 size={15} className="animate-spin mr-2" /> Publishing…</>
+                      <Loader2 size={14} className="animate-spin mr-1.5" />
                     ) : (
-                      "Publish Rank"
+                      <Globe size={14} className="mr-1.5" />
                     )}
+                    Publish
                   </Button>
                 </div>
               </div>
@@ -694,10 +807,36 @@ export default function AdminRanksPage() {
         {/* ── MANAGE TAB ── */}
         {activeTab === "manage" && (
           <div>
-            <div className="flex items-center justify-between mb-5">
-              <p className="text-sm text-gray-400">{existingRanks.length} published rank{existingRanks.length !== 1 ? "s" : ""}</p>
-              <button onClick={() => refetchRanks()} className="p-1.5 rounded-lg hover:bg-gray-800 transition-colors">
-                <RefreshCw size={15} className="text-gray-400" />
+            {/* Sub-tabs */}
+            <div className="flex items-center gap-1 bg-gray-900 rounded-xl p-1 mb-5">
+              {(["published", "scheduled", "drafts"] as ManageSubTab[]).map((tab) => {
+                const counts = {
+                  published: existingRanks.filter((r) => (r.status || "published") === "published").length,
+                  scheduled: existingRanks.filter((r) => r.status === "scheduled").length,
+                  drafts: existingRanks.filter((r) => r.status === "draft").length,
+                };
+                const labels = { published: "Published", scheduled: "Scheduled", drafts: "Drafts" };
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setManageSubTab(tab)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
+                      manageSubTab === tab
+                        ? "bg-purple-600 text-white"
+                        : "text-gray-400 hover:text-white"
+                    }`}
+                  >
+                    {labels[tab]}
+                    {counts[tab] > 0 && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                        manageSubTab === tab ? "bg-white/20 text-white" : "bg-gray-700 text-gray-300"
+                      }`}>{counts[tab]}</span>
+                    )}
+                  </button>
+                );
+              })}
+              <button onClick={() => refetchRanks()} className="p-2 rounded-lg hover:bg-gray-800 transition-colors ml-1">
+                <RefreshCw size={13} className="text-gray-400" />
               </button>
             </div>
 
@@ -707,43 +846,111 @@ export default function AdminRanksPage() {
               </div>
             )}
 
-            {!ranksLoading && existingRanks.length === 0 && (
-              <div className="text-center py-12 bg-gray-900/50 rounded-2xl border border-dashed border-gray-700">
-                <BarChart3 size={32} className="mx-auto mb-2 text-gray-600" />
-                <p className="text-gray-500 text-sm">No consumed ranks yet</p>
-                <button
-                  onClick={() => setActiveTab("create")}
-                  className="mt-3 text-purple-400 hover:text-purple-300 text-sm font-medium"
-                >
-                  Create your first rank →
-                </button>
-              </div>
-            )}
+            {(() => {
+              const filtered = existingRanks.filter((r) => {
+                const s = r.status || "published";
+                if (manageSubTab === "published") return s === "published";
+                if (manageSubTab === "scheduled") return s === "scheduled";
+                return s === "draft";
+              });
 
-            <div className="space-y-3">
-              {existingRanks.map((rank) => {
-                const cat = CATEGORIES.find((c) => c.value === rank.category);
+              if (!ranksLoading && filtered.length === 0) {
                 return (
-                  <div key={rank.id} className="bg-gray-900 border border-gray-700 rounded-2xl p-4 flex items-center gap-4">
-                    <div className="text-2xl flex-shrink-0">{cat?.emoji || "📋"}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white font-semibold text-sm truncate">{rank.title}</p>
-                      <p className="text-gray-400 text-xs mt-0.5">
-                        {cat?.label || rank.category} · {rank.item_count ?? 0} items
-                        {" · "}
-                        {new Date(rank.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                      </p>
-                    </div>
+                  <div className="text-center py-12 bg-gray-900/50 rounded-2xl border border-dashed border-gray-700">
+                    <BarChart3 size={32} className="mx-auto mb-2 text-gray-600" />
+                    <p className="text-gray-500 text-sm">
+                      {manageSubTab === "published" && "No published ranks yet"}
+                      {manageSubTab === "scheduled" && "No scheduled ranks"}
+                      {manageSubTab === "drafts" && "No drafts saved"}
+                    </p>
                     <button
-                      onClick={() => handleDeleteRank(rank.id, rank.title)}
-                      className="p-2 rounded-lg hover:bg-red-900/30 transition-colors flex-shrink-0"
+                      onClick={() => setActiveTab("create")}
+                      className="mt-3 text-purple-400 hover:text-purple-300 text-sm font-medium"
                     >
-                      <Trash2 size={15} className="text-gray-600 hover:text-red-400 transition-colors" />
+                      Create a rank →
                     </button>
                   </div>
                 );
-              })}
-            </div>
+              }
+
+              return (
+                <div className="space-y-3">
+                  {filtered.map((rank) => {
+                    const cat = CATEGORIES.find((c) => c.value === rank.category);
+                    const isExpanded = expandedRankId === rank.id;
+                    return (
+                      <div key={rank.id} className="bg-gray-900 border border-gray-700 rounded-2xl overflow-hidden">
+                        {/* Rank header row — click to expand */}
+                        <div
+                          className="p-4 flex items-center gap-3 cursor-pointer hover:bg-gray-800/50 transition-colors"
+                          onClick={() => toggleExpand(rank)}
+                        >
+                          <div className="text-2xl flex-shrink-0">{cat?.emoji || "📋"}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white font-semibold text-sm truncate">{rank.title}</p>
+                            <p className="text-gray-400 text-xs mt-0.5">
+                              {cat?.label || rank.category} · {rank.item_count ?? 0} items
+                              {" · "}
+                              {rank.status === "scheduled" && rank.scheduled_date
+                                ? `Scheduled ${new Date(rank.scheduled_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                                : new Date(rank.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                              }
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {rank.status === "draft" && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handlePublishDraft(rank.id); }}
+                                className="px-2 py-1 rounded-lg bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 text-xs font-semibold transition-colors"
+                              >
+                                Publish
+                              </button>
+                            )}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteRank(rank.id, rank.title); }}
+                              className="p-1.5 rounded-lg hover:bg-red-900/30 transition-colors"
+                            >
+                              <Trash2 size={14} className="text-gray-600 hover:text-red-400 transition-colors" />
+                            </button>
+                            <ChevronDown
+                              size={15}
+                              className={`text-gray-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Expanded item list */}
+                        {isExpanded && (
+                          <div className="border-t border-gray-700/60 px-4 pb-4 pt-3 space-y-1.5">
+                            {!rank.items ? (
+                              <div className="flex items-center justify-center py-4">
+                                <Loader2 size={18} className="animate-spin text-gray-500" />
+                              </div>
+                            ) : rank.items.length === 0 ? (
+                              <p className="text-gray-500 text-xs text-center py-3">No items in this rank</p>
+                            ) : (
+                              rank.items.map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-2.5 py-1.5 px-2 rounded-lg bg-gray-800/50">
+                                  <span className={`w-5 h-5 rounded flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${
+                                    idx === 0 ? "bg-teal-500 text-white" :
+                                    idx === 1 ? "bg-teal-600/70 text-white" :
+                                    "bg-gray-700 text-gray-400"
+                                  }`}>{item.position}</span>
+                                  <span className="text-white text-sm font-medium flex-1 truncate">{item.title}</span>
+                                  <span className="text-gray-500 text-xs truncate">
+                                    {[item.creator, item.year].filter(Boolean).join(" · ")}
+                                  </span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>

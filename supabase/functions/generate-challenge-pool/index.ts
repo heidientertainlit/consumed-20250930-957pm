@@ -157,6 +157,7 @@ No markdown, no explanation, just the JSON array.`;
 Return ONLY a valid JSON array of ${maxItems} objects with exactly these keys:
 - title: string (the name of the movie/show/album/book/etc.)
 - creator: string (director, artist, author, band — empty string if not applicable)
+- year: string (4-digit release year, e.g. "1994" — empty string if unknown)
 
 No markdown, no explanation, just the JSON array.`;
 

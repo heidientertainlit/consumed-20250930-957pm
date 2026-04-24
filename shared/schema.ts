@@ -378,6 +378,8 @@ export const ranks = pgTable("ranks", {
   coverImageUrl: text("cover_image_url"),
   originType: text("origin_type").default("user"), // 'user' or 'consumed' for platform-created content
   originUserId: varchar("origin_user_id"), // For platform personas or admin accounts
+  status: text("status").default("published"), // 'draft', 'scheduled', 'published'
+  scheduledDate: timestamp("scheduled_date"), // when to auto-publish (for scheduled status)
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -391,6 +393,7 @@ export const rankItems = pgTable("rank_items", {
   title: text("title").notNull(),
   mediaType: text("media_type"), // 'movie', 'tv', 'book', 'music', 'podcast', 'game'
   creator: text("creator"), // Director, author, artist
+  year: text("year"), // Release year for reference
   imageUrl: text("image_url"),
   externalId: text("external_id"),
   externalSource: text("external_source"), // 'tmdb', 'spotify', 'openlibrary', 'youtube'
