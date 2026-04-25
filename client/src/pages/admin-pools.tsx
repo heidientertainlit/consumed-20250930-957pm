@@ -93,12 +93,14 @@ function QuestionEditor({
   question,
   onChange,
   onDelete,
+  autoEdit = false,
 }: {
   question: GeneratedQuestion;
   onChange: (q: GeneratedQuestion) => void;
   onDelete: () => void;
+  autoEdit?: boolean;
 }) {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(autoEdit);
   const [local, setLocal] = useState(question);
 
   function save() { onChange(local); setEditing(false); }
@@ -146,6 +148,16 @@ function QuestionEditor({
 
 function QuestionSection({ difficulty, questions, onChange }: { difficulty: Difficulty; questions: GeneratedQuestion[]; onChange: (qs: GeneratedQuestion[]) => void }) {
   const [expanded, setExpanded] = useState(difficulty === "easy");
+  const [newIdx, setNewIdx] = useState<number | null>(null);
+
+  function addBlank() {
+    const blank: GeneratedQuestion = { question_text: "", options: ["", "", "", ""], correct_answer: "" };
+    const next = [...questions, blank];
+    onChange(next);
+    setNewIdx(next.length - 1);
+    setExpanded(true);
+  }
+
   return (
     <div className="rounded-xl border border-gray-700/40 overflow-hidden">
       <button onClick={() => setExpanded(e => !e)} className="w-full flex items-center justify-between px-4 py-3 bg-gray-800/40 hover:bg-gray-800/60 transition-colors">
@@ -157,11 +169,24 @@ function QuestionSection({ difficulty, questions, onChange }: { difficulty: Diff
       </button>
       {expanded && (
         <div className="p-3 space-y-2 bg-gray-900/20">
-          {questions.length === 0
-            ? <p className="text-gray-500 text-sm text-center py-4">No questions in this tier</p>
-            : questions.map((q, i) => (
-              <QuestionEditor key={i} question={q} onChange={updated => { const n = [...questions]; n[i] = updated; onChange(n); }} onDelete={() => onChange(questions.filter((_, idx) => idx !== i))} />
-            ))}
+          {questions.length === 0 && (
+            <p className="text-gray-500 text-sm text-center py-2">No questions yet — add one below</p>
+          )}
+          {questions.map((q, i) => (
+            <QuestionEditor
+              key={i}
+              question={q}
+              autoEdit={i === newIdx}
+              onChange={updated => { const n = [...questions]; n[i] = updated; onChange(n); setNewIdx(null); }}
+              onDelete={() => { onChange(questions.filter((_, idx) => idx !== i)); if (newIdx === i) setNewIdx(null); }}
+            />
+          ))}
+          <button
+            onClick={addBlank}
+            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300 text-sm transition-colors"
+          >
+            <Plus size={14} /> Add question
+          </button>
         </div>
       )}
     </div>
@@ -657,7 +682,30 @@ export default function AdminPoolsPage() {
                 <Button onClick={handleGenerate} disabled={generating || !poolName.trim() || !topic.trim()} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
                   {generating
                     ? <><Loader2 size={16} className="mr-2 animate-spin" />Generating 36 questions...</>
-                    : <><Sparkles size={16} className="mr-2" />Generate 36 Questions</>}
+                    : <><Sparkles size={16} className="mr-2" />Generate 36 Questions with AI</>}
+                </Button>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-800" /></div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-gray-950 px-3 text-gray-500 text-xs">or</span>
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  disabled={!poolName.trim()}
+                  onClick={() => {
+                    if (!poolName.trim()) {
+                      toast({ title: "Fill in the Pool Name first", variant: "destructive" });
+                      return;
+                    }
+                    setGeneratedQuestions({ easy: [], medium: [], hard: [] });
+                    setStep("preview");
+                  }}
+                  className="w-full border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                >
+                  <Pencil size={15} className="mr-2" /> Write questions myself
                 </Button>
               </div>
             )}
@@ -669,9 +717,11 @@ export default function AdminPoolsPage() {
                   <button onClick={() => setStep("form")} className="flex items-center gap-1.5 text-gray-400 hover:text-gray-200 text-sm transition-colors">
                     <ArrowLeft size={14} /> Back to form
                   </button>
-                  <Button size="sm" variant="ghost" onClick={handleGenerate} disabled={generating} className="text-gray-400 text-xs">
-                    <RefreshCw size={13} className="mr-1" />Regenerate
-                  </Button>
+                  {totalGenerated > 0 && (
+                    <Button size="sm" variant="ghost" onClick={handleGenerate} disabled={generating} className="text-gray-400 text-xs">
+                      <RefreshCw size={13} className="mr-1" />Regenerate
+                    </Button>
+                  )}
                 </div>
 
                 {/* Pool summary */}
@@ -679,16 +729,25 @@ export default function AdminPoolsPage() {
                   <span className="text-3xl">{emoji}</span>
                   <div>
                     <p className="text-white font-bold">{poolName}</p>
-                    <p className="text-gray-400 text-xs">{category} · {totalGenerated} questions</p>
+                    <p className="text-gray-400 text-xs">{category} · {totalGenerated} question{totalGenerated !== 1 ? "s" : ""}</p>
                     {description && <p className="text-gray-500 text-xs mt-0.5 italic">{description}</p>}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-emerald-400 shrink-0" />
-                  <p className="text-gray-300 text-sm">{totalGenerated} questions ready — review and edit any below</p>
-                </div>
-                <p className="text-gray-500 text-xs px-0.5">Hover a question and click the pencil to edit it. The radio button marks the correct answer.</p>
+                {totalGenerated > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={16} className="text-emerald-400 shrink-0" />
+                    <p className="text-gray-300 text-sm">{totalGenerated} questions ready — review and edit any below</p>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-xl bg-blue-900/20 border border-blue-700/30 px-4 py-3">
+                    <Pencil size={15} className="text-blue-400 shrink-0" />
+                    <p className="text-blue-300 text-sm">Add your questions below — use Easy, Medium, and Hard tiers to organise by difficulty.</p>
+                  </div>
+                )}
+                {totalGenerated > 0 && (
+                  <p className="text-gray-500 text-xs px-0.5">Hover a question and click the pencil to edit it. The radio button marks the correct answer.</p>
+                )}
 
                 {(["easy", "medium", "hard"] as Difficulty[]).map(diff => (
                   <QuestionSection key={diff} difficulty={diff} questions={generatedQuestions[diff] || []}
