@@ -675,7 +675,7 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList }: {
+function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList, forceActionFirst }: {
   post: UGCPost;
   onLike: (id: string) => void;
   isLiked: boolean;
@@ -684,6 +684,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   currentUserId?: string;
   onDeletePost?: (postId: string) => void;
   onAddToList?: (media: any) => void;
+  forceActionFirst?: boolean;
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -1062,8 +1063,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const isRatingPost = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought';
   const isOtherUser = post.user?.id !== currentUserId;
 
-  // Action First layout for other users' unrated rating posts
-  const isActionFirst = isRatingPost && isOtherUser && !ratingSubmitted && session?.access_token;
+  // Action First layout: other users' unrated rating posts, OR any promoted card (forceActionFirst)
+  const isActionFirst = isRatingPost && (forceActionFirst || isOtherUser) && !ratingSubmitted && session?.access_token;
 
   // Use external (3rd-party) rating as comparison baseline when available; convert /10 → /5
   const baselineRating = externalRating ? externalRating / 2 : communityRating;
@@ -3548,6 +3549,7 @@ export default function Feed() {
               currentUserId={currentAppUserId || undefined}
               onDeletePost={handleDeletePost}
               onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+              forceActionFirst={true}
             />
           </div>
         </div>
