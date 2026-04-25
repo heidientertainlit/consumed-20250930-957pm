@@ -44,6 +44,10 @@ export default function AdminDailyCallPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dates, setDates] = useState<Record<string, string>>({});
 
+  const [expandedScheduledId, setExpandedScheduledId] = useState<string | null>(null);
+  const [rescheduleDates, setRescheduleDates] = useState<Record<string, string>>({});
+  const [reschedulingId, setReschedulingId] = useState<string | null>(null);
+
   const [showManualForm, setShowManualForm] = useState(false);
   const [manualTitle, setManualTitle] = useState("");
   const [manualOptions, setManualOptions] = useState(["", ""]);
@@ -169,6 +173,30 @@ export default function AdminDailyCallPage() {
   async function deleteDraft(id: string) {
     await supabase.from("trivia_poll_drafts").delete().eq("id", id);
     queryClient.invalidateQueries({ queryKey: ["daily-call-drafts"] });
+  }
+
+  async function handleReschedule(item: any) {
+    const newDate = rescheduleDates[item.id];
+    if (!newDate) {
+      toast({ title: "Pick a new date first", variant: "destructive" });
+      return;
+    }
+    setReschedulingId(item.id);
+    try {
+      const { error } = await supabase
+        .from("prediction_pools")
+        .update({ featured_date: newDate })
+        .eq("id", item.id);
+      if (error) throw error;
+      toast({ title: "Rescheduled!", description: `Moved to ${newDate}` });
+      setExpandedScheduledId(null);
+      setRescheduleDates(d => { const n = { ...d }; delete n[item.id]; return n; });
+      queryClient.invalidateQueries({ queryKey: ["daily-call-upcoming"] });
+    } catch (err: any) {
+      toast({ title: "Reschedule failed", description: err.message, variant: "destructive" });
+    } finally {
+      setReschedulingId(null);
+    }
   }
 
   async function handleSaveManualDraft() {
@@ -476,17 +504,70 @@ export default function AdminDailyCallPage() {
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{upcoming.length} upcoming</p>
                   <p className="text-xs text-yellow-400 font-medium">Next free: {nextFreeDate}</p>
                 </div>
-                {upcoming.map(u => (
-                  <div key={u.id} className="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center justify-between">
-                    <p className="text-sm text-white font-medium line-clamp-2 flex-1 mr-3">{u.title}</p>
-                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                      <span className="text-xs text-yellow-400 font-semibold">{u.featured_date}</span>
-                      {u.category && (
-                        <span className="text-[10px] font-medium text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">{u.category}</span>
+                {upcoming.map(u => {
+                  const isExpanded = expandedScheduledId === u.id;
+                  const newDate = rescheduleDates[u.id] || u.featured_date;
+                  const dateTaken = newDate !== u.featured_date && upcoming.some(x => x.id !== u.id && x.featured_date === newDate);
+                  return (
+                    <div key={u.id} className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+                      <button
+                        onClick={() => setExpandedScheduledId(isExpanded ? null : u.id)}
+                        className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-800/40 transition-colors"
+                      >
+                        <p className="text-sm text-white font-medium line-clamp-2 flex-1 mr-3">{u.title}</p>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="flex flex-col items-end gap-1">
+                            <span className="text-xs text-yellow-400 font-semibold">{u.featured_date}</span>
+                            {u.category && (
+                              <span className="text-[10px] font-medium text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">{u.category}</span>
+                            )}
+                          </div>
+                          <Pencil size={13} className="text-gray-600 ml-1" />
+                        </div>
+                      </button>
+
+                      {isExpanded && (
+                        <div className="px-4 pb-4 border-t border-gray-800 pt-3 space-y-3">
+                          <p className="text-xs text-gray-500">Move to a different date:</p>
+                          <div className="flex items-center gap-2">
+                            <CalendarDays size={14} className="text-gray-400" />
+                            <Input
+                              type="date"
+                              value={rescheduleDates[u.id] || u.featured_date}
+                              onChange={e => setRescheduleDates(d => ({ ...d, [u.id]: e.target.value }))}
+                              className={`bg-gray-800 border-gray-700 text-white h-8 text-sm flex-1 ${dateTaken ? "border-orange-500/60" : ""}`}
+                            />
+                          </div>
+                          {dateTaken && (
+                            <div className="flex items-center gap-1.5 text-orange-400">
+                              <AlertTriangle size={12} />
+                              <p className="text-xs">Another Daily Call is already scheduled for that date.</p>
+                            </div>
+                          )}
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => handleReschedule(u)}
+                              disabled={reschedulingId === u.id || !rescheduleDates[u.id] || rescheduleDates[u.id] === u.featured_date}
+                              size="sm"
+                              className="bg-yellow-500 hover:bg-yellow-400 text-black font-semibold flex-1"
+                            >
+                              {reschedulingId === u.id ? <Loader2 size={14} className="animate-spin mr-1" /> : <CalendarDays size={14} className="mr-1" />}
+                              Save New Date
+                            </Button>
+                            <Button
+                              onClick={() => { setExpandedScheduledId(null); setRescheduleDates(d => { const n = { ...d }; delete n[u.id]; return n; }); }}
+                              size="sm"
+                              variant="ghost"
+                              className="text-gray-400 hover:text-gray-200"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </>
             )}
           </div>
