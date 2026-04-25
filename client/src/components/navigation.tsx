@@ -157,7 +157,8 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
       return data.results || [];
     },
     enabled: !!searchQuery.trim() && !!session?.access_token && isSearchExpanded,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 30 * 1000,
+    gcTime: 60 * 1000,
     retry: 1,
   });
 
@@ -497,13 +498,16 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                           onClick={() => handleMediaClick(media)}
                           className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
                         >
-                          {media.image ? (
-                            <img src={media.image} alt={media.title} className="w-10 h-14 object-cover rounded" />
-                          ) : (
-                            <div className="w-10 h-14 bg-gray-700 rounded flex items-center justify-center">
-                              <Activity size={16} className="text-gray-500" />
-                            </div>
-                          )}
+                          {(() => {
+                            const posterSrc = media.image || (media as any).poster_url || (media as any).image_url || '';
+                            return posterSrc ? (
+                              <img src={posterSrc} alt={media.title} className="w-10 h-14 object-cover rounded shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                            ) : (
+                              <div className="w-10 h-14 bg-gray-700 rounded flex items-center justify-center shrink-0">
+                                <Activity size={16} className="text-gray-500" />
+                              </div>
+                            );
+                          })()}
                           <div className="flex-1 min-w-0">
                             <p className="text-white text-sm font-medium truncate">{media.title}</p>
                             <p className="text-gray-400 text-xs">{media.type} {media.year && `• ${media.year}`}</p>
