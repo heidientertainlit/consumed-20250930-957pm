@@ -155,13 +155,20 @@ serve(async (req) => {
         try {
           const tmdbKey = Deno.env.get('TMDB_API_KEY');
           if (tmdbKey) {
+            // TMDB supports two auth styles:
+            //   v3 API key  → short alphanumeric, passed as ?api_key= query param
+            //   v4 Bearer   → long JWT token, passed as Authorization: Bearer header
+            // We send the key BOTH ways so either format works without any reconfiguration.
+            const tmdbUrl = `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(searchQuery)}&page=1&include_adult=false`;
             const tmdbResponse = await fetchWithTimeout(
-              `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(searchQuery)}&page=1&include_adult=false`,
-              {},
-              4000
+              tmdbUrl,
+              { headers: { 'Authorization': `Bearer ${tmdbKey}` } },
+              6000
             );
+            console.log('TMDB response status:', tmdbResponse.status, 'query:', searchQuery);
             if (tmdbResponse.ok) {
               const tmdbData = await tmdbResponse.json();
+              console.log('TMDB results count:', tmdbData.results?.length ?? 0);
               tmdbData.results?.slice(0, 25).forEach((item: any) => {
                 if ((item.media_type === 'movie' || item.media_type === 'tv') && isContentAppropriate(item, item.media_type)) {
                   const releaseDate = item.release_date || item.first_air_date || '';
@@ -171,7 +178,7 @@ serve(async (req) => {
                     title: item.title || item.name,
                     type: item.media_type === 'movie' ? 'movie' : 'tv',
                     media_subtype: item.media_type === 'tv' ? 'series' : null,
-                    creator: '', // Director requires extra API call - leave empty
+                    creator: '',
                     year: year || null,
                     poster_url: item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : '',
                     external_id: item.id?.toString(),
@@ -183,7 +190,13 @@ serve(async (req) => {
                   });
                 }
               });
+              console.log('TMDB movie/TV results added:', movieTvResults.length);
+            } else {
+              const errText = await tmdbResponse.text().catch(() => '');
+              console.error('TMDB non-ok response:', tmdbResponse.status, errText.substring(0, 200));
             }
+          } else {
+            console.warn('TMDB_API_KEY not set in environment');
           }
 
           // OpenAI fallback — when TMDB key is missing or returns no results
