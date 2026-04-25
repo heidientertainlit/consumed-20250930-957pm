@@ -51,7 +51,7 @@ export const consumptionLogs = pgTable("consumption_logs", {
   title: text("title").notNull(),
   category: text("category").notNull(), // movies, tv, books, music, games
   type: text("type").notNull(), // movie, episode, book, album, game
-  rating: integer("rating"), // 1-5 stars
+  rating: real("rating"), // 0.5-5 stars (supports half stars)
   review: text("review"),
   pointsEarned: integer("points_earned").notNull().default(10),
   consumedAt: timestamp("consumed_at").notNull(),
@@ -349,7 +349,7 @@ export const mediaRatings = pgTable("media_ratings", {
   mediaExternalSource: text("media_external_source").notNull(), // 'tmdb', 'spotify', 'openlibrary', 'youtube'
   mediaTitle: text("media_title").notNull(),
   mediaType: text("media_type").notNull(), // 'movie', 'tv', 'book', 'podcast', 'music'
-  rating: integer("rating").notNull(), // 1-5 stars
+  rating: real("rating").notNull(), // 0.5-5 stars (supports half stars)
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
