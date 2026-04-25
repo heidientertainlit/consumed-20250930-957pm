@@ -1063,8 +1063,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const isRatingPost = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought';
   const isOtherUser = post.user?.id !== currentUserId;
 
-  // Action First layout: other users' unrated rating posts, OR any promoted card (forceActionFirst)
-  const isActionFirst = isRatingPost && (forceActionFirst || isOtherUser) && !ratingSubmitted && session?.access_token;
+  // Action First layout: other users' unrated rating posts, OR any promoted card (forceActionFirst).
+  // When forceActionFirst is set we skip the ratingSubmitted check so the section stays visible
+  // even after the useEffect loads the user's existing rating from media_ratings.
+  const isActionFirst = isRatingPost && (forceActionFirst || (isOtherUser && !ratingSubmitted)) && session?.access_token;
 
   // Use external (3rd-party) rating as comparison baseline when available; convert /10 → /5
   const baselineRating = externalRating ? externalRating / 2 : communityRating;
@@ -1157,7 +1159,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   ) : null;
 
   return (
-    <div className="snap-start flex-shrink-0 w-[85vw] max-w-[340px] md:w-full md:max-w-none md:snap-align-none md:flex-shrink bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className={`${forceActionFirst ? 'w-full' : 'snap-start flex-shrink-0 w-[85vw] max-w-[340px]'} md:w-full md:max-w-none md:snap-align-none md:flex-shrink bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden`}>
       {isActionFirst ? (
         // ACTION FIRST layout — stars on top, friend's take below
         <>
@@ -1993,17 +1995,21 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                 setHoverRating(0);
               }}
             >
-              {[1, 2, 3, 4, 5].map(star => (
-                <div key={star} className="relative" style={{ width: 38, height: 38 }}>
-                  <Star size={38} className="absolute inset-0 text-violet-200" />
-                  <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: hoverRating >= star ? '100%' : hoverRating >= star - 0.5 ? '50%' : '0%' }}>
-                    <Star size={38} className="fill-yellow-400 text-yellow-400" />
+              {[1, 2, 3, 4, 5].map(star => {
+                const displayVal = hoverRating || (ratingSubmitted ? ratingValue : 0);
+                return (
+                  <div key={star} className="relative" style={{ width: 38, height: 38 }}>
+                    <Star size={38} className="absolute inset-0 text-violet-200" />
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
+                      <Star size={38} className="fill-yellow-400 text-yellow-400" />
+                    </div>
+                    <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
+                    <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
                   </div>
-                  <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
-                  <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
-                </div>
-              ))}
+                );
+              })}
               {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
+              {ratingSubmitted && hoverRating === 0 && <span className="ml-1 text-xs text-gray-400">{ratingValue}/5</span>}
             </div>
           </div>
           <div className="px-4 pt-3 pb-1">
@@ -3539,7 +3545,7 @@ export default function Feed() {
       const { _isPromoted, _promotedKey, ...originalPost } = item;
       return (
         <div key={`${keyPrefix}-${_promotedKey || 'promoted'}-${item.id}`} className="mb-4">
-          <div className="flex">
+          <div className="w-full">
             <UGCGroupCard
               post={originalPost as any}
               onLike={handleLike}
