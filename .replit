@@ -138,12 +138,12 @@ outputType = "console"
 name = "Deploy: social-feed"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx supabase functions deploy social-feed --project-ref mahpgcogwpawvviapqza --use-api"
-
-[workflows.workflow.metadata]
-outputType = "console"
 
 [agent]
 integrations = ["javascript_openai:1.0.0", "javascript_supabase:1.0.0"]

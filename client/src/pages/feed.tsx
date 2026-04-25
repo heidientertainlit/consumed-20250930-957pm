@@ -237,11 +237,6 @@ const fetchSocialFeed = async ({ pageParam = 0, session }: { pageParam?: number;
       return hasContent || hasRating || hasMedia || hasList || hasGame;
     });
     
-    // Debug: Check for cast_approved posts after filtering
-    const castApprovedAfter = filteredPosts.filter((p: any) => p.type === 'cast_approved');
-    console.log('🎬 Cast_approved posts AFTER filter:', castApprovedAfter.length);
-    
-
     // Debug: Log posts with missing or problematic imageUrls
     filteredPosts.forEach((post: any, idx: number) => {
       if (post.mediaItems?.length > 0) {
@@ -2816,6 +2811,10 @@ export default function Feed() {
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const { session, user } = useAuth();
+  // currentAppUserId (module-level) resets to null on HMR module reload while TanStack
+  // Query serves from cache (queryFn doesn't re-run). Fall back to session.user.id so
+  // the carousel "exclude own posts" logic works reliably.
+  const effectiveUserId = currentAppUserId || session?.user?.id || user?.id || null;
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -3265,7 +3264,7 @@ export default function Feed() {
       );
       // Prefer a real (non-persona, non-self) user's post as the representative card
       const representative =
-        group.find((p: any) => p.user?.id !== currentAppUserId && !p.user?.is_persona) ||
+        group.find((p: any) => p.user?.id !== effectiveUserId && !p.user?.is_persona) ||
         group.find((p: any) => !p.user?.is_persona) ||
         group[0];
       finalOrder.push(representative);
@@ -3284,7 +3283,7 @@ export default function Feed() {
     for (const item of recencySorted) {
       if (promoted.length >= MAX_PROMOTED) break;
       const authorId = item.user?.id || item._rawPost?.user?.id;
-      if (!authorId || authorId === currentAppUserId) continue;
+      if (!authorId || authorId === effectiveUserId) continue;
       if (item.user?.is_persona || item._rawPost?.user?.is_persona) continue;
       if (seenAuthors.has(authorId)) continue;
       seenAuthors.add(authorId);

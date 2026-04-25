@@ -1356,7 +1356,9 @@ serve(async (req) => {
           usersError: usersError?.message || null,
           hasServiceRoleKey: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
           sampleUserIds: validUserIds.slice(0, 3),
-          sampleUsers: users?.slice(0, 3).map(u => ({ id: u.id?.substring(0, 8), user_name: u.user_name, display_name: u.display_name }))
+          sampleUsers: users?.slice(0, 3).map(u => ({ id: u.id?.substring(0, 8), user_name: u.user_name, display_name: u.display_name })),
+          ratedAddToListPosts: allItems.filter((p: any) => p.type === 'add-to-list' && p.rating).map((p: any) => ({ id: p.id?.substring(0, 8), type: p.type, rating: p.rating, title: p.mediaItems?.[0]?.title })),
+          totalPostsReturned: allItems.length
         }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
