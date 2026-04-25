@@ -544,53 +544,10 @@ function TodaysPlayGame({
 
   const PURPLE_GRADIENT = 'linear-gradient(160deg,#312e81 0%,#1d4ed8 35%,#0284c7 65%,#0e7490 100%)';
 
-  return createPortal(
-    <div className={`fixed inset-0 z-[190] flex ${phase === 'done' ? 'items-center justify-center px-4' : 'items-end'}`}>
-      {/* Backdrop */}
-      <div
-        className={`absolute inset-0 ${phase === 'done' ? 'bg-black/65 backdrop-blur-md' : 'bg-black/40 backdrop-blur-sm'}`}
-        onClick={phase === 'playing' ? onClose : undefined}
-      />
-
-      {/* Bottom sheet — light theme, transparent when done */}
-      <div
-        className={`relative w-full flex flex-col ${phase === 'done' ? 'max-h-[90vh] overflow-y-auto' : 'rounded-t-3xl'}`}
-        style={{ ...(phase === 'done' ? {} : { height: '92vh', background: '#fafafa' }) }}
-      >
-        {/* Drag handle — hidden when done */}
-        {phase !== 'done' && (
-          <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1 shrink-0 bg-gray-200" />
-        )}
-
-        {/* Header — hidden when done (close button is inside the card area) */}
-        {phase !== 'done' ? (
-          <div className="flex items-center justify-between px-4 pt-3 pb-3 border-b border-gray-100 shrink-0">
-            <div className="w-9" />
-            <h1 className="text-[15px] font-bold text-gray-900">Today's Play</h1>
-            <button
-              onClick={onClose}
-              className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200"
-            >
-              <X size={16} className="text-gray-500" />
-            </button>
-          </div>
-        ) : (
-          /* Floating close button for done state */
-          <div className="flex justify-end px-5 pt-4 pb-0 shrink-0">
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
-            >
-              <X size={15} className="text-white" />
-            </button>
-          </div>
-        )}
-
-        {/* Scrollable content */}
-        <div className={phase === 'done' ? '' : 'flex-1 overflow-y-auto'}>
-          {phase === 'done' && doneScore ? (
-            // ── Combined done + share screen ──
-            (() => {
+  // ── Done state: full-screen scrollable overlay (separate from bottom sheet) ──
+  if (phase === 'done' && doneScore) {
+    return createPortal(
+      (() => {
               const ratio = doneScore.correct / doneScore.total;
               const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -648,7 +605,16 @@ function TodaysPlayGame({
               })();
 
               return (
-            <div className="flex flex-col px-5 pt-4 pb-10">
+            <div className="fixed inset-0 z-[190] bg-black/65 backdrop-blur-md overflow-y-auto">
+              <div className="min-h-full flex flex-col items-center px-4 pt-4 pb-24">
+                {/* Floating close button */}
+                <div className="w-full flex justify-end mb-2">
+                  <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                    <X size={15} className="text-white" />
+                  </button>
+                </div>
+                {/* Card + buttons */}
+                <div className="flex flex-col w-full">
               {/* Screenshotable card */}
               <div className="rounded-3xl overflow-hidden shadow-2xl w-full mb-4">
                 {/* Blue gradient header */}
@@ -715,9 +681,6 @@ function TodaysPlayGame({
                       })}
                     </div>
 
-                    {/* Everyone's playing */}
-                    <p className="text-[11px] font-semibold text-gray-400 leading-snug">Everyone's playing. Where do you rank?</p>
-
                     {/* Insight line */}
                     {insightLine && (
                       <p className="text-[11px] font-medium text-gray-500 leading-snug">{insightLine}</p>
@@ -752,6 +715,9 @@ function TodaysPlayGame({
                       <p className="text-[11px] font-bold text-purple-600">@consumedapp</p>
                       <p className="text-[9px] text-gray-400 mt-0.5">where entertainment gets played</p>
                     </div>
+
+                    {/* Everyone's playing */}
+                    <p className="text-[11px] font-semibold text-gray-400 leading-snug">Everyone's playing. Where do you rank?</p>
                   </div>
                 </div>
               </div>
@@ -796,12 +762,30 @@ function TodaysPlayGame({
                   <MessageCircle size={15} className="opacity-80" />
                   Have a Take? Rate &amp; Review
                 </button>
-              </div>
+              </div>{/* end action buttons */}
+                </div>{/* end flex flex-col w-full */}
+              </div>{/* end min-h-full */}
             </div>
-              );
-            })()
-          ) : (
-            // ── Question screen — Q1 expanded, Q2/Q3 collapsed below ──
+          );
+        })(),
+      document.body
+    );
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-[190] flex items-end">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full rounded-t-3xl flex flex-col" style={{ height: '92vh', background: '#fafafa' }}>
+        <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1 shrink-0 bg-gray-200" />
+        <div className="flex items-center justify-between px-4 pt-3 pb-3 border-b border-gray-100 shrink-0">
+          <div className="w-9" />
+          <h1 className="text-[15px] font-bold text-gray-900">Today's Play</h1>
+          <button onClick={onClose} className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200">
+            <X size={16} className="text-gray-500" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+            {/* Question screen — Q1 expanded, Q2/Q3 collapsed below */}
             <div className="flex flex-col px-4 pt-5 pb-32">
               {/* Streak chip + motivational header */}
               <div className="flex flex-col items-center text-center mb-5">
@@ -1007,12 +991,11 @@ function TodaysPlayGame({
                 })}
               </div>
             </div>
-          )}
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
+              </div>
+            </div>
+          </div>,
+          document.body
+        );
 }
 
 // ─────────────────────────────────────────────
