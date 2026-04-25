@@ -3,6 +3,10 @@ import { useLocation, useParams, Link } from 'wouter';
 import { ArrowLeft, Trophy, Plus, GripVertical, Globe, Lock, Trash2, X, Link2 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/lib/auth';
@@ -38,6 +42,7 @@ export default function RankDetail() {
   const queryClient = useQueryClient();
   
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const { data: rankData, isLoading } = useQuery({
     queryKey: ['rank-detail', id],
@@ -92,19 +97,9 @@ export default function RankDetail() {
 
   const deleteRankMutation = useMutation({
     mutationFn: async (rankId: string) => {
-      if (!session?.access_token) throw new Error('Authentication required');
-
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/delete-rank", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ rank_id: rankId }),
-      });
-
-      if (!response.ok) throw new Error('Failed to delete rank');
-      return response.json();
+      const { error } = await supabase.from('ranks').delete().eq('id', rankId);
+      if (error) throw new Error(error.message || 'Failed to delete rank');
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-ranks'] });
@@ -186,9 +181,13 @@ export default function RankDetail() {
 
   const handleDeleteRank = () => {
     if (!rankData?.id) return;
-    if (confirm(`Are you sure you want to delete "${rankData.title}"? This action cannot be undone.`)) {
-      deleteRankMutation.mutate(rankData.id);
-    }
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteRank = () => {
+    if (!rankData?.id) return;
+    setShowDeleteDialog(false);
+    deleteRankMutation.mutate(rankData.id);
   };
 
   const handleRemoveItem = (itemId: string) => {
@@ -414,6 +413,27 @@ export default function RankDetail() {
         currentItemCount={rankData.items?.length || 0}
         maxItems={rankData.max_items || 10}
       />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this rank?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{rankData.title}" and all its items. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteRank}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteRankMutation.isPending}
+            >
+              {deleteRankMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import { Link } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 import CommentsSection from "@/components/comments-section";
 
 interface RankItemWithVotes {
@@ -184,17 +185,9 @@ export default function RankFeedCard({
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`${supabaseUrl}/functions/v1/delete-rank`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token || ''}`,
-          "apikey": supabaseAnonKey,
-        },
-        body: JSON.stringify({ rankId: rank.id }),
-      });
-      if (!response.ok) { const error = await response.json(); throw new Error(error.error || 'Failed to delete rank'); }
-      return response.json();
+      const { error } = await supabase.from('ranks').delete().eq('id', rank.id);
+      if (error) throw new Error(error.message || 'Failed to delete rank');
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
