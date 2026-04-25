@@ -185,6 +185,62 @@ serve(async (req) => {
               });
             }
           }
+
+          // OpenAI fallback — when TMDB key is missing or returns no results
+          if (movieTvResults.length === 0) {
+            const openaiKey = Deno.env.get('OPENAI_API_KEY');
+            if (openaiKey) {
+              try {
+                const targetType = type === 'tv' ? 'TV show' : 'movie or TV show';
+                const openaiMovieResponse = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${openaiKey}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    model: 'gpt-4o-mini',
+                    messages: [{
+                      role: 'system',
+                      content: `You are a film and TV database. Return a JSON array of up to 8 ${targetType} results matching the query. Each object must have: title (string), type ("movie" or "tv"), year (4-digit string or null), creator (director for movies or empty string), description (one sentence synopsis). Return ONLY valid JSON array, no markdown.`
+                    }, {
+                      role: 'user',
+                      content: `Search: "${searchQuery}"`
+                    }],
+                    temperature: 0,
+                    max_tokens: 600
+                  })
+                }, 8000);
+
+                if (openaiMovieResponse.ok) {
+                  const openaiMovieData = await openaiMovieResponse.json();
+                  const raw = openaiMovieData.choices?.[0]?.message?.content?.trim() || '[]';
+                  try {
+                    const suggestions: any[] = JSON.parse(raw);
+                    suggestions.slice(0, 8).forEach((item: any) => {
+                      if (!item.title) return;
+                      movieTvResults.push({
+                        title: item.title,
+                        type: item.type === 'tv' ? 'tv' : 'movie',
+                        creator: item.creator || '',
+                        year: item.year || null,
+                        poster_url: '',
+                        external_id: `openai-${(item.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${item.year || 'unknown'}`,
+                        external_source: 'openai',
+                        description: item.description || '',
+                        popularity: 5,
+                        vote_count: 0,
+                        release_date: item.year ? `${item.year}-01-01` : null
+                      });
+                    });
+                    console.log('OpenAI movie/TV fallback returned:', movieTvResults.length, 'results');
+                  } catch (_) { /* ignore parse errors */ }
+                }
+              } catch (error) {
+                console.error('OpenAI movie/TV fallback error:', error);
+              }
+            }
+          }
         } catch (error) {
           console.error('TMDB search error:', error);
           errors.push('tmdb');
