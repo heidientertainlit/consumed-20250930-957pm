@@ -113,6 +113,24 @@ serve(async (req) => {
 
     console.log('Successfully created rank:', rank.title);
 
+    // Create a social_posts entry so the rank appears in the activity feed
+    if ((visibility || 'public') === 'public') {
+      const { error: postError } = await supabaseAdmin
+        .from('social_posts')
+        .insert({
+          user_id: appUser.id,
+          rank_id: rank.id,
+          post_type: 'rank_share',
+          content: null,
+          visibility: 'public'
+        });
+      if (postError) {
+        console.error('Warning: rank created but feed post failed:', postError.message);
+      } else {
+        console.log('Feed post created for rank:', rank.id);
+      }
+    }
+
     return new Response(JSON.stringify({
       success: true,
       data: rank
