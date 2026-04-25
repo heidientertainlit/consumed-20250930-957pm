@@ -2811,10 +2811,14 @@ export default function Feed() {
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const { session, user } = useAuth();
-  // currentAppUserId (module-level) resets to null on HMR module reload while TanStack
-  // Query serves from cache (queryFn doesn't re-run). Fall back to session.user.id so
-  // the carousel "exclude own posts" logic works reliably.
-  const effectiveUserId = currentAppUserId || session?.user?.id || user?.id || null;
+  // Stable user ID that never resets to null once resolved. currentAppUserId (module-level)
+  // resets on HMR reloads; session.user.id / user.id may be null on the very first render
+  // before Supabase restores the session. Using a ref ensures the value is locked in as soon
+  // as any source resolves it and never flips back to null mid-session.
+  const _effectiveUserIdRef = useRef<string | null>(null);
+  const _resolvedId = currentAppUserId || session?.user?.id || user?.id || null;
+  if (_resolvedId && !_effectiveUserIdRef.current) _effectiveUserIdRef.current = _resolvedId;
+  const effectiveUserId = _effectiveUserIdRef.current;
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -3250,9 +3254,14 @@ export default function Feed() {
       byMedia.get(key)!.push(item);
     });
 
-    // Sort media groups: most co-ratings first (hot items anchor the carousel front)
+    // Sort media groups: current user's own posts first, then most co-ratings
     const sortedGroups = Array.from(byMedia.values())
-      .sort((a, b) => b.length - a.length);
+      .sort((a, b) => {
+        const aHasSelf = effectiveUserId && a.some((p: any) => p.user?.id === effectiveUserId) ? 1 : 0;
+        const bHasSelf = effectiveUserId && b.some((p: any) => p.user?.id === effectiveUserId) ? 1 : 0;
+        if (bHasSelf !== aHasSelf) return bHasSelf - aHasSelf;
+        return b.length - a.length;
+      });
 
     // Within each group keep recency order; take only ONE post per media title
     // (the most recent real-user post, or the first if all are personas)
