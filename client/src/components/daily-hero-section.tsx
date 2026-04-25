@@ -382,7 +382,7 @@ function ScoreShareCard({
             Play More Trivia
           </button>
           <button
-            onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('openQuickAction')); }}
+            onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('openAddMedia')); }}
             className="w-full py-3 rounded-2xl font-semibold text-[13px] text-white flex items-center justify-center gap-2"
             style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}
           >
@@ -769,7 +769,7 @@ function TodaysPlayGame({
                   Play More Trivia
                 </button>
                 <button
-                  onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('openQuickAction')); }}
+                  onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('openAddMedia')); }}
                   className="w-full py-3.5 rounded-2xl font-semibold text-[14px] text-white/90 flex items-center justify-center gap-2"
                   style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
                 >

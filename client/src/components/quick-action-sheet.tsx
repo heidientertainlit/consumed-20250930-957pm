@@ -34,9 +34,10 @@ interface QuickActionSheetProps {
   } | null;
   roomId?: string | null;
   onPosted?: () => void;
+  preselectedIntent?: "capture" | null;
 }
 
-export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, onPosted }: QuickActionSheetProps) {
+export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, onPosted, preselectedIntent }: QuickActionSheetProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   
@@ -69,11 +70,15 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
       setSelectedIntent("capture");
       setSelectedAction("track");
       setShareToFeed(false);
+    } else if (isOpen && preselectedIntent === "capture" && !preselectedMedia && !roomId) {
+      // Direct Add Media flow (e.g. from "Have a Take?" score card button)
+      setSelectedIntent("capture");
+      setSelectedAction("track");
     }
     if (isOpen && !roomId) {
       setShareToFeed(true);
     }
-  }, [isOpen, preselectedMedia, roomId]);
+  }, [isOpen, preselectedMedia, roomId, preselectedIntent]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);

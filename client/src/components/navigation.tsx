@@ -59,12 +59,19 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [actionSheetMedia, setActionSheetMedia] = useState<any>(null);
+  const [directCapture, setDirectCapture] = useState(false);
   const [totalPoints, setTotalPoints] = useState<number | null>(null);
 
   useEffect(() => {
     const handler = () => setIsQuickActionOpen(true);
     window.addEventListener('openQuickAction', handler);
     return () => window.removeEventListener('openQuickAction', handler);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => { setDirectCapture(true); setIsQuickActionOpen(true); };
+    window.addEventListener('openAddMedia', handler);
+    return () => window.removeEventListener('openAddMedia', handler);
   }, []);
 
   useEffect(() => {
@@ -576,8 +583,9 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
       {/* Quick Action Sheet */}
       <QuickActionSheet
         isOpen={isQuickActionOpen}
-        onClose={() => { setIsQuickActionOpen(false); setActionSheetMedia(null); }}
+        onClose={() => { setIsQuickActionOpen(false); setActionSheetMedia(null); setDirectCapture(false); }}
         preselectedMedia={actionSheetMedia}
+        preselectedIntent={directCapture ? "capture" : null}
       />
 
       {/* Quick Add to List Sheet */}
