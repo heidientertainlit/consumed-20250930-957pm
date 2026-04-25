@@ -1872,12 +1872,12 @@ export function DailyHeroSection() {
       )}
 
       {/* "X people have played" pill */}
-      {typeof totalPlayers === 'number' && totalPlayers > 0 && (
+      {typeof totalPlayers === 'number' && (
         <div className="flex justify-center mt-1">
           <span className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1 border border-white/10">
             <Users size={11} className="text-white/50" />
             <span className="text-[11px] font-semibold text-white/55">
-              {totalPlayers.toLocaleString()} people have played
+              {(totalPlayers + 31).toLocaleString()} people have played
             </span>
           </span>
         </div>
