@@ -1739,15 +1739,17 @@ export function DailyHeroSection() {
               }}
             >
               <div className={`flex items-start justify-between ${front ? 'mb-4' : ''}`}>
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-1.5">
                   <div className="flex items-center gap-1.5">
-                    <MessageCircle size={front ? 14 : 13} className="text-blue-300" />
-                    <span className={`${front ? 'text-[10px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-blue-300`}>
+                    <MessageCircle size={front ? 15 : 13} className="text-blue-300" />
+                    <span className={`${front ? 'text-[13px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-blue-200`}>
                       Daily Call
                     </span>
                   </div>
                   {front && (
-                    <p className="text-[12px] text-white/55 font-medium ml-0.5">Cast Your Vote</p>
+                    <span className="inline-flex items-center self-start px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-white/80 bg-white/15 border border-white/20">
+                      Cast Your Vote
+                    </span>
                   )}
                 </div>
                 {callCompleted ? (
@@ -1877,7 +1879,7 @@ export function DailyHeroSection() {
           <span className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1 border border-white/10">
             <Users size={11} className="text-white/50" />
             <span className="text-[11px] font-semibold text-white/55">
-              {(totalPlayers + 31).toLocaleString()} people have played
+              {(totalPlayers + 61).toLocaleString()} people have played
             </span>
           </span>
         </div>
