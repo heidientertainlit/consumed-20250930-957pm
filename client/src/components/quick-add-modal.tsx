@@ -93,6 +93,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
   const [rewatchCount, setRewatchCount] = useState<number>(1);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const starsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -731,9 +732,28 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
   };
 
   const renderStars = () => {
+    const displayRating = hoverRating || rating;
     return (
       <div className="flex items-center gap-1" data-testid="rating-slider">
-        <div className="flex gap-1">
+        <div
+          ref={starsRef}
+          className="flex gap-1 touch-none select-none"
+          onTouchMove={(e) => {
+            if (!starsRef.current) return;
+            const touch = e.touches[0];
+            const rect = starsRef.current.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const starWidth = rect.width / 5;
+            const starIndex = Math.floor(x / starWidth);
+            const withinStar = (x % starWidth) / starWidth;
+            const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1)));
+            setHoverRating(Math.round(val * 2) / 2);
+          }}
+          onTouchEnd={() => {
+            if (hoverRating > 0) setRating(hoverRating);
+            setHoverRating(0);
+          }}
+        >
           {[1, 2, 3, 4, 5].map((star) => (
             <div
               key={star}
@@ -746,10 +766,10 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               <div
                 className="absolute inset-0 overflow-hidden pointer-events-none"
                 style={{
-                  width: rating >= star ? '100%' : rating >= star - 0.5 ? '50%' : '0%'
+                  width: displayRating >= star ? '100%' : displayRating >= star - 0.5 ? '50%' : '0%'
                 }}
               >
-                <Star size={44} className="fill-yellow-400 text-yellow-400" />
+                <Star size={44} className={`fill-yellow-400 text-yellow-400 ${hoverRating > 0 ? 'opacity-80' : ''}`} />
               </div>
               {/* Left 50% = half-star tap zone */}
               <button
@@ -770,8 +790,8 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
             </div>
           ))}
         </div>
-        {rating > 0 && (
-          <span className="ml-2 text-sm text-gray-600">{rating}/5</span>
+        {displayRating > 0 && (
+          <span className="ml-2 text-sm text-gray-600">{displayRating}/5</span>
         )}
       </div>
     );
@@ -1264,7 +1284,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
               )}
             </div>
             
-            <div className="p-4 border-t border-gray-100">
+            <div className="px-4 pt-4 pb-20 border-t border-gray-100">
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting || (defaultListId ? !selectedMedia : (!reviewText.trim() && postType !== 'rank' && !(rating > 0 && (postType === 'review' || selectedMedia))))}
