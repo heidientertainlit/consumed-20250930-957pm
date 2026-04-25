@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, Sparkles, Loader2, Check, X, CalendarDays, ChevronDown, ChevronUp, Send,
-  ShieldCheck, AlertTriangle,
+  ShieldCheck, AlertTriangle, Pencil, Plus, Minus,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -43,6 +43,12 @@ export default function AdminDailyCallPage() {
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dates, setDates] = useState<Record<string, string>>({});
+
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [manualTitle, setManualTitle] = useState("");
+  const [manualOptions, setManualOptions] = useState(["", ""]);
+  const [manualCategory, setManualCategory] = useState("Pop Culture");
+  const [savingManual, setSavingManual] = useState(false);
 
   const { data: drafts = [], isLoading } = useQuery<Draft[]>({
     queryKey: ["daily-call-drafts"],
@@ -165,6 +171,37 @@ export default function AdminDailyCallPage() {
     queryClient.invalidateQueries({ queryKey: ["daily-call-drafts"] });
   }
 
+  async function handleSaveManualDraft() {
+    const filledOptions = manualOptions.filter(o => o.trim());
+    if (!manualTitle.trim() || filledOptions.length < 2) {
+      toast({ title: "Add a question and at least 2 options", variant: "destructive" });
+      return;
+    }
+    setSavingManual(true);
+    try {
+      const { error } = await supabase.from("trivia_poll_drafts").insert({
+        id: crypto.randomUUID(),
+        title: manualTitle.trim(),
+        options: filledOptions,
+        category: manualCategory,
+        content_type: "featured_play",
+        status: "draft",
+      });
+      if (error) throw error;
+      toast({ title: "Saved to Drafts!", description: "Go to Drafts tab to schedule it." });
+      setManualTitle("");
+      setManualOptions(["", ""]);
+      setManualCategory("Pop Culture");
+      setShowManualForm(false);
+      queryClient.invalidateQueries({ queryKey: ["daily-call-drafts"] });
+      setTab("drafts");
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingManual(false);
+    }
+  }
+
   const nextFreeDate = (() => {
     if (upcoming.length === 0) return toLocalDateStr(new Date());
     const last = upcoming[upcoming.length - 1].featured_date;
@@ -265,6 +302,83 @@ export default function AdminDailyCallPage() {
             >
               {generating ? <><Loader2 size={18} className="animate-spin mr-2" /> Generating...</> : <><Sparkles size={18} className="mr-2" /> Generate {count} Daily Calls</>}
             </Button>
+
+            {/* Write Your Own */}
+            <div className="mt-2">
+              <button
+                onClick={() => setShowManualForm(v => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-gray-900 border border-gray-800 hover:border-gray-700 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Pencil size={14} className="text-yellow-400" />
+                  <span className="text-sm font-medium text-gray-300">Write your own Daily Call</span>
+                </div>
+                {showManualForm ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
+              </button>
+
+              {showManualForm && (
+                <div className="mt-2 bg-gray-900 border border-gray-800 rounded-2xl p-5 space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Question / Prediction prompt</label>
+                    <Textarea
+                      value={manualTitle}
+                      onChange={e => setManualTitle(e.target.value)}
+                      placeholder="e.g. Who will win the Super Bowl this year?"
+                      className="bg-gray-800 border-gray-700 text-white resize-none h-20 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Options</label>
+                    <div className="space-y-2">
+                      {manualOptions.map((opt, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <Input
+                            value={opt}
+                            onChange={e => setManualOptions(prev => prev.map((o, idx) => idx === i ? e.target.value : o))}
+                            placeholder={`Option ${i + 1}`}
+                            className="bg-gray-800 border-gray-700 text-white text-sm flex-1"
+                          />
+                          {manualOptions.length > 2 && (
+                            <button onClick={() => setManualOptions(prev => prev.filter((_, idx) => idx !== i))} className="text-gray-500 hover:text-red-400">
+                              <Minus size={14} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {manualOptions.length < 4 && (
+                        <button onClick={() => setManualOptions(prev => [...prev, ""])} className="flex items-center gap-1.5 text-xs text-yellow-400 hover:text-yellow-300 mt-1">
+                          <Plus size={12} /> Add option
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Category</label>
+                    <div className="flex flex-wrap gap-2">
+                      {["Pop Culture", "Movies", "TV", "Books", "Music"].map(cat => (
+                        <button
+                          key={cat}
+                          onClick={() => setManualCategory(cat)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${manualCategory === cat ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/40" : "bg-gray-800 text-gray-400 border border-gray-700 hover:text-gray-200"}`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleSaveManualDraft}
+                    disabled={savingManual}
+                    className="w-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 border border-yellow-500/40 font-semibold rounded-xl"
+                  >
+                    {savingManual ? <><Loader2 size={14} className="animate-spin mr-2" /> Saving...</> : <><Send size={14} className="mr-2" /> Save to Drafts</>}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

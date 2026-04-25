@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, Sparkles, Loader2, Check, X, CalendarDays, Send,
   ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, Film, BookOpen, Zap, Pencil,
-  Tv, Music2, Headphones, Gamepad2, Shuffle, Plus,
+  Tv, Music2, Headphones, Gamepad2, Shuffle, Plus, Minus,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -184,6 +184,15 @@ export default function AdminTodaysPlayPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editOptions, setEditOptions] = useState<string[]>([]);
   const [editAnswer, setEditAnswer] = useState("");
+
+  // Write your own state
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [manualTitle, setManualTitle] = useState("");
+  const [manualOptions, setManualOptions] = useState(["", "", "", ""]);
+  const [manualAnswer, setManualAnswer] = useState("");
+  const [manualShowTag, setManualShowTag] = useState("");
+  const [manualMediaType, setManualMediaType] = useState("tv");
+  const [savingManual, setSavingManual] = useState(false);
 
   // Pending drafts
   const { data: drafts = [], refetch: refetchDrafts } = useQuery<Draft[]>({
@@ -662,6 +671,44 @@ export default function AdminTodaysPlayPage() {
     await refetchDrafts();
   }
 
+  async function handleSaveManualTrivia() {
+    const filled = manualOptions.filter(o => o.trim());
+    if (!manualTitle.trim() || filled.length < 2 || !manualAnswer || !manualShowTag.trim()) {
+      toast({ title: "Fill in question, options, correct answer, and show/media name", variant: "destructive" });
+      return;
+    }
+    const categoryMap: Record<string, string> = { movie: "Movies", tv: "TV", book: "Books", music: "Music", mixed: "Pop Culture" };
+    setSavingManual(true);
+    try {
+      const { error } = await supabase.from("trivia_poll_drafts").insert({
+        id: crypto.randomUUID(),
+        title: manualTitle.trim(),
+        options: filled,
+        correct_answer: manualAnswer,
+        show_tag: manualShowTag.trim(),
+        media_tags: [manualShowTag.trim()],
+        media_type: manualMediaType,
+        category: categoryMap[manualMediaType] || "TV",
+        content_type: "trivia",
+        status: "draft",
+      });
+      if (error) throw error;
+      toast({ title: "Saved to Drafts!", description: "Go to Drafts tab to schedule it." });
+      setManualTitle("");
+      setManualOptions(["", "", "", ""]);
+      setManualAnswer("");
+      setManualShowTag("");
+      setManualMediaType("tv");
+      setShowManualForm(false);
+      await refetchDrafts();
+      setTab("drafts");
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingManual(false);
+    }
+  }
+
   const generating = !["idle", "done"].includes(genStage);
   const generatingExtras = !["idle", "done"].includes(extrasStage);
 
@@ -830,6 +877,115 @@ export default function AdminTodaysPlayPage() {
                 <p className="text-xs text-center text-gray-600">Don't close this page while generating</p>
               </div>
             )}
+
+            {/* Write Your Own */}
+            <div className="mt-2">
+              <button
+                onClick={() => setShowManualForm(v => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-gray-900 border border-gray-800 hover:border-gray-700 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Pencil size={14} className="text-teal-400" />
+                  <span className="text-sm font-medium text-gray-300">Write your own trivia question</span>
+                </div>
+                {showManualForm ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
+              </button>
+
+              {showManualForm && (
+                <div className="mt-2 bg-gray-900 border border-gray-800 rounded-2xl p-5 space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Question</label>
+                    <Textarea
+                      value={manualTitle}
+                      onChange={e => setManualTitle(e.target.value)}
+                      placeholder="e.g. What is the name of the coffee shop in Friends?"
+                      className="bg-gray-800 border-gray-700 text-white resize-none h-20 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Answer options</label>
+                    <div className="space-y-2">
+                      {manualOptions.map((opt, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <Input
+                            value={opt}
+                            onChange={e => setManualOptions(prev => prev.map((o, idx) => idx === i ? e.target.value : o))}
+                            placeholder={`Option ${String.fromCharCode(65 + i)}`}
+                            className="bg-gray-800 border-gray-700 text-white text-sm flex-1"
+                          />
+                          {manualOptions.length > 2 && (
+                            <button onClick={() => setManualOptions(prev => prev.filter((_, idx) => idx !== i))} className="text-gray-500 hover:text-red-400">
+                              <Minus size={14} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {manualOptions.length < 5 && (
+                        <button onClick={() => setManualOptions(prev => [...prev, ""])} className="flex items-center gap-1.5 text-xs text-teal-400 hover:text-teal-300 mt-1">
+                          <Plus size={12} /> Add option
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Correct answer</label>
+                    <select
+                      value={manualAnswer}
+                      onChange={e => setManualAnswer(e.target.value)}
+                      className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2"
+                    >
+                      <option value="">— select the correct answer —</option>
+                      {manualOptions.filter(o => o.trim()).map((opt, i) => (
+                        <option key={i} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Media type</label>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { value: "movie", label: "Movie", icon: <Film size={11} />, cls: "bg-blue-500/20 text-blue-300 border-blue-500/40" },
+                          { value: "tv", label: "TV", icon: <Tv size={11} />, cls: "bg-amber-500/20 text-amber-300 border-amber-500/40" },
+                          { value: "book", label: "Book", icon: <BookOpen size={11} />, cls: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" },
+                          { value: "music", label: "Music", icon: <Music2 size={11} />, cls: "bg-pink-500/20 text-pink-300 border-pink-500/40" },
+                          { value: "mixed", label: "Pop Culture", icon: <Zap size={11} />, cls: "bg-purple-500/20 text-purple-300 border-purple-500/40" },
+                        ].map(m => (
+                          <button
+                            key={m.value}
+                            onClick={() => setManualMediaType(m.value)}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${manualMediaType === m.value ? m.cls : "bg-gray-800 text-gray-500 border-gray-700"}`}
+                          >
+                            {m.icon} {m.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Show / media name</label>
+                      <Input
+                        value={manualShowTag}
+                        onChange={e => setManualShowTag(e.target.value)}
+                        placeholder="e.g. Friends, Oppenheimer..."
+                        className="bg-gray-800 border-gray-700 text-white text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleSaveManualTrivia}
+                    disabled={savingManual}
+                    className="w-full bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 font-semibold rounded-xl"
+                  >
+                    {savingManual ? <><Loader2 size={14} className="animate-spin mr-2" /> Saving...</> : <><Send size={14} className="mr-2" /> Save to Drafts</>}
+                  </Button>
+                </div>
+              )}
+            </div>
 
             {/* Scheduled queue preview */}
             {scheduled.length > 0 && (

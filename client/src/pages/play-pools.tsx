@@ -163,7 +163,7 @@ function LeaderboardSheet({ pool, onClose }: { pool: Pool; onClose: () => void }
       />
       {/* Sheet */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl pb-10"
+        className="fixed bottom-0 left-0 right-0 z-[10000] bg-white rounded-t-3xl pb-24"
         style={{ maxHeight: "80vh", overflowY: "auto" }}
       >
         {/* Handle */}
@@ -411,8 +411,8 @@ export default function PlayPoolsPage() {
                       }}
                     >
                       <div
-                        className={`flex-1 flex items-center gap-3 min-w-0 ${unlocked ? "cursor-pointer active:scale-[0.98]" : "cursor-not-allowed"}`}
-                        onClick={() => unlocked && setLocation(`/play/challenge/${encodeURIComponent(pool.showTag)}/${round.difficulty}`)}
+                        className={`flex-1 flex items-center gap-3 min-w-0 ${unlocked && !completed ? "cursor-pointer active:scale-[0.98]" : completed ? "cursor-default" : "cursor-not-allowed"}`}
+                        onClick={() => (unlocked && !completed) && setLocation(`/play/challenge/${encodeURIComponent(pool.showTag)}/${round.difficulty}`)}
                       >
                         <div
                           className="w-2 h-2 rounded-full shrink-0"
