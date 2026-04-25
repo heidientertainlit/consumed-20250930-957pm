@@ -3254,13 +3254,12 @@ export default function Feed() {
       byMedia.get(key)!.push(item);
     });
 
-    // Sort media groups: current user's own posts first, then most co-ratings
+    // Sort media groups chronologically — most recently rated first
     const sortedGroups = Array.from(byMedia.values())
       .sort((a, b) => {
-        const aHasSelf = effectiveUserId && a.some((p: any) => p.user?.id === effectiveUserId) ? 1 : 0;
-        const bHasSelf = effectiveUserId && b.some((p: any) => p.user?.id === effectiveUserId) ? 1 : 0;
-        if (bHasSelf !== aHasSelf) return bHasSelf - aHasSelf;
-        return b.length - a.length;
+        const aRecent = Math.max(...a.map((p: any) => new Date(p.timestamp || 0).getTime()));
+        const bRecent = Math.max(...b.map((p: any) => new Date(p.timestamp || 0).getTime()));
+        return bRecent - aRecent;
       });
 
     // Within each group keep recency order; take only ONE post per media title
@@ -3281,7 +3280,8 @@ export default function Feed() {
 
     // PROMOTION: pull a small number of high-signal real-user ratings out of the
     // carousel pool to show as standalone cards interleaved with play slots.
-    // Criteria: real user (not persona, not current user), most recent, one per author.
+    // Criteria: real user (not persona), most recent, one per author.
+    // Includes the current user's own posts so their rated add-to-list posts surface here.
     // Cap at 4 so play stays dominant in the feed.
     const MAX_PROMOTED = 4;
     const recencySorted = [...finalOrder].sort((a: any, b: any) =>
@@ -3292,7 +3292,7 @@ export default function Feed() {
     for (const item of recencySorted) {
       if (promoted.length >= MAX_PROMOTED) break;
       const authorId = item.user?.id || item._rawPost?.user?.id;
-      if (!authorId || authorId === effectiveUserId) continue;
+      if (!authorId) continue;
       if (item.user?.is_persona || item._rawPost?.user?.is_persona) continue;
       if (seenAuthors.has(authorId)) continue;
       seenAuthors.add(authorId);
