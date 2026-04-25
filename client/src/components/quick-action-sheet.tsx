@@ -43,7 +43,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
   
   const [selectedIntent, setSelectedIntent] = useState<IntentType>(null);
   const [selectedAction, setSelectedAction] = useState<ActionType>(null);
-  const [sayMode, setSayMode] = useState<"thought" | "ask">("thought");
+  const [sayMode, setSayMode] = useState<"rate_review" | "ask">("rate_review");
   const [isPosting, setIsPosting] = useState(false);
   
   const [contentText, setContentText] = useState("");
@@ -276,7 +276,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
       setSelectedAction("track");
     } else if (intent === "say") {
       setSelectedAction("post");
-      setSayMode("thought");
+      setSayMode("rate_review");
     } else if (intent === "play") {
       setSelectedAction(null);
     }
@@ -441,7 +441,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
         const { data: { user: authUser } } = await supabase.auth.getUser();
         if (!authUser) throw new Error('Not authenticated');
         
-        const postType = sayMode || "thought";
+        const postType = sayMode || "rate_review";
         const { error } = await supabase.from('social_posts').insert({
           user_id: authUser.id,
           content: contentText,
@@ -1193,9 +1193,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
       <div className="space-y-4">
         <div className="flex gap-2">
           <button
-            onClick={() => { setSayMode("thought"); setSelectedAction("post"); }}
+            onClick={() => { setSayMode("rate_review"); setSelectedAction("post"); }}
             className={`flex-1 py-2.5 px-4 rounded-full text-sm font-medium transition-all ${
-              sayMode === "thought" 
+              sayMode === "rate_review" 
                 ? "bg-gray-100 text-gray-900 border border-gray-200" 
                 : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"
             }`}
@@ -1239,7 +1239,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
         )}
 
         {/* Tag Media Section */}
-        {sayMode === "thought" && (
+        {sayMode === "rate_review" && (
           <div className="space-y-2">
             {!selectedMedia ? (
               <div className="relative">

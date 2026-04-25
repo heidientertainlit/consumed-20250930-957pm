@@ -3099,7 +3099,7 @@ export default function Feed() {
         else if (p.type === 'cast_approved') postType = 'cast_approved';
         else if (p.type === 'rank' || p.type === 'shared_rank') postType = 'rank';
         else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
-        else if ((p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review') && content) postType = p.rating && p.rating > 0 ? 'review' : 'thought';
+        else if ((p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review') && content) postType = 'review';
         else if (p.type === 'thought' || p.post_type === 'thought') postType = 'thought';
         else if (p.rating && p.rating > 0 && content.length > 20) postType = 'review';
         else if (p.rating && p.rating > 0) postType = 'rating';
