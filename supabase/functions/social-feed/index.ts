@@ -166,12 +166,15 @@ serve(async (req) => {
       // Track 2 (game moments): predictions, polls, votes, trivia, rank_shares, cast_approved
       // Excluded: list adds, grouped list events — these live in Library, not the feed.
       if (!specificPostId) {
-        query = query.not('post_type', 'in', '("added_to_list","add-to-list","friend_list_group","media_group","game_moment")');
+        // friend_list_group, media_group, game_moment are always excluded.
+        // add-to-list/added_to_list are excluded at query level — we bring back
+        // rated ones via a code-level filter below.
+        query = query.not('post_type', 'in', '("friend_list_group","media_group","game_moment")');
         // Exclude room-scoped posts — they belong only in the room feed, not the main activity feed
         query = query.is('room_id', null);
       }
       
-      const { data: posts, error } = await query;
+      const { data: rawPosts, error } = await query;
 
       if (error) {
         console.log('Query failed:', error);
@@ -180,6 +183,14 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
+
+      // Keep add-to-list posts only when they carry a rating — those are real
+      // engagement signals (ratings/reviews) and should appear in the feed carousel.
+      // Pure list additions with no rating stay out of the feed (they live in Library).
+      const posts = rawPosts?.filter((p: any) =>
+        (p.post_type !== 'add-to-list' && p.post_type !== 'added_to_list') ||
+        (p.rating && p.rating > 0)
+      );
 
       console.log('Found posts:', posts?.length || 0);
       
@@ -903,7 +914,9 @@ serve(async (req) => {
       let listPostsCount = 0;
       posts?.forEach(post => {
         // Match posts with list_id OR 'add-to-list' type (covers both old and new posts)
-        if (post.list_id || post.post_type === 'add-to-list') {
+        // Exempt rated add-to-list posts — they are engagement signals (ratings/reviews),
+        // not list-filing events, so they must never be consolidated/deduplicated.
+        if ((post.list_id || post.post_type === 'add-to-list') && !(post.rating && post.rating > 0)) {
           listPostsCount++;
           // Group by user_id + list_id for more precise consolidation.
           // If list_id is null, use a per-post unique key so the post is never

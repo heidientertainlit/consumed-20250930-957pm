@@ -66,6 +66,10 @@ args = "Deploy: post-scheduled-content"
 task = "workflow.run"
 args = "Deploy: generate-persona-content"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Deploy: social-feed"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -126,6 +130,17 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx supabase functions deploy generate-persona-content --project-ref mahpgcogwpawvviapqza --use-api"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Deploy: social-feed"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx supabase functions deploy social-feed --project-ref mahpgcogwpawvviapqza --use-api"
 
 [workflows.workflow.metadata]
 outputType = "console"
