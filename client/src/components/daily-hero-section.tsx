@@ -1497,6 +1497,20 @@ export function DailyHeroSection() {
     },
   });
 
+  // ── Player count (for the "X people have played" pill) ──
+  const { data: totalPlayers } = useQuery<number>({
+    queryKey: ['daily-hero-players', dailyCall?.id],
+    queryFn: async () => {
+      if (!dailyCall?.id) return 0;
+      const { count } = await supabase
+        .from('user_predictions')
+        .select('*', { count: 'exact', head: true })
+        .eq('pool_id', dailyCall.id);
+      return count ?? 0;
+    },
+    enabled: !!dailyCall?.id,
+  });
+
   // ── Streak ──
   const { data: streak } = useQuery<number | null>({
     queryKey: ['play-streak-hero', user?.id],
@@ -1725,11 +1739,16 @@ export function DailyHeroSection() {
               }}
             >
               <div className={`flex items-start justify-between ${front ? 'mb-4' : ''}`}>
-                <div className="flex items-center gap-1.5">
-                  <MessageCircle size={front ? 14 : 13} className="text-blue-300" />
-                  <span className={`${front ? 'text-[10px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-blue-300`}>
-                    Daily Call
-                  </span>
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <MessageCircle size={front ? 14 : 13} className="text-blue-300" />
+                    <span className={`${front ? 'text-[10px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-blue-300`}>
+                      Daily Call
+                    </span>
+                  </div>
+                  {front && (
+                    <p className="text-[12px] text-white/55 font-medium ml-0.5">Cast Your Vote</p>
+                  )}
                 </div>
                 {callCompleted ? (
                   <span className="flex items-center gap-1 bg-green-400/15 rounded-full px-1.5 py-0.5 border border-green-400/30">
@@ -1850,6 +1869,18 @@ export function DailyHeroSection() {
             </div>
           );
         })()
+      )}
+
+      {/* "X people have played" pill */}
+      {typeof totalPlayers === 'number' && totalPlayers > 0 && (
+        <div className="flex justify-center mt-1">
+          <span className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1 border border-white/10">
+            <Users size={11} className="text-white/50" />
+            <span className="text-[11px] font-semibold text-white/55">
+              {totalPlayers.toLocaleString()} people have played
+            </span>
+          </span>
+        </div>
       )}
 
       {/* Game overlay */}
