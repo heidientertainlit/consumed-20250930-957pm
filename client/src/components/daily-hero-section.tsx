@@ -97,6 +97,7 @@ function ScoreShareCard({
   onClose: () => void;
 }) {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   if (!open) return null;
 
@@ -121,14 +122,14 @@ function ScoreShareCard({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[210] flex items-center justify-center px-5 py-6">
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-[10000] bg-black/75 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
+      <div className="min-h-full flex flex-col items-center px-5 pt-10 pb-10">
 
-      <div className="relative w-full max-w-sm flex flex-col gap-3">
+      <div className="relative w-full max-w-sm flex flex-col gap-3" onClick={e => e.stopPropagation()}>
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute -top-2 right-0 z-10 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
+          className="absolute -top-8 right-0 z-10 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
         >
           <X size={15} className="text-white" />
         </button>
@@ -273,9 +274,6 @@ function ScoreShareCard({
                         })}
                       </div>
 
-                      {/* Everyone's playing line */}
-                      <p className="text-[11px] font-semibold text-gray-400 leading-snug">Everyone's playing. Where do you rank?</p>
-
                       {/* Insight line */}
                       {insightLine && (
                         <p className="text-[11px] font-medium text-gray-500 leading-snug">{insightLine}</p>
@@ -353,6 +351,9 @@ function ScoreShareCard({
               <p className="text-[11px] font-bold text-purple-600">@consumedapp</p>
               <p className="text-[9px] text-gray-400 mt-0.5">where entertainment gets played</p>
             </div>
+
+            {/* Everyone's playing */}
+            <p className="text-[11px] font-semibold text-gray-400 leading-snug text-center">Everyone's playing. Where do you rank?</p>
           </div>
         </div>
 
@@ -369,6 +370,35 @@ function ScoreShareCard({
         <p className="text-center text-[11px] text-white/30">
           Screenshot the card above to share on social
         </p>
+
+        {/* Action buttons */}
+        <div className="flex flex-col gap-2 pt-1">
+          <button
+            onClick={() => { onClose(); setLocation('/play'); }}
+            className="w-full py-3 rounded-2xl font-semibold text-[13px] text-white flex items-center justify-center gap-2"
+            style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}
+          >
+            <Trophy size={15} className="opacity-80" />
+            Play More Trivia
+          </button>
+          <button
+            onClick={() => { onClose(); setLocation('/'); }}
+            className="w-full py-3 rounded-2xl font-semibold text-[13px] text-white flex items-center justify-center gap-2"
+            style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}
+          >
+            <Users size={15} className="opacity-80" />
+            See What Everyone's Into
+          </button>
+          <button
+            onClick={() => { onClose(); setLocation('/add'); }}
+            className="w-full py-3 rounded-2xl font-semibold text-[13px] text-white flex items-center justify-center gap-2"
+            style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}
+          >
+            <MessageCircle size={15} className="opacity-80" />
+            Have a Take? Rate &amp; Review
+          </button>
+        </div>
+      </div>
       </div>
     </div>,
     document.body
