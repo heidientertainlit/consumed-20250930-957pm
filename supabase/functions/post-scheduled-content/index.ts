@@ -60,7 +60,7 @@ serve(async (req) => {
           .from('social_posts')
           .insert({
             user_id: scheduledPost.persona_user_id,
-            post_type: scheduledPost.post_type === 'hot_take' ? 'thought' : scheduledPost.post_type,
+            post_type: (scheduledPost.post_type === 'hot_take' || scheduledPost.post_type === 'thought') ? 'review' : scheduledPost.post_type,
             content: scheduledPost.content,
             rating: scheduledPost.rating,
             media_title: scheduledPost.media_title,

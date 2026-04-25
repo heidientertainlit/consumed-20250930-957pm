@@ -173,7 +173,7 @@ CRITICAL STYLE RULES — read carefully:
 - NEVER put any score or rating inside the post text. No "9/10", "4.5 stars", "8 out of 10", "9 stars out of 10", or ANY numerical rating in the content field. Ratings go ONLY in the separate "rating" JSON field.
 
 For each post return a JSON object with these exact fields:
-- post_type: one of "thought", "review" — use "review" when there's a star rating, "thought" for everything else. NEVER use "hot_take".
+- post_type: always use "review" regardless of whether a rating is included. NEVER use "thought" or "hot_take".
 - content: the post text — NO ratings, NO scores, NO stars mentioned. Just the reaction in their voice.
 - rating: a number on a 5-STAR scale from 0.5 to 5.0 in 0.5 increments (e.g. 3.5, 4.0, 4.5, 5.0). MAXIMUM is 5.0. NEVER use 6, 7, 8, 9, or 10. If the post is not a review, use null.
 - media_title: exact title of the media being discussed
@@ -236,7 +236,7 @@ Return ONLY a JSON array of ${postsPerPersona} post objects. No other text.`;
         for (const post of posts) {
           const draft = {
             persona_user_id: persona.id,
-            post_type: post.post_type || 'thought',
+            post_type: (post.post_type === 'thought' || !post.post_type) ? 'review' : post.post_type,
             content: post.content || '',
             rating: post.rating || null,
             media_title: post.media_title || null,

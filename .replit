@@ -58,6 +58,14 @@ args = "Deploy: create-rank"
 task = "workflow.run"
 args = "Deploy: media-search"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Deploy: post-scheduled-content"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Deploy: generate-persona-content"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -99,6 +107,28 @@ outputType = "console"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx supabase functions deploy media-search --project-ref mahpgcogwpawvviapqza --use-api"
+
+[[workflows.workflow]]
+name = "Deploy: post-scheduled-content"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx supabase functions deploy post-scheduled-content --project-ref mahpgcogwpawvviapqza --use-api"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Deploy: generate-persona-content"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx supabase functions deploy generate-persona-content --project-ref mahpgcogwpawvviapqza --use-api"
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [agent]
 integrations = ["javascript_openai:1.0.0", "javascript_supabase:1.0.0"]
