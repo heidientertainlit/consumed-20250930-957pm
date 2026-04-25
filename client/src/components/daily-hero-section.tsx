@@ -545,7 +545,7 @@ function TodaysPlayGame({
   const PURPLE_GRADIENT = 'linear-gradient(160deg,#312e81 0%,#1d4ed8 35%,#0284c7 65%,#0e7490 100%)';
 
   return createPortal(
-    <div className="fixed inset-0 z-[190] flex items-end">
+    <div className={`fixed inset-0 z-[190] flex ${phase === 'done' ? 'items-center justify-center px-4' : 'items-end'}`}>
       {/* Backdrop */}
       <div
         className={`absolute inset-0 ${phase === 'done' ? 'bg-black/65 backdrop-blur-md' : 'bg-black/40 backdrop-blur-sm'}`}
@@ -554,8 +554,8 @@ function TodaysPlayGame({
 
       {/* Bottom sheet — light theme, transparent when done */}
       <div
-        className={`relative w-full flex flex-col ${phase === 'done' ? '' : 'rounded-t-3xl'}`}
-        style={{ height: '92vh', background: phase === 'done' ? 'transparent' : '#fafafa' }}
+        className={`relative w-full flex flex-col ${phase === 'done' ? 'max-h-[90vh] overflow-y-auto' : 'rounded-t-3xl'}`}
+        style={{ ...(phase === 'done' ? {} : { height: '92vh', background: '#fafafa' }) }}
       >
         {/* Drag handle — hidden when done */}
         {phase !== 'done' && (
@@ -587,7 +587,7 @@ function TodaysPlayGame({
         )}
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className={phase === 'done' ? '' : 'flex-1 overflow-y-auto'}>
           {phase === 'done' && doneScore ? (
             // ── Combined done + share screen ──
             (() => {
