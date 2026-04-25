@@ -547,27 +547,44 @@ function TodaysPlayGame({
   return createPortal(
     <div className="fixed inset-0 z-[190] flex items-end">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={phase === 'playing' ? onClose : undefined} />
-
-      {/* Bottom sheet — light theme */}
       <div
-        className="relative w-full rounded-t-3xl flex flex-col"
-        style={{ height: '92vh', background: '#fafafa' }}
-      >
-        {/* Drag handle */}
-        <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1 shrink-0 bg-gray-200" />
+        className={`absolute inset-0 ${phase === 'done' ? 'bg-black/65 backdrop-blur-md' : 'bg-black/40 backdrop-blur-sm'}`}
+        onClick={phase === 'playing' ? onClose : undefined}
+      />
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 pt-3 pb-3 border-b border-gray-100 shrink-0">
-          <div className="w-9" />
-          <h1 className="text-[15px] font-bold text-gray-900">Today's Play</h1>
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200"
-          >
-            <X size={16} className="text-gray-500" />
-          </button>
-        </div>
+      {/* Bottom sheet — light theme, transparent when done */}
+      <div
+        className={`relative w-full flex flex-col ${phase === 'done' ? '' : 'rounded-t-3xl'}`}
+        style={{ height: '92vh', background: phase === 'done' ? 'transparent' : '#fafafa' }}
+      >
+        {/* Drag handle — hidden when done */}
+        {phase !== 'done' && (
+          <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-1 shrink-0 bg-gray-200" />
+        )}
+
+        {/* Header — hidden when done (close button is inside the card area) */}
+        {phase !== 'done' ? (
+          <div className="flex items-center justify-between px-4 pt-3 pb-3 border-b border-gray-100 shrink-0">
+            <div className="w-9" />
+            <h1 className="text-[15px] font-bold text-gray-900">Today's Play</h1>
+            <button
+              onClick={onClose}
+              className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center active:bg-gray-200"
+            >
+              <X size={16} className="text-gray-500" />
+            </button>
+          </div>
+        ) : (
+          /* Floating close button for done state */
+          <div className="flex justify-end px-5 pt-4 pb-0 shrink-0">
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
+            >
+              <X size={15} className="text-white" />
+            </button>
+          </div>
+        )}
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto">
@@ -749,9 +766,37 @@ function TodaysPlayGame({
                 Share Your Score
               </button>
 
-              <p className="text-center text-[11px] text-gray-400 mt-2">
+              <p className="text-center text-[11px] text-white/40 mt-2 mb-4">
                 Screenshot the card above to share on social
               </p>
+
+              {/* Action buttons */}
+              <div className="flex flex-col gap-2.5">
+                <button
+                  onClick={() => { onClose(); setLocation('/play'); }}
+                  className="w-full py-3.5 rounded-2xl font-semibold text-[14px] text-white/90 flex items-center justify-center gap-2"
+                  style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
+                >
+                  <Zap size={15} className="opacity-80" fill="currentColor" />
+                  Play More Trivia
+                </button>
+                <button
+                  onClick={() => { onClose(); setLocation('/'); }}
+                  className="w-full py-3.5 rounded-2xl font-semibold text-[14px] text-white/90 flex items-center justify-center gap-2"
+                  style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
+                >
+                  <Radio size={15} className="opacity-80" />
+                  See What Everyone's Into
+                </button>
+                <button
+                  onClick={() => { onClose(); setLocation('/add'); }}
+                  className="w-full py-3.5 rounded-2xl font-semibold text-[14px] text-white/90 flex items-center justify-center gap-2"
+                  style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
+                >
+                  <MessageCircle size={15} className="opacity-80" />
+                  Have a Take? Rate &amp; Review
+                </button>
+              </div>
             </div>
               );
             })()
