@@ -575,10 +575,22 @@ function TodaysPlayGame({
             // ── Combined done + share screen ──
             (() => {
               const ratio = doneScore.correct / doneScore.total;
+              const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
               // Day-based seed so lines rotate daily but stay consistent within a day
               const daySeed = parseInt(new Date().toISOString().split('T')[0].replace(/-/g, ''), 10) % 97;
               const pick = <T,>(arr: T[]): T => arr[daySeed % arr.length];
+
+              const CAT_EMOJI: Record<string, string> = {
+                Movies: '🎬', Movie: '🎬',
+                TV: '📺', Television: '📺',
+                Music: '🎵',
+                Books: '📚', Book: '📚',
+                'Pop Culture': '⭐',
+                Sports: '🏆',
+                Games: '🎮', Gaming: '🎮',
+                Podcasts: '🎙️', Podcast: '🎙️',
+              };
 
               // Category data from actual answers
               const correctCats = questions.filter((_, i) => answers[i]?.correct).map(q => q.category).filter(Boolean);
@@ -586,34 +598,19 @@ function TodaysPlayGame({
               const strongCat = correctCats[0] ?? null;
               const weakCat = wrongCats[0] ?? null;
 
-              // Category name → friendly label
-              const catLabel = (c: string) => {
-                const map: Record<string, string> = { Movies: 'Film', Movie: 'Film', TV: 'TV', Television: 'TV', Music: 'Music', Books: 'Books', Book: 'Books', 'Pop Culture': 'Pop Culture', Sports: 'Sports', Games: 'Gaming', Gaming: 'Gaming', Podcasts: 'Podcasts' };
-                return map[c] || c;
-              };
-
-              // Perfect score
               const perfectOptions: [string, string][] = [
                 ['Perfect. You\u2019ve got elite entertainment instincts.', 'Added to your Entertainment DNA.'],
-                ['Untouchable today. You\u2019ve got a gift for this.', 'This just leveled up your Entertainment DNA.'],
-                [`${doneScore.correct}/${doneScore.total}. You nailed every category. Not easy.`, 'Your Entertainment DNA just got stronger.'],
-                ...(strongCat ? [[`${catLabel(strongCat)} is your home. Perfect score to prove it.`, 'Your Entertainment DNA just got stronger.'] as [string, string]] : []),
+                ['Untouchable today.', 'Your Entertainment DNA just got stronger.'],
+                [`${doneScore.correct}/${doneScore.total}. Every category. Not easy.`, 'Added to your Entertainment DNA.'],
               ];
-
-              // Good score (≥ 66%)
               const goodOptions: [string, string][] = [
-                ...(strongCat && weakCat ? [[`Strong in ${catLabel(strongCat)}. ${catLabel(weakCat)} got you.`, 'One slip doesn\u2019t change the story.'] as [string, string]] : []),
-                ['Almost perfect. One answer away from dangerous.', 'Close enough to flex — sharp enough to come back.'],
-                [`${doneScore.correct}/${doneScore.total}. Close enough to be dangerous, not enough to be quiet about it.`, 'Build on this.'],
-                ...(weakCat ? [[`${catLabel(weakCat)} is your blind spot. You know it.`, 'Work on it. It\u2019s fixable.'] as [string, string]] : []),
+                ...(strongCat && weakCat ? [[`Strong in ${strongCat}. ${weakCat} got you.`, 'Your Entertainment DNA is building.'] as [string, string]] : []),
+                ['Almost perfect. One away from dangerous.', 'Your Entertainment DNA just got stronger.'],
+                [`${doneScore.correct}/${doneScore.total}. Close enough to flex.`, 'Keep building your Entertainment DNA.'],
               ];
-
-              // Weak score (< 34%)
               const weakOptions: [string, string][] = [
-                ['Today humbled you. Tomorrow\u2019s yours.', 'The streak is still breathing. Don\u2019t kill it.'],
-                ['The hard ones always hit different.', 'Knowing that is already half the battle.'],
-                [`${doneScore.correct}/${doneScore.total}. Respect the difficulty. Come back swinging.`, 'Nobody goes perfect every day.'],
-                ...(weakCat ? [[`${catLabel(weakCat)} let you down today.`, 'It won\u2019t next time.'] as [string, string]] : []),
+                ['Today humbled you. Tomorrow\u2019s yours.', 'Every play builds your Entertainment DNA.'],
+                ['The hard ones hit different.', 'Come back and strengthen your DNA.'],
               ];
 
               const [headline, subhead] =
@@ -621,194 +618,140 @@ function TodaysPlayGame({
                 : ratio >= 0.5 ? pick(goodOptions)
                 : pick(weakOptions);
 
-              const possessive = (() => {
-                const name = (username || 'Your').trim();
-                if (!username) return 'Your';
-                return name.endsWith('s') || name.endsWith('S') ? `${name}'` : `${name}'s`;
+              const insightLine = (() => {
+                if (doneScore.correct === doneScore.total) return pick([
+                  'Strong across everything. No weak spots today.',
+                  'Balanced taste. That\u2019s rare.',
+                  'Perfect across the board. Most people don\u2019t pull that off.',
+                ]);
+                if (strongCat && weakCat && strongCat !== weakCat)
+                  return `Strong in ${strongCat}. ${weakCat} got you.`;
+                if (weakCat) return `${weakCat} tripped you up \u2014 worth a revisit.`;
+                return null;
               })();
+
               return (
-            <div className="flex flex-col px-5 pt-6 pb-10">
-              {/* Score card — designed to be screenshot-worthy */}
-              <div
-                className="rounded-3xl overflow-hidden shadow-xl border border-gray-100 mb-6"
-                style={{ background: 'linear-gradient(180deg,#ffffff 0%,#faf5ff 100%)' }}
-              >
-                {/* Top branded strip */}
+            <div className="flex flex-col px-5 pt-4 pb-10">
+              {/* Screenshotable card */}
+              <div className="rounded-3xl overflow-hidden shadow-2xl w-full mb-4">
+                {/* Blue gradient header */}
                 <div
-                  className="px-5 py-3 flex items-center justify-between"
-                  style={{ background: PURPLE_GRADIENT }}
+                  className="px-5 pt-5 pb-4"
+                  style={{ background: 'linear-gradient(135deg,#1e40af 0%,#2563eb 35%,#0ea5e9 75%,#38bdf8 100%)' }}
                 >
-                  <img
-                    src="/consumed-logo-white.png"
-                    alt="Consumed"
-                    className="h-4 w-auto opacity-95"
-                  />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/70">
-                    Today's Play
-                  </span>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <img src="/consumed-logo-white.png" alt="Consumed" className="h-7 w-auto mb-1 -ml-1" />
+                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">Today's Play</p>
+                    </div>
+                    <p className="text-[11px] font-semibold text-white/50 mt-1">{today}</p>
+                  </div>
                 </div>
 
-                <div className="px-6 pt-6 pb-7 flex flex-col items-center text-center">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-gray-400 mb-1">
-                    {possessive} Today's Play Score
-                  </p>
-                  <h2 className="text-3xl font-black text-gray-900 mb-1.5 leading-tight">
-                    {headline}
-                  </h2>
-                  <p className="text-gray-500 text-[13px] mb-5 leading-snug max-w-[280px]">
-                    {subhead}
-                  </p>
-
-                  {/* Big score */}
-                  <div className="flex items-baseline gap-2 mb-5">
-                    <span
-                      className="text-[64px] font-black leading-none"
-                      style={{
-                        background: PURPLE_GRADIENT,
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                      }}
-                    >
-                      {doneScore.correct}
-                    </span>
-                    <span className="text-[28px] font-bold text-gray-300">
-                      / {doneScore.total}
-                    </span>
-                  </div>
-
-                  {/* Per-question category chips */}
-                  {(() => {
-                    const CAT_EMOJI: Record<string, string> = {
-                      Movies: '🎬', Movie: '🎬',
-                      TV: '📺', Television: '📺',
-                      Music: '🎵',
-                      Books: '📚', Book: '📚',
-                      'Pop Culture': '⭐',
-                      Sports: '🏆',
-                      Games: '🎮', Gaming: '🎮',
-                      Podcasts: '🎙️', Podcast: '🎙️',
-                    };
-                    const correctQs = questions.filter((_, i) => answers[i]?.correct);
-                    const wrongQs = questions.filter((_, i) => answers[i] && !answers[i].correct);
-                    const strongestCat = correctQs.length > 0 ? correctQs[0].category : null;
-                    const weakestCat = wrongQs.length > 0 ? wrongQs[0].category : null;
-
-                    const insightLine = (() => {
-                      if (doneScore.correct === doneScore.total) return pick([
-                        'Strong across everything. No weak spots today.',
-                        'Balanced taste. That\u2019s rare.',
-                        'Perfect across the board. Most people don\u2019t pull that off.',
-                      ]);
-                      if (strongestCat && weakestCat && strongestCat !== weakestCat)
-                        return `Strong in ${strongestCat}. ${weakestCat} got you.`;
-                      if (weakestCat) return `${weakestCat} tripped you up — worth a revisit.`;
-                      return null;
-                    })();
-
-                    return (
-                      <>
-                        <div className="flex gap-2 mb-3 flex-wrap justify-center">
-                          {questions.map((q, i) => {
-                            const correct = answers[i]?.correct;
-                            const cat = q.category || 'General';
-                            const emoji = CAT_EMOJI[cat] || '🎯';
-                            return (
-                              <div
-                                key={i}
-                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-semibold"
-                                style={{
-                                  background: correct ? '#f0fdf4' : '#fff1f2',
-                                  color: correct ? '#16a34a' : '#dc2626',
-                                  border: `1px solid ${correct ? '#bbf7d0' : '#fecdd3'}`,
-                                }}
-                              >
-                                <span>{emoji}</span>
-                                <span>{cat}</span>
-                                {correct
-                                  ? <CheckCircle size={10} className="ml-0.5" />
-                                  : <XCircle size={10} className="ml-0.5" />}
-                              </div>
-                            );
-                          })}
-                        </div>
-                        {insightLine && (
-                          <p className="text-[12px] text-gray-500 font-medium mb-4 leading-snug px-2">
-                            {insightLine}
-                          </p>
-                        )}
-                      </>
-                    );
-                  })()}
-
-                  {/* Stats footer row */}
-                  <div className="flex items-center gap-4 text-[11px] text-gray-500 font-medium">
-                    {doneScore.totalPoints > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Zap size={12} className="text-purple-600" fill="currentColor" />
-                        <span><span className="font-bold text-gray-900">+{doneScore.totalPoints}</span> pts — climbing the leaderboard</span>
-                      </div>
+                {/* White body */}
+                <div className="bg-white px-6 pt-7 pb-8">
+                  <div className="flex flex-col items-center text-center gap-4">
+                    {/* Display name */}
+                    {username && (
+                      <p className="text-[22px] font-bold uppercase tracking-widest text-gray-400">{username}</p>
                     )}
-                    {streak && streak > 0 && (
-                      <>
-                        {doneScore.totalPoints > 0 && <span className="w-px h-3 bg-gray-200" />}
+
+                    {/* Headline block */}
+                    <div>
+                      <h2 className="text-[15px] font-black text-gray-900 leading-snug mb-1">{headline}</h2>
+                      <p className="text-[11px] font-semibold text-gray-500 leading-snug">{subhead}</p>
+                    </div>
+
+                    {/* Score */}
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-[44px] font-black leading-none text-gray-900">{doneScore.correct}</span>
+                      <span className="text-[20px] font-bold text-gray-300 leading-none">/{doneScore.total}</span>
+                    </div>
+
+                    {/* Per-question category pills */}
+                    <div className="flex gap-2 flex-wrap justify-center">
+                      {questions.map((q, i) => {
+                        const correct = answers[i]?.correct;
+                        const cat = q.category || 'General';
+                        const emoji = CAT_EMOJI[cat] || '🎯';
+                        return (
+                          <div
+                            key={i}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                            style={{
+                              background: correct ? '#f0fdf4' : '#fff1f2',
+                              border: `1px solid ${correct ? '#bbf7d0' : '#fecdd3'}`,
+                            }}
+                          >
+                            <span className="text-[13px] leading-none">{emoji}</span>
+                            <span
+                              className="text-[10px] font-bold uppercase tracking-wide"
+                              style={{ color: correct ? '#15803d' : '#dc2626' }}
+                            >
+                              {cat}
+                            </span>
+                            {correct
+                              ? <CheckCircle size={11} className="text-green-600" />
+                              : <XCircle size={11} className="text-red-500" />}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Everyone's playing */}
+                    <p className="text-[11px] font-semibold text-gray-400 leading-snug">Everyone's playing. Where do you rank?</p>
+
+                    {/* Insight line */}
+                    {insightLine && (
+                      <p className="text-[11px] font-medium text-gray-500 leading-snug">{insightLine}</p>
+                    )}
+
+                    {/* Divider */}
+                    <div className="w-full h-px bg-gray-100" />
+
+                    {/* Points + streak */}
+                    <div className="flex items-center gap-2.5 text-[11px] text-gray-500 font-medium">
+                      {doneScore.totalPoints > 0 && (
                         <div className="flex items-center gap-1">
-                          <Flame size={12} className="text-orange-500 fill-orange-500" />
-                          <span>
-                            {streak === 1
-                              ? <><span className="font-bold text-gray-900">🔥</span> streak started</>
-                              : <><span className="font-bold text-gray-900">🔥 {streak}-day</span> streak</>
-                            }
-                          </span>
+                          <Zap size={11} className="text-purple-600" fill="currentColor" />
+                          <span><span className="font-bold text-gray-900">+{doneScore.totalPoints} pts</span></span>
                         </div>
-                      </>
-                    )}
-                  </div>
+                      )}
+                      {streak && streak > 0 && (
+                        <>
+                          {doneScore.totalPoints > 0 && <span className="text-gray-300">·</span>}
+                          <div className="flex items-center gap-1">
+                            <Flame size={11} className="text-orange-500 fill-orange-500" />
+                            <span className="font-semibold text-gray-700">
+                              {streak === 1 ? 'streak started' : `${streak}-day streak`}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
 
-                  {/* Tomorrow tension */}
-                  <p className="text-[12px] text-purple-600 font-semibold mt-4 leading-snug">
-                    {pick([
-                      'Think you can do it again tomorrow?',
-                      'Let\u2019s see if you can stay perfect.',
-                      'Tomorrow might not be this easy.',
-                    ])}
-                  </p>
+                    {/* @consumedapp footer */}
+                    <div className="pt-2 border-t border-gray-100 w-full text-center">
+                      <p className="text-[11px] font-bold text-purple-600">@consumedapp</p>
+                      <p className="text-[9px] text-gray-400 mt-0.5">where entertainment gets played</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
+              {/* Share button */}
               <button
                 onClick={() => { onClose(); onShare(answers); }}
-                className="w-full py-4 px-5 rounded-2xl font-bold text-[15px] text-white flex items-center justify-between mb-3 shadow-md"
-                style={{ background: PURPLE_GRADIENT }}
+                className="w-full py-4 rounded-2xl font-bold text-[15px] text-white flex items-center justify-center gap-2 shadow-lg"
+                style={{ background: 'linear-gradient(90deg,#7c3aed,#4f46e5)' }}
               >
-                <span>Share Your Score</span>
-                <Share2 size={16} className="opacity-80" />
+                <Share2 size={17} />
+                Share Your Score
               </button>
 
-              <button
-                onClick={() => { onClose(); setLocation('/add'); }}
-                className="w-full py-3.5 px-5 rounded-2xl font-semibold text-[14px] flex items-center justify-between mb-3 bg-gray-50 border border-gray-100 text-gray-700"
-              >
-                <span>Share a Take</span>
-                <ChevronRight size={15} className="opacity-50" />
-              </button>
-
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => { onClose(); setLocation('/play'); }}
-                  className="py-4 px-4 rounded-2xl font-semibold text-[13px] flex flex-col items-center gap-1.5 bg-purple-50 border border-purple-100 text-purple-700"
-                >
-                  <Zap size={18} className="text-purple-600" fill="currentColor" />
-                  Play More
-                </button>
-                <button
-                  onClick={() => { onClose(); setLocation('/play/predictions'); }}
-                  className="py-4 px-4 rounded-2xl font-semibold text-[13px] flex flex-col items-center gap-1.5 bg-blue-50 border border-blue-100 text-blue-700"
-                >
-                  <Radio size={18} className="text-blue-600" />
-                  Call More
-                </button>
-              </div>
+              <p className="text-center text-[11px] text-gray-400 mt-2">
+                Screenshot the card above to share on social
+              </p>
             </div>
               );
             })()
@@ -1076,7 +1019,7 @@ function DailyCallOverlay({
       });
       const data = await resp.json();
       if (data.error && !data.error.includes('Already')) throw new Error(data.error);
-      localStorage.setItem(getDailyCallKey(user?.id), JSON.stringify({ completed: true, result: { userAnswer: selected } }));
+      localStorage.setItem(getDailyCallKey(session?.user?.id), JSON.stringify({ completed: true, result: { userAnswer: selected } }));
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
 
       // Fetch how many other players picked the same option (social proof)
