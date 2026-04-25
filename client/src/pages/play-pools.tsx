@@ -244,13 +244,35 @@ export default function PlayPoolsPage() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const [leaderboardPool, setLeaderboardPool] = useState<Pool | null>(null);
-  const [, forceUpdate] = useState(0);
   const [dbPools, setDbPools] = useState<Pool[]>([]);
   const [poolsLoading, setPoolsLoading] = useState(true);
+  // DB-backed completion tracking (keyed as "showTag-difficulty")
+  const [completedScores, setCompletedScores] = useState<Set<string>>(new Set());
 
+  // Fetch this user's completed rounds from DB on mount
   useEffect(() => {
-    forceUpdate(n => n + 1);
-  }, []);
+    if (!user?.id) return;
+    supabase
+      .from("challenge_scores")
+      .select("show_tag, difficulty")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        if (data) {
+          setCompletedScores(new Set(data.map((s: any) => `${s.show_tag}-${s.difficulty}`)));
+        }
+      });
+  }, [user?.id]);
+
+  function isCompletedForUser(showTag: string, difficulty: Difficulty) {
+    return completedScores.has(`${showTag}-${difficulty}`) || isCompleted(showTag, difficulty);
+  }
+
+  function isUnlockedForUser(showTag: string, difficulty: Difficulty) {
+    if (difficulty === "easy") return true;
+    if (difficulty === "medium") return isCompletedForUser(showTag, "easy");
+    if (difficulty === "hard") return isCompletedForUser(showTag, "medium");
+    return false;
+  }
 
   // Fetch pools from DB, fall back to hardcoded POOLS for any not in DB
   useEffect(() => {
@@ -328,7 +350,7 @@ export default function PlayPoolsPage() {
         )}
 
         {!poolsLoading && dbPools.map((pool) => {
-          const completedCount = pool.rounds.filter(r => isCompleted(pool.showTag, r.difficulty)).length;
+          const completedCount = pool.rounds.filter(r => isCompletedForUser(pool.showTag, r.difficulty)).length;
 
           return (
             <div
@@ -375,8 +397,8 @@ export default function PlayPoolsPage() {
               {/* Rounds */}
               <div className="border-t border-gray-100 px-4 py-3 space-y-2">
                 {pool.rounds.map((round) => {
-                  const unlocked = isUnlocked(pool.showTag, round.difficulty);
-                  const completed = isCompleted(pool.showTag, round.difficulty);
+                  const unlocked = isUnlockedForUser(pool.showTag, round.difficulty);
+                  const completed = isCompletedForUser(pool.showTag, round.difficulty);
 
                   return (
                     <div
