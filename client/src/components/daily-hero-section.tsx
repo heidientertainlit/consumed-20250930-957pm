@@ -374,7 +374,7 @@ function ScoreShareCard({
         {/* Action buttons */}
         <div className="flex flex-col gap-2 pt-1">
           <button
-            onClick={() => { onClose(); setLocation('/play'); }}
+            onClick={() => { onClose(); setLocation('/play/trivia'); }}
             className="w-full py-3 rounded-2xl font-semibold text-[13px] text-white flex items-center justify-center gap-2"
             style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}
           >
@@ -382,15 +382,7 @@ function ScoreShareCard({
             Play More Trivia
           </button>
           <button
-            onClick={() => { onClose(); setLocation('/'); }}
-            className="w-full py-3 rounded-2xl font-semibold text-[13px] text-white flex items-center justify-center gap-2"
-            style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}
-          >
-            <Users size={15} className="opacity-80" />
-            See What Everyone's Into
-          </button>
-          <button
-            onClick={() => { onClose(); setLocation('/add'); }}
+            onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('openQuickAction')); }}
             className="w-full py-3 rounded-2xl font-semibold text-[13px] text-white flex items-center justify-center gap-2"
             style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}
           >
@@ -769,7 +761,7 @@ function TodaysPlayGame({
               {/* Action buttons */}
               <div className="flex flex-col gap-2.5">
                 <button
-                  onClick={() => { onClose(); setLocation('/play'); }}
+                  onClick={() => { onClose(); setLocation('/play/trivia'); }}
                   className="w-full py-3.5 rounded-2xl font-semibold text-[14px] text-white/90 flex items-center justify-center gap-2"
                   style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
                 >
@@ -777,15 +769,7 @@ function TodaysPlayGame({
                   Play More Trivia
                 </button>
                 <button
-                  onClick={() => { onClose(); setLocation('/'); }}
-                  className="w-full py-3.5 rounded-2xl font-semibold text-[14px] text-white/90 flex items-center justify-center gap-2"
-                  style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
-                >
-                  <Radio size={15} className="opacity-80" />
-                  See What Everyone's Into
-                </button>
-                <button
-                  onClick={() => { onClose(); setLocation('/add'); }}
+                  onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('openQuickAction')); }}
                   className="w-full py-3.5 rounded-2xl font-semibold text-[14px] text-white/90 flex items-center justify-center gap-2"
                   style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)' }}
                 >

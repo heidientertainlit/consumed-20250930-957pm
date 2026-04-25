@@ -62,6 +62,12 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   const [totalPoints, setTotalPoints] = useState<number | null>(null);
 
   useEffect(() => {
+    const handler = () => setIsQuickActionOpen(true);
+    window.addEventListener('openQuickAction', handler);
+    return () => window.removeEventListener('openQuickAction', handler);
+  }, []);
+
+  useEffect(() => {
     if (!user?.id || !session?.access_token) return;
     fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/calculate-user-points?user_id=${user.id}`, {
       headers: { Authorization: `Bearer ${session.access_token}` },

@@ -1363,7 +1363,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
             )}
             
             {selectedAction && selectedAction !== "challenge" && (selectedAction !== "rank" || (selectedAction === "rank" && userRanks.length > 0)) && (
-              <div className="pt-4 pb-2 space-y-3">
+              <div className="pt-4 pb-20 space-y-3">
                 {roomId && (selectedAction === "post" || selectedAction === "track") && (
                   <button
                     onClick={() => setShareToFeed(v => !v)}
