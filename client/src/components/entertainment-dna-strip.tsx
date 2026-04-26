@@ -8,8 +8,6 @@ import {
   Film, Tv, BookOpen, Music, Star, Trophy,
 } from 'lucide-react';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-
 const CATEGORY_ICONS: Record<string, any> = {
   Movies: Film, Movie: Film,
   TV: Tv, Television: Tv,
@@ -27,7 +25,7 @@ function getCatIcon(cat: string) {
 }
 
 function useStripData() {
-  const { user, session } = useAuth();
+  const { user } = useAuth();
 
   const { data: streak } = useQuery({
     queryKey: ['dna-strip-streak', user?.id],
@@ -86,30 +84,38 @@ function useStripData() {
   const { data: rankData } = useQuery({
     queryKey: ['dna-strip-rank', user?.id],
     queryFn: async () => {
-      if (!user?.id || !session?.access_token) return { rank: null, percentile: null, total: 0 };
+      if (!user?.id) return { rank: null, percentile: null, total: 0 };
       try {
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/get-leaderboards?category=trivia&scope=global`, {
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!res.ok) return { rank: null, percentile: null, total: 0 };
-        const data = await res.json();
-        // Response shape: { categories: { trivia: LeaderboardEntry[] }, ... }
-        const entries: any[] = data?.categories?.trivia ?? data?.categories?.overall ?? [];
-        if (!entries.length) return { rank: null, percentile: null, total: 0 };
-        const myEntry = entries.find((e: any) => e.user_id === user.id);
-        if (!myEntry) return { rank: null, percentile: null, total: entries.length };
-        const rank = myEntry.rank;
-        const total = entries.length;
-        const percentile = Math.round(((total - rank) / total) * 100);
-        return { rank, percentile, total };
+        // Get my trivia points
+        const { data: myRow } = await supabase
+          .from('trivia_user_points')
+          .select('total_trivia_points')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const myPoints = myRow?.total_trivia_points ?? 0;
+        if (!myRow) return { rank: null, percentile: null, total: 0 };
+
+        // Count users with MORE points → rank = that count + 1
+        const { count: above } = await supabase
+          .from('trivia_user_points')
+          .select('*', { count: 'exact', head: true })
+          .gt('total_trivia_points', myPoints);
+
+        // Count total players on the leaderboard
+        const { count: total } = await supabase
+          .from('trivia_user_points')
+          .select('*', { count: 'exact', head: true });
+
+        const rank = (above ?? 0) + 1;
+        const totalPlayers = total ?? 1;
+        const percentile = Math.round(((totalPlayers - rank) / totalPlayers) * 100);
+        return { rank, percentile, total: totalPlayers };
       } catch {
         return { rank: null, percentile: null, total: 0 };
       }
     },
-    enabled: !!user?.id && !!session?.access_token,
+    enabled: !!user?.id,
     staleTime: 300000,
   });
 
