@@ -3090,7 +3090,7 @@ export default function Feed() {
 
         if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') return true;
         if ((p.type === 'poll' || p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) return true;
-        if (p.type === 'rank' || p.type === 'shared_rank') return true;
+        if (p.type === 'rank' || p.type === 'shared_rank' || p.type === 'rank_share') return true;
         if (p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review' || p.type === 'rate_review' || p.post_type === 'rate_review') return true;
         if (p.type === 'thought' || p.post_type === 'thought') return true;
         const content = (p.content || '').trim();
@@ -3107,7 +3107,7 @@ export default function Feed() {
         else if ((p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) postType = 'predict';
         else if (p.type === 'poll' && ((p as any).question || (p as any).options)) postType = 'poll';
         else if (p.type === 'cast_approved') postType = 'cast_approved';
-        else if (p.type === 'rank' || p.type === 'shared_rank') postType = 'rank';
+        else if (p.type === 'rank' || p.type === 'shared_rank' || p.type === 'rank_share') postType = 'rank';
         else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
         else if ((p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review' || p.type === 'rate_review' || p.post_type === 'rate_review') && content) postType = 'review';
         else if (p.type === 'thought' || p.post_type === 'thought') postType = 'thought';
