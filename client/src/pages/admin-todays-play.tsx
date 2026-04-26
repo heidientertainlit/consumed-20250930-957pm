@@ -184,6 +184,8 @@ export default function AdminTodaysPlayPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editOptions, setEditOptions] = useState<string[]>([]);
   const [editAnswer, setEditAnswer] = useState("");
+  const [editShowTag, setEditShowTag] = useState("");
+  const [editMediaType, setEditMediaType] = useState("tv");
 
   // Write your own state
   const [showManualForm, setShowManualForm] = useState(false);
@@ -698,13 +700,21 @@ export default function AdminTodaysPlayPage() {
     setEditTitle(draft.title);
     setEditOptions(draft.options || []);
     setEditAnswer(draft.correct_answer || "");
+    setEditShowTag(draft.show_tag || "");
+    const mtMap: Record<string, string> = { Movies: "movie", Books: "book", TV: "tv", Music: "music" };
+    setEditMediaType(mtMap[draft.category] || draft.media_type || "tv");
   }
 
   async function saveEdit(draft: Draft) {
+    const categoryMap: Record<string, string> = { movie: "Movies", tv: "TV", book: "Books", music: "Music" };
     await supabase.from("trivia_poll_drafts").update({
       title: editTitle,
       options: editOptions,
       correct_answer: editAnswer || null,
+      show_tag: editShowTag.trim() || null,
+      media_tags: editShowTag.trim() ? [editShowTag.trim()] : null,
+      media_type: editMediaType,
+      category: categoryMap[editMediaType] || draft.category,
     }).eq("id", draft.id);
     setEditingId(null);
     await refetchDrafts();
@@ -1188,6 +1198,27 @@ export default function AdminTodaysPlayPage() {
                                       <Input value={opt} onChange={e => { const o = [...editOptions]; o[i] = e.target.value; setEditOptions(o); }} className="bg-black/30 border-white/10 text-white text-xs h-7" />
                                     </div>
                                   ))}
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-xs text-gray-500">Media / Show tag</p>
+                                  <div className="flex gap-2">
+                                    <select
+                                      value={editMediaType}
+                                      onChange={e => setEditMediaType(e.target.value)}
+                                      className="bg-black/30 border border-white/10 text-white text-xs rounded-md px-2 h-7 flex-shrink-0"
+                                    >
+                                      <option value="tv">TV</option>
+                                      <option value="movie">Movie</option>
+                                      <option value="book">Book</option>
+                                      <option value="music">Music</option>
+                                    </select>
+                                    <Input
+                                      value={editShowTag}
+                                      onChange={e => setEditShowTag(e.target.value)}
+                                      placeholder="e.g. The Picture of Dorian Gray"
+                                      className="bg-black/30 border-white/10 text-white text-xs h-7 flex-1"
+                                    />
+                                  </div>
                                 </div>
                                 <div className="flex gap-2">
                                   <Button onClick={() => saveEdit(draft)} size="sm" className="bg-teal-600 hover:bg-teal-500 text-white flex-1"><Check size={12} className="mr-1" /> Save</Button>
