@@ -658,9 +658,22 @@ ${dedupedItems.map((q: any, i: number) => {
       // "...from [Title]?"
       m = title.match(/\bfrom\s+([A-Z][A-Za-z0-9 :'\-&\.]{2,60})\?/);
       if (m) return m[1].trim();
-      // Single-quoted title: 'The Matrix'
-      m = title.match(/['\u2018\u2019]([A-Z][^'\u2018\u2019]{1,60})['\u2018\u2019]/);
+      // Single-quoted title (straight or curly): 'The Matrix' or \u2018Title\u2019
+      m = title.match(/['\u2018\u2019]([A-Z][^'\u2018\u2019"]{1,60})['\u2018\u2019]/);
       if (m) return m[1].trim();
+      // Double-quoted title: "The Matrix"
+      m = title.match(/"([A-Z][^"]{1,60})"/);
+      if (m) return m[1].trim();
+      // "the novel/book/film/movie/show/album/song/series [Title]?" — title at end, no quotes
+      m = title.match(/\bthe\s+(?:novel|book|film|movie|show|series|album|song|game|podcast)\s+([A-Z][A-Za-z0-9 :'\-&\.]{2,60})\?/i);
+      if (m) return m[1].trim();
+      // "wrote/directed/created/starred in [Title]?" at end
+      m = title.match(/\b(?:wrote|authored|directed|created|composed|produced|starring)\s+([A-Z][A-Za-z0-9 :'\-&\.]{2,60})\?/i);
+      if (m) return m[1].trim();
+      // Fallback: last capitalised multi-word phrase before "?"
+      // e.g. "What is the main character's name in Breaking Bad?"
+      m = title.match(/\b([A-Z][a-zA-Z0-9]+(?: [A-Z][a-zA-Z0-9]+)+)\?$/);
+      if (m && m[1].split(' ').length >= 2) return m[1].trim();
       return null;
     }
 
