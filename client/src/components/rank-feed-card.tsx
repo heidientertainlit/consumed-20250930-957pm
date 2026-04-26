@@ -187,6 +187,9 @@ export default function RankFeedCard({
     mutationFn: async () => {
       const { error } = await supabase.from('ranks').delete().eq('id', rank.id);
       if (error) throw new Error(error.message || 'Failed to delete rank');
+      if (postId) {
+        await supabase.from('social_posts').delete().eq('id', postId);
+      }
       return { success: true };
     },
     onSuccess: () => {
@@ -277,47 +280,76 @@ export default function RankFeedCard({
       )}
 
       {/* Rank title */}
-      <div className="px-4 pb-3">
+      <div className="px-4 pb-1">
         <Link href={`/rank/${rank.id}`}>
           <h3 className="font-bold text-gray-900 text-base leading-snug hover:text-purple-700 cursor-pointer">{rank.title}</h3>
         </Link>
+        {caption && caption.trim() && (
+          <p className="text-sm text-gray-500 mt-0.5 leading-snug">{caption}</p>
+        )}
       </div>
 
       {/* ── COLLAPSED GLIMPSE ── */}
       {!isExpanded && (
-        <button
-          onClick={() => setIsExpanded(true)}
-          className="w-full text-left"
-        >
-          {/* Preview strip: top 3 items as compact rows */}
-          <div className="px-4 pb-2 space-y-1.5">
-            {previewItems.map((item) => {
-              const mediaIcon = getMediaIcon(item.media_type);
-              return (
-                <div key={item.id} className="flex items-center gap-2.5">
-                  <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold text-purple-600 bg-purple-50 rounded flex-shrink-0">
-                    {item.position}
-                  </span>
-                  {item.image_url && (
-                    <img src={item.image_url} alt={item.title} className="w-7 h-7 rounded object-cover flex-shrink-0" />
-                  )}
-                  <div className="flex items-center gap-1 min-w-0">
-                    {mediaIcon && <span className="flex-shrink-0">{mediaIcon}</span>}
-                    <span className="text-sm text-gray-800 font-medium truncate">{item.title}</span>
-                  </div>
+        <>
+          {/* Loading skeleton */}
+          {isLoadingItems && (
+            <div className="px-4 pb-2 space-y-1.5">
+              {[1, 2, 3].map(n => (
+                <div key={n} className="flex items-center gap-2.5 animate-pulse">
+                  <div className="w-5 h-5 bg-gray-100 rounded flex-shrink-0" />
+                  <div className="h-3.5 bg-gray-100 rounded w-2/3" />
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
 
-          {/* Expand CTA */}
-          <div className="mx-4 mb-3 flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
-            <span className="text-xs text-gray-500">
-              {hiddenCount > 0 ? `+${hiddenCount} more · ` : ''}Vote to rank
-            </span>
-            <ChevronDown size={14} className="text-purple-500" />
-          </div>
-        </button>
+          {/* Empty state */}
+          {!isLoadingItems && localItems.length === 0 && (
+            <div className="mx-4 mb-3 flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-3">
+              <BarChart2 size={14} className="text-gray-300 flex-shrink-0" />
+              <span className="text-xs text-gray-400">No items added yet</span>
+              {isOwner && (
+                <Link href={`/rank/${rank.id}`}>
+                  <span className="ml-auto text-xs text-purple-500 font-medium hover:text-purple-700">Add items →</span>
+                </Link>
+              )}
+            </div>
+          )}
+
+          {/* Preview strip: top 3 items as compact rows */}
+          {!isLoadingItems && localItems.length > 0 && (
+            <button onClick={() => setIsExpanded(true)} className="w-full text-left">
+              <div className="px-4 pb-2 space-y-1.5">
+                {previewItems.map((item) => {
+                  const mediaIcon = getMediaIcon(item.media_type);
+                  return (
+                    <div key={item.id} className="flex items-center gap-2.5">
+                      <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold text-purple-600 bg-purple-50 rounded flex-shrink-0">
+                        {item.position}
+                      </span>
+                      {item.image_url && (
+                        <img src={item.image_url} alt={item.title} className="w-7 h-7 rounded object-cover flex-shrink-0" />
+                      )}
+                      <div className="flex items-center gap-1 min-w-0">
+                        {mediaIcon && <span className="flex-shrink-0">{mediaIcon}</span>}
+                        <span className="text-sm text-gray-800 font-medium truncate">{item.title}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Expand CTA */}
+              <div className="mx-4 mb-3 flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
+                <span className="text-xs text-gray-500">
+                  {hiddenCount > 0 ? `+${hiddenCount} more · ` : ''}Vote to rank
+                </span>
+                <ChevronDown size={14} className="text-purple-500" />
+              </div>
+            </button>
+          )}
+        </>
       )}
 
       {/* ── EXPANDED FULL LIST ── */}
