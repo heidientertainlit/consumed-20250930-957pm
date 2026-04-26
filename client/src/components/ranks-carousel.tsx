@@ -7,7 +7,8 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
-import { BarChart3, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Loader2, ArrowUp, ArrowDown, Plus, X, MessageCircle, Send, Heart } from 'lucide-react';
+import { BarChart3, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Loader2, ArrowUp, ArrowDown, Plus, X, MessageCircle, Send, Heart, Flag } from 'lucide-react';
+import { ReportSheet } from '@/components/report-sheet';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -123,6 +124,7 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
   const rankToSocialPost = useRef<Record<string, string>>({});
   const likedInitialized = useRef(false);
+  const [reportCommentTarget, setReportCommentTarget] = useState<{id: string; userId: string; userName: string} | null>(null);
 
   const { data: ranks, isLoading } = useQuery({
     queryKey: ['consumed-ranks-carousel', offset],
@@ -865,6 +867,15 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                             </div>
                             <p className="text-xs text-gray-700 break-words">{comment.content}</p>
                           </div>
+                          {user?.id !== comment.user_id && (
+                            <button
+                              onClick={() => setReportCommentTarget({ id: comment.id, userId: comment.user_id, userName: comment.user?.display_name || comment.user?.user_name || 'User' })}
+                              className="text-gray-400 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5"
+                              title="Report comment"
+                            >
+                              <Flag size={11} />
+                            </button>
+                          )}
                         </div>
                       ))
                     )}
@@ -888,6 +899,15 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
           ))}
         </div>
       )}
+
+      <ReportSheet
+        isOpen={!!reportCommentTarget}
+        onClose={() => setReportCommentTarget(null)}
+        contentType="comment"
+        contentId={reportCommentTarget?.id || ''}
+        reportedUserId={reportCommentTarget?.userId}
+        reportedUserName={reportCommentTarget?.userName}
+      />
     </div>
   );
 }

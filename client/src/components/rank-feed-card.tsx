@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { ArrowBigUp, ArrowBigDown, Heart, MessageCircle, Trash2, BarChart2, Users } from "lucide-react";
+import { ArrowBigUp, ArrowBigDown, Heart, MessageCircle, Trash2, BarChart2, Users, Flag } from "lucide-react";
+import { ReportSheet } from "@/components/report-sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -107,6 +108,7 @@ export default function RankFeedCard({
   const [localLikesCount, setLocalLikesCount] = useState(likesCount);
   const [localIsLiked, setLocalIsLiked] = useState(isLiked);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [reportPostOpen, setReportPostOpen] = useState(false);
 
   const isOwner = user?.id === rank.user_id;
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -247,6 +249,11 @@ export default function RankFeedCard({
           {isOwner && (
             <button onClick={() => setShowDeleteDialog(true)} className="p-1 hover:bg-red-50 rounded-full transition-colors ml-1" data-testid={`delete-rank-${rank.id}`}>
               <Trash2 size={14} className="text-gray-300 hover:text-red-400 transition-colors" />
+            </button>
+          )}
+          {!isOwner && (
+            <button onClick={() => setReportPostOpen(true)} className="p-1 hover:bg-red-50 rounded-full transition-colors ml-1" title="Report">
+              <Flag size={13} className="text-gray-400" />
             </button>
           )}
         </div>
@@ -408,6 +415,15 @@ export default function RankFeedCard({
           />
         </div>
       )}
+
+      <ReportSheet
+        isOpen={reportPostOpen}
+        onClose={() => setReportPostOpen(false)}
+        contentType="post"
+        contentId={postId || rank.id}
+        reportedUserId={author.id}
+        reportedUserName={author.user_name}
+      />
     </div>
   );
 }

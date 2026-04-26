@@ -715,6 +715,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [resolvedExternalId, setResolvedExternalId] = useState(post.externalId || '');
   const [resolvedExternalSource, setResolvedExternalSource] = useState(post.externalSource || 'tmdb');
   const [isSearchingMedia, setIsSearchingMedia] = useState(false);
+  const [reportPostOpen, setReportPostOpen] = useState(false);
+  const [reportCommentTarget, setReportCommentTarget] = useState<{id: string; userId: string; userName: string} | null>(null);
 
   const handleStarClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1121,6 +1123,15 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </>
       )}
       <div className="ml-auto flex items-center gap-1.5">
+        {currentUserId !== post.userId && (
+          <button
+            onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }}
+            className="text-gray-400 hover:text-red-400 transition-colors"
+            title="Report"
+          >
+            <Flag size={13} />
+          </button>
+        )}
         <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
         <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
       </div>
@@ -1522,6 +1533,15 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     <span className="text-xs font-semibold text-gray-800 mr-1">{c.user?.username || c.username || 'User'}</span>
                     <span className="text-xs text-gray-600">{c.content}</span>
                   </div>
+                  {currentUserId !== (c.user?.id || c.userId) && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setReportCommentTarget({ id: c.id, userId: c.user?.id || c.userId || '', userName: c.user?.username || c.username || 'User' }); }}
+                      className="text-gray-400 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5"
+                      title="Report comment"
+                    >
+                      <Flag size={11} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -1547,6 +1567,22 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )}
         </div>
       )}
+      <ReportSheet
+        isOpen={reportPostOpen}
+        onClose={() => setReportPostOpen(false)}
+        contentType="post"
+        contentId={post.id}
+        reportedUserId={post.userId}
+        reportedUserName={post.userName}
+      />
+      <ReportSheet
+        isOpen={!!reportCommentTarget}
+        onClose={() => setReportCommentTarget(null)}
+        contentType="comment"
+        contentId={reportCommentTarget?.id || ''}
+        reportedUserId={reportCommentTarget?.userId}
+        reportedUserName={reportCommentTarget?.userName}
+      />
     </div>
   );
 }
