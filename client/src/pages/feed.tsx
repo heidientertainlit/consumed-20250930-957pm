@@ -1123,15 +1123,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </>
       )}
       <div className="ml-auto flex items-center gap-1.5">
-        {currentUserId !== post.userId && (
-          <button
-            onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }}
-            className="text-gray-400 hover:text-red-400 transition-colors"
-            title="Report"
-          >
-            <Flag size={13} />
-          </button>
-        )}
         <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
         <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
       </div>
@@ -1254,19 +1245,26 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   {post.user?.displayName || post.user?.username || 'Someone'}
                 </p>
               </Link>
-              {post.rating && post.rating > 0 && (
-                <div className="flex flex-col items-end">
-                  <div className="flex items-center gap-0.5">
-                    {[1,2,3,4,5].map(s => {
-                      const r = post.rating!;
-                      if (s <= Math.floor(r)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
-                      if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={12} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                      return <Star key={s} size={12} className="text-gray-200" />;
-                    })}
+              <div className="flex items-center gap-2">
+                {post.rating && post.rating > 0 && (
+                  <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5].map(s => {
+                        const r = post.rating!;
+                        if (s <= Math.floor(r)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
+                        if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={12} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                        return <Star key={s} size={12} className="text-gray-200" />;
+                      })}
+                    </div>
+                    {ratingDiffLine(post.rating, 'mt-0.5 text-right')}
                   </div>
-                  {ratingDiffLine(post.rating, 'mt-0.5 text-right')}
-                </div>
-              )}
+                )}
+                {currentUserId && post.user?.id !== currentUserId && (
+                  <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-400 hover:text-red-400 transition-colors flex-shrink-0" title="Report post">
+                    <Flag size={13} />
+                  </button>
+                )}
+              </div>
             </div>
             {/* Taste alignment */}
             {tasteAlignment !== null && (
@@ -1282,23 +1280,25 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             )}
             {/* Other users who rated the same media */}
             {relatedRatings.length > 0 && (
-              <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2">
+              <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2.5">
                 {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
-                  <div key={r.userId}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
-                          {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
-                        </div>
-                        <span className="text-[11px] font-semibold text-gray-700">{r.displayName || r.userName}</span>
+                  <div key={r.userId} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 overflow-hidden">
+                        {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
                       </div>
-                      <div className="flex items-center gap-0.5">
-                        {[1,2,3,4,5].map(s => (
-                          <Star key={s} size={10} className={s <= Math.floor(r.rating) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(r.rating) && r.rating % 1 >= 0.5 ? 'text-yellow-200 fill-yellow-200' : 'text-gray-200'} />
-                        ))}
-                      </div>
+                      <span className="text-xs font-semibold text-gray-700">{r.displayName || r.userName}</span>
                     </div>
-                    {ratingDiffLine(r.rating, 'mt-0.5')}
+                    <div className="flex flex-col items-end">
+                      <div className="flex items-center gap-0.5">
+                        {[1,2,3,4,5].map(s => {
+                          if (s <= Math.floor(r.rating)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
+                          if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative"><Star size={12} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                          return <Star key={s} size={12} className="text-gray-200" />;
+                        })}
+                      </div>
+                      {ratingDiffLine(r.rating, 'mt-0.5 text-right')}
+                    </div>
                   </div>
                 ))}
                 {relatedRatings.length > 2 && (
@@ -1337,6 +1337,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </div>
             </Link>
             <div className="flex items-center gap-1.5">
+              {currentUserId && post.user?.id !== currentUserId && (
+                <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-400 hover:text-red-400 transition-colors" title="Report post">
+                  <Flag size={13} />
+                </button>
+              )}
               {currentUserId && post.user?.id === currentUserId && onDeletePost && (
                 <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors">
                   <Trash2 size={14} />
@@ -1397,24 +1402,26 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )}
           {/* Other raters for the same media — shown in NORMAL layout too */}
           {relatedRatings.length > 0 && (
-            <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2">
+            <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2.5">
               <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">From your feed</p>
               {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
-                <div key={r.userId}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
-                        {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
-                      </div>
-                      <span className="text-[11px] font-semibold text-gray-700">{r.displayName || r.userName}</span>
+                <div key={r.userId} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 overflow-hidden">
+                      {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
                     </div>
-                    <div className="flex items-center gap-0.5">
-                      {[1,2,3,4,5].map(s => (
-                        <Star key={s} size={10} className={s <= Math.floor(r.rating) ? 'text-yellow-400 fill-yellow-400' : s === Math.ceil(r.rating) && r.rating % 1 >= 0.5 ? 'text-yellow-200 fill-yellow-200' : 'text-gray-200'} />
-                      ))}
-                    </div>
+                    <span className="text-xs font-semibold text-gray-700">{r.displayName || r.userName}</span>
                   </div>
-                  {ratingDiffLine(r.rating, 'mt-0.5')}
+                  <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5].map(s => {
+                        if (s <= Math.floor(r.rating)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
+                        if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative"><Star size={12} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                        return <Star key={s} size={12} className="text-gray-200" />;
+                      })}
+                    </div>
+                    {ratingDiffLine(r.rating, 'mt-0.5 text-right')}
+                  </div>
                 </div>
               ))}
               {relatedRatings.length > 2 && (
