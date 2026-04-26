@@ -1038,6 +1038,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     setSubmitting(false);
   };
 
+  const deleteComment = async (commentId: string) => {
+    if (!session?.access_token) return;
+    const { error } = await supabase.from('social_post_comments').delete().eq('id', commentId);
+    if (!error) setComments(prev => prev.filter((c: any) => c.id !== commentId));
+  };
+
   const getTypeInfo = () => {
 
     if (post.type === 'review') return { label: 'Review', color: 'text-yellow-500', bg: 'bg-yellow-50' };
@@ -1245,26 +1251,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   {post.user?.displayName || post.user?.username || 'Someone'}
                 </p>
               </Link>
-              <div className="flex items-center gap-2">
-                {post.rating && post.rating > 0 && (
-                  <div className="flex flex-col items-end">
-                    <div className="flex items-center gap-0.5">
-                      {[1,2,3,4,5].map(s => {
-                        const r = post.rating!;
-                        if (s <= Math.floor(r)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
-                        if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={12} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                        return <Star key={s} size={12} className="text-gray-200" />;
-                      })}
-                    </div>
-                    {ratingDiffLine(post.rating, 'mt-0.5 text-right')}
+              {post.rating && post.rating > 0 && (
+                <div className="flex flex-col items-end">
+                  <div className="flex items-center gap-0.5">
+                    {[1,2,3,4,5].map(s => {
+                      const r = post.rating!;
+                      if (s <= Math.floor(r)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
+                      if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={12} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                      return <Star key={s} size={12} className="text-gray-200" />;
+                    })}
                   </div>
-                )}
-                {currentUserId && post.user?.id !== currentUserId && (
-                  <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-400 hover:text-red-400 transition-colors flex-shrink-0" title="Report post">
-                    <Flag size={13} />
-                  </button>
-                )}
-              </div>
+                  {ratingDiffLine(post.rating, 'mt-0.5 text-right')}
+                </div>
+              )}
             </div>
             {/* Taste alignment */}
             {tasteAlignment !== null && (
@@ -1273,9 +1272,18 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </p>
             )}
             {post.content && (
-              <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mb-2">
-                <p className={`text-gray-600 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
-                {!contentExpanded && post.content.length > 80 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
+              <div className="mb-2">
+                <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
+                  <p className={`text-gray-600 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
+                  {!contentExpanded && post.content.length > 80 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
+                </div>
+                {currentUserId && post.user?.id !== currentUserId && (
+                  <div className="flex justify-end mt-0.5">
+                    <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-red-400 transition-colors" title="Report post">
+                      <Flag size={11} />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
             {/* Other users who rated the same media */}
@@ -1284,7 +1292,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
                   <div key={r.userId} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 overflow-hidden">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 overflow-hidden">
                         {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
                       </div>
                       <span className="text-xs font-semibold text-gray-700">{r.displayName || r.userName}</span>
@@ -1337,11 +1345,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </div>
             </Link>
             <div className="flex items-center gap-1.5">
-              {currentUserId && post.user?.id !== currentUserId && (
-                <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-400 hover:text-red-400 transition-colors" title="Report post">
-                  <Flag size={13} />
-                </button>
-              )}
               {currentUserId && post.user?.id === currentUserId && onDeletePost && (
                 <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors">
                   <Trash2 size={14} />
@@ -1385,18 +1388,36 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </p>
                 )}
                 {post.content && (
-                  <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer mt-1.5">
-                    <p className={`text-gray-700 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
-                    {!contentExpanded && post.content.length > 100 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
+                  <div className="mt-1.5">
+                    <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
+                      <p className={`text-gray-700 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
+                      {!contentExpanded && post.content.length > 100 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
+                    </div>
+                    {currentUserId && post.user?.id !== currentUserId && (
+                      <div className="flex justify-end mt-0.5">
+                        <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-red-400 transition-colors" title="Report post">
+                          <Flag size={11} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
           ) : (
             post.content && (
-              <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
-                <p className={`text-gray-800 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
-                {!contentExpanded && post.content.length > 100 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
+              <div>
+                <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
+                  <p className={`text-gray-800 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
+                  {!contentExpanded && post.content.length > 100 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
+                </div>
+                {currentUserId && post.user?.id !== currentUserId && (
+                  <div className="flex justify-end mt-0.5">
+                    <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="text-gray-300 hover:text-red-400 transition-colors" title="Report post">
+                      <Flag size={11} />
+                    </button>
+                  </div>
+                )}
               </div>
             )
           )}
@@ -1407,7 +1428,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
                 <div key={r.userId} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 overflow-hidden">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 overflow-hidden">
                       {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
                     </div>
                     <span className="text-xs font-semibold text-gray-700">{r.displayName || r.userName}</span>
@@ -1540,10 +1561,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     <span className="text-xs font-semibold text-gray-800 mr-1">{c.user?.username || c.username || 'User'}</span>
                     <span className="text-xs text-gray-600">{c.content}</span>
                   </div>
-                  {currentUserId !== (c.user?.id || c.userId) && (
+                  {(currentUserId === (c.user?.id || c.userId) || currentUserId === post.userId) && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteComment(c.id); }}
+                      className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5"
+                      title="Delete comment"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  )}
+                  {currentUserId && currentUserId !== (c.user?.id || c.userId) && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setReportCommentTarget({ id: c.id, userId: c.user?.id || c.userId || '', userName: c.user?.username || c.username || 'User' }); }}
-                      className="text-gray-400 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5"
+                      className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5"
                       title="Report comment"
                     >
                       <Flag size={11} />
