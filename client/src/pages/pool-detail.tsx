@@ -1020,7 +1020,9 @@ function MediaTypePill({ poll }: { poll: any }) {
   if (src === 'spotify' || cat.includes('music')) { label = 'Music'; Icon = Music; }
   else if (src === 'googlebooks' || cat.includes('book')) { label = 'Book'; Icon = BookOpen; }
   else if (cat.includes('movie') || src === 'tmdb_movie') { label = 'Movie'; Icon = Film; }
-  else if (poll.show_tag || src === 'tmdb' || src === 'tv') { label = 'TV'; Icon = Tv; }
+  else if (cat.includes('podcast')) { label = 'Podcast'; Icon = Tv; }
+  else if (cat.includes('gaming') || cat.includes('game')) { label = 'Game'; Icon = Tv; }
+  else if (src === 'tmdb' || src === 'tv' || cat.includes('tv') || cat.includes('pop culture') || cat.includes('pop_culture')) { label = 'TV'; Icon = Tv; }
 
   return (
     <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200">
