@@ -307,6 +307,7 @@ export default function AdminTodaysPlayPage() {
   const [editingScheduledDate, setEditingScheduledDate] = useState<string | null>(null);
   const [newDateForEdit, setNewDateForEdit] = useState<string>("");
   const [movingDate, setMovingDate] = useState(false);
+  const [unschedulingId, setUnschedulingId] = useState<string | null>(null);
 
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -829,6 +830,31 @@ export default function AdminTodaysPlayPage() {
       toast({ title: "Move failed", description: err.message, variant: "destructive" });
     } finally {
       setMovingDate(false);
+    }
+  }
+
+  async function unscheduleQuestion(poolId: string) {
+    setUnschedulingId(poolId);
+    try {
+      const { data: { session: s } } = await supabase.auth.getSession();
+      const resp = await fetch(`${supabaseUrl}/functions/v1/generate-trivia-polls`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${s?.access_token}`,
+          "apikey": supabaseAnonKey,
+        },
+        body: JSON.stringify({ action: "unschedule", poolId }),
+      });
+      const result = await resp.json();
+      if (!resp.ok || result.error) throw new Error(result.error || "Unschedule failed");
+      await Promise.all([refetchScheduled(), refetchDrafts()]);
+      queryClient.invalidateQueries({ queryKey: ["todays-play-scheduled"] });
+      toast({ title: "Removed — question moved back to Drafts" });
+    } catch (err: any) {
+      toast({ title: "Failed to unschedule", description: err.message, variant: "destructive" });
+    } finally {
+      setUnschedulingId(null);
     }
   }
 
@@ -1621,9 +1647,19 @@ export default function AdminTodaysPlayPage() {
 
                       <div className="space-y-1">
                         {questions.map(q => (
-                          <div key={q.id} className="flex items-start gap-2">
+                          <div key={q.id} className="flex items-center gap-2 group">
                             <span className="text-xs text-gray-600 bg-gray-800 px-2 py-0.5 rounded flex-shrink-0">{q.category || "?"}</span>
-                            <p className="text-xs text-gray-400 line-clamp-1">{q.title}</p>
+                            <p className="text-xs text-gray-400 line-clamp-1 flex-1">{q.title}</p>
+                            <button
+                              onClick={() => unscheduleQuestion(q.id)}
+                              disabled={unschedulingId === q.id}
+                              title="Remove — moves back to Drafts"
+                              className="flex-shrink-0 opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-400 transition-all disabled:opacity-50"
+                            >
+                              {unschedulingId === q.id
+                                ? <Loader2 size={11} className="animate-spin text-gray-400" />
+                                : <X size={11} />}
+                            </button>
                           </div>
                         ))}
                       </div>

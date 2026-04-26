@@ -97,6 +97,32 @@ Deno.serve(async (req) => {
       });
     }
 
+    // --- Unschedule action: delete pool + reset draft back to 'draft' status ---
+    if (body.action === 'unschedule') {
+      const { poolId } = body;
+      if (!poolId) {
+        return new Response(JSON.stringify({ error: 'Missing poolId' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      const { error: delErr } = await supabaseAdmin
+        .from('prediction_pools')
+        .delete()
+        .eq('id', poolId);
+      if (delErr) {
+        return new Response(JSON.stringify({ error: delErr.message }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      await supabaseAdmin
+        .from('trivia_poll_drafts')
+        .update({ status: 'draft', published_at: null, published_pool_id: null })
+        .eq('published_pool_id', poolId);
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     // --- DNA publish action: insert into dna_moments + mark draft published ---
     if (body.action === 'publish_dna') {
       const { dnaData, draftId } = body;
