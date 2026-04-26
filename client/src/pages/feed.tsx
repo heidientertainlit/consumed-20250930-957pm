@@ -3162,9 +3162,9 @@ export default function Feed() {
     const ONE_DAY_MS = 24 * 60 * 60 * 1000;
     const byUser = new Map<string, UGCPost[]>();
     for (const post of allUGC) {
-      // game_moment and cast_approved posts must always be solo cards — never grouped into
+      // game_moment, cast_approved, and rank posts must always be solo cards — never grouped into
       // the 24h carousel because UGCGroupCard doesn't know how to render them
-      const uid = (post.type === 'game_moment' || post.type === 'cast_approved')
+      const uid = (post.type === 'game_moment' || post.type === 'cast_approved' || post.type === 'rank')
         ? `solo-${post.id}`
         : post.user?.id || 'anon';
       if (!byUser.has(uid)) byUser.set(uid, []);
@@ -3223,7 +3223,8 @@ export default function Feed() {
   const feedPlaySlots: any[] = standaloneUGCPosts.filter((item: any) =>
     item.type === 'game_moment' ||
     item.type === 'predict' ||
-    item.type === 'prediction'
+    item.type === 'prediction' ||
+    item.type === 'rank'
   );
 
   const { feedRatingCarousels, promotedRatings } = (() => {
@@ -3234,7 +3235,8 @@ export default function Feed() {
       } else if (
         item.type !== 'game_moment' &&
         item.type !== 'predict' &&
-        item.type !== 'prediction'
+        item.type !== 'prediction' &&
+        item.type !== 'rank'
       ) {
         ratingItems.push(item);
       }
