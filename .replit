@@ -76,7 +76,7 @@ args = "Deploy: generate-trivia-polls"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Migrate: add media_type to prediction_pools"
+args = "Deploy: gaming-search"
 
 [[workflows.workflow]]
 name = "Start application"
@@ -162,12 +162,15 @@ task = "shell.exec"
 args = "npx supabase functions deploy generate-trivia-polls --project-ref mahpgcogwpawvviapqza --use-api"
 
 [[workflows.workflow]]
-name = "Migrate: add media_type to prediction_pools"
+name = "Deploy: gaming-search"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash /tmp/verify_ranks.sh"
+args = "npx supabase functions deploy gaming-search --project-ref mahpgcogwpawvviapqza --use-api"
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [agent]
 integrations = ["javascript_openai:1.0.0", "javascript_supabase:1.0.0"]

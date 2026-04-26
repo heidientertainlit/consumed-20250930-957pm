@@ -3678,13 +3678,12 @@ export default function Feed() {
         );
       }
       const rankId = rawPost.rankId;
-      const rankTitle = rawPost.user?.displayName
-        ? (rawPost.content || '')
-        : (() => {
-            const content = rawPost.content || '';
-            const prefix = 'Check out my ranked list: ';
-            return content.startsWith(prefix) ? content.slice(prefix.length) : content;
-          })();
+      const rankTitle = (() => {
+        const content = rawPost.content || '';
+        const prefix = 'Check out my ranked list: ';
+        return content.startsWith(prefix) ? content.slice(prefix.length) : content;
+      })();
+      const isStubOwner = rawPost.user?.id && currentAppUserId && rawPost.user.id === currentAppUserId;
       return (
         <div key={`${keyPrefix}-rank-stub-${item.id}`} id={`post-${item.id}`} className="mb-4">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
@@ -3693,6 +3692,11 @@ export default function Feed() {
               <div className="flex items-center gap-2 mb-3">
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">RANK</span>
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">Community</span>
+                {isStubOwner && (
+                  <button onClick={() => handleDeletePost(item.id)} className="ml-auto p-1 hover:bg-red-50 rounded-full transition-colors">
+                    <Trash2 size={14} className="text-gray-300 hover:text-red-400 transition-colors" />
+                  </button>
+                )}
               </div>
               {/* Author */}
               {rawPost.user && (
@@ -6367,7 +6371,7 @@ export default function Feed() {
                   }
                   const rankId = rankPost.rankId;
                   const rankTitle = (() => {
-                    const content = post.content || '';
+                    const content = post.content || rankPost.rankData?.title || '';
                     const prefix = 'Check out my ranked list: ';
                     return content.startsWith(prefix) ? content.slice(prefix.length) : content;
                   })();

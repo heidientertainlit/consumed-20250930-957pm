@@ -42,10 +42,11 @@ serve(async (req) => {
             results.push({
               title: game.name,
               type: 'game',
+              year: game.released ? game.released.slice(0, 4) : '',
               creator: game.developers?.map((d: any) => d.name).join(', ') || 
                        game.publishers?.map((p: any) => p.name).join(', ') || 
-                       'Unknown Developer',
-              image: game.background_image || '',
+                       '',
+              poster_url: game.background_image || '',
               external_id: game.id?.toString(),
               external_source: 'rawg',
               description: game.genres?.map((g: any) => g.name).join(', ') || 
@@ -111,8 +112,8 @@ serve(async (req) => {
                   results.push({
                     title: item.title || `Game ${index + 1}`,
                     type: 'game',
-                    creator: item.creator || 'Unknown Developer',
-                    image: '',
+                    creator: item.creator || '',
+                    poster_url: '',
                     external_id: `ai_game_${Date.now()}_${index}`,
                     external_source: 'openai',
                     description: item.description || ''

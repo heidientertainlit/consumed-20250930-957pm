@@ -325,6 +325,18 @@ export default function AdminRanksPage() {
       const { error: itemsErr } = await supabase.from("rank_items").insert(itemRows);
       if (itemsErr) throw itemsErr;
 
+      if (status === "published") {
+        const { error: postErr } = await supabase.from("social_posts").insert({
+          user_id: user.id,
+          rank_id: rank.id,
+          post_type: "rank_share",
+          visibility: "public",
+          media_title: title.trim(),
+          media_type: "rank",
+        });
+        if (postErr) console.error("Feed post creation failed:", postErr.message);
+      }
+
       const statusLabels = {
         published: { title: "Rank published!", desc: `"${title}" is now live in the Debate the Rank carousel.` },
         scheduled: { title: "Rank scheduled!", desc: `"${title}" will go live on ${new Date(scheduleDate).toLocaleDateString()}.` },
