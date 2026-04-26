@@ -208,7 +208,7 @@ export default function PlayRanks() {
           .order('position', { ascending: true }),
         supabase
           .from('users')
-          .select('id, user_name, display_name, profile_image_url')
+          .select('id, user_name, display_name')
           .in('id', userIds),
         supabase
           .from('social_posts')
