@@ -74,6 +74,10 @@ args = "Deploy: social-feed"
 task = "workflow.run"
 args = "Deploy: generate-trivia-polls"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Migrate: add media_type to prediction_pools"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -156,6 +160,14 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx supabase functions deploy generate-trivia-polls --project-ref mahpgcogwpawvviapqza --use-api"
+
+[[workflows.workflow]]
+name = "Migrate: add media_type to prediction_pools"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "curl -s -X POST \"https://api.supabase.com/v1/projects/mahpgcogwpawvviapqza/database/query\" -H \"Authorization: Bearer $SUPABASE_ACCESS_TOKEN\" -H \"Content-Type: application/json\" -d '{\"query\":\"ALTER TABLE prediction_pools ADD COLUMN IF NOT EXISTS media_type text; ALTER TABLE prediction_pools ADD COLUMN IF NOT EXISTS media_tags text[]; ALTER TABLE prediction_pools ADD COLUMN IF NOT EXISTS show_tag text; ALTER TABLE prediction_pools ADD COLUMN IF NOT EXISTS partner_tag text;\"}'"
 
 [agent]
 integrations = ["javascript_openai:1.0.0", "javascript_supabase:1.0.0"]

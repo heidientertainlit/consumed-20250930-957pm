@@ -185,6 +185,8 @@ export const predictionPools = pgTable("prediction_pools", {
   socialPrompt: text("social_prompt"), // Shown after vote/answer, e.g. "Tag the friend who'd argue this"
   partnerTag: text("partner_tag"), // Partner room tag e.g. 'reelz' — marks this poll as featured in that partner's room carousel
   showTag: text("show_tag"), // Display label shown on poll card e.g. 'The White Lotus S3'
+  mediaType: text("media_type"), // 'movie', 'tv', 'book', 'music', 'podcast'
+  mediaTags: text("media_tags").array(), // Array of media titles / tags for this pool
   createdAt: timestamp("created_at"),
 });
 
