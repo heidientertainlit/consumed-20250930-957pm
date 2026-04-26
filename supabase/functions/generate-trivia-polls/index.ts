@@ -716,7 +716,53 @@ ${dedupedItems.map((q: any, i: number) => {
       return true;
     });
 
-    for (const item of validatedItems) {
+    // ── Auto-resolve media external IDs ──────────────────────────────────────
+    // For each trivia item with a show_tag, call media-search in parallel to
+    // resolve an external_id / external_source (best-effort, never blocks save).
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+    async function resolveExternalId(showTag: string, mediaType: string | null): Promise<{ external_id: string; external_source: string } | null> {
+      if (!showTag || !supabaseUrl) return null;
+      try {
+        const searchType = mediaType === 'mixed' || !mediaType ? undefined : mediaType;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const resp = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${serviceKey}`,
+            'apikey': serviceKey,
+          },
+          body: JSON.stringify({ query: showTag, ...(searchType ? { type: searchType } : {}) }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        const items = Array.isArray(data) ? data : (data.results || []);
+        const first = items[0];
+        if (first?.external_id && first?.external_source) {
+          return { external_id: String(first.external_id), external_source: first.external_source };
+        }
+        return null;
+      } catch { return null; }
+    }
+
+    const resolvedWithIds = await Promise.all(
+      validatedItems.map(async (item) => {
+        if (!item.show_tag) return { ...item, media_external_id: null, media_external_source: null };
+        const resolved = await resolveExternalId(item.show_tag, item.media_type || null);
+        return {
+          ...item,
+          media_external_id: resolved?.external_id ?? null,
+          media_external_source: resolved?.external_source ?? null,
+        };
+      })
+    );
+
+    for (const item of resolvedWithIds) {
       const draft = {
         content_type: item.content_type || contentType,
         title: item.title || '',
@@ -726,6 +772,8 @@ ${dedupedItems.map((q: any, i: number) => {
         show_tag: item.show_tag || null,
         media_tags: item.media_tags || null,
         media_type: item.media_type || null,
+        media_external_id: item.media_external_id || null,
+        media_external_source: item.media_external_source || null,
         difficulty: item.difficulty || difficulty,
         points_reward: item.content_type === 'trivia' ? 10 : item.content_type === 'featured_play' ? 20 : item.content_type === 'dna_moment' ? 5 : 2,
         partner_tag: partnerTag || null,

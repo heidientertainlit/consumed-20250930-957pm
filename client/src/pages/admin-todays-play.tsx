@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect, type ChangeEvent } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@supabase/supabase-js";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ArrowLeft, Sparkles, Loader2, Check, X, CalendarDays, Send,
   ChevronDown, ChevronUp, ShieldCheck, AlertTriangle, Film, BookOpen, Zap, Pencil,
-  Tv, Music2, Headphones, Gamepad2, Shuffle, Plus, Minus,
+  Tv, Music2, Headphones, Gamepad2, Shuffle, Plus, Minus, Search,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -25,10 +25,139 @@ type Draft = {
   show_tag: string | null;
   media_tags: string[] | null;
   media_type: string | null;
+  media_external_id: string | null;
+  media_external_source: string | null;
   featured_date: string | null;
   status: string;
   created_at: string;
 };
+
+type MediaSearchResult = {
+  title: string;
+  external_id: string;
+  external_source: string;
+  type: string;
+  poster_url?: string;
+  image?: string;
+  creator?: string;
+  year?: string | number;
+};
+
+function MediaSearchPicker({
+  mediaType,
+  value,
+  externalId,
+  externalSource,
+  onSelect,
+}: {
+  mediaType: string;
+  value: string;
+  externalId: string | null;
+  externalSource: string | null;
+  onSelect: (result: MediaSearchResult | null, rawTitle: string) => void;
+}) {
+  const [query, setQuery] = useState(value);
+  const [results, setResults] = useState<MediaSearchResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [open, setOpen] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setQuery(value); }, [value]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  function handleInput(e: ChangeEvent<HTMLInputElement>) {
+    const q = e.target.value;
+    setQuery(q);
+    onSelect(null, q);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (q.trim().length < 2) { setResults([]); setOpen(false); return; }
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const searchType = (mediaType === "mixed" || !mediaType) ? undefined : mediaType;
+        const resp = await fetch(`${supabaseUrl}/functions/v1/media-search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "apikey": supabaseAnonKey },
+          body: JSON.stringify({ query: q, ...(searchType ? { type: searchType } : {}) }),
+        });
+        const data = await resp.json();
+        const items: MediaSearchResult[] = (Array.isArray(data) ? data : (data.results || [])).slice(0, 6);
+        setResults(items);
+        setOpen(items.length > 0);
+      } catch { /* best-effort */ } finally { setSearching(false); }
+    }, 400);
+  }
+
+  function select(item: MediaSearchResult) {
+    setQuery(item.title);
+    setOpen(false);
+    setResults([]);
+    onSelect(item, item.title);
+  }
+
+  const isVerified = !!externalId;
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+        <Input
+          value={query}
+          onChange={handleInput}
+          onFocus={() => results.length > 0 && setOpen(true)}
+          placeholder="Search to link a real media item..."
+          className="bg-black/30 border-white/10 text-white text-xs h-7 pl-6 pr-16"
+        />
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          {searching && <Loader2 size={10} className="animate-spin text-gray-400" />}
+          {isVerified && !searching && (
+            <span className="text-[9px] font-bold text-teal-400 flex items-center gap-0.5">
+              <Check size={9} /> linked
+            </span>
+          )}
+        </div>
+      </div>
+      {isVerified && externalSource && (
+        <p className="text-[10px] text-teal-500/70 mt-0.5 pl-1">
+          via {externalSource}
+        </p>
+      )}
+      {open && results.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-gray-900 border border-gray-700 rounded-lg shadow-xl overflow-hidden max-h-52 overflow-y-auto">
+          {results.map((item, i) => (
+            <button
+              key={i}
+              onMouseDown={() => select(item)}
+              className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-800 text-left transition-colors"
+            >
+              {(item.poster_url || item.image) ? (
+                <img src={item.poster_url || item.image} alt="" className="w-6 h-8 object-cover rounded flex-shrink-0" />
+              ) : (
+                <div className="w-6 h-8 bg-gray-700 rounded flex-shrink-0" />
+              )}
+              <div className="min-w-0">
+                <p className="text-xs text-white font-medium truncate">{item.title}</p>
+                <p className="text-[10px] text-gray-400 truncate">
+                  {[item.creator, item.year, item.external_source].filter(Boolean).join(" · ")}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function toLocalDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -186,6 +315,8 @@ export default function AdminTodaysPlayPage() {
   const [editAnswer, setEditAnswer] = useState("");
   const [editShowTag, setEditShowTag] = useState("");
   const [editMediaType, setEditMediaType] = useState("tv");
+  const [editMediaExternalId, setEditMediaExternalId] = useState<string | null>(null);
+  const [editMediaExternalSource, setEditMediaExternalSource] = useState<string | null>(null);
 
   // Write your own state
   const [showManualForm, setShowManualForm] = useState(false);
@@ -194,6 +325,8 @@ export default function AdminTodaysPlayPage() {
   const [manualAnswer, setManualAnswer] = useState("");
   const [manualShowTag, setManualShowTag] = useState("");
   const [manualMediaType, setManualMediaType] = useState("tv");
+  const [manualMediaExternalId, setManualMediaExternalId] = useState<string | null>(null);
+  const [manualMediaExternalSource, setManualMediaExternalSource] = useState<string | null>(null);
   const [savingManual, setSavingManual] = useState(false);
 
   // Pending drafts
@@ -202,7 +335,7 @@ export default function AdminTodaysPlayPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("trivia_poll_drafts")
-        .select("id, title, options, correct_answer, category, show_tag, media_tags, media_type, featured_date, status, created_at")
+        .select("id, title, options, correct_answer, category, show_tag, media_tags, media_type, media_external_id, media_external_source, featured_date, status, created_at")
         .eq("content_type", "trivia")
         .in("status", ["draft", "pending"])
         .order("created_at", { ascending: false })
@@ -514,6 +647,8 @@ export default function AdminTodaysPlayPage() {
         show_tag: draft.show_tag || null,
         media_tags: draft.media_tags || (draft.show_tag ? [draft.show_tag] : null),
         media_type: draft.media_type || null,
+        media_external_id: draft.media_external_id || null,
+        media_external_source: draft.media_external_source || null,
         featured_date: dateStr,
         status: "open",
         origin_type: "consumed",
@@ -601,6 +736,8 @@ export default function AdminTodaysPlayPage() {
           show_tag: draft.show_tag || null,
           media_tags: draft.media_tags || (draft.show_tag ? [draft.show_tag] : null),
           media_type: draft.media_type || null,
+          media_external_id: draft.media_external_id || null,
+          media_external_source: draft.media_external_source || null,
           featured_date: dateStr,
           status: "open",
           origin_type: "consumed",
@@ -703,6 +840,8 @@ export default function AdminTodaysPlayPage() {
     setEditShowTag(draft.show_tag || "");
     const mtMap: Record<string, string> = { Movies: "movie", Books: "book", TV: "tv", Music: "music" };
     setEditMediaType(mtMap[draft.category] || draft.media_type || "tv");
+    setEditMediaExternalId(draft.media_external_id || null);
+    setEditMediaExternalSource(draft.media_external_source || null);
   }
 
   async function saveEdit(draft: Draft) {
@@ -715,6 +854,8 @@ export default function AdminTodaysPlayPage() {
       media_tags: editShowTag.trim() ? [editShowTag.trim()] : null,
       media_type: editMediaType,
       category: categoryMap[editMediaType] || draft.category,
+      media_external_id: editMediaExternalId || null,
+      media_external_source: editMediaExternalSource || null,
     }).eq("id", draft.id);
     setEditingId(null);
     await refetchDrafts();
@@ -738,6 +879,8 @@ export default function AdminTodaysPlayPage() {
         media_tags: [manualShowTag.trim()],
         media_type: manualMediaType,
         category: categoryMap[manualMediaType] || "TV",
+        media_external_id: manualMediaExternalId || null,
+        media_external_source: manualMediaExternalSource || null,
         content_type: "trivia",
         status: "draft",
       });
@@ -748,6 +891,8 @@ export default function AdminTodaysPlayPage() {
       setManualAnswer("");
       setManualShowTag("");
       setManualMediaType("tv");
+      setManualMediaExternalId(null);
+      setManualMediaExternalSource(null);
       setShowManualForm(false);
       await refetchDrafts();
       setTab("drafts");
@@ -992,7 +1137,7 @@ export default function AdminTodaysPlayPage() {
                     </select>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
                     <div>
                       <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Media type</label>
                       <div className="flex flex-wrap gap-2">
@@ -1005,7 +1150,7 @@ export default function AdminTodaysPlayPage() {
                         ].map(m => (
                           <button
                             key={m.value}
-                            onClick={() => setManualMediaType(m.value)}
+                            onClick={() => { setManualMediaType(m.value); setManualMediaExternalId(null); setManualMediaExternalSource(null); }}
                             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${manualMediaType === m.value ? m.cls : "bg-gray-800 text-gray-500 border-gray-700"}`}
                           >
                             {m.icon} {m.label}
@@ -1016,11 +1161,17 @@ export default function AdminTodaysPlayPage() {
 
                     <div>
                       <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Show / media name</label>
-                      <Input
+                      <MediaSearchPicker
+                        mediaType={manualMediaType}
                         value={manualShowTag}
-                        onChange={e => setManualShowTag(e.target.value)}
-                        placeholder="e.g. Friends, Oppenheimer..."
-                        className="bg-gray-800 border-gray-700 text-white text-sm"
+                        externalId={manualMediaExternalId}
+                        externalSource={manualMediaExternalSource}
+                        onSelect={(result, rawTitle) => {
+                          setManualShowTag(rawTitle);
+                          setManualMediaExternalId(result?.external_id || null);
+                          setManualMediaExternalSource(result?.external_source || null);
+                          if (result?.type && result.type !== "mixed") setManualMediaType(result.type);
+                        }}
                       />
                     </div>
                   </div>
@@ -1200,25 +1351,31 @@ export default function AdminTodaysPlayPage() {
                                   ))}
                                 </div>
                                 <div className="space-y-1">
-                                  <p className="text-xs text-gray-500">Media / Show tag</p>
-                                  <div className="flex gap-2">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className="text-xs text-gray-500">Media / Show tag</p>
                                     <select
                                       value={editMediaType}
-                                      onChange={e => setEditMediaType(e.target.value)}
-                                      className="bg-black/30 border border-white/10 text-white text-xs rounded-md px-2 h-7 flex-shrink-0"
+                                      onChange={e => { setEditMediaType(e.target.value); setEditMediaExternalId(null); setEditMediaExternalSource(null); }}
+                                      className="bg-black/30 border border-white/10 text-white text-xs rounded-md px-2 h-6 flex-shrink-0 ml-auto"
                                     >
                                       <option value="tv">TV</option>
                                       <option value="movie">Movie</option>
                                       <option value="book">Book</option>
                                       <option value="music">Music</option>
                                     </select>
-                                    <Input
-                                      value={editShowTag}
-                                      onChange={e => setEditShowTag(e.target.value)}
-                                      placeholder="e.g. The Picture of Dorian Gray"
-                                      className="bg-black/30 border-white/10 text-white text-xs h-7 flex-1"
-                                    />
                                   </div>
+                                  <MediaSearchPicker
+                                    mediaType={editMediaType}
+                                    value={editShowTag}
+                                    externalId={editMediaExternalId}
+                                    externalSource={editMediaExternalSource}
+                                    onSelect={(result, rawTitle) => {
+                                      setEditShowTag(rawTitle);
+                                      setEditMediaExternalId(result?.external_id || null);
+                                      setEditMediaExternalSource(result?.external_source || null);
+                                      if (result?.type && result.type !== "mixed") setEditMediaType(result.type);
+                                    }}
+                                  />
                                 </div>
                                 <div className="flex gap-2">
                                   <Button onClick={() => saveEdit(draft)} size="sm" className="bg-teal-600 hover:bg-teal-500 text-white flex-1"><Check size={12} className="mr-1" /> Save</Button>
