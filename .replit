@@ -70,6 +70,10 @@ args = "Deploy: generate-persona-content"
 task = "workflow.run"
 args = "Deploy: social-feed"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Deploy: generate-trivia-polls"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -144,6 +148,14 @@ outputType = "console"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx supabase functions deploy social-feed --project-ref mahpgcogwpawvviapqza --use-api"
+
+[[workflows.workflow]]
+name = "Deploy: generate-trivia-polls"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx supabase functions deploy generate-trivia-polls --project-ref mahpgcogwpawvviapqza --use-api"
 
 [agent]
 integrations = ["javascript_openai:1.0.0", "javascript_supabase:1.0.0"]

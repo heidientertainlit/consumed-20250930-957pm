@@ -562,9 +562,30 @@ export default function AdminTodaysPlayPage() {
       return;
     }
 
+    // Pre-filter drafts that can never be scheduled (missing show_tag)
+    const noTagDrafts = groupDrafts.filter(d => !d.show_tag);
+    const schedulable = groupDrafts.filter(d => !!d.show_tag);
+
+    if (noTagDrafts.length > 0 && schedulable.length === 0) {
+      toast({
+        title: "Cannot schedule — no media tags",
+        description: `All ${noTagDrafts.length} question(s) are missing a media tag (show_tag). Edit each question to add one first.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    if (noTagDrafts.length > 0) {
+      toast({
+        title: `${noTagDrafts.length} question(s) skipped — no media tag`,
+        description: `Skipped: ${noTagDrafts.map(d => d.title.slice(0, 40)).join("; ")}`,
+        variant: "destructive",
+      });
+    }
+
     setPublishingGroup(dateStr);
     let succeeded = 0;
-    for (const draft of groupDrafts) {
+    const errors: string[] = [];
+    for (const draft of schedulable) {
       try {
         const { data: { session: s } } = await supabase.auth.getSession();
         const meta = typeMeta(draft);
@@ -594,12 +615,30 @@ export default function AdminTodaysPlayPage() {
           },
           body: JSON.stringify({ action: "publish", poolData, draftId: draft.id }),
         });
-        const result = await resp.json();
-        if (resp.ok && !result.error) succeeded++;
-      } catch { /* continue */ }
+        const result = await resp.json().catch(() => ({}));
+        if (resp.ok && !result.error) {
+          succeeded++;
+        } else {
+          errors.push(result.error || result.message || `HTTP ${resp.status}`);
+        }
+      } catch (err: any) {
+        errors.push(err?.message || "Network error");
+      }
     }
     setPublishingGroup(null);
-    toast({ title: `Scheduled ${succeeded}/${groupDrafts.length} questions for ${dateStr}` });
+
+    if (succeeded === 0) {
+      toast({
+        title: `Failed to schedule questions for ${dateStr}`,
+        description: errors.length > 0 ? errors[0] : "Unknown error — check that the edge function is deployed.",
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: `Scheduled ${succeeded}/${schedulable.length} questions for ${dateStr}` });
+      if (errors.length > 0) {
+        toast({ title: `${errors.length} question(s) failed`, description: errors[0], variant: "destructive" });
+      }
+    }
     await refetchDrafts();
     await refetchScheduled();
     queryClient.invalidateQueries({ queryKey: ["todays-play-scheduled"] });
