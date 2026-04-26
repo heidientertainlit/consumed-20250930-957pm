@@ -7,7 +7,10 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
-import { BarChart3, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Loader2, ArrowUp, ArrowDown, Plus, X, MessageCircle, Send } from 'lucide-react';
+import { BarChart3, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Loader2, ArrowUp, ArrowDown, Plus, X, MessageCircle, Send, Heart } from 'lucide-react';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 interface RankItem {
   id: string;
@@ -25,6 +28,8 @@ interface RankData {
   description?: string;
   category: string;
   items: RankItem[];
+  socialPostId?: string | null;
+  likesCount?: number;
 }
 
 interface VoteItemProps {
@@ -113,6 +118,11 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
   const [showComments, setShowComments] = useState<Record<string, boolean>>({});
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [rankComments, setRankComments] = useState<Record<string, RankComment[]>>({});
+  // Like state — keyed by social_posts.id
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+  const rankToSocialPost = useRef<Record<string, string>>({});
+  const likedInitialized = useRef(false);
 
   const { data: ranks, isLoading } = useQuery({
     queryKey: ['consumed-ranks-carousel', offset],
@@ -126,26 +136,63 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
         .range(offset * 3, (offset * 3) + 2);
       
       if (ranksError) throw ranksError;
-      
-      const ranksWithItems: RankData[] = [];
-      
-      for (const rank of ranksData || []) {
-        const { data: items } = await supabase
-          .from('rank_items')
-          .select('*')
-          .eq('rank_id', rank.id)
-          .order('position', { ascending: true });
-        
-        ranksWithItems.push({
+      if (!ranksData || ranksData.length === 0) return [];
+
+      const rankIds = ranksData.map(r => r.id);
+
+      const [itemsResults, socialPostsResult] = await Promise.all([
+        Promise.all(ranksData.map(rank =>
+          supabase
+            .from('rank_items')
+            .select('*')
+            .eq('rank_id', rank.id)
+            .order('position', { ascending: true })
+        )),
+        supabase
+          .from('social_posts')
+          .select('id, rank_id, likes_count')
+          .in('rank_id', rankIds)
+          .eq('post_type', 'rank_share'),
+      ]);
+
+      // Build rankId → socialPostId map
+      const newMap: Record<string, string> = {};
+      const newLikeCounts: Record<string, number> = {};
+      (socialPostsResult.data || []).forEach((sp: any) => {
+        newMap[sp.rank_id] = sp.id;
+        newLikeCounts[sp.rank_id] = sp.likes_count || 0;
+      });
+      rankToSocialPost.current = newMap;
+      setLikeCounts(newLikeCounts);
+
+      // Fetch current user's likes for these social posts
+      if (socialPostsResult.data && socialPostsResult.data.length > 0 && user?.id) {
+        const spIds = socialPostsResult.data.map((sp: any) => sp.id);
+        const { data: likeData } = await supabase
+          .from('post_likes')
+          .select('post_id')
+          .in('post_id', spIds)
+          .eq('user_id', user.id);
+        if (!likedInitialized.current && likeData && likeData.length > 0) {
+          setLikedPosts(new Set(likeData.map((l: any) => l.post_id)));
+          likedInitialized.current = true;
+        }
+      }
+
+      const postByRank = new Map((socialPostsResult.data || []).map((sp: any) => [sp.rank_id, sp]));
+
+      return ranksData.map((rank, i) => {
+        const sp = postByRank.get(rank.id);
+        return {
           id: rank.id,
           title: rank.title,
           description: rank.description,
           category: rank.category,
-          items: items || []
-        });
-      }
-      
-      return ranksWithItems;
+          items: itemsResults[i].data || [],
+          socialPostId: sp?.id || null,
+          likesCount: sp?.likes_count || 0,
+        } as RankData;
+      });
     },
     enabled: !!session?.access_token
   });
@@ -492,6 +539,52 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
     commentMutation.mutate({ rankId, content });
   };
 
+  // ── Like handler ─────────────────────────────────────────────────────────────
+  const handleLike = async (rankId: string) => {
+    if (!session?.access_token) {
+      toast({ title: 'Sign in to like', variant: 'destructive' });
+      return;
+    }
+    const socialPostId = rankToSocialPost.current[rankId];
+    if (!socialPostId) {
+      toast({ title: 'Likes not available yet', description: 'This rank has no feed post yet.', variant: 'destructive' });
+      return;
+    }
+    const wasLiked = likedPosts.has(socialPostId);
+    // Optimistic update
+    setLikedPosts(prev => {
+      const next = new Set(prev);
+      wasLiked ? next.delete(socialPostId) : next.add(socialPostId);
+      return next;
+    });
+    setLikeCounts(prev => ({
+      ...prev,
+      [rankId]: Math.max(0, (prev[rankId] || 0) + (wasLiked ? -1 : 1)),
+    }));
+    try {
+      await fetch(`${SUPABASE_URL}/functions/v1/social-feed-like`, {
+        method: wasLiked ? 'DELETE' : 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ post_id: socialPostId }),
+      });
+    } catch {
+      // Rollback on error
+      setLikedPosts(prev => {
+        const next = new Set(prev);
+        wasLiked ? next.add(socialPostId) : next.delete(socialPostId);
+        return next;
+      });
+      setLikeCounts(prev => ({
+        ...prev,
+        [rankId]: Math.max(0, (prev[rankId] || 0) + (wasLiked ? 1 : -1)),
+      }));
+    }
+  };
+
   const formatTimeAgo = (dateStr: string) => {
     const date = new Date(dateStr);
     const now = new Date();
@@ -684,13 +777,6 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                       </button>
                     )}
                     <button
-                      onClick={() => toggleComments(rank.id)}
-                      className="flex items-center gap-1 text-gray-400 hover:text-purple-600 text-xs transition-colors"
-                    >
-                      <MessageCircle size={13} />
-                      <span>Debate</span>
-                    </button>
-                    <button
                       onClick={() => setExpandedVoting(prev => ({ ...prev, [rank.id]: false }))}
                       className="ml-auto flex items-center gap-0.5 text-xs text-gray-400 hover:text-purple-500 transition-colors"
                     >
@@ -701,8 +787,36 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                 </>
               )}
 
+              {/* Always-visible footer: like + debate */}
+              <div className="px-3 py-2.5 border-t border-gray-100 flex items-center gap-4">
+                {(() => {
+                  const socialPostId = rankToSocialPost.current[rank.id];
+                  const isLiked = socialPostId ? likedPosts.has(socialPostId) : false;
+                  const count = likeCounts[rank.id] ?? (rank.likesCount || 0);
+                  return (
+                    <button
+                      onClick={() => handleLike(rank.id)}
+                      className="flex items-center gap-1.5 text-gray-400 hover:text-red-400 transition-colors"
+                    >
+                      <Heart size={15} className={isLiked ? 'text-red-400 fill-red-400' : ''} />
+                      <span className="text-xs font-medium text-gray-500">{count}</span>
+                    </button>
+                  );
+                })()}
+                <button
+                  onClick={() => toggleComments(rank.id)}
+                  className="flex items-center gap-1.5 text-gray-400 hover:text-purple-600 transition-colors"
+                >
+                  <MessageCircle size={15} />
+                  <span className="text-xs font-medium text-gray-500">
+                    {showComments[rank.id] ? 'Hide' : 'Debate'}
+                    {(rankComments[rank.id]?.length || 0) > 0 ? ` · ${rankComments[rank.id].length}` : ''}
+                  </span>
+                </button>
+              </div>
+
               {/* Comments */}
-              {isVotingExpanded && showComments[rank.id] && (
+              {showComments[rank.id] && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
                   <div className="flex items-center gap-2 mb-3">
                     <Input
