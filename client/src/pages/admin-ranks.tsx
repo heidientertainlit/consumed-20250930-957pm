@@ -332,7 +332,6 @@ export default function AdminRanksPage() {
           post_type: "rank_share",
           visibility: "public",
           media_title: title.trim(),
-          media_type: "rank",
         });
         if (postErr) console.error("Feed post creation failed:", postErr.message);
       }
