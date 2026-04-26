@@ -195,7 +195,7 @@ export default function PlayRanks() {
           .in('id', userIds),
         supabase
           .from('social_posts')
-          .select('id, rank_id, likes_count, comment_count')
+          .select('id, rank_id, likes_count, comments_count')
           .in('rank_id', rankIds)
           .eq('post_type', 'rank_share'),
       ]);
@@ -252,7 +252,7 @@ export default function PlayRanks() {
             isConsumed: false,
             createdAt: rank.created_at,
             likesCount: sp?.likes_count || 0,
-            commentsCount: sp?.comment_count || 0,
+            commentsCount: sp?.comments_count || 0,
           };
         });
     },
