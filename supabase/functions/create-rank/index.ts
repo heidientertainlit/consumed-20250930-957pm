@@ -123,7 +123,8 @@ serve(async (req) => {
           post_type: 'rank_share',
           content: rank.title || '',
           visibility: 'public',
-          media_title: rank.title || ''
+          media_title: rank.title || '',
+          media_type: 'rank'
         })
         .select('id')
         .single();

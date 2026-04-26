@@ -3647,7 +3647,7 @@ export default function Feed() {
                 display_name: rawPost.user?.displayName,
                 profile_image_url: rawPost.user?.avatar
               }}
-              caption={rawPost.content}
+              caption={rawPost.content?.startsWith('Check out my ranked list:') ? undefined : rawPost.content || undefined}
               createdAt={rawPost.timestamp}
               postId={item.id}
               likesCount={rawPost.likes}
@@ -6336,7 +6336,7 @@ export default function Feed() {
                               display_name: post.user?.displayName,
                               profile_image_url: post.user?.avatar
                             }}
-                            caption={post.content}
+                            caption={post.content?.startsWith('Check out my ranked list:') ? undefined : post.content || undefined}
                             createdAt={post.timestamp}
                             postId={post.id}
                             likesCount={post.likes}
