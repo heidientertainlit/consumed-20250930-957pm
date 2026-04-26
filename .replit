@@ -167,7 +167,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "bash /tmp/check_tables.sh"
+args = "bash /tmp/verify_ranks.sh"
 
 [agent]
 integrations = ["javascript_openai:1.0.0", "javascript_supabase:1.0.0"]
