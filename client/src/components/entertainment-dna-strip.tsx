@@ -135,7 +135,9 @@ function CollapsedStrip({ state, streak, dnaProfile, triviaStats, onExpand }: {
     5: {
       icon: <Dna size={20} className="text-purple-300" />,
       headline: `Your DNA: ${dnaProfile?.label || 'The Balanced Binger'}`,
-      sub: dnaProfile?.tagline || 'Your taste is fully mapped',
+      sub: dnaProfile?.favorite_genres?.length >= 2
+        ? `Leading: ${dnaProfile.favorite_genres[0]} + ${dnaProfile.favorite_genres[1]}`
+        : 'Your taste profile is complete',
       cta: 'View DNA →',
     },
   };
@@ -194,7 +196,7 @@ function ExpandedCard({ state, streak, dnaProfile, triviaStats, onClose, onNavig
     2: "We're learning where your instincts are strongest. Keep playing to sharpen the signal.",
     3: "You're picking quality over hype and calling the right answers before most players.",
     4: "Across your plays, a clear pattern has emerged. Your instincts are consistent.",
-    5: dnaProfile?.tagline || "You move easily across formats with strong instincts for what's next.",
+    5: "Your instincts span formats with a clear signature emerging across recent plays.",
   }[state];
 
   const accuracyVal = triviaStats.total > 0 ? `${triviaStats.accuracy}%` : '—';
