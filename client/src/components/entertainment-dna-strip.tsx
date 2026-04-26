@@ -130,37 +130,52 @@ function getStripState(streak: number, dnaProfile: any, triviaStats: { total: nu
   return 1;
 }
 
-// ─── Collapsed: subtle centered pill like "62 people have played" ────────────
+// ─── Collapsed: dark bordered card ───────────────────────────────────────────
 function CollapsedStrip({ state, streak, dnaProfile, onExpand }: {
   state: StripState; streak: number; dnaProfile: any; onExpand: () => void;
 }) {
-  const label = {
-    1: 'Discover your Entertainment DNA',
-    2: 'Your Entertainment DNA is forming',
-    3: streak >= 2 ? `You're on a hot streak 🔥` : 'Your instincts are sharpening',
-    4: 'Your entertainment edge is clear',
-    5: dnaProfile?.label || 'The Balanced Binger',
-  }[state];
+  const configs: Record<StripState, { icon: any; headline: string; cta: string }> = {
+    1: {
+      icon: <Dna size={20} className="text-purple-400" />,
+      headline: 'Your Entertainment DNA is waiting',
+      cta: 'Start →',
+    },
+    2: {
+      icon: <Sparkles size={20} className="text-violet-300" />,
+      headline: 'Your Entertainment DNA is forming',
+      cta: 'Keep playing →',
+    },
+    3: {
+      icon: <Flame size={20} className="text-orange-400" />,
+      headline: streak >= 2 ? `You're on a hot streak 🔥` : 'Your instincts are sharpening',
+      cta: 'Prove it →',
+    },
+    4: {
+      icon: <Trophy size={20} className="text-yellow-400" />,
+      headline: 'Your entertainment edge is clear',
+      cta: 'View your DNA →',
+    },
+    5: {
+      icon: <Dna size={20} className="text-purple-300" />,
+      headline: dnaProfile?.label || 'The Balanced Binger',
+      cta: 'View DNA →',
+    },
+  };
 
-  const icon = {
-    1: <Dna size={13} className="text-purple-400" />,
-    2: <Sparkles size={13} className="text-violet-300" />,
-    3: <Flame size={13} className="text-orange-400" />,
-    4: <Trophy size={13} className="text-yellow-400" />,
-    5: <Dna size={13} className="text-purple-300" />,
-  }[state];
+  const c = configs[state];
 
   return (
-    <div className="flex justify-center mb-3">
-      <button
-        onClick={onExpand}
-        className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/60 text-xs hover:bg-white/10 hover:text-white/80 transition-colors"
-      >
-        {icon}
-        <span className="font-medium">{label}</span>
-        <ChevronRight size={11} className="opacity-50" />
-      </button>
-    </div>
+    <button onClick={onExpand} className="w-full text-left mb-3">
+      <div className="rounded-2xl border border-purple-700/40 bg-[#1a1033]/90 px-4 py-3.5 flex items-center gap-3 shadow-md backdrop-blur-sm">
+        <div className="flex-shrink-0 w-9 h-9 rounded-full bg-purple-900/60 border border-purple-600/30 flex items-center justify-center">
+          {c.icon}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-white text-sm font-semibold leading-snug truncate">{c.headline}</p>
+        </div>
+        <span className="text-purple-400 text-xs font-semibold whitespace-nowrap flex-shrink-0">{c.cta}</span>
+      </div>
+    </button>
   );
 }
 
