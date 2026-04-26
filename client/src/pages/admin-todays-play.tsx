@@ -219,7 +219,7 @@ const EXTRA_SLOTS: SlotMeta[] = [
   {
     mediaType: "podcast",
     focusTopic: "popular podcasts, podcast hosts, true crime podcasts, comedy podcasts, famous podcast moments and episodes, widely-known podcast culture",
-    categoryHint: "Podcast",
+    categoryHint: "Podcasts",
     label: "Podcast",
     icon: <Headphones size={11} />,
     pillClass: "bg-sky-500/20 text-sky-300",
@@ -286,7 +286,7 @@ function typeMeta(draft: Draft): SlotMeta {
   if (draft.category === "TV") return PRIMARY_SLOTS[2];
   if (draft.category === "Pop Culture") return EXTRA_SLOTS[0];
   if (draft.category === "Music") return EXTRA_SLOTS[1];
-  if (draft.category === "Podcast") return EXTRA_SLOTS[2];
+  if (draft.category === "Podcast" || draft.category === "Podcasts") return EXTRA_SLOTS[2];
   if (draft.category === "Gaming") return EXTRA_SLOTS[3];
   return PRIMARY_SLOTS[0];
 }
@@ -871,7 +871,7 @@ export default function AdminTodaysPlayPage() {
   }
 
   async function saveEdit(draft: Draft) {
-    const categoryMap: Record<string, string> = { movie: "Movies", tv: "TV", book: "Books", music: "Music" };
+    const categoryMap: Record<string, string> = { movie: "Movies", tv: "TV", book: "Books", music: "Music", podcast: "Podcasts", gaming: "Gaming", mixed: "Pop Culture" };
     await supabase.from("trivia_poll_drafts").update({
       title: editTitle,
       options: editOptions,
@@ -893,7 +893,7 @@ export default function AdminTodaysPlayPage() {
       toast({ title: "Fill in question, options, correct answer, and show/media name", variant: "destructive" });
       return;
     }
-    const categoryMap: Record<string, string> = { movie: "Movies", tv: "TV", book: "Books", music: "Music", mixed: "Pop Culture" };
+    const categoryMap: Record<string, string> = { movie: "Movies", tv: "TV", book: "Books", music: "Music", podcast: "Podcasts", gaming: "Gaming", mixed: "Pop Culture" };
     setSavingManual(true);
     try {
       const { error } = await supabase.from("trivia_poll_drafts").insert({
@@ -1172,6 +1172,8 @@ export default function AdminTodaysPlayPage() {
                           { value: "tv", label: "TV", icon: <Tv size={11} />, cls: "bg-amber-500/20 text-amber-300 border-amber-500/40" },
                           { value: "book", label: "Book", icon: <BookOpen size={11} />, cls: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" },
                           { value: "music", label: "Music", icon: <Music2 size={11} />, cls: "bg-pink-500/20 text-pink-300 border-pink-500/40" },
+                          { value: "podcast", label: "Podcast", icon: <Headphones size={11} />, cls: "bg-sky-500/20 text-sky-300 border-sky-500/40" },
+                          { value: "gaming", label: "Gaming", icon: <Gamepad2 size={11} />, cls: "bg-violet-500/20 text-violet-300 border-violet-500/40" },
                           { value: "mixed", label: "Pop Culture", icon: <Zap size={11} />, cls: "bg-purple-500/20 text-purple-300 border-purple-500/40" },
                         ].map(m => (
                           <button
@@ -1388,6 +1390,9 @@ export default function AdminTodaysPlayPage() {
                                       <option value="movie">Movie</option>
                                       <option value="book">Book</option>
                                       <option value="music">Music</option>
+                                      <option value="podcast">Podcast</option>
+                                      <option value="gaming">Gaming</option>
+                                      <option value="mixed">Pop Culture</option>
                                     </select>
                                   </div>
                                   <MediaSearchPicker
