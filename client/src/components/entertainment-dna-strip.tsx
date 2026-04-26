@@ -96,11 +96,12 @@ function useStripData() {
         });
         if (!res.ok) return { rank: null, percentile: null, total: 0 };
         const data = await res.json();
-        const entries: any[] = data?.leaderboard ?? data?.data ?? data ?? [];
+        // Response shape: { categories: { trivia: LeaderboardEntry[] }, ... }
+        const entries: any[] = data?.categories?.trivia ?? data?.categories?.overall ?? [];
         if (!entries.length) return { rank: null, percentile: null, total: 0 };
-        const idx = entries.findIndex((e: any) => e.user_id === user.id || e.id === user.id);
-        if (idx === -1) return { rank: null, percentile: null, total: entries.length };
-        const rank = idx + 1;
+        const myEntry = entries.find((e: any) => e.user_id === user.id);
+        if (!myEntry) return { rank: null, percentile: null, total: entries.length };
+        const rank = myEntry.rank;
         const total = entries.length;
         const percentile = Math.round(((total - rank) / total) * 100);
         return { rank, percentile, total };
