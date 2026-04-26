@@ -26,16 +26,22 @@ export default function PlayRanks() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Likes / comments state
+  // Likes / comments state — keyed by rank.id for consistency (rank.id is always the stable key)
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Map of rankId → social_posts.id (populated by query)
+  const rankToSocialPost = useRef<Record<string, string>>({});
   const likedInitialized = useRef(false);
+
+  // Resolve the real social_posts.id from a rankId (passed in as postId by RankFeedCard)
+  const resolveSocialPostId = (rankId: string): string | null =>
+    rankToSocialPost.current[rankId] || null;
 
   // ── Like mutation ────────────────────────────────────────────────────────────
   const likeMutation = useMutation({
-    mutationFn: async ({ postId, wasLiked }: { postId: string; wasLiked: boolean }) => {
+    mutationFn: async ({ socialPostId, wasLiked }: { socialPostId: string; wasLiked: boolean }) => {
       if (!session?.access_token) throw new Error('Not authenticated');
       const response = await fetch(`${SUPABASE_URL}/functions/v1/social-feed-like`, {
         method: wasLiked ? 'DELETE' : 'POST',
@@ -44,47 +50,55 @@ export default function PlayRanks() {
           'Content-Type': 'application/json',
           'apikey': SUPABASE_ANON_KEY,
         },
-        body: JSON.stringify({ post_id: postId }),
+        body: JSON.stringify({ post_id: socialPostId }),
       });
       if (!response.ok) throw new Error('Failed to like post');
       return response.json();
     },
-    onMutate: ({ postId, wasLiked }) => {
+    onMutate: ({ socialPostId, wasLiked }) => {
+      // Optimistically toggle liked state (keyed by socialPostId)
       setLikedPosts(prev => {
         const next = new Set(prev);
-        wasLiked ? next.delete(postId) : next.add(postId);
+        wasLiked ? next.delete(socialPostId) : next.add(socialPostId);
         return next;
       });
-      // Optimistically update count in query data
+      // Optimistically update count
       queryClient.setQueryData(['public-ranks-play'], (old: any) => {
         if (!Array.isArray(old)) return old;
         return old.map((item: any) =>
-          item.postId === postId
+          item.socialPostId === socialPostId
             ? { ...item, likesCount: Math.max(0, (item.likesCount || 0) + (wasLiked ? -1 : 1)) }
             : item
         );
       });
     },
-    onError: (_err, { postId, wasLiked }) => {
-      // Revert
+    onError: (_err, { socialPostId, wasLiked }) => {
       setLikedPosts(prev => {
         const next = new Set(prev);
-        wasLiked ? next.add(postId) : next.delete(postId);
+        wasLiked ? next.add(socialPostId) : next.delete(socialPostId);
         return next;
       });
     },
   });
 
-  const handleLike = (postId: string) => {
+  // RankFeedCard calls onLike(postId) where postId = rank.id (what we pass as postId prop)
+  const handleLike = (rankId: string) => {
     if (!session?.access_token) { toast({ title: 'Sign in to like', variant: 'destructive' }); return; }
-    const wasLiked = likedPosts.has(postId);
-    likeMutation.mutate({ postId, wasLiked });
+    const socialPostId = resolveSocialPostId(rankId);
+    if (!socialPostId) {
+      toast({ title: 'Likes not available yet', description: 'This rank is missing a feed post — run the backfill SQL in Supabase.', variant: 'destructive' });
+      return;
+    }
+    const wasLiked = likedPosts.has(socialPostId);
+    likeMutation.mutate({ socialPostId, wasLiked });
   };
 
   // ── Comment fetch ────────────────────────────────────────────────────────────
-  const fetchComments = async (postId: string): Promise<any[]> => {
+  const fetchComments = async (rankId: string): Promise<any[]> => {
     if (!session?.access_token) throw new Error('Not authenticated');
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/social-feed-comments?post_id=${postId}`, {
+    const socialPostId = resolveSocialPostId(rankId);
+    if (!socialPostId) return [];
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/social-feed-comments?post_id=${socialPostId}`, {
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
@@ -109,12 +123,17 @@ export default function PlayRanks() {
   };
 
   // ── Comment submit ───────────────────────────────────────────────────────────
-  const handleComment = async (postId: string, parentCommentId?: string, content?: string) => {
-    const text = content?.trim() || commentInputs[postId]?.trim();
+  const handleComment = async (rankId: string, parentCommentId?: string, content?: string) => {
+    const text = content?.trim() || commentInputs[rankId]?.trim();
     if (!text || !session?.access_token) return;
+    const socialPostId = resolveSocialPostId(rankId);
+    if (!socialPostId) {
+      toast({ title: 'Comments not available yet', description: 'This rank is missing a feed post — run the backfill SQL in Supabase.', variant: 'destructive' });
+      return;
+    }
     setIsSubmitting(true);
     try {
-      const body: any = { post_id: postId, content: text };
+      const body: any = { post_id: socialPostId, content: text };
       if (parentCommentId) body.parent_comment_id = parentCommentId;
       const response = await fetch(`${SUPABASE_URL}/functions/v1/social-feed-comments`, {
         method: 'POST',
@@ -125,12 +144,11 @@ export default function PlayRanks() {
         body: JSON.stringify(body),
       });
       if (response.ok) {
-        setCommentInputs(prev => ({ ...prev, [postId]: '' }));
-        // Update comment count
+        setCommentInputs(prev => ({ ...prev, [rankId]: '' }));
         queryClient.setQueryData(['public-ranks-play'], (old: any) => {
           if (!Array.isArray(old)) return old;
           return old.map((item: any) =>
-            item.postId === postId
+            item.rank?.id === rankId
               ? { ...item, commentsCount: (item.commentsCount || 0) + 1 }
               : item
           );
@@ -142,13 +160,13 @@ export default function PlayRanks() {
   };
 
   // ── Delete comment ───────────────────────────────────────────────────────────
-  const handleDeleteComment = async (commentId: string, postId: string) => {
+  const handleDeleteComment = async (commentId: string, rankId: string) => {
     if (!confirm('Delete this comment?') || !session?.access_token) return;
     await supabase.from('social_post_comments').delete().eq('id', commentId);
     queryClient.setQueryData(['public-ranks-play'], (old: any) => {
       if (!Array.isArray(old)) return old;
       return old.map((item: any) =>
-        item.postId === postId
+        item.rank?.id === rankId
           ? { ...item, commentsCount: Math.max(0, (item.commentsCount || 0) - 1) }
           : item
       );
@@ -160,7 +178,6 @@ export default function PlayRanks() {
     if (!session?.access_token) return;
     await supabase.from('comment_likes').upsert({ comment_id: commentId, user_id: user?.id }, { onConflict: 'comment_id,user_id' });
   };
-
 
   // ── Fetch community ranks with social_post data ──────────────────────────────
   const { data: publicRanksData, isLoading: isLoadingPublic } = useQuery({
@@ -200,16 +217,25 @@ export default function PlayRanks() {
           .eq('post_type', 'rank_share'),
       ]);
 
-      // If user is signed in, fetch which posts they have liked
-      let userLikedSet = new Set<string>();
-      if (socialPostsData && socialPostsData.length > 0 && session?.access_token) {
+      // Build rankId → socialPostId map (for use in handlers)
+      const newMap: Record<string, string> = {};
+      (socialPostsData || []).forEach((sp: any) => { newMap[sp.rank_id] = sp.id; });
+      rankToSocialPost.current = newMap;
+
+      // Fetch which posts current user has liked
+      let likedSocialPostIds = new Set<string>();
+      if (socialPostsData && socialPostsData.length > 0 && user?.id) {
         const spIds = socialPostsData.map((sp: any) => sp.id);
         const { data: likeData } = await supabase
           .from('post_likes')
           .select('post_id')
           .in('post_id', spIds)
-          .eq('user_id', user?.id);
-        (likeData || []).forEach((l: any) => userLikedSet.add(l.post_id));
+          .eq('user_id', user.id);
+        (likeData || []).forEach((l: any) => likedSocialPostIds.add(l.post_id));
+      }
+      if (!likedInitialized.current && likedSocialPostIds.size > 0) {
+        setLikedPosts(likedSocialPostIds);
+        likedInitialized.current = true;
       }
 
       const itemsByRank: Record<string, any[]> = {};
@@ -221,19 +247,15 @@ export default function PlayRanks() {
       const usersMap = new Map((usersData || []).map((u: any) => [u.id, u]));
       const postByRank = new Map((socialPostsData || []).map((sp: any) => [sp.rank_id, sp]));
 
-      // Init liked posts from DB
-      if (!likedInitialized.current && userLikedSet.size > 0) {
-        setLikedPosts(userLikedSet);
-        likedInitialized.current = true;
-      }
-
       return ranksData
         .filter(rank => (itemsByRank[rank.id] || []).length > 0)
         .map(rank => {
           const author = usersMap.get(rank.user_id) as any;
           const sp = postByRank.get(rank.id);
           return {
-            postId: sp?.id || rank.id,       // social_posts.id (needed for likes/comments)
+            // rank.id is always the stable key (used for expandedComments, commentInputs, onLike arg)
+            rankId: rank.id,
+            // social_posts.id — may be null for older ranks without a feed post
             socialPostId: sp?.id || null,
             rank: {
               id: rank.id,
@@ -249,7 +271,6 @@ export default function PlayRanks() {
               display_name: author?.display_name,
               profile_image_url: author?.profile_image_url,
             },
-            isConsumed: false,
             createdAt: rank.created_at,
             likesCount: sp?.likes_count || 0,
             commentsCount: sp?.comments_count || 0,
@@ -435,24 +456,28 @@ export default function PlayRanks() {
 
             <div className="space-y-4">
               {filteredCommunityRanks.map((item: any) => (
-                <div key={item.postId}>
+                <div key={item.rankId}>
                   <RankFeedCard
                     rank={item.rank}
                     author={item.author}
                     createdAt={item.createdAt}
-                    postId={item.socialPostId || undefined}
+                    postId={item.rank.id}
                     likesCount={item.likesCount}
                     commentsCount={item.commentsCount}
-                    isLiked={likedPosts.has(item.postId)}
-                    onLike={(postId) => { handleLike(postId); }}
-                    expandedComments={expandedComments[item.postId] || false}
-                    onToggleComments={() => {
-                      setExpandedComments(prev => ({ ...prev, [item.postId]: !prev[item.postId] }));
-                    }}
+                    isLiked={likedPosts.has(item.socialPostId || '')}
+                    onLike={handleLike}
+                    expandedComments={expandedComments[item.rankId] || false}
+                    onToggleComments={() =>
+                      setExpandedComments(prev => ({ ...prev, [item.rankId]: !prev[item.rankId] }))
+                    }
                     fetchComments={fetchComments}
-                    commentInput={commentInputs[item.postId] || ''}
-                    onCommentInputChange={(val) => setCommentInputs(prev => ({ ...prev, [item.postId]: val }))}
-                    onSubmitComment={(parentCommentId, content) => handleComment(item.postId, parentCommentId, content)}
+                    commentInput={commentInputs[item.rankId] || ''}
+                    onCommentInputChange={(val) =>
+                      setCommentInputs(prev => ({ ...prev, [item.rankId]: val }))
+                    }
+                    onSubmitComment={(parentCommentId, content) =>
+                      handleComment(item.rankId, parentCommentId, content)
+                    }
                     isSubmitting={isSubmitting}
                     currentUserId={user?.id}
                     onDeleteComment={handleDeleteComment}
