@@ -122,7 +122,9 @@ serve(async (req) => {
           rank_id: rank.id,
           post_type: 'rank_share',
           content: null,
-          visibility: 'public'
+          visibility: 'public',
+          media_title: rank.title || '',
+          media_type: 'rank'
         });
       if (postError) {
         console.error('Warning: rank created but feed post failed:', postError.message);

@@ -3678,63 +3678,70 @@ export default function Feed() {
         );
       }
       const rankId = rawPost.rankId;
-      const rankTitle = (() => {
-        const content = rawPost.content || '';
-        const prefix = 'Check out my ranked list: ';
-        return content.startsWith(prefix) ? content.slice(prefix.length) : content;
-      })();
+      const rankTitle = rawPost.user?.displayName
+        ? (rawPost.content || '')
+        : (() => {
+            const content = rawPost.content || '';
+            const prefix = 'Check out my ranked list: ';
+            return content.startsWith(prefix) ? content.slice(prefix.length) : content;
+          })();
       return (
         <div key={`${keyPrefix}-rank-stub-${item.id}`} id={`post-${item.id}`} className="mb-4">
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="px-4 pt-4 pb-3">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="p-4">
+              {/* Pills */}
+              <div className="flex items-center gap-2 mb-3">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">RANK</span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">Community</span>
+              </div>
+              {/* Author */}
               {rawPost.user && (
                 <div className="flex items-center gap-2 mb-3">
                   <Link href={`/user/${rawPost.user.id}`}>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer flex-shrink-0">
-                      {rawPost.user.avatar ? (
-                        <img src={rawPost.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        <span className="text-xs">{rawPost.user.username?.[0]?.toUpperCase() || '?'}</span>
-                      )}
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold cursor-pointer flex-shrink-0 overflow-hidden">
+                      {rawPost.user.avatar
+                        ? <img src={rawPost.user.avatar} alt="" className="w-full h-full object-cover" />
+                        : (rawPost.user.displayName || rawPost.user.username || '?')[0].toUpperCase()}
                     </div>
                   </Link>
-                  <div className="flex-1 min-w-0">
+                  <div>
                     <Link href={`/user/${rawPost.user.id}`}>
                       <span className="text-sm font-medium text-gray-900 hover:text-purple-600 cursor-pointer">
                         {rawPost.user.displayName || rawPost.user.username}
                       </span>
                     </Link>
-                    <p className="text-xs text-gray-400">shared a ranked list</p>
+                    <span className="text-xs text-gray-500 ml-2">shared a ranked list</span>
                   </div>
-                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 flex-shrink-0">Rank</span>
                 </div>
               )}
+              {/* Title */}
               {rankId ? (
-                <Link href={`/ranks/${rankId}`}>
-                  <p className="font-semibold text-gray-900 text-sm mb-1.5 hover:text-purple-600 cursor-pointer leading-snug">{rankTitle}</p>
+                <Link href={`/rank/${rankId}`}>
+                  <h3 className="font-semibold text-gray-900 hover:text-purple-700 cursor-pointer leading-snug mb-2">{rankTitle}</h3>
                 </Link>
               ) : (
-                <p className="font-semibold text-gray-900 text-sm mb-1.5 leading-snug">{rankTitle}</p>
+                <h3 className="font-semibold text-gray-900 leading-snug mb-2">{rankTitle}</h3>
               )}
               {rankId && (
-                <Link href={`/ranks/${rankId}`}>
-                  <span className="text-xs text-purple-600 font-medium">See full rank ›</span>
+                <Link href={`/rank/${rankId}`}>
+                  <span className="text-xs text-purple-600 font-medium hover:text-purple-800">See full rank →</span>
                 </Link>
               )}
-              <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-gray-50">
-                <button
-                  onClick={() => setExpandedComments(prev => {
-                    const newSet = new Set(prev);
-                    if (newSet.has(item.id)) newSet.delete(item.id);
-                    else newSet.add(item.id);
-                    return newSet;
-                  })}
-                  className={`flex items-center gap-1.5 text-sm ${expandedComments.has(item.id) ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
-                >
-                  <MessageCircle size={15} />
-                  <span className="text-xs">{rawPost.comments || 0}</span>
-                </button>
-              </div>
+            </div>
+            {/* Footer */}
+            <div className="px-4 py-2.5 border-t border-gray-100 flex items-center gap-4">
+              <button
+                onClick={() => setExpandedComments(prev => {
+                  const newSet = new Set(prev);
+                  if (newSet.has(item.id)) newSet.delete(item.id);
+                  else newSet.add(item.id);
+                  return newSet;
+                })}
+                className={`flex items-center gap-1.5 text-sm ${expandedComments.has(item.id) ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
+              >
+                <MessageCircle size={15} />
+                <span className="text-xs">{rawPost.comments || 0}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -6368,63 +6375,68 @@ export default function Feed() {
                     <div key={`rank-stub-${post.id}`} id={`post-${post.id}`}>
                       {carouselElements}
                       <div className="mb-4">
-                        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                          <div className="px-4 pt-4 pb-3">
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                          <div className="p-4">
+                            {/* Pills */}
+                            <div className="flex items-center gap-2 mb-3">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-semibold rounded-full uppercase tracking-wide">RANK</span>
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">Community</span>
+                            </div>
+                            {/* Author */}
                             {post.user && (
                               <div className="flex items-center gap-2 mb-3">
                                 <Link href={`/user/${post.user.id}`}>
-                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer flex-shrink-0">
-                                    {post.user.avatar ? (
-                                      <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                                    ) : (
-                                      <span className="text-xs">{post.user.username?.[0]?.toUpperCase() || '?'}</span>
-                                    )}
+                                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold cursor-pointer flex-shrink-0 overflow-hidden">
+                                    {post.user.avatar
+                                      ? <img src={post.user.avatar} alt="" className="w-full h-full object-cover" />
+                                      : (post.user.displayName || post.user.username || '?')[0].toUpperCase()}
                                   </div>
                                 </Link>
-                                <div className="flex-1 min-w-0">
+                                <div>
                                   <Link href={`/user/${post.user.id}`}>
                                     <span className="text-sm font-medium text-gray-900 hover:text-purple-600 cursor-pointer">
                                       {post.user.displayName || post.user.username}
                                     </span>
                                   </Link>
-                                  <p className="text-xs text-gray-400">shared a ranked list</p>
+                                  <span className="text-xs text-gray-500 ml-2">shared a ranked list</span>
                                 </div>
-                                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 flex-shrink-0">Rank</span>
                               </div>
                             )}
+                            {/* Title */}
                             {rankId ? (
-                              <Link href={`/ranks/${rankId}`}>
-                                <p className="font-semibold text-gray-900 text-sm mb-1.5 hover:text-purple-600 cursor-pointer leading-snug">{rankTitle}</p>
+                              <Link href={`/rank/${rankId}`}>
+                                <h3 className="font-semibold text-gray-900 hover:text-purple-700 cursor-pointer leading-snug mb-2">{rankTitle}</h3>
                               </Link>
                             ) : (
-                              <p className="font-semibold text-gray-900 text-sm mb-1.5 leading-snug">{rankTitle}</p>
+                              <h3 className="font-semibold text-gray-900 leading-snug mb-2">{rankTitle}</h3>
                             )}
                             {rankId && (
-                              <Link href={`/ranks/${rankId}`}>
-                                <span className="text-xs text-purple-600 font-medium">See full rank ›</span>
+                              <Link href={`/rank/${rankId}`}>
+                                <span className="text-xs text-purple-600 font-medium hover:text-purple-800">See full rank →</span>
                               </Link>
                             )}
-                            <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-gray-50">
-                              <button
-                                onClick={() => handleLike(post.id)}
-                                className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
-                              >
-                                <Heart size={16} fill={likedPosts.has(post.id) ? 'currentColor' : 'none'} />
-                                <span>{post.likes || 0}</span>
-                              </button>
-                              <button
-                                onClick={() => setExpandedComments(prev => {
-                                  const newSet = new Set(prev);
-                                  if (newSet.has(post.id)) newSet.delete(post.id);
-                                  else newSet.add(post.id);
-                                  return newSet;
-                                })}
-                                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
-                              >
-                                <MessageCircle size={16} />
-                                <span>{post.comments || 0}</span>
-                              </button>
-                            </div>
+                          </div>
+                          {/* Footer */}
+                          <div className="px-4 py-2.5 border-t border-gray-100 flex items-center gap-4">
+                            <button
+                              onClick={() => handleLike(post.id)}
+                              className={`flex items-center gap-1.5 text-sm ${likedPosts.has(post.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-500'}`}
+                            >
+                              <Heart size={16} fill={likedPosts.has(post.id) ? 'currentColor' : 'none'} />
+                              <span className="text-xs">{post.likes || 0}</span>
+                            </button>
+                            <button
+                              onClick={() => setExpandedComments(prev => {
+                                const newSet = new Set(prev);
+                                if (newSet.has(post.id)) newSet.delete(post.id);
+                                else newSet.add(post.id);
+                                return newSet;
+                              })}
+                              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
+                            >
+                              <MessageCircle size={16} />
+                              <span className="text-xs">{post.comments || 0}</span>
+                            </button>
                           </div>
                         </div>
                       </div>
