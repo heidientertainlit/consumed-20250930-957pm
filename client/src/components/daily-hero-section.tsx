@@ -580,7 +580,7 @@ function TodaysPlayGame({
       };
       localStorage.setItem(getTodayPlayKey(session?.user?.id), JSON.stringify({
         completed: true,
-        date: new Date().toISOString().split('T')[0],
+        date: getLocalDateStr(),
         score,
         answers: allAnswers.map(a => ({ correct: a.correct, category: a.category })),
       }));
@@ -589,7 +589,7 @@ function TodaysPlayGame({
       setPhase('done');
 
       // Update streak for Today's Play completion — fire-and-forget
-      const localDate = new Date().toISOString().split('T')[0];
+      const localDate = getLocalDateStr();
       fetch(`${SUPABASE_URL}/functions/v1/daily-challenge`, {
         method: 'POST',
         headers: {
@@ -1432,7 +1432,7 @@ export function DailyHeroSection() {
   // Re-sync play/call state when the logged-in user changes (so switching accounts clears stale state)
   useEffect(() => {
     if (!user?.id) return;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateStr();
     try {
       const ps = localStorage.getItem(getTodayPlayKey(user.id));
       if (ps) {
@@ -1551,7 +1551,7 @@ export function DailyHeroSection() {
     queryKey: ['daily-play-supabase-check', user?.id],
     queryFn: async () => {
       if (!user?.id) return false;
-      const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local date
+      const today = getLocalDateStr();
       const { data } = await supabase
         .from('login_streaks')
         .select('play_completed_date')
@@ -1559,22 +1559,43 @@ export function DailyHeroSection() {
         .maybeSingle();
       return data?.play_completed_date === today;
     },
-    enabled: !!user?.id && !playCompleted,
+    enabled: !!user?.id,
     staleTime: 60_000,
   });
 
   useEffect(() => {
-    if (!supabasePlayDone || playCompleted) return;
+    if (supabasePlayDone === undefined) return;
     const today = getLocalDateStr();
-    setPlayCompleted(true);
-    // Backfill localStorage so future loads are instant
-    try {
-      const existing = localStorage.getItem(getTodayPlayKey(user?.id));
-      if (!existing) {
-        localStorage.setItem(getTodayPlayKey(user?.id), JSON.stringify({ completed: true, date: today }));
+    if (supabasePlayDone === true && !playCompleted) {
+      // DB confirms played but local state is wrong → fix it
+      setPlayCompleted(true);
+      try {
+        const existing = localStorage.getItem(getTodayPlayKey(user?.id));
+        if (!existing) {
+          localStorage.setItem(getTodayPlayKey(user?.id), JSON.stringify({ completed: true, date: today }));
+        }
+      } catch { /* ignore */ }
+    } else if (supabasePlayDone === false && playCompleted) {
+      // DB says NOT played but local state says yes → verify localStorage
+      try {
+        const stored = localStorage.getItem(getTodayPlayKey(user?.id));
+        if (!stored) {
+          // No localStorage entry for this user → stale/wrong state, reset
+          setPlayScore(null); setPlayAnswers(null); setPlayCompleted(false);
+        } else {
+          const parsed = JSON.parse(stored);
+          if (parsed.date !== today) {
+            // Stale localStorage entry from a different day → reset
+            setPlayScore(null); setPlayAnswers(null); setPlayCompleted(false);
+          }
+          // If localStorage has today's date → trust it (user played this session,
+          // streak update may still be in-flight)
+        }
+      } catch {
+        setPlayScore(null); setPlayAnswers(null); setPlayCompleted(false);
       }
-    } catch { /* ignore */ }
-  }, [supabasePlayDone, playCompleted, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    }
+  }, [supabasePlayDone, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Supabase fallback: verify Daily Call completion ──
   const { data: supabaseCallData } = useQuery<{ done: boolean; answer: string | null }>({
@@ -1590,27 +1611,45 @@ export function DailyHeroSection() {
         .maybeSingle();
       return data ? { done: true, answer: data.prediction ?? null } : { done: false, answer: null };
     },
-    enabled: !!user?.id && !!dailyCall?.id && !callCompleted,
+    enabled: !!user?.id && !!dailyCall?.id,
     staleTime: 60_000,
   });
 
   useEffect(() => {
-    if (!supabaseCallData?.done || callCompleted) return;
+    if (supabaseCallData === undefined) return;
     const today = getLocalDateStr();
-    setCallCompleted(true);
-    if (supabaseCallData.answer) setCallAnswer(supabaseCallData.answer);
-    // Backfill localStorage
-    try {
-      const existing = localStorage.getItem(getDailyCallKey(user?.id));
-      if (!existing) {
-        localStorage.setItem(getDailyCallKey(user?.id), JSON.stringify({
-          completed: true,
-          date: today,
-          result: { userAnswer: supabaseCallData.answer },
-        }));
+    if (supabaseCallData.done && !callCompleted) {
+      // DB confirms answered but local state is wrong → fix it
+      setCallCompleted(true);
+      if (supabaseCallData.answer) setCallAnswer(supabaseCallData.answer);
+      try {
+        const existing = localStorage.getItem(getDailyCallKey(user?.id));
+        if (!existing) {
+          localStorage.setItem(getDailyCallKey(user?.id), JSON.stringify({
+            completed: true,
+            date: today,
+            result: { userAnswer: supabaseCallData.answer },
+          }));
+        }
+      } catch { /* ignore */ }
+    } else if (!supabaseCallData.done && callCompleted) {
+      // DB says NOT answered but local state says yes → verify localStorage
+      try {
+        const stored = localStorage.getItem(getDailyCallKey(user?.id));
+        if (!stored) {
+          setCallCompleted(false); setCallAnswer(null);
+        } else {
+          const parsed = JSON.parse(stored);
+          if (parsed.date !== today) {
+            setCallCompleted(false); setCallAnswer(null);
+          }
+          // If localStorage has today's date → trust it (in-flight submission)
+        }
+      } catch {
+        setCallCompleted(false); setCallAnswer(null);
       }
-    } catch { /* ignore */ }
-  }, [supabaseCallData, callCompleted, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    }
+  }, [supabaseCallData, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Player count (for the "X people have played" pill) ──
   const { data: totalPlayers } = useQuery<number>({
