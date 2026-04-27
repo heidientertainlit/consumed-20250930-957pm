@@ -82,6 +82,7 @@ function ScoreShareCard({
   answers,
   questions,
   username,
+  dnaStats,
   onClose,
 }: {
   open: boolean;
@@ -94,6 +95,7 @@ function ScoreShareCard({
   answers?: { correct: boolean; category?: string }[];
   questions?: { category?: string | null }[];
   username?: string | null;
+  dnaStats?: { label: string | null; totalAnswered: number; topGenre: string | null; allGenres: string[] } | null;
   onClose: () => void;
 }) {
   const { toast } = useToast();
@@ -312,37 +314,52 @@ function ScoreShareCard({
             ) : (
               /* Daily Call body */
               <>
-                <div className="flex flex-col items-center text-center py-4">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-3" style={{ background: '#f3f0ff' }}>
-                    <Sparkles size={26} className="text-purple-600" />
+                <div className="flex flex-col items-center text-center pb-4">
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style={{ background: '#f3f0ff' }}>
+                    <Sparkles size={22} className="text-purple-600" />
                   </div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">My Daily Call</p>
                   {callQuestion && (
-                    <p className="text-[13px] font-medium text-gray-600 mb-2 leading-snug px-2">{callQuestion}</p>
+                    <p className="text-[13px] font-medium text-gray-500 mb-2 leading-snug px-2">{callQuestion}</p>
                   )}
                   {callAnswer && (
                     <p className="text-[17px] font-bold text-gray-900 mb-1">"{callAnswer}"</p>
                   )}
-                  {streak && streak > 0 ? (
-                    <div className="flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-full" style={{ background: '#f5f0ff' }}>
-                      <Flame size={13} className="text-orange-500" fill="currentColor" />
-                      <span className="text-[12px] font-bold text-purple-700">{streak} day streak</span>
-                    </div>
-                  ) : null}
                 </div>
 
-                {/* Category icons */}
-                <div className="h-px bg-gray-100 mb-3 mt-1" />
-                <div className="grid grid-cols-6 gap-1.5 mb-4">
-                  {CATEGORIES.map(({ label, Icon }) => (
-                    <div key={label} className="flex flex-col items-center gap-1">
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: '#f3f0ff' }}>
-                        <Icon size={16} className="text-purple-600" />
-                      </div>
-                      <p className="text-[7px] font-bold uppercase tracking-wide text-gray-400">{label}</p>
-                    </div>
-                  ))}
+                {/* Stats grid */}
+                <div className="h-px bg-gray-100 mb-4" />
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
+                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Hot Streak</p>
+                    <p className="text-[20px] font-black text-gray-900 leading-none">{streak ?? 0}</p>
+                    <p className="text-[8px] text-gray-400 mt-0.5">day{(streak ?? 0) !== 1 ? 's' : ''}</p>
+                  </div>
+                  <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
+                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">DNA Q's</p>
+                    <p className="text-[20px] font-black text-gray-900 leading-none">{dnaStats?.totalAnswered ?? 0}</p>
+                    <p className="text-[8px] text-gray-400 mt-0.5">answered</p>
+                  </div>
+                  <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
+                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Top Genre</p>
+                    <p className="text-[13px] font-black text-gray-900 leading-tight text-center mt-0.5">{dnaStats?.topGenre ?? '—'}</p>
+                  </div>
                 </div>
+
+                {/* Strongest categories pills */}
+                {(dnaStats?.allGenres?.length ?? 0) > 0 && (
+                  <>
+                    <p className="text-[8px] font-bold uppercase tracking-widest text-gray-400 mb-2">Strongest Categories</p>
+                    <div className="flex gap-1.5 flex-wrap mb-3">
+                      {dnaStats!.allGenres.map(g => (
+                        <span key={g} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold" style={{ background: '#ede9fe', color: '#6d28d9' }}>
+                          <Star size={9} fill="currentColor" />
+                          {g}
+                        </span>
+                      ))}
+                    </div>
+                  </>
+                )}
               </>
             )}
 
@@ -1575,17 +1592,20 @@ export function DailyHeroSection() {
   });
 
   // ── DNA profile + answered count (for scorecard) ──
-  const { data: dnaStats } = useQuery<{ label: string | null; totalAnswered: number }>({
+  const { data: dnaStats } = useQuery<{ label: string | null; totalAnswered: number; topGenre: string | null; allGenres: string[] }>({
     queryKey: ['hero-dna-stats', user?.id],
     queryFn: async () => {
-      if (!user?.id) return { label: null, totalAnswered: 0 };
+      if (!user?.id) return { label: null, totalAnswered: 0, topGenre: null, allGenres: [] };
       const [profileRes, countRes] = await Promise.all([
-        supabase.from('dna_profiles').select('label').eq('user_id', user.id).maybeSingle(),
+        supabase.from('dna_profiles').select('label, favorite_genres').eq('user_id', user.id).maybeSingle(),
         supabase.from('dna_moment_responses').select('moment_id', { count: 'exact', head: true }).eq('user_id', user.id),
       ]);
+      const genres: string[] = Array.isArray(profileRes.data?.favorite_genres) ? profileRes.data.favorite_genres : [];
       return {
         label: profileRes.data?.label ?? null,
         totalAnswered: countRes.count ?? 0,
+        topGenre: genres[0] ?? null,
+        allGenres: genres.slice(0, 3),
       };
     },
     enabled: !!user?.id,
@@ -1979,9 +1999,16 @@ export function DailyHeroSection() {
                               <div className="w-6 h-6 rounded-full bg-purple-400/30 flex items-center justify-center flex-shrink-0">
                                 <Dna size={11} className="text-purple-200" />
                               </div>
-                              <span className="text-[11px] font-semibold text-white leading-tight">
-                                {dnaStats?.label ?? 'Building your DNA…'}
-                              </span>
+                              <div className="flex flex-col">
+                                <span className="text-[11px] font-semibold text-white leading-tight">
+                                  {dnaStats?.label ?? 'Building your DNA…'}
+                                </span>
+                                {dnaStats?.topGenre && (
+                                  <span className="text-[9px] text-purple-300/80">
+                                    You're strong on {dnaStats.topGenre}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                             <Link href="/entertainment-dna">
                               <span className="text-[10px] text-purple-300 flex items-center gap-0.5 flex-shrink-0 ml-2">
@@ -2024,22 +2051,35 @@ export function DailyHeroSection() {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between mt-2">
+                    <div className="mt-2">
                       {!dnaHeroAnswered ? (
-                        <button
-                          onClick={handleDnaSkip}
-                          className="text-white/30 text-[11px] hover:text-white/60 transition-colors"
-                        >
-                          Skip
-                        </button>
+                        <div className="flex items-center justify-between">
+                          <button
+                            onClick={handleDnaSkip}
+                            className="text-white/30 text-[11px] hover:text-white/60 transition-colors"
+                          >
+                            Skip
+                          </button>
+                        </div>
                       ) : (
-                        <button
-                          onClick={() => setSwipeIndex(0)}
-                          className="text-white/40 text-[11px] hover:text-white/70 transition-colors flex items-center gap-1"
-                        >
-                          <ArrowRight size={10} />
-                          Back to Play
-                        </button>
+                        <div className="flex flex-col gap-1.5">
+                          <button
+                            onClick={() => { setLocation('/play/trivia'); }}
+                            className="w-full py-2 rounded-xl text-[11px] font-semibold text-white/80 flex items-center justify-center gap-1.5 border border-white/15"
+                            style={{ background: 'rgba(255,255,255,0.10)' }}
+                          >
+                            <Trophy size={11} className="opacity-80" />
+                            Play More Trivia
+                          </button>
+                          <button
+                            onClick={() => { window.dispatchEvent(new CustomEvent('openAddMedia')); }}
+                            className="w-full py-2 rounded-xl text-[11px] font-semibold text-white/80 flex items-center justify-center gap-1.5 border border-white/15"
+                            style={{ background: 'rgba(255,255,255,0.10)' }}
+                          >
+                            <MessageCircle size={11} className="opacity-80" />
+                            Have a Take? Rate &amp; Review
+                          </button>
+                        </div>
                       )}
                     </div>
                   </>
@@ -2208,6 +2248,7 @@ export function DailyHeroSection() {
         callQuestion={dailyCall?.title}
         streak={streak}
         userId={user?.id}
+        dnaStats={dnaStats ?? null}
         onClose={() => setShowCallShare(false)}
       />
     </>
