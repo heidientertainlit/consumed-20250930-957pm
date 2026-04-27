@@ -3422,7 +3422,18 @@ export default function Feed() {
       promoted.push(item);
     }
     const promotedIdSet = new Set(promoted.map((p: any) => p.id));
-    const carouselOrder = finalOrder.filter((p: any) => !promotedIdSet.has(p.id));
+    // Deduplicate the carousel by media title so the same show/movie doesn't
+    // appear multiple times (e.g. 9 persona users all rating The Fugitive).
+    // finalOrder is already sorted by recency, so the first occurrence per
+    // media key is the most recent one — keep that, drop the rest.
+    const seenMediaInCarousel = new Set<string>();
+    const carouselOrder = finalOrder.filter((p: any) => {
+      if (promotedIdSet.has(p.id)) return false;
+      const mediaKey = p.mediaTitle || p.externalId || p.id;
+      if (seenMediaInCarousel.has(mediaKey)) return false;
+      seenMediaInCarousel.add(mediaKey);
+      return true;
+    });
 
     // 10 posts per carousel — max 6 carousels total
     const batches: { id: string; type: string; posts: any[] }[] = [];
