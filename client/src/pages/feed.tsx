@@ -714,6 +714,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const hasFetched = useRef(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
   const starsRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number>(0);
   const [resolvedExternalId, setResolvedExternalId] = useState(post.externalId || '');
   const [resolvedExternalSource, setResolvedExternalSource] = useState(post.externalSource || 'tmdb');
   const [isSearchingMedia, setIsSearchingMedia] = useState(false);
@@ -1202,6 +1203,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               ref={starsRef}
               className="flex items-center gap-1.5 touch-none select-none"
               onMouseLeave={() => setHoverRating(0)}
+              onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
               onTouchMove={(e) => {
                 e.stopPropagation();
                 if (!starsRef.current) return;
@@ -1228,8 +1230,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
                       <Star size={38} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
                     </div>
-                    <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleSubmitRating(star - 0.5); }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
-                    <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleSubmitRating(star); }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
+                    <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); if (Math.abs(e.changedTouches[0].clientY - touchStartY.current) > 10) return; handleSubmitRating(star - 0.5); }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
+                    <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); if (Math.abs(e.changedTouches[0].clientY - touchStartY.current) > 10) return; handleSubmitRating(star); }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
                   </div>
                 );
               })}
@@ -1473,6 +1475,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   ref={starsRef}
                   className="flex items-center gap-1 touch-none select-none"
                   onMouseLeave={() => setHoverRating(0)}
+                  onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
                   onTouchMove={(e) => {
                     e.stopPropagation();
                     if (!starsRef.current) return;
@@ -1506,7 +1509,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                           className="absolute top-0 left-0 h-full z-10"
                           style={{ width: '50%' }}
                           onMouseEnter={() => setHoverRating(star - 0.5)}
-                          onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleSubmitRating(star - 0.5); }}
+                          onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); if (Math.abs(e.changedTouches[0].clientY - touchStartY.current) > 10) return; handleSubmitRating(star - 0.5); }}
                           onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }}
                           aria-label={`Rate ${star - 0.5}`}
                         />
@@ -1514,7 +1517,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                           className="absolute top-0 right-0 h-full z-10"
                           style={{ width: '50%' }}
                           onMouseEnter={() => setHoverRating(star)}
-                          onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleSubmitRating(star); }}
+                          onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); if (Math.abs(e.changedTouches[0].clientY - touchStartY.current) > 10) return; handleSubmitRating(star); }}
                           onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }}
                           aria-label={`Rate ${star}`}
                         />
@@ -1684,6 +1687,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const [tasteAlignment, setTasteAlignment] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState(0);
   const starsRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number>(0);
   const [seenItDone, setSeenItDone] = useState(false);
   const [resolvedExternalId, setResolvedExternalId] = useState(post.externalId || '');
   const [resolvedExternalSource, setResolvedExternalSource] = useState(post.externalSource || 'tmdb');
@@ -2453,6 +2457,7 @@ function CurrentlyConsumingFeedCard({
   const [selectedRating, setSelectedRating] = useState(0);
   const [seenItDone, setSeenItDone] = useState(false);
   const starsRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number>(0);
   
   const rawMedia = post.mediaItems![0];
   const media = (() => {
