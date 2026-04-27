@@ -3397,7 +3397,6 @@ export default function Feed() {
       if (promoted.length >= MAX_PROMOTED) break;
       const authorId = item.user?.id || item._rawPost?.user?.id;
       if (!authorId) continue;
-      if (item.user?.is_persona || item._rawPost?.user?.is_persona) continue;
       if (promotedIds.has(item.id)) continue;
       if (seenAuthors.has(authorId)) continue;
       seenAuthors.add(authorId);
