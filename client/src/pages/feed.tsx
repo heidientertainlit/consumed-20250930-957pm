@@ -3452,6 +3452,12 @@ export default function Feed() {
       _isPromoted: true,
       _promotedKey: `promoted-${idx}`,
     });
+    // Lead with the first promoted rating so it's the very first item in the feed
+    if (promotedRatings.length > 0) {
+      out.push(wrapPromoted(promotedIdx));
+      promotedIdx++;
+    }
+
     feedPlaySlots.forEach((item: any, i: number) => {
       out.push(item);
       // After every 3rd play item, surface a promoted rating if we still have one
