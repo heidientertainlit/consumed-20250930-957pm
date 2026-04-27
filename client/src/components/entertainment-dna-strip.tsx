@@ -165,6 +165,10 @@ function CollapsedStrip({ state, streak, dnaProfile, onExpand }: {
 
   const c = configs[state];
 
+  const topGenre: string | null = Array.isArray(dnaProfile?.favorite_genres) && dnaProfile.favorite_genres.length > 0
+    ? dnaProfile.favorite_genres[0]
+    : null;
+
   return (
     <button onClick={onExpand} className="w-full text-left mb-3">
       <div className="rounded-2xl border border-purple-700/40 bg-[#1a1033]/90 px-4 py-3.5 flex items-center gap-3 shadow-md backdrop-blur-sm">
@@ -173,6 +177,11 @@ function CollapsedStrip({ state, streak, dnaProfile, onExpand }: {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-white text-sm font-semibold leading-snug truncate">{c.headline}</p>
+          {state === 5 && topGenre && (
+            <p className="text-purple-400 text-[11px] font-medium leading-tight mt-0.5">
+              You're strong on {topGenre}
+            </p>
+          )}
         </div>
         <span className="text-purple-400 text-xs font-semibold whitespace-nowrap flex-shrink-0">{c.cta}</span>
       </div>

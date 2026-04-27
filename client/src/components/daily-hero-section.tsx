@@ -1400,6 +1400,7 @@ export function DailyHeroSection() {
 
   // ── Swipe / deck navigation ──
   const [swipeIndex, setSwipeIndex] = useState(0); // 0 = Today's Play, 1 = Daily Call, 2 = DNA Moment
+  const [showDnaInCarousel, setShowDnaInCarousel] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef(0);
@@ -1625,7 +1626,7 @@ export function DailyHeroSection() {
     ? truncateWords(dailyCall.title, 32)
     : 'Loading today\'s call…';
 
-  const bothCompleted = playCompleted && callCompleted;
+  const bothCompleted = playCompleted && callCompleted && !showDnaInCarousel;
 
   return (
     <>
@@ -1697,6 +1698,39 @@ export function DailyHeroSection() {
             </button>
 
           </div>
+
+          {/* ENTERTAINMENT DNA — 3rd mini card (full width) */}
+          <button
+            onClick={() => { if (!dnaHeroAnswered) { setSwipeIndex(2); setShowDnaInCarousel(true); } }}
+            className="rounded-xl px-3 py-2.5 flex items-center justify-between text-left w-full"
+            style={{
+              background: 'linear-gradient(135deg,#4c1d95 0%,#6d28d9 60%,#7c3aed 100%)',
+              border: '1px solid rgba(139,92,246,0.3)',
+            }}
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-purple-400/20 flex items-center justify-center flex-shrink-0">
+                <Dna size={12} className="text-purple-200" />
+              </div>
+              <div>
+                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-purple-300/70">Entertainment DNA</span>
+                <p className="text-white text-[12px] font-semibold leading-tight">
+                  {dnaStats?.topGenre ? `Strong on ${dnaStats.topGenre}` : 'Answer today\'s question'}
+                </p>
+              </div>
+            </div>
+            {dnaHeroAnswered ? (
+              <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-purple-300/80 flex items-center gap-0.5 flex-shrink-0">
+                <Check size={9} strokeWidth={3} />
+                Done
+              </span>
+            ) : (
+              <span className="text-[8px] font-bold text-purple-400 flex items-center gap-0.5 flex-shrink-0">
+                Answer <ArrowRight size={9} />
+              </span>
+            )}
+          </button>
+
           <p className="text-center text-[10px] text-white/25 tracking-wide">Come back tomorrow to keep up your streak</p>
         </div>
       ) : (
@@ -1899,6 +1933,7 @@ export function DailyHeroSection() {
                 total,
               });
               setDnaHeroAnswered(true);
+              setShowDnaInCarousel(false);
             } catch { /* ignore */ } finally {
               setDnaHeroAnswering(false);
             }
