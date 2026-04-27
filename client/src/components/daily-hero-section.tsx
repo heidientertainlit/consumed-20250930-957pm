@@ -1999,16 +1999,11 @@ export function DailyHeroSection() {
                               <div className="w-6 h-6 rounded-full bg-purple-400/30 flex items-center justify-center flex-shrink-0">
                                 <Dna size={11} className="text-purple-200" />
                               </div>
-                              <div className="flex flex-col">
-                                <span className="text-[11px] font-semibold text-white leading-tight">
-                                  {dnaStats?.label ?? 'Building your DNA…'}
-                                </span>
-                                {dnaStats?.topGenre && (
-                                  <span className="text-[9px] text-purple-300/80">
-                                    You're strong on {dnaStats.topGenre}
-                                  </span>
-                                )}
-                              </div>
+                              <span className="text-[11px] font-semibold text-white leading-tight">
+                                {dnaStats?.topGenre
+                                  ? `You're strong on ${dnaStats.topGenre}`
+                                  : (dnaStats?.label ?? 'Building your DNA…')}
+                              </span>
                             </div>
                             <Link href="/entertainment-dna">
                               <span className="text-[10px] text-purple-300 flex items-center gap-0.5 flex-shrink-0 ml-2">
