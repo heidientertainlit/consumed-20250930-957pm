@@ -1560,12 +1560,12 @@ export function DailyHeroSection() {
       if (!user?.id || !dailyCall?.id) return { done: false, answer: null };
       const { data } = await supabase
         .from('user_predictions')
-        .select('answer')
+        .select('prediction')
         .eq('user_id', user.id)
         .eq('pool_id', dailyCall.id)
         .limit(1)
-        .single();
-      return data ? { done: true, answer: data.answer ?? null } : { done: false, answer: null };
+        .maybeSingle();
+      return data ? { done: true, answer: data.prediction ?? null } : { done: false, answer: null };
     },
     enabled: !!user?.id && !!dailyCall?.id && !callCompleted,
     staleTime: 60_000,
