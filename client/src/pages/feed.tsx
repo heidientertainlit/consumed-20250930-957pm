@@ -1227,8 +1227,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
                       <Star size={38} className="fill-yellow-400 text-yellow-400" />
                     </div>
-                    <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
-                    <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
+                    <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleSubmitRating(star - 0.5); }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
+                    <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleSubmitRating(star); }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
                   </div>
                 );
               })}
@@ -1504,6 +1504,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                           className="absolute top-0 left-0 h-full z-10"
                           style={{ width: '50%' }}
                           onMouseEnter={() => setHoverRating(star - 0.5)}
+                          onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleSubmitRating(star - 0.5); }}
                           onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }}
                           aria-label={`Rate ${star - 0.5}`}
                         />
@@ -1511,6 +1512,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                           className="absolute top-0 right-0 h-full z-10"
                           style={{ width: '50%' }}
                           onMouseEnter={() => setHoverRating(star)}
+                          onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleSubmitRating(star); }}
                           onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }}
                           aria-label={`Rate ${star}`}
                         />
@@ -2077,8 +2079,8 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                     <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
                       <Star size={38} className="fill-yellow-400 text-yellow-400" />
                     </div>
-                    <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
-                    <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
+                    <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleSubmitRating(star - 0.5); }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
+                    <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleSubmitRating(star); }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
                   </div>
                 );
               })}
@@ -6055,6 +6057,9 @@ export default function Feed() {
               {/* Play slot #0 */}
               {renderPostBatchByIndex(0)}
 
+              {/* Play slot #1 — promoted rating card immediately after the first play post */}
+              {renderPostBatchByIndex(1)}
+
               {/* Movies trivia — round 1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia' || selectedFilter === 'games') &&
                (!selectedCategory || selectedCategory === 'movies') && (
@@ -6101,9 +6106,6 @@ export default function Feed() {
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Books" />
               )}
-
-              {/* Play slot #1 */}
-              {renderPostBatchByIndex(1)}
 
               {/* Leaderboard #1 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 1 && (
