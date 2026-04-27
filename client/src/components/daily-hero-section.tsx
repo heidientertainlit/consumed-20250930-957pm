@@ -127,13 +127,13 @@ function ScoreShareCard({
 
   return createPortal(
     <div className="fixed inset-0 z-[10000] bg-black/75 backdrop-blur-sm overflow-y-auto" onClick={onClose}>
-      <div className="min-h-full flex flex-col items-center px-5 pt-10 pb-10">
+      <div className="min-h-full flex flex-col items-center px-5 pb-10" style={{ paddingTop: 'max(56px, calc(env(safe-area-inset-top, 0px) + 16px))' }}>
 
       <div className="relative w-full max-w-sm flex flex-col gap-3" onClick={e => e.stopPropagation()}>
-        {/* Close button */}
+        {/* Close button — in normal flow so it's always below the status bar */}
         <button
           onClick={onClose}
-          className="absolute -top-8 right-0 z-10 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
+          className="self-end w-9 h-9 rounded-full bg-white/20 flex items-center justify-center mb-1"
         >
           <X size={15} className="text-white" />
         </button>
