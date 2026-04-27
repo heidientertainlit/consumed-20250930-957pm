@@ -697,6 +697,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [showRating, setShowRating] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [ratingJustSaved, setRatingJustSaved] = useState(false);
   const [showStarPicker, setShowStarPicker] = useState(false);
   const [communityRating, setCommunityRating] = useState<number | null>(null);
   const [externalRating, setExternalRating] = useState<number | null>(null);
@@ -900,6 +901,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   const handleSubmitRating = async (rating: number) => {
     if (!session?.access_token) return;
+    // Optimistic update — lock in stars immediately so the user sees instant feedback
+    setRatingValue(rating);
+    setRatingSubmitted(true);
+    setShowStarPicker(false);
+    setHoverRating(0);
+    setRatingJustSaved(true);
+    setTimeout(() => setRatingJustSaved(false), 1800);
     let externalId = resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId || '';
     let externalSource = resolvedExternalSource || post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
     const mediaTitle = post.mediaTitle || post.mediaItems?.[0]?.title || '';
@@ -934,10 +942,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           skip_social_post: false,
         }),
       });
-      setRatingValue(rating);
-      setRatingSubmitted(true);
-      setShowStarPicker(false);
-      setHoverRating(0);
     } catch (err) {
       console.error('Rating failed', err);
     }
@@ -1238,8 +1242,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
               {hoverRating === 0 && ratingSubmitted && ratingValue > 0 && (
                 <span className="ml-1 flex items-center gap-2">
-                  <span className="text-xs text-yellow-600 font-medium">You rated {ratingValue}/5</span>
-                  <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove</button>
+                  {ratingJustSaved
+                    ? <span className="text-xs text-green-600 font-semibold animate-pulse">✓ Saved!</span>
+                    : <span className="text-xs text-yellow-600 font-medium">You rated {ratingValue}/5</span>
+                  }
+                  {!ratingJustSaved && <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove</button>}
                 </span>
               )}
             </div>
@@ -1536,12 +1543,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               // Post-rating: compact YOUR RATING + comparison
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Your rating</p>
-                  <div className="flex items-center gap-2">
+                  <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">
+                    {ratingJustSaved ? <span className="text-green-600 normal-case font-semibold">✓ Saved!</span> : 'Your rating'}
+                  </p>
+                  {!ratingJustSaved && <div className="flex items-center gap-2">
                     <button onClick={() => setShowStarPicker(true)} className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors">Edit</button>
                     <span className="text-gray-200 text-[10px]">·</span>
                     <button onClick={() => { setRatingSubmitted(false); setRatingValue(0); }} className="text-[10px] text-gray-300 hover:text-red-400 transition-colors">Remove</button>
-                  </div>
+                  </div>}
                 </div>
                 <div className="flex items-center gap-0.5">
                   {[1, 2, 3, 4, 5].map(s => (
@@ -1685,6 +1694,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
   const [showRating, setShowRating] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const [ratingJustSaved, setRatingJustSaved] = useState(false);
   const [showStarPicker, setShowStarPicker] = useState(false);
   const [communityRating, setCommunityRating] = useState<number | null>(null);
   const [externalRating, setExternalRating] = useState<number | null>(null);
@@ -1844,6 +1854,9 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     setRatingValue(rating);
     setRatingSubmitted(true);
     setShowStarPicker(false);
+    setHoverRating(0);
+    setRatingJustSaved(true);
+    setTimeout(() => setRatingJustSaved(false), 1800);
     let eid = resolvedExternalId || post.externalId || post.mediaItems?.[0]?.externalId || '';
     let esrc = resolvedExternalSource || post.externalSource || post.mediaItems?.[0]?.externalSource || 'tmdb';
     if (!eid && post.mediaTitle) {
@@ -2295,8 +2308,10 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
           {(post.mediaTitle || resolvedExternalId || post.externalId) && currentUserId && post.user?.id !== currentUserId && showStarPicker && (
             <div className="border-t border-gray-100 mt-3 pt-3">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-[10px] font-bold text-purple-600 tracking-widest uppercase">{ratingSubmitted ? 'Change Rating' : 'Your Turn'}</p>
-                {ratingSubmitted && <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove rating</button>}
+                <p className="text-[10px] font-bold text-purple-600 tracking-widest uppercase">
+                  {ratingJustSaved ? <span className="text-green-600 normal-case font-semibold">✓ Saved!</span> : ratingSubmitted ? 'Change Rating' : 'Your Turn'}
+                </p>
+                {ratingSubmitted && !ratingJustSaved && <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove rating</button>}
               </div>
               <div ref={starsRef} className="flex items-center gap-0.5 touch-none select-none" onMouseLeave={() => setHoverRating(0)} onTouchMove={(e) => { e.stopPropagation(); if (!starsRef.current) return; const touch = e.touches[0]; const rect = starsRef.current.getBoundingClientRect(); const x = touch.clientX - rect.left; const starWidth = rect.width / 5; const starIndex = Math.floor(x / starWidth); const withinStar = (x % starWidth) / starWidth; const val = Math.max(0.5, Math.min(5, starIndex + (withinStar < 0.5 ? 0.5 : 1))); setHoverRating(Math.round(val * 2) / 2); }} onTouchEnd={(e) => { e.stopPropagation(); if (hoverRating > 0) handleSubmitRating(hoverRating); setHoverRating(0); }}>
                 {[1,2,3,4,5].map(star => {
@@ -2460,6 +2475,7 @@ function CurrentlyConsumingFeedCard({
   const [showRating, setShowRating] = useState(false);
   const [hoverRating, setHoverRating] = useState(0);
   const [selectedRating, setSelectedRating] = useState(0);
+  const [ratingJustSaved, setRatingJustSaved] = useState(false);
   const [seenItDone, setSeenItDone] = useState(false);
   const starsRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number>(0);
@@ -2486,6 +2502,9 @@ function CurrentlyConsumingFeedCard({
     if (!session?.access_token) return;
     setSelectedRating(rating);
     setShowRating(false);
+    setHoverRating(0);
+    setRatingJustSaved(true);
+    setTimeout(() => setRatingJustSaved(false), 1800);
     try {
       await fetch(
         `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/rate-media`,
@@ -2808,8 +2827,14 @@ function CurrentlyConsumingFeedCard({
                         </div>
                       );
                     })}
-                    <span className="ml-2 text-xs text-gray-400">
-                      {hoverRating > 0 ? `${hoverRating}/5` : selectedRating > 0 ? `${selectedRating}/5` : ''}
+                    <span className="ml-2 text-xs">
+                      {ratingJustSaved
+                        ? <span className="text-green-600 font-semibold">✓ Saved!</span>
+                        : hoverRating > 0
+                          ? <span className="text-gray-400">{hoverRating}/5</span>
+                          : selectedRating > 0
+                            ? <span className="text-gray-400">{selectedRating}/5</span>
+                            : null}
                     </span>
                   </div>
                 </>
