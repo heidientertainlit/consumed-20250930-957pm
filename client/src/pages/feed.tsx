@@ -1221,12 +1221,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               }}
             >
               {[1, 2, 3, 4, 5].map(star => {
-                const displayVal = hoverRating;
+                const displayVal = hoverRating || (ratingSubmitted ? ratingValue : 0);
                 return (
                   <div key={star} className="relative" style={{ width: 38, height: 38 }}>
                     <Star size={38} className="absolute inset-0 text-violet-200" />
                     <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: displayVal >= star ? '100%' : displayVal >= star - 0.5 ? '50%' : '0%' }}>
-                      <Star size={38} className="fill-yellow-400 text-yellow-400" />
+                      <Star size={38} className={hoverRating > 0 ? 'fill-yellow-300 text-yellow-300' : 'fill-yellow-400 text-yellow-400'} />
                     </div>
                     <button className="absolute top-0 left-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star - 0.5)} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleSubmitRating(star - 0.5); }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star - 0.5); }} aria-label={`Rate ${star - 0.5}`} />
                     <button className="absolute top-0 right-0 h-full z-10" style={{ width: '50%' }} onMouseEnter={() => setHoverRating(star)} onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); handleSubmitRating(star); }} onClick={(e) => { e.stopPropagation(); handleSubmitRating(star); }} aria-label={`Rate ${star}`} />
@@ -1234,6 +1234,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 );
               })}
               {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
+              {hoverRating === 0 && ratingSubmitted && ratingValue > 0 && <span className="ml-1 text-xs text-yellow-600 font-medium">You rated {ratingValue}/5</span>}
             </div>
           </div>
           {/* From your feed separator */}
