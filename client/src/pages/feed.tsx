@@ -3329,15 +3329,31 @@ export default function Feed() {
     const MAX_RATING_POSTS = 60;
     const capped = prioritised.slice(0, MAX_RATING_POSTS);
 
-    // Group posts by media title to find "hot" items (multiple people rated same thing)
+    // Two streams:
+    // 1. bypassDedup — explicit rate-review posts (post_type='rate-review') AND persona posts.
+    //    These always show in full — no one-per-media dedup.
+    //    • rate-review: the user deliberately wrote a review; it must always surface.
+    //    • persona posts: each AI persona is unique, so their posts never flood the feed.
+    //      A real user rating the same title must not silently erase a persona's review.
+    // 2. trackingPosts — rated add-to-list posts from real users.
+    //    Deduplicated to one representative per media title to prevent the same show
+    //    appearing 10 times from 10 different friends.
+    const isExplicitReview = (item: any) =>
+      item._rawPost?.type === 'rate-review' || item._rawPost?.post_type === 'rate-review';
+    const isPersonaPost = (item: any) =>
+      item.user?.is_persona === true || item._rawPost?.user?.is_persona === true;
+
+    const bypassDedup = capped.filter((item: any) => isExplicitReview(item) || isPersonaPost(item));
+    const trackingPosts = capped.filter((item: any) => !isExplicitReview(item) && !isPersonaPost(item));
+
+    // One-per-media dedup for tracking posts only
     const byMedia = new Map<string, any[]>();
-    capped.forEach((item: any) => {
+    trackingPosts.forEach((item: any) => {
       const key = item.mediaTitle || item.externalId || `solo-${item.id}`;
       if (!byMedia.has(key)) byMedia.set(key, []);
       byMedia.get(key)!.push(item);
     });
 
-    // Sort media groups chronologically — most recently rated first
     const sortedGroups = Array.from(byMedia.values())
       .sort((a, b) => {
         const aRecent = Math.max(...a.map((p: any) => new Date(p.timestamp || 0).getTime()));
@@ -3345,21 +3361,22 @@ export default function Feed() {
         return bRecent - aRecent;
       });
 
-    // Within each group keep recency order; take only ONE post per media title
-    // (the most recent non-persona post, or the first if all are personas)
-    // Other raters for the same media are shown via relatedRatings inside UGCGroupCard
-    const finalOrder: any[] = [];
+    const dedupedTracking: any[] = [];
     for (const group of sortedGroups) {
       group.sort((a: any, b: any) =>
         new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
       );
-      // Most-recent non-persona post wins; do NOT exclude the current user's own posts —
-      // they were being silently dropped when another user reviewed the same media.
       const representative =
         group.find((p: any) => !p.user?.is_persona) ||
         group[0];
-      finalOrder.push(representative);
+      dedupedTracking.push(representative);
     }
+
+    // Merge: all bypass posts + one-per-media tracking posts, sorted by recency
+    const finalOrder: any[] = [...bypassDedup, ...dedupedTracking]
+      .sort((a: any, b: any) =>
+        new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
+      );
 
     // PROMOTION: pull a small number of high-signal ratings out of the carousel pool
     // to show as standalone cards interleaved with play slots.
