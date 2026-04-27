@@ -2373,7 +2373,8 @@ export function DailyHeroSection() {
           onComplete={(answer) => {
             setCallAnswer(answer);
             setCallCompleted(true);
-            // sheet stays open showing the combined done+share screen
+            setShowCallOverlay(false);
+            setShowCallShare(true);
           }}
           onShare={() => { setShowCallOverlay(false); setShowCallShare(true); }}
           onClose={() => setShowCallOverlay(false)}
