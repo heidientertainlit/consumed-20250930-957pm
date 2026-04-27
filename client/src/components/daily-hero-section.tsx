@@ -1633,104 +1633,97 @@ export function DailyHeroSection() {
       {/* ══ POST-GAME: Mini badge pair (both done) ══ */}
       {bothCompleted ? (
         <div className="flex flex-col gap-2">
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-3 gap-2">
 
             {/* TODAY'S PLAY — completed mini card */}
             <button
               onClick={() => setShowPlayShare(true)}
-              className="rounded-xl px-3 py-2.5 flex flex-col gap-1.5 text-left"
+              className="rounded-xl px-2.5 py-2.5 flex flex-col gap-1.5 text-left"
               style={{
                 background: 'linear-gradient(150deg,#312e81 0%,#1e3a8a 40%,#0369a1 100%)',
                 border: '1px solid rgba(29,78,216,0.3)',
               }}
             >
-              <div className="flex items-center justify-between">
-                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-cyan-300/70">Today's Play</span>
-                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-cyan-200/90 flex items-center gap-0.5">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[7px] font-bold uppercase tracking-[0.1em] text-cyan-300/70 leading-tight">Today's Play</span>
+                <span className="text-cyan-200/90 flex-shrink-0">
                   <Check size={9} strokeWidth={3} />
-                  Done
                 </span>
               </div>
-              <div className="flex items-end gap-2">
-                <p className="text-white text-[18px] font-black leading-none">{playScore?.correct ?? '–'}<span className="text-white/30 text-[12px] font-bold">/{playScore?.total ?? 3}</span></p>
+              <div className="flex items-end gap-1.5">
+                <p className="text-white text-[17px] font-black leading-none">{playScore?.correct ?? '–'}<span className="text-white/30 text-[11px] font-bold">/{playScore?.total ?? 3}</span></p>
                 {streak && streak > 0 ? (
-                  <span className="flex items-center gap-0.5 text-orange-400 text-[11px] font-bold leading-none">
-                    <Flame size={11} fill="currentColor" />
+                  <span className="flex items-center gap-0.5 text-orange-400 text-[10px] font-bold leading-none">
+                    <Flame size={10} fill="currentColor" />
                     {streak}
                   </span>
                 ) : null}
               </div>
-              <span className="flex items-center gap-1 text-purple-300/60 text-[9px] font-semibold">
-                <Share2 size={9} />
-                Share score
+              <span className="flex items-center gap-1 text-purple-300/60 text-[8px] font-semibold">
+                <Share2 size={8} />
+                Share
               </span>
             </button>
 
             {/* DAILY CALL — completed mini card */}
             <button
               onClick={() => setShowCallShare(true)}
-              className="rounded-xl px-3 py-2.5 flex flex-col gap-1.5 text-left"
+              className="rounded-xl px-2.5 py-2.5 flex flex-col gap-1.5 text-left"
               style={{
                 background: 'linear-gradient(150deg,#1e40af 0%,#1e3a8a 100%)',
                 border: '1px solid rgba(59,130,246,0.25)',
               }}
             >
-              <div className="flex items-center justify-between">
-                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-blue-300/60">Daily Call</span>
-                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-blue-300/80 flex items-center gap-0.5">
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[7px] font-bold uppercase tracking-[0.1em] text-blue-300/60 leading-tight">Daily Call</span>
+                <span className="text-blue-300/80 flex-shrink-0">
                   <Check size={9} strokeWidth={3} />
-                  Done
                 </span>
               </div>
-              <div className="flex items-end gap-2">
+              <div className="flex items-end gap-1.5">
                 <p className="text-white text-[13px] font-bold leading-none">Locked In</p>
                 {streak && streak > 0 ? (
-                  <span className="flex items-center gap-0.5 text-orange-400 text-[11px] font-bold leading-none">
-                    <Flame size={11} fill="currentColor" />
+                  <span className="flex items-center gap-0.5 text-orange-400 text-[10px] font-bold leading-none">
+                    <Flame size={10} fill="currentColor" />
                     {streak}
                   </span>
                 ) : null}
               </div>
-              <span className="flex items-center gap-1 text-blue-300/60 text-[9px] font-semibold">
-                <Share2 size={9} />
-                Share call
+              <span className="flex items-center gap-1 text-blue-300/60 text-[8px] font-semibold">
+                <Share2 size={8} />
+                Share
+              </span>
+            </button>
+
+            {/* eDNA — completed mini card */}
+            <button
+              onClick={() => { if (!dnaHeroAnswered) { setSwipeIndex(2); setShowDnaInCarousel(true); } }}
+              className="rounded-xl px-2.5 py-2.5 flex flex-col gap-1.5 text-left"
+              style={{
+                background: 'linear-gradient(150deg,#4c1d95 0%,#6d28d9 100%)',
+                border: '1px solid rgba(139,92,246,0.3)',
+              }}
+            >
+              <div className="flex items-center justify-between gap-1">
+                <span className="text-[7px] font-bold uppercase tracking-[0.1em] text-purple-300/70 leading-tight">eDNA</span>
+                {dnaHeroAnswered ? (
+                  <span className="text-purple-300/80 flex-shrink-0"><Check size={9} strokeWidth={3} /></span>
+                ) : (
+                  <span className="text-purple-400 flex-shrink-0"><ArrowRight size={9} /></span>
+                )}
+              </div>
+              <p className="text-white text-[12px] font-bold leading-tight">
+                {dnaHeroAnswered
+                  ? (dnaStats?.topGenre ? `Strong on ${dnaStats.topGenre}` : 'Done ✓')
+                  : 'Answer now'}
+              </p>
+              <span className="flex items-center gap-1 text-purple-300/60 text-[8px] font-semibold">
+                <Dna size={8} />
+                {dnaHeroAnswered ? 'Answered' : 'Tap to play'}
               </span>
             </button>
 
           </div>
-
-          {/* ENTERTAINMENT DNA — 3rd mini card (full width) */}
-          <button
-            onClick={() => { if (!dnaHeroAnswered) { setSwipeIndex(2); setShowDnaInCarousel(true); } }}
-            className="rounded-xl px-3 py-2.5 flex items-center justify-between text-left w-full"
-            style={{
-              background: 'linear-gradient(135deg,#4c1d95 0%,#6d28d9 60%,#7c3aed 100%)',
-              border: '1px solid rgba(139,92,246,0.3)',
-            }}
-          >
-            <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-purple-400/20 flex items-center justify-center flex-shrink-0">
-                <Dna size={12} className="text-purple-200" />
-              </div>
-              <div>
-                <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-purple-300/70">Entertainment DNA</span>
-                <p className="text-white text-[12px] font-semibold leading-tight">
-                  {dnaStats?.topGenre ? `Strong on ${dnaStats.topGenre}` : 'Answer today\'s question'}
-                </p>
-              </div>
-            </div>
-            {dnaHeroAnswered ? (
-              <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-purple-300/80 flex items-center gap-0.5 flex-shrink-0">
-                <Check size={9} strokeWidth={3} />
-                Done
-              </span>
-            ) : (
-              <span className="text-[8px] font-bold text-purple-400 flex items-center gap-0.5 flex-shrink-0">
-                Answer <ArrowRight size={9} />
-              </span>
-            )}
-          </button>
-
           <p className="text-center text-[10px] text-white/25 tracking-wide">Come back tomorrow to keep up your streak</p>
         </div>
       ) : (
