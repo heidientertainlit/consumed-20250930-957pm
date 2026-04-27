@@ -3346,37 +3346,59 @@ export default function Feed() {
       });
 
     // Within each group keep recency order; take only ONE post per media title
-    // (the most recent real-user post, or the first if all are personas)
+    // (the most recent non-persona post, or the first if all are personas)
     // Other raters for the same media are shown via relatedRatings inside UGCGroupCard
     const finalOrder: any[] = [];
     for (const group of sortedGroups) {
       group.sort((a: any, b: any) =>
         new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
       );
-      // Prefer a real (non-persona, non-self) user's post as the representative card
+      // Most-recent non-persona post wins; do NOT exclude the current user's own posts —
+      // they were being silently dropped when another user reviewed the same media.
       const representative =
-        group.find((p: any) => p.user?.id !== effectiveUserId && !p.user?.is_persona) ||
         group.find((p: any) => !p.user?.is_persona) ||
         group[0];
       finalOrder.push(representative);
     }
 
-    // PROMOTION: pull a small number of high-signal real-user ratings out of the
-    // carousel pool to show as standalone cards interleaved with play slots.
-    // Criteria: real user (not persona), most recent, one per author.
-    // Includes the current user's own posts so their rated add-to-list posts surface here.
+    // PROMOTION: pull a small number of high-signal ratings out of the carousel pool
+    // to show as standalone cards interleaved with play slots.
+    // Priority 1: the current user's OWN most-recent rating posts (pulled directly from
+    //   ratingItems, bypassing one-per-media dedup so they always surface).
+    // Priority 2: other real (non-persona) users, most recent, one per author.
     // Cap at 4 so play stays dominant in the feed.
     const MAX_PROMOTED = 4;
+    const seenAuthors = new Set<string>();
+    const promoted: any[] = [];
+
+    // Always surface the current user's own recent rating posts first (up to 2 slots)
+    if (effectiveUserId) {
+      const myOwnPosts = ratingItems
+        .filter((item: any) => (item.user?.id || item._rawPost?.user?.id) === effectiveUserId)
+        .sort((a: any, b: any) =>
+          new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
+        );
+      for (const item of myOwnPosts) {
+        if (promoted.length >= 2) break;
+        const authorId = item.user?.id || item._rawPost?.user?.id;
+        if (!authorId || seenAuthors.has(authorId + '-' + (item.mediaTitle || item.id))) continue;
+        seenAuthors.add(authorId + '-' + (item.mediaTitle || item.id));
+        if (!seenAuthors.has(authorId)) seenAuthors.add(authorId);
+        promoted.push(item);
+      }
+    }
+
+    // Fill remaining slots with the most-recent real (non-persona) users' posts
     const recencySorted = [...finalOrder].sort((a: any, b: any) =>
       new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
     );
-    const seenAuthors = new Set<string>();
-    const promoted: any[] = [];
+    const promotedIds = new Set(promoted.map((p: any) => p.id));
     for (const item of recencySorted) {
       if (promoted.length >= MAX_PROMOTED) break;
       const authorId = item.user?.id || item._rawPost?.user?.id;
       if (!authorId) continue;
       if (item.user?.is_persona || item._rawPost?.user?.is_persona) continue;
+      if (promotedIds.has(item.id)) continue;
       if (seenAuthors.has(authorId)) continue;
       seenAuthors.add(authorId);
       promoted.push(item);
