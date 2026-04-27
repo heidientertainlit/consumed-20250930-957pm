@@ -1990,10 +1990,21 @@ export function DailyHeroSection() {
                     </div>
                     {front && <p className="text-[12px] text-white/55 font-medium ml-0.5">Your answers build your profile</p>}
                   </div>
-                  <span className="flex items-center gap-1 bg-white/10 rounded-full px-1.5 py-0.5 border border-white/10">
-                    <Sparkles size={9} className="text-purple-300" />
-                    <span className="text-[8px] font-bold text-white/80">+5 pts</span>
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 bg-white/10 rounded-full px-1.5 py-0.5 border border-white/10">
+                      <Sparkles size={9} className="text-purple-300" />
+                      <span className="text-[8px] font-bold text-white/80">+5 pts</span>
+                    </span>
+                    {showDnaInCarousel && front && (
+                      <button
+                        onClick={() => setShowDnaInCarousel(false)}
+                        className="w-6 h-6 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
+                        title="Close"
+                      >
+                        <X size={11} className="text-white/70" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {front ? (
