@@ -1522,8 +1522,9 @@ export function DailyHeroSection() {
   });
 
   // ── Supabase fallback: verify Today's Play completion ──
-  // login_streaks.last_login is set to today whenever update_streak fires (after Today's Play completes).
-  // This is the canonical completion record — independent of which specific question IDs were shown.
+  // login_streaks.play_completed_date is set only by the update_streak action (called after all 3 trivia
+  // questions are answered). Unlike last_login, this is NOT set by submitAnswer for the Daily Call,
+  // so it accurately reflects Today's Play completion only — independent of question IDs shown.
   const { data: supabasePlayDone } = useQuery<boolean>({
     queryKey: ['daily-play-supabase-check', user?.id],
     queryFn: async () => {
@@ -1531,10 +1532,10 @@ export function DailyHeroSection() {
       const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local date
       const { data } = await supabase
         .from('login_streaks')
-        .select('last_login')
+        .select('play_completed_date')
         .eq('user_id', user.id)
         .maybeSingle();
-      return data?.last_login === today;
+      return data?.play_completed_date === today;
     },
     enabled: !!user?.id && !playCompleted,
     staleTime: 60_000,

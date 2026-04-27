@@ -207,14 +207,16 @@ serve(async (req) => {
           await supabaseAdmin.from('login_streaks').update({
             current_streak: currentStreak,
             longest_streak: longestStreak,
-            last_login: todayDate
+            last_login: todayDate,
+            play_completed_date: todayDate
           }).eq('user_id', user.id);
         } else {
           await supabaseAdmin.from('login_streaks').insert({
             user_id: user.id,
             current_streak: 1,
             longest_streak: 1,
-            last_login: todayDate
+            last_login: todayDate,
+            play_completed_date: todayDate
           });
         }
 
