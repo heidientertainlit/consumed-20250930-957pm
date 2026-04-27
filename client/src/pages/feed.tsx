@@ -1236,7 +1236,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 );
               })}
               {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
-              {hoverRating === 0 && ratingSubmitted && ratingValue > 0 && <span className="ml-1 text-xs text-yellow-600 font-medium">You rated {ratingValue}/5</span>}
+              {hoverRating === 0 && ratingSubmitted && ratingValue > 0 && (
+                <span className="ml-1 flex items-center gap-2">
+                  <span className="text-xs text-yellow-600 font-medium">You rated {ratingValue}/5</span>
+                  <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove</button>
+                </span>
+              )}
             </div>
           </div>
           {/* From your feed separator */}
