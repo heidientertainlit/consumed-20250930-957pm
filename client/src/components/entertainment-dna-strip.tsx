@@ -177,11 +177,20 @@ function CollapsedStrip({ state, streak, dnaProfile, onExpand }: {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-white text-sm font-semibold leading-snug truncate">{c.headline}</p>
-          {state === 5 && topGenre && (
-            <p className="text-purple-400 text-[11px] font-medium leading-tight mt-0.5">
-              You're strong on {topGenre}
-            </p>
-          )}
+          {state === 5 && topGenre && (() => {
+            const daySeed = parseInt(new Date().toISOString().slice(0, 10).replace(/-/g, ''), 10) % 97;
+            const phrases = [
+              `You're strong on ${topGenre}`,
+              `Your top category is ${topGenre}`,
+              `${topGenre} is your comfort zone`,
+              `Always returning to ${topGenre}`,
+              `${topGenre} never disappoints you`,
+            ];
+            const label = phrases[daySeed % phrases.length];
+            return (
+              <p className="text-purple-400 text-[11px] font-medium leading-tight mt-0.5">{label}</p>
+            );
+          })()}
         </div>
         <span className="text-purple-400 text-xs font-semibold whitespace-nowrap flex-shrink-0">{c.cta}</span>
       </div>
