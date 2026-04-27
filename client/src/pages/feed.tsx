@@ -3226,7 +3226,7 @@ export default function Feed() {
       // Filter out thought posts that have no rating AND no media — they're low-signal filler.
       // But keep thoughts that reference a specific media item (e.g. "Godzilla is my comfort watch").
       if (p.type === 'thought') return !!(p.rating && p.rating > 0) || !!p.mediaTitle;
-      return p.type === 'review' || p.type === 'rating' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment';
+      return p.type === 'review' || p.type === 'rating' || p.type === 'rate-review' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment';
     });
 
     // Group posts by user within 24-hour rolling windows.
