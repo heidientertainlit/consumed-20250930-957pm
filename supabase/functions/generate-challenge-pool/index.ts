@@ -353,6 +353,7 @@ QUESTION RULES:
 - Wrong answers must be plausible (not obviously wrong)
 - Question text should be a complete, clear sentence or question
 - No trick questions — the correct answer should be unambiguous
+- CRITICAL: Never write a question where the answer is simply the name of the subject itself (e.g. for a U2 trivia pool, never ask "Who won the Grammy for Album of the Year in 2006?" with "U2" as the answer — the pool title already tells them it's about U2). Every question must ask about a detail, fact, character, year, lyric, or event WITHIN the subject — not the subject's name.
 
 Return ONLY valid JSON in this exact structure:
 {
