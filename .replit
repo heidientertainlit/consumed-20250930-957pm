@@ -76,6 +76,10 @@ args = "Deploy: generate-trivia-polls"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
+args = "Deploy: generate-dna-moments"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
 args = "Deploy: gaming-search"
 
 [[workflows.workflow]]
@@ -160,6 +164,17 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx supabase functions deploy generate-trivia-polls --project-ref mahpgcogwpawvviapqza --use-api"
+
+[[workflows.workflow]]
+name = "Deploy: generate-dna-moments"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx supabase functions deploy generate-dna-moments --project-ref mahpgcogwpawvviapqza --use-api"
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [[workflows.workflow]]
 name = "Deploy: gaming-search"
