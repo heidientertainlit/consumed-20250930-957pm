@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import {
   Flame, CheckCircle, CheckCircle2, Circle, XCircle,
   Trophy, X, Loader2, Star, Users, Radio, Share2, Check,
@@ -1574,6 +1574,23 @@ export function DailyHeroSection() {
     enabled: !!user?.id,
   });
 
+  // ── DNA profile + answered count (for scorecard) ──
+  const { data: dnaStats } = useQuery<{ label: string | null; totalAnswered: number }>({
+    queryKey: ['hero-dna-stats', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return { label: null, totalAnswered: 0 };
+      const [profileRes, countRes] = await Promise.all([
+        supabase.from('dna_profiles').select('label').eq('user_id', user.id).maybeSingle(),
+        supabase.from('dna_moment_responses').select('moment_id', { count: 'exact', head: true }).eq('user_id', user.id),
+      ]);
+      return {
+        label: profileRes.data?.label ?? null,
+        totalAnswered: countRes.count ?? 0,
+      };
+    },
+    enabled: !!user?.id,
+  });
+
   const readyQuestions = questions.slice(0, 3);
   const hasTodaysPlay = readyQuestions.length >= 1;
   const hasDailyCall = !!dailyCall && (dailyCall.options?.length ?? 0) > 0;
@@ -1715,10 +1732,18 @@ export function DailyHeroSection() {
                     <span className="text-[8px] font-bold text-green-200">DONE</span>
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1 bg-white/10 rounded-full px-1.5 py-0.5 border border-white/5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]" style={{ animation: 'pulse 2s infinite' }} />
-                    <span className="text-[8px] font-bold text-white/80">LIVE</span>
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {front && (
+                      <span className="flex items-center gap-1 bg-purple-400/20 rounded-full px-1.5 py-0.5 border border-purple-400/30">
+                        <Sparkles size={8} className="text-purple-200" />
+                        <span className="text-[8px] font-bold text-purple-100">+{readyQuestions.length * 10} pts</span>
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1 bg-white/10 rounded-full px-1.5 py-0.5 border border-white/5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]" style={{ animation: 'pulse 2s infinite' }} />
+                      <span className="text-[8px] font-bold text-white/80">LIVE</span>
+                    </span>
+                  </div>
                 )}
               </div>
 
@@ -1770,7 +1795,7 @@ export function DailyHeroSection() {
               }}
             >
               <div className={`flex items-start justify-between ${front ? 'mb-4' : ''}`}>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-1.5">
                     <MessageCircle size={front ? 15 : 13} className="text-blue-300" />
                     <span className={`${front ? 'text-[13px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-blue-200`}>
@@ -1778,9 +1803,7 @@ export function DailyHeroSection() {
                     </span>
                   </div>
                   {front && (
-                    <span className="inline-flex items-center self-start px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-white/80 bg-white/15 border border-white/20">
-                      Cast Your Vote
-                    </span>
+                    <p className="text-[12px] text-white/55 font-medium ml-0.5">Cast your call on today's question</p>
                   )}
                 </div>
                 {callCompleted ? (
@@ -1789,10 +1812,18 @@ export function DailyHeroSection() {
                     <span className="text-[8px] font-bold text-green-200">DONE</span>
                   </span>
                 ) : (
-                  <span className="flex items-center gap-1 bg-white/10 rounded-full px-1.5 py-0.5 border border-white/5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]" style={{ animation: 'pulse 2s infinite' }} />
-                    <span className="text-[8px] font-bold text-white/80">LIVE</span>
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {front && (
+                      <span className="flex items-center gap-1 bg-blue-400/20 rounded-full px-1.5 py-0.5 border border-blue-400/30">
+                        <Sparkles size={8} className="text-blue-200" />
+                        <span className="text-[8px] font-bold text-blue-100">+{dailyCall?.points_reward ?? 10} pts</span>
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1 bg-white/10 rounded-full px-1.5 py-0.5 border border-white/5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]" style={{ animation: 'pulse 2s infinite' }} />
+                      <span className="text-[8px] font-bold text-white/80">LIVE</span>
+                    </span>
+                  </div>
                 )}
               </div>
 
@@ -1942,6 +1973,23 @@ export function DailyHeroSection() {
                         </div>
                       ) : dnaHeroResult && (
                         <div className="flex flex-col gap-2 animate-in fade-in duration-300">
+                          {/* Archetype scorecard */}
+                          <div className="flex items-center justify-between bg-white/10 rounded-xl px-3 py-2 border border-white/10">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-purple-400/30 flex items-center justify-center flex-shrink-0">
+                                <Dna size={11} className="text-purple-200" />
+                              </div>
+                              <span className="text-[11px] font-semibold text-white leading-tight">
+                                {dnaStats?.label ?? 'Building your DNA…'}
+                              </span>
+                            </div>
+                            <Link href="/entertainment-dna">
+                              <span className="text-[10px] text-purple-300 flex items-center gap-0.5 flex-shrink-0 ml-2">
+                                View DNA <ArrowRight size={9} />
+                              </span>
+                            </Link>
+                          </div>
+                          {/* Result bars */}
                           {[
                             { label: heroDnaMoment.optionA, pct: dnaHeroResult.optionAPercent },
                             { label: heroDnaMoment.optionB, pct: dnaHeroResult.optionBPercent },
@@ -1959,6 +2007,19 @@ export function DailyHeroSection() {
                               </div>
                             </div>
                           ))}
+                          {/* Stats row */}
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] text-purple-200/50 flex items-center gap-1">
+                              <Flame size={9} className="text-purple-300" />
+                              {dnaStats?.totalAnswered ?? 0} answered
+                            </span>
+                            <span className="text-[10px] text-purple-200/50">·</span>
+                            <span className="text-[10px] text-purple-200/50">{dnaHeroResult.total} responses</span>
+                            <span className="text-[10px] text-purple-200/50">·</span>
+                            <span className="text-[10px] text-green-300/70 flex items-center gap-1">
+                              <Sparkles size={8} /> +5 pts earned
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1979,9 +2040,6 @@ export function DailyHeroSection() {
                           <ArrowRight size={10} />
                           Back to Play
                         </button>
-                      )}
-                      {dnaHeroResult && (
-                        <span className="text-[10px] text-purple-200/40">{dnaHeroResult.total} responses</span>
                       )}
                     </div>
                   </>
