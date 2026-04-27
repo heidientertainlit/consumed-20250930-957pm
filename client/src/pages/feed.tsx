@@ -3391,10 +3391,17 @@ export default function Feed() {
     const seenAuthors = new Set<string>();
     const promoted: any[] = [];
 
-    // Always surface the current user's own recent rating posts first (up to 2 slots)
+    // Surface the current user's own rating posts first — but ONLY if posted within the last 30 minutes.
+    // After that window it naturally gets displaced by newer content (same as Facebook behaviour).
+    const THIRTY_MIN_MS = 30 * 60 * 1000;
     if (effectiveUserId) {
       const myOwnPosts = ratingItems
-        .filter((item: any) => (item.user?.id || item._rawPost?.user?.id) === effectiveUserId)
+        .filter((item: any) => {
+          const authorId = item.user?.id || item._rawPost?.user?.id;
+          if (authorId !== effectiveUserId) return false;
+          const postTime = new Date(item.timestamp || 0).getTime();
+          return Date.now() - postTime < THIRTY_MIN_MS;
+        })
         .sort((a: any, b: any) =>
           new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
         );
