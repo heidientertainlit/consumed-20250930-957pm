@@ -7,6 +7,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { copyLink } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
 interface PlayCardProps {
   game: any;
@@ -51,11 +52,6 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
   const { data: pollResults, isLoading: isPollResultsLoading, error: pollResultsError } = useQuery({
     queryKey: ['poll-results', game.id],
     queryFn: async () => {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
-      
       // Get vote counts
       const { data, error } = await supabase
         .from('user_predictions')
@@ -93,12 +89,6 @@ export default function PlayCard({ game, onComplete, compact = false }: PlayCard
 
   const submitMutation = useMutation({
     mutationFn: async (answer: string) => {
-      // Import Supabase client for direct DB access
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabaseUrl = 'https://mahpgcogwpawvviapqza.supabase.co';
-      const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1haHBnY29nd3Bhd3Z2aWFwcXphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxNTczOTMsImV4cCI6MjA2MTczMzM5M30.cv34J_2INF3_GExWw9zN1Vaa-AOFWI2Py02h0vAlW4c';
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
-      
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');

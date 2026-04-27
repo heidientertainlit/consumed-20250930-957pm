@@ -1,13 +1,9 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import { Loader2, Users, ListChecks, ChevronRight, Layers, Star, Gamepad2, BarChart3, Dna } from "lucide-react";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const TOOLS = [
   {

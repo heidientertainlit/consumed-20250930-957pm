@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
 import { useRoute } from "wouter";
-import { createClient } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_SUPABASE_ANON_KEY!
-);
+import { supabase } from "@/lib/supabase";
 
 interface DNAProfile {
   id: string;

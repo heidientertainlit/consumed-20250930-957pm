@@ -1,22 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import {
   Sparkles, Check, X, Clock, ArrowLeft, Loader2, Trash2, Pencil,
   ChevronDown, ChevronUp, Calendar, Star, Zap, Brain, Vote, Dna,
   RefreshCw, Send, ListChecks, TrendingUp, AlertCircle, Search, Link2, LinkIcon,
 } from "lucide-react";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 type Draft = {
   id: string;

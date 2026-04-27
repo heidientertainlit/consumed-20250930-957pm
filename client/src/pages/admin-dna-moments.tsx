@@ -1,17 +1,13 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import {
   ArrowLeft, Trash2, ToggleLeft, ToggleRight, Dna,
   CalendarDays, Loader2, Sparkles, Rss, Star, FileText, Clock, CheckCircle,
 } from "lucide-react";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const CATEGORY_LABELS: Record<string, string> = {
   consumption_style: "Consumption Style",

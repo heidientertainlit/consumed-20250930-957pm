@@ -6,6 +6,7 @@ import { MessageCircle, ArrowRight, Send, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import { supabase } from '@/lib/supabase';
 
 interface FeedbackDialogProps {
   isOpen: boolean;
@@ -27,11 +28,6 @@ export function FeedbackDialog({ isOpen, onClose }: FeedbackDialogProps) {
 
     setIsSubmitting(true);
     try {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
       try {
         const { error } = await supabase
           .from('beta_feedback')

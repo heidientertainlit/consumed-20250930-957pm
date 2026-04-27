@@ -1,21 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import {
   Sparkles, ArrowLeft, Loader2, Trash2, ChevronDown, ChevronUp,
   CheckCircle, Layers, Plus, Pencil, Save, RefreshCw, ArrowRight,
   Search, Link2, X, LinkIcon,
 } from "lucide-react";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 type Difficulty = "easy" | "medium" | "hard";
 
@@ -799,8 +795,7 @@ function PoolCard({ pool, onDelete, onAddQuestions }: { pool: PoolRow; onDelete:
   async function toggle() {
     if (counts) { setExpanded(e => !e); return; }
     setLoading(true);
-    const sb = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
-    const { data } = await sb.from("challenge_questions").select("difficulty").eq("pool_id", pool.id);
+    const { data } = await supabase.from("challenge_questions").select("difficulty").eq("pool_id", pool.id);
     const c: Record<string, number> = { easy: 0, medium: 0, hard: 0 };
     for (const row of data || []) if (row.difficulty in c) c[row.difficulty]++;
     setCounts(c);

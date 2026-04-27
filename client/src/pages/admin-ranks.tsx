@@ -1,21 +1,17 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import {
   ArrowLeft, Loader2, Trash2, Plus, ChevronUp, ChevronDown,
   CheckCircle, BarChart3, Sparkles, ChevronRight, RefreshCw,
   Calendar, FileText, Globe,
 } from "lucide-react";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const CATEGORIES = [
   { value: "movies", label: "Movies", emoji: "🎬" },
