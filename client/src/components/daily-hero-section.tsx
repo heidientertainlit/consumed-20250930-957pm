@@ -1522,20 +1522,21 @@ export function DailyHeroSection() {
   });
 
   // ── Supabase fallback: verify Today's Play completion ──
-  // If localStorage is empty (e.g. different domain, cleared cache), check Supabase directly.
-  const questionIds = questions.map(q => q.id);
+  // login_streaks.last_login is set to today whenever update_streak fires (after Today's Play completes).
+  // This is the canonical completion record — independent of which specific question IDs were shown.
   const { data: supabasePlayDone } = useQuery<boolean>({
-    queryKey: ['daily-play-supabase-check', user?.id, questionIds.join(',')],
+    queryKey: ['daily-play-supabase-check', user?.id],
     queryFn: async () => {
-      if (!user?.id || !questionIds.length) return false;
-      const { count } = await supabase
-        .from('user_predictions')
-        .select('*', { count: 'exact', head: true })
+      if (!user?.id) return false;
+      const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local date
+      const { data } = await supabase
+        .from('login_streaks')
+        .select('last_login')
         .eq('user_id', user.id)
-        .in('pool_id', questionIds);
-      return (count ?? 0) >= questionIds.length;
+        .maybeSingle();
+      return data?.last_login === today;
     },
-    enabled: !!user?.id && questionIds.length > 0 && !playCompleted,
+    enabled: !!user?.id && !playCompleted,
     staleTime: 60_000,
   });
 
