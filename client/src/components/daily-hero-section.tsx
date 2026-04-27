@@ -83,6 +83,7 @@ function ScoreShareCard({
   questions,
   username,
   dnaStats,
+  rankData,
   onClose,
 }: {
   open: boolean;
@@ -96,6 +97,7 @@ function ScoreShareCard({
   questions?: { category?: string | null }[];
   username?: string | null;
   dnaStats?: { label: string | null; totalAnswered: number; topGenre: string | null; allGenres: string[] } | null;
+  rankData?: { rank: number | null; percentile: number | null } | null;
   onClose: () => void;
 }) {
   const { toast } = useToast();
@@ -331,18 +333,37 @@ function ScoreShareCard({
                 <div className="h-px bg-gray-100 mb-4" />
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
+                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Weekly Rank</p>
+                    {rankData?.rank != null ? (
+                      <>
+                        <p className="text-[20px] font-black text-gray-900 leading-none">#{rankData.rank}</p>
+                        <p className="text-[8px] text-gray-400 mt-0.5">This week</p>
+                      </>
+                    ) : (
+                      <>
+                        <Lock size={16} className="text-gray-300 mt-1" />
+                        <p className="text-[8px] text-gray-400 mt-0.5">Play to unlock</p>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
                     <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Hot Streak</p>
                     <p className="text-[20px] font-black text-gray-900 leading-none">{streak ?? 0}</p>
                     <p className="text-[8px] text-gray-400 mt-0.5">day{(streak ?? 0) !== 1 ? 's' : ''}</p>
                   </div>
                   <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
-                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">DNA Q's</p>
-                    <p className="text-[20px] font-black text-gray-900 leading-none">{dnaStats?.totalAnswered ?? 0}</p>
-                    <p className="text-[8px] text-gray-400 mt-0.5">answered</p>
-                  </div>
-                  <div className="flex flex-col items-center rounded-xl p-2.5" style={{ background: '#f5f0ff' }}>
-                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Top Genre</p>
-                    <p className="text-[13px] font-black text-gray-900 leading-tight text-center mt-0.5">{dnaStats?.topGenre ?? '—'}</p>
+                    <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400 mb-1">Percentile</p>
+                    {rankData?.percentile != null ? (
+                      <>
+                        <p className="text-[20px] font-black text-gray-900 leading-none">{rankData.percentile}%</p>
+                        <p className="text-[8px] text-gray-400 mt-0.5">of players</p>
+                      </>
+                    ) : (
+                      <>
+                        <Lock size={16} className="text-gray-300 mt-1" />
+                        <p className="text-[8px] text-gray-400 mt-0.5">Play to unlock</p>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -1681,6 +1702,33 @@ export function DailyHeroSection() {
     enabled: !!user?.id,
   });
 
+  // ── Trivia rank + percentile (for scorecard) ──
+  const { data: rankData } = useQuery<{ rank: number | null; percentile: number | null }>({
+    queryKey: ['hero-rank-data', user?.id],
+    queryFn: async () => {
+      if (!user?.id || !session?.access_token) return { rank: null, percentile: null };
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/get-leaderboards?category=trivia&scope=global`, {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) return { rank: null, percentile: null };
+        const data = await res.json();
+        const entries: any[] = data?.categories?.trivia ?? [];
+        if (!entries.length) return { rank: null, percentile: null };
+        const myEntry = entries.find((e: any) => e.user_id === user.id);
+        if (!myEntry) return { rank: null, percentile: null };
+        const rank = myEntry.rank;
+        const total = entries.length;
+        const percentile = Math.round(((total - rank) / total) * 100);
+        return { rank, percentile };
+      } catch {
+        return { rank: null, percentile: null };
+      }
+    },
+    enabled: !!user?.id && !!session?.access_token,
+    staleTime: 300000,
+  });
+
   const readyQuestions = questions.slice(0, 3);
   const hasTodaysPlay = readyQuestions.length >= 1;
   const hasDailyCall = !!dailyCall && (dailyCall.options?.length ?? 0) > 0;
@@ -2352,6 +2400,7 @@ export function DailyHeroSection() {
         streak={streak}
         userId={user?.id}
         dnaStats={dnaStats ?? null}
+        rankData={rankData ?? null}
         onClose={() => setShowCallShare(false)}
       />
     </>
