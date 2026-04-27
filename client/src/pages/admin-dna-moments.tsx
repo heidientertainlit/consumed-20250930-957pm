@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import {
   ArrowLeft, Plus, Trash2, ToggleLeft, ToggleRight, Dna,
-  ChevronDown, ChevronUp, Loader2, CheckCircle2,
+  ChevronDown, ChevronUp, Loader2, CheckCircle2, CalendarDays, X,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -153,6 +153,7 @@ type DnaMoment = {
   option_b: string;
   category: string;
   is_active: boolean;
+  display_date: string | null;
   created_at: string;
 };
 
@@ -165,8 +166,10 @@ export default function AdminDnaMomentsPage() {
   const [activeTab, setActiveTab] = useState<"questions" | "add" | "bank">("questions");
   const [filterCategory, setFilterCategory] = useState("all");
   const [expandedBank, setExpandedBank] = useState<string | null>(null);
+  const [editingDateId, setEditingDateId] = useState<string | null>(null);
+  const [editingDateValue, setEditingDateValue] = useState("");
 
-  const [newQ, setNewQ] = useState({ question_text: "", option_a: "", option_b: "", category: "consumption_style" });
+  const [newQ, setNewQ] = useState({ question_text: "", option_a: "", option_b: "", category: "consumption_style", display_date: "" });
 
   const { data: moments = [], isLoading } = useQuery<DnaMoment[]>({
     queryKey: ["admin-dna-moments"],
@@ -202,17 +205,35 @@ export default function AdminDnaMomentsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (q: { question_text: string; option_a: string; option_b: string; category: string }) => {
-      const { error } = await supabase.from("dna_moments").insert({ ...q, is_active: true });
+    mutationFn: async (q: { question_text: string; option_a: string; option_b: string; category: string; display_date: string }) => {
+      const { display_date: dateStr, ...rest } = q;
+      const { error } = await supabase.from("dna_moments").insert({
+        ...rest,
+        is_active: true,
+        display_date: dateStr ? new Date(dateStr).toISOString() : null,
+      });
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-dna-moments"] });
-      setNewQ({ question_text: "", option_a: "", option_b: "", category: "consumption_style" });
+      setNewQ({ question_text: "", option_a: "", option_b: "", category: "consumption_style", display_date: "" });
       toast({ title: "Added", description: "Question created and active" });
       setActiveTab("questions");
     },
     onError: () => toast({ title: "Error", description: "Failed to create", variant: "destructive" }),
+  });
+
+  const setDateMutation = useMutation({
+    mutationFn: async ({ id, display_date }: { id: string; display_date: string | null }) => {
+      const { error } = await supabase.from("dna_moments").update({ display_date }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-dna-moments"] });
+      setEditingDateId(null);
+      setEditingDateValue("");
+    },
+    onError: () => toast({ title: "Error", description: "Failed to update date", variant: "destructive" }),
   });
 
   const quickAddMutation = useMutation({
@@ -226,7 +247,14 @@ export default function AdminDnaMomentsPage() {
 
   const existingQuestions = new Set(moments.map(m => m.question_text.toLowerCase().trim()));
 
-  const filtered = filterCategory === "all" ? moments : moments.filter(m => m.category === filterCategory);
+  const filtered = (filterCategory === "all" ? moments : moments.filter(m => m.category === filterCategory))
+    .slice()
+    .sort((a, b) => {
+      if (a.display_date && !b.display_date) return -1;
+      if (!a.display_date && b.display_date) return 1;
+      if (a.display_date && b.display_date) return a.display_date.localeCompare(b.display_date);
+      return 0;
+    });
   const usedCategories = Array.from(new Set(moments.map(m => m.category)));
 
   return (
@@ -296,14 +324,45 @@ export default function AdminDnaMomentsPage() {
                 <p>No questions yet. Add some from the Question Bank.</p>
               </div>
             ) : (
-              filtered.map(m => (
+              filtered.map(m => {
+                const featuredDate = m.display_date
+                  ? new Date(m.display_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                  : null;
+                const isEditingDate = editingDateId === m.id;
+                return (
                 <div key={m.id} className={`rounded-2xl border p-4 transition-all ${m.is_active ? "bg-gray-900/60 border-gray-700/50" : "bg-gray-900/30 border-gray-800/50 opacity-60"}`}>
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-white font-medium text-sm leading-snug">{m.question_text}</p>
-                      <span className="text-[10px] text-purple-400/70 font-medium mt-0.5 block">{CATEGORY_LABELS[m.category] || m.category}</span>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className="text-[10px] text-purple-400/70 font-medium">{CATEGORY_LABELS[m.category] || m.category}</span>
+                        {featuredDate && !isEditingDate && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-300 bg-amber-900/30 border border-amber-700/40 px-1.5 py-0.5 rounded-full">
+                            <CalendarDays size={9} />
+                            Featured {featuredDate}
+                          </span>
+                        )}
+                        {!featuredDate && !isEditingDate && (
+                          <span className="text-[10px] text-gray-600 font-medium">Feed only</span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => {
+                          if (isEditingDate) {
+                            setEditingDateId(null);
+                            setEditingDateValue("");
+                          } else {
+                            setEditingDateId(m.id);
+                            setEditingDateValue(m.display_date ? m.display_date.slice(0, 10) : "");
+                          }
+                        }}
+                        className={`transition-colors ${isEditingDate ? "text-amber-400" : "text-gray-500 hover:text-amber-400"}`}
+                        title="Set featured date"
+                      >
+                        <CalendarDays size={16} />
+                      </button>
                       <button
                         onClick={() => toggleMutation.mutate({ id: m.id, is_active: !m.is_active })}
                         className="text-gray-400 hover:text-purple-400 transition-colors"
@@ -321,12 +380,47 @@ export default function AdminDnaMomentsPage() {
                       </button>
                     </div>
                   </div>
+
+                  {/* Inline date picker */}
+                  {isEditingDate && (
+                    <div className="mb-3 flex items-center gap-2 bg-gray-800/60 rounded-xl p-2.5">
+                      <CalendarDays size={14} className="text-amber-400 flex-shrink-0" />
+                      <input
+                        type="date"
+                        value={editingDateValue}
+                        onChange={e => setEditingDateValue(e.target.value)}
+                        className="flex-1 bg-transparent text-white text-xs focus:outline-none"
+                      />
+                      <button
+                        onClick={() => setDateMutation.mutate({
+                          id: m.id,
+                          display_date: editingDateValue ? new Date(editingDateValue).toISOString() : null,
+                        })}
+                        disabled={setDateMutation.isPending}
+                        className="text-[11px] font-semibold bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-1 rounded-lg transition-colors"
+                      >
+                        {editingDateValue ? "Set" : "Clear"}
+                      </button>
+                      {m.display_date && (
+                        <button
+                          onClick={() => setDateMutation.mutate({ id: m.id, display_date: null })}
+                          disabled={setDateMutation.isPending}
+                          className="text-gray-400 hover:text-red-400 transition-colors"
+                          title="Remove featured date"
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex gap-2">
                     <span className="text-xs text-gray-500 bg-gray-800/60 px-2.5 py-1 rounded-lg flex-1 truncate">A: {m.option_a}</span>
                     <span className="text-xs text-gray-500 bg-gray-800/60 px-2.5 py-1 rounded-lg flex-1 truncate">B: {m.option_b}</span>
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         )}
@@ -376,6 +470,18 @@ export default function AdminDnaMomentsPage() {
                   <option key={c.category} value={c.category}>{c.label}</option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block flex items-center gap-1">
+                <CalendarDays size={11} />
+                Featured Date <span className="text-gray-600 ml-1">(optional — leave blank to show in feed randomly)</span>
+              </label>
+              <input
+                type="date"
+                value={newQ.display_date}
+                onChange={e => setNewQ(q => ({ ...q, display_date: e.target.value }))}
+                className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500"
+              />
             </div>
             <Button
               onClick={() => createMutation.mutate(newQ)}
