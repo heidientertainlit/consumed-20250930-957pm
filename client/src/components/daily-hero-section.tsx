@@ -47,11 +47,13 @@ const getStoredUserId = (): string => {
   } catch { return 'anon'; }
 };
 
+const getLocalDateStr = () => new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local date, never UTC
+
 const getTodayPlayKey = (userId?: string) =>
-  `todays-play-${new Date().toISOString().split('T')[0]}-${userId ?? getStoredUserId()}`;
+  `todays-play-${getLocalDateStr()}-${userId ?? getStoredUserId()}`;
 
 const getDailyCallKey = (userId?: string) =>
-  `daily-call-fallback-${new Date().toISOString().split('T')[0]}-${userId ?? getStoredUserId()}`;
+  `daily-call-fallback-${getLocalDateStr()}-${userId ?? getStoredUserId()}`;
 
 // Truncate text to N words then "…"
 function truncateWords(text: string, maxChars = 28): string {
@@ -1382,8 +1384,7 @@ export function DailyHeroSection() {
       const s = localStorage.getItem(getTodayPlayKey());
       if (!s) return null;
       const d = JSON.parse(s);
-      const today = new Date().toISOString().split('T')[0];
-      return d.completed && d.date === today && d.answers ? d.answers : null;
+      return d.completed && d.answers ? d.answers : null;
     } catch { return null; }
   });
   const [playScore, setPlayScore] = useState<PlayScore | null>(() => {
@@ -1391,7 +1392,7 @@ export function DailyHeroSection() {
       const s = localStorage.getItem(getTodayPlayKey());
       if (!s) return null;
       const d = JSON.parse(s);
-      if (d.completed && d.date === new Date().toISOString().split('T')[0]) return d.score ?? null;
+      if (d.completed) return d.score ?? null;
       return null;
     } catch { return null; }
   });
@@ -1564,7 +1565,7 @@ export function DailyHeroSection() {
 
   useEffect(() => {
     if (!supabasePlayDone || playCompleted) return;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateStr();
     setPlayCompleted(true);
     // Backfill localStorage so future loads are instant
     try {
@@ -1595,7 +1596,7 @@ export function DailyHeroSection() {
 
   useEffect(() => {
     if (!supabaseCallData?.done || callCompleted) return;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateStr();
     setCallCompleted(true);
     if (supabaseCallData.answer) setCallAnswer(supabaseCallData.answer);
     // Backfill localStorage
