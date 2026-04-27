@@ -811,6 +811,9 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
             
             return (
               <div key={item.id} ref={(el) => { slideRefs.current[idx] = el; }} className="flex-shrink-0 w-full snap-center h-auto relative">
+                {answered && item.showTag && (
+                  <p className="text-[11px] font-bold text-purple-600 uppercase tracking-wider mb-1">{item.showTag}</p>
+                )}
                 <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{item.question}</h3>
                 
                 {!answered ? (
