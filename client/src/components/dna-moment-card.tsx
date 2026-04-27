@@ -74,6 +74,7 @@ export function DnaMomentCard() {
       const { data: allMoments, error: momentsError } = await supabase
         .from('dna_moments')
         .select('*')
+        .in('display_type', ['feed', 'both'])
         .order('created_at', { ascending: true });
       
       if (momentsError || !allMoments) {

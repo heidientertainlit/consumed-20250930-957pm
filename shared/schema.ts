@@ -91,6 +91,7 @@ export const dnaMoments = pgTable("dna_moments", {
   category: text("category").notNull(), // genre, habit, preference, personality
   isActive: boolean("is_active").notNull().default(true),
   displayDate: timestamp("display_date"), // optional: for daily rotation
+  displayType: text("display_type").default('feed'), // 'feed' | 'featured' | 'both'
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

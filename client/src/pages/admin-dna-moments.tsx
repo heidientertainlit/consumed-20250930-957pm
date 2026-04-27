@@ -9,14 +9,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import {
   ArrowLeft, Plus, Trash2, ToggleLeft, ToggleRight, Dna,
-  ChevronDown, ChevronUp, Loader2, CheckCircle2, CalendarDays, X,
+  ChevronDown, ChevronUp, Loader2, CheckCircle2, CalendarDays, X, Sparkles, Rss, Star,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// ── Full question bank from Entertainment DNA design doc ──
 const QUESTION_BANK: { category: string; label: string; questions: { q: string; a: string; b: string }[] }[] = [
   {
     category: "consumption_style", label: "Consumption Style",
@@ -154,22 +153,36 @@ type DnaMoment = {
   category: string;
   is_active: boolean;
   display_date: string | null;
+  display_type: string | null;
   created_at: string;
+};
+
+const DISPLAY_TYPE_LABELS: Record<string, { label: string; color: string; icon: any }> = {
+  feed: { label: "Feed", color: "text-blue-400 bg-blue-900/30 border-blue-700/40", icon: Rss },
+  featured: { label: "Featured", color: "text-amber-300 bg-amber-900/30 border-amber-700/40", icon: Star },
+  both: { label: "Feed + Featured", color: "text-purple-400 bg-purple-900/30 border-purple-700/40", icon: Sparkles },
 };
 
 export default function AdminDnaMomentsPage() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { session } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState<"questions" | "add" | "bank">("questions");
+  const [activeTab, setActiveTab] = useState<"questions" | "add" | "bank" | "generate">("questions");
   const [filterCategory, setFilterCategory] = useState("all");
   const [expandedBank, setExpandedBank] = useState<string | null>(null);
   const [editingDateId, setEditingDateId] = useState<string | null>(null);
   const [editingDateValue, setEditingDateValue] = useState("");
 
-  const [newQ, setNewQ] = useState({ question_text: "", option_a: "", option_b: "", category: "consumption_style", display_date: "" });
+  const [newQ, setNewQ] = useState({ question_text: "", option_a: "", option_b: "", category: "consumption_style", display_date: "", display_type: "feed" });
+
+  // Generate state
+  const [genCategory, setGenCategory] = useState("consumption_style");
+  const [genCount, setGenCount] = useState(5);
+  const [genDisplayType, setGenDisplayType] = useState("feed");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [lastGenerated, setLastGenerated] = useState<DnaMoment[]>([]);
 
   const { data: moments = [], isLoading } = useQuery<DnaMoment[]>({
     queryKey: ["admin-dna-moments"],
@@ -205,7 +218,7 @@ export default function AdminDnaMomentsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (q: { question_text: string; option_a: string; option_b: string; category: string; display_date: string }) => {
+    mutationFn: async (q: typeof newQ) => {
       const { display_date: dateStr, ...rest } = q;
       const { error } = await supabase.from("dna_moments").insert({
         ...rest,
@@ -216,7 +229,7 @@ export default function AdminDnaMomentsPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-dna-moments"] });
-      setNewQ({ question_text: "", option_a: "", option_b: "", category: "consumption_style", display_date: "" });
+      setNewQ({ question_text: "", option_a: "", option_b: "", category: "consumption_style", display_date: "", display_type: "feed" });
       toast({ title: "Added", description: "Question created and active" });
       setActiveTab("questions");
     },
@@ -236,14 +249,51 @@ export default function AdminDnaMomentsPage() {
     onError: () => toast({ title: "Error", description: "Failed to update date", variant: "destructive" }),
   });
 
+  const setDisplayTypeMutation = useMutation({
+    mutationFn: async ({ id, display_type }: { id: string; display_type: string }) => {
+      const { error } = await supabase.from("dna_moments").update({ display_type }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-dna-moments"] }),
+    onError: () => toast({ title: "Error", description: "Failed to update display type", variant: "destructive" }),
+  });
+
   const quickAddMutation = useMutation({
     mutationFn: async (q: { question_text: string; option_a: string; option_b: string; category: string }) => {
-      const { error } = await supabase.from("dna_moments").insert({ ...q, is_active: true });
+      const { error } = await supabase.from("dna_moments").insert({ ...q, is_active: true, display_type: 'feed' });
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-dna-moments"] }),
     onError: () => toast({ title: "Error", description: "Failed to add", variant: "destructive" }),
   });
+
+  const handleGenerate = async () => {
+    if (!session?.access_token) return;
+    setIsGenerating(true);
+    setLastGenerated([]);
+    try {
+      const res = await fetch(
+        `${supabaseUrl}/functions/v1/generate-dna-moments`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ category: genCategory, count: genCount, display_type: genDisplayType }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Generation failed');
+      setLastGenerated(data.questions || []);
+      qc.invalidateQueries({ queryKey: ["admin-dna-moments"] });
+      toast({ title: `Generated ${data.generated} questions`, description: `Added to ${DISPLAY_TYPE_LABELS[genDisplayType]?.label || genDisplayType} slot` });
+    } catch (err: any) {
+      toast({ title: "Generation failed", description: err.message, variant: "destructive" });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const existingQuestions = new Set(moments.map(m => m.question_text.toLowerCase().trim()));
 
@@ -270,24 +320,24 @@ export default function AdminDnaMomentsPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">DNA Moments</h1>
-              <p className="text-xs text-gray-500">{moments.length} questions · {moments.filter(m => m.is_active).length} active</p>
+              <p className="text-xs text-gray-500">{moments.length} questions · {moments.filter(m => m.is_active).length} active · {moments.filter(m => m.display_type === 'featured' || m.display_type === 'both').length} featured</p>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6">
-          {(["questions", "add", "bank"] as const).map(tab => (
+        <div className="flex gap-2 mb-6 flex-wrap">
+          {(["questions", "generate", "add", "bank"] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                 activeTab === tab
-                  ? "bg-purple-600 text-white"
+                  ? tab === "generate" ? "bg-violet-600 text-white" : "bg-purple-600 text-white"
                   : "bg-gray-800/60 text-gray-400 hover:text-white hover:bg-gray-800"
               }`}
             >
-              {tab === "questions" ? "All Questions" : tab === "add" ? "Add Custom" : "Question Bank"}
+              {tab === "questions" ? "All Questions" : tab === "generate" ? "✨ Generate" : tab === "add" ? "Add Custom" : "Question Bank"}
             </button>
           ))}
         </div>
@@ -295,7 +345,6 @@ export default function AdminDnaMomentsPage() {
         {/* ── Questions Tab ── */}
         {activeTab === "questions" && (
           <div className="space-y-3">
-            {/* Category filter */}
             <div className="flex gap-2 flex-wrap mb-4">
               <button
                 onClick={() => setFilterCategory("all")}
@@ -321,7 +370,7 @@ export default function AdminDnaMomentsPage() {
             ) : filtered.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
                 <Dna size={32} className="mx-auto mb-3 opacity-30" />
-                <p>No questions yet. Add some from the Question Bank.</p>
+                <p>No questions yet. Add some from the Question Bank or Generate with AI.</p>
               </div>
             ) : (
               filtered.map(m => {
@@ -329,21 +378,33 @@ export default function AdminDnaMomentsPage() {
                   ? new Date(m.display_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
                   : null;
                 const isEditingDate = editingDateId === m.id;
+                const dt = m.display_type || 'feed';
+                const dtInfo = DISPLAY_TYPE_LABELS[dt] || DISPLAY_TYPE_LABELS.feed;
+                const DtIcon = dtInfo.icon;
                 return (
                 <div key={m.id} className={`rounded-2xl border p-4 transition-all ${m.is_active ? "bg-gray-900/60 border-gray-700/50" : "bg-gray-900/30 border-gray-800/50 opacity-60"}`}>
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-white font-medium text-sm leading-snug">{m.question_text}</p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         <span className="text-[10px] text-purple-400/70 font-medium">{CATEGORY_LABELS[m.category] || m.category}</span>
+                        {/* Display type badge — click to cycle */}
+                        <button
+                          onClick={() => {
+                            const cycle: Record<string, string> = { feed: 'featured', featured: 'both', both: 'feed' };
+                            setDisplayTypeMutation.mutate({ id: m.id, display_type: cycle[dt] || 'feed' });
+                          }}
+                          className={`inline-flex items-center gap-1 text-[10px] font-semibold border px-1.5 py-0.5 rounded-full transition-all hover:opacity-80 ${dtInfo.color}`}
+                          title="Click to cycle: Feed → Featured → Both"
+                        >
+                          <DtIcon size={9} />
+                          {dtInfo.label}
+                        </button>
                         {featuredDate && !isEditingDate && (
                           <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-300 bg-amber-900/30 border border-amber-700/40 px-1.5 py-0.5 rounded-full">
                             <CalendarDays size={9} />
-                            Featured {featuredDate}
+                            {featuredDate}
                           </span>
-                        )}
-                        {!featuredDate && !isEditingDate && (
-                          <span className="text-[10px] text-gray-600 font-medium">Feed only</span>
                         )}
                       </div>
                     </div>
@@ -371,9 +432,7 @@ export default function AdminDnaMomentsPage() {
                         {m.is_active ? <ToggleRight size={22} className="text-purple-400" /> : <ToggleLeft size={22} />}
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm("Delete this question?")) deleteMutation.mutate(m.id);
-                        }}
+                        onClick={() => { if (confirm("Delete this question?")) deleteMutation.mutate(m.id); }}
                         className="text-gray-600 hover:text-red-400 transition-colors"
                       >
                         <Trash2 size={15} />
@@ -381,7 +440,6 @@ export default function AdminDnaMomentsPage() {
                     </div>
                   </div>
 
-                  {/* Inline date picker */}
                   {isEditingDate && (
                     <div className="mb-3 flex items-center gap-2 bg-gray-800/60 rounded-xl p-2.5">
                       <CalendarDays size={14} className="text-amber-400 flex-shrink-0" />
@@ -406,7 +464,6 @@ export default function AdminDnaMomentsPage() {
                           onClick={() => setDateMutation.mutate({ id: m.id, display_date: null })}
                           disabled={setDateMutation.isPending}
                           className="text-gray-400 hover:text-red-400 transition-colors"
-                          title="Remove featured date"
                         >
                           <X size={14} />
                         </button>
@@ -421,6 +478,101 @@ export default function AdminDnaMomentsPage() {
                 </div>
                 );
               })
+            )}
+          </div>
+        )}
+
+        {/* ── Generate Tab ── */}
+        {activeTab === "generate" && (
+          <div className="space-y-5">
+            <div className="bg-violet-950/40 border border-violet-700/40 rounded-2xl p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Sparkles size={16} className="text-violet-400" />
+                <h2 className="text-base font-semibold text-white">AI Question Generator</h2>
+              </div>
+              <p className="text-xs text-gray-400 mb-5">
+                Generates fresh DNA Moment questions using your Entertainment DNA rules — questions that reveal consumption behavior, taste identity, and media habits.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-gray-400 mb-1.5 block">Category</label>
+                  <select
+                    value={genCategory}
+                    onChange={e => setGenCategory(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 text-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-violet-500"
+                  >
+                    {QUESTION_BANK.map(c => (
+                      <option key={c.category} value={c.category}>{c.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-400 mb-1.5 block">Number of questions</label>
+                  <div className="flex gap-2">
+                    {[3, 5, 7, 10].map(n => (
+                      <button
+                        key={n}
+                        onClick={() => setGenCount(n)}
+                        className={`flex-1 py-2 rounded-xl text-sm font-semibold transition-all ${genCount === n ? "bg-violet-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs text-gray-400 mb-1.5 block">Display slot</label>
+                  <div className="flex gap-2">
+                    {(["feed", "featured", "both"] as const).map(dt => {
+                      const info = DISPLAY_TYPE_LABELS[dt];
+                      const Icon = info.icon;
+                      return (
+                        <button
+                          key={dt}
+                          onClick={() => setGenDisplayType(dt)}
+                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1 ${genDisplayType === dt ? "bg-violet-600 text-white border border-violet-500" : "bg-gray-800 text-gray-400 hover:bg-gray-700 border border-transparent"}`}
+                        >
+                          <Icon size={11} />
+                          {info.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[10px] text-gray-600 mt-1.5">
+                    Feed = shown inline in social feed · Featured = big daily card (like Daily Call) · Both = shown everywhere
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  className="w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold"
+                >
+                  {isGenerating ? (
+                    <><Loader2 size={16} className="animate-spin mr-2" /> Generating with AI...</>
+                  ) : (
+                    <><Sparkles size={16} className="mr-2" /> Generate {genCount} Questions</>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {lastGenerated.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500 font-medium">Just generated — now active in your library:</p>
+                {lastGenerated.map((q: any) => (
+                  <div key={q.id} className="bg-gray-900/60 border border-violet-700/30 rounded-xl p-3">
+                    <p className="text-white text-sm font-medium">{q.question_text}</p>
+                    <div className="flex gap-2 mt-2">
+                      <span className="text-xs text-gray-500 bg-gray-800/60 px-2 py-0.5 rounded truncate">A: {q.option_a}</span>
+                      <span className="text-xs text-gray-500 bg-gray-800/60 px-2 py-0.5 rounded truncate">B: {q.option_b}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
@@ -472,9 +624,28 @@ export default function AdminDnaMomentsPage() {
               </select>
             </div>
             <div>
+              <label className="text-xs text-gray-400 mb-1 block">Display Slot</label>
+              <div className="flex gap-2">
+                {(["feed", "featured", "both"] as const).map(dt => {
+                  const info = DISPLAY_TYPE_LABELS[dt];
+                  const Icon = info.icon;
+                  return (
+                    <button
+                      key={dt}
+                      onClick={() => setNewQ(q => ({ ...q, display_type: dt }))}
+                      className={`flex-1 py-2 px-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1 ${newQ.display_type === dt ? "bg-purple-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
+                    >
+                      <Icon size={11} />
+                      {info.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div>
               <label className="text-xs text-gray-400 mb-1 block flex items-center gap-1">
                 <CalendarDays size={11} />
-                Featured Date <span className="text-gray-600 ml-1">(optional — leave blank to show in feed randomly)</span>
+                Featured Date <span className="text-gray-600 ml-1">(optional)</span>
               </label>
               <input
                 type="date"
@@ -497,7 +668,7 @@ export default function AdminDnaMomentsPage() {
         {/* ── Question Bank Tab ── */}
         {activeTab === "bank" && (
           <div className="space-y-3">
-            <p className="text-xs text-gray-500 mb-4">Click any question to add it. Questions already in your library are marked.</p>
+            <p className="text-xs text-gray-500 mb-4">Click any question to add it to the feed. Questions already in your library are marked.</p>
             {QUESTION_BANK.map(cat => (
               <div key={cat.category} className="bg-gray-900/60 border border-gray-700/40 rounded-2xl overflow-hidden">
                 <button
