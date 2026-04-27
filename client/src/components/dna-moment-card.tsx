@@ -189,6 +189,23 @@ export function DnaMomentCard() {
     }
   };
 
+  const handleSkip = (momentId: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    const key = `dna-skipped-${today}`;
+    try {
+      const skipped: string[] = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!skipped.includes(momentId)) {
+        skipped.push(momentId);
+        localStorage.setItem(key, JSON.stringify(skipped));
+      }
+    } catch {}
+    if (data?.moments && currentIndex < data.moments.length - 1) {
+      scrollToNext();
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['dna-moments-carousel', session?.user?.id] });
+    }
+  };
+
   const scrollToPrev = () => {
     if (scrollRef.current && currentIndex > 0) {
       const cardWidth = scrollRef.current.children[0]?.clientWidth || 280;
@@ -339,6 +356,12 @@ export function DnaMomentCard() {
                       Submit ({selected.length} selected)
                     </button>
                   )}
+                  <button
+                    onClick={() => handleSkip(moment.id)}
+                    className="text-center text-[11px] text-gray-400 hover:text-gray-600 transition-colors pt-1"
+                  >
+                    Skip
+                  </button>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2 animate-in fade-in duration-300">

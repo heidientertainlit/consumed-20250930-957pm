@@ -6,7 +6,7 @@ import {
   Trophy, X, Loader2, Star, Users, Radio, Share2, Check,
   Film, Tv, Music, BookOpen, Mic2, Gamepad2,
   Zap, ArrowRight, Sparkles, MessageCircle,
-  ChevronRight, ChevronDown, Lock,
+  ChevronRight, ChevronDown, Lock, Dna,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -1376,8 +1376,13 @@ export function DailyHeroSection() {
     } catch { return false; }
   });
 
+  // ── DNA Moment (3rd hero card) state ──
+  const [dnaHeroAnswered, setDnaHeroAnswered] = useState(false);
+  const [dnaHeroAnswering, setDnaHeroAnswering] = useState(false);
+  const [dnaHeroResult, setDnaHeroResult] = useState<{ optionAPercent: number; optionBPercent: number; total: number } | null>(null);
+
   // ── Swipe / deck navigation ──
-  const [swipeIndex, setSwipeIndex] = useState(0); // 0 = Today's Play front, 1 = Daily Call front
+  const [swipeIndex, setSwipeIndex] = useState(0); // 0 = Today's Play, 1 = Daily Call, 2 = DNA Moment
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef(0);
@@ -1415,10 +1420,11 @@ export function DailyHeroSection() {
     } catch { /* ignore */ }
   }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-promote Daily Call to front once Today's Play is completed
+  // Auto-promote: play done → Daily Call; both done → DNA Moment
   useEffect(() => {
-    if (playCompleted && !callCompleted) setSwipeIndex(1);
-  }, [playCompleted]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (playCompleted && callCompleted) setSwipeIndex(2);
+    else if (playCompleted && !callCompleted) setSwipeIndex(1);
+  }, [playCompleted, callCompleted]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Fetch trivia questions ──
   const { data: questions = [] } = useQuery<TriviaQuestion[]>({
@@ -1509,6 +1515,33 @@ export function DailyHeroSection() {
       return count ?? 0;
     },
     enabled: !!dailyCall?.id,
+  });
+
+  // ── DNA Moment for hero card ──
+  const { data: heroDnaMoment } = useQuery<{ id: string; questionText: string; optionA: string; optionB: string } | null>({
+    queryKey: ['hero-dna-moment', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data: answered } = await supabase
+        .from('dna_moment_responses')
+        .select('moment_id')
+        .eq('user_id', user.id);
+      const answeredIds = new Set((answered || []).map((r: any) => r.moment_id));
+      const today = new Date().toISOString().split('T')[0];
+      let skipped: string[] = [];
+      try { skipped = JSON.parse(localStorage.getItem(`dna-hero-skipped-${today}`) || '[]'); } catch {}
+      const excluded = new Set([...answeredIds, ...skipped]);
+      const { data: moments } = await supabase
+        .from('dna_moments')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+      const available = (moments || []).filter((m: any) => !excluded.has(m.id));
+      if (!available.length) return null;
+      const m = available[0];
+      return { id: m.id, questionText: m.question_text, optionA: m.option_a, optionB: m.option_b };
+    },
+    enabled: !!user?.id,
   });
 
   // ── Streak ──
@@ -1632,8 +1665,6 @@ export function DailyHeroSection() {
       ) : (
         /* ══ PRE-GAME: Deck-layered cards — front + back peek, swap when one is done ══ */
         (() => {
-          const playOnFront = swipeIndex === 0;
-
           const frontPosClass = "relative w-full rounded-2xl p-5 flex flex-col justify-between min-h-[210px] text-left";
           const backPosClass  = "absolute top-0 left-0 right-0 rounded-2xl p-4 flex flex-col justify-between min-h-[210px] text-left";
 
@@ -1795,6 +1826,176 @@ export function DailyHeroSection() {
             </button>
           );
 
+          const handleDnaAnswer = async (answer: 'a' | 'b') => {
+            if (dnaHeroAnswering || dnaHeroAnswered || !heroDnaMoment || !user?.id) return;
+            setDnaHeroAnswering(true);
+            try {
+              await supabase.from('dna_moment_responses').insert({
+                user_id: user.id,
+                moment_id: heroDnaMoment.id,
+                answer,
+                points_earned: 5,
+              });
+              const { data: allResp } = await supabase
+                .from('dna_moment_responses')
+                .select('answer')
+                .eq('moment_id', heroDnaMoment.id);
+              const total = allResp?.length || 1;
+              const aCount = (allResp || []).filter((r: any) => r.answer === 'a').length;
+              setDnaHeroResult({
+                optionAPercent: Math.round((aCount / total) * 100),
+                optionBPercent: Math.round(((total - aCount) / total) * 100),
+                total,
+              });
+              setDnaHeroAnswered(true);
+            } catch { /* ignore */ } finally {
+              setDnaHeroAnswering(false);
+            }
+          };
+
+          const handleDnaSkip = () => {
+            if (!heroDnaMoment) return;
+            const today = new Date().toISOString().split('T')[0];
+            const key = `dna-hero-skipped-${today}`;
+            try {
+              const skipped: string[] = JSON.parse(localStorage.getItem(key) || '[]');
+              skipped.push(heroDnaMoment.id);
+              localStorage.setItem(key, JSON.stringify(skipped));
+            } catch {}
+            setSwipeIndex(0);
+          };
+
+          const dnaMomentCard = (front: boolean) => {
+            const emptyCard = (
+              <div
+                key="dna"
+                className={front ? frontPosClass : backPosClass}
+                style={{
+                  background: 'linear-gradient(160deg,#4c1d95 0%,#6d28d9 45%,#7c3aed 100%)',
+                  ...(front ? frontPosStyle : backPosStyle),
+                }}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Dna size={front ? 15 : 13} className="text-purple-300" />
+                    <span className={`${front ? 'text-[13px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-purple-200/90`}>
+                      Entertainment DNA
+                    </span>
+                  </div>
+                </div>
+                {front && (
+                  <div className="flex-1 flex items-center justify-center py-6">
+                    <p className="text-white/40 text-sm text-center">All caught up — check back tomorrow</p>
+                  </div>
+                )}
+              </div>
+            );
+            if (!heroDnaMoment) return emptyCard;
+
+            return (
+              <div
+                key="dna"
+                className={front ? frontPosClass : backPosClass}
+                style={{
+                  background: 'linear-gradient(160deg,#4c1d95 0%,#6d28d9 45%,#7c3aed 100%)',
+                  ...(front ? frontPosStyle : backPosStyle),
+                }}
+              >
+                <div className={`flex items-start justify-between ${front ? 'mb-4' : ''}`}>
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <Dna size={front ? 15 : 13} className="text-purple-300" />
+                      <span className={`${front ? 'text-[13px]' : 'text-[9px]'} font-bold uppercase tracking-[0.16em] text-purple-200/90`}>
+                        Entertainment DNA
+                      </span>
+                    </div>
+                    {front && <p className="text-[12px] text-white/55 font-medium ml-0.5">Your answers build your profile</p>}
+                  </div>
+                  <span className="flex items-center gap-1 bg-white/10 rounded-full px-1.5 py-0.5 border border-white/10">
+                    <Sparkles size={9} className="text-purple-300" />
+                    <span className="text-[8px] font-bold text-white/80">+5 pts</span>
+                  </span>
+                </div>
+
+                {front ? (
+                  <>
+                    <div className="flex-1 flex flex-col justify-center py-2">
+                      <p className="text-white text-xl font-bold leading-tight drop-shadow-sm mb-3">
+                        {heroDnaMoment.questionText}
+                      </p>
+                      {!dnaHeroAnswered ? (
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={() => handleDnaAnswer('a')}
+                            disabled={dnaHeroAnswering}
+                            className="py-2.5 px-4 rounded-xl bg-white/10 border border-white/20 text-white/90 text-sm font-medium text-left hover:bg-white/20 active:bg-white/25 transition-all"
+                          >
+                            {heroDnaMoment.optionA}
+                          </button>
+                          <button
+                            onClick={() => handleDnaAnswer('b')}
+                            disabled={dnaHeroAnswering}
+                            className="py-2.5 px-4 rounded-xl bg-white/10 border border-white/20 text-white/90 text-sm font-medium text-left hover:bg-white/20 active:bg-white/25 transition-all"
+                          >
+                            {heroDnaMoment.optionB}
+                          </button>
+                        </div>
+                      ) : dnaHeroResult && (
+                        <div className="flex flex-col gap-2 animate-in fade-in duration-300">
+                          {[
+                            { label: heroDnaMoment.optionA, pct: dnaHeroResult.optionAPercent },
+                            { label: heroDnaMoment.optionB, pct: dnaHeroResult.optionBPercent },
+                          ].map(opt => (
+                            <div key={opt.label} className="p-2.5 rounded-xl bg-white/10 border border-white/15">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-xs text-white/80 truncate pr-2">{opt.label}</span>
+                                <span className="text-sm font-bold text-purple-200 flex-shrink-0">{opt.pct}%</span>
+                              </div>
+                              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-purple-300/70 rounded-full transition-all duration-700 ease-out"
+                                  style={{ width: `${opt.pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between mt-2">
+                      {!dnaHeroAnswered ? (
+                        <button
+                          onClick={handleDnaSkip}
+                          className="text-white/30 text-[11px] hover:text-white/60 transition-colors"
+                        >
+                          Skip
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setSwipeIndex(0)}
+                          className="text-white/40 text-[11px] hover:text-white/70 transition-colors flex items-center gap-1"
+                        >
+                          <ArrowRight size={10} />
+                          Back to Play
+                        </button>
+                      )}
+                      {dnaHeroResult && (
+                        <span className="text-[10px] text-purple-200/40">{dnaHeroResult.total} responses</span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex-1 flex flex-col justify-center pt-3 pb-2">
+                    <p className="text-white text-[13px] font-semibold leading-snug line-clamp-3">
+                      {heroDnaMoment.questionText}
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          };
+
           return (
             <div className="flex flex-col gap-2 md:max-w-lg md:mx-auto">
               <div
@@ -1815,8 +2016,8 @@ export function DailyHeroSection() {
                 }}
                 onTouchEnd={() => {
                   const THRESHOLD = 48;
-                  if (dragOffset < -THRESHOLD && swipeIndex === 0) setSwipeIndex(1);
-                  else if (dragOffset > THRESHOLD && swipeIndex === 1) setSwipeIndex(0);
+                  if (dragOffset < -THRESHOLD && swipeIndex < 2) setSwipeIndex(swipeIndex + 1);
+                  else if (dragOffset > THRESHOLD && swipeIndex > 0) setSwipeIndex(swipeIndex - 1);
                   setDragOffset(0);
                   setIsDragging(false);
                 }}
@@ -1834,38 +2035,52 @@ export function DailyHeroSection() {
                 }}
                 onMouseUp={() => {
                   const THRESHOLD = 48;
-                  if (dragOffset < -THRESHOLD && swipeIndex === 0) setSwipeIndex(1);
-                  else if (dragOffset > THRESHOLD && swipeIndex === 1) setSwipeIndex(0);
+                  if (dragOffset < -THRESHOLD && swipeIndex < 2) setSwipeIndex(swipeIndex + 1);
+                  else if (dragOffset > THRESHOLD && swipeIndex > 0) setSwipeIndex(swipeIndex - 1);
                   setDragOffset(0);
                   setIsDragging(false);
                 }}
                 onMouseLeave={() => {
                   if (isDragging) {
                     const THRESHOLD = 48;
-                    if (dragOffset < -THRESHOLD && swipeIndex === 0) setSwipeIndex(1);
-                    else if (dragOffset > THRESHOLD && swipeIndex === 1) setSwipeIndex(0);
+                    if (dragOffset < -THRESHOLD && swipeIndex < 2) setSwipeIndex(swipeIndex + 1);
+                    else if (dragOffset > THRESHOLD && swipeIndex > 0) setSwipeIndex(swipeIndex - 1);
                     setDragOffset(0);
                     setIsDragging(false);
                   }
                 }}
                 onWheel={(e) => {
-                  // Horizontal trackpad swipe — only trigger if moving mostly sideways
                   if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
                   if (wheelCooldown.current) return;
-                  if (e.deltaX > 30 && swipeIndex === 0) {
-                    setSwipeIndex(1);
+                  if (e.deltaX > 30 && swipeIndex < 2) {
+                    setSwipeIndex(swipeIndex + 1);
                     wheelCooldown.current = true;
                     setTimeout(() => { wheelCooldown.current = false; }, 600);
-                  } else if (e.deltaX < -30 && swipeIndex === 1) {
-                    setSwipeIndex(0);
+                  } else if (e.deltaX < -30 && swipeIndex > 0) {
+                    setSwipeIndex(swipeIndex - 1);
                     wheelCooldown.current = true;
                     setTimeout(() => { wheelCooldown.current = false; }, 600);
                   }
                 }}
               >
-                {/* Render back first (absolute), then front (relative establishes height) */}
-                {playOnFront ? dailyCallCard(false) : todaysPlayCard(false)}
-                {playOnFront ? todaysPlayCard(true)  : dailyCallCard(true)}
+                {/* 3-card deck: back card first (absolute, peeks behind), front card second (relative, sets height) */}
+                {swipeIndex === 0 && dailyCallCard(false)}
+                {swipeIndex === 0 && todaysPlayCard(true)}
+                {swipeIndex === 1 && dnaMomentCard(false)}
+                {swipeIndex === 1 && dailyCallCard(true)}
+                {swipeIndex === 2 && todaysPlayCard(false)}
+                {swipeIndex === 2 && dnaMomentCard(true)}
+              </div>
+
+              {/* Dot indicators */}
+              <div className="flex items-center justify-center gap-1.5 mt-1">
+                {[0, 1, 2].map(i => (
+                  <button
+                    key={i}
+                    onClick={() => setSwipeIndex(i)}
+                    className={`rounded-full transition-all duration-300 ${swipeIndex === i ? 'w-4 h-1.5 bg-white/70' : 'w-1.5 h-1.5 bg-white/20 hover:bg-white/35'}`}
+                  />
+                ))}
               </div>
 
             </div>

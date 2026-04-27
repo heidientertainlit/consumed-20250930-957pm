@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "@/lib/auth";
-import { Loader2, Users, ListChecks, ChevronRight, Layers, Star, Gamepad2, BarChart3 } from "lucide-react";
+import { Loader2, Users, ListChecks, ChevronRight, Layers, Star, Gamepad2, BarChart3, Dna } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -63,6 +63,15 @@ const TOOLS = [
     color: "from-teal-900/40 to-teal-800/20 border-teal-700/40",
     iconColor: "text-teal-400",
     iconBg: "bg-teal-900/50",
+  },
+  {
+    path: "/admin/dna-moments",
+    icon: Dna,
+    title: "DNA Moments Builder",
+    description: "Manage the Entertainment DNA question bank. Add, activate, or remove the binary-choice questions that appear in the feed and hero carousel.",
+    color: "from-purple-900/40 to-purple-800/20 border-purple-700/40",
+    iconColor: "text-purple-400",
+    iconBg: "bg-purple-900/50",
   },
 ];
 
