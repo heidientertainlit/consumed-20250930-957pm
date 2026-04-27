@@ -1521,6 +1521,73 @@ export function DailyHeroSection() {
     },
   });
 
+  // ── Supabase fallback: verify Today's Play completion ──
+  // If localStorage is empty (e.g. different domain, cleared cache), check Supabase directly.
+  const questionIds = questions.map(q => q.id);
+  const { data: supabasePlayDone } = useQuery<boolean>({
+    queryKey: ['daily-play-supabase-check', user?.id, questionIds.join(',')],
+    queryFn: async () => {
+      if (!user?.id || !questionIds.length) return false;
+      const { count } = await supabase
+        .from('user_predictions')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .in('pool_id', questionIds);
+      return (count ?? 0) >= questionIds.length;
+    },
+    enabled: !!user?.id && questionIds.length > 0 && !playCompleted,
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (!supabasePlayDone || playCompleted) return;
+    const today = new Date().toISOString().split('T')[0];
+    setPlayCompleted(true);
+    // Backfill localStorage so future loads are instant
+    try {
+      const existing = localStorage.getItem(getTodayPlayKey(user?.id));
+      if (!existing) {
+        localStorage.setItem(getTodayPlayKey(user?.id), JSON.stringify({ completed: true, date: today }));
+      }
+    } catch { /* ignore */ }
+  }, [supabasePlayDone, playCompleted, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Supabase fallback: verify Daily Call completion ──
+  const { data: supabaseCallData } = useQuery<{ done: boolean; answer: string | null }>({
+    queryKey: ['daily-call-supabase-check', user?.id, dailyCall?.id],
+    queryFn: async () => {
+      if (!user?.id || !dailyCall?.id) return { done: false, answer: null };
+      const { data } = await supabase
+        .from('user_predictions')
+        .select('answer')
+        .eq('user_id', user.id)
+        .eq('pool_id', dailyCall.id)
+        .limit(1)
+        .single();
+      return data ? { done: true, answer: data.answer ?? null } : { done: false, answer: null };
+    },
+    enabled: !!user?.id && !!dailyCall?.id && !callCompleted,
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (!supabaseCallData?.done || callCompleted) return;
+    const today = new Date().toISOString().split('T')[0];
+    setCallCompleted(true);
+    if (supabaseCallData.answer) setCallAnswer(supabaseCallData.answer);
+    // Backfill localStorage
+    try {
+      const existing = localStorage.getItem(getDailyCallKey(user?.id));
+      if (!existing) {
+        localStorage.setItem(getDailyCallKey(user?.id), JSON.stringify({
+          completed: true,
+          date: today,
+          result: { userAnswer: supabaseCallData.answer },
+        }));
+      }
+    } catch { /* ignore */ }
+  }, [supabaseCallData, callCompleted, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Player count (for the "X people have played" pill) ──
   const { data: totalPlayers } = useQuery<number>({
     queryKey: ['daily-hero-players', dailyCall?.id],
