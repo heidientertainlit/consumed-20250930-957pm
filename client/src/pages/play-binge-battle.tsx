@@ -867,9 +867,29 @@ export default function PlayBingeBattle() {
               </div>
               <p className="text-[22px] font-black text-purple-600">{myProgress}/{battle.media_total}</p>
             </div>
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
               <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-purple-400 transition-all"
                 style={{ width: `${Math.min((myProgress / battle.media_total) * 100, 100)}%` }} />
+            </div>
+            {/* Inline progress stepper — always visible, even while pending */}
+            <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
+              <button
+                onClick={() => handleUpdateProgress(Math.max(0, myProgress - 1))}
+                disabled={myProgress === 0 || updating}
+                className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 disabled:opacity-30 shrink-0"
+              >
+                <Minus size={15} />
+              </button>
+              <div className="flex-1 text-center">
+                <p className="text-[11px] text-gray-400">Update your progress</p>
+              </div>
+              <button
+                onClick={() => handleUpdateProgress(Math.min(myProgress + 1, battle.media_total))}
+                disabled={myProgress >= battle.media_total || updating}
+                className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center text-white disabled:opacity-40 shrink-0"
+              >
+                {updating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={15} />}
+              </button>
             </div>
           </div>
 
@@ -936,28 +956,6 @@ export default function PlayBingeBattle() {
 
           {/* Actions */}
           <div className="space-y-2.5 pt-1">
-            {/* Progress stepper */}
-            <div className="bg-white rounded-2xl border border-gray-200 px-4 py-3 flex items-center gap-3">
-              <button
-                onClick={() => handleUpdateProgress(Math.max(0, myProgress - 1))}
-                disabled={myProgress === 0 || updating}
-                className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 disabled:opacity-30 shrink-0"
-              >
-                <Minus size={16} />
-              </button>
-              <div className="flex-1 text-center">
-                <p className="text-[20px] font-black text-gray-900 leading-none">{myProgress}<span className="text-[13px] font-medium text-gray-400">/{battle.media_total}</span></p>
-                <p className="text-[11px] text-gray-400 mt-0.5">{battle.media_unit} completed</p>
-              </div>
-              <button
-                onClick={() => handleUpdateProgress(Math.min(myProgress + 1, battle.media_total))}
-                disabled={myProgress >= battle.media_total || updating}
-                className="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center text-white disabled:opacity-40 shrink-0"
-              >
-                {updating ? <Loader2 size={15} className="animate-spin" /> : <Plus size={16} />}
-              </button>
-            </div>
-
             {/* Resend challenge link — only shown while waiting for opponent */}
             {isPending && isChallenger && (
               <button
