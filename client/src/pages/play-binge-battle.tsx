@@ -131,7 +131,7 @@ export default function PlayBingeBattle() {
         body: JSON.stringify({ query, include_book_series: true }),
       });
       const data = await resp.json();
-      const mapped: MediaItem[] = (data.results || []).slice(0, 8).map((r: any) => {
+      const mapped: MediaItem[] = (data.results || []).slice(0, 20).map((r: any) => {
         const isBookSeries = r.type === "book_series";
         return {
           id: r.external_id || r.id || r.title,

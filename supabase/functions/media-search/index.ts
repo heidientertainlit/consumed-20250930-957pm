@@ -281,7 +281,7 @@ serve(async (req) => {
         // Try Google Books first (with API key for proper quota)
         if (googleBooksApiKey) {
           try {
-            const googleBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=8&key=${googleBooksApiKey}`;
+            const googleBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=20&key=${googleBooksApiKey}`;
             console.log('Fetching Google Books with API key (key length:', googleBooksApiKey.length, ')');
             const googleResponse = await fetchWithTimeout(googleBooksUrl, {}, 5000);
             console.log('Google Books response status:', googleResponse.status);
@@ -296,9 +296,9 @@ serve(async (req) => {
               const googleData = await googleResponse.json();
               console.log('Google Books items count:', googleData.items?.length || 0);
               // Log titles for debugging
-              const titles = googleData.items?.slice(0, 5).map((i: any) => i.volumeInfo?.title) || [];
+              const titles = googleData.items?.slice(0, 15).map((i: any) => i.volumeInfo?.title) || [];
               console.log('Google Books titles found:', JSON.stringify(titles));
-              for (const item of googleData.items?.slice(0, 5) || []) {
+              for (const item of googleData.items?.slice(0, 15) || []) {
                 const volumeInfo = item.volumeInfo;
                 if (volumeInfo && isContentAppropriate(volumeInfo, 'book')) {
                   const posterUrl = `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`;
@@ -337,9 +337,9 @@ serve(async (req) => {
               const parts = searchQuery.split(/\s+by\s+/i);
               const title = parts[0].trim();
               const author = parts[1].trim();
-              bookUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=8`;
+              bookUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=20`;
             } else {
-              bookUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}&limit=8`;
+              bookUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}&limit=20`;
             }
             
             console.log('Fetching Open Library (fallback):', bookUrl);
@@ -347,7 +347,7 @@ serve(async (req) => {
             
             if (bookResponse.ok) {
               const bookData = await bookResponse.json();
-              bookData.docs?.slice(0, 5).forEach((book: any) => {
+              bookData.docs?.slice(0, 15).forEach((book: any) => {
                 if (isContentAppropriate(book, 'book')) {
                   bookResults.push({
                     title: book.title,
