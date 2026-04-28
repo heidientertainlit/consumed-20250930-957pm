@@ -223,13 +223,16 @@ export default function PlayBingeBattle() {
       prefixLen = match;
     }
     const commonPrefix = prefixLen >= 2 ? words.slice(0, prefixLen).join(" ") : "";
-    const combinedTitle = commonPrefix
-      ? `${commonPrefix} (${items.length} ${first.unit === "books" ? "books" : "items"})`
-      : `${titles[0]} + ${items.length - 1} more`;
 
-    const allSameUnit = items.every(i => i.unit === first.unit);
-    const unit = allSameUnit ? first.unit : "items";
-    const total = unit === "% read" ? 100 : items.length;
+    // For multi-select: always count items, never "% read"
+    const isAllBooks = items.every(i => i.unit === "% read" || i.unit === "books");
+    const isAllEpisodes = items.every(i => i.unit === "episodes");
+    const unit = isAllBooks ? "books" : isAllEpisodes ? "episodes" : "items";
+    const total = items.length;
+
+    const combinedTitle = commonPrefix
+      ? `${commonPrefix} (${total} ${unit})`
+      : `${titles[0]} + ${items.length - 1} more`;
 
     return {
       id: items.map(i => i.id).join("|"),
