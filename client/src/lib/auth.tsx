@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       await new Promise((r) => setTimeout(r, 800))
-      await OneSignal.Notifications.requestPermission(true)
+      await OneSignal.Notifications.requestPermission(false)
     } catch (e) {
       console.log("Push permission request failed:", e)
     }
