@@ -21,6 +21,7 @@ type MediaItem = {
   unit: string;
   external_id?: string;
   external_source?: string;
+  series_count?: number;
 };
 
 type BattleRow = {
@@ -127,20 +128,26 @@ export default function PlayBingeBattle() {
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/media-search`, {
         method: "POST",
         headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query, include_book_series: true }),
       });
       const data = await resp.json();
-      const mapped: MediaItem[] = (data.results || []).slice(0, 6).map((r: any) => ({
-        id: r.external_id || r.id || r.title,
-        title: r.title,
-        sub: [r.creator || r.artist, r.year, r.network || r.platform].filter(Boolean).join(" · "),
-        type: r.type ? (r.type.charAt(0).toUpperCase() + r.type.slice(1)) : "Media",
-        poster: r.image_url || r.poster_url || r.image || "",
-        total: r.type === "book" ? 100 : r.type === "podcast" ? 20 : r.episodes || 10,
-        unit: r.type === "book" ? "% read" : "episodes",
-        external_id: r.external_id,
-        external_source: r.external_source,
-      }));
+      const mapped: MediaItem[] = (data.results || []).slice(0, 8).map((r: any) => {
+        const isBookSeries = r.type === "book_series";
+        return {
+          id: r.external_id || r.id || r.title,
+          title: r.title,
+          sub: isBookSeries
+            ? [r.creator, r.series_count ? `${r.series_count} books` : null].filter(Boolean).join(" · ")
+            : [r.creator || r.artist, r.year, r.network || r.platform].filter(Boolean).join(" · "),
+          type: isBookSeries ? "Book Series" : (r.type ? (r.type.charAt(0).toUpperCase() + r.type.slice(1)) : "Media"),
+          poster: r.image_url || r.poster_url || r.image || "",
+          total: isBookSeries ? (r.series_count || 1) : (r.type === "book" ? 100 : r.type === "podcast" ? 20 : r.episodes || 10),
+          unit: isBookSeries ? "books" : (r.type === "book" ? "% read" : "episodes"),
+          external_id: r.external_id,
+          external_source: r.external_source,
+          series_count: r.series_count,
+        };
+      });
       setMediaResults(mapped);
     } catch {
       setMediaResults([]);
@@ -595,8 +602,14 @@ export default function PlayBingeBattle() {
                     <p className="text-[13px] font-semibold text-gray-900 truncate">{item.title}</p>
                     <p className="text-[11px] text-gray-400 truncate">{item.sub}</p>
                     <span className={`inline-block mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
-                      selectedMedia?.id === item.id ? "bg-purple-100 text-purple-600" : "bg-gray-100 text-gray-500"
-                    }`}>{item.type}</span>
+                      item.type === "Book Series"
+                        ? "bg-amber-100 text-amber-700"
+                        : selectedMedia?.id === item.id
+                          ? "bg-purple-100 text-purple-600"
+                          : "bg-gray-100 text-gray-500"
+                    }`}>
+                      {item.type === "Book Series" ? "📚 Series" : item.type}
+                    </span>
                   </div>
                   <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center ${
                     selectedMedia?.id === item.id ? "bg-purple-600 border-purple-600" : "border-gray-300"

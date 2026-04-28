@@ -88,14 +88,18 @@ serve(async (req) => {
     let query: string | null = null;
     let type: string | null = null;
     
+    let includeBookSeries = false;
+
     if (req.method === 'GET') {
       const url = new URL(req.url);
       query = url.searchParams.get('query');
       type = url.searchParams.get('type');
+      includeBookSeries = url.searchParams.get('include_book_series') === 'true';
     } else {
       const body = await req.json();
       query = body.query;
       type = body.type;
+      includeBookSeries = body.include_book_series === true;
     }
     
     if (!query || query.trim().length === 0) {
@@ -138,6 +142,7 @@ serve(async (req) => {
 
     // Collect results by type first, then merge in desired order
     const bookResults: any[] = [];
+    const bookSeriesResults: any[] = [];
     const movieTvResults: any[] = [];
     const podcastResults: any[] = [];
     const musicResults: any[] = [];
@@ -630,6 +635,74 @@ serve(async (req) => {
       })());
     }
 
+    // Book Series detection — only when caller requests it (e.g. Binge Battle)
+    if (includeBookSeries && (!type || type === 'book' || type === 'book_series')) {
+      searchPromises.push((async () => {
+        try {
+          const openaiKey = Deno.env.get('OPENAI_API_KEY');
+          if (!openaiKey) return;
+
+          const seriesResponse = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: [{
+                role: 'system',
+                content: 'You are a book series database. Given a search query, determine if it matches a well-known book series. If yes, return a JSON object with exactly these fields: series_name (string), author (string), book_count (integer, total number of books in the series), first_book_title (string, title of the first book), description (string, one sentence). If the query does not clearly match a book series, return null. Return ONLY valid JSON or the word null, no markdown, no explanation.'
+              }, {
+                role: 'user',
+                content: `Query: "${searchQuery}"`
+              }],
+              temperature: 0,
+              max_tokens: 250
+            })
+          }, 7000);
+
+          if (!seriesResponse.ok) return;
+          const seriesData = await seriesResponse.json();
+          const raw = seriesData.choices?.[0]?.message?.content?.trim() || 'null';
+
+          let series: any = null;
+          try { series = JSON.parse(raw); } catch (_) { return; }
+          if (!series || !series.series_name) return;
+
+          // Fetch cover using the first book in the series
+          let coverUrl = '';
+          const googleBooksApiKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
+          if (googleBooksApiKey && series.first_book_title) {
+            try {
+              const gbResp = await fetchWithTimeout(
+                `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(series.first_book_title + ' ' + (series.author || ''))}&maxResults=1&key=${googleBooksApiKey}`,
+                {}, 4000
+              );
+              if (gbResp.ok) {
+                const gbData = await gbResp.json();
+                const firstItem = gbData.items?.[0];
+                if (firstItem) {
+                  coverUrl = `https://books.google.com/books/content?id=${firstItem.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`;
+                }
+              }
+            } catch (_) { /* ignore cover fetch failure */ }
+          }
+
+          bookSeriesResults.push({
+            title: series.series_name,
+            type: 'book_series',
+            creator: series.author || '',
+            poster_url: coverUrl,
+            external_id: `series-${(series.series_name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+            external_source: 'openai',
+            description: series.description || '',
+            series_count: typeof series.book_count === 'number' ? series.book_count : 0,
+            release_date: null
+          });
+        } catch (error) {
+          console.error('Book series detection error:', error);
+        }
+      })());
+    }
+
     // Wait for all searches to complete (with individual timeouts)
     await Promise.allSettled(searchPromises);
 
@@ -828,13 +901,17 @@ serve(async (req) => {
     // Limit results to avoid massive responses
     const trimmed = scoredResults.slice(0, 50);
     
-    // Remove internal score and normalize image field before returning
-    const results = trimmed.map(({ _score, poster_url, ...item }) => ({
+    // Normalize image fields on both scored results and series results
+    const normalizeResult = ({ _score, poster_url, ...item }: any) => ({
       ...item,
       poster_url,
       image: poster_url,
       image_url: poster_url
-    }));
+    });
+
+    // Book series results always appear first (OpenAI already validated the match)
+    const seriesNormalized = bookSeriesResults.map(normalizeResult);
+    const results = [...seriesNormalized, ...trimmed.map(normalizeResult)];
 
     // Log final results
     console.log('Final results:', results.length, 'items');
