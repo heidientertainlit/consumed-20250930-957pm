@@ -113,7 +113,10 @@ serve(async (req) => {
     const queryHasBook = /\b(book|novel|read)\b/i.test(query);
     const queryHasMovie = /\b(movie|film)\b/i.test(query);
     const queryHasMusic = /\b(song|album|music|listen)\b/i.test(query);
-    const queryHasTv = /\b(series|tv show|television)\b/i.test(query);
+    // When include_book_series is true, "series" in the query means book series, not TV series
+    const queryHasTv = includeBookSeries
+      ? /\b(tv show|television)\b/i.test(query)
+      : /\b(series|tv show|television)\b/i.test(query);
     const queryHasPodcast = /\b(podcast|podcasts)\b/i.test(query);
     
     // Strip type keywords from query for cleaner API searches
@@ -636,7 +639,8 @@ serve(async (req) => {
     }
 
     // Book Series detection — only when caller requests it (e.g. Binge Battle)
-    if (includeBookSeries && (!type || type === 'book' || type === 'book_series')) {
+    // Always run when includeBookSeries is true — don't let type narrowing block it
+    if (includeBookSeries) {
       searchPromises.push((async () => {
         try {
           const openaiKey = Deno.env.get('OPENAI_API_KEY');
