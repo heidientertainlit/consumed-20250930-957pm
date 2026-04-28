@@ -99,7 +99,7 @@ export default function PlayBingeBattle() {
   const { toast } = useToast();
 
   const [view, setView] = useState<View>("hub");
-  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
+  const [selectedItems, setSelectedItems] = useState<MediaItem[]>([]);
   const [search, setSearch] = useState("");
   const [mediaResults, setMediaResults] = useState<MediaItem[]>([]);
   const [mediaLoading, setMediaLoading] = useState(false);
@@ -205,22 +205,62 @@ export default function PlayBingeBattle() {
     if (view === "hub") loadBattles();
   }, [view, user?.id]);
 
+  // --- Combine multiple selected items into one battle entry ---
+  function buildCombinedMedia(items: MediaItem[]) {
+    if (items.length === 1) return items[0];
+    const first = items[0];
+    // Build a combined title: find common prefix or use "First Title + N more"
+    const titles = items.map(i => i.title);
+    const words = titles[0].split(/\s+/);
+    let prefixLen = words.length;
+    for (const t of titles.slice(1)) {
+      const tw = t.split(/\s+/);
+      let match = 0;
+      for (let i = 0; i < Math.min(prefixLen, tw.length); i++) {
+        if (words[i].toLowerCase() === tw[i].toLowerCase()) match = i + 1;
+        else break;
+      }
+      prefixLen = match;
+    }
+    const commonPrefix = prefixLen >= 2 ? words.slice(0, prefixLen).join(" ") : "";
+    const combinedTitle = commonPrefix
+      ? `${commonPrefix} (${items.length} ${first.unit === "books" ? "books" : "items"})`
+      : `${titles[0]} + ${items.length - 1} more`;
+
+    const allSameUnit = items.every(i => i.unit === first.unit);
+    const unit = allSameUnit ? first.unit : "items";
+    const total = unit === "% read" ? 100 : items.length;
+
+    return {
+      id: items.map(i => i.id).join("|"),
+      title: combinedTitle,
+      sub: items.map(i => i.title).join(", "),
+      type: first.type,
+      poster: first.poster,
+      total,
+      unit,
+      external_id: items.map(i => i.external_id || i.id).join("|"),
+      external_source: "multi",
+    } as MediaItem;
+  }
+
   // --- Create battle ---
   async function handleStartBattle() {
-    if (!selectedMedia || !user?.id) return;
+    if (selectedItems.length === 0 || !user?.id) return;
+    const combined = buildCombinedMedia(selectedItems);
     setCreating(true);
     const { data, error } = await supabase
       .from("binge_battles")
       .insert({
         challenger_id: user.id,
-        media_external_id: selectedMedia.external_id || selectedMedia.id,
-        media_external_source: selectedMedia.external_source || "unknown",
-        media_title: selectedMedia.title,
-        media_type: selectedMedia.type,
-        media_poster: selectedMedia.poster || null,
-        media_sub: selectedMedia.sub || null,
-        media_total: selectedMedia.total,
-        media_unit: selectedMedia.unit,
+        media_external_id: combined.external_id || combined.id,
+        media_external_source: combined.external_source || "unknown",
+        media_title: combined.title,
+        media_type: combined.type,
+        media_poster: combined.poster || null,
+        media_sub: combined.sub || null,
+        media_total: combined.total,
+        media_unit: combined.unit,
         status: "pending",
       })
       .select()
@@ -582,58 +622,84 @@ export default function PlayBingeBattle() {
             )}
 
             <div className="space-y-2">
-              {displayMedia.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => setSelectedMedia(selectedMedia?.id === item.id ? null : item)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
-                    selectedMedia?.id === item.id ? "bg-purple-50 border-purple-200" : "bg-white"
-                  }`}
-                  style={{ borderColor: selectedMedia?.id === item.id ? undefined : "#ececf0" }}
-                >
-                  <div className="w-9 h-12 rounded-lg overflow-hidden bg-purple-100 flex items-center justify-center relative shrink-0">
-                    <span className="text-[10px] font-black text-purple-300">{item.type[0]}</span>
-                    {item.poster && (
-                      <img src={item.poster} alt={item.title} className="absolute inset-0 w-full h-full object-cover"
-                        onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              {displayMedia.map(item => {
+                const isSelected = selectedItems.some(s => s.id === item.id);
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setSelectedItems(prev =>
+                      isSelected ? prev.filter(s => s.id !== item.id) : [...prev, item]
                     )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-gray-900 truncate">{item.title}</p>
-                    <p className="text-[11px] text-gray-400 truncate">{item.sub}</p>
-                    <span className={`inline-block mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
-                      item.type === "Book Series"
-                        ? "bg-amber-100 text-amber-700"
-                        : selectedMedia?.id === item.id
-                          ? "bg-purple-100 text-purple-600"
-                          : "bg-gray-100 text-gray-500"
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                      isSelected ? "bg-purple-50 border-purple-200" : "bg-white"
+                    }`}
+                    style={{ borderColor: isSelected ? undefined : "#ececf0" }}
+                  >
+                    <div className="w-9 h-12 rounded-lg overflow-hidden bg-purple-100 flex items-center justify-center relative shrink-0">
+                      <span className="text-[10px] font-black text-purple-300">{item.type[0]}</span>
+                      {item.poster && (
+                        <img src={item.poster} alt={item.title} className="absolute inset-0 w-full h-full object-cover"
+                          onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-semibold text-gray-900 truncate">{item.title}</p>
+                      <p className="text-[11px] text-gray-400 truncate">{item.sub}</p>
+                      <span className={`inline-block mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+                        item.type === "Book Series"
+                          ? "bg-amber-100 text-amber-700"
+                          : isSelected
+                            ? "bg-purple-100 text-purple-600"
+                            : "bg-gray-100 text-gray-500"
+                      }`}>
+                        {item.type === "Book Series" ? "📚 Series" : item.type}
+                      </span>
+                    </div>
+                    <div className={`w-5 h-5 rounded-md border-2 shrink-0 flex items-center justify-center ${
+                      isSelected ? "bg-purple-600 border-purple-600" : "border-gray-300"
                     }`}>
-                      {item.type === "Book Series" ? "📚 Series" : item.type}
-                    </span>
-                  </div>
-                  <div className={`w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center ${
-                    selectedMedia?.id === item.id ? "bg-purple-600 border-purple-600" : "border-gray-300"
-                  }`}>
-                    {selectedMedia?.id === item.id && <CheckCircle2 size={12} className="text-white fill-white" />}
-                  </div>
-                </button>
-              ))}
+                      {isSelected && <CheckCircle2 size={12} className="text-white fill-white" />}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        <div className="px-4 pb-10 pt-3 bg-[#f8f8fb] border-t border-gray-100">
+        <div className="px-4 pb-10 pt-3 bg-[#f8f8fb] border-t border-gray-100 space-y-2.5">
+          {selectedItems.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {selectedItems.map(item => (
+                <div key={item.id} className="flex items-center gap-1 bg-purple-100 rounded-full px-2 py-1">
+                  <span className="text-[11px] font-semibold text-purple-700 max-w-[140px] truncate">{item.title}</span>
+                  <button
+                    onClick={() => setSelectedItems(prev => prev.filter(s => s.id !== item.id))}
+                    className="text-purple-400 hover:text-purple-700 ml-0.5"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <button
-            disabled={!selectedMedia || creating}
+            disabled={selectedItems.length === 0 || creating}
             onClick={handleStartBattle}
             className={`w-full py-4 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 transition-all ${
-              selectedMedia && !creating
+              selectedItems.length > 0 && !creating
                 ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
                 : "bg-gray-200 text-gray-400"
             }`}
           >
             {creating ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />}
-            {creating ? "Creating..." : selectedMedia ? "Start Battle" : "Pick media first"}
+            {creating
+              ? "Creating..."
+              : selectedItems.length > 1
+                ? `Start Battle (${selectedItems.length} items)`
+                : selectedItems.length === 1
+                  ? "Start Battle"
+                  : "Pick media first"}
           </button>
         </div>
       </div>
@@ -642,7 +708,7 @@ export default function PlayBingeBattle() {
 
   // --- View: Sent (share) ---
   if (view === "sent") {
-    const media = selectedMedia!;
+    const media = buildCombinedMedia(selectedItems.length > 0 ? selectedItems : EXAMPLE_MEDIA.slice(0, 1));
     const battleUrl = `${APP_BASE}/play/binge-battle/accept/${createdBattleId}`;
     const shareText = `Can you beat me? I'm challenging you to a Binge Battle on ${media.title} — first to finish wins. Join me on Consumed`;
 
