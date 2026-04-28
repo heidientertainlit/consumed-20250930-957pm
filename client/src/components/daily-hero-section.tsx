@@ -1567,13 +1567,19 @@ export function DailyHeroSection() {
     if (supabasePlayDone === undefined) return;
     const today = getLocalDateStr();
     if (supabasePlayDone === true && !playCompleted) {
-      // DB confirms played but local state is wrong → fix it
-      setPlayCompleted(true);
+      // DB confirms played — only trust this if localStorage ALSO has a valid entry for today.
+      // Without local evidence we refuse to override: the DB row may be stale/contaminated
+      // from the now-fixed multi-client auth bug, and blindly trusting it causes false
+      // "completed" on every fresh page load for affected users.
       try {
-        const existing = localStorage.getItem(getTodayPlayKey(user?.id));
-        if (!existing) {
-          localStorage.setItem(getTodayPlayKey(user?.id), JSON.stringify({ completed: true, date: today }));
+        const stored = localStorage.getItem(getTodayPlayKey(user?.id));
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.date === today) {
+            setPlayCompleted(true);
+          }
         }
+        // No localStorage entry for today → skip DB override
       } catch { /* ignore */ }
     } else if (supabasePlayDone === false && playCompleted) {
       // DB says NOT played but local state says yes → verify localStorage
@@ -1619,18 +1625,18 @@ export function DailyHeroSection() {
     if (supabaseCallData === undefined) return;
     const today = getLocalDateStr();
     if (supabaseCallData.done && !callCompleted) {
-      // DB confirms answered but local state is wrong → fix it
-      setCallCompleted(true);
-      if (supabaseCallData.answer) setCallAnswer(supabaseCallData.answer);
+      // DB confirms answered — only trust this if localStorage ALSO has today's entry.
+      // Same guard as Today's Play: avoids false "completed" from contaminated DB data.
       try {
-        const existing = localStorage.getItem(getDailyCallKey(user?.id));
-        if (!existing) {
-          localStorage.setItem(getDailyCallKey(user?.id), JSON.stringify({
-            completed: true,
-            date: today,
-            result: { userAnswer: supabaseCallData.answer },
-          }));
+        const stored = localStorage.getItem(getDailyCallKey(user?.id));
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.date === today) {
+            setCallCompleted(true);
+            if (supabaseCallData.answer) setCallAnswer(supabaseCallData.answer);
+          }
         }
+        // No localStorage entry for today → skip DB override
       } catch { /* ignore */ }
     } else if (!supabaseCallData.done && callCompleted) {
       // DB says NOT answered but local state says yes → verify localStorage

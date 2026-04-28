@@ -1068,6 +1068,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     if (t === 'tv show') return 'tv';
     return t;
   })();
+  const mediaTypeLabel = mediaTypeNorm === 'tv' ? 'TV' : mediaTypeNorm === 'movie' ? 'Movie' : mediaTypeNorm === 'book' ? 'Book' : mediaTypeNorm === 'music' ? 'Music' : mediaTypeNorm === 'podcast' ? 'Podcast' : mediaTypeNorm === 'game' ? 'Game' : null;
   const seenItLabel = (() => {
     if (mediaTypeNorm === 'music') return { idle: 'Heard it', done: 'Heard!' };
     if (mediaTypeNorm === 'podcast') return { idle: 'Listened', done: 'Listened!' };
@@ -1154,6 +1155,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {mediaTypeNorm === 'movie' && <Film size={9} className="text-white" />}
               {mediaTypeNorm === 'book' && <Book size={9} className="text-white" />}
               {mediaTypeNorm === 'music' && <Music size={9} className="text-white" />}
+              {mediaTypeNorm === 'podcast' && <Headphones size={9} className="text-white" />}
+              {mediaTypeNorm === 'game' && <Gamepad2 size={9} className="text-white" />}
             </div>
           )}
         </div>
@@ -1167,6 +1170,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {mediaTypeNorm === 'movie' && <Film size={9} className="text-white" />}
             {mediaTypeNorm === 'book' && <Book size={9} className="text-white" />}
             {mediaTypeNorm === 'music' && <Music size={9} className="text-white" />}
+            {mediaTypeNorm === 'podcast' && <Headphones size={9} className="text-white" />}
+            {mediaTypeNorm === 'game' && <Gamepad2 size={9} className="text-white" />}
           </div>
         )}
       </div>
@@ -1180,7 +1185,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         <>
           {/* Top: violet action section */}
           <div className="px-4 pt-4 pb-4 bg-gray-50">
-            <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase mb-2">What's Your Take?</p>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase">What's Your Take?</p>
+              {mediaTypeLabel && <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">{mediaTypeLabel}</span>}
+            </div>
             <div className="flex items-center gap-3 mb-3">
               {posterEl}
               <div className="flex-1 min-w-0">
@@ -1972,6 +1980,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
     if (t === 'tv show') return 'tv';
     return t;
   })();
+  const spMediaTypeLabel = spMediaTypeNorm === 'tv' ? 'TV' : spMediaTypeNorm === 'movie' ? 'Movie' : spMediaTypeNorm === 'book' ? 'Book' : spMediaTypeNorm === 'music' ? 'Music' : spMediaTypeNorm === 'podcast' ? 'Podcast' : spMediaTypeNorm === 'game' ? 'Game' : null;
   const spSeenItLabel = (() => {
     if (spMediaTypeNorm === 'music') return { idle: 'Heard it', done: 'Heard!' };
     if (spMediaTypeNorm === 'podcast') return { idle: 'Listened', done: 'Listened!' };
@@ -2057,7 +2066,10 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
         <>
           <div className="px-4 pt-4 pb-4 bg-gray-50">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase">What's Your Take?</p>
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase">What's Your Take?</p>
+                {spMediaTypeLabel && <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">{spMediaTypeLabel}</span>}
+              </div>
               <span className="text-[10px] font-bold text-gray-500 px-2 py-0.5 rounded-full bg-white border border-gray-200">+10 pts</span>
             </div>
             <div className="flex items-center gap-3 mb-3">
