@@ -30,7 +30,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
   const handleInviteFriends = async () => {
     if (!userId) return;
     const inviteUrl = `${APP_BASE}/u/${userId}`;
-    const shareText = "I'm using Consumed to track everything I watch, read, and listen to. Join me and we can compare tastes!";
+    const shareText = "My entire entertainment personality is on Consumed — every show, book, album, podcast. Join me and let's see who has better taste.";
 
     if (navigator.share) {
       try {
