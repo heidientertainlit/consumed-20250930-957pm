@@ -526,7 +526,7 @@ export default function PlayBingeBattle() {
 
         <div className="px-4 pt-5 pb-28 space-y-5">
           <button
-            onClick={() => { setSelectedMedia(null); setSearch(""); setView("new"); }}
+            onClick={() => { setSelectedItems([]); setSearch(""); setView("new"); }}
             className="w-full py-4 rounded-2xl bg-purple-600 text-white font-bold text-[15px] flex items-center justify-center gap-2 shadow-lg shadow-purple-200"
           >
             <Zap size={16} />
@@ -1119,7 +1119,7 @@ export default function PlayBingeBattle() {
 
         <div className="px-4 pb-10 pt-3 bg-[#f8f8fb] border-t border-gray-100 space-y-2.5">
           <button
-            onClick={() => { setSelectedMedia(null); setCurrentBattle(null); setMyProgress(0); setCreatedBattleId(null); setView("new"); }}
+            onClick={() => { setSelectedItems([]); setCurrentBattle(null); setMyProgress(0); setCreatedBattleId(null); setView("new"); }}
             className="w-full py-3.5 rounded-2xl font-bold text-[14px] bg-purple-600 text-white flex items-center justify-center gap-2 shadow-md shadow-purple-100"
           >
             <RotateCcw size={14} />
