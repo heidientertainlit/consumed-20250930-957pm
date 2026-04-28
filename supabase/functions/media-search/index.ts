@@ -646,10 +646,10 @@ serve(async (req) => {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${openaiKey}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              model: 'gpt-4o-mini',
+              model: 'gpt-4o',
               messages: [{
                 role: 'system',
-                content: 'You are a book series database. Given a search query, determine if it matches a well-known book series. If yes, return a JSON object with exactly these fields: series_name (string), author (string), book_count (integer, total number of books in the series), first_book_title (string, title of the first book), description (string, one sentence). If the query does not clearly match a book series, return null. Return ONLY valid JSON or the word null, no markdown, no explanation.'
+                content: 'You are a comprehensive book series database with knowledge of mainstream, indie, YA, cozy mystery, Christian fiction, romance, and niche series. Given a search query, determine if it matches any known book series. If yes, return a JSON object with exactly these fields: series_name (string), author (string), book_count (integer, total number of books in the series), first_book_title (string, title of the first book), description (string, one sentence). If the query does not clearly match a book series, return null. Return ONLY valid JSON or the word null, no markdown, no explanation.'
               }, {
                 role: 'user',
                 content: `Query: "${searchQuery}"`
