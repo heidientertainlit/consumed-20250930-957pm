@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Film, Music, BookOpen, Tv, Mic, Gamepad2, Clock, Download, Share2, List, ChevronRight, Calendar, Play, Trophy, LayoutGrid, Activity, X } from "lucide-react";
 import { SearchPlusIcon } from "@/components/ui/search-plus-icon";
@@ -375,7 +376,7 @@ export default function MyLibrary() {
   }, [filteredMediaHistory, isGeneratingHistoryImage, toast, mediaHistoryType, mediaHistoryYear, mediaHistoryRating]);
 
   const handleShareList = async (listId: string, listTitle: string) => {
-    const url = `${window.location.origin}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}`;
+    const url = `${APP_BASE}/list/${listTitle.toLowerCase().replace(/\s+/g, '-')}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: listTitle, url });

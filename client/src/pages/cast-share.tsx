@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useParams, Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ export default function CastSharePage() {
   }, [token, supabaseUrl]);
 
   const shareLink = async () => {
-    const url = window.location.href;
+    const url = `${APP_BASE}${window.location.pathname}`;
     if (navigator.share) {
       try {
         await navigator.share({

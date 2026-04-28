@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { copyLink } from "@/lib/share";
+import { copyLink, APP_BASE } from "@/lib/share";
 import { AuthModal } from "@/components/auth";
 import { queryClient } from "@/lib/queryClient";
 import { DNALevelBadge, DNAFeatureLock } from "@/components/dna-level-badge";
@@ -686,7 +686,7 @@ export default function UserProfile() {
   const handleDnaShareSummary = async () => {
     if (navigator.share && dnaProfile) {
       try {
-        await navigator.share({ title: 'My Entertainment DNA', text: `I'm a "${dnaProfile.label}" - ${dnaProfile.tagline}. Check out my entertainment DNA on Consumed!`, url: window.location.origin });
+        await navigator.share({ title: 'My Entertainment DNA', text: `I'm a "${dnaProfile.label}" - ${dnaProfile.tagline}. Check out my entertainment DNA on Consumed!`, url: APP_BASE });
       } catch {
         navigator.clipboard.writeText(`I'm a "${dnaProfile?.label}" - ${dnaProfile?.tagline}. Check out my entertainment DNA on Consumed!`);
         toast({ title: "Copied!", description: "Share text copied to clipboard" });
@@ -711,10 +711,9 @@ export default function UserProfile() {
 
   const handleDnaNudgeFriend = async (friend: any) => {
     const itemsNeeded = Math.max(0, 30 - friend.itemCount);
-    const appUrl = window.location.origin;
     const message = friend.hasSurvey
-      ? `Hey ${friend.user_name}! I want to compare our Entertainment DNA on Consumed, but you need to log ${itemsNeeded} more items first. ${appUrl}`
-      : `Hey ${friend.user_name}! I want to compare our Entertainment DNA on Consumed! Complete the DNA survey and log 30 items so we can see how compatible our taste is! ${appUrl}`;
+      ? `Hey ${friend.user_name}! I want to compare our Entertainment DNA on Consumed, but you need to log ${itemsNeeded} more items first. ${APP_BASE}`
+      : `Hey ${friend.user_name}! I want to compare our Entertainment DNA on Consumed! Complete the DNA survey and log 30 items so we can see how compatible our taste is! ${APP_BASE}`;
     if (navigator.share) {
       try { await navigator.share({ title: 'Compare our Entertainment DNA!', text: message }); }
       catch { await navigator.clipboard.writeText(message); toast({ title: "Copied!", description: "Share message copied to clipboard" }); }

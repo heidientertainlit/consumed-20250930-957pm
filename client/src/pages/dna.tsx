@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Film, Tv, Users, Share2, Dna, Sparkles, Clock, BarChart3, Send, Lock, Heart, X, RefreshCw, Check } from "lucide-react";
 import { ShareImageSheet } from "@/components/share-image-sheet";
@@ -226,7 +227,7 @@ export default function DnaPage() {
         await navigator.share({
           title: 'My Entertainment DNA',
           text: `I'm a "${dnaProfile.label}" - ${dnaProfile.tagline}. Check out my entertainment DNA on Consumed!`,
-          url: window.location.origin,
+          url: APP_BASE,
         });
       } catch (error) {
         navigator.clipboard.writeText(`I'm a "${dnaProfile?.label}" - ${dnaProfile?.tagline}. Check out my entertainment DNA on Consumed!`);
@@ -276,10 +277,9 @@ export default function DnaPage() {
 
   const handleNudgeFriend = async (friend: any) => {
     const itemsNeeded = Math.max(0, 30 - friend.itemCount);
-    const appUrl = window.location.origin;
     const message = friend.hasSurvey 
-      ? `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on Consumed, but you need to log ${itemsNeeded} more items first. Let's see how compatible our taste is! ${appUrl}`
-      : `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on Consumed! Complete the DNA survey and log 30 items so we can see how compatible our taste is! ${appUrl}`;
+      ? `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on Consumed, but you need to log ${itemsNeeded} more items first. Let's see how compatible our taste is! ${APP_BASE}`
+      : `Hey ${friend.user_name}! 🧬 I want to compare our Entertainment DNA on Consumed! Complete the DNA survey and log 30 items so we can see how compatible our taste is! ${APP_BASE}`;
     
     if (navigator.share) {
       try {

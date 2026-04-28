@@ -1,6 +1,10 @@
 const RAW_BASE = import.meta.env.VITE_APP_URL || 'https://app.consumedapp.com';
 const BASE = RAW_BASE.startsWith('http') ? RAW_BASE : `https://${RAW_BASE}`;
 
+// Always returns the real web URL — never capacitor://localhost or localhost.
+// Use this everywhere you build a shareable link.
+export const APP_BASE = BASE;
+
 export type ShareKind = 'list' | 'media' | 'prediction' | 'post' | 'edna' | 'profile' | 'leaderboard' | 'game';
 
 function listPath(input: { id?: string; user_id?: string; isCurrently?: boolean }) {

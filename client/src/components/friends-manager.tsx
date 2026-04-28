@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Search, Check, UserPlus, X, Share2 } from "lucide-react";
 import { useFriendsManagement } from "@/hooks/use-friends-management";
-import { urlFor } from "@/lib/share";
+import { urlFor, APP_BASE } from "@/lib/share";
 import { useToast } from "@/hooks/use-toast";
 
 interface FriendsManagerProps {
@@ -29,8 +29,7 @@ export default function FriendsManager({ userId }: FriendsManagerProps) {
 
   const handleInviteFriends = async () => {
     if (!userId) return;
-    const base = window.location.origin;
-    const inviteUrl = `${base}/u/${userId}`;
+    const inviteUrl = `${APP_BASE}/u/${userId}`;
     const shareText = "I'm using Consumed to track everything I watch, read, and listen to. Join me and we can compare tastes!";
 
     if (navigator.share) {

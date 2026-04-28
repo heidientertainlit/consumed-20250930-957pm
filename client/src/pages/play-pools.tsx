@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useLocation } from "wouter";
 import { ChevronLeft, Lock, ChevronRight, Trophy, X, Loader2, Share2 } from "lucide-react";
 import Navigation from "@/components/navigation";
@@ -435,7 +436,7 @@ export default function PlayPoolsPage() {
                       <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            const url = `${window.location.origin}/play/challenge/${encodeURIComponent(pool.showTag)}/${round.difficulty}${user?.id ? `?from=${user.id}` : ""}`;
+                            const url = `${APP_BASE}/play/challenge/${encodeURIComponent(pool.showTag)}/${round.difficulty}${user?.id ? `?from=${user.id}` : ""}`;
                             const text = `Can you beat me on ${pool.title} (${round.label}) on Consumed?`;
                             if (navigator.share) {
                               navigator.share({ title: "Challenge me on Consumed", text, url }).catch(() => {});

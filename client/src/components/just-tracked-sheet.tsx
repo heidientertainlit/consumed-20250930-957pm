@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -289,7 +290,7 @@ export function JustTrackedSheet({
         await navigator.share({
           title: `${media.title} on Consumed`,
           text: shareText,
-          url: window.location.origin,
+          url: APP_BASE,
         });
       } catch (err) {
         // user cancelled

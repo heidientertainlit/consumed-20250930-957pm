@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useLocation, useParams } from "wouter";
 import { ChevronLeft, CheckCircle2, XCircle, Trophy, Brain, Lock, Star, Users, Loader2, Flame } from "lucide-react";
 
@@ -452,8 +453,8 @@ export default function PlayChallengePage() {
     const pct = Math.round((correctCount / totalQuestions) * 100);
     const next = nextDifficulty[difficulty];
     const challengeUrl = user?.id
-      ? `${window.location.origin}/play/challenge/${encodeURIComponent(showTag)}/${difficulty}?from=${user.id}`
-      : `${window.location.origin}/play/challenge/${encodeURIComponent(showTag)}/${difficulty}`;
+      ? `${APP_BASE}/play/challenge/${encodeURIComponent(showTag)}/${difficulty}?from=${user.id}`
+      : `${APP_BASE}/play/challenge/${encodeURIComponent(showTag)}/${difficulty}`;
     const shareText = `I got ${pct}% on ${showTag} (${diffConfig.label}) on Consumed — can you beat me?`;
 
     const challengerPct = challengerData

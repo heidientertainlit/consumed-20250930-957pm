@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, MessageCircle, User, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil, HelpCircle, Tv, Vote, Dna, Zap, Brain, Film, Music, BookOpen } from "lucide-react";
@@ -2260,8 +2261,7 @@ export default function PoolDetailPage() {
   const roomPosts: any[] = roomPostsData || [];
 
   const handleCopyLink = () => {
-    const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-    navigator.clipboard.writeText(`${appUrl}/room/join/${data?.pool?.invite_code}`);
+    navigator.clipboard.writeText(`${APP_BASE}/room/join/${data?.pool?.invite_code}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast({ title: 'Invite link copied!' });

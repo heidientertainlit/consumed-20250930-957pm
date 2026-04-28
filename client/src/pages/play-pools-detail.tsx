@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useLocation, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Star, Flame, CheckCircle2, X, Share2, Users, Brain, Trophy } from "lucide-react";
@@ -151,7 +152,7 @@ export default function PlayPoolsDetailPage() {
   };
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/play/pools/${params.id}`;
+    const url = `${APP_BASE}/play/pools/${params.id}`;
     try {
       if (navigator.share) await navigator.share({ title: pool?.name, url });
       else { await navigator.clipboard.writeText(url); toast({ title: "Link copied!" }); }
@@ -538,7 +539,7 @@ export default function PlayPoolsDetailPage() {
             <p className="text-gray-900 text-base font-bold mb-1">Challenge your friends</p>
             <p className="text-gray-400 text-sm mb-5">Share this pool link — they play the same round and compete on your leaderboard</p>
             <div className="flex items-center gap-3 rounded-2xl px-4 py-3 mb-4 bg-gray-50" style={{ border: "0.5px solid #e5e7eb" }}>
-              <span className="text-gray-400 text-sm flex-1 truncate">{window.location.origin}/play/pools/{params.id}</span>
+              <span className="text-gray-400 text-sm flex-1 truncate">{APP_BASE}/play/pools/{params.id}</span>
               <button onClick={handleShare} className="text-sm font-bold" style={{ color: accent }}>Copy</button>
             </div>
             <div className="flex gap-2">

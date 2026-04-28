@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useLocation } from "wouter";
 import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, MessageCircle, Loader2, Clock, Minus, Plus, Trash2, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -629,7 +630,7 @@ export default function PlayBingeBattle() {
   // --- View: Sent (share) ---
   if (view === "sent") {
     const media = selectedMedia!;
-    const battleUrl = `${window.location.origin}/play/binge-battle/accept/${createdBattleId}`;
+    const battleUrl = `${APP_BASE}/play/binge-battle/accept/${createdBattleId}`;
     const shareText = `Can you beat me? I'm challenging you to a Binge Battle on ${media.title} — first to finish wins. Join me on Consumed`;
 
     function sendChallenge() {
@@ -879,7 +880,7 @@ export default function PlayBingeBattle() {
             {isPending && isChallenger && (
               <button
                 onClick={() => {
-                  const battleUrl = `${window.location.origin}/play/binge-battle/accept/${battle.id}`;
+                  const battleUrl = `${APP_BASE}/play/binge-battle/accept/${battle.id}`;
                   const shareText = `Can you beat me? I'm challenging you to a Binge Battle on ${battle.media_title} — first to finish wins. Join me on Consumed`;
                   if (navigator.share) {
                     navigator.share({ title: "Binge Battle Challenge", text: shareText, url: battleUrl }).catch(() => {

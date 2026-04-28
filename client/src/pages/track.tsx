@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Navigation from "@/components/navigation";
 import ConsumptionTracker from "@/components/consumption-tracker";
@@ -59,7 +60,7 @@ export default function Track() {
     }
 
     const listId = listName.toLowerCase().replace(/\s+/g, '-');
-    const shareUrl = `${import.meta.env.VITE_APP_URL || window.location.origin}/list/${listId}?user=${session.user.id}`;
+    const shareUrl = `${APP_BASE}/list/${listId}?user=${session.user.id}`;
 
     if (navigator.share) {
       // Use native sharing if available (mobile)

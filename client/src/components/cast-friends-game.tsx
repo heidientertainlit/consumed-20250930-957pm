@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, memo } from "react";
+import { APP_BASE } from "@/lib/share";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -639,7 +640,7 @@ function CastFriendsGame({ onComplete }: CastFriendsGameProps) {
           {!lastCastWasToFriend && lastCastToken && (
             <Button 
               onClick={() => {
-                const url = `${window.location.origin}/cast/${lastCastToken}`;
+                const url = `${APP_BASE}/cast/${lastCastToken}`;
                 if (navigator.share) {
                   navigator.share({
                     title: 'Cast Your Friends - Consumed',

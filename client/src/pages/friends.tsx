@@ -7,7 +7,7 @@ import { Search, Check, UserPlus, Users, X, Share2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import { copyLink } from "@/lib/share";
+import { copyLink, APP_BASE } from "@/lib/share";
 
 export default function FriendsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -247,7 +247,7 @@ export default function FriendsPage() {
               <Button
                 onClick={async () => {
                   if (!user?.id) return;
-                  const inviteUrl = `${import.meta.env.VITE_APP_URL || window.location.origin}/invite/${user.id}`;
+                  const inviteUrl = `${APP_BASE}/invite/${user.id}`;
                   try {
                     await navigator.clipboard.writeText(inviteUrl);
                     toast({

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Share2, X, Check } from "lucide-react";
+import { APP_BASE } from "@/lib/share";
 
 interface ShareImageSheetProps {
   open: boolean;
@@ -29,14 +30,14 @@ export function ShareImageSheet({
         await navigator.share({
           title: title,
           text: shareText || `Check this out on Consumed!`,
-          url: shareUrl || window.location.href,
+          url: shareUrl || `${APP_BASE}${window.location.pathname}`,
         });
         setShared(true);
         setTimeout(() => setShared(false), 2000);
       } catch (err) {}
     } else {
       try {
-        await navigator.clipboard.writeText(shareUrl || window.location.href);
+        await navigator.clipboard.writeText(shareUrl || `${APP_BASE}${window.location.pathname}`);
         setShared(true);
         setTimeout(() => setShared(false), 2000);
       } catch (err) {}

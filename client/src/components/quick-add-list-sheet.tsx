@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { APP_BASE } from "@/lib/share";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -332,7 +333,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         await navigator.share({
           title: `${media.title} on Consumed`,
           text: shareText,
-          url: window.location.origin,
+          url: APP_BASE,
         });
       } catch (err) {
         // User cancelled or error

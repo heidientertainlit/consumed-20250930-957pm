@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { APP_BASE } from '@/lib/share';
 import { useLocation, useParams, Link } from 'wouter';
 import { ArrowLeft, Trophy, Plus, GripVertical, Globe, Lock, Trash2, X, Link2 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
@@ -289,7 +290,7 @@ export default function RankDetail() {
           <div className="pl-9">
             <button
               onClick={() => {
-                const url = `${import.meta.env.VITE_APP_URL || window.location.origin}/rank/${rankData.id}?user=${session?.user?.id}`;
+                const url = `${APP_BASE}/rank/${rankData.id}?user=${session?.user?.id}`;
                 navigator.clipboard.writeText(url);
                 toast({ title: "Link copied!", description: "Share this link with anyone" });
               }}

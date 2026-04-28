@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -525,7 +526,7 @@ export default function AwardsPredictions() {
   const handleShare = async () => {
     if (!event) return;
     
-    const shareUrl = `${window.location.origin}/awards/${event.slug}/ballot?user=${userId}`;
+    const shareUrl = `${APP_BASE}/awards/${event.slug}/ballot?user=${userId}`;
     const shareText = `Check out my ${event.year} ${event.name} predictions!`;
     
     if (navigator.share) {
@@ -678,7 +679,7 @@ export default function AwardsPredictions() {
             </div>
             <button
               onClick={() => {
-                const shareUrl = `${window.location.origin}/play/awards/${eventSlug}`;
+                const shareUrl = `${APP_BASE}/play/awards/${eventSlug}`;
                 if (navigator.share) {
                   navigator.share({
                     title: `${event.year} ${event.name} Predictions`,

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useLocation } from "wouter";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -66,7 +67,7 @@ export function ChallengePoolsFeedBanner() {
 
   function handleShare(pool: Pool, e: React.MouseEvent) {
     e.stopPropagation();
-    const url = `${window.location.origin}/play/challenge/${encodeURIComponent(pool.show_tag)}/easy${user?.id ? `?from=${user.id}` : ""}`;
+    const url = `${APP_BASE}/play/challenge/${encodeURIComponent(pool.show_tag)}/easy${user?.id ? `?from=${user.id}` : ""}`;
     const text = `Think you know ${pool.title}? Challenge me on Consumed!`;
     if (navigator.share) {
       navigator.share({ title: "Challenge me on Consumed", text, url }).catch(() => {});

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -86,7 +87,7 @@ export default function AwardsBallotShare() {
   });
 
   const handleShare = async () => {
-    const shareUrl = window.location.href;
+    const shareUrl = `${APP_BASE}${window.location.pathname}`;
     const shareText = ballotData 
       ? `Check out my ${ballotData.event.year} ${ballotData.event.name} predictions! 🏆` 
       : 'Check out my awards predictions!';

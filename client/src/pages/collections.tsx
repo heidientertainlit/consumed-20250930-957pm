@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { APP_BASE } from "@/lib/share";
 import { Link, useLocation } from "wouter";
 import Navigation from "@/components/navigation";
 import { useAuth } from "@/lib/auth";
@@ -841,7 +842,7 @@ export default function CollectionsPage() {
                           onClick={(e) => {
                             e.stopPropagation();
                             const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
-                            const url = `${import.meta.env.VITE_APP_URL || window.location.origin}/list/${listSlug}?user=${user?.id}`;
+                            const url = `${APP_BASE}/list/${listSlug}?user=${user?.id}`;
                             navigator.clipboard.writeText(url);
                             toast({ title: "Link copied!" });
                           }}

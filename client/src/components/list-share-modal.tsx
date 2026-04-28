@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Copy, Check, Share2, Link, Facebook, Twitter, MessageCircle } from "lucide-react";
-import { copyLink, urlFor } from "@/lib/share";
+import { APP_BASE, copyLink, urlFor } from "@/lib/share";
 
 interface ListShareModalProps {
   isOpen: boolean;
@@ -16,7 +16,7 @@ export default function ListShareModal({ isOpen, onClose, listName, listItems, l
   const [copied, setCopied] = useState(false);
   
   // Use the new URL format
-  const shareUrl = listId ? urlFor('list', listId) : `${import.meta.env.VITE_APP_URL || window.location.origin}/list/${listName.toLowerCase().replace(/\s+/g, '-')}`;
+  const shareUrl = listId ? urlFor('list', listId) : `${APP_BASE}/list/${listName.toLowerCase().replace(/\s+/g, '-')}`;
   
   const handleCopyLink = async () => {
     try {

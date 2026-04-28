@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { APP_BASE } from "@/lib/share";
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -72,7 +73,7 @@ export default function PublicProfilePage() {
   };
 
   const displayName = profile?.display_name || profile?.username || 'User';
-  const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+  const appUrl = APP_BASE;
 
   const getMediaIcon = (type: string) => {
     switch (type?.toLowerCase()) {
