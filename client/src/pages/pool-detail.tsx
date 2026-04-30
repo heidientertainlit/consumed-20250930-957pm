@@ -2246,6 +2246,8 @@ export default function PoolDetailPage() {
   const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [joiningRoom, setJoiningRoom] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [editSeriesTag, setEditSeriesTag] = useState<string | null>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -2320,6 +2322,17 @@ export default function PoolDetailPage() {
     if (result.error) { toast({ title: result.error, variant: 'destructive' }); return; }
     refresh();
     toast({ title: newValue ? 'Room is now public' : 'Room is now private' });
+  };
+
+  const handleSaveSettings = async () => {
+    if (editSeriesTag === null) return;
+    setSavingSettings(true);
+    const result = await callFn('update-pool', { pool_id: params.id, series_tag: editSeriesTag.trim() || null }, token);
+    setSavingSettings(false);
+    if (result.error) { toast({ title: result.error, variant: 'destructive' }); return; }
+    refresh();
+    setEditSeriesTag(null);
+    toast({ title: 'Room settings saved!' });
   };
 
   const handleJoinRoom = async () => {
@@ -2635,12 +2648,89 @@ export default function PoolDetailPage() {
 
         {/* ── STATS — Coming Soon ── */}
         {!isLoading && tab === 'stats' && (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mb-1">
-              <BarChart2 size={22} className="text-purple-400" />
+          <div className="space-y-4">
+            {/* Stats placeholder */}
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mb-1">
+                <BarChart2 size={22} className="text-purple-400" />
+              </div>
+              <p className="text-gray-800 font-semibold text-base">Stats coming soon</p>
+              <p className="text-gray-400 text-sm text-center max-w-xs leading-relaxed">Fan rankings, engagement streaks, top contributors, and room heat maps — all on their way.</p>
             </div>
-            <p className="text-gray-800 font-semibold text-base">Stats coming soon</p>
-            <p className="text-gray-400 text-sm text-center max-w-xs leading-relaxed">Fan rankings, engagement streaks, top contributors, and room heat maps — all on their way.</p>
+
+            {/* Host Settings */}
+            {isHost && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Room Settings</p>
+                <div className="space-y-3">
+                  {/* Visibility */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Visibility</p>
+                      <p className="text-xs text-gray-400">{isPublic ? 'Anyone can discover this room' : 'Only invited members can join'}</p>
+                    </div>
+                    <button
+                      onClick={() => handleToggleVisibility(!isPublic)}
+                      disabled={togglingVisibility}
+                      className={`relative w-11 h-6 rounded-full transition-colors ${isPublic ? 'bg-purple-600' : 'bg-gray-300'}`}
+                    >
+                      <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${isPublic ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+
+                  {/* Series Tag */}
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 mb-0.5">Show / Series tag</p>
+                    <p className="text-xs text-gray-400 mb-2">Polls and trivia tagged with this show auto-appear in the Play tab.</p>
+                    {editSeriesTag !== null ? (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={editSeriesTag}
+                          onChange={e => setEditSeriesTag(e.target.value)}
+                          placeholder="e.g. Friends"
+                          className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-purple-400"
+                          autoFocus
+                        />
+                        <button
+                          onClick={handleSaveSettings}
+                          disabled={savingSettings}
+                          className="px-3 py-2 rounded-xl text-sm font-semibold text-white bg-purple-600 disabled:opacity-50"
+                        >
+                          {savingSettings ? '…' : 'Save'}
+                        </button>
+                        <button
+                          onClick={() => setEditSeriesTag(null)}
+                          className="px-3 py-2 rounded-xl text-sm text-gray-400 border border-gray-200"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setEditSeriesTag(pool?.series_tag || '')}
+                        className="flex items-center gap-2 w-full px-3 py-2 rounded-xl border border-dashed border-gray-200 text-sm text-left"
+                      >
+                        <span className="flex-1 text-gray-700">{pool?.series_tag || <span className="text-gray-400">Not set</span>}</span>
+                        <span className="text-purple-500 text-xs font-medium">Edit</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Invite Link */}
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 mb-2">Invite link</p>
+                    <button
+                      onClick={handleCopyLink}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 text-sm text-left"
+                    >
+                      <span className="flex-1 text-gray-400 truncate text-xs font-mono">{`/room/join/${pool?.invite_code}`}</span>
+                      <span className="text-purple-500 text-xs font-medium shrink-0">{copied ? 'Copied!' : 'Copy'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

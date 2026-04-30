@@ -26,7 +26,7 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return json({ error: 'Unauthorized' }, 401);
 
-    const { name, is_public = false, description = '' } = await req.json();
+    const { name, is_public = false, description = '', series_tag = null, partner_name = null, media_image = null } = await req.json();
     if (!name?.trim()) return json({ error: 'Pool name is required' }, 400);
 
     const svc = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
@@ -43,7 +43,10 @@ serve(async (req) => {
         status: 'open',
         is_public: !!is_public,
         points_per_correct: 1,
-        pool_type: 'room'
+        pool_type: 'room',
+        series_tag: series_tag || null,
+        partner_name: partner_name || null,
+        media_image: media_image || null,
       }).select().single();
       if (error?.code === '23505') continue;
       if (error) return json({ error: error.message }, 500);

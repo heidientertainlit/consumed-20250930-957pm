@@ -155,19 +155,58 @@ serve(async (req) => {
       vote_counts: (p.prompt_type === 'pick' || p.prompt_type === 'call_it') ? (voteCountsMap[p.id] || {}) : undefined,
     }));
 
-    // Fetch featured prediction_pools for partner rooms (e.g. partner_tag = 'reelz')
+    // Fetch featured prediction_pools for rooms — match by partner_name AND/OR series_tag
     let featuredPolls: any[] = [];
     const partnerTag = (pool.partner_name || '').toLowerCase().trim();
-    if (partnerTag) {
-      const { data: partnerPolls } = await svc
-        .from('prediction_pools')
-        .select('id, title, type, status, options, points_reward, category, show_tag, partner_tag')
-        .eq('partner_tag', partnerTag)
-        .eq('status', 'open')
-        .order('created_at', { ascending: true });
+    const seriesTag = (pool.series_tag || '').toLowerCase().trim();
 
-      if (partnerPolls && partnerPolls.length > 0) {
-        const pollIds = partnerPolls.map((p: any) => p.id);
+    if (partnerTag || seriesTag) {
+      const seenIds = new Set<string>();
+      let allMatchedPolls: any[] = [];
+
+      const POLL_SELECT = 'id, title, type, status, options, points_reward, category, show_tag, partner_tag, correct_answer, deadline, media_external_source';
+
+      // Query 1: match by partner_tag (existing partner-room behaviour)
+      if (partnerTag) {
+        const { data } = await svc
+          .from('prediction_pools')
+          .select(POLL_SELECT)
+          .eq('partner_tag', partnerTag)
+          .eq('status', 'open')
+          .order('created_at', { ascending: true });
+        for (const p of (data || [])) {
+          if (!seenIds.has(p.id)) { seenIds.add(p.id); allMatchedPolls.push(p); }
+        }
+      }
+
+      // Query 2: match by series_tag — against both partner_tag column and show_tag column
+      if (seriesTag && seriesTag !== partnerTag) {
+        // 2a — partner_tag exact match on series_tag
+        const { data: byPartner } = await svc
+          .from('prediction_pools')
+          .select(POLL_SELECT)
+          .eq('partner_tag', seriesTag)
+          .eq('status', 'open')
+          .order('created_at', { ascending: true });
+        for (const p of (byPartner || [])) {
+          if (!seenIds.has(p.id)) { seenIds.add(p.id); allMatchedPolls.push(p); }
+        }
+
+        // 2b — show_tag contains series_tag (case-insensitive)
+        const { data: byShowTag } = await svc
+          .from('prediction_pools')
+          .select(POLL_SELECT)
+          .ilike('show_tag', `%${pool.series_tag}%`)
+          .eq('status', 'open')
+          .order('created_at', { ascending: true });
+        for (const p of (byShowTag || [])) {
+          if (!seenIds.has(p.id)) { seenIds.add(p.id); allMatchedPolls.push(p); }
+        }
+      }
+
+      if (allMatchedPolls.length > 0) {
+        const pollIds = allMatchedPolls.map((p: any) => p.id);
+
         // Fetch this user's existing votes
         const { data: myVotes } = await svc
           .from('user_predictions')
@@ -188,7 +227,7 @@ serve(async (req) => {
           voteCountsById[v.pool_id][v.prediction] = (voteCountsById[v.pool_id][v.prediction] || 0) + 1;
         }
 
-        featuredPolls = partnerPolls.map((p: any) => ({
+        featuredPolls = allMatchedPolls.map((p: any) => ({
           ...p,
           user_vote: myVoteMap[p.id] || null,
           vote_counts: voteCountsById[p.id] || {},
