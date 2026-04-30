@@ -591,13 +591,22 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               <div className="h-[22px] flex items-center justify-center"><Dices size={23} className="text-white" strokeWidth={1.4} /></div>
               <span className="text-white text-[10px] mt-0.5">Play</span>
             </Link>
-            <button className="flex flex-col items-center justify-center p-2" data-testid="nav-add">
-              <div className="h-[22px] flex items-center justify-center">
-                <div className="w-8 h-8 rounded-full border-2 border-white/40 flex items-center justify-center">
-                  <span className="text-white/60 text-[18px] font-light leading-none mb-px">+</span>
-                </div>
+            <button
+              onClick={() => setIsQuickActionOpen(true)}
+              className="flex flex-col items-center justify-center p-2 -mt-3"
+              data-testid="nav-add"
+              aria-label="Add"
+            >
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{
+                  background: "linear-gradient(135deg, #8b5cf6, #6d28d9)",
+                  boxShadow: "0 0 14px 3px rgba(139,92,246,0.55)",
+                }}
+              >
+                <Plus size={22} className="text-white" strokeWidth={1.5} />
               </div>
-              <span className="text-white/40 text-[10px] mt-0.5"> </span>
+              <span className="text-transparent text-[10px] mt-0.5 select-none">·</span>
             </button>
             <Link href="/my-library" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/my-library" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-library" onTouchStart={prefetchCollections} onMouseEnter={prefetchCollections}>
               <div className="h-[22px] flex items-center justify-center"><Library className="text-white" size={22} /></div>
