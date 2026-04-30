@@ -424,15 +424,6 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               {isSearchExpanded ? <X className="text-white" size={20} /> : <Search className="text-white" size={20} />}
             </button>
             <NotificationBell />
-            <Link href="/profile" className="flex items-center justify-center ml-0.5" aria-label="Profile">
-              {navAvatar ? (
-                <img src={navAvatar} alt="Profile" className="w-7 h-7 rounded-full object-cover border border-white/20" />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
-                  <User size={14} className="text-white" />
-                </div>
-              )}
-            </Link>
           </div>
         </div>
 
@@ -605,6 +596,16 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             <Link href="/rooms" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/rooms" || location.startsWith("/room/") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-rooms">
               <div className="h-[22px] flex items-center justify-center"><DoorOpen className="text-white" size={22} /></div>
               <span className="text-white text-[10px] mt-0.5">Rooms</span>
+            </Link>
+            <Link href="/profile" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/profile" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-me" aria-label="Profile">
+              <div className="h-[22px] flex items-center justify-center">
+                {navAvatar ? (
+                  <img src={navAvatar} alt="Me" className="w-[22px] h-[22px] rounded-full object-cover border border-white/30" />
+                ) : (
+                  <User className="text-white" size={22} />
+                )}
+              </div>
+              <span className="text-white text-[10px] mt-0.5">Me</span>
             </Link>
           </div>
         </nav>,
