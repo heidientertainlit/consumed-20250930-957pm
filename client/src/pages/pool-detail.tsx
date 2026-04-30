@@ -1011,6 +1011,24 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
 }
 
 /* ─── Play Tab: Media type pill helper ───────────────────────────────── */
+function RoomMediaTypePill({ mediaType }: { mediaType: string | null }) {
+  if (!mediaType) return null;
+  const type = mediaType.toLowerCase();
+  let label = '';
+  let Icon = Tv;
+  if (type === 'book') { label = 'Book'; Icon = BookOpen; }
+  else if (type === 'movie') { label = 'Movie'; Icon = Film; }
+  else if (type === 'music') { label = 'Music'; Icon = Music; }
+  else if (type === 'tv') { label = 'TV'; Icon = Tv; }
+  else return null;
+  return (
+    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 border border-white/20">
+      <Icon size={10} className="text-white/70" />
+      <span className="text-[10px] font-semibold text-white/70 uppercase tracking-wide">{label}</span>
+    </div>
+  );
+}
+
 function MediaTypePill({ poll }: { poll: any }) {
   const src = (poll.media_external_source || '').toLowerCase();
   const cat = (poll.category || '').toLowerCase();
@@ -2400,7 +2418,7 @@ export default function PoolDetailPage() {
         {/* Room name + meta */}
         <div className="px-4 pb-3">
           <p className="text-white/40 text-[10px] font-medium uppercase tracking-widest mb-1">Room</p>
-          <h1 className="text-white text-[22px] font-medium leading-tight mb-2.5 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-white text-[22px] font-medium leading-tight mb-1.5 flex items-center gap-2 flex-wrap" style={{ fontFamily: 'Poppins, sans-serif' }}>
             {isLoading ? '...' : pool?.name || 'Room'}
             {!isLoading && pool?.partner_name && (
               <span title="Official Partner Room" className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full shrink-0" style={{ marginTop: '1px', background: '#4f7ef7' }}>
@@ -2408,6 +2426,14 @@ export default function PoolDetailPage() {
               </span>
             )}
           </h1>
+          {!isLoading && pool?.media_type && (
+            <div className="flex items-center gap-2 mb-2">
+              <RoomMediaTypePill mediaType={pool.media_type} />
+              {pool.series_volumes && (
+                <span className="text-white/40 text-[11px]">{pool.series_volumes} volumes</span>
+              )}
+            </div>
+          )}
           {/* Member count + visibility */}
           {!isLoading && (
             <div className="flex items-center gap-2">

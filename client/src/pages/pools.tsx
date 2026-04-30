@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, Tv } from "lucide-react";
+import { Search, X, Tv, BookOpen, Film, Music } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
 
@@ -103,11 +103,29 @@ export default function PoolsPage() {
                 </div>
 
                 <button onClick={() => setLocation(`/room/${pool.id}`)} className="flex-1 min-w-0 text-left">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <h3 className="text-gray-900 font-semibold text-base truncate">{pool.name}</h3>
-                    {isPlatform && (
-                      <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: accent + '18', color: accent }}>Platform</span>
-                    )}
+                  <h3 className="text-gray-900 font-semibold text-base truncate mb-0.5">{pool.name}</h3>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    {/* Media type pill */}
+                    {(() => {
+                      const mt = (pool.media_type || '').toLowerCase();
+                      if (!mt && !isPlatform) return null;
+                      const config: Record<string, { label: string; Icon: any }> = {
+                        book:  { label: 'Book',     Icon: BookOpen },
+                        movie: { label: 'Movie',    Icon: Film },
+                        music: { label: 'Music',    Icon: Music },
+                        tv:    { label: 'TV',       Icon: Tv },
+                      };
+                      const { label, Icon } = isPlatform
+                        ? { label: 'Platform', Icon: Tv }
+                        : (config[mt] || { label: mt, Icon: Tv });
+                      return (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide shrink-0"
+                          style={{ background: accent + '14', color: accent }}>
+                          <Icon size={9} />
+                          {label}
+                        </span>
+                      );
+                    })()}
                   </div>
                   {pool.description && (
                     <p className="text-gray-500 text-xs mb-1 line-clamp-1">{pool.description}</p>
