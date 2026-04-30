@@ -2258,7 +2258,35 @@ export default function PoolDetailPage() {
     enabled: !!params.id && !!session?.access_token
   });
 
-  const roomPosts: any[] = roomPostsData || [];
+  const seriesTag: string | null = data?.pool?.series_tag ?? null;
+
+  const { data: seriesPostsData } = useQuery({
+    queryKey: ['room-series-posts', params.id, seriesTag],
+    queryFn: async () => {
+      if (!seriesTag) return [];
+      const { data: posts, error } = await supabase
+        .from('social_posts')
+        .select('*, users:user_id(id, display_name, user_name)')
+        .ilike('media_title', `%${seriesTag}%`)
+        .is('room_id', null)
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return posts || [];
+    },
+    enabled: !!params.id && !!session?.access_token && !!seriesTag
+  });
+
+  // Merge room-direct posts + series posts, deduplicate by id, sort newest first
+  const roomPosts: any[] = (() => {
+    const direct = roomPostsData || [];
+    const series = seriesPostsData || [];
+    const seen = new Set(direct.map((p: any) => p.id));
+    const merged = [...direct, ...series.filter((p: any) => !seen.has(p.id))];
+    return merged.sort((a: any, b: any) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  })();
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`${APP_BASE}/room/join/${data?.pool?.invite_code}`);

@@ -9,7 +9,7 @@ const cors = {
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
-const FULL_POOL_SELECT = 'id, name, description, host_id, invite_code, status, is_public, is_official, partner_name, partner_logo_url, accent_color, media_image, room_category, created_at, pool_type';
+const FULL_POOL_SELECT = 'id, name, description, host_id, invite_code, status, is_public, is_official, partner_name, partner_logo_url, accent_color, media_image, room_category, series_tag, created_at, pool_type';
 const FULL_MEMBERSHIP_SELECT = `pool_id, role, total_points, joined_at, pools:pool_id(${FULL_POOL_SELECT})`;
 
 const BASE_POOL_SELECT = 'id, name, description, host_id, invite_code, status, is_public, created_at, pool_type';
@@ -35,6 +35,7 @@ async function enrichPool(svc: any, pool: any, _userId: string, isHost: boolean,
     accent_color: pool.accent_color ?? null,
     media_image: pool.media_image ?? null,
     room_category: pool.room_category ?? 'media',
+    series_tag: pool.series_tag ?? null,
     created_at: pool.created_at,
     is_host: isHost,
     user_points: userPoints,
