@@ -593,22 +593,14 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             </Link>
             <button
               onClick={() => setIsQuickActionOpen(true)}
-              className="flex flex-col items-center justify-center p-2 mt-2"
+              className="flex flex-col items-center justify-center p-2"
               data-testid="nav-add"
               aria-label="Add"
             >
               <div className="h-[22px] flex items-center justify-center">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center"
-                  style={{
-                    background: "linear-gradient(135deg, #8b5cf6, #6d28d9)",
-                    boxShadow: "0 0 8px 2px rgba(139,92,246,0.40)",
-                  }}
-                >
-                  <Plus size={18} className="text-white" strokeWidth={2} />
-                </div>
+                <Plus size={22} strokeWidth={1.8} style={{ color: '#8b5cf6' }} />
               </div>
-              <span className="text-transparent text-[10px] mt-0.5 select-none">·</span>
+              <span className="text-[10px] mt-0.5 font-medium" style={{ color: '#8b5cf6' }}>Add</span>
             </button>
             <Link href="/my-library" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/my-library" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-library" onTouchStart={prefetchCollections} onMouseEnter={prefetchCollections}>
               <div className="h-[22px] flex items-center justify-center"><Library className="text-white" size={22} /></div>
