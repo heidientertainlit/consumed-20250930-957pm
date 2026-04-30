@@ -595,6 +595,12 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               <div className="h-[22px] flex items-center justify-center"><Library className="text-white" size={22} /></div>
               <span className="text-white text-[10px] mt-0.5">Library</span>
             </Link>
+            {(roomsEnabled || user?.id === "88bfb2a0-e8ce-4081-b731-2a49567ff093") && (
+              <Link href="/rooms" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/rooms" || location.startsWith("/room/") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-rooms">
+                <div className="h-[22px] flex items-center justify-center"><DoorOpen className="text-white" size={22} /></div>
+                <span className="text-white text-[10px] mt-0.5">Rooms</span>
+              </Link>
+            )}
           </div>
         </nav>,
         document.body
