@@ -5954,30 +5954,6 @@ export default function Feed() {
           </div>
         )}
 
-        {/* Seen It? Game Carousels */}
-        {session && (
-          <div className="space-y-4 mb-4">
-            <div className="flex items-center gap-3 mt-2">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">What have you seen?</span>
-              <div className="flex-1 h-px bg-gray-200" />
-            </div>
-            <SeenItGame onAddToList={(media) => { setQuickAddMedia({ title: media.title, mediaType: media.mediaType, externalId: media.externalId, externalSource: media.externalSource, imageUrl: media.imageUrl }); setIsQuickAddOpen(true); }} />
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">What have you read?</span>
-              <div className="flex-1 h-px bg-gray-200" />
-            </div>
-            <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia({ title: media.title, mediaType: media.mediaType, externalId: media.externalId, externalSource: media.externalSource, imageUrl: media.imageUrl }); setIsQuickAddOpen(true); }} />
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">What have you listened to?</span>
-              <div className="flex-1 h-px bg-gray-200" />
-            </div>
-            <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia({ title: media.title, mediaType: media.mediaType, externalId: media.externalId, externalSource: media.externalSource, imageUrl: media.imageUrl }); setIsQuickAddOpen(true); }} />
-          </div>
-        )}
-
         {/* Activity Stream */}
         <div className="space-y-3">
 
@@ -6237,6 +6213,11 @@ export default function Feed() {
                 <RanksCarousel offset={0} />
               )}
 
+              {/* Seen It? — Movies/TV */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
+                <SeenItGame onAddToList={(media) => { setQuickAddMedia({ title: media.title, mediaType: media.mediaType, externalId: media.externalId, externalSource: media.externalSource, imageUrl: media.imageUrl }); setIsQuickAddOpen(true); }} />
+              )}
+
               {/* Music trivia */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Music" />
@@ -6299,6 +6280,11 @@ export default function Feed() {
                 <SocialProofCard card={buildLeaderboardSocialProof(playActivity[3], 3)} />
               )}
 
+              {/* Seen It? — Books */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
+                <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia({ title: media.title, mediaType: media.mediaType, externalId: media.externalId, externalSource: media.externalSource, imageUrl: media.imageUrl }); setIsQuickAddOpen(true); }} />
+              )}
+
               {/* Games trivia */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Gaming" />
@@ -6329,6 +6315,11 @@ export default function Feed() {
               {/* Music trivia — round 2 */}
               {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'trivia') && !selectedCategory && (
                 <TriviaCarousel expanded={selectedFilter === 'trivia'} category="Music" />
+              )}
+
+              {/* Seen It? — Music */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && session && (
+                <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia({ title: media.title, mediaType: media.mediaType, externalId: media.externalId, externalSource: media.externalSource, imageUrl: media.imageUrl }); setIsQuickAddOpen(true); }} />
               )}
 
               {/* Play slot #5 */}
