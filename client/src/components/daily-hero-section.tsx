@@ -1796,97 +1796,34 @@ export function DailyHeroSection() {
       {/* ══ POST-GAME: Mini badge pair (both done) ══ */}
       {bothCompleted ? (
         <div className="flex flex-col gap-2">
-          <div className="grid grid-cols-3 gap-2">
-
-            {/* TODAY'S PLAY — completed mini card */}
-            <button
-              onClick={() => setShowPlayShare(true)}
-              className="rounded-xl px-2.5 py-2.5 flex flex-col gap-1.5 text-left"
-              style={{
-                background: 'linear-gradient(150deg,#312e81 0%,#1e3a8a 40%,#0369a1 100%)',
-                border: '1px solid rgba(29,78,216,0.3)',
-              }}
-            >
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-[7px] font-bold uppercase tracking-[0.1em] text-cyan-300/70 leading-tight">Today's Play</span>
-                <span className="text-cyan-200/90 flex-shrink-0">
-                  <Check size={9} strokeWidth={3} />
-                </span>
+          {/* TODAY'S PLAY — completed mini card */}
+          <button
+            onClick={() => setShowPlayShare(true)}
+            className="w-full rounded-xl px-3 py-3 flex items-center justify-between gap-3 text-left"
+            style={{
+              background: 'linear-gradient(150deg,#312e81 0%,#1e3a8a 40%,#0369a1 100%)',
+              border: '1px solid rgba(29,78,216,0.3)',
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-cyan-300/70">Today's Play</span>
+                <div className="flex items-end gap-1.5 mt-0.5">
+                  <p className="text-white text-[20px] font-black leading-none">{playScore?.correct ?? '–'}<span className="text-white/30 text-[13px] font-bold">/{playScore?.total ?? 3}</span></p>
+                  {streak && streak > 0 ? (
+                    <span className="flex items-center gap-0.5 text-orange-400 text-[11px] font-bold leading-none mb-0.5">
+                      <Flame size={11} fill="currentColor" />
+                      {streak}
+                    </span>
+                  ) : null}
+                </div>
               </div>
-              <div className="flex items-end gap-1.5">
-                <p className="text-white text-[17px] font-black leading-none">{playScore?.correct ?? '–'}<span className="text-white/30 text-[11px] font-bold">/{playScore?.total ?? 3}</span></p>
-                {streak && streak > 0 ? (
-                  <span className="flex items-center gap-0.5 text-orange-400 text-[10px] font-bold leading-none">
-                    <Flame size={10} fill="currentColor" />
-                    {streak}
-                  </span>
-                ) : null}
-              </div>
-              <span className="flex items-center gap-1 text-purple-300/60 text-[8px] font-semibold">
-                <Share2 size={8} />
-                Share
-              </span>
-            </button>
-
-            {/* DAILY CALL — completed mini card */}
-            <button
-              onClick={() => setShowCallShare(true)}
-              className="rounded-xl px-2.5 py-2.5 flex flex-col gap-1.5 text-left"
-              style={{
-                background: 'linear-gradient(150deg,#1e40af 0%,#1e3a8a 100%)',
-                border: '1px solid rgba(59,130,246,0.25)',
-              }}
-            >
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-[7px] font-bold uppercase tracking-[0.1em] text-blue-300/60 leading-tight">Daily Call</span>
-                <span className="text-blue-300/80 flex-shrink-0">
-                  <Check size={9} strokeWidth={3} />
-                </span>
-              </div>
-              <div className="flex items-end gap-1.5">
-                <p className="text-white text-[13px] font-bold leading-none">Locked In</p>
-                {streak && streak > 0 ? (
-                  <span className="flex items-center gap-0.5 text-orange-400 text-[10px] font-bold leading-none">
-                    <Flame size={10} fill="currentColor" />
-                    {streak}
-                  </span>
-                ) : null}
-              </div>
-              <span className="flex items-center gap-1 text-blue-300/60 text-[8px] font-semibold">
-                <Share2 size={8} />
-                Share
-              </span>
-            </button>
-
-            {/* eDNA — completed mini card */}
-            <button
-              onClick={() => { if (!dnaHeroAnswered) { setSwipeIndex(2); setShowDnaInCarousel(true); } }}
-              className="rounded-xl px-2.5 py-2.5 flex flex-col gap-1.5 text-left"
-              style={{
-                background: 'linear-gradient(150deg,#4c1d95 0%,#6d28d9 100%)',
-                border: '1px solid rgba(139,92,246,0.3)',
-              }}
-            >
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-[7px] font-bold uppercase tracking-[0.1em] text-purple-300/70 leading-tight">eDNA</span>
-                {dnaHeroAnswered ? (
-                  <span className="text-purple-300/80 flex-shrink-0"><Check size={9} strokeWidth={3} /></span>
-                ) : (
-                  <span className="text-purple-400 flex-shrink-0"><ArrowRight size={9} /></span>
-                )}
-              </div>
-              <p className="text-white text-[12px] font-bold leading-tight">
-                {dnaHeroAnswered
-                  ? (dnaStats?.topGenre ? `Strong on ${dnaStats.topGenre}` : 'Done ✓')
-                  : 'Answer now'}
-              </p>
-              <span className="flex items-center gap-1 text-purple-300/60 text-[8px] font-semibold">
-                <Dna size={8} />
-                {dnaHeroAnswered ? 'Answered' : 'Tap to play'}
-              </span>
-            </button>
-
-          </div>
+            </div>
+            <span className="flex items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5 text-white text-[11px] font-semibold border border-white/10">
+              <Share2 size={10} />
+              Share
+            </span>
+          </button>
         </div>
       ) : (
         /* ══ PRE-GAME: Deck-layered cards — front + back peek, swap when one is done ══ */
@@ -2292,91 +2229,9 @@ export function DailyHeroSection() {
 
           return (
             <div className="flex flex-col gap-2 md:max-w-lg md:mx-auto">
-              <div
-                className="relative pr-1 pb-12 select-none cursor-grab active:cursor-grabbing"
-                onClickCapture={(e) => {
-                  if (wasDragRef.current) { wasDragRef.current = false; e.stopPropagation(); e.preventDefault(); }
-                }}
-                onTouchStart={(e) => {
-                  touchStartX.current = e.touches[0].clientX;
-                  wasDragRef.current = false;
-                  setIsDragging(true);
-                  setDragOffset(0);
-                }}
-                onTouchMove={(e) => {
-                  const delta = e.touches[0].clientX - touchStartX.current;
-                  if (Math.abs(delta) > 8) wasDragRef.current = true;
-                  setDragOffset(delta);
-                }}
-                onTouchEnd={() => {
-                  const THRESHOLD = 48;
-                  if (dragOffset < -THRESHOLD && swipeIndex < 2) setSwipeIndex(swipeIndex + 1);
-                  else if (dragOffset > THRESHOLD && swipeIndex > 0) setSwipeIndex(swipeIndex - 1);
-                  setDragOffset(0);
-                  setIsDragging(false);
-                }}
-                onMouseDown={(e) => {
-                  touchStartX.current = e.clientX;
-                  wasDragRef.current = false;
-                  setIsDragging(true);
-                  setDragOffset(0);
-                }}
-                onMouseMove={(e) => {
-                  if (!isDragging) return;
-                  const delta = e.clientX - touchStartX.current;
-                  if (Math.abs(delta) > 8) wasDragRef.current = true;
-                  setDragOffset(delta);
-                }}
-                onMouseUp={() => {
-                  const THRESHOLD = 48;
-                  if (dragOffset < -THRESHOLD && swipeIndex < 2) setSwipeIndex(swipeIndex + 1);
-                  else if (dragOffset > THRESHOLD && swipeIndex > 0) setSwipeIndex(swipeIndex - 1);
-                  setDragOffset(0);
-                  setIsDragging(false);
-                }}
-                onMouseLeave={() => {
-                  if (isDragging) {
-                    const THRESHOLD = 48;
-                    if (dragOffset < -THRESHOLD && swipeIndex < 2) setSwipeIndex(swipeIndex + 1);
-                    else if (dragOffset > THRESHOLD && swipeIndex > 0) setSwipeIndex(swipeIndex - 1);
-                    setDragOffset(0);
-                    setIsDragging(false);
-                  }
-                }}
-                onWheel={(e) => {
-                  if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
-                  if (wheelCooldown.current) return;
-                  if (e.deltaX > 30 && swipeIndex < 2) {
-                    setSwipeIndex(swipeIndex + 1);
-                    wheelCooldown.current = true;
-                    setTimeout(() => { wheelCooldown.current = false; }, 600);
-                  } else if (e.deltaX < -30 && swipeIndex > 0) {
-                    setSwipeIndex(swipeIndex - 1);
-                    wheelCooldown.current = true;
-                    setTimeout(() => { wheelCooldown.current = false; }, 600);
-                  }
-                }}
-              >
-                {/* 3-card deck: back card first (absolute, peeks behind), front card second (relative, sets height) */}
-                {swipeIndex === 0 && dailyCallCard(false)}
-                {swipeIndex === 0 && todaysPlayCard(true)}
-                {swipeIndex === 1 && dnaMomentCard(false)}
-                {swipeIndex === 1 && dailyCallCard(true)}
-                {swipeIndex === 2 && todaysPlayCard(false)}
-                {swipeIndex === 2 && dnaMomentCard(true)}
+              <div className="relative">
+                {todaysPlayCard(true)}
               </div>
-
-              {/* Dot indicators */}
-              <div className="flex items-center justify-center gap-1.5 mt-1">
-                {[0, 1, 2].map(i => (
-                  <button
-                    key={i}
-                    onClick={() => setSwipeIndex(i)}
-                    className={`rounded-full transition-all duration-300 ${swipeIndex === i ? 'w-4 h-1.5 bg-white/70' : 'w-1.5 h-1.5 bg-white/20 hover:bg-white/35'}`}
-                  />
-                ))}
-              </div>
-
             </div>
           );
         })()
