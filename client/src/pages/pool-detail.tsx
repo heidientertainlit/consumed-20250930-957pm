@@ -2524,6 +2524,7 @@ export default function PoolDetailPage() {
   const isMember = data?.is_member ?? true;
   const isPublic = pool?.is_public ?? false;
   const token = session?.access_token || '';
+  const currentUserId = session?.user?.id ?? null;
 
   // Separate picks and comments
   const picks = posts.filter(p => p.prompt_type === 'pick' || p.prompt_type === 'call_it');
