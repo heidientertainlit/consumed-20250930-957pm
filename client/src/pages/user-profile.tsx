@@ -3786,27 +3786,16 @@ export default function UserProfile() {
         {activeSection === 'lists' && isOwnProfile && (
           <div ref={listsRef} className="px-4 mb-8">
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                  <input
-                    type="text"
-                    placeholder="Search lists..."
-                    value={listSearch}
-                    onChange={(e) => setListSearch(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
-                    data-testid="input-search-lists"
-                  />
-                </div>
-                <Button
-                  size="sm"
-                  className="bg-purple-600 hover:bg-purple-700 shrink-0"
-                  onClick={() => setShowCreateListDialog(true)}
-                  data-testid="button-create-list"
-                >
-                  <Plus size={14} className="mr-1" />
-                  Create
-                </Button>
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                <input
+                  type="text"
+                  placeholder="Search within lists..."
+                  value={listSearch}
+                  onChange={(e) => setListSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                  data-testid="input-search-lists"
+                />
               </div>
               {isLoadingLists ? (
                 <div className="space-y-2">
