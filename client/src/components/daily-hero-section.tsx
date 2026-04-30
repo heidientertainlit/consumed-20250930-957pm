@@ -1657,18 +1657,20 @@ export function DailyHeroSection() {
     }
   }, [supabaseCallData, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Player count (for the "X people have played" pill) ──
+  // ── Trivia player count for hero subtle text ──
+  const triviaPoolIds = questions.map((q) => q.id);
   const { data: totalPlayers } = useQuery<number>({
-    queryKey: ['daily-hero-players', dailyCall?.id],
+    queryKey: ['daily-hero-trivia-players', triviaPoolIds],
     queryFn: async () => {
-      if (!dailyCall?.id) return 0;
-      const { count } = await supabase
+      if (triviaPoolIds.length === 0) return 0;
+      const { data } = await supabase
         .from('user_predictions')
-        .select('*', { count: 'exact', head: true })
-        .eq('pool_id', dailyCall.id);
-      return count ?? 0;
+        .select('user_id')
+        .in('pool_id', triviaPoolIds);
+      const unique = new Set((data || []).map((r: any) => r.user_id));
+      return unique.size;
     },
-    enabled: !!dailyCall?.id,
+    enabled: triviaPoolIds.length > 0,
   });
 
   // ── DNA Moment for hero card ──

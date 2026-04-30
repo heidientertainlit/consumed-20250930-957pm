@@ -17,16 +17,30 @@ interface NudgeItem {
 export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'light' }) {
   const today = todayStr();
 
+  // Mirror the same two-step logic as daily-hero-section: featured today → fallback to recent unscheduled
   const { data: pools = [] } = useQuery({
     queryKey: ['todays-play-nudge-pools', today],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data: todayData } = await supabase
         .from('prediction_pools')
         .select('id')
         .eq('type', 'trivia')
         .eq('featured_date', today)
-        .eq('status', 'open');
-      return (data || []).map((r: any) => r.id as string);
+        .eq('status', 'open')
+        .limit(3);
+      if (todayData && todayData.length > 0) {
+        return todayData.map((r: any) => r.id as string);
+      }
+      // Fallback: most recent pools with no featured_date (legacy content)
+      const { data: fallbackData } = await supabase
+        .from('prediction_pools')
+        .select('id')
+        .eq('type', 'trivia')
+        .eq('status', 'open')
+        .is('featured_date', null)
+        .order('created_at', { ascending: false })
+        .limit(3);
+      return (fallbackData || []).map((r: any) => r.id as string);
     },
     staleTime: 60_000,
   });
@@ -96,7 +110,20 @@ export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'ligh
     staleTime: 60_000,
   });
 
-  if (!activityData || activityData.totalPlayers === 0) return null;
+  // If pools exist but no one has played yet, show a "be the first" fallback in the feed
+  if (!activityData || activityData.totalPlayers === 0) {
+    if (variant === 'light' && pools.length > 0) {
+      return (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
+            <Zap size={15} className="text-purple-500" />
+          </div>
+          <p className="text-[13px] text-gray-700 font-medium leading-snug">Be the first to ace today's trivia — no one has yet</p>
+        </div>
+      );
+    }
+    return null;
+  }
 
   const nudges: NudgeItem[] = [];
   const { totalPlayers, perfectScorers, allCorrectPct, maxQuestions } = activityData;
