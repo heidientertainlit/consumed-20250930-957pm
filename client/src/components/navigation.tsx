@@ -50,6 +50,17 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   const { user, session } = useAuth();
   const { roomsEnabled } = useFeatureFlags();
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+
+  const { data: navAvatar } = useQuery<string | null>({
+    queryKey: ['nav-avatar', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase.from('users').select('avatar_url').eq('id', user.id).single();
+      return (data as any)?.avatar_url ?? null;
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60_000,
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -413,6 +424,15 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               {isSearchExpanded ? <X className="text-white" size={20} /> : <Search className="text-white" size={20} />}
             </button>
             <NotificationBell />
+            <Link href="/profile" className="flex items-center justify-center ml-0.5" aria-label="Profile">
+              {navAvatar ? (
+                <img src={navAvatar} alt="Profile" className="w-7 h-7 rounded-full object-cover border border-white/20" />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                  <User size={14} className="text-white" />
+                </div>
+              )}
+            </Link>
           </div>
         </div>
 
