@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X } from "lucide-react";
+import { Search, X, Tv } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
 
@@ -79,18 +79,19 @@ export default function PoolsPage() {
               style={{ border: '1px solid rgba(0,0,0,0.08)' }}
             >
               <div className="flex items-center gap-3 p-4">
-                {/* Avatar: poster for media rooms, logo for platform rooms, initials fallback */}
+                {/* Avatar: icon for platform rooms, poster for media rooms, initials fallback */}
                 <div className="shrink-0">
-                  {roomImage ? (
-                    isPlatform ? (
-                      <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center bg-gray-100">
-                        <img src={roomImage} alt={pool.name} className="w-full h-full object-contain p-1" />
-                      </div>
-                    ) : (
-                      <div className="w-12 h-16 rounded-xl overflow-hidden shadow-sm">
-                        <img src={roomImage} alt={pool.name} className="w-full h-full object-cover" />
-                      </div>
-                    )
+                  {isPlatform ? (
+                    <div
+                      className="w-12 h-16 rounded-xl flex items-center justify-center shadow-sm"
+                      style={{ background: `linear-gradient(135deg, ${accent}22, ${accent}44)`, border: `1.5px solid ${accent}55` }}
+                    >
+                      <Tv size={22} style={{ color: accent }} strokeWidth={1.6} />
+                    </div>
+                  ) : roomImage ? (
+                    <div className="w-12 h-16 rounded-xl overflow-hidden shadow-sm">
+                      <img src={roomImage} alt={pool.name} className="w-full h-full object-cover" />
+                    </div>
                   ) : (
                     <div
                       className="w-12 h-16 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm"
