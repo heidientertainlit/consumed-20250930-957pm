@@ -68,7 +68,6 @@ import EntertainmentDNAPage from "./pages/entertainment-dna";
 import OnboardingPage from "./pages/onboarding";
 import NotFoundPage from "./pages/not-found";
 
-import MyLibrary from "@/pages/my-library";
 import About from "@/pages/about";
 import PointsBreakdown from "@/pages/points-breakdown";
 
@@ -277,7 +276,7 @@ function Router() {
           </Route>
 
           <Route path="/track">
-            <RedirectTo to="/my-library" />
+            <RedirectTo to="/profile" />
           </Route>
 
           <Route path="/leaderboard">
@@ -385,18 +384,12 @@ function Router() {
             </ProtectedRoute>
           </Route>
 
-          <Route path="/my-library">
-            <ProtectedRoute>
-              <MyLibrary />
-            </ProtectedRoute>
-          </Route>
-
           <Route path="/dna">
             <RedirectTo to="/me" />
           </Route>
 
           <Route path="/collections">
-            <RedirectTo to="/my-library" />
+            <RedirectTo to="/profile" />
           </Route>
 
           <Route path="/trivia">
