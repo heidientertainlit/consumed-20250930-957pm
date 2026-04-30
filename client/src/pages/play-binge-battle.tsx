@@ -386,24 +386,42 @@ export default function PlayBingeBattle() {
     const { data } = await supabase.from("binge_battles").select("*").eq("id", currentBattle.id).single();
     if (data) setCurrentBattle(data);
 
-    // Insert social_posts entry so friends can see who won
+    // Insert social_posts so both players' friends see the result
     const opponentId = isChallenger ? currentBattle.opponent_id : currentBattle.challenger_id;
-    const opponentInfo = opponentId ? userMap[opponentId] : null;
-    const myInfo = userMap[user.id];
-    const myName = myInfo?.name || user.user_metadata?.full_name || user.user_metadata?.display_name || user.email?.split("@")[0] || "Someone";
-    const opponentName = opponentInfo?.name || "their opponent";
 
-    const { error: postErr } = await supabase.from("social_posts").insert({
-      user_id: user.id,
+    // Fetch both names fresh from DB (don't rely on userMap closure)
+    const myName = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "Someone";
+    let opponentName = userMap[opponentId || ""]?.name || null;
+    if (!opponentName && opponentId) {
+      const { data: oppData } = await supabase
+        .from("users")
+        .select("display_name, user_name")
+        .eq("id", opponentId)
+        .single();
+      opponentName = oppData?.display_name || oppData?.user_name || null;
+    }
+    opponentName = opponentName || "their opponent";
+
+    const postContent = `${myName} just beat ${opponentName} in a Binge Battle on ${currentBattle.media_title}!`;
+    const postBase = {
       post_type: "binge_battle",
-      content: `${myName} just beat ${opponentName} in a Binge Battle on ${currentBattle.media_title}!`,
+      content: postContent,
       media_title: currentBattle.media_title,
       media_type: currentBattle.media_type || null,
       image_url: currentBattle.media_poster || null,
       media_external_id: currentBattle.id,
       media_external_source: "binge_battle",
-    });
-    if (postErr) console.error("[BingeBattle] failed to post feed card on finish:", postErr.message);
+    };
+
+    // Post under winner's account
+    const { error: postErr } = await supabase.from("social_posts").insert({ ...postBase, user_id: user.id });
+    if (postErr) console.error("[BingeBattle] failed to post winner feed card:", postErr.message);
+
+    // Post under opponent's account so it appears in their friends' feeds too
+    if (opponentId) {
+      const { error: oppPostErr } = await supabase.from("social_posts").insert({ ...postBase, user_id: opponentId });
+      if (oppPostErr) console.error("[BingeBattle] failed to post opponent feed card:", oppPostErr.message);
+    }
 
     setFinishing(false);
     setView("finished");
