@@ -597,14 +597,16 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               data-testid="nav-add"
               aria-label="Add"
             >
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center"
-                style={{
-                  background: "linear-gradient(135deg, #8b5cf6, #6d28d9)",
-                  boxShadow: "0 0 8px 2px rgba(139,92,246,0.45)",
-                }}
-              >
-                <Plus size={20} className="text-white" strokeWidth={2} />
+              <div className="h-[22px] flex items-center justify-center">
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center"
+                  style={{
+                    background: "linear-gradient(135deg, #8b5cf6, #6d28d9)",
+                    boxShadow: "0 0 8px 2px rgba(139,92,246,0.40)",
+                  }}
+                >
+                  <Plus size={18} className="text-white" strokeWidth={2} />
+                </div>
               </div>
               <span className="text-transparent text-[10px] mt-0.5 select-none">·</span>
             </button>
