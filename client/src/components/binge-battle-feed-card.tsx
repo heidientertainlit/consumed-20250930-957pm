@@ -1,4 +1,4 @@
-import { Zap, Trash2 } from "lucide-react";
+import { Zap, Trash2, Trophy } from "lucide-react";
 import { useLocation } from "wouter";
 
 interface BingeBattleFeedCardProps {
@@ -17,56 +17,85 @@ interface BingeBattleFeedCardProps {
   onDelete?: (id: string) => void;
 }
 
+function parseContent(content: string, fallbackTitle?: string) {
+  // Expected format: "{winner} just beat {opponent} in a Binge Battle on {title}!"
+  const match = content.match(/^(.+?) just beat (.+?) in a Binge Battle on (.+?)!?$/i);
+  if (match) {
+    return {
+      winner: match[1].trim(),
+      opponent: match[2].trim(),
+      title: match[3].trim(),
+    };
+  }
+  return { winner: null, opponent: null, title: fallbackTitle || null };
+}
+
 export default function BingeBattleFeedCard({ post, isOwn, onDelete }: BingeBattleFeedCardProps) {
   const [, setLocation] = useLocation();
+  const { winner, opponent, title } = parseContent(post.content, post.media_title);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-4">
-      <div className="p-4">
-        <div className="flex items-start gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-2">
-              <div className="w-5 h-5 rounded-md bg-purple-100 flex items-center justify-center shrink-0">
-                <Zap size={11} className="text-purple-600" />
-              </div>
-              <span className="text-[11px] font-bold text-purple-600 uppercase tracking-wide">Binge Battle</span>
-            </div>
-            <p className="text-[14px] font-semibold text-gray-900 leading-snug">{post.content}</p>
-            {post.media_title && (
-              <p className="text-[12px] text-gray-400 mt-1">{post.media_title}</p>
-            )}
-          </div>
-          <div className="flex flex-col items-end gap-2 shrink-0">
-            {post.image_url && (
-              <div className="w-12 h-16 rounded-lg overflow-hidden bg-gray-100">
-                <img
-                  src={post.image_url}
-                  alt={post.media_title || ""}
-                  className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
-              </div>
-            )}
-            {isOwn && onDelete && (
-              <button
-                onClick={() => onDelete(post.id)}
-                className="p-1.5 rounded-full hover:bg-red-50 text-gray-300 hover:text-red-400 transition-colors"
-                aria-label="Delete post"
-              >
-                <Trash2 size={14} />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-      <div className="border-t border-gray-100 px-4 py-2.5">
+    <div className="relative rounded-2xl overflow-hidden mb-4 shadow-lg" style={{ background: "linear-gradient(135deg, #3b0764 0%, #4c1d95 40%, #5b21b6 100%)" }}>
+      {/* Delete button — top right, only for own post */}
+      {isOwn && onDelete && (
         <button
-          onClick={() => setLocation("/play/binge-battle")}
-          className="w-full py-2 rounded-xl bg-purple-600 text-white font-semibold text-[13px] flex items-center justify-center gap-1.5"
+          onClick={() => onDelete(post.id)}
+          className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/50 hover:text-white/90 transition-colors"
+          aria-label="Delete post"
         >
-          <Zap size={13} />
-          Start Your Own Battle
+          <Trash2 size={13} />
         </button>
+      )}
+
+      <div className="flex items-stretch gap-0">
+        {/* Main content */}
+        <div className="flex-1 p-4 pr-3 flex flex-col gap-2">
+          {/* Label pill */}
+          <div className="flex items-center gap-1.5">
+            <Zap size={11} className="text-yellow-400" fill="currentColor" />
+            <span className="text-[10px] font-bold text-yellow-400 uppercase tracking-widest">Binge Battle</span>
+          </div>
+
+          {/* Winner headline */}
+          {winner ? (
+            <div className="flex items-center gap-2">
+              <Trophy size={18} className="text-yellow-400 shrink-0" />
+              <span className="text-white font-extrabold text-[20px] leading-tight">{winner} Won!</span>
+            </div>
+          ) : (
+            <span className="text-white font-extrabold text-[18px] leading-tight">{post.content}</span>
+          )}
+
+          {/* Narrative line */}
+          {winner && opponent && (
+            <p className="text-white/70 text-[12px] leading-snug">
+              {winner} and {opponent} went head to head in a Binge Battle
+              {title ? <> on <span className="text-white/90 font-semibold">{title}</span></> : null}
+            </p>
+          )}
+
+          {/* CTA button */}
+          <button
+            onClick={() => setLocation("/play/binge-battle")}
+            className="mt-1 self-start px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-[12px] font-semibold flex items-center gap-1.5 transition-colors border border-white/20"
+          >
+            <Zap size={11} fill="currentColor" />
+            Start Your Own Battle
+          </button>
+        </div>
+
+        {/* Media cover */}
+        {post.image_url && (
+          <div className="w-[72px] shrink-0 self-stretch">
+            <img
+              src={post.image_url}
+              alt={title || post.media_title || ""}
+              className="w-full h-full object-cover"
+              style={{ minHeight: 120 }}
+              onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = "none"; }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
