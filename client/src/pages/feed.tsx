@@ -3238,7 +3238,8 @@ export default function Feed() {
       .map((p: any): UGCPost => {
         let postType: UGCPost['type'] = 'general';
         const content = (p.content || '').trim();
-        if (p.type === 'game_moment') postType = 'game_moment';
+        if (p.type === 'binge_battle') postType = 'binge_battle';
+        else if (p.type === 'game_moment') postType = 'game_moment';
         else if (p.type === 'ask_for_rec' || p.type === 'ask_for_recs') postType = 'ask_for_rec';
         else if ((p.type === 'predict' || p.type === 'prediction') && ((p as any).question || (p as any).options)) postType = 'predict';
         else if (p.type === 'poll' && ((p as any).question || (p as any).options)) postType = 'poll';
@@ -3288,7 +3289,7 @@ export default function Feed() {
       // Filter out thought posts that have no rating AND no media — they're low-signal filler.
       // But keep thoughts that reference a specific media item (e.g. "Godzilla is my comfort watch").
       if (p.type === 'thought') return !!(p.rating && p.rating > 0) || !!p.mediaTitle;
-      return p.type === 'review' || p.type === 'rating' || p.type === 'rate-review' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment';
+      return p.type === 'review' || p.type === 'rating' || p.type === 'rate-review' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment' || p.type === 'binge_battle';
     });
 
     // Group posts by user within 24-hour rolling windows.
@@ -3298,9 +3299,9 @@ export default function Feed() {
     const ONE_DAY_MS = 24 * 60 * 60 * 1000;
     const byUser = new Map<string, UGCPost[]>();
     for (const post of allUGC) {
-      // game_moment, cast_approved, and rank posts must always be solo cards — never grouped into
-      // the 24h carousel because UGCGroupCard doesn't know how to render them
-      const uid = (post.type === 'game_moment' || post.type === 'cast_approved' || post.type === 'rank')
+      // game_moment, cast_approved, rank, and binge_battle posts must always be solo cards —
+      // never grouped into the 24h carousel because UGCGroupCard doesn't know how to render them
+      const uid = (post.type === 'game_moment' || post.type === 'cast_approved' || post.type === 'rank' || post.type === 'binge_battle')
         ? `solo-${post.id}`
         : post.user?.id || 'anon';
       if (!byUser.has(uid)) byUser.set(uid, []);

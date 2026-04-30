@@ -844,16 +844,13 @@ export default function PlayBingeBattle() {
     const battleUrl = `${APP_BASE}/play/binge-battle/accept/${createdBattleId}`;
     const shareText = `Can you beat me? I'm challenging you to a Binge Battle on ${media.title} — first to finish wins. Join me on Consumed`;
 
-    function sendChallenge() {
+    async function sendChallenge() {
+      const fullText = `${shareText} ${battleUrl}`;
       if (navigator.share) {
-        navigator.share({ title: "Binge Battle Challenge", text: shareText, url: battleUrl }).catch(() => {
-          navigator.clipboard.writeText(`${shareText} ${battleUrl}`);
-          toast({ title: "Link copied!", description: "Paste it in a text or DM to challenge your friend." });
-        });
-      } else {
-        navigator.clipboard.writeText(`${shareText} ${battleUrl}`);
-        toast({ title: "Link copied!", description: "Paste it in a text or DM to challenge your friend." });
+        try { await navigator.share({ title: "Binge Battle Challenge", text: shareText, url: battleUrl }); return; } catch { /* fall through */ }
       }
+      try { await navigator.clipboard.writeText(fullText); } catch { /* ignore */ }
+      toast({ title: "Link copied!", description: "Paste it in a text or DM to challenge your friend." });
     }
 
     return (
@@ -1155,15 +1152,13 @@ export default function PlayBingeBattle() {
                 onClick={() => {
                   const battleUrl = `${APP_BASE}/play/binge-battle/accept/${battle.id}`;
                   const shareText = `Can you beat me? I'm challenging you to a Binge Battle on ${battle.media_title} — first to finish wins. Join me on Consumed`;
-                  if (navigator.share) {
-                    navigator.share({ title: "Binge Battle Challenge", text: shareText, url: battleUrl }).catch(() => {
-                      navigator.clipboard.writeText(`${shareText} ${battleUrl}`);
-                      toast({ title: "Link copied!", description: "Paste it in a text or DM." });
-                    });
-                  } else {
-                    navigator.clipboard.writeText(`${shareText} ${battleUrl}`);
+                  (async () => {
+                    if (navigator.share) {
+                      try { await navigator.share({ title: "Binge Battle Challenge", text: shareText, url: battleUrl }); return; } catch { /* fall through */ }
+                    }
+                    try { await navigator.clipboard.writeText(`${shareText} ${battleUrl}`); } catch { /* ignore */ }
                     toast({ title: "Link copied!", description: "Paste it in a text or DM." });
-                  }
+                  })();
                 }}
                 className="w-full py-3.5 rounded-2xl font-bold text-[14px] bg-purple-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-purple-200"
               >
@@ -1228,18 +1223,23 @@ export default function PlayBingeBattle() {
     const opponentProgress = isChallenger ? battle.opponent_progress : battle.challenger_progress;
     const iWon = battle.winner_id === user?.id;
 
-    function shareResult() {
+    async function shareResult() {
       const text = iWon
         ? `I just beat ${opponent?.name || "my opponent"} in a Binge Battle on ${battle!.media_title} on Consumed!`
         : `${opponent?.name || "My opponent"} beat me in a Binge Battle on ${battle!.media_title} on Consumed — rematch time!`;
       if (navigator.share) {
-        navigator.share({ title: "Binge Battle Result", text }).catch(() => {
-          navigator.clipboard.writeText(text);
-          toast({ title: "Result copied!", description: "Share it with your friends." });
-        });
-      } else {
-        navigator.clipboard.writeText(text);
+        try {
+          await navigator.share({ title: "Binge Battle Result", text });
+          return;
+        } catch {
+          // share was dismissed or not allowed — fall through to clipboard
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(text);
         toast({ title: "Result copied!", description: "Share it with your friends." });
+      } catch {
+        toast({ title: "Share", description: text });
       }
     }
 
