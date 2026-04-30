@@ -2217,7 +2217,7 @@ export default function PoolDetailPage() {
   const { session } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<'feed' | 'live' | 'play' | 'pools' | 'leaderboard' | 'members'>('feed');
+  const [tab, setTab] = useState<'room' | 'play' | 'live' | 'stats'>('room');
   const [feedPickIndex, setFeedPickIndex] = useState(0);
   const [managingId, setManagingId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -2332,12 +2332,10 @@ export default function PoolDetailPage() {
 
   const isPartnerRoom = !!pool?.partner_name;
   const TABS = [
-    { key: 'feed', label: 'Feed' },
-    ...(isPartnerRoom ? [{ key: 'live', label: 'live' }] : []),
+    { key: 'room', label: 'Room' },
     { key: 'play', label: 'Play' },
-    { key: 'pools', label: 'Pools' },
-    { key: 'leaderboard', label: 'Scores' },
-    { key: 'members', label: 'Members' },
+    { key: 'live', label: 'Live' },
+    { key: 'stats', label: 'Stats' },
   ] as const;
 
   const handleManagePrompt = async (promptId: string, action: 'close' | 'delete') => {
@@ -2442,76 +2440,132 @@ export default function PoolDetailPage() {
           </div>
         )}
 
-        {/* ── LIVE ── */}
+        {/* ── LIVE — Coming Soon ── */}
         {!isLoading && tab === 'live' && (
-          <LiveTab featuredPolls={featuredPolls} poolId={params.id!} currentUserId={session?.user?.id ?? null} />
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mb-1">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse block" />
+            </div>
+            <p className="text-gray-800 font-semibold text-base">Live is coming soon</p>
+            <p className="text-gray-400 text-sm text-center max-w-xs leading-relaxed">Real-time watch parties, live reactions, and synchronized viewing experiences — all in one place.</p>
+          </div>
         )}
 
-        {/* ── FEED ── */}
-        {!isLoading && tab === 'feed' && (
+        {/* ── ROOM — Fan room feed ── */}
+        {!isLoading && tab === 'room' && (
           <div>
-            {/* ── Featured Poll Carousel (from prediction_pools with partner_tag) ── */}
-            {featuredPolls.length > 0 && (
-              <FeaturedPollCarousel polls={featuredPolls} token={token} onVoted={refresh} />
-            )}
-
-            {/* ── Fallback: room picks carousel (if no featured polls yet) ── */}
-            {featuredPolls.length === 0 && currentFeedPick && (
-              <div className="mb-2">
-                <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest px-1 pb-2">This week's polls</p>
-                <FeaturedPickBanner key={currentFeedPick.id} post={currentFeedPick} isHost={isHost} token={token} onRefresh={refresh} />
+            {/* Happening Now */}
+            {roomPosts.length > 0 && (
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Happening Now</p>
+                </div>
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  {roomPosts.slice(0, 3).map((post, idx) => {
+                    const author = (post.users as any)?.display_name || (post.users as any)?.user_name || 'Fan';
+                    return (
+                      <div key={post.id} className={`flex items-center gap-3 px-4 py-3 ${idx < Math.min(roomPosts.length, 3) - 1 ? 'border-b border-gray-50' : ''}`}>
+                        <AvatarCircle name={author} size="sm" />
+                        <p className="text-gray-700 text-xs flex-1 line-clamp-1">
+                          <span className="font-semibold text-gray-900">{author}</span> {post.content}
+                        </p>
+                        <span className="text-gray-400 text-[10px] shrink-0">{timeAgo(post.created_at)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
-            {/* ── Discussion section ── */}
-            <div className="flex items-center justify-between px-1 pb-2 pt-1">
-              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest">Discussion</p>
-              {roomPosts.length > 0 && (
-                <span className="text-[11px] text-gray-400">{roomPosts.length} posts</span>
-              )}
-            </div>
-
-            {/* Composer — members only */}
-            {isMember && (
+            {/* Drop a Take button */}
+            {isMember ? (
               <button
                 onClick={() => setIsComposerOpen(true)}
-                className="w-full bg-white rounded-2xl border border-gray-200 px-4 py-3 flex items-center gap-3 mb-3 shadow-sm text-left"
+                className="w-full rounded-2xl px-4 py-3.5 flex items-center gap-3 mb-4 text-left transition-colors"
+                style={{ background: 'linear-gradient(135deg, #7c3aed18, #4f7ef718)', border: '1px solid #7c3aed30' }}
               >
-                <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-                  <Pencil size={14} className="text-purple-600" />
+                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
+                  <MessageSquare size={14} className="text-white" />
                 </div>
-                <span className="text-sm text-gray-400 flex-1">Write something...</span>
+                <div className="flex-1">
+                  <p className="text-gray-800 text-sm font-medium">Drop a take</p>
+                  <p className="text-gray-400 text-xs">Start a thread or join the conversation</p>
+                </div>
+                <ChevronRight size={16} className="text-gray-300" />
               </button>
-            )}
-            {!isMember && (
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-4 px-4 text-center mb-3">
-                <p className="text-gray-400 text-sm">Join this room to participate</p>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-4 px-4 text-center mb-4">
+                <p className="text-gray-400 text-sm">Join this room to drop takes</p>
               </div>
             )}
 
-            {/* Room posts */}
-            <div className="space-y-3">
+            {/* Featured threads label */}
+            {roomPosts.length > 0 && (
+              <div className="flex items-center justify-between px-1 mb-2">
+                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Threads</p>
+                <span className="text-[11px] text-gray-400">{roomPosts.length} {roomPosts.length === 1 ? 'thread' : 'threads'}</span>
+              </div>
+            )}
+
+            {/* Thread list — Reddit style */}
+            <div className="space-y-2">
               {roomPosts.length === 0 && (
-                <div className="text-center py-6">
-                  <p className="text-gray-400 text-sm">No posts yet. Start the conversation.</p>
+                <div className="text-center py-10">
+                  <MessageSquare size={32} className="text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm font-medium">No takes yet</p>
+                  <p className="text-gray-400 text-xs mt-1">Be the first to drop one</p>
                 </div>
               )}
-              {roomPosts.map(post => (
-                <RoomPostCard
-                  key={post.id}
-                  post={post}
-                  currentUserId={session?.user?.id || ''}
-                  onDelete={async (id) => {
-                    await supabase.from('social_posts').delete().eq('id', id);
-                    refetchRoomPosts();
-                  }}
-                />
-              ))}
+              {roomPosts.map((post, idx) => {
+                const author = (post.users as any)?.display_name || (post.users as any)?.user_name || 'Fan';
+                const isFeatured = idx === 0 && roomPosts.length > 1;
+                return (
+                  <div
+                    key={post.id}
+                    className="bg-white rounded-2xl border shadow-sm overflow-hidden"
+                    style={{ borderColor: isFeatured ? '#7c3aed30' : '#f3f4f6' }}
+                  >
+                    {isFeatured && (
+                      <div className="px-4 pt-2.5 pb-0 flex items-center gap-1.5">
+                        <Flame size={11} className="text-orange-400" />
+                        <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">Featured</span>
+                      </div>
+                    )}
+                    <div className="px-4 py-3">
+                      <p className="text-gray-900 text-sm font-medium leading-snug mb-2 line-clamp-3">{post.content}</p>
+                      <div className="flex items-center gap-3">
+                        <AvatarCircle name={author} size="sm" />
+                        <span className="text-gray-500 text-xs font-medium">{author}</span>
+                        <span className="text-gray-300 text-xs">·</span>
+                        <span className="text-gray-400 text-xs">{timeAgo(post.created_at)}</span>
+                        <div className="ml-auto flex items-center gap-3">
+                          <button className="flex items-center gap-1 text-gray-400 hover:text-purple-600 transition-colors">
+                            <MessageCircle size={13} />
+                            <span className="text-[11px]">Reply</span>
+                          </button>
+                          {(session?.user?.id === post.user_id || isHost) && (
+                            <button
+                              onClick={async () => {
+                                await supabase.from('social_posts').delete().eq('id', post.id);
+                                refetchRoomPosts();
+                              }}
+                              className="text-gray-300 hover:text-rose-400 transition-colors"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
 
-        {/* ── PICKS ── */}
+        {/* ── PLAY ── */}
         {!isLoading && tab === 'play' && (
           <PlayTab
             featuredPolls={featuredPolls}
@@ -2525,209 +2579,17 @@ export default function PoolDetailPage() {
           />
         )}
 
-        {/* ── POOLS ── */}
-        {!isLoading && tab === 'pools' && (
-          <PoolsTab
-            posts={posts}
-            pool={data?.pool}
-            token={token}
-            onRefresh={refresh}
-          />
-        )}
-
-        {/* ── PICKS (legacy, kept for reference in non-partner rooms via PlayTab) ── */}
-        {false && !isLoading && tab === 'play' && (
-          <div className="space-y-3">
-            {[...picks].reverse().map((p: any) => {
-              const isOpen = p.status !== 'resolved';
-              const opts: string[] = p.options || [];
-              const allAnswers: any[] = p.all_answers || [];
-              const voteCounts: Record<string, number> = {};
-              allAnswers.forEach((a: any) => { voteCounts[a.answer] = (voteCounts[a.answer] || 0) + 1; });
-              const totalVotes = Object.values(voteCounts).reduce((s, n) => s + n, 0);
-              const isBusy = managingId === p.id;
-
-              return (
-                <div key={p.id} className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #12102b 0%, #1e1654 55%, #2d1f6e 100%)' }}>
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
-                    <div className="flex items-center gap-2">
-                      <BarChart2 size={13} className="text-white/60" />
-                      <span className="text-white text-xs font-semibold" style={{ fontFamily: 'Poppins, sans-serif' }}>The Pick</span>
-                      {isOpen
-                        ? <span className="text-[10px] font-bold text-emerald-400 tracking-widest">LIVE</span>
-                        : <span className="text-[10px] font-medium text-white/35 tracking-wide">CLOSED</span>
-                      }
-                    </div>
-                    {/* Host controls */}
-                    {isHost && (
-                      <div className="flex items-center gap-3">
-                        {isOpen && (
-                          <button
-                            onClick={() => handleManagePrompt(p.id, 'close')}
-                            disabled={isBusy}
-                            className="text-white/50 text-[11px] font-medium hover:text-white/80 transition-colors disabled:opacity-40"
-                          >
-                            {isBusy ? '...' : 'Close'}
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleManagePrompt(p.id, 'delete')}
-                          disabled={isBusy}
-                          className="text-rose-400/60 text-[11px] font-medium hover:text-rose-300 transition-colors disabled:opacity-40"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Question */}
-                  <div className="px-4 pb-2">
-                    <p className="text-white/90 text-sm font-medium leading-snug">{p.prompt_text}</p>
-                  </div>
-
-                  {/* Vote bars */}
-                  {opts.length > 0 && (
-                    <div className="px-4 pb-4 space-y-1.5">
-                      {opts.map((opt: string) => {
-                        const count = voteCounts[opt] || 0;
-                        const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-                        const isWinner = p.correct_answer && opt.toLowerCase() === p.correct_answer.toLowerCase();
-                        return (
-                          <div key={opt} className="rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
-                            <div className="relative px-3 py-2">
-                              <div
-                                className="absolute inset-y-0 left-0 rounded-lg transition-all duration-500"
-                                style={{ width: `${pct}%`, background: isWinner ? 'rgba(52,211,153,0.25)' : 'rgba(139,92,246,0.2)' }}
-                              />
-                              <div className="relative flex items-center justify-between">
-                                <span className={`text-xs ${isWinner ? 'text-emerald-300 font-semibold' : 'text-white/75'}`}>{opt}</span>
-                                <span className={`text-[11px] font-medium ${isWinner ? 'text-emerald-400' : 'text-white/40'}`}>{pct}%</span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {totalVotes > 0 && <p className="text-white/30 text-[10px] pl-1 pt-0.5">{totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}</p>}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+        {/* ── STATS — Coming Soon ── */}
+        {!isLoading && tab === 'stats' && (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mb-1">
+              <BarChart2 size={22} className="text-purple-400" />
+            </div>
+            <p className="text-gray-800 font-semibold text-base">Stats coming soon</p>
+            <p className="text-gray-400 text-sm text-center max-w-xs leading-relaxed">Fan rankings, engagement streaks, top contributors, and room heat maps — all on their way.</p>
           </div>
         )}
 
-        {/* ── LEADERBOARD ── */}
-        {!isLoading && tab === 'leaderboard' && (
-          <div className="space-y-2">
-            {members.length === 0 && <p className="text-gray-400 text-sm text-center py-12">No scores yet</p>}
-            {[...members].sort((a, b) => (b.total_points || 0) - (a.total_points || 0)).map((m: any, i) => {
-              const name = (m.users as any)?.display_name || (m.users as any)?.user_name || 'Member';
-              return (
-                <div key={m.user_id} className="flex items-center gap-3 bg-white rounded-2xl p-3.5 border border-gray-100 shadow-sm">
-                  <span className={`text-sm font-bold w-6 text-center shrink-0 ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-600' : 'text-gray-300'}`}>{i + 1}</span>
-                  <AvatarCircle name={name} size="md" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-900 text-sm font-medium truncate">{name}</p>
-                    {m.role === 'host' && <p className="text-yellow-600 text-[11px] flex items-center gap-1"><Crown size={9} /> Host</p>}
-                  </div>
-                  <span className="text-purple-600 font-semibold text-sm">{m.total_points || 0} pts</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* ── MEMBERS ── */}
-        {!isLoading && tab === 'members' && (
-          <div className="space-y-3">
-            {/* Visibility toggle — host only */}
-            {isHost && (
-              <div className="flex items-center justify-between bg-white rounded-2xl px-4 py-3 border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-2">
-                  {isPublic
-                    ? <Globe size={14} className="text-emerald-500" />
-                    : <Lock size={14} className="text-gray-400" />
-                  }
-                  <span className="text-gray-700 text-sm font-medium">
-                    {isPublic ? 'Public room' : 'Private room'}
-                  </span>
-                  <span className="text-gray-400 text-xs">
-                    {isPublic ? '· anyone can join' : '· invite only'}
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleToggleVisibility(!isPublic)}
-                  disabled={togglingVisibility}
-                  className={`relative w-11 h-6 rounded-full transition-colors duration-200 disabled:opacity-50 overflow-hidden shrink-0 ${isPublic ? 'bg-emerald-500' : 'bg-gray-200'}`}
-                >
-                  <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${isPublic ? 'translate-x-5' : 'translate-x-0'}`} />
-                </button>
-              </div>
-            )}
-
-            {isHost && (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-3 py-3 border-b border-gray-50">
-                  <Search size={15} className="text-gray-400 shrink-0" />
-                  <input value={memberSearch} onChange={e => setMemberSearch(e.target.value)}
-                    placeholder="Search by name or username..."
-                    className="flex-1 text-sm text-gray-800 placeholder:text-gray-400 outline-none bg-transparent" />
-                  {memberSearch && <button onClick={() => { setMemberSearch(''); setSearchResults([]); }}><X size={14} className="text-gray-400" /></button>}
-                </div>
-                {isSearching && <div className="px-3 py-2 text-xs text-gray-400">Searching...</div>}
-                {searchResults.length > 0 && (
-                  <div>
-                    {searchResults.map((u: any) => {
-                      const alreadyIn = members.some(m => m.user_id === u.id);
-                      return (
-                        <div key={u.id} className="flex items-center gap-3 px-3 py-2.5 border-b border-gray-50 last:border-0">
-                          <AvatarCircle name={u.display_name || u.user_name || '?'} size="md" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-gray-900 text-sm font-medium truncate">{u.display_name || u.user_name}</p>
-                            {u.display_name && <p className="text-gray-400 text-xs">@{u.user_name}</p>}
-                          </div>
-                          {alreadyIn
-                            ? <span className="text-gray-400 text-xs">Added</span>
-                            : <button onClick={() => handleAddMember(u.id)} disabled={addingId === u.id}
-                                className="flex items-center gap-1 text-purple-600 text-xs font-medium hover:text-purple-700 disabled:opacity-50">
-                                <UserPlus size={14} />{addingId === u.id ? 'Adding...' : 'Add'}
-                              </button>
-                          }
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                {memberSearch.trim() && !isSearching && searchResults.length === 0 && (
-                  <div className="px-3 py-2 text-xs text-gray-400">No users found</div>
-                )}
-              </div>
-            )}
-
-            {members.map((m: any) => {
-              const name = (m.users as any)?.display_name || (m.users as any)?.user_name || 'Member';
-              return (
-                <div key={m.user_id} className="flex items-center gap-3 bg-white rounded-2xl p-3.5 border border-gray-100 shadow-sm">
-                  <AvatarCircle name={name} size="md" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-gray-900 text-sm font-medium truncate">{name}</p>
-                    {m.role === 'host' && <p className="text-yellow-600 text-[11px] flex items-center gap-1"><Crown size={9} /> Host</p>}
-                  </div>
-                  <span className="text-gray-400 text-sm">{m.total_points || 0} pts</span>
-                </div>
-              );
-            })}
-
-            {isMember && (
-              <button onClick={handleCopyLink} className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-dashed border-gray-300 text-gray-500 text-sm bg-white hover:bg-gray-50 transition-colors">
-                {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                {copied ? 'Copied!' : 'Copy invite link'}
-              </button>
-            )}
-          </div>
-        )}
       </div>
 
 
