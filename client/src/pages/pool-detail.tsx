@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { APP_BASE } from "@/lib/share";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, MessageCircle, User, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil, HelpCircle, Tv, Vote, Dna, Zap, Brain, Film, Music, BookOpen } from "lucide-react";
+import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, MessageCircle, User, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil, HelpCircle, Tv, Vote, Dna, Zap, Brain, Film, Music, BookOpen, ArrowUp, ArrowDown, Tag, AlignLeft, Hash, Swords, TrendingUp, HelpCircle as QuestionIcon, ListOrdered, ThumbsUp } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -2248,6 +2248,19 @@ export default function PoolDetailPage() {
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [editSeriesTag, setEditSeriesTag] = useState<string | null>(null);
   const [savingSettings, setSavingSettings] = useState(false);
+
+  // Takes state
+  const [isTakeComposerOpen, setIsTakeComposerOpen] = useState(false);
+  const [newTakeTitle, setNewTakeTitle] = useState('');
+  const [newTakeBody, setNewTakeBody] = useState('');
+  const [newTakeTag, setNewTakeTag] = useState<'debate' | 'ranking' | 'hot_take' | 'question' | 'discussion'>('discussion');
+  const [submittingTake, setSubmittingTake] = useState(false);
+  const [activeTake, setActiveTake] = useState<any | null>(null);
+  const [takeReplyText, setTakeReplyText] = useState('');
+  const [replyingToReplyId, setReplyingToReplyId] = useState<string | null>(null);
+  const [submittingTakeReply, setSubmittingTakeReply] = useState(false);
+  const [reviewsExpanded, setReviewsExpanded] = useState(false);
+
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -2308,6 +2321,56 @@ export default function PoolDetailPage() {
     );
   })();
 
+  // ── Reviews: filter seriesPostsData to only substantive rate-review posts ──
+  const roomReviews: any[] = (seriesPostsData || []).filter((p: any) =>
+    p.content && p.content.trim().length > 0 && p.rating
+  );
+
+  // ── Room Takes (Reddit-style threads) ──
+  const { data: takesData, refetch: refetchTakes } = useQuery({
+    queryKey: ['room-takes', params.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('room_takes')
+        .select('*, users:user_id(id, display_name, user_name)')
+        .eq('room_id', params.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!params.id && !!session?.access_token,
+  });
+  const takes: any[] = takesData || [];
+
+  const { data: activeThreadRepliesData, refetch: refetchReplies } = useQuery({
+    queryKey: ['take-replies', activeTake?.id],
+    queryFn: async () => {
+      if (!activeTake?.id) return [];
+      const { data, error } = await supabase
+        .from('room_take_replies')
+        .select('*, users:user_id(id, display_name, user_name)')
+        .eq('take_id', activeTake.id)
+        .order('upvotes', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!activeTake?.id,
+  });
+  const activeThreadReplies: any[] = activeThreadRepliesData || [];
+
+  const { data: myTakeVotes, refetch: refetchMyVotes } = useQuery({
+    queryKey: ['my-take-votes', currentUserId, params.id],
+    queryFn: async () => {
+      if (!currentUserId) return [];
+      const { data } = await supabase
+        .from('room_take_votes')
+        .select('*')
+        .eq('user_id', currentUserId);
+      return data || [];
+    },
+    enabled: !!currentUserId,
+  });
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`${APP_BASE}/room/join/${data?.pool?.invite_code}`);
     setCopied(true);
@@ -2333,6 +2396,92 @@ export default function PoolDetailPage() {
     refresh();
     setEditSeriesTag(null);
     toast({ title: 'Room settings saved!' });
+  };
+
+  // ── Takes handlers ────────────────────────────────────────────────────────
+  const handleSubmitTake = async () => {
+    if (!newTakeTitle.trim() || !currentUserId) return;
+    setSubmittingTake(true);
+    await supabase.from('room_takes').insert({
+      room_id: params.id,
+      user_id: currentUserId,
+      title: newTakeTitle.trim(),
+      body: newTakeBody.trim() || null,
+      tag: newTakeTag,
+    });
+    setNewTakeTitle('');
+    setNewTakeBody('');
+    setNewTakeTag('discussion');
+    setIsTakeComposerOpen(false);
+    setSubmittingTake(false);
+    refetchTakes();
+  };
+
+  const handleSubmitTakeReply = async () => {
+    if (!takeReplyText.trim() || !currentUserId || !activeTake?.id) return;
+    setSubmittingTakeReply(true);
+    await supabase.from('room_take_replies').insert({
+      take_id: activeTake.id,
+      parent_reply_id: replyingToReplyId || null,
+      user_id: currentUserId,
+      content: takeReplyText.trim(),
+    });
+    // Increment reply_count on the take
+    await supabase.from('room_takes')
+      .update({ reply_count: (activeTake.reply_count || 0) + 1 })
+      .eq('id', activeTake.id);
+    setTakeReplyText('');
+    setReplyingToReplyId(null);
+    setSubmittingTakeReply(false);
+    refetchReplies();
+    refetchTakes();
+  };
+
+  const handleVoteTake = async (takeId: string, direction: 1 | -1) => {
+    if (!currentUserId) return;
+    const existing = (myTakeVotes || []).find((v: any) => v.take_id === takeId && !v.reply_id);
+    const take = takes.find((t: any) => t.id === takeId);
+    if (existing) {
+      if (existing.vote === direction) {
+        // Toggle off
+        await supabase.from('room_take_votes').delete().eq('id', existing.id);
+        await supabase.from('room_takes').update({ upvotes: Math.max(0, (take?.upvotes || 0) - 1) }).eq('id', takeId);
+      } else {
+        // Flip direction
+        await supabase.from('room_take_votes').update({ vote: direction }).eq('id', existing.id);
+        await supabase.from('room_takes').update({ upvotes: (take?.upvotes || 0) + (direction === 1 ? 2 : -2) }).eq('id', takeId);
+      }
+    } else {
+      await supabase.from('room_take_votes').insert({ take_id: takeId, user_id: currentUserId, vote: direction });
+      await supabase.from('room_takes').update({ upvotes: (take?.upvotes || 0) + direction }).eq('id', takeId);
+    }
+    refetchTakes();
+    refetchMyVotes();
+  };
+
+  const handleVoteReply = async (replyId: string, direction: 1 | -1) => {
+    if (!currentUserId) return;
+    const existing = (myTakeVotes || []).find((v: any) => v.reply_id === replyId);
+    const reply = activeThreadReplies.find((r: any) => r.id === replyId);
+    const field = direction === 1 ? 'upvotes' : 'downvotes';
+    if (existing) {
+      if (existing.vote === direction) {
+        await supabase.from('room_take_votes').delete().eq('id', existing.id);
+        await supabase.from('room_take_replies').update({ [field]: Math.max(0, (reply?.[field] || 0) - 1) }).eq('id', replyId);
+      } else {
+        await supabase.from('room_take_votes').update({ vote: direction }).eq('id', existing.id);
+        const prevField = direction === 1 ? 'downvotes' : 'upvotes';
+        await supabase.from('room_take_replies').update({
+          [field]: (reply?.[field] || 0) + 1,
+          [prevField]: Math.max(0, (reply?.[prevField] || 0) - 1),
+        }).eq('id', replyId);
+      }
+    } else {
+      await supabase.from('room_take_votes').insert({ reply_id: replyId, user_id: currentUserId, vote: direction });
+      await supabase.from('room_take_replies').update({ [field]: (reply?.[field] || 0) + 1 }).eq('id', replyId);
+    }
+    refetchReplies();
+    refetchMyVotes();
   };
 
   const handleJoinRoom = async () => {
@@ -2519,118 +2668,204 @@ export default function PoolDetailPage() {
         )}
 
         {/* ── ROOM — Fan room feed ── */}
-        {!isLoading && tab === 'room' && (
-          <div>
-            {/* Happening Now */}
-            {roomPosts.length > 0 && (
-              <div className="mb-4">
-                <div className="flex items-center gap-2 mb-2 px-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Happening Now</p>
-                </div>
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  {roomPosts.slice(0, 3).map((post, idx) => {
-                    const author = (post.users as any)?.display_name || (post.users as any)?.user_name || 'Fan';
-                    return (
-                      <div key={post.id} className={`flex items-center gap-3 px-4 py-3 ${idx < Math.min(roomPosts.length, 3) - 1 ? 'border-b border-gray-50' : ''}`}>
-                        <AvatarCircle name={author} size="sm" />
-                        <p className="text-gray-700 text-xs flex-1 line-clamp-1">
-                          <span className="font-semibold text-gray-900">{author}</span> {post.content}
-                        </p>
-                        <span className="text-gray-400 text-[10px] shrink-0">{timeAgo(post.created_at)}</span>
+        {!isLoading && tab === 'room' && (() => {
+          const TAG_CONFIG: Record<string, { label: string; colorClass: string }> = {
+            debate:     { label: 'Debate',      colorClass: 'text-rose-600 bg-rose-50' },
+            ranking:    { label: 'Ranking',     colorClass: 'text-blue-600 bg-blue-50' },
+            hot_take:   { label: 'Hot Take',    colorClass: 'text-orange-600 bg-orange-50' },
+            question:   { label: 'Question',    colorClass: 'text-green-600 bg-green-50' },
+            discussion: { label: 'Discussion',  colorClass: 'text-purple-600 bg-purple-50' },
+          };
+
+          // Happening Now: live predictions + high-velocity takes
+          const livePolls = (featuredPolls || []).filter((p: any) => p.type === 'predict' || p.type === 'vote');
+          const hotTakes = takes.filter((t: any) => (t.reply_count || 0) >= 1).slice(0, 3);
+          const showHappeningNow = livePolls.length > 0 || hotTakes.length > 0;
+
+          return (
+            <div className="space-y-4">
+              {/* ── Happening Now ── */}
+              {showHappeningNow && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2 px-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Happening Now</p>
+                  </div>
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
+                    {livePolls.slice(0, 2).map((poll: any) => (
+                      <div key={poll.id} className="flex items-center gap-3 px-4 py-3">
+                        <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                          <Vote size={12} className="text-purple-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-gray-800 line-clamp-1">{poll.title}</p>
+                          <p className="text-[10px] text-gray-400">{poll.total_participants || 0} votes</p>
+                        </div>
+                        <span className="text-[10px] text-purple-500 font-semibold shrink-0">Live</span>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Drop a Take button */}
-            {isMember ? (
-              <button
-                onClick={() => setIsComposerOpen(true)}
-                className="w-full rounded-2xl px-4 py-3.5 flex items-center gap-3 mb-4 text-left transition-colors"
-                style={{ background: 'linear-gradient(135deg, #7c3aed18, #4f7ef718)', border: '1px solid #7c3aed30' }}
-              >
-                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
-                  <MessageSquare size={14} className="text-white" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-gray-800 text-sm font-medium">Drop a take</p>
-                  <p className="text-gray-400 text-xs">Start a thread or join the conversation</p>
-                </div>
-                <ChevronRight size={16} className="text-gray-300" />
-              </button>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-4 px-4 text-center mb-4">
-                <p className="text-gray-400 text-sm">Join this room to drop takes</p>
-              </div>
-            )}
-
-            {/* Featured threads label */}
-            {roomPosts.length > 0 && (
-              <div className="flex items-center justify-between px-1 mb-2">
-                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Threads</p>
-                <span className="text-[11px] text-gray-400">{roomPosts.length} {roomPosts.length === 1 ? 'thread' : 'threads'}</span>
-              </div>
-            )}
-
-            {/* Thread list — Reddit style */}
-            <div className="space-y-2">
-              {roomPosts.length === 0 && (
-                <div className="text-center py-10">
-                  <MessageSquare size={32} className="text-gray-200 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm font-medium">No takes yet</p>
-                  <p className="text-gray-400 text-xs mt-1">Be the first to drop one</p>
+                    ))}
+                    {hotTakes.map((take: any) => {
+                      const author = take.users?.display_name || take.users?.user_name || 'Fan';
+                      return (
+                        <button key={take.id} className="w-full flex items-center gap-3 px-4 py-3 text-left" onClick={() => setActiveTake(take)}>
+                          <div className="w-7 h-7 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
+                            <TrendingUp size={12} className="text-orange-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-gray-800 line-clamp-1">{take.title}</p>
+                            <p className="text-[10px] text-gray-400">{take.reply_count} replies · {author}</p>
+                          </div>
+                          <ChevronRight size={13} className="text-gray-300 shrink-0" />
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
-              {roomPosts.map((post, idx) => {
-                const author = (post.users as any)?.display_name || (post.users as any)?.user_name || 'Fan';
-                const isFeatured = idx === 0 && roomPosts.length > 1;
-                return (
-                  <div
-                    key={post.id}
-                    className="bg-white rounded-2xl border shadow-sm overflow-hidden"
-                    style={{ borderColor: isFeatured ? '#7c3aed30' : '#f3f4f6' }}
-                  >
-                    {isFeatured && (
-                      <div className="px-4 pt-2.5 pb-0 flex items-center gap-1.5">
-                        <Flame size={11} className="text-orange-400" />
-                        <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">Featured</span>
-                      </div>
-                    )}
-                    <div className="px-4 py-3">
-                      <p className="text-gray-900 text-sm font-medium leading-snug mb-2 line-clamp-3">{post.content}</p>
-                      <div className="flex items-center gap-3">
-                        <AvatarCircle name={author} size="sm" />
-                        <span className="text-gray-500 text-xs font-medium">{author}</span>
-                        <span className="text-gray-300 text-xs">·</span>
-                        <span className="text-gray-400 text-xs">{timeAgo(post.created_at)}</span>
-                        <div className="ml-auto flex items-center gap-3">
-                          <button className="flex items-center gap-1 text-gray-400 hover:text-purple-600 transition-colors">
-                            <MessageCircle size={13} />
-                            <span className="text-[11px]">Reply</span>
-                          </button>
-                          {(session?.user?.id === post.user_id || isHost) && (
-                            <button
-                              onClick={async () => {
-                                await supabase.from('social_posts').delete().eq('id', post.id);
-                                refetchRoomPosts();
-                              }}
-                              className="text-gray-300 hover:text-rose-400 transition-colors"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+
+              {/* ── Drop a Take ── */}
+              {isMember ? (
+                <button
+                  onClick={() => setIsTakeComposerOpen(true)}
+                  className="w-full rounded-2xl px-4 py-3.5 flex items-center gap-3 text-left transition-colors"
+                  style={{ background: 'linear-gradient(135deg, #7c3aed18, #4f7ef718)', border: '1px solid #7c3aed30' }}
+                >
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
+                    <MessageSquare size={14} className="text-white" />
                   </div>
-                );
-              })}
+                  <div className="flex-1">
+                    <p className="text-gray-800 text-sm font-medium">Drop a take</p>
+                    <p className="text-gray-400 text-xs">Start a debate, ranking, or question</p>
+                  </div>
+                  <ChevronRight size={16} className="text-gray-300" />
+                </button>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-4 px-4 text-center">
+                  <p className="text-gray-400 text-sm">Join this room to drop takes</p>
+                </div>
+              )}
+
+              {/* ── Takes list ── */}
+              <div>
+                <div className="flex items-center justify-between px-1 mb-2">
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Takes</p>
+                  {takes.length > 0 && <span className="text-[11px] text-gray-400">{takes.length}</span>}
+                </div>
+                {takes.length === 0 ? (
+                  <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-100">
+                    <MessageSquare size={28} className="text-gray-200 mx-auto mb-2" />
+                    <p className="text-gray-500 text-sm font-medium">No takes yet</p>
+                    <p className="text-gray-400 text-xs mt-1">Start a debate, ranking, or hot take</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {takes.map((take: any) => {
+                      const author = take.users?.display_name || take.users?.user_name || 'Fan';
+                      const tagCfg = TAG_CONFIG[take.tag] || TAG_CONFIG.discussion;
+                      const myVote = (myTakeVotes || []).find((v: any) => v.take_id === take.id && !v.reply_id);
+                      const isHot = (take.reply_count || 0) >= 3;
+                      return (
+                        <div
+                          key={take.id}
+                          className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                        >
+                          {isHot && (
+                            <div className="px-4 pt-2.5 pb-0 flex items-center gap-1.5">
+                              <Flame size={11} className="text-orange-400" />
+                              <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">Hot</span>
+                            </div>
+                          )}
+                          <button
+                            className="w-full px-4 pt-3 pb-2 text-left"
+                            onClick={() => setActiveTake(take)}
+                          >
+                            <div className="flex items-start gap-2 mb-2">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${tagCfg.colorClass}`}>{tagCfg.label}</span>
+                              <p className="text-gray-900 text-sm font-semibold leading-snug">{take.title}</p>
+                            </div>
+                            {take.body && (
+                              <p className="text-gray-500 text-xs leading-relaxed line-clamp-2 mb-2">{take.body}</p>
+                            )}
+                          </button>
+                          <div className="flex items-center gap-3 px-4 pb-3">
+                            <AvatarCircle name={author} size="sm" />
+                            <span className="text-gray-500 text-xs">{author}</span>
+                            <span className="text-gray-300 text-xs">·</span>
+                            <span className="text-gray-400 text-xs">{timeAgo(take.created_at)}</span>
+                            <div className="ml-auto flex items-center gap-3">
+                              <button
+                                onClick={() => setActiveTake(take)}
+                                className="flex items-center gap-1 text-gray-400 hover:text-purple-600 transition-colors"
+                              >
+                                <MessageCircle size={13} />
+                                <span className="text-[11px]">{take.reply_count || 0}</span>
+                              </button>
+                              <button
+                                onClick={() => handleVoteTake(take.id, 1)}
+                                className={`flex items-center gap-1 transition-colors ${myVote?.vote === 1 ? 'text-purple-600' : 'text-gray-400 hover:text-purple-500'}`}
+                              >
+                                <ArrowUp size={13} />
+                                <span className="text-[11px]">{take.upvotes || 0}</span>
+                              </button>
+                              {(session?.user?.id === take.user_id || isHost) && (
+                                <button
+                                  onClick={async () => {
+                                    await supabase.from('room_takes').delete().eq('id', take.id);
+                                    refetchTakes();
+                                  }}
+                                  className="text-gray-300 hover:text-rose-400 transition-colors"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* ── Ratings & Reviews ── */}
+              {roomReviews.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between px-1 mb-2">
+                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Ratings & Reviews</p>
+                    {roomReviews.length > 3 && (
+                      <button onClick={() => setReviewsExpanded(v => !v)} className="text-[11px] text-purple-500">
+                        {reviewsExpanded ? 'Show less' : `See all ${roomReviews.length}`}
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {(reviewsExpanded ? roomReviews : roomReviews.slice(0, 3)).map((post: any) => {
+                      const author = post.users?.display_name || post.users?.user_name || 'Fan';
+                      return (
+                        <div key={post.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <AvatarCircle name={author} size="sm" />
+                            <span className="text-xs font-semibold text-gray-900">{author}</span>
+                            {post.rating && (
+                              <div className="flex items-center gap-0.5 ml-auto">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                  <Star key={i} size={10} className={i < Math.round(post.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
+                                ))}
+                                <span className="text-[10px] text-gray-500 ml-1">{post.rating}/5</span>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-gray-700 text-xs leading-relaxed line-clamp-3">{post.content}</p>
+                          <p className="text-gray-400 text-[10px] mt-1.5">{timeAgo(post.created_at)}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ── PLAY ── */}
         {!isLoading && tab === 'play' && (
@@ -2736,6 +2971,206 @@ export default function PoolDetailPage() {
 
       </div>
 
+
+      {/* ── Take Composer Sheet ── */}
+      {isTakeComposerOpen && (
+        <div className="fixed inset-0 z-50 flex items-end" onClick={() => setIsTakeComposerOpen(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative w-full bg-white rounded-t-3xl shadow-2xl p-5 pb-8 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
+            <p className="text-base font-bold text-gray-900 mb-4">Drop a Take</p>
+
+            {/* Tag selector */}
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Type</p>
+            <div className="flex gap-2 flex-wrap mb-4">
+              {([
+                { key: 'debate',     label: 'Debate',      color: 'rose' },
+                { key: 'ranking',    label: 'Ranking',     color: 'blue' },
+                { key: 'hot_take',   label: 'Hot Take',    color: 'orange' },
+                { key: 'question',   label: 'Question',    color: 'green' },
+                { key: 'discussion', label: 'Discussion',  color: 'purple' },
+              ] as const).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setNewTakeTag(key)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                    newTakeTag === key
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-purple-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Title */}
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Your take *</p>
+            <textarea
+              value={newTakeTitle}
+              onChange={e => setNewTakeTitle(e.target.value)}
+              placeholder={
+                newTakeTag === 'debate'    ? 'e.g. Ross was NOT on a break'      :
+                newTakeTag === 'ranking'   ? 'e.g. Rank every season from best to worst' :
+                newTakeTag === 'hot_take'  ? 'e.g. Season 8 is actually the best'  :
+                newTakeTag === 'question'  ? 'e.g. Best cold open ever?'           :
+                'e.g. What did everyone think of the finale?'
+              }
+              rows={2}
+              maxLength={200}
+              className="w-full px-3 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 resize-none mb-3"
+            />
+
+            {/* Optional body */}
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">More context <span className="text-gray-300 font-normal normal-case">(optional)</span></p>
+            <textarea
+              value={newTakeBody}
+              onChange={e => setNewTakeBody(e.target.value)}
+              placeholder="Add more detail, context, or your full argument…"
+              rows={3}
+              className="w-full px-3 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 resize-none mb-4"
+            />
+
+            <button
+              onClick={handleSubmitTake}
+              disabled={!newTakeTitle.trim() || submittingTake}
+              className="w-full py-3 rounded-xl text-sm font-bold text-white bg-purple-600 disabled:opacity-40 transition-opacity"
+            >
+              {submittingTake ? 'Posting…' : 'Post Take'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Take Thread Sheet ── */}
+      {activeTake && (
+        <div className="fixed inset-0 z-50 flex items-end" onClick={() => { setActiveTake(null); setTakeReplyText(''); setReplyingToReplyId(null); }}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative w-full bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[92vh]" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-0 shrink-0" />
+
+            {/* Thread header */}
+            <div className="px-5 pt-4 pb-3 border-b border-gray-100 shrink-0">
+              {(() => {
+                const TAG_CONFIG: Record<string, { label: string; colorClass: string }> = {
+                  debate:     { label: 'Debate',      colorClass: 'text-rose-600 bg-rose-50' },
+                  ranking:    { label: 'Ranking',     colorClass: 'text-blue-600 bg-blue-50' },
+                  hot_take:   { label: 'Hot Take',    colorClass: 'text-orange-600 bg-orange-50' },
+                  question:   { label: 'Question',    colorClass: 'text-green-600 bg-green-50' },
+                  discussion: { label: 'Discussion',  colorClass: 'text-purple-600 bg-purple-50' },
+                };
+                const tagCfg = TAG_CONFIG[activeTake.tag] || TAG_CONFIG.discussion;
+                const author = activeTake.users?.display_name || activeTake.users?.user_name || 'Fan';
+                return (
+                  <>
+                    <div className="flex items-start gap-2 mb-1">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${tagCfg.colorClass}`}>{tagCfg.label}</span>
+                      <p className="text-gray-900 text-base font-bold leading-snug">{activeTake.title}</p>
+                    </div>
+                    {activeTake.body && <p className="text-gray-600 text-sm leading-relaxed mb-2">{activeTake.body}</p>}
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <AvatarCircle name={author} size="sm" />
+                      <span className="font-medium text-gray-600">{author}</span>
+                      <span>·</span>
+                      <span>{timeAgo(activeTake.created_at)}</span>
+                      <button
+                        onClick={() => handleVoteTake(activeTake.id, 1)}
+                        className={`ml-auto flex items-center gap-1 ${(myTakeVotes || []).find((v: any) => v.take_id === activeTake.id && !v.reply_id)?.vote === 1 ? 'text-purple-600' : 'text-gray-400'}`}
+                      >
+                        <ArrowUp size={13} /><span>{activeTake.upvotes || 0}</span>
+                      </button>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Replies list */}
+            <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
+              {activeThreadReplies.length === 0 && (
+                <div className="text-center py-8">
+                  <MessageCircle size={24} className="text-gray-200 mx-auto mb-2" />
+                  <p className="text-gray-400 text-sm">No replies yet — jump in!</p>
+                </div>
+              )}
+              {activeThreadReplies.map((reply: any) => {
+                const author = reply.users?.display_name || reply.users?.user_name || 'Fan';
+                const myVote = (myTakeVotes || []).find((v: any) => v.reply_id === reply.id);
+                const isNested = !!reply.parent_reply_id;
+                const parentReply = isNested ? activeThreadReplies.find((r: any) => r.id === reply.parent_reply_id) : null;
+                const parentAuthor = parentReply?.users?.display_name || parentReply?.users?.user_name;
+                return (
+                  <div key={reply.id} className={`${isNested ? 'ml-6 border-l-2 border-purple-100 pl-3' : ''}`}>
+                    {isNested && parentAuthor && (
+                      <p className="text-[10px] text-gray-400 mb-0.5">↩ replying to {parentAuthor}</p>
+                    )}
+                    <div className="flex items-start gap-2">
+                      <AvatarCircle name={author} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="text-xs font-semibold text-gray-800">{author}</span>
+                          <span className="text-[10px] text-gray-400">{timeAgo(reply.created_at)}</span>
+                        </div>
+                        <p className="text-sm text-gray-700 leading-relaxed">{reply.content}</p>
+                        <div className="flex items-center gap-3 mt-1.5">
+                          <button
+                            onClick={() => handleVoteReply(reply.id, 1)}
+                            className={`flex items-center gap-0.5 text-xs transition-colors ${myVote?.vote === 1 ? 'text-purple-600' : 'text-gray-400 hover:text-purple-500'}`}
+                          >
+                            <ArrowUp size={12} />{reply.upvotes || 0}
+                          </button>
+                          <button
+                            onClick={() => handleVoteReply(reply.id, -1)}
+                            className={`flex items-center gap-0.5 text-xs transition-colors ${myVote?.vote === -1 ? 'text-rose-500' : 'text-gray-400 hover:text-rose-400'}`}
+                          >
+                            <ArrowDown size={12} />{reply.downvotes || 0}
+                          </button>
+                          {isMember && (
+                            <button
+                              onClick={() => setReplyingToReplyId(reply.id)}
+                              className="text-xs text-gray-400 hover:text-purple-500"
+                            >
+                              Reply
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Reply input */}
+            {isMember && (
+              <div className="px-4 py-3 border-t border-gray-100 shrink-0 bg-white">
+                {replyingToReplyId && (
+                  <div className="flex items-center gap-1 mb-1.5">
+                    <span className="text-[10px] text-gray-400">Replying to a comment</span>
+                    <button onClick={() => setReplyingToReplyId(null)} className="text-[10px] text-purple-500 ml-1">Cancel</button>
+                  </div>
+                )}
+                <div className="flex items-end gap-2">
+                  <textarea
+                    value={takeReplyText}
+                    onChange={e => setTakeReplyText(e.target.value)}
+                    placeholder="Jump in…"
+                    rows={1}
+                    className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 resize-none"
+                  />
+                  <button
+                    onClick={handleSubmitTakeReply}
+                    disabled={!takeReplyText.trim() || submittingTakeReply}
+                    className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center disabled:opacity-40 shrink-0"
+                  >
+                    <Send size={15} className="text-white" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <QuickActionSheet
         isOpen={isComposerOpen}

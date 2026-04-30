@@ -427,6 +427,39 @@ export const userRankOrders = pgTable("user_rank_orders", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// ── Room Takes (Reddit-style threads inside a Room) ──────────────────────────
+export const roomTakes = pgTable("room_takes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  roomId: uuid("room_id").notNull().references(() => pools.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull(),
+  title: text("title").notNull(),
+  body: text("body"),
+  tag: text("tag").notNull().default("discussion"), // debate | ranking | hot_take | question | discussion
+  upvotes: integer("upvotes").notNull().default(0),
+  replyCount: integer("reply_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const roomTakeReplies = pgTable("room_take_replies", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  takeId: uuid("take_id").notNull().references(() => roomTakes.id, { onDelete: "cascade" }),
+  parentReplyId: uuid("parent_reply_id"),
+  userId: uuid("user_id").notNull(),
+  content: text("content").notNull(),
+  upvotes: integer("upvotes").notNull().default(0),
+  downvotes: integer("downvotes").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const roomTakeVotes = pgTable("room_take_votes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  takeId: uuid("take_id").references(() => roomTakes.id, { onDelete: "cascade" }),
+  replyId: uuid("reply_id").references(() => roomTakeReplies.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull(),
+  vote: integer("vote").notNull(), // 1 = up, -1 = down
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
