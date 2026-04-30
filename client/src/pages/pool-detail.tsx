@@ -2260,6 +2260,7 @@ export default function PoolDetailPage() {
   const [takeReplyText, setTakeReplyText] = useState('');
   const [replyingToReplyId, setReplyingToReplyId] = useState<string | null>(null);
   const [submittingTakeReply, setSubmittingTakeReply] = useState(false);
+  const [newTakeSpoiler, setNewTakeSpoiler] = useState(false);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
 
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -2409,10 +2410,12 @@ export default function PoolDetailPage() {
       title: newTakeTitle.trim(),
       body: newTakeBody.trim() || null,
       tag: newTakeTag,
+      has_spoiler: newTakeSpoiler,
     });
     setNewTakeTitle('');
     setNewTakeBody('');
     setNewTakeTag('discussion');
+    setNewTakeSpoiler(false);
     setIsTakeComposerOpen(false);
     setSubmittingTake(false);
     refetchTakes();
@@ -2724,21 +2727,26 @@ export default function PoolDetailPage() {
                 </div>
               )}
 
-              {/* ── Drop a Take ── */}
+              {/* ── Drop a Take composer prompt ── */}
               {isMember ? (
                 <button
                   onClick={() => setIsTakeComposerOpen(true)}
-                  className="w-full rounded-2xl px-4 py-3.5 flex items-center gap-3 text-left transition-colors"
-                  style={{ background: 'linear-gradient(135deg, #7c3aed18, #4f7ef718)', border: '1px solid #7c3aed30' }}
+                  className="w-full text-left"
                 >
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
-                    <MessageSquare size={14} className="text-white" />
+                  <div
+                    className="w-full rounded-2xl px-4 py-3.5 flex items-center gap-3"
+                    style={{ background: '#fff', border: '1.5px solid #e5e7eb', boxShadow: '0 1px 4px 0 rgba(0,0,0,0.05)' }}
+                  >
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-purple-100">
+                      <MessageSquare size={15} className="text-purple-500" />
+                    </div>
+                    <p className="flex-1 text-[13px] text-gray-400 leading-snug">
+                      Something on your mind? Drop a take to start a thread
+                    </p>
+                    <span className="shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
+                      Take
+                    </span>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-gray-800 text-sm font-medium">Drop a take</p>
-                    <p className="text-gray-400 text-xs">Start a debate, ranking, or question</p>
-                  </div>
-                  <ChevronRight size={16} className="text-gray-300" />
                 </button>
               ) : (
                 <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-4 px-4 text-center">
@@ -3031,6 +3039,28 @@ export default function PoolDetailPage() {
               rows={3}
               className="w-full px-3 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 resize-none mb-4"
             />
+
+            {/* Spoiler toggle */}
+            <button
+              type="button"
+              onClick={() => setNewTakeSpoiler(v => !v)}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border mb-4 transition-colors ${
+                newTakeSpoiler
+                  ? 'bg-amber-50 border-amber-300'
+                  : 'bg-gray-50 border-gray-200'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="text-base">⚠️</span>
+                <div className="text-left">
+                  <p className={`text-sm font-semibold ${newTakeSpoiler ? 'text-amber-700' : 'text-gray-700'}`}>Contains spoilers</p>
+                  <p className="text-xs text-gray-400">Readers will see a warning first</p>
+                </div>
+              </div>
+              <div className={`w-10 h-5.5 rounded-full relative transition-colors ${newTakeSpoiler ? 'bg-amber-400' : 'bg-gray-200'}`} style={{ width: 40, height: 22 }}>
+                <div className={`absolute top-0.5 w-4.5 h-4.5 bg-white rounded-full shadow transition-transform ${newTakeSpoiler ? 'translate-x-[20px]' : 'translate-x-[2px]'}`} style={{ width: 18, height: 18, top: 2 }} />
+              </div>
+            </button>
 
             <button
               onClick={handleSubmitTake}
