@@ -2233,6 +2233,7 @@ export default function PoolDetailPage() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const { session } = useAuth();
+  const currentUserId = session?.user?.id ?? null;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<'room' | 'play' | 'live' | 'stats'>('room');
@@ -2524,7 +2525,6 @@ export default function PoolDetailPage() {
   const isMember = data?.is_member ?? true;
   const isPublic = pool?.is_public ?? false;
   const token = session?.access_token || '';
-  const currentUserId = session?.user?.id ?? null;
 
   // Separate picks and comments
   const picks = posts.filter(p => p.prompt_type === 'pick' || p.prompt_type === 'call_it');
