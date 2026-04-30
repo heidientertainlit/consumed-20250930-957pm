@@ -47,8 +47,8 @@ All changes are styling/layout only. No voting logic, point systems, interaction
 
 ### UI/UX Decisions
 - Mobile-first design with a dark gradient theme using shadcn/ui (Radix UI, Tailwind CSS).
-- Persistent bottom navigation: Activity, Play, Library, Leaders, with a floating center Plus button for content addition.
-- Top navigation: Search, Notifications, Profile.
+- Persistent bottom navigation: Now (Activity), Play, Library — three items. Profile removed from bottom nav.
+- Top navigation: Search, Notifications, Profile avatar (links to /profile).
 - Profile section navigation: Sticky pills for Friends, DNA, Media History (own profile); Overview, DNA (friend profiles). DNA tab includes "My DNA" and "Compare" sub-tabs.
 - Default button theme: Purple background with white text; outline buttons have a purple border and white background.
 - Composer: Simplified inline with quick action buttons and dynamic forms.

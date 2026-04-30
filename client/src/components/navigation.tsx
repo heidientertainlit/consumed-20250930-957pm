@@ -595,10 +595,6 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               <div className="h-[22px] flex items-center justify-center"><Library className="text-white" size={22} /></div>
               <span className="text-white text-[10px] mt-0.5">Library</span>
             </Link>
-            <Link href="/me?tab=dna" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/me" || location.startsWith("/me?") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-profile">
-              <div className="h-[22px] flex items-center justify-center"><User className="text-white" size={22} /></div>
-              <span className="text-white text-[10px] mt-0.5">Profile</span>
-            </Link>
           </div>
         </nav>,
         document.body
