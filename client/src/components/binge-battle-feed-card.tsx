@@ -34,45 +34,58 @@ export default function BingeBattleFeedCard({ post, isOwn, onDelete }: BingeBatt
   const [, setLocation] = useLocation();
   const { winner, opponent, title } = parseContent(post.content, post.media_title);
 
+  const displayTitle = title || post.media_title || "this title";
+  const displayWinner = winner || post.user?.displayName || "Someone";
+  const displayOpponent = opponent || "their opponent";
+
   return (
-    <div className="relative rounded-2xl overflow-hidden mb-4 shadow-lg" style={{ background: "linear-gradient(135deg, #3b0764 0%, #4c1d95 40%, #5b21b6 100%)" }}>
+    <div
+      className="relative rounded-2xl overflow-hidden mb-4 shadow-lg"
+      style={{ background: "linear-gradient(135deg, #3b0764 0%, #4c1d95 40%, #5b21b6 100%)" }}
+    >
       {/* Delete button — top right, only for own post */}
       {isOwn && onDelete && (
         <button
           onClick={() => onDelete(post.id)}
-          className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/50 hover:text-white/90 transition-colors"
+          className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/40 hover:text-white/80 transition-colors"
           aria-label="Delete post"
         >
           <Trash2 size={13} />
         </button>
       )}
 
-      <div className="flex items-stretch gap-0">
+      <div className="flex items-stretch">
         {/* Main content */}
-        <div className="flex-1 p-4 pr-3 flex flex-col gap-2">
-          {/* Label pill */}
+        <div className="flex-1 p-4 pr-3 flex flex-col gap-2.5">
+          {/* Label */}
           <div className="flex items-center gap-1.5">
             <Zap size={11} className="text-yellow-400" fill="currentColor" />
             <span className="text-[10px] font-bold text-yellow-400 uppercase tracking-widest">Binge Battle</span>
           </div>
 
           {/* Winner headline */}
-          {winner ? (
-            <div className="flex items-center gap-2">
-              <Trophy size={18} className="text-yellow-400 shrink-0" />
-              <span className="text-white font-extrabold text-[20px] leading-tight">{winner} Won!</span>
-            </div>
-          ) : (
-            <span className="text-white font-extrabold text-[18px] leading-tight">{post.content}</span>
-          )}
+          <div className="flex items-start gap-2">
+            <Trophy size={20} className="text-yellow-400 shrink-0 mt-0.5" />
+            <span className="text-white font-extrabold text-[18px] leading-tight">
+              {displayWinner} Won the Binge Battle!
+            </span>
+          </div>
 
-          {/* Narrative line */}
-          {winner && opponent && (
-            <p className="text-white/70 text-[12px] leading-snug">
-              {winner} and {opponent} went head to head in a Binge Battle
-              {title ? <> on <span className="text-white/90 font-semibold">{title}</span></> : null}
-            </p>
-          )}
+          {/* Narrative */}
+          <p className="text-white/70 text-[12px] leading-snug">
+            <span className="text-white/90 font-semibold">{displayWinner}</span>
+            {" v. "}
+            <span className="text-white/90 font-semibold">{displayOpponent}</span>
+            {" competed in a "}
+            <span className="text-white/90 font-semibold">{displayTitle}</span>
+            {" binge battle and "}
+            <span className="text-white/90 font-semibold">{displayWinner}</span>
+            {" won. "}
+            <span className="text-yellow-400 font-bold">+100 pts</span>
+            {" to "}
+            <span className="text-white/90 font-semibold">{displayWinner}</span>
+            {"!"}
+          </p>
 
           {/* CTA button */}
           <button
@@ -80,19 +93,21 @@ export default function BingeBattleFeedCard({ post, isOwn, onDelete }: BingeBatt
             className="mt-1 self-start px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-[12px] font-semibold flex items-center gap-1.5 transition-colors border border-white/20"
           >
             <Zap size={11} fill="currentColor" />
-            Start Your Own Battle
+            Start Your Own Binge Battle
           </button>
         </div>
 
-        {/* Media cover */}
+        {/* Media cover — flush right edge */}
         {post.image_url && (
           <div className="w-[72px] shrink-0 self-stretch">
             <img
               src={post.image_url}
-              alt={title || post.media_title || ""}
+              alt={displayTitle}
               className="w-full h-full object-cover"
-              style={{ minHeight: 120 }}
-              onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = "none"; }}
+              style={{ minHeight: 130 }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).parentElement!.style.display = "none";
+              }}
             />
           </div>
         )}

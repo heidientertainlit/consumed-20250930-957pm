@@ -3361,7 +3361,8 @@ export default function Feed() {
     item.type === 'game_moment' ||
     item.type === 'predict' ||
     item.type === 'prediction' ||
-    item.type === 'rank'
+    item.type === 'rank' ||
+    item.type === 'binge_battle'
   );
 
   const { feedRatingCarousels, promotedRatings } = (() => {
@@ -3373,7 +3374,8 @@ export default function Feed() {
         item.type !== 'game_moment' &&
         item.type !== 'predict' &&
         item.type !== 'prediction' &&
-        item.type !== 'rank'
+        item.type !== 'rank' &&
+        item.type !== 'binge_battle'
       ) {
         ratingItems.push(item);
       }
