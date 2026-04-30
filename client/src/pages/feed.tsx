@@ -23,6 +23,7 @@ import { LeaderboardGlimpse } from "@/components/leaderboard-glimpse";
 import { PollsCarousel } from "@/components/polls-carousel";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { GamesCarousel } from "@/components/games-carousel";
+import SeenItGame from "@/components/seen-it-game";
 import { RanksCarousel } from "@/components/ranks-carousel";
 import { ChallengePoolsFeedBanner } from "@/components/challenge-pools-feed-banner";
 import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
@@ -5950,6 +5951,30 @@ export default function Feed() {
                 onRespond={() => refetchPendingCasts()}
               />
             ))}
+          </div>
+        )}
+
+        {/* Seen It? Game Carousels */}
+        {session && (
+          <div className="space-y-4 mb-4">
+            <div className="flex items-center gap-3 mt-2">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">What have you seen?</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+            <SeenItGame onAddToList={(media) => { setQuickAddMedia({ title: media.title, mediaType: media.mediaType, externalId: media.externalId, externalSource: media.externalSource, imageUrl: media.imageUrl }); setIsQuickAddOpen(true); }} />
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">What have you read?</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+            <SeenItGame mediaTypeFilter="book" onAddToList={(media) => { setQuickAddMedia({ title: media.title, mediaType: media.mediaType, externalId: media.externalId, externalSource: media.externalSource, imageUrl: media.imageUrl }); setIsQuickAddOpen(true); }} />
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">What have you listened to?</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+            <SeenItGame mediaTypeFilter="music" onAddToList={(media) => { setQuickAddMedia({ title: media.title, mediaType: media.mediaType, externalId: media.externalId, externalSource: media.externalSource, imageUrl: media.imageUrl }); setIsQuickAddOpen(true); }} />
           </div>
         )}
 
