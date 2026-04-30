@@ -1887,7 +1887,6 @@ export function DailyHeroSection() {
             </button>
 
           </div>
-          <p className="text-center text-[10px] text-white/25 tracking-wide">Come back tomorrow to keep up your streak</p>
         </div>
       ) : (
         /* ══ PRE-GAME: Deck-layered cards — front + back peek, swap when one is done ══ */
