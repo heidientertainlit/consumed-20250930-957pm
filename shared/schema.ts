@@ -851,6 +851,7 @@ export const bingeBattles = pgTable("binge_battles", {
   mediaSub: text("media_sub"),
   mediaTotal: integer("media_total").notNull(),
   mediaUnit: text("media_unit").notNull(),
+
   status: text("status").notNull().default("pending"), // pending | active | completed
   challengerProgress: integer("challenger_progress").notNull().default(0),
   opponentProgress: integer("opponent_progress").notNull().default(0),

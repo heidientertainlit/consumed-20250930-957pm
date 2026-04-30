@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
-import { ChevronLeft, Zap, Trophy, AlertCircle, Loader2 } from "lucide-react";
+import { ChevronLeft, Zap, Trophy, AlertCircle, Loader2, BookOpen } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
 export default function PlayBingeBattleAccept() {
   const params = useParams<{ battleId: string }>();
   const battleId = params.battleId;
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
 
   const [battle, setBattle] = useState<any>(null);
   const [challengerName, setChallengerName] = useState("");
@@ -72,6 +74,27 @@ export default function PlayBingeBattleAccept() {
     if (err) {
       setError("Could not join the battle. It may have already started.");
       return;
+    }
+
+    // Add battle items to opponent's "Currently" library list
+    if (session?.access_token) {
+      const items: any[] = Array.isArray(battle.media_items) && battle.media_items.length > 0
+        ? battle.media_items
+        : [{ title: battle.media_title, type: battle.media_type, poster: battle.media_poster, external_id: battle.media_external_id, external_source: battle.media_external_source }];
+      for (const item of items) {
+        if (!item.external_id) continue;
+        try {
+          await fetch(`${SUPABASE_URL}/functions/v1/track-media`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              media: { title: item.title, mediaType: item.type, imageUrl: item.poster || "", externalId: item.external_id, externalSource: item.external_source || "tmdb" },
+              listType: "currently",
+              privateMode: true,
+            }),
+          });
+        } catch { /* non-critical */ }
+      }
     }
 
     // Insert social_posts entry so friends can see the battle started
@@ -224,14 +247,20 @@ export default function PlayBingeBattleAccept() {
             </button>
           )}
           {!isOwner && !isAlreadyOpponent && !isFull && !isCompleted && (
-            <button
-              onClick={handleAccept}
-              disabled={accepting}
-              className="w-full py-4 rounded-2xl font-bold text-[15px] bg-purple-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-purple-200 disabled:opacity-60"
-            >
-              {accepting ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />}
-              {accepting ? "Joining..." : "Accept Challenge"}
-            </button>
+            <>
+              <button
+                onClick={handleAccept}
+                disabled={accepting}
+                className="w-full py-4 rounded-2xl font-bold text-[15px] bg-purple-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-purple-200 disabled:opacity-60"
+              >
+                {accepting ? <Loader2 size={15} className="animate-spin" /> : <Zap size={15} />}
+                {accepting ? "Adding to your library..." : "Accept Challenge"}
+              </button>
+              <p className="text-center text-[11px] text-gray-400 flex items-center justify-center gap-1">
+                <BookOpen size={11} />
+                Accepting adds {Array.isArray(battle.media_items) && battle.media_items.length > 1 ? "these items" : "this"} to your Currently list in the library
+              </p>
+            </>
           )}
           {(isFull || isCompleted) && (
             <button

@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { APP_BASE } from "@/lib/share";
 import { useLocation } from "wouter";
-import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, MessageCircle, Loader2, Clock, Minus, Plus, Trash2, X } from "lucide-react";
+import { ChevronLeft, Search, Zap, CheckCircle2, Trophy, Share2, RotateCcw, MessageCircle, Loader2, Clock, Trash2, X, BookOpen } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/navigation";
+import { ProgressUpdateSheet, ProgressItem } from "@/components/progress-update-sheet";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
 
@@ -36,6 +37,7 @@ type BattleRow = {
   media_unit: string;
   media_external_id: string;
   media_external_source: string;
+  media_items?: any[] | null;
   status: string;
   challenger_progress: number;
   opponent_progress: number;
@@ -119,6 +121,11 @@ export default function PlayBingeBattle() {
   const [myProgress, setMyProgress] = useState(0);
   const [updating, setUpdating] = useState(false);
   const [finishing, setFinishing] = useState(false);
+
+  // Per-item library progress
+  const [itemProgressMap, setItemProgressMap] = useState<Record<string, any>>({});
+  const [activeProgressItem, setActiveProgressItem] = useState<ProgressItem | null>(null);
+  const [isProgressSheetOpen, setIsProgressSheetOpen] = useState(false);
 
   // --- Media search ---
   const doMediaSearch = useCallback(async (query: string) => {
@@ -264,6 +271,7 @@ export default function PlayBingeBattle() {
         media_sub: combined.sub || null,
         media_total: combined.total,
         media_unit: combined.unit,
+        media_items: selectedItems,
         status: "pending",
       })
       .select()
@@ -282,6 +290,8 @@ export default function PlayBingeBattle() {
     setCreatedBattleId(data.id);
     setCurrentBattle(data);
     setMyProgress(0);
+    // Add all items to challenger's "Currently" library list
+    addItemsToLibrary(selectedItems);
     setView("sent");
   }
 
@@ -295,9 +305,12 @@ export default function PlayBingeBattle() {
     if (!data) return;
     setCurrentBattle(data);
 
-    // Determine my progress
+    // Determine my progress (will be overridden by loadMyItemsProgress if media_items exist)
     const isChallenger = data.challenger_id === user?.id;
     setMyProgress(isChallenger ? data.challenger_progress : data.opponent_progress);
+
+    // Load per-item library progress (for new-style battles)
+    loadMyItemsProgress(data);
 
     // Load user info if needed
     const ids = [data.challenger_id, data.opponent_id].filter(Boolean) as string[];
@@ -390,6 +403,94 @@ export default function PlayBingeBattle() {
 
     setFinishing(false);
     setView("finished");
+  }
+
+  // --- Helper: get the individual items for a battle ---
+  function getBattleItems(battle: BattleRow): MediaItem[] {
+    if (battle.media_items && Array.isArray(battle.media_items) && battle.media_items.length > 0) {
+      return battle.media_items as MediaItem[];
+    }
+    // Backward compat: synthesize from single-item columns
+    return [{
+      id: battle.media_external_id,
+      title: battle.media_title,
+      sub: battle.media_sub || "",
+      type: battle.media_type,
+      poster: battle.media_poster || "",
+      total: battle.media_total,
+      unit: battle.media_unit,
+      external_id: battle.media_external_id,
+      external_source: battle.media_external_source,
+    }];
+  }
+
+  // --- Helper: load my library progress for all battle items ---
+  async function loadMyItemsProgress(battle: BattleRow) {
+    const items = getBattleItems(battle);
+    const extIds = items.map(i => i.external_id).filter(Boolean) as string[];
+    if (extIds.length === 0) return;
+    const { data } = await supabase
+      .from("list_items")
+      .select("id, progress, total, progress_mode, external_id")
+      .in("external_id", extIds);
+    if (!data) return;
+    const map: Record<string, any> = {};
+    data.forEach((row: any) => { if (row.external_id) map[row.external_id] = row; });
+    setItemProgressMap(map);
+    // Compute overall % and sync to battle row
+    if (items.length > 0) {
+      const pct = Math.round(
+        items.reduce((sum, item) => {
+          const li = map[item.external_id || ""];
+          if (!li) return sum;
+          return sum + Math.min((li.progress / (li.total || item.total || 1)) * 100, 100);
+        }, 0) / items.length
+      );
+      setMyProgress(pct);
+    }
+  }
+
+  // --- Helper: sync my overall % back to the battle row ---
+  async function syncBattleProgress(battle: BattleRow, map: Record<string, any>) {
+    if (!user?.id) return;
+    const items = getBattleItems(battle);
+    if (items.length === 0) return;
+    const pct = Math.round(
+      items.reduce((sum, item) => {
+        const li = map[item.external_id || ""];
+        if (!li) return sum;
+        return sum + Math.min((li.progress / (li.total || item.total || 1)) * 100, 100);
+      }, 0) / items.length
+    );
+    const isChallenger = battle.challenger_id === user.id;
+    const field = isChallenger ? "challenger_progress" : "opponent_progress";
+    setMyProgress(pct);
+    await supabase.from("binge_battles").update({ [field]: pct, updated_at: new Date().toISOString() }).eq("id", battle.id);
+  }
+
+  // --- Helper: add items to the current user's "Currently" library list ---
+  async function addItemsToLibrary(items: MediaItem[]) {
+    if (!session?.access_token) return;
+    for (const item of items) {
+      if (!item.external_id) continue;
+      try {
+        await fetch(`${SUPABASE_URL}/functions/v1/track-media`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            media: {
+              title: item.title,
+              mediaType: item.type,
+              imageUrl: item.poster || "",
+              externalId: item.external_id,
+              externalSource: item.external_source || "tmdb",
+            },
+            listType: "currently",
+            privateMode: true,
+          }),
+        });
+      } catch { /* non-critical */ }
+    }
   }
 
   // --- Cancel / delete battle ---
@@ -704,6 +805,12 @@ export default function PlayBingeBattle() {
                   ? "Start Battle"
                   : "Pick media first"}
           </button>
+          {selectedItems.length > 0 && (
+            <p className="text-center text-[11px] text-gray-400 flex items-center justify-center gap-1">
+              <BookOpen size={11} className="text-gray-400" />
+              {selectedItems.length === 1 ? "This" : "These"} will be added to your Currently list in the library
+            </p>
+          )}
         </div>
       </div>
     );
@@ -802,8 +909,11 @@ export default function PlayBingeBattle() {
     const opponentProgress = isChallenger ? battle.opponent_progress : battle.challenger_progress;
     const lead = myProgress - opponentProgress;
     const isPending = battle.status === "pending";
+    const isNewStyle = !!(battle.media_items && Array.isArray(battle.media_items) && battle.media_items.length > 0);
+    const battleItems = isNewStyle ? getBattleItems(battle) : [];
 
     return (
+      <>
       <div className="min-h-screen bg-[#f8f8fb] flex flex-col">
         <div className="flex items-center gap-3 px-4 pt-14 pb-3 bg-white border-b border-gray-100">
           <button onClick={() => setView("hub")} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100">
@@ -861,36 +971,96 @@ export default function PlayBingeBattle() {
                   )}
                 </div>
                 <p className="text-[11px] text-gray-400">
-                  {battle.media_unit === "episodes" ? `Ep ${myProgress} of ${battle.media_total}` : `${myProgress} of ${battle.media_total}`}
-                  {" · "}{Math.round((myProgress / battle.media_total) * 100)}% done
+                  {isNewStyle
+                    ? `${myProgress}% overall`
+                    : (battle.media_unit === "episodes" ? `Ep ${myProgress} of ${battle.media_total}` : `${myProgress} of ${battle.media_total} · ${Math.round((myProgress / battle.media_total) * 100)}% done`)}
                 </p>
               </div>
-              <p className="text-[22px] font-black text-purple-600">{myProgress}/{battle.media_total}</p>
+              <p className="text-[22px] font-black text-purple-600">{myProgress}%</p>
             </div>
             <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
               <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-purple-400 transition-all"
-                style={{ width: `${Math.min((myProgress / battle.media_total) * 100, 100)}%` }} />
+                style={{ width: `${Math.min(isNewStyle ? myProgress : (myProgress / battle.media_total) * 100, 100)}%` }} />
             </div>
-            {/* Inline progress stepper — always visible, even while pending */}
-            <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
-              <button
-                onClick={() => handleUpdateProgress(Math.max(0, myProgress - 1))}
-                disabled={myProgress === 0 || updating}
-                className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 disabled:opacity-30 shrink-0"
-              >
-                <Minus size={15} />
-              </button>
-              <div className="flex-1 text-center">
-                <p className="text-[11px] text-gray-400">Update your progress</p>
+
+            {/* Per-item progress rows (new-style battles) */}
+            {isNewStyle ? (
+              <div className="space-y-2 pt-2 border-t border-gray-100">
+                {battleItems.map((item) => {
+                  const li = itemProgressMap[item.external_id || item.id];
+                  const itemTotal = li?.total || item.total || 1;
+                  const itemProgress = li?.progress || 0;
+                  const itemPct = Math.round(Math.min((itemProgress / itemTotal) * 100, 100));
+                  return (
+                    <div key={item.external_id || item.id} className="flex items-center gap-2.5">
+                      <div className="w-8 h-10 rounded-md overflow-hidden bg-purple-50 shrink-0 relative">
+                        {item.poster ? (
+                          <img src={item.poster} alt={item.title} className="w-full h-full object-cover"
+                            onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-[9px] font-black text-purple-300">{item.type?.[0]}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-semibold text-gray-800 truncate">{item.title}</p>
+                        <p className="text-[10px] text-gray-400">
+                          {li
+                            ? (item.unit === "% read" || item.unit === "books"
+                                ? `${itemProgress} of ${itemTotal} pages · ${itemPct}%`
+                                : item.unit === "episodes"
+                                  ? `Ep ${itemProgress}/${itemTotal} · ${itemPct}%`
+                                  : `${itemPct}% done`)
+                            : "Not started"}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setActiveProgressItem({
+                            id: li?.id,
+                            title: item.title,
+                            image_url: item.poster,
+                            media_type: item.type,
+                            progress: li?.progress,
+                            progress_mode: li?.progress_mode,
+                            progress_total: li?.total || item.total,
+                            total: li?.total || item.total,
+                            external_id: item.external_id,
+                            external_source: item.external_source,
+                          });
+                          setIsProgressSheetOpen(true);
+                        }}
+                        className="text-[11px] font-semibold text-purple-600 px-2.5 py-1 rounded-lg bg-purple-50 shrink-0"
+                      >
+                        Update
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
-              <button
-                onClick={() => handleUpdateProgress(Math.min(myProgress + 1, battle.media_total))}
-                disabled={myProgress >= battle.media_total || updating}
-                className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center text-white disabled:opacity-40 shrink-0"
-              >
-                {updating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={15} />}
-              </button>
-            </div>
+            ) : (
+              /* Legacy stepper for old battles */
+              <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
+                <button
+                  onClick={() => handleUpdateProgress(Math.max(0, myProgress - 1))}
+                  disabled={myProgress === 0 || updating}
+                  className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 disabled:opacity-30 shrink-0"
+                >
+                  <span className="text-[18px] leading-none text-gray-600">−</span>
+                </button>
+                <div className="flex-1 text-center">
+                  <p className="text-[11px] text-gray-400">Update your progress</p>
+                </div>
+                <button
+                  onClick={() => handleUpdateProgress(Math.min(myProgress + 1, battle.media_total))}
+                  disabled={myProgress >= battle.media_total || updating}
+                  className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center text-white disabled:opacity-40 shrink-0"
+                >
+                  {updating ? <Loader2 size={14} className="animate-spin" /> : <span className="text-[18px] leading-none">+</span>}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-3 px-2">
@@ -920,14 +1090,15 @@ export default function PlayBingeBattle() {
                   <div className="flex-1">
                     <p className="text-[13px] font-bold text-gray-900">{opponent.name}</p>
                     <p className="text-[11px] text-gray-400">
-                      {battle.media_unit === "episodes" ? `Ep ${opponentProgress} of ${battle.media_total}` : `${opponentProgress} of ${battle.media_total}`}
-                      {" · "}{Math.round((opponentProgress / battle.media_total) * 100)}% done
+                      {isNewStyle
+                        ? `${opponentProgress}% overall`
+                        : (battle.media_unit === "episodes" ? `Ep ${opponentProgress} of ${battle.media_total}` : `${opponentProgress} of ${battle.media_total} · ${Math.round((opponentProgress / battle.media_total) * 100)}% done`)}
                     </p>
                   </div>
-                  <p className="text-[22px] font-black text-gray-300">{opponentProgress}/{battle.media_total}</p>
+                  <p className="text-[22px] font-black text-gray-300">{isNewStyle ? `${opponentProgress}%` : `${opponentProgress}/${battle.media_total}`}</p>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full bg-gray-300" style={{ width: `${Math.min((opponentProgress / battle.media_total) * 100, 100)}%` }} />
+                  <div className="h-full rounded-full bg-gray-300" style={{ width: `${Math.min(isNewStyle ? opponentProgress : (opponentProgress / battle.media_total) * 100, 100)}%` }} />
                 </div>
               </>
             )}
@@ -937,14 +1108,14 @@ export default function PlayBingeBattle() {
           {!isPending && opponent && lead > 0 && (
             <div className="p-3 rounded-xl bg-amber-50 border border-amber-200">
               <p className="text-[12px] text-amber-700 text-center">
-                You're <span className="font-bold">{lead} {battle.media_unit} ahead</span> of {opponent.name} — keep going!
+                You're <span className="font-bold">{isNewStyle ? `${lead}%` : `${lead} ${battle.media_unit}`} ahead</span> of {opponent.name} — keep going!
               </p>
             </div>
           )}
           {!isPending && opponent && lead < 0 && (
             <div className="p-3 rounded-xl bg-red-50 border border-red-200">
               <p className="text-[12px] text-red-600 text-center">
-                {opponent.name} is <span className="font-bold">{Math.abs(lead)} {battle.media_unit} ahead</span> — pick it up!
+                {opponent.name} is <span className="font-bold">{isNewStyle ? `${Math.abs(lead)}%` : `${Math.abs(lead)} ${battle.media_unit}`} ahead</span> — pick it up!
               </p>
             </div>
           )}
@@ -996,6 +1167,31 @@ export default function PlayBingeBattle() {
           </div>
         </div>
       </div>
+
+      {/* Progress update sheet — shared library modal */}
+      {activeProgressItem && (
+        <ProgressUpdateSheet
+          isOpen={isProgressSheetOpen}
+          onOpenChange={setIsProgressSheetOpen}
+          item={activeProgressItem}
+          onProgressSaved={async () => {
+            // Re-fetch library progress and sync % to battle row
+            const items = getBattleItems(battle);
+            const extIds = items.map(i => i.external_id).filter(Boolean) as string[];
+            if (extIds.length === 0) return;
+            const { data } = await supabase
+              .from("list_items")
+              .select("id, progress, total, progress_mode, external_id")
+              .in("external_id", extIds);
+            if (!data) return;
+            const map: Record<string, any> = {};
+            data.forEach((row: any) => { if (row.external_id) map[row.external_id] = row; });
+            setItemProgressMap(map);
+            syncBattleProgress(battle, map);
+          }}
+        />
+      )}
+      </>
     );
   }
 
