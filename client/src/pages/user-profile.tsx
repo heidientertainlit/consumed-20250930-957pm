@@ -224,7 +224,7 @@ export default function UserProfile() {
   const historyRef = useRef<HTMLDivElement>(null);
   const [activeSection, setActiveSection] = useState<string>('friends');
   const initialSectionSet = useRef(false);
-  const [collectionsSubTab, setCollectionsSubTab] = useState<'in-progress' | 'lists' | 'all-media'>('in-progress');
+
   const [activitySubFilter, setActivitySubFilter] = useState<'posts' | 'history' | 'bets'>('posts');
   const [listSearch, setListSearch] = useState("");
   // User activity state
@@ -3110,15 +3110,26 @@ export default function UserProfile() {
               DNA
             </button>
             <button
-              onClick={() => setActiveSection('collections')}
+              onClick={() => setActiveSection('lists')}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                activeSection === 'collections'
+                activeSection === 'lists'
                   ? 'bg-purple-600 text-white shadow-md'
                   : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
               }`}
-              data-testid="nav-collections"
+              data-testid="nav-lists"
             >
-              Collections
+              Lists
+            </button>
+            <button
+              onClick={() => setActiveSection('all-media')}
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                activeSection === 'all-media'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+              }`}
+              data-testid="nav-all-media"
+            >
+              All My Media
             </button>
           </div>
         </div>
@@ -3771,310 +3782,245 @@ export default function UserProfile() {
           </div>
         )}
 
-        {/* Collections Section - Library view with Lists/History tabs (own profile only) */}
-        {activeSection === 'collections' && isOwnProfile && (
-          <div ref={listsRef} className="mb-8">
-            {/* Tab bar — matches Library pill style */}
-            <div className="flex items-center gap-1 px-4 pt-4 pb-2 bg-white">
-              {([
-                { key: 'in-progress', label: 'In Progress' },
-                { key: 'lists',       label: 'Lists' },
-                { key: 'all-media',   label: 'All My Media' },
-              ] as const).map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setCollectionsSubTab(key)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                    collectionsSubTab === key
-                      ? 'bg-purple-500 text-white'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {/* ── In Progress ── */}
-            {collectionsSubTab === 'in-progress' && (() => {
-              const currentlyList = userLists.find((l: any) => l.title === 'Currently');
-              const inProgressItems = currentlyList?.items?.slice(0, 10) || [];
-              return (
-                <div className="px-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100 mx-4">
-                  {isLoadingLists ? (
-                    <div className="flex gap-3">
-                      {[1, 2, 3].map((n) => (
-                        <div key={n} className="flex-shrink-0 w-28 aspect-[2/3] bg-gray-200 rounded-lg animate-pulse" />
-                      ))}
-                    </div>
-                  ) : inProgressItems.length > 0 ? (
-                    <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1" style={{ WebkitOverflowScrolling: 'touch' }}>
-                      {inProgressItems.map((item: any) => (
-                        <CurrentlyConsumingCard
-                          key={item.id}
-                          item={item}
-                          onUpdateProgress={(progress, total, mode, progressDisplay) => {
-                            updateProgressMutation.mutate({ itemId: item.id, progress, total, mode, progressDisplay });
-                          }}
-                          onMoveToList={(targetList, listName) => {
-                            moveToListMutation.mutate({ itemId: item.id, targetList, listName });
-                          }}
-                          isUpdating={updateProgressMutation.isPending || moveToListMutation.isPending}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Clock className="mx-auto mb-2 text-gray-300" size={28} />
-                      <p className="text-sm text-gray-600 mb-1">Nothing in progress yet</p>
-                      <p className="text-xs text-gray-400">Add media and mark it as "Currently" to track progress here</p>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* ── Lists ── */}
-            {collectionsSubTab === 'lists' && (
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mx-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                    <input
-                      type="text"
-                      placeholder="Search lists..."
-                      value={listSearch}
-                      onChange={(e) => setListSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
-                      data-testid="input-search-lists"
-                    />
-                  </div>
-                  <Button
-                    size="sm"
-                    className="bg-purple-600 hover:bg-purple-700 shrink-0"
-                    onClick={() => setShowCreateListDialog(true)}
-                    data-testid="button-create-list"
-                  >
-                    <Plus size={14} className="mr-1" />
-                    Create
-                  </Button>
-                </div>
-
-                {isLoadingLists ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((n) => (
-                      <div key={n} className="bg-gray-50 rounded-lg p-3 animate-pulse">
-                        <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
-                        <div className="h-3 bg-gray-100 rounded w-1/4" />
-                      </div>
-                    ))}
-                  </div>
-                ) : userLists.length === 0 ? (
-                  <div className="text-center py-6">
-                    <List className="mx-auto mb-2 text-gray-300" size={28} />
-                    <p className="text-sm text-gray-600">No lists yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {userLists
-                      .filter((list: any) => list.title.toLowerCase().includes(listSearch.toLowerCase()))
-                      .map((list: any) => (
-                      <div
-                        key={list.id}
-                        className="bg-gray-50 border border-gray-200 rounded-lg hover:border-purple-300 transition-colors cursor-pointer"
-                        onClick={() => {
-                          const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
-                          setLocation(`/list/${listSlug}`);
-                        }}
-                        data-testid={`list-card-${list.id}`}
-                      >
-                        <div className="px-3 py-2.5 flex items-center justify-between">
-                          <div className="flex items-center gap-2.5 flex-1">
-                            <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                              {list.title === 'Currently' ? <Clock className="text-blue-600" size={16} /> :
-                               list.title === 'Finished' || list.title === 'Completed' ? <Trophy className="text-green-600" size={16} /> :
-                               list.title === 'Want To' || list.title === 'Want to Watch' ? <Play className="text-purple-600" size={16} /> :
-                               <List className="text-gray-600" size={16} />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <span className="font-medium text-sm text-gray-900">{getDisplayTitle(list.title)}</span>
-                                {!list.is_default && list.visibility === 'private' && (
-                                  <Lock size={10} className="text-gray-400 flex-shrink-0" />
-                                )}
-                              </div>
-                              <p className="text-xs text-gray-500">{list.items?.length || 0} {list.items?.length === 1 ? 'item' : 'items'}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Share2
-                              className="text-gray-400 hover:text-purple-600 transition-colors"
-                              size={16}
-                              onClick={(e) => { e.stopPropagation(); handleShareListDirect(list.id, list.title); }}
-                            />
-                            <ChevronRight className="text-gray-400" size={18} />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── All My Media ── */}
-            {collectionsSubTab === 'all-media' && (
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mx-4">
-                {/* Filters */}
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {/* Type */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                        mediaHistoryType !== 'all' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                      }`}
-                    >
-                      <Film size={12} />
-                      {mediaHistoryType === 'all' ? 'Type' : mediaHistoryType}
-                      <ChevronRight size={12} className={`transition-transform ${openFilter === 'type' ? 'rotate-90' : ''}`} />
-                    </button>
-                    {openFilter === 'type' && (
-                      <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[120px]">
-                        {[
-                          { value: 'all', label: 'All Types' },
-                          { value: 'movie', label: 'Movies', icon: Film },
-                          { value: 'tv', label: 'TV', icon: Tv },
-                          { value: 'book', label: 'Books', icon: BookOpen },
-                          { value: 'music', label: 'Music', icon: Music },
-                        ].map(({ value, label, icon: Icon }) => (
-                          <button key={value} onClick={() => { setMediaHistoryType(value); setOpenFilter(null); }}
-                            className={`w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-gray-100 ${mediaHistoryType === value ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
-                            {Icon && <Icon size={12} className="text-gray-600" />}{label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {/* Year */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setOpenFilter(openFilter === 'year' ? null : 'year')}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                        mediaHistoryYear !== 'all' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                      }`}
-                    >
-                      <Calendar size={12} />
-                      {mediaHistoryYear === 'all' ? 'Year' : mediaHistoryYear}
-                      <ChevronRight size={12} className={`transition-transform ${openFilter === 'year' ? 'rotate-90' : ''}`} />
-                    </button>
-                    {openFilter === 'year' && (
-                      <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[100px] max-h-48 overflow-y-auto">
-                        <button onClick={() => { setMediaHistoryYear('all'); setOpenFilter(null); }}
-                          className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryYear === 'all' ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
-                          All Years
-                        </button>
-                        {Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() - i).toString()).map((year) => (
-                          <button key={year} onClick={() => { setMediaHistoryYear(year); setOpenFilter(null); }}
-                            className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryYear === year ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
-                            {year}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {/* Rating */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setOpenFilter(openFilter === 'rating' ? null : 'rating')}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                        mediaHistoryRating !== 'all' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                      }`}
-                    >
-                      ⭐ {mediaHistoryRating === 'all' ? 'Rating' : `${mediaHistoryRating}★`}
-                      <ChevronRight size={12} className={`transition-transform ${openFilter === 'rating' ? 'rotate-90' : ''}`} />
-                    </button>
-                    {openFilter === 'rating' && (
-                      <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[100px]">
-                        <button onClick={() => { setMediaHistoryRating('all'); setOpenFilter(null); }}
-                          className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryRating === 'all' ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
-                          All Ratings
-                        </button>
-                        {[5, 4, 3, 2, 1].map((rating) => (
-                          <button key={rating} onClick={() => { setMediaHistoryRating(rating.toString()); setOpenFilter(null); }}
-                            className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryRating === rating.toString() ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
-                            {'⭐'.repeat(rating)}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {/* Search */}
-                <div className="relative mb-4">
+        {/* Lists Section (own profile only) */}
+        {activeSection === 'lists' && isOwnProfile && (
+          <div ref={listsRef} className="px-4 mb-8">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
                   <input
                     type="text"
-                    placeholder="Search media history..."
-                    value={mediaHistorySearch}
-                    onChange={(e) => setMediaHistorySearch(e.target.value)}
+                    placeholder="Search lists..."
+                    value={listSearch}
+                    onChange={(e) => setListSearch(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
-                    data-testid="input-history-search"
+                    data-testid="input-search-lists"
                   />
                 </div>
-                {isLoadingLists ? (
-                  <div className="space-y-2">
-                    {[1, 2, 3].map((n) => (
-                      <div key={n} className="bg-gray-50 rounded-lg p-3 animate-pulse">
-                        <div className="h-4 bg-gray-200 rounded w-2/3 mb-2" />
-                        <div className="h-3 bg-gray-100 rounded w-1/3" />
-                      </div>
-                    ))}
-                  </div>
-                ) : filteredMediaHistory.length === 0 ? (
-                  <div className="text-center py-6">
-                    <Clock className="mx-auto mb-2 text-gray-300" size={28} />
-                    <p className="text-sm text-gray-600">No media history yet</p>
-                    <p className="text-xs text-gray-400 mt-1">Start tracking media to see your history here</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {filteredMediaHistory.map((item: any, index: number) => (
-                      <div
-                        key={`${item.id}-${index}`}
-                        className="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:border-purple-300 transition-colors cursor-pointer"
-                        onClick={() => {
-                          if (item.external_id && item.external_source) {
-                            setLocation(`/media/${item.media_type}/${item.external_source}/${item.external_id}`);
-                          }
-                        }}
-                        data-testid={`history-item-${index}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-14 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                            {item.image_url ? (
-                              <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">{getMediaIcon(item.media_type)}</div>
-                            )}
+                <Button
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700 shrink-0"
+                  onClick={() => setShowCreateListDialog(true)}
+                  data-testid="button-create-list"
+                >
+                  <Plus size={14} className="mr-1" />
+                  Create
+                </Button>
+              </div>
+              {isLoadingLists ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} className="bg-gray-50 rounded-lg p-3 animate-pulse">
+                      <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
+                      <div className="h-3 bg-gray-100 rounded w-1/4" />
+                    </div>
+                  ))}
+                </div>
+              ) : userLists.length === 0 ? (
+                <div className="text-center py-6">
+                  <List className="mx-auto mb-2 text-gray-300" size={28} />
+                  <p className="text-sm text-gray-600">No lists yet</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {userLists
+                    .filter((list: any) => list.title.toLowerCase().includes(listSearch.toLowerCase()))
+                    .map((list: any) => (
+                    <div
+                      key={list.id}
+                      className="bg-gray-50 border border-gray-200 rounded-lg hover:border-purple-300 transition-colors cursor-pointer"
+                      onClick={() => {
+                        const listSlug = list.title.toLowerCase().replace(/\s+/g, '-');
+                        setLocation(`/list/${listSlug}`);
+                      }}
+                      data-testid={`list-card-${list.id}`}
+                    >
+                      <div className="px-3 py-2.5 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5 flex-1">
+                          <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            {list.title === 'Currently' ? <Clock className="text-blue-600" size={16} /> :
+                             list.title === 'Finished' || list.title === 'Completed' ? <Trophy className="text-green-600" size={16} /> :
+                             list.title === 'Want To' || list.title === 'Want to Watch' ? <Play className="text-purple-600" size={16} /> :
+                             <List className="text-gray-600" size={16} />}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm text-gray-900 truncate">{item.title}</h4>
-                            <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
-                              {getMediaIcon(item.media_type)}
-                              <span className="capitalize">{item.media_type}</span>
-                              <span>•</span>
-                              <span>{item.listName}</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium text-sm text-gray-900">{getDisplayTitle(list.title)}</span>
+                              {!list.is_default && list.visibility === 'private' && (
+                                <Lock size={10} className="text-gray-400 flex-shrink-0" />
+                              )}
                             </div>
-                            <p className="text-xs text-gray-400 mt-0.5">{new Date(item.created_at).toLocaleDateString()}</p>
+                            <p className="text-xs text-gray-500">{list.items?.length || 0} {list.items?.length === 1 ? 'item' : 'items'}</p>
                           </div>
                         </div>
+                        <div className="flex items-center gap-2">
+                          <Share2
+                            className="text-gray-400 hover:text-purple-600 transition-colors"
+                            size={16}
+                            onClick={(e) => { e.stopPropagation(); handleShareListDirect(list.id, list.title); }}
+                          />
+                          <ChevronRight className="text-gray-400" size={18} />
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* All My Media Section (own profile only) */}
+        {activeSection === 'all-media' && isOwnProfile && (
+          <div className="px-4 mb-8">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              {/* Filters */}
+              <div className="flex flex-wrap gap-2 mb-3">
+                <div className="relative">
+                  <button
+                    onClick={() => setOpenFilter(openFilter === 'type' ? null : 'type')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                      mediaHistoryType !== 'all' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                    }`}
+                  >
+                    <Film size={12} />
+                    {mediaHistoryType === 'all' ? 'Type' : mediaHistoryType}
+                    <ChevronRight size={12} className={`transition-transform ${openFilter === 'type' ? 'rotate-90' : ''}`} />
+                  </button>
+                  {openFilter === 'type' && (
+                    <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[120px]">
+                      {[
+                        { value: 'all', label: 'All Types' },
+                        { value: 'movie', label: 'Movies', icon: Film },
+                        { value: 'tv', label: 'TV', icon: Tv },
+                        { value: 'book', label: 'Books', icon: BookOpen },
+                        { value: 'music', label: 'Music', icon: Music },
+                      ].map(({ value, label, icon: Icon }) => (
+                        <button key={value} onClick={() => { setMediaHistoryType(value); setOpenFilter(null); }}
+                          className={`w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-gray-100 ${mediaHistoryType === value ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
+                          {Icon && <Icon size={12} className="text-gray-600" />}{label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="relative">
+                  <button
+                    onClick={() => setOpenFilter(openFilter === 'year' ? null : 'year')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                      mediaHistoryYear !== 'all' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                    }`}
+                  >
+                    <Calendar size={12} />
+                    {mediaHistoryYear === 'all' ? 'Year' : mediaHistoryYear}
+                    <ChevronRight size={12} className={`transition-transform ${openFilter === 'year' ? 'rotate-90' : ''}`} />
+                  </button>
+                  {openFilter === 'year' && (
+                    <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[100px] max-h-48 overflow-y-auto">
+                      <button onClick={() => { setMediaHistoryYear('all'); setOpenFilter(null); }}
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryYear === 'all' ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
+                        All Years
+                      </button>
+                      {Array.from({ length: 10 }, (_, i) => (new Date().getFullYear() - i).toString()).map((year) => (
+                        <button key={year} onClick={() => { setMediaHistoryYear(year); setOpenFilter(null); }}
+                          className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryYear === year ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
+                          {year}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="relative">
+                  <button
+                    onClick={() => setOpenFilter(openFilter === 'rating' ? null : 'rating')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                      mediaHistoryRating !== 'all' ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                    }`}
+                  >
+                    ⭐ {mediaHistoryRating === 'all' ? 'Rating' : `${mediaHistoryRating}★`}
+                    <ChevronRight size={12} className={`transition-transform ${openFilter === 'rating' ? 'rotate-90' : ''}`} />
+                  </button>
+                  {openFilter === 'rating' && (
+                    <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[100px]">
+                      <button onClick={() => { setMediaHistoryRating('all'); setOpenFilter(null); }}
+                        className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryRating === 'all' ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
+                        All Ratings
+                      </button>
+                      {[5, 4, 3, 2, 1].map((rating) => (
+                        <button key={rating} onClick={() => { setMediaHistoryRating(rating.toString()); setOpenFilter(null); }}
+                          className={`w-full px-3 py-1.5 text-left text-xs hover:bg-gray-100 ${mediaHistoryRating === rating.toString() ? 'text-purple-600 font-medium bg-purple-50' : 'text-gray-900'}`}>
+                          {'⭐'.repeat(rating)}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
+              {/* Search */}
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                <input
+                  type="text"
+                  placeholder="Search media history..."
+                  value={mediaHistorySearch}
+                  onChange={(e) => setMediaHistorySearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                  data-testid="input-history-search"
+                />
+              </div>
+              {isLoadingLists ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((n) => (
+                    <div key={n} className="bg-gray-50 rounded-lg p-3 animate-pulse">
+                      <div className="h-4 bg-gray-200 rounded w-2/3 mb-2" />
+                      <div className="h-3 bg-gray-100 rounded w-1/3" />
+                    </div>
+                  ))}
+                </div>
+              ) : filteredMediaHistory.length === 0 ? (
+                <div className="text-center py-6">
+                  <Clock className="mx-auto mb-2 text-gray-300" size={28} />
+                  <p className="text-sm text-gray-600">No media history yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Start tracking media to see your history here</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredMediaHistory.map((item: any, index: number) => (
+                    <div
+                      key={`${item.id}-${index}`}
+                      className="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:border-purple-300 transition-colors cursor-pointer"
+                      onClick={() => {
+                        if (item.external_id && item.external_source) {
+                          setLocation(`/media/${item.media_type}/${item.external_source}/${item.external_id}`);
+                        }
+                      }}
+                      data-testid={`history-item-${index}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-14 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                          {item.image_url ? (
+                            <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">{getMediaIcon(item.media_type)}</div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm text-gray-900 truncate">{item.title}</h4>
+                          <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
+                            {getMediaIcon(item.media_type)}
+                            <span className="capitalize">{item.media_type}</span>
+                            <span>•</span>
+                            <span>{item.listName}</span>
+                          </div>
+                          <p className="text-xs text-gray-400 mt-0.5">{new Date(item.created_at).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
