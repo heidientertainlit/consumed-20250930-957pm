@@ -379,6 +379,10 @@ export default function PlayBingeBattle() {
       return;
     }
     setMyProgress(total);
+
+    // Award 100 points to the winner
+    await supabase.rpc("increment_user_points", { user_id_param: user.id, points_to_add: 100 });
+
     const { data } = await supabase.from("binge_battles").select("*").eq("id", currentBattle.id).single();
     if (data) setCurrentBattle(data);
 
@@ -1309,7 +1313,7 @@ export default function PlayBingeBattle() {
           {iWon && (
             <div className="flex items-center justify-center gap-2 py-3 rounded-xl bg-white border border-gray-200 shadow-sm">
               <Trophy size={15} className="text-purple-600" />
-              <p className="text-[13px] text-gray-600">You earned <span className="font-black text-purple-600">+50 pts</span> for winning</p>
+              <p className="text-[13px] text-gray-600">You earned <span className="font-black text-purple-600">+100 pts</span> for winning</p>
             </div>
           )}
         </div>
@@ -1319,9 +1323,18 @@ export default function PlayBingeBattle() {
             onClick={() => { setSelectedItems([]); setCurrentBattle(null); setMyProgress(0); setCreatedBattleId(null); setView("new"); }}
             className="w-full py-3.5 rounded-2xl font-bold text-[14px] bg-purple-600 text-white flex items-center justify-center gap-2 shadow-md shadow-purple-100"
           >
-            <RotateCcw size={14} />
-            {opponent ? `Rematch ${opponent.name}` : "Start New Battle"}
+            <Zap size={14} />
+            Start a Binge Battle with a Friend
           </button>
+          {opponent && (
+            <button
+              onClick={() => { setSelectedItems([]); setCurrentBattle(null); setMyProgress(0); setCreatedBattleId(null); setView("new"); }}
+              className="w-full py-3.5 rounded-2xl font-bold text-[14px] border border-purple-200 text-purple-600 bg-white flex items-center justify-center gap-2"
+            >
+              <RotateCcw size={14} />
+              Rematch {opponent.name}
+            </button>
+          )}
           <button
             onClick={shareResult}
             className="w-full py-3.5 rounded-2xl font-bold text-[14px] border border-gray-200 text-gray-600 bg-white flex items-center justify-center gap-2"
