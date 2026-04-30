@@ -29,7 +29,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 
-import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark } from "lucide-react";
+import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -2149,8 +2149,13 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                     {spRatingDiffLine(post.rating, 'text-right')}
                   </div>
                 )}
-                <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 ${typeInfo.bg} ${typeInfo.color}`}>{typeInfo.label}</span>
+                {post.type !== 'binge_battle' && (
+                  <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 ${typeInfo.bg} ${typeInfo.color}`}>{typeInfo.label}</span>
+                )}
                 <span className="text-[11px] text-gray-400">{timeAgo(post.timestamp)}</span>
+                {currentUserId && post.user?.id === currentUserId && post.type === 'binge_battle' && onDeletePost && (
+                  <button onClick={() => onDeletePost(post.id)} className="text-gray-300 hover:text-red-400 p-1 shrink-0 transition-colors"><Trash2 size={13} /></button>
+                )}
                 {currentUserId && post.user?.id !== currentUserId && (
                   <button onClick={() => setIsReportOpen(true)} className="text-gray-300 hover:text-orange-400 p-1 shrink-0 transition-colors"><Flag size={13} /></button>
                 )}
@@ -2161,7 +2166,13 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                 You're {tasteAlignment}% aligned with {displayName}'s taste overall
               </p>
             )}
-            {displayContent && (
+            {post.type === 'binge_battle' && displayContent && (
+              <div className="flex items-center gap-2 py-2 px-3 rounded-xl bg-purple-50 mb-2">
+                <Zap size={13} className="text-purple-600 shrink-0" />
+                <p className="text-[13px] font-semibold text-purple-900 leading-snug">{displayContent}</p>
+              </div>
+            )}
+            {post.type !== 'binge_battle' && displayContent && (
               <div onClick={() => setContentExpanded(e => !e)} className="cursor-pointer mb-2">
                 <p className={`text-gray-600 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-3'}`}>{displayContent}</p>
                 {!contentExpanded && displayContent.length > 120 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
