@@ -3772,6 +3772,7 @@ export default function Feed() {
     // Binge Battle posts — render dedicated card
     if (item?.type === 'binge_battle') {
       const raw = item._rawPost || item;
+      const postUserId = raw.user?.id || item.user?.id;
       return (
         <BingeBattleFeedCard
           key={`binge-battle-${item.id}`}
@@ -3783,6 +3784,8 @@ export default function Feed() {
             timestamp: raw.timestamp || raw.created_at || '',
             user: raw.user || item.user,
           }}
+          isOwn={postUserId === currentAppUserId}
+          onDelete={handleDeletePost}
         />
       );
     }
@@ -6507,6 +6510,8 @@ export default function Feed() {
                           timestamp: post.timestamp,
                           user: post.user,
                         }}
+                        isOwn={post.user?.id === currentAppUserId}
+                        onDelete={handleDeletePost}
                       />
                     </div>
                   );

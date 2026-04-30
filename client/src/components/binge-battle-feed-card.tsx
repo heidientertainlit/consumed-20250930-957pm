@@ -1,4 +1,4 @@
-import { Zap } from "lucide-react";
+import { Zap, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
 
 interface BingeBattleFeedCardProps {
@@ -13,9 +13,11 @@ interface BingeBattleFeedCardProps {
       username?: string;
     };
   };
+  isOwn?: boolean;
+  onDelete?: (id: string) => void;
 }
 
-export default function BingeBattleFeedCard({ post }: BingeBattleFeedCardProps) {
+export default function BingeBattleFeedCard({ post, isOwn, onDelete }: BingeBattleFeedCardProps) {
   const [, setLocation] = useLocation();
 
   return (
@@ -34,16 +36,27 @@ export default function BingeBattleFeedCard({ post }: BingeBattleFeedCardProps) 
               <p className="text-[12px] text-gray-400 mt-1">{post.media_title}</p>
             )}
           </div>
-          {post.image_url && (
-            <div className="w-12 h-16 rounded-lg overflow-hidden shrink-0 bg-gray-100">
-              <img
-                src={post.image_url}
-                alt={post.media_title || ""}
-                className="w-full h-full object-cover"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-              />
-            </div>
-          )}
+          <div className="flex flex-col items-end gap-2 shrink-0">
+            {post.image_url && (
+              <div className="w-12 h-16 rounded-lg overflow-hidden bg-gray-100">
+                <img
+                  src={post.image_url}
+                  alt={post.media_title || ""}
+                  className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              </div>
+            )}
+            {isOwn && onDelete && (
+              <button
+                onClick={() => onDelete(post.id)}
+                className="p-1.5 rounded-full hover:bg-red-50 text-gray-300 hover:text-red-400 transition-colors"
+                aria-label="Delete post"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
       <div className="border-t border-gray-100 px-4 py-2.5">
