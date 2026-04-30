@@ -9,11 +9,9 @@ const cors = {
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
-// Full select with partner columns (requires SQL migration to have run)
-const FULL_POOL_SELECT = 'id, name, description, host_id, invite_code, status, is_public, is_official, partner_name, partner_logo_url, accent_color, cover_image, created_at, pool_type';
+const FULL_POOL_SELECT = 'id, name, description, host_id, invite_code, status, is_public, is_official, partner_name, partner_logo_url, accent_color, media_image, room_category, created_at, pool_type';
 const FULL_MEMBERSHIP_SELECT = `pool_id, role, total_points, joined_at, pools:pool_id(${FULL_POOL_SELECT})`;
 
-// Fallback select without partner columns (for backwards compatibility)
 const BASE_POOL_SELECT = 'id, name, description, host_id, invite_code, status, is_public, created_at, pool_type';
 const BASE_MEMBERSHIP_SELECT = `pool_id, role, total_points, joined_at, pools:pool_id(${BASE_POOL_SELECT})`;
 
@@ -35,7 +33,8 @@ async function enrichPool(svc: any, pool: any, _userId: string, isHost: boolean,
     partner_name: pool.partner_name ?? null,
     partner_logo_url: pool.partner_logo_url ?? null,
     accent_color: pool.accent_color ?? null,
-    cover_image: pool.cover_image ?? null,
+    media_image: pool.media_image ?? null,
+    room_category: pool.room_category ?? 'media',
     created_at: pool.created_at,
     is_host: isHost,
     user_points: userPoints,

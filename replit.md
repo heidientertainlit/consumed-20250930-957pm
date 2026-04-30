@@ -12,7 +12,7 @@ Preferred communication style: Simple, everyday language.
   ```
   npx supabase functions deploy <function-name> --project-ref mahpgcogwpawvviapqza --use-api
   ```
-- Use a temporary console workflow to run this command — workflows have access to `SUPABASE_ACCESS_TOKEN` (the bash tool does not).
+- Run this directly from the **bash tool** — `SUPABASE_ACCESS_TOKEN` IS accessible in bash (contrary to old notes).
 - The `SUPABASE_ACCESS_TOKEN` is a **personal access token** from supabase.com → Account → Access Tokens (not a project API key).
 
 ### CRITICAL Rules

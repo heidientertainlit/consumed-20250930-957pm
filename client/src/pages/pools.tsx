@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Globe, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
 
@@ -69,23 +69,45 @@ export default function PoolsPage() {
 
         {!isLoading && filteredRooms.map((pool: any) => {
           const accent = pool.accent_color || '#7c3aed';
-          const accentLight = accent + '18';
+          const isPlatform = pool.room_category === 'platform';
+          const roomImage = pool.media_image || pool.partner_logo_url;
+          const initials = (pool.name || '?').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
           return (
             <div
               key={pool.id}
               className="bg-white rounded-2xl shadow-sm overflow-hidden"
-              style={{ border: `1px solid ${accent + '40'}` }}
+              style={{ border: '1px solid rgba(0,0,0,0.08)' }}
             >
               <div className="flex items-center gap-3 p-4">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: accentLight }}>
-                  {pool.partner_logo_url ? (
-                    <img src={pool.partner_logo_url} alt={pool.partner_name || 'Partner'} className="h-6 w-auto object-contain rounded-full" />
+                {/* Avatar: poster for media rooms, logo for platform rooms, initials fallback */}
+                <div className="shrink-0">
+                  {roomImage ? (
+                    isPlatform ? (
+                      <div className="w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center bg-gray-100">
+                        <img src={roomImage} alt={pool.name} className="w-full h-full object-contain p-1" />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-16 rounded-xl overflow-hidden shadow-sm">
+                        <img src={roomImage} alt={pool.name} className="w-full h-full object-cover" />
+                      </div>
+                    )
                   ) : (
-                    <Globe size={18} style={{ color: accent }} />
+                    <div
+                      className="w-12 h-16 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm"
+                      style={{ background: `linear-gradient(135deg, ${accent}, ${accent}99)` }}
+                    >
+                      {initials}
+                    </div>
                   )}
                 </div>
+
                 <button onClick={() => setLocation(`/room/${pool.id}`)} className="flex-1 min-w-0 text-left">
-                  <h3 className="text-gray-900 font-semibold text-base truncate mb-0.5">{pool.name}</h3>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <h3 className="text-gray-900 font-semibold text-base truncate">{pool.name}</h3>
+                    {isPlatform && (
+                      <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-full" style={{ background: accent + '18', color: accent }}>Platform</span>
+                    )}
+                  </div>
                   {pool.description && (
                     <p className="text-gray-500 text-xs mb-1 line-clamp-1">{pool.description}</p>
                   )}
@@ -100,7 +122,6 @@ export default function PoolsPage() {
 
         {!isLoading && filteredRooms.length === 0 && (
           <div className="text-center py-16">
-            <Globe size={40} className="text-gray-300 mx-auto mb-3" />
             <p className="text-gray-400 text-sm">
               {searchQuery ? `No rooms matching "${searchQuery}"` : 'No rooms available yet.'}
             </p>
