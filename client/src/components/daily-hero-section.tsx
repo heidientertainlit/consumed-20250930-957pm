@@ -2237,15 +2237,6 @@ export function DailyHeroSection() {
         })()
       )}
 
-      {/* "X people have played" — plain text, no pill */}
-      {typeof totalPlayers === 'number' && (
-        <div className="flex justify-center items-center gap-1.5 mt-1">
-          <Users size={11} className="text-white/40" />
-          <span className="text-[11px] text-white/45">
-            {(totalPlayers + 61).toLocaleString()} people have played
-          </span>
-        </div>
-      )}
 
       {/* Game overlay */}
       {showPlayGame && readyQuestions.length > 0 && (
