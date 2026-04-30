@@ -2232,6 +2232,11 @@ export function DailyHeroSection() {
               <div className="relative">
                 {todaysPlayCard(true)}
               </div>
+              {typeof totalPlayers === 'number' && totalPlayers > 0 && (
+                <p className="text-center text-[11px] text-white/35 tracking-wide">
+                  {(totalPlayers + 61).toLocaleString()} people playing today
+                </p>
+              )}
             </div>
           );
         })()

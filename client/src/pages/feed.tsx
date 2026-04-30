@@ -5930,7 +5930,6 @@ export default function Feed() {
             <div className="mt-4">
               <DnaMomentFeaturedCard />
             </div>
-            <TodaysPlayNudge />
 
           </div>
           
@@ -5938,6 +5937,9 @@ export default function Feed() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-6" data-feed-content>
+        {/* Competition nudge — first item in feed */}
+        <TodaysPlayNudge variant="light" />
+
         {/* Pending Friend Casts - You've Been Cast! - At top of white feed area */}
         {pendingCasts.length > 0 && (
           <div className="space-y-3 mb-4">

@@ -14,7 +14,7 @@ interface NudgeItem {
   color: string;
 }
 
-export function TodaysPlayNudge() {
+export function TodaysPlayNudge({ variant = 'dark' }: { variant?: 'dark' | 'light' }) {
   const today = todayStr();
 
   const { data: pools = [] } = useQuery({
@@ -156,6 +156,27 @@ export function TodaysPlayNudge() {
   if (nudges.length === 0) return null;
 
   const iconMap = { trophy: Trophy, flame: Flame, users: Users, zap: Zap };
+
+  const lightIconColor: Record<string, string> = {
+    trophy: 'text-amber-500',
+    flame: 'text-red-500',
+    users: 'text-purple-500',
+    zap: 'text-blue-500',
+  };
+
+  if (variant === 'light') {
+    // In the white feed — show only the first nudge, styled as a clean white card
+    const nudge = nudges[0];
+    const Icon = iconMap[nudge.icon];
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3 mb-3">
+        <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+          <Icon size={15} className={lightIconColor[nudge.icon]} />
+        </div>
+        <p className="text-[13px] text-gray-700 font-medium leading-snug">{nudge.text}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory">
