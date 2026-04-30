@@ -593,11 +593,11 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             </Link>
             <button
               onClick={() => setIsQuickActionOpen(true)}
-              className="flex flex-col items-center justify-center p-2"
+              className="flex flex-col items-center justify-center p-2 mt-2"
               data-testid="nav-add"
               aria-label="Add"
             >
-              <div className="h-[22px] flex items-end justify-center">
+              <div className="h-[22px] flex items-center justify-center">
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center"
                   style={{
