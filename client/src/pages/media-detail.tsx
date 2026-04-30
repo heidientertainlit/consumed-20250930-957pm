@@ -427,6 +427,36 @@ export default function MediaDetail() {
     enabled: !!params?.source && !!params?.id
   });
 
+  // Look up any public room linked to this media by series_tag or name match
+  const { data: linkedRoom } = useQuery({
+    queryKey: ['media-room', mediaItem?.title],
+    queryFn: async () => {
+      if (!mediaItem?.title) return null;
+      const title = mediaItem.title.toLowerCase().trim();
+      const { data } = await supabase
+        .from('pools')
+        .select('id, name, series_tag, media_image, partner_logo_url, is_public')
+        .eq('pool_type', 'room')
+        .eq('is_public', true)
+        .ilike('series_tag', `%${title}%`)
+        .limit(1)
+        .maybeSingle();
+      if (data) return data;
+      // Fallback: match on room name itself
+      const { data: byName } = await supabase
+        .from('pools')
+        .select('id, name, series_tag, media_image, partner_logo_url, is_public')
+        .eq('pool_type', 'room')
+        .eq('is_public', true)
+        .ilike('name', `%${title}%`)
+        .limit(1)
+        .maybeSingle();
+      return byName || null;
+    },
+    enabled: !!mediaItem?.title,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Separate reviews from other activity
   const reviews = socialActivity.filter((post: any) => post.rating);
   const avgRating = reviews.length > 0
@@ -1545,6 +1575,33 @@ export default function MediaDetail() {
           </div>
 
         </div>
+
+        {/* Fan Room Banner */}
+        {linkedRoom && (
+          <button
+            onClick={() => setLocation(`/pools/${linkedRoom.id}`)}
+            className="w-full flex items-center gap-3 bg-gradient-to-r from-purple-700 to-purple-500 rounded-2xl p-4 shadow-sm text-left mb-4 active:opacity-90"
+          >
+            {(linkedRoom.media_image || linkedRoom.partner_logo_url) && (
+              <img
+                src={linkedRoom.media_image || linkedRoom.partner_logo_url}
+                alt={linkedRoom.name}
+                className="w-12 h-12 rounded-xl object-cover flex-shrink-0 shadow"
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-semibold text-sm leading-tight mb-0.5">
+                Fan of {mediaItem.title}?
+              </p>
+              <p className="text-purple-200 text-xs leading-snug line-clamp-1">
+                Join the room and dive even deeper →
+              </p>
+            </div>
+            <div className="flex-shrink-0 bg-white/20 rounded-xl px-3 py-1.5">
+              <span className="text-white text-xs font-bold">Join</span>
+            </div>
+          </button>
+        )}
 
         {/* Content sections */}
         <div className="space-y-4">
