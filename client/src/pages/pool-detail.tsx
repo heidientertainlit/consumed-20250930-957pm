@@ -2646,13 +2646,16 @@ export default function PoolDetailPage() {
             question: '#10b981', discussion: '#8b5cf6',
           };
 
-          // Non-review room posts — only show ones with actual displayable content
+          // Non-review room posts — only show ones with actual displayable content, exclude list additions
           const activityPosts = roomPosts.filter((p: any) => {
             const hasContent = p.content && p.content.trim().length > 0;
             const hasRating = p.rating && p.rating > 0;
             const isPredict = p.post_type === 'predict' || p.post_type === 'prediction';
             const hasPredictQ = isPredict && (p.question || p.prediction_question || p.title);
-            return (hasContent || hasPredictQ) && !hasRating; // exclude reviews (shown in Ratings & Reviews)
+            // Exclude list/tracking additions (e.g. "Added X to Currently", post_type track/add_media)
+            const isListAdd = p.post_type === 'track' || p.post_type === 'add_media' || p.post_type === 'list_add'
+              || (hasContent && /^added .+ to /i.test(p.content.trim()));
+            return (hasContent || hasPredictQ) && !hasRating && !isListAdd;
           });
 
           // Mock featured threads — replace with real pinned takes once available
@@ -2669,17 +2672,20 @@ export default function PoolDetailPage() {
               {isMember ? (
                 <button onClick={() => setIsComposerOpen(true)} className="w-full text-left">
                   <div
-                    className="w-full rounded-2xl px-4 py-3.5 flex items-center gap-3"
-                    style={{ background: '#fff', border: '1.5px solid #e5e7eb', boxShadow: '0 1px 4px 0 rgba(0,0,0,0.05)' }}
+                    className="w-full rounded-2xl px-3 py-3 flex items-center gap-3"
+                    style={{ background: '#fff', border: '1.5px solid #e8e5f5', boxShadow: '0 1px 6px 0 rgba(120,80,220,0.06)' }}
                   >
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-purple-100">
-                      <MessageSquare size={15} className="text-purple-500" />
+                    {/* User initial avatar */}
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold" style={{ background: '#7c3aed' }}>
+                      {(myName?.[0] || session?.user?.email?.[0] || '?').toUpperCase()}
                     </div>
-                    <p className="flex-1 text-[13px] text-gray-400 leading-snug">
-                      Something on your mind? Drop a take to start a thread
+                    {/* Placeholder text */}
+                    <p className="flex-1 text-[14px] text-gray-400 leading-snug">
+                      What's on your mind about {pool?.name || 'this room'}?
                     </p>
-                    <span className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold text-white" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
-                      Take
+                    {/* Post button */}
+                    <span className="shrink-0 px-4 py-2 rounded-full text-sm font-semibold text-white" style={{ background: '#7c3aed' }}>
+                      Post
                     </span>
                   </div>
                 </button>
