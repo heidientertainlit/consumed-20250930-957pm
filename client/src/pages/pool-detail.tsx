@@ -2727,6 +2727,47 @@ export default function PoolDetailPage() {
                 </div>
               )}
 
+              {/* ── Featured Takes ── */}
+              {takes.length > 0 && (() => {
+                const featured = takes.slice(0, 3);
+                const TAG_COLORS: Record<string, string> = {
+                  debate: '#ef4444', hot_take: '#f97316', ranking: '#3b82f6',
+                  question: '#10b981', discussion: '#8b5cf6',
+                };
+                return (
+                  <div className="rounded-2xl overflow-hidden" style={{ border: '1.5px solid #ede9fe', background: '#faf5ff' }}>
+                    <div className="flex items-center gap-1.5 px-4 pt-3 pb-2">
+                      <span className="text-xs">🔥</span>
+                      <p className="text-[11px] font-bold text-purple-700 uppercase tracking-widest">Featured Takes</p>
+                    </div>
+                    <div className="divide-y divide-purple-100">
+                      {featured.map((take: any, i: number) => {
+                        const author = take.users?.display_name || take.users?.user_name || 'Fan';
+                        const tag = take.tag || 'discussion';
+                        const dotColor = TAG_COLORS[tag] || '#8b5cf6';
+                        const preview = take.title.length > 72
+                          ? take.title.slice(0, 72) + '…'
+                          : take.title;
+                        return (
+                          <button
+                            key={take.id}
+                            onClick={() => setActiveTake(take)}
+                            className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-purple-50 transition-colors"
+                          >
+                            <div className="mt-0.5 w-2 h-2 rounded-full shrink-0" style={{ background: dotColor, marginTop: 5 }} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] text-gray-700 leading-snug">{preview}</p>
+                              <p className="text-[10px] text-gray-400 mt-0.5">{author} · {take.reply_count || 0} replies</p>
+                            </div>
+                            <ChevronRight size={13} className="text-purple-300 shrink-0 mt-1" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {/* ── Drop a Take composer prompt ── */}
               {isMember ? (
                 <button
