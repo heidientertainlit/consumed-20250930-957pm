@@ -1672,8 +1672,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                   ) : (
                     selectedAction === "track" ? (
                       roomId ? "Share" :
-                      (trackPostType === 'hot_take' || trackPostType === 'question') ? "Post" :
-                      "Add Media"
+                      trackPostType === 'review' ? "Add Media" :
+                      trackPostType === 'rank'   ? "Add to Rank" :
+                      "Post"
                     ) : 
                     selectedAction === "rank" ? "Add to Rank" : 
                     sayMode === "ask" ? "Ask" :
