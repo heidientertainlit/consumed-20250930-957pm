@@ -455,7 +455,7 @@ export default function Search() {
           </div>
         </div>
 
-        {/* Quiet links: New Rank + New Room */}
+        {/* Quiet link: New Rank */}
         {!searchQuery.trim() && (
           <div className="flex gap-3 mb-5">
             <Link
@@ -463,13 +463,6 @@ export default function Search() {
               className="flex-1 flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:bg-white/[0.06] transition-colors"
             >
               <span className="text-white/50 text-sm">New Rank</span>
-              <ChevronRight size={14} className="text-white/25" />
-            </Link>
-            <Link
-              href="/pools"
-              className="flex-1 flex items-center justify-between px-4 py-3 rounded-xl bg-white/[0.04] border border-white/[0.07] hover:bg-white/[0.06] transition-colors"
-            >
-              <span className="text-white/50 text-sm">New Room</span>
               <ChevronRight size={14} className="text-white/25" />
             </Link>
           </div>
