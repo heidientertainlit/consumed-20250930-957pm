@@ -1278,11 +1278,18 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <MessageCircle size={15} />
             <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
           </button>
-          {currentUserId === post.user?.id && onDeletePost && (
-            <button onClick={() => onDeletePost(post.id)} className="ml-auto p-1 text-gray-300 hover:text-red-400 transition-colors">
-              <Trash2 size={14} />
-            </button>
-          )}
+          <div className="ml-auto flex items-center gap-1">
+            {currentUserId !== post.user?.id && (
+              <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="p-1 text-gray-300 hover:text-red-400 transition-colors" title="Report post">
+                <Flag size={14} />
+              </button>
+            )}
+            {currentUserId === post.user?.id && onDeletePost && (
+              <button onClick={() => onDeletePost(post.id)} className="p-1 text-gray-300 hover:text-red-400 transition-colors" title="Delete post">
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
         </div>
 
         {showComments && (
@@ -1290,6 +1297,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <CommentsSection postId={post.id} session={session} fetchComments={fetchComments} currentUserId={currentUserId} />
           </div>
         )}
+        <ReportSheet isOpen={reportPostOpen} onClose={() => setReportPostOpen(false)} contentType="post" contentId={post.id} reportedUserId={post.user?.id} reportedUserName={post.user?.username} />
       </div>
     );
   }
@@ -1356,11 +1364,18 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
             <span className="text-xs">{post.likes || 0}</span>
           </button>
-          {currentUserId === post.user?.id && onDeletePost && (
-            <button onClick={() => onDeletePost(post.id)} className="ml-auto p-1 text-gray-300 hover:text-red-400 transition-colors">
-              <Trash2 size={14} />
-            </button>
-          )}
+          <div className="ml-auto flex items-center gap-1">
+            {currentUserId !== post.user?.id && (
+              <button onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }} className="p-1 text-gray-300 hover:text-red-400 transition-colors" title="Report post">
+                <Flag size={14} />
+              </button>
+            )}
+            {currentUserId === post.user?.id && onDeletePost && (
+              <button onClick={() => onDeletePost(post.id)} className="p-1 text-gray-300 hover:text-red-400 transition-colors" title="Delete post">
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
         </div>
 
         {showComments && (
@@ -1368,6 +1383,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <CommentsSection postId={post.id} session={session} fetchComments={fetchComments} currentUserId={currentUserId} />
           </div>
         )}
+        <ReportSheet isOpen={reportPostOpen} onClose={() => setReportPostOpen(false)} contentType="post" contentId={post.id} reportedUserId={post.user?.id} reportedUserName={post.user?.username} />
       </div>
     );
   }
