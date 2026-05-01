@@ -1367,21 +1367,24 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           </div>
         </div>
 
-        {/* Question text */}
+        {/* Question text + optional media side by side */}
         <div className="px-4 pb-3">
-          <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3">
-            <p className="text-[16px] font-semibold text-gray-900 leading-snug">{post.content}</p>
-          </div>
-          {/* Optional media pill */}
-          {post.mediaTitle && (
-            <div className="flex items-center gap-2 mt-3 p-2.5 bg-gray-50 rounded-xl border border-gray-100">
-              {post.mediaImage && <img src={post.mediaImage} alt="" className="w-8 h-11 rounded-lg object-cover shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />}
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-gray-800 truncate">{post.mediaTitle}</p>
-                {mediaTypeLabel && <span className="text-[10px] text-gray-400">{mediaTypeLabel}</span>}
-              </div>
+          <div className="flex items-stretch gap-0 bg-blue-50 border border-blue-100 rounded-2xl overflow-hidden">
+            <div className="flex-1 px-4 py-3 min-w-0">
+              <p className="text-[16px] font-semibold text-gray-900 leading-snug">{post.content}</p>
+              {post.mediaTitle && (
+                <p className="text-[11px] text-blue-400 font-medium mt-1.5 truncate">{post.mediaTitle}</p>
+              )}
             </div>
-          )}
+            {post.mediaImage && (
+              <img
+                src={post.mediaImage}
+                alt={post.mediaTitle || ''}
+                className="w-16 object-cover shrink-0"
+                onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }}
+              />
+            )}
+          </div>
         </div>
 
         {/* Action bar */}

@@ -799,7 +799,7 @@ function AboutSection({ pool, members, isLoading }: { pool: any; members: any[];
     );
   }
 
-  const hostName = (pool?.host as any)?.display_name || (pool?.host as any)?.user_name || 'the host';
+  const hostName = pool?.is_official ? 'Consumed' : ((pool?.host as any)?.display_name || (pool?.host as any)?.user_name || 'the host');
   const fullDescription = pool?.description
     || `${hostName}'s room for group predictions, picks, and more.`;
   const shortDescription = fullDescription.length > 100 ? fullDescription.slice(0, 97).trim() + '…' : fullDescription;
