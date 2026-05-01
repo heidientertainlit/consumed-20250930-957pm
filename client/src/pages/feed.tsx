@@ -3576,7 +3576,9 @@ export default function Feed() {
     item.type === 'predict' ||
     item.type === 'prediction' ||
     item.type === 'rank' ||
-    item.type === 'binge_battle'
+    item.type === 'binge_battle' ||
+    item.type === 'hot_take' ||
+    item.type === 'question'
   );
 
   const { feedRatingCarousels, promotedRatings } = (() => {
@@ -3589,7 +3591,9 @@ export default function Feed() {
         item.type !== 'predict' &&
         item.type !== 'prediction' &&
         item.type !== 'rank' &&
-        item.type !== 'binge_battle'
+        item.type !== 'binge_battle' &&
+        item.type !== 'hot_take' &&
+        item.type !== 'question'
       ) {
         ratingItems.push(item);
       }
@@ -4173,6 +4177,24 @@ export default function Feed() {
               </button>
             </div>
           </div>
+        </div>
+      );
+    }
+
+    // Hot take / question — use UGCGroupCard which has dedicated layouts for these
+    if (item.type === 'hot_take' || item.type === 'question') {
+      return (
+        <div key={`${keyPrefix}-${item.id}`} id={`post-${item.id}`} className="mb-4">
+          <UGCGroupCard
+            post={item as UGCPost}
+            onLike={handleLike}
+            isLiked={likedPosts.has(item.id)}
+            session={session}
+            fetchComments={fetchComments}
+            currentUserId={currentAppUserId || undefined}
+            onDeletePost={handleDeletePost}
+            onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+          />
         </div>
       );
     }
