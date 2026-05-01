@@ -949,33 +949,51 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
               {/* Status pills + advanced options — only shown when media is selected */}
               {selectedMedia && (
                 <>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {[
-                      { id: 'finished', label: 'Finished' },
-                      { id: 'currently', label: 'Currently' },
-                      { id: 'queue', label: 'Want To' },
-                      { id: 'favorites', label: 'Favorites' },
-                      { id: 'dnf', label: 'DNF' },
-                    ].map((list) => (
+                  {/* Add to list — compact dropdown row */}
+                  <div className="flex items-center gap-2">
+                    {selectedListId ? (
+                      <>
+                        <ListPlus size={15} className="text-purple-500 shrink-0" />
+                        <select
+                          value={selectedListId}
+                          onChange={(e) => {
+                            if (e.target.value === '') {
+                              setSelectedListId(null);
+                              setAddToList(false);
+                            } else {
+                              setSelectedListId(e.target.value);
+                              setAddToList(true);
+                            }
+                          }}
+                          className="flex-1 text-sm border border-purple-300 bg-purple-50 text-purple-800 rounded-lg px-2.5 py-1.5 font-medium focus:outline-none"
+                          data-testid="list-dropdown"
+                        >
+                          <option value="finished">Finished</option>
+                          <option value="currently">Currently</option>
+                          <option value="queue">Want To</option>
+                          <option value="favorites">Favorites</option>
+                          <option value="dnf">DNF</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => { setSelectedListId(null); setAddToList(false); }}
+                          className="p-1 text-gray-400 hover:text-gray-600 shrink-0"
+                          aria-label="Remove from list"
+                        >
+                          <X size={14} />
+                        </button>
+                      </>
+                    ) : (
                       <button
-                        key={list.id}
-                        onClick={() => {
-                          if (selectedListId === list.id) {
-                            setSelectedListId(null);
-                            setAddToList(false);
-                          } else {
-                            setSelectedListId(list.id);
-                            setAddToList(true);
-                          }
-                        }}
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                          selectedListId === list.id ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                        data-testid={`list-pill-${list.id}`}
+                        type="button"
+                        onClick={() => { setSelectedListId('currently'); setAddToList(true); }}
+                        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600 transition-colors"
+                        data-testid="add-to-list-btn"
                       >
-                        {list.label}
+                        <ListPlus size={15} />
+                        Add to a list
                       </button>
-                    ))}
+                    )}
                   </div>
 
                   <button
