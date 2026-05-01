@@ -965,7 +965,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                               setAddToList(true);
                             }
                           }}
-                          className="flex-1 text-base border border-purple-300 bg-purple-50 text-purple-800 rounded-xl px-3 py-3 font-medium focus:outline-none"
+                          className="flex-1 text-base border border-purple-300 bg-purple-50 text-purple-800 rounded-xl px-3 py-4 font-medium focus:outline-none"
                           data-testid="list-dropdown"
                         >
                           <option value="finished">Finished</option>
