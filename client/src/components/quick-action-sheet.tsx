@@ -953,7 +953,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                   <div className="flex items-center gap-2">
                     {selectedListId ? (
                       <>
-                        <ListPlus size={15} className="text-purple-500 shrink-0" />
+                        <ListPlus size={18} className="text-purple-500 shrink-0" />
                         <select
                           value={selectedListId}
                           onChange={(e) => {
@@ -965,7 +965,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                               setAddToList(true);
                             }
                           }}
-                          className="flex-1 text-sm border border-purple-300 bg-purple-50 text-purple-800 rounded-lg px-2.5 py-1.5 font-medium focus:outline-none"
+                          className="flex-1 text-base border border-purple-300 bg-purple-50 text-purple-800 rounded-xl px-3 py-3 font-medium focus:outline-none"
                           data-testid="list-dropdown"
                         >
                           <option value="finished">Finished</option>
@@ -977,20 +977,20 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                         <button
                           type="button"
                           onClick={() => { setSelectedListId(null); setAddToList(false); }}
-                          className="p-1 text-gray-400 hover:text-gray-600 shrink-0"
+                          className="p-2 text-gray-400 hover:text-gray-600 shrink-0"
                           aria-label="Remove from list"
                         >
-                          <X size={14} />
+                          <X size={18} />
                         </button>
                       </>
                     ) : (
                       <button
                         type="button"
                         onClick={() => { setSelectedListId('currently'); setAddToList(true); }}
-                        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600 transition-colors"
+                        className="flex items-center gap-2 text-base text-gray-500 hover:text-purple-600 transition-colors py-2"
                         data-testid="add-to-list-btn"
                       >
-                        <ListPlus size={15} />
+                        <ListPlus size={18} />
                         Add to a list
                       </button>
                     )}
