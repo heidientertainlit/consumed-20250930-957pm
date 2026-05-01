@@ -3655,11 +3655,21 @@ export default function Feed() {
       dedupedTracking.push(representative);
     }
 
-    // Merge: all bypass posts + one-per-media tracking posts, sorted by recency
-    const finalOrder: any[] = [...bypassDedup, ...dedupedTracking]
+    // Merge: all bypass posts + one-per-media tracking posts, sorted by recency.
+    // Then apply a final per-media dedup across both streams so the same title/externalId
+    // never appears twice in the carousel (e.g. two explicit rate-review posts for the same book).
+    const merged: any[] = [...bypassDedup, ...dedupedTracking]
       .sort((a: any, b: any) =>
         new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
       );
+    const seenFinalMedia = new Set<string>();
+    const finalOrder: any[] = merged.filter((item: any) => {
+      const key = (item.externalId || item.mediaTitle || '').toLowerCase().trim();
+      if (!key) return true; // no media info — always keep
+      if (seenFinalMedia.has(key)) return false;
+      seenFinalMedia.add(key);
+      return true;
+    });
 
     // PROMOTION: pull a small number of high-signal ratings out of the carousel pool
     // to show as standalone cards interleaved with play slots.
@@ -3692,14 +3702,14 @@ export default function Feed() {
         if (!authorId || seenAuthors.has(authorId + '-' + (item.mediaTitle || item.id))) continue;
         seenAuthors.add(authorId + '-' + (item.mediaTitle || item.id));
         if (!seenAuthors.has(authorId)) seenAuthors.add(authorId);
-        const mediaKey = (item.mediaTitle || '').toLowerCase().trim();
+        const mediaKey = (item.mediaTitle || item.externalId || '').toLowerCase().trim();
         if (mediaKey) seenMediaTitles.add(mediaKey);
         promoted.push(item);
       }
     }
 
     // Fill remaining slots with the most-recent real (non-persona) users' posts.
-    // Deduplicate by both author AND media title — same book/show must not appear twice.
+    // Deduplicate by both author AND media (title or externalId) — same book/show must not appear twice.
     const recencySorted = [...finalOrder].sort((a: any, b: any) =>
       new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
     );
@@ -3710,7 +3720,8 @@ export default function Feed() {
       if (!authorId) continue;
       if (promotedIds.has(item.id)) continue;
       if (seenAuthors.has(authorId)) continue;
-      const mediaKey = (item.mediaTitle || '').toLowerCase().trim();
+      // Use mediaTitle first, fall back to externalId so blank-title items are still deduped
+      const mediaKey = (item.mediaTitle || item.externalId || '').toLowerCase().trim();
       if (mediaKey && seenMediaTitles.has(mediaKey)) continue;
       seenAuthors.add(authorId);
       if (mediaKey) seenMediaTitles.add(mediaKey);
