@@ -75,7 +75,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
       setSelectedIntent("capture");
       setSelectedAction("track");
       setShareToFeed(false);
-      setTrackPostType("hot_take");
+      setTrackPostType("thought");
       if (roomDefaultMedia?.title) {
         setSelectedMedia({
           title: roomDefaultMedia.title,
@@ -107,7 +107,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [privateMode, setPrivateMode] = useState(false);
   const [selectedRankId, setSelectedRankId] = useState<string>("");
-  const [trackPostType, setTrackPostType] = useState<"review" | "prediction" | "hot_take" | "question" | "rank">("review");
+  const [trackPostType, setTrackPostType] = useState<"thought" | "review" | "prediction" | "hot_take" | "question" | "rank">("review");
 
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null);
@@ -333,7 +333,13 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
         if (roomId) {
           const { data: { user: authUser } } = await supabase.auth.getUser();
           if (!authUser) throw new Error('Not authenticated');
-          const postType = trackPostType === 'review' ? 'rate_review' : 'predict';
+          const postType =
+            trackPostType === 'review'     ? 'rate_review' :
+            trackPostType === 'thought'    ? 'thought'     :
+            trackPostType === 'hot_take'   ? 'hot_take'    :
+            trackPostType === 'question'   ? 'question'    :
+            trackPostType === 'prediction' ? 'predict'     :
+            'rate_review';
           const { error: postError } = await supabase.from('social_posts').insert({
             user_id: authUser.id,
             content: contentText || null,
@@ -381,6 +387,35 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           return;
         }
         
+        // ── Thought ───────────────────────────────────────────────────────────
+        if (trackPostType === 'thought') {
+          if (!contentText.trim()) {
+            toast({ title: "Please write your thought", variant: "destructive" });
+            return;
+          }
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (!authUser) throw new Error('Not authenticated');
+          const { error: tErr } = await supabase.from('social_posts').insert({
+            user_id: authUser.id,
+            content: contentText,
+            post_type: 'thought',
+            visibility: 'public',
+            media_title: selectedMedia?.title || null,
+            media_type: selectedMedia?.type?.toLowerCase() || null,
+            media_external_id: selectedMedia?.external_id || null,
+            media_external_source: selectedMedia?.external_source || null,
+            image_url: selectedMedia?.image || selectedMedia?.image_url || '',
+            contains_spoilers: containsSpoilers,
+            fire_votes: 0,
+            ice_votes: 0,
+          });
+          if (tErr) throw tErr;
+          queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+          queryClient.invalidateQueries({ queryKey: ['feed'] });
+          handleClose();
+          return;
+        }
+
         // ── Hot Take ──────────────────────────────────────────────────────────
         if (trackPostType === 'hot_take') {
           if (!contentText.trim()) {
@@ -831,9 +866,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                 </div>
               )}
 
-              {/* Post type toggle - all 5 types */}
+              {/* Post type toggle - all types */}
               <div className="flex items-center gap-2 flex-wrap">
                 {([
+                  { key: 'thought'    as const, label: 'Thought'       },
                   { key: 'review'     as const, label: 'Rate / Review' },
                   { key: 'prediction' as const, label: 'Prediction'    },
                   { key: 'hot_take'   as const, label: 'Hot Take'      },
@@ -858,6 +894,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                   value={contentText}
                   onChange={(e) => setContentText(e.target.value)}
                   placeholder={
+                    trackPostType === 'thought'    ? "What's on your mind?" :
                     trackPostType === 'review'     ? "Write your review..." :
                     trackPostType === 'prediction' ? "What do you predict?" :
                     trackPostType === 'hot_take'   ? "Drop your hot take — don't hold back…" :
@@ -865,7 +902,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                     ""
                   }
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none text-sm"
-                  rows={trackPostType === 'hot_take' ? 4 : 3}
+                  rows={trackPostType === 'hot_take' || trackPostType === 'thought' ? 4 : 3}
                 />
               )}
 
@@ -895,8 +932,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                 </div>
               )}
 
-              {/* Hot Take — spoiler toggle */}
-              {trackPostType === 'hot_take' && (
+              {/* Thought / Hot Take — spoiler toggle */}
+              {(trackPostType === 'thought' || trackPostType === 'hot_take') && (
                 <button
                   type="button"
                   onClick={() => setContainsSpoilers(v => !v)}
@@ -1375,7 +1412,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   const canPost = () => {
     if (selectedAction === "track") {
       if (roomId) return !!contentText.trim() || ratingValue > 0 || !!selectedMedia;
-      if (trackPostType === 'hot_take') return !!contentText.trim() && !!selectedMedia;
+      if (trackPostType === 'thought')   return !!contentText.trim();
+      if (trackPostType === 'hot_take')  return !!contentText.trim() && !!selectedMedia;
       if (trackPostType === 'question')  return !!contentText.trim();
       if (trackPostType === 'rank')      return !!selectedMedia && !!selectedRankId;
       return !!selectedMedia; // review / prediction
