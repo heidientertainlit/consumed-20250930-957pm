@@ -1293,8 +1293,44 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {showComments && (
-          <div className="border-t border-gray-100">
-            <CommentsSection postId={post.id} session={session} fetchComments={fetchComments} currentUserId={currentUserId} />
+          <div className="border-t border-gray-100 px-4 pb-4 bg-gray-50/50">
+            {loadingComments ? (
+              <p className="text-xs text-gray-400 text-center py-3">Loading...</p>
+            ) : comments.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-3">No comments yet. Be the first!</p>
+            ) : (
+              <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pt-3 mb-2">
+                {comments.slice(0, 5).map((c: any) => (
+                  <div key={c.id} className="flex items-start gap-2">
+                    <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                      <User size={12} className="text-orange-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-semibold text-gray-800 mr-1">{c.user?.username || c.username || 'User'}</span>
+                      <span className="text-xs text-gray-600">{c.content}</span>
+                    </div>
+                    {(currentUserId === (c.user?.id || c.userId) || currentUserId === post.userId) && (
+                      <button onClick={(e) => { e.stopPropagation(); deleteComment(c.id); }} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5" title="Delete comment">
+                        <Trash2 size={11} />
+                      </button>
+                    )}
+                    {currentUserId && currentUserId !== (c.user?.id || c.userId) && (
+                      <button onClick={(e) => { e.stopPropagation(); setReportCommentTarget({ id: c.id, userId: c.user?.id || c.userId || '', userName: c.user?.username || c.username || 'User' }); }} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5" title="Report comment">
+                        <Flag size={11} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {session && (
+              <div className="flex gap-2 pt-2">
+                <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 text-xs px-3 py-2 rounded-full border border-gray-200 focus:outline-none focus:border-orange-400 bg-white" onKeyPress={(e) => e.key === 'Enter' && submitComment()} />
+                <button onClick={submitComment} disabled={!commentText.trim() || submitting} className="p-2 rounded-full bg-orange-500 text-white disabled:opacity-50">
+                  <Send size={14} />
+                </button>
+              </div>
+            )}
           </div>
         )}
         <ReportSheet isOpen={reportPostOpen} onClose={() => setReportPostOpen(false)} contentType="post" contentId={post.id} reportedUserId={post.user?.id} reportedUserName={post.user?.username} />
@@ -1379,8 +1415,44 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {showComments && (
-          <div className="border-t border-gray-100">
-            <CommentsSection postId={post.id} session={session} fetchComments={fetchComments} currentUserId={currentUserId} />
+          <div className="border-t border-gray-100 px-4 pb-4 bg-gray-50/50">
+            {loadingComments ? (
+              <p className="text-xs text-gray-400 text-center py-3">Loading...</p>
+            ) : comments.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-3">No replies yet. Be the first!</p>
+            ) : (
+              <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pt-3 mb-2">
+                {comments.slice(0, 5).map((c: any) => (
+                  <div key={c.id} className="flex items-start gap-2">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <User size={12} className="text-blue-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-semibold text-gray-800 mr-1">{c.user?.username || c.username || 'User'}</span>
+                      <span className="text-xs text-gray-600">{c.content}</span>
+                    </div>
+                    {(currentUserId === (c.user?.id || c.userId) || currentUserId === post.userId) && (
+                      <button onClick={(e) => { e.stopPropagation(); deleteComment(c.id); }} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5" title="Delete comment">
+                        <Trash2 size={11} />
+                      </button>
+                    )}
+                    {currentUserId && currentUserId !== (c.user?.id || c.userId) && (
+                      <button onClick={(e) => { e.stopPropagation(); setReportCommentTarget({ id: c.id, userId: c.user?.id || c.userId || '', userName: c.user?.username || c.username || 'User' }); }} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5" title="Report comment">
+                        <Flag size={11} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {session && (
+              <div className="flex gap-2 pt-2">
+                <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Write a reply..." className="flex-1 text-xs px-3 py-2 rounded-full border border-gray-200 focus:outline-none focus:border-blue-400 bg-white" onKeyPress={(e) => e.key === 'Enter' && submitComment()} />
+                <button onClick={submitComment} disabled={!commentText.trim() || submitting} className="p-2 rounded-full bg-blue-500 text-white disabled:opacity-50">
+                  <Send size={14} />
+                </button>
+              </div>
+            )}
           </div>
         )}
         <ReportSheet isOpen={reportPostOpen} onClose={() => setReportPostOpen(false)} contentType="post" contentId={post.id} reportedUserId={post.user?.id} reportedUserName={post.user?.username} />
