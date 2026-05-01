@@ -2641,29 +2641,64 @@ export default function PoolDetailPage() {
 
         {/* ── ROOM — Fan room feed ── */}
         {!isLoading && tab === 'room' && (() => {
-          const TAG_COLORS: Record<string, string> = {
-            debate: '#ef4444', hot_take: '#f97316', ranking: '#3b82f6',
-            question: '#10b981', discussion: '#8b5cf6',
-          };
-
-          // Non-review room posts — only show ones with actual displayable content, exclude list additions
+          // Non-review room posts with actual displayable content, no list additions
           const activityPosts = roomPosts.filter((p: any) => {
             const hasContent = p.content && p.content.trim().length > 0;
             const hasRating = p.rating && p.rating > 0;
             const isPredict = p.post_type === 'predict' || p.post_type === 'prediction';
             const hasPredictQ = isPredict && (p.question || p.prediction_question || p.title);
-            // Exclude list/tracking additions (e.g. "Added X to Currently", post_type track/add_media)
             const isListAdd = p.post_type === 'track' || p.post_type === 'add_media' || p.post_type === 'list_add'
               || (hasContent && /^added .+ to /i.test(p.content.trim()));
             return (hasContent || hasPredictQ) && !hasRating && !isListAdd;
           });
 
-          // Mock featured threads — replace with real pinned takes once available
+          // Build Featured: merge room_takes + social_posts, rank by engagement, take top 3
+          type FeaturedItem = {
+            id: string; isTake: boolean; dotColor: string;
+            title: string; author: string; engagement: number; ts: string;
+            takeRef?: any;
+          };
+          const TAG_COLORS: Record<string, string> = {
+            debate: '#ef4444', hot_take: '#f97316', ranking: '#3b82f6',
+            question: '#10b981', discussion: '#8b5cf6',
+          };
+          const allCandidates: FeaturedItem[] = [
+            ...takes.map((t: any) => ({
+              id: t.id, isTake: true,
+              dotColor: TAG_COLORS[t.tag || 'discussion'] || '#8b5cf6',
+              title: t.title,
+              author: t.users?.display_name || t.users?.user_name || 'Fan',
+              engagement: (t.reply_count || 0) + (t.upvotes || 0),
+              ts: timeAgo(t.created_at),
+              takeRef: t,
+            })),
+            ...activityPosts.map((p: any) => ({
+              id: p.id, isTake: false,
+              dotColor: '#8b5cf6',
+              title: p.content?.slice(0, 120) || '',
+              author: p.users?.display_name || p.users?.user_name || 'Fan',
+              engagement: (p.comment_count || 0),
+              ts: timeAgo(p.created_at),
+            })),
+          ].sort((a, b) => b.engagement - a.engagement);
+
+          // Top 3 with any engagement; fall back to top 3 overall if none have replies yet
+          const hasEngagement = allCandidates.some(c => c.engagement > 0);
+          const featuredItems: FeaturedItem[] = hasEngagement
+            ? allCandidates.filter(c => c.engagement > 0).slice(0, 3)
+            : allCandidates.slice(0, 3);
+          const featuredIds = new Set(featuredItems.map(f => f.id));
+
+          // Activity = social posts NOT already in Featured
+          const activityForFeed = activityPosts.filter((p: any) => !featuredIds.has(p.id));
+
+          // Mock fallback when room has no content yet
           const MOCK_FEATURED = [
-            { id: 'f1', color: '#ef4444', tag: 'Debate', title: 'Who has the best character arc in the series?', author: 'heidi', replies: 4, time: '2d' },
-            { id: 'f2', color: '#f97316', tag: 'Hot Take', title: 'The ending was perfect — change my mind', author: 'Jeeppler', replies: 7, time: '3d' },
-            { id: 'f3', color: '#8b5cf6', tag: 'Discussion', title: 'Ranking every season from best to worst', author: 'heidi', replies: 2, time: '1w' },
+            { id: 'f1', isTake: false, dotColor: '#ef4444', title: 'Who has the best character arc in the series?', author: 'heidi', engagement: 4, ts: '2d' },
+            { id: 'f2', isTake: false, dotColor: '#f97316', title: 'The ending was perfect — change my mind', author: 'Jeeppler', engagement: 7, ts: '3d' },
+            { id: 'f3', isTake: false, dotColor: '#8b5cf6', title: 'Ranking every season from best to worst', author: 'heidi', engagement: 2, ts: '1w' },
           ];
+          const displayFeatured: FeaturedItem[] = featuredItems.length > 0 ? featuredItems : MOCK_FEATURED as any;
 
           return (
             <div className="space-y-6">
@@ -2675,15 +2710,12 @@ export default function PoolDetailPage() {
                     className="w-full rounded-2xl px-3 py-3 flex items-center gap-3"
                     style={{ background: '#fff', border: '1.5px solid #e8e5f5', boxShadow: '0 1px 6px 0 rgba(120,80,220,0.06)' }}
                   >
-                    {/* User initial avatar */}
                     <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold" style={{ background: '#7c3aed' }}>
                       {(myName?.[0] || session?.user?.email?.[0] || '?').toUpperCase()}
                     </div>
-                    {/* Placeholder text */}
                     <p className="flex-1 text-[14px] text-gray-400 leading-snug">
                       What's on your mind about {pool?.name || 'this room'}?
                     </p>
-                    {/* Post button */}
                     <span className="shrink-0 px-4 py-2 rounded-full text-sm font-semibold text-white" style={{ background: '#7c3aed' }}>
                       Post
                     </span>
@@ -2695,109 +2727,36 @@ export default function PoolDetailPage() {
                 </div>
               )}
 
-              {/* ── Featured Threads ── */}
+              {/* ── Featured ── high-activity takes & hot thoughts ── */}
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Featured</p>
-                  <span className="text-[10px] text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">Pinned</span>
+                  {featuredItems.length === 0 && (
+                    <span className="text-[10px] text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">Example</span>
+                  )}
                 </div>
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
-                  {(takes.length > 0 ? takes.slice(0, 3) : MOCK_FEATURED).map((item: any) => {
-                    const isMock = !item.user_id;
-                    const dotColor = isMock ? item.color : (TAG_COLORS[item.tag || 'discussion'] || '#8b5cf6');
-                    const title = isMock ? item.title : item.title;
-                    const author = isMock ? item.author : (item.users?.display_name || item.users?.user_name || 'Fan');
-                    const replies = isMock ? item.replies : (item.reply_count || 0);
-                    const time = isMock ? item.time : timeAgo(item.created_at);
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => !isMock && setActiveTake(item)}
-                        className="w-full flex items-start gap-3 px-4 py-4 text-left hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="mt-[5px] w-2 h-2 rounded-full shrink-0" style={{ background: dotColor }} />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-semibold text-gray-800 leading-snug">{title}</p>
-                          <div className="flex items-center gap-1.5 text-[10px] text-gray-400 mt-1">
-                            <span>{author}</span>
-                            <span>·</span>
-                            <span>{replies} replies</span>
-                            <span>·</span>
-                            <span>{time}</span>
-                          </div>
+                  {displayFeatured.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => item.isTake && item.takeRef && setActiveTake(item.takeRef)}
+                      className="w-full flex items-start gap-3 px-4 py-4 text-left hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="mt-[5px] w-2 h-2 rounded-full shrink-0" style={{ background: item.dotColor }} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-semibold text-gray-800 leading-snug line-clamp-2">{item.title}</p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-gray-400 mt-1">
+                          <span>{item.author}</span>
+                          <span>·</span>
+                          <span>{item.engagement} {item.isTake ? 'replies' : 'comments'}</span>
+                          <span>·</span>
+                          <span>{item.ts}</span>
                         </div>
-                        <ChevronRight size={14} className="text-gray-300 shrink-0 mt-0.5" />
-                      </button>
-                    );
-                  })}
+                      </div>
+                      {item.isTake && <ChevronRight size={14} className="text-gray-300 shrink-0 mt-0.5" />}
+                    </button>
+                  ))}
                 </div>
-              </div>
-
-              {/* ── Takes ── */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Takes</p>
-                  {takes.length > 0 && <span className="text-[11px] text-gray-400">{takes.length}</span>}
-                </div>
-                {takes.length === 0 ? (
-                  <div className="text-center py-10 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                    <MessageSquare size={28} className="text-gray-200 mx-auto mb-2" />
-                    <p className="text-gray-500 text-sm font-medium">No takes yet</p>
-                    <p className="text-gray-400 text-xs mt-1">Start a debate, ranking, or hot take</p>
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
-                    {takes.map((take: any) => {
-                      const author = take.users?.display_name || take.users?.user_name || 'Fan';
-                      const dotColor = TAG_COLORS[take.tag || 'discussion'] || '#8b5cf6';
-                      const myVote = (myTakeVotes || []).find((v: any) => v.take_id === take.id && !v.reply_id);
-                      const isHot = (take.reply_count || 0) >= 3;
-                      return (
-                        <button
-                          key={take.id}
-                          onClick={() => setActiveTake(take)}
-                          className="w-full flex items-start gap-3 px-4 py-4 text-left hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="mt-[5px] w-2 h-2 rounded-full shrink-0" style={{ background: dotColor }} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5 mb-0.5">
-                              {isHot && <Flame size={11} className="text-orange-400 shrink-0" />}
-                              <p className="text-[13px] font-semibold text-gray-800 leading-snug">{take.title}</p>
-                            </div>
-                            {take.body && (
-                              <p className="text-[12px] text-gray-500 leading-relaxed line-clamp-1 mb-1">{take.body}</p>
-                            )}
-                            <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
-                              <span>{author}</span>
-                              <span>·</span>
-                              <span>{take.reply_count || 0} replies</span>
-                              <span>·</span>
-                              <span>{timeAgo(take.created_at)}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0 mt-0.5">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleVoteTake(take.id, 1); }}
-                              className={`flex items-center gap-0.5 transition-colors ${myVote?.vote === 1 ? 'text-purple-600' : 'text-gray-300 hover:text-purple-500'}`}
-                            >
-                              <ArrowUp size={13} />
-                              <span className="text-[11px]">{take.upvotes || 0}</span>
-                            </button>
-                            {(session?.user?.id === take.user_id || isHost) && (
-                              <button
-                                onClick={async (e) => { e.stopPropagation(); await supabase.from('room_takes').delete().eq('id', take.id); refetchTakes(); }}
-                                className="text-gray-200 hover:text-rose-400 transition-colors"
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            )}
-                            <ChevronRight size={14} className="text-gray-300" />
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
 
               {/* ── Ratings & Reviews ── */}
@@ -2837,12 +2796,12 @@ export default function PoolDetailPage() {
                 </div>
               )}
 
-              {/* ── Activity (general room posts) ── */}
-              {activityPosts.length > 0 && (
+              {/* ── Activity ── */}
+              {activityForFeed.length > 0 && (
                 <div>
                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Activity</p>
                   <div className="space-y-2">
-                    {activityPosts.map((post: any) => (
+                    {activityForFeed.map((post: any) => (
                       <RoomPostCard
                         key={post.id}
                         post={post}
