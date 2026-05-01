@@ -3487,7 +3487,7 @@ export default function Feed() {
       // Filter out thought posts that have no rating AND no media — they're low-signal filler.
       // But keep thoughts that reference a specific media item (e.g. "Godzilla is my comfort watch").
       if (p.type === 'thought') return !!(p.rating && p.rating > 0) || !!p.mediaTitle;
-      return p.type === 'review' || p.type === 'rating' || p.type === 'rate-review' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment' || p.type === 'binge_battle';
+      return p.type === 'review' || p.type === 'rating' || p.type === 'rate-review' || p.type === 'finished' || p.type === 'ask_for_rec' || p.type === 'rank' || p.type === 'cast_approved' || p.type === 'game_moment' || p.type === 'binge_battle' || p.type === 'hot_take' || p.type === 'question';
     });
 
     // Group posts by user within 24-hour rolling windows.
@@ -3499,7 +3499,7 @@ export default function Feed() {
     for (const post of allUGC) {
       // game_moment, cast_approved, rank, and binge_battle posts must always be solo cards —
       // never grouped into the 24h carousel because UGCGroupCard doesn't know how to render them
-      const uid = (post.type === 'game_moment' || post.type === 'cast_approved' || post.type === 'rank' || post.type === 'binge_battle')
+      const uid = (post.type === 'game_moment' || post.type === 'cast_approved' || post.type === 'rank' || post.type === 'binge_battle' || post.type === 'hot_take' || post.type === 'question')
         ? `solo-${post.id}`
         : post.user?.id || 'anon';
       if (!byUser.has(uid)) byUser.set(uid, []);
@@ -3649,6 +3649,7 @@ export default function Feed() {
     // Cap at 4 so play stays dominant in the feed.
     const MAX_PROMOTED = 4;
     const seenAuthors = new Set<string>();
+    const seenMediaTitles = new Set<string>();
     const promoted: any[] = [];
 
     // Surface the current user's own rating posts first — but ONLY if posted within the last 30 minutes.
@@ -3671,11 +3672,14 @@ export default function Feed() {
         if (!authorId || seenAuthors.has(authorId + '-' + (item.mediaTitle || item.id))) continue;
         seenAuthors.add(authorId + '-' + (item.mediaTitle || item.id));
         if (!seenAuthors.has(authorId)) seenAuthors.add(authorId);
+        const mediaKey = (item.mediaTitle || '').toLowerCase().trim();
+        if (mediaKey) seenMediaTitles.add(mediaKey);
         promoted.push(item);
       }
     }
 
-    // Fill remaining slots with the most-recent real (non-persona) users' posts
+    // Fill remaining slots with the most-recent real (non-persona) users' posts.
+    // Deduplicate by both author AND media title — same book/show must not appear twice.
     const recencySorted = [...finalOrder].sort((a: any, b: any) =>
       new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime()
     );
@@ -3686,7 +3690,10 @@ export default function Feed() {
       if (!authorId) continue;
       if (promotedIds.has(item.id)) continue;
       if (seenAuthors.has(authorId)) continue;
+      const mediaKey = (item.mediaTitle || '').toLowerCase().trim();
+      if (mediaKey && seenMediaTitles.has(mediaKey)) continue;
       seenAuthors.add(authorId);
+      if (mediaKey) seenMediaTitles.add(mediaKey);
       promoted.push(item);
     }
     const promotedIdSet = new Set(promoted.map((p: any) => p.id));

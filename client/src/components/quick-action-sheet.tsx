@@ -412,7 +412,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
           queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
           queryClient.invalidateQueries({ queryKey: ['social-feed'] });
           queryClient.invalidateQueries({ queryKey: ['feed'] });
-          toast({ title: "Hot take posted! 🔥" });
+          
           handleClose();
           return;
         }
