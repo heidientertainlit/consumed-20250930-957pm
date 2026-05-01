@@ -2648,107 +2648,20 @@ export default function PoolDetailPage() {
 
         {/* ── ROOM — Fan room feed ── */}
         {!isLoading && tab === 'room' && (() => {
-          const TAG_CONFIG: Record<string, { label: string; colorClass: string }> = {
-            debate:     { label: 'Debate',      colorClass: 'text-rose-600 bg-rose-50' },
-            ranking:    { label: 'Ranking',     colorClass: 'text-blue-600 bg-blue-50' },
-            hot_take:   { label: 'Hot Take',    colorClass: 'text-orange-600 bg-orange-50' },
-            question:   { label: 'Question',    colorClass: 'text-green-600 bg-green-50' },
-            discussion: { label: 'Discussion',  colorClass: 'text-purple-600 bg-purple-50' },
+          const TAG_COLORS: Record<string, string> = {
+            debate: '#ef4444', hot_take: '#f97316', ranking: '#3b82f6',
+            question: '#10b981', discussion: '#8b5cf6',
           };
 
-          // Happening Now: live predictions + high-velocity takes
-          const livePolls = (featuredPolls || []).filter((p: any) => p.type === 'predict' || p.type === 'vote');
-          const hotTakes = takes.filter((t: any) => (t.reply_count || 0) >= 1).slice(0, 3);
-          const showHappeningNow = livePolls.length > 0 || hotTakes.length > 0;
+          // Non-review room posts (thoughts, general activity)
+          const activityPosts = roomPosts.filter((p: any) => !(p.content && p.content.trim().length > 0 && p.rating));
 
           return (
-            <div className="space-y-4">
-              {/* ── Happening Now ── */}
-              {showHappeningNow && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2 px-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Happening Now</p>
-                  </div>
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
-                    {livePolls.slice(0, 2).map((poll: any) => (
-                      <div key={poll.id} className="flex items-center gap-3 px-4 py-3">
-                        <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-                          <Vote size={12} className="text-purple-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-gray-800 line-clamp-1">{poll.title}</p>
-                          <p className="text-[10px] text-gray-400">{poll.total_participants || 0} votes</p>
-                        </div>
-                        <span className="text-[10px] text-purple-500 font-semibold shrink-0">Live</span>
-                      </div>
-                    ))}
-                    {hotTakes.map((take: any) => {
-                      const author = take.users?.display_name || take.users?.user_name || 'Fan';
-                      return (
-                        <button key={take.id} className="w-full flex items-center gap-3 px-4 py-3 text-left" onClick={() => setActiveTake(take)}>
-                          <div className="w-7 h-7 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
-                            <TrendingUp size={12} className="text-orange-500" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-gray-800 line-clamp-1">{take.title}</p>
-                            <p className="text-[10px] text-gray-400">{take.reply_count} replies · {author}</p>
-                          </div>
-                          <ChevronRight size={13} className="text-gray-300 shrink-0" />
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+            <div className="space-y-6">
 
-              {/* ── Featured Takes ── */}
-              {takes.length > 0 && (() => {
-                const featured = takes.slice(0, 3);
-                const TAG_COLORS: Record<string, string> = {
-                  debate: '#ef4444', hot_take: '#f97316', ranking: '#3b82f6',
-                  question: '#10b981', discussion: '#8b5cf6',
-                };
-                return (
-                  <div className="rounded-2xl overflow-hidden" style={{ border: '1.5px solid #ede9fe', background: '#faf5ff' }}>
-                    <div className="flex items-center gap-1.5 px-4 pt-3 pb-2">
-                      <span className="text-xs">🔥</span>
-                      <p className="text-[11px] font-bold text-purple-700 uppercase tracking-widest">Featured Takes</p>
-                    </div>
-                    <div className="divide-y divide-purple-100">
-                      {featured.map((take: any, i: number) => {
-                        const author = take.users?.display_name || take.users?.user_name || 'Fan';
-                        const tag = take.tag || 'discussion';
-                        const dotColor = TAG_COLORS[tag] || '#8b5cf6';
-                        const preview = take.title.length > 72
-                          ? take.title.slice(0, 72) + '…'
-                          : take.title;
-                        return (
-                          <button
-                            key={take.id}
-                            onClick={() => setActiveTake(take)}
-                            className="w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-purple-50 transition-colors"
-                          >
-                            <div className="mt-0.5 w-2 h-2 rounded-full shrink-0" style={{ background: dotColor, marginTop: 5 }} />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[13px] text-gray-700 leading-snug">{preview}</p>
-                              <p className="text-[10px] text-gray-400 mt-0.5">{author} · {take.reply_count || 0} replies</p>
-                            </div>
-                            <ChevronRight size={13} className="text-purple-300 shrink-0 mt-1" />
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* ── Composer prompt ── */}
+              {/* ── Composer ── */}
               {isMember ? (
-                <button
-                  onClick={() => setIsComposerOpen(true)}
-                  className="w-full text-left"
-                >
+                <button onClick={() => setIsComposerOpen(true)} className="w-full text-left">
                   <div
                     className="w-full rounded-2xl px-4 py-3.5 flex items-center gap-3"
                     style={{ background: '#fff', border: '1.5px solid #e5e7eb', boxShadow: '0 1px 4px 0 rgba(0,0,0,0.05)' }}
@@ -2759,7 +2672,7 @@ export default function PoolDetailPage() {
                     <p className="flex-1 text-[13px] text-gray-400 leading-snug">
                       Something on your mind? Drop a take to start a thread
                     </p>
-                    <span className="shrink-0 px-3 py-1 rounded-full text-xs font-bold text-white" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
+                    <span className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold text-white" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
                       Take
                     </span>
                   </div>
@@ -2770,82 +2683,67 @@ export default function PoolDetailPage() {
                 </div>
               )}
 
-              {/* ── Takes list ── */}
+              {/* ── Takes ── */}
               <div>
-                <div className="flex items-center justify-between px-1 mb-2">
+                <div className="flex items-center justify-between mb-3">
                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Takes</p>
                   {takes.length > 0 && <span className="text-[11px] text-gray-400">{takes.length}</span>}
                 </div>
                 {takes.length === 0 ? (
-                  <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-100">
+                  <div className="text-center py-10 bg-white rounded-2xl border border-gray-100 shadow-sm">
                     <MessageSquare size={28} className="text-gray-200 mx-auto mb-2" />
                     <p className="text-gray-500 text-sm font-medium">No takes yet</p>
                     <p className="text-gray-400 text-xs mt-1">Start a debate, ranking, or hot take</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
                     {takes.map((take: any) => {
                       const author = take.users?.display_name || take.users?.user_name || 'Fan';
-                      const tagCfg = TAG_CONFIG[take.tag] || TAG_CONFIG.discussion;
+                      const dotColor = TAG_COLORS[take.tag || 'discussion'] || '#8b5cf6';
                       const myVote = (myTakeVotes || []).find((v: any) => v.take_id === take.id && !v.reply_id);
                       const isHot = (take.reply_count || 0) >= 3;
                       return (
-                        <div
+                        <button
                           key={take.id}
-                          className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                          onClick={() => setActiveTake(take)}
+                          className="w-full flex items-start gap-3 px-4 py-4 text-left hover:bg-gray-50 transition-colors"
                         >
-                          {isHot && (
-                            <div className="px-4 pt-2.5 pb-0 flex items-center gap-1.5">
-                              <Flame size={11} className="text-orange-400" />
-                              <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider">Hot</span>
-                            </div>
-                          )}
-                          <button
-                            className="w-full px-4 pt-3 pb-2 text-left"
-                            onClick={() => setActiveTake(take)}
-                          >
-                            <div className="flex items-start gap-2 mb-2">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${tagCfg.colorClass}`}>{tagCfg.label}</span>
-                              <p className="text-gray-900 text-sm font-semibold leading-snug">{take.title}</p>
+                          <div className="mt-[5px] w-2 h-2 rounded-full shrink-0" style={{ background: dotColor }} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              {isHot && <Flame size={11} className="text-orange-400 shrink-0" />}
+                              <p className="text-[13px] font-semibold text-gray-800 leading-snug">{take.title}</p>
                             </div>
                             {take.body && (
-                              <p className="text-gray-500 text-xs leading-relaxed line-clamp-2 mb-2">{take.body}</p>
+                              <p className="text-[12px] text-gray-500 leading-relaxed line-clamp-1 mb-1">{take.body}</p>
                             )}
-                          </button>
-                          <div className="flex items-center gap-3 px-4 pb-3">
-                            <AvatarCircle name={author} size="sm" />
-                            <span className="text-gray-500 text-xs">{author}</span>
-                            <span className="text-gray-300 text-xs">·</span>
-                            <span className="text-gray-400 text-xs">{timeAgo(take.created_at)}</span>
-                            <div className="ml-auto flex items-center gap-3">
-                              <button
-                                onClick={() => setActiveTake(take)}
-                                className="flex items-center gap-1 text-gray-400 hover:text-purple-600 transition-colors"
-                              >
-                                <MessageCircle size={13} />
-                                <span className="text-[11px]">{take.reply_count || 0}</span>
-                              </button>
-                              <button
-                                onClick={() => handleVoteTake(take.id, 1)}
-                                className={`flex items-center gap-1 transition-colors ${myVote?.vote === 1 ? 'text-purple-600' : 'text-gray-400 hover:text-purple-500'}`}
-                              >
-                                <ArrowUp size={13} />
-                                <span className="text-[11px]">{take.upvotes || 0}</span>
-                              </button>
-                              {(session?.user?.id === take.user_id || isHost) && (
-                                <button
-                                  onClick={async () => {
-                                    await supabase.from('room_takes').delete().eq('id', take.id);
-                                    refetchTakes();
-                                  }}
-                                  className="text-gray-300 hover:text-rose-400 transition-colors"
-                                >
-                                  <Trash2 size={12} />
-                                </button>
-                              )}
+                            <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+                              <span>{author}</span>
+                              <span>·</span>
+                              <span>{take.reply_count || 0} replies</span>
+                              <span>·</span>
+                              <span>{timeAgo(take.created_at)}</span>
                             </div>
                           </div>
-                        </div>
+                          <div className="flex items-center gap-2 shrink-0 mt-0.5">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleVoteTake(take.id, 1); }}
+                              className={`flex items-center gap-0.5 transition-colors ${myVote?.vote === 1 ? 'text-purple-600' : 'text-gray-300 hover:text-purple-500'}`}
+                            >
+                              <ArrowUp size={13} />
+                              <span className="text-[11px]">{take.upvotes || 0}</span>
+                            </button>
+                            {(session?.user?.id === take.user_id || isHost) && (
+                              <button
+                                onClick={async (e) => { e.stopPropagation(); await supabase.from('room_takes').delete().eq('id', take.id); refetchTakes(); }}
+                                className="text-gray-200 hover:text-rose-400 transition-colors"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            )}
+                            <ChevronRight size={14} className="text-gray-300" />
+                          </div>
+                        </button>
                       );
                     })}
                   </div>
@@ -2855,7 +2753,7 @@ export default function PoolDetailPage() {
               {/* ── Ratings & Reviews ── */}
               {roomReviews.length > 0 && (
                 <div>
-                  <div className="flex items-center justify-between px-1 mb-2">
+                  <div className="flex items-center justify-between mb-3">
                     <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Ratings & Reviews</p>
                     {roomReviews.length > 3 && (
                       <button onClick={() => setReviewsExpanded(v => !v)} className="text-[11px] text-purple-500">
@@ -2870,24 +2768,45 @@ export default function PoolDetailPage() {
                         <div key={post.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
                           <div className="flex items-center gap-2 mb-2">
                             <AvatarCircle name={author} size="sm" />
-                            <span className="text-xs font-semibold text-gray-900">{author}</span>
+                            <span className="text-sm font-semibold text-gray-900">{author}</span>
                             {post.rating && (
                               <div className="flex items-center gap-0.5 ml-auto">
                                 {Array.from({ length: 5 }).map((_, i) => (
-                                  <Star key={i} size={10} className={i < Math.round(post.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
+                                  <Star key={i} size={11} className={i < Math.round(post.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
                                 ))}
-                                <span className="text-[10px] text-gray-500 ml-1">{post.rating}/5</span>
+                                <span className="text-[10px] font-semibold text-gray-600 ml-1">{post.rating}/5</span>
                               </div>
                             )}
                           </div>
-                          <p className="text-gray-700 text-xs leading-relaxed line-clamp-3">{post.content}</p>
-                          <p className="text-gray-400 text-[10px] mt-1.5">{timeAgo(post.created_at)}</p>
+                          <p className="text-gray-700 text-sm leading-relaxed line-clamp-4">{post.content}</p>
+                          <p className="text-gray-400 text-[10px] mt-2">{timeAgo(post.created_at)}</p>
                         </div>
                       );
                     })}
                   </div>
                 </div>
               )}
+
+              {/* ── Activity (general room posts) ── */}
+              {activityPosts.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Activity</p>
+                  <div className="space-y-2">
+                    {activityPosts.map((post: any) => (
+                      <RoomPostCard
+                        key={post.id}
+                        post={post}
+                        currentUserId={session?.user?.id}
+                        onDelete={async (id: string) => {
+                          await supabase.from('social_posts').delete().eq('id', id);
+                          refetchRoomPosts();
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           );
         })()}
