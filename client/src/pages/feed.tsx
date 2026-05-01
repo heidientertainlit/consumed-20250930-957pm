@@ -713,6 +713,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [peeked, setPeeked] = useState(false);
   const [ratingDistribution, setRatingDistribution] = useState<Record<number, number>>({});
   const [ratingCount, setRatingCount] = useState(0);
+  // Fire / Ice vote state (used by hot_take cards)
+  const [fireCount, setFireCount] = useState(post.fire_votes || 0);
+  const [iceCount, setIceCount] = useState(post.ice_votes || 0);
+  const [fireIceVoted, setFireIceVoted] = useState<'fire' | 'ice' | null>(null);
   const hasFetched = useRef(false);
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
   const starsRef = useRef<HTMLDivElement>(null);
@@ -1059,6 +1063,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     if (post.type === 'finished') return { label: 'Finished', color: 'text-green-500', bg: 'bg-green-50' };
     if (post.type === 'predict' || post.type === 'prediction') return { label: 'Prediction', color: 'text-purple-500', bg: 'bg-purple-50' };
     if (post.type === 'poll') return { label: 'Cast your vote', color: 'text-purple-500', bg: 'bg-purple-50' };
+    if (post.type === 'hot_take') return { label: 'Hot Take', color: 'text-orange-500', bg: 'bg-orange-50' };
+    if (post.type === 'question') return { label: 'Question', color: 'text-blue-500', bg: 'bg-blue-50' };
     return { label: 'Post', color: 'text-gray-400', bg: 'bg-gray-50' };
   };
 
@@ -1178,6 +1184,193 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       </div>
     )
   ) : null;
+
+  // ── Hot Take card ──────────────────────────────────────────────────────────
+  if (post.type === 'hot_take') {
+    const castVote = async (v: 'fire' | 'ice') => {
+      if (fireIceVoted || !session?.access_token) return;
+      setFireIceVoted(v);
+      if (v === 'fire') setFireCount(n => n + 1); else setIceCount(n => n + 1);
+      const col = v === 'fire' ? 'fire_votes' : 'ice_votes';
+      const newVal = (v === 'fire' ? fireCount : iceCount) + 1;
+      await supabase.from('social_posts').update({ [col]: newVal }).eq('id', post.id);
+    };
+    const spoilerBlurred = post.containsSpoilers && !peeked;
+    return (
+      <div className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-1">
+        {/* Header bar */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
+          <div className="flex items-center gap-2">
+            <Link href={`/user/${post.user?.id}`}>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white font-bold text-xs cursor-pointer shrink-0">
+                {post.user?.avatar ? <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" /> : (post.user?.username?.[0]?.toUpperCase() || '?')}
+              </div>
+            </Link>
+            <div>
+              <Link href={`/user/${post.user?.id}`}>
+                <span className="text-sm font-semibold text-gray-900 hover:text-orange-500 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+              </Link>
+              {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
+                <p className="text-[10px] text-gray-400 leading-none">@{post.user.username}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 text-[11px] font-bold text-orange-500 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">
+              <Flame size={11} /> Hot Take
+            </span>
+            <span className="text-[11px] text-gray-400">{timeAgo(post.timestamp)}</span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="px-4 pb-3">
+          {post.containsSpoilers && (
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">⚠️ Spoilers</span>
+              {spoilerBlurred && <button onClick={() => setPeeked(true)} className="text-[10px] text-gray-400 underline">Reveal</button>}
+            </div>
+          )}
+          <div className={spoilerBlurred ? 'blur-sm select-none' : ''}>
+            <p className="text-[15px] font-semibold text-gray-900 leading-snug">{post.content}</p>
+          </div>
+          {/* Optional media pill */}
+          {post.mediaTitle && (
+            <div className="flex items-center gap-2 mt-3 p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+              {post.mediaImage && <img src={post.mediaImage} alt="" className="w-8 h-11 rounded-lg object-cover shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />}
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-gray-800 truncate">{post.mediaTitle}</p>
+                {mediaTypeLabel && <span className="text-[10px] text-gray-400">{mediaTypeLabel}</span>}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Action bar */}
+        <div className="flex items-center gap-3 px-4 py-2.5 border-t border-gray-100">
+          <button
+            onClick={() => castVote('fire')}
+            disabled={!!fireIceVoted}
+            className={`flex items-center gap-1.5 text-sm font-medium transition-all active:scale-110 ${fireIceVoted === 'fire' ? 'text-orange-500' : 'text-gray-400 hover:text-orange-400'}`}
+          >
+            <Flame size={16} fill={fireIceVoted === 'fire' ? 'currentColor' : 'none'} />
+            <span className="text-xs">{fireCount}</span>
+          </button>
+          <button
+            onClick={() => castVote('ice')}
+            disabled={!!fireIceVoted}
+            className={`flex items-center gap-1.5 text-sm font-medium transition-all active:scale-110 ${fireIceVoted === 'ice' ? 'text-blue-400' : 'text-gray-400 hover:text-blue-400'}`}
+          >
+            <Snowflake size={16} fill={fireIceVoted === 'ice' ? 'currentColor' : 'none'} />
+            <span className="text-xs">{iceCount}</span>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
+            className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+          >
+            <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
+            <span className="text-xs">{post.likes || 0}</span>
+          </button>
+          <button
+            onClick={handleCommentToggle}
+            className={`flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
+          >
+            <MessageCircle size={15} />
+            <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
+          </button>
+          {currentUserId === post.user?.id && onDeletePost && (
+            <button onClick={() => onDeletePost(post.id)} className="ml-auto p-1 text-gray-300 hover:text-red-400 transition-colors">
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
+
+        {showComments && (
+          <div className="border-t border-gray-100">
+            <CommentsSection postId={post.id} session={session} fetchComments={fetchComments} currentUserId={currentUserId} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Question card ───────────────────────────────────────────────────────────
+  if (post.type === 'question') {
+    return (
+      <div className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-1">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
+          <div className="flex items-center gap-2">
+            <Link href={`/user/${post.user?.id}`}>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-xs cursor-pointer shrink-0">
+                {post.user?.avatar ? <img src={post.user.avatar} alt="" className="w-full h-full rounded-full object-cover" /> : (post.user?.username?.[0]?.toUpperCase() || '?')}
+              </div>
+            </Link>
+            <div>
+              <Link href={`/user/${post.user?.id}`}>
+                <span className="text-sm font-semibold text-gray-900 hover:text-blue-500 cursor-pointer">{post.user?.displayName || post.user?.username}</span>
+              </Link>
+              {post.user?.username && post.user?.displayName && post.user.username !== post.user.displayName && (
+                <p className="text-[10px] text-gray-400 leading-none">@{post.user.username}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 text-[11px] font-bold text-blue-500 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+              <HelpCircle size={11} /> Question
+            </span>
+            <span className="text-[11px] text-gray-400">{timeAgo(post.timestamp)}</span>
+          </div>
+        </div>
+
+        {/* Question text */}
+        <div className="px-4 pb-3">
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3">
+            <p className="text-[16px] font-semibold text-gray-900 leading-snug">{post.content}</p>
+          </div>
+          {/* Optional media pill */}
+          {post.mediaTitle && (
+            <div className="flex items-center gap-2 mt-3 p-2.5 bg-gray-50 rounded-xl border border-gray-100">
+              {post.mediaImage && <img src={post.mediaImage} alt="" className="w-8 h-11 rounded-lg object-cover shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display='none'; }} />}
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-gray-800 truncate">{post.mediaTitle}</p>
+                {mediaTypeLabel && <span className="text-[10px] text-gray-400">{mediaTypeLabel}</span>}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Action bar */}
+        <div className="flex items-center gap-3 px-4 py-2.5 border-t border-gray-100">
+          <button
+            onClick={handleCommentToggle}
+            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${showComments ? 'text-blue-500' : 'text-gray-600 hover:text-blue-500'}`}
+          >
+            <MessageCircle size={15} />
+            <span className="text-xs">{Math.max(post.comments || 0, comments.length) > 0 ? `${Math.max(post.comments || 0, comments.length)} replies` : 'Reply'}</span>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
+            className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+          >
+            <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
+            <span className="text-xs">{post.likes || 0}</span>
+          </button>
+          {currentUserId === post.user?.id && onDeletePost && (
+            <button onClick={() => onDeletePost(post.id)} className="ml-auto p-1 text-gray-300 hover:text-red-400 transition-colors">
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
+
+        {showComments && (
+          <div className="border-t border-gray-100">
+            <CommentsSection postId={post.id} session={session} fetchComments={fetchComments} currentUserId={currentUserId} />
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={`${forceActionFirst ? 'w-full' : 'snap-start flex-shrink-0 w-[85vw] max-w-[340px]'} md:w-full md:max-w-none md:snap-align-none md:flex-shrink bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden`}>
@@ -3230,6 +3423,8 @@ export default function Feed() {
         if (p.type === 'rank' || p.type === 'shared_rank' || p.type === 'rank_share') return true;
         if (p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review' || p.type === 'rate_review' || p.post_type === 'rate_review') return true;
         if (p.type === 'thought' || p.post_type === 'thought') return true;
+        if (p.type === 'hot_take' || p.post_type === 'hot_take') return true;
+        if (p.type === 'question' || p.post_type === 'question') return true;
         const content = (p.content || '').trim();
         if (p.rating && p.rating > 0) return true;
         if (content.length > 20 && !isAutoGen(content)) return true;
@@ -3246,6 +3441,8 @@ export default function Feed() {
         else if (p.type === 'poll' && ((p as any).question || (p as any).options)) postType = 'poll';
         else if (p.type === 'cast_approved') postType = 'cast_approved';
         else if (p.type === 'rank' || p.type === 'shared_rank' || p.type === 'rank_share') postType = 'rank';
+        else if (p.type === 'hot_take' || p.post_type === 'hot_take') postType = 'hot_take';
+        else if (p.type === 'question' || p.post_type === 'question') postType = 'question';
         else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
         else if ((p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review' || p.type === 'rate_review' || p.post_type === 'rate_review') && content) postType = 'review';
         else if (p.type === 'thought' || p.post_type === 'thought') postType = 'thought';
