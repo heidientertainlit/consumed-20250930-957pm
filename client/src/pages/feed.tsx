@@ -1146,6 +1146,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       <div className="ml-auto flex items-center gap-1.5">
         <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
         <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
+        {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
+          <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors" title="Delete post">
+            <Trash2 size={13} />
+          </button>
+        )}
       </div>
     </div>
   );
