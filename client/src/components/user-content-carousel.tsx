@@ -14,6 +14,7 @@ export interface UGCPost {
     username: string;
     displayName?: string;
     avatar?: string;
+    is_persona?: boolean;
   };
   content: string;
   mediaTitle?: string;

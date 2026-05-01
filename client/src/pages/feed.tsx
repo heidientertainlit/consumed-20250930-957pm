@@ -2438,10 +2438,10 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                   <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 ${typeInfo.bg} ${typeInfo.color}`}>{typeInfo.label}</span>
                 )}
                 <span className="text-[11px] text-gray-400">{timeAgo(post.timestamp)}</span>
-                {currentUserId && post.user?.id === currentUserId && onDeletePost && (
+                {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
                   <button onClick={() => onDeletePost(post.id)} className="text-gray-300 hover:text-red-400 p-1 shrink-0 transition-colors"><Trash2 size={13} /></button>
                 )}
-                {currentUserId && post.user?.id !== currentUserId && (
+                {currentUserId && post.user?.id !== currentUserId && !post.user?.is_persona && (
                   <button onClick={() => setIsReportOpen(true)} className="text-gray-300 hover:text-orange-400 p-1 shrink-0 transition-colors"><Flag size={13} /></button>
                 )}
               </div>
@@ -3551,7 +3551,7 @@ export default function Feed() {
         const userObj = p.user || p.creator;
         return {
           id: p.id, type: postType,
-          user: { id: userObj?.id || '', username: userObj?.username || '', displayName: userObj?.displayName || userObj?.display_name || '', avatar: userObj?.avatar_url || userObj?.avatarUrl || userObj?.avatar || '' },
+          user: { id: userObj?.id || '', username: userObj?.username || '', displayName: userObj?.displayName || userObj?.display_name || '', avatar: userObj?.avatar_url || userObj?.avatarUrl || userObj?.avatar || '', is_persona: userObj?.is_persona || false },
           content: (postType === 'poll' || postType === 'predict') ? ((p as any).question || content) : content,
           mediaTitle: media?.title || (p as any).mediaTitle || (p as any).media_title, mediaType: media?.mediaType || media?.type || (p as any).media_type, mediaImage: mediaImg, externalId: eid, externalSource: src,
           rating: p.rating, containsSpoilers: p.containsSpoilers || false, likes: p.likes || p.likes_count || 0, comments: p.comments || p.comments_count || 0,
