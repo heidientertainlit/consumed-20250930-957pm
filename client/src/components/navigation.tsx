@@ -584,14 +584,14 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
             </Link>
             <button
               onClick={() => setIsQuickActionOpen(true)}
-              className="flex flex-col items-center justify-center p-2"
+              className="flex flex-col items-center justify-center p-2 opacity-55"
               data-testid="nav-add"
               aria-label="Add"
             >
               <div className="h-[22px] flex items-center justify-center">
-                <Plus size={22} strokeWidth={1.8} style={{ color: '#8b5cf6' }} />
+                <Plus size={22} strokeWidth={1.8} className="text-white" />
               </div>
-              <span className="text-[10px] mt-0.5 font-medium" style={{ color: '#8b5cf6' }}>Add</span>
+              <span className="text-white text-[10px] mt-0.5">Add</span>
             </button>
             <Link href="/rooms" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/rooms" || location.startsWith("/room/") ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-rooms">
               <div className="h-[22px] flex items-center justify-center"><DoorOpen className="text-white" size={22} /></div>
