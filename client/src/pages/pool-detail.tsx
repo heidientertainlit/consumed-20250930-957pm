@@ -2687,10 +2687,8 @@ export default function PoolDetailPage() {
           const featuredItems: FeaturedItem[] = hasEngagement
             ? allCandidates.filter(c => c.engagement > 0).slice(0, 3)
             : allCandidates.slice(0, 3);
-          const featuredIds = new Set(featuredItems.map(f => f.id));
-
-          // Activity = social posts NOT already in Featured
-          const activityForFeed = activityPosts.filter((p: any) => !featuredIds.has(p.id));
+          // Activity always shows all social posts — Featured is a spotlight, not a filter
+          const activityForFeed = activityPosts;
 
           // Mock fallback when room has no content yet
           const MOCK_FEATURED = [
