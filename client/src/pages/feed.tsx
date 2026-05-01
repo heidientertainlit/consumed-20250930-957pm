@@ -2438,7 +2438,7 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                   <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full shrink-0 ${typeInfo.bg} ${typeInfo.color}`}>{typeInfo.label}</span>
                 )}
                 <span className="text-[11px] text-gray-400">{timeAgo(post.timestamp)}</span>
-                {currentUserId && post.user?.id === currentUserId && post.type === 'binge_battle' && onDeletePost && (
+                {currentUserId && post.user?.id === currentUserId && onDeletePost && (
                   <button onClick={() => onDeletePost(post.id)} className="text-gray-300 hover:text-red-400 p-1 shrink-0 transition-colors"><Trash2 size={13} /></button>
                 )}
                 {currentUserId && post.user?.id !== currentUserId && (
