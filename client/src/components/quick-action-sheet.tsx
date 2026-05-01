@@ -94,7 +94,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [privateMode, setPrivateMode] = useState(false);
   const [selectedRankId, setSelectedRankId] = useState<string>("");
-  
+  const [trackPostType, setTrackPostType] = useState<"review" | "prediction" | "hot_take" | "question" | "rank">("review");
+
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<number | null>(null);
   const [seasons, setSeasons] = useState<any[]>([]);
@@ -715,9 +716,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
     { id: "prediction" as ActionType, label: "Prediction", icon: Vote, iconColor: "text-purple-500", bgColor: "bg-purple-50", desc: "Predict what happens next" },
     { id: "challenge" as ActionType, label: "Challenge", icon: Swords, iconColor: "text-pink-500", bgColor: "bg-pink-50", desc: "Challenge a friend" },
   ];
-
-  // Post type state for the inline toggle in track form
-  const [trackPostType, setTrackPostType] = useState<"review" | "prediction" | "hot_take" | "question" | "rank">("review");
 
   const renderActionContent = () => {
     if (selectedAction === "track") {
