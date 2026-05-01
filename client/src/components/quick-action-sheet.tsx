@@ -136,7 +136,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
       if (!response.ok) throw new Error('Failed to fetch user ranks');
       return response.json();
     },
-    enabled: !!session?.access_token && isOpen && selectedAction === "rank",
+    enabled: !!session?.access_token && isOpen && (selectedAction === "rank" || trackPostType === "rank"),
   });
 
   const userRanks = userRanksData?.ranks || [];
@@ -367,6 +367,139 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
           return;
         }
         
+        // ── Hot Take ──────────────────────────────────────────────────────────
+        if (trackPostType === 'hot_take') {
+          if (!contentText.trim()) {
+            toast({ title: "Please write your hot take", variant: "destructive" });
+            return;
+          }
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (!authUser) throw new Error('Not authenticated');
+          if (selectedMedia && addToList) {
+            await fetch(`${supabaseUrl}/functions/v1/track-media`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                media: {
+                  title: selectedMedia.title,
+                  mediaType: selectedMedia.type,
+                  creator: selectedMedia.creator || '',
+                  imageUrl: selectedMedia.image || selectedMedia.image_url || '',
+                  externalId: selectedMedia.external_id,
+                  externalSource: selectedMedia.external_source || 'tmdb',
+                },
+                listType: selectedListId || 'currently',
+                privateMode: true,
+              }),
+            });
+          }
+          const { error: htErr } = await supabase.from('social_posts').insert({
+            user_id: authUser.id,
+            content: contentText,
+            post_type: 'hot_take',
+            visibility: 'public',
+            media_title: selectedMedia?.title || null,
+            media_type: selectedMedia?.type?.toLowerCase() || null,
+            media_external_id: selectedMedia?.external_id || null,
+            media_external_source: selectedMedia?.external_source || null,
+            image_url: selectedMedia?.image || selectedMedia?.image_url || '',
+            contains_spoilers: containsSpoilers,
+            fire_votes: 0,
+            ice_votes: 0,
+          });
+          if (htErr) throw htErr;
+          queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+          queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+          queryClient.invalidateQueries({ queryKey: ['feed'] });
+          toast({ title: "Hot take posted! 🔥" });
+          handleClose();
+          return;
+        }
+
+        // ── Question ───────────────────────────────────────────────────────────
+        if (trackPostType === 'question') {
+          if (!contentText.trim()) {
+            toast({ title: "Please write your question", variant: "destructive" });
+            return;
+          }
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (!authUser) throw new Error('Not authenticated');
+          if (selectedMedia && addToList) {
+            await fetch(`${supabaseUrl}/functions/v1/track-media`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                media: {
+                  title: selectedMedia.title,
+                  mediaType: selectedMedia.type,
+                  creator: selectedMedia.creator || '',
+                  imageUrl: selectedMedia.image || selectedMedia.image_url || '',
+                  externalId: selectedMedia.external_id,
+                  externalSource: selectedMedia.external_source || 'tmdb',
+                },
+                listType: selectedListId || 'currently',
+                privateMode: true,
+              }),
+            });
+          }
+          const { error: qErr } = await supabase.from('social_posts').insert({
+            user_id: authUser.id,
+            content: contentText,
+            post_type: 'question',
+            visibility: 'public',
+            media_title: selectedMedia?.title || null,
+            media_type: selectedMedia?.type?.toLowerCase() || null,
+            media_external_id: selectedMedia?.external_id || null,
+            media_external_source: selectedMedia?.external_source || null,
+            image_url: selectedMedia?.image || selectedMedia?.image_url || '',
+            contains_spoilers: false,
+            fire_votes: 0,
+            ice_votes: 0,
+          });
+          if (qErr) throw qErr;
+          queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+          queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+          queryClient.invalidateQueries({ queryKey: ['feed'] });
+          toast({ title: "Question posted!" });
+          handleClose();
+          return;
+        }
+
+        // ── Rank (add media to an existing rank) ───────────────────────────────
+        if (trackPostType === 'rank') {
+          if (!selectedRankId) {
+            toast({ title: "Please select a rank", variant: "destructive" });
+            return;
+          }
+          if (!selectedMedia) {
+            toast({ title: "Please select media to rank", variant: "destructive" });
+            return;
+          }
+          const rankResp = await fetch(`${supabaseUrl}/functions/v1/add-rank-item`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              rank_id: selectedRankId,
+              media: {
+                title: selectedMedia.title,
+                media_type: selectedMedia.type,
+                creator: selectedMedia.creator || '',
+                image_url: selectedMedia.image || selectedMedia.image_url || '',
+                external_id: selectedMedia.external_id,
+                external_source: selectedMedia.external_source || 'tmdb',
+              },
+            }),
+          });
+          if (!rankResp.ok) throw new Error('Failed to add to rank');
+          const rankName = userRanks.find((r: any) => r.id === selectedRankId)?.title || 'rank';
+          toast({ title: `Added ${selectedMedia.title} to ${rankName}!` });
+          queryClient.invalidateQueries({ queryKey: ['user-ranks'] });
+          queryClient.invalidateQueries({ queryKey: ['social-feed'] });
+          queryClient.invalidateQueries({ queryKey: ['feed'] });
+          handleClose();
+          return;
+        }
+
         // First track the media
         const trackResponse = await fetch(`${supabaseUrl}/functions/v1/track-media`, {
           method: 'POST',
@@ -584,7 +717,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
   ];
 
   // Post type state for the inline toggle in track form
-  const [trackPostType, setTrackPostType] = useState<"review" | "prediction">("review");
+  const [trackPostType, setTrackPostType] = useState<"review" | "prediction" | "hot_take" | "question" | "rank">("review");
 
   const renderActionContent = () => {
     if (selectedAction === "track") {
@@ -658,38 +791,43 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                 </div>
               )}
 
-              {/* Rating - always shown */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Rating:</span>
-                <div className="relative flex gap-0.5">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <div key={star} className="relative" style={{ width: 24, height: 24 }}>
-                      <Star className="w-6 h-6 text-gray-300 absolute inset-0" />
-                      <div
-                        className="absolute inset-0 overflow-hidden pointer-events-none"
-                        style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}
-                      >
-                        <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+              {/* Rating - only for review / prediction */}
+              {(trackPostType === 'review' || trackPostType === 'prediction') && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Rating:</span>
+                  <div className="relative flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <div key={star} className="relative" style={{ width: 24, height: 24 }}>
+                        <Star className="w-6 h-6 text-gray-300 absolute inset-0" />
+                        <div
+                          className="absolute inset-0 overflow-hidden pointer-events-none"
+                          style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}
+                        >
+                          <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  <input
-                    type="range" min="0" max="5" step="0.5"
-                    value={ratingValue}
-                    onChange={(e) => setRatingValue(parseFloat(e.target.value))}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    style={{ margin: 0 }}
-                    data-testid="rating-slider"
-                  />
+                    ))}
+                    <input
+                      type="range" min="0" max="5" step="0.5"
+                      value={ratingValue}
+                      onChange={(e) => setRatingValue(parseFloat(e.target.value))}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      style={{ margin: 0 }}
+                      data-testid="rating-slider"
+                    />
+                  </div>
+                  {ratingValue > 0 && <span className="text-sm font-medium text-gray-700">{ratingValue}/5</span>}
                 </div>
-                {ratingValue > 0 && <span className="text-sm font-medium text-gray-700">{ratingValue}/5</span>}
-              </div>
+              )}
 
-              {/* Post type toggle - always shown */}
+              {/* Post type toggle - all 5 types */}
               <div className="flex items-center gap-2 flex-wrap">
                 {([
-                  { key: 'review' as const, label: 'Rate / Review' },
-                  { key: 'prediction' as const, label: 'Prediction' },
+                  { key: 'review'     as const, label: 'Rate / Review' },
+                  { key: 'prediction' as const, label: 'Prediction'    },
+                  { key: 'hot_take'   as const, label: 'Hot Take'      },
+                  { key: 'question'   as const, label: 'Question'      },
+                  { key: 'rank'       as const, label: 'Rank'          },
                 ] as const).map(({ key, label }) => (
                   <button
                     key={key}
@@ -703,18 +841,24 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                 ))}
               </div>
 
-              {/* Text area - always shown */}
-              <textarea
-                value={contentText}
-                onChange={(e) => setContentText(e.target.value)}
-                placeholder={
-                  trackPostType === 'review' ? "Write your review..." :
-                  "What do you predict?"
-                }
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none text-sm"
-                rows={3}
-              />
+              {/* Text area — hidden for Rank tab */}
+              {trackPostType !== 'rank' && (
+                <textarea
+                  value={contentText}
+                  onChange={(e) => setContentText(e.target.value)}
+                  placeholder={
+                    trackPostType === 'review'     ? "Write your review..." :
+                    trackPostType === 'prediction' ? "What do you predict?" :
+                    trackPostType === 'hot_take'   ? "Drop your hot take — don't hold back…" :
+                    trackPostType === 'question'   ? "Ask the room a question…" :
+                    ""
+                  }
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none text-sm"
+                  rows={trackPostType === 'hot_take' ? 4 : 3}
+                />
+              )}
 
+              {/* Prediction poll options */}
               {trackPostType === 'prediction' && (
                 <div className="space-y-2">
                   {pollOptions.map((option, idx) => (
@@ -736,6 +880,70 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                     <button onClick={() => setPollOptions([...pollOptions, ""])} className="text-sm text-purple-600 hover:text-purple-700 font-medium">
                       + Add option
                     </button>
+                  )}
+                </div>
+              )}
+
+              {/* Hot Take — spoiler toggle */}
+              {trackPostType === 'hot_take' && (
+                <button
+                  type="button"
+                  onClick={() => setContainsSpoilers(v => !v)}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm transition-colors ${
+                    containsSpoilers ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-gray-50 border-gray-200 text-gray-600'
+                  }`}
+                >
+                  <span className="flex items-center gap-2"><span>⚠️</span> Contains spoilers</span>
+                  <div className="w-8 h-4 rounded-full relative transition-colors" style={{ background: containsSpoilers ? '#fbbf24' : '#d1d5db' }}>
+                    <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${containsSpoilers ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                  </div>
+                </button>
+              )}
+
+              {/* Rank — rank selector */}
+              {trackPostType === 'rank' && (
+                <div className="space-y-3">
+                  {userRanks.length === 0 ? (
+                    <div className="text-center py-4">
+                      <Trophy size={28} className="text-gray-300 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500 mb-1">No ranked lists yet</p>
+                      <button
+                        type="button"
+                        onClick={() => { handleClose(); window.location.href = "/collections?tab=ranks"; }}
+                        className="text-sm text-purple-600 font-medium"
+                      >
+                        Create a ranked list →
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Add to which rank?</p>
+                      <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                        {userRanks.map((rank: any) => (
+                          <button
+                            key={rank.id}
+                            type="button"
+                            onClick={() => setSelectedRankId(rank.id)}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-sm text-left transition-colors ${
+                              selectedRankId === rank.id
+                                ? 'bg-purple-50 border-purple-300 text-purple-800'
+                                : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300'
+                            }`}
+                          >
+                            <Trophy size={14} className={selectedRankId === rank.id ? 'text-purple-500' : 'text-gray-400'} />
+                            <span className="flex-1 truncate">{rank.title}</span>
+                            {selectedRankId === rank.id && <Check size={14} className="text-purple-500 shrink-0" />}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { handleClose(); window.location.href = "/collections?tab=ranks"; }}
+                        className="text-xs text-purple-600 font-medium"
+                      >
+                        + Create new ranked list
+                      </button>
+                    </>
                   )}
                 </div>
               )}
@@ -1138,7 +1346,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
   const canPost = () => {
     if (selectedAction === "track") {
       if (roomId) return !!contentText.trim() || ratingValue > 0 || !!selectedMedia;
-      return !!selectedMedia;
+      if (trackPostType === 'hot_take') return !!contentText.trim() && !!selectedMedia;
+      if (trackPostType === 'question')  return !!contentText.trim();
+      if (trackPostType === 'rank')      return !!selectedMedia && !!selectedRankId;
+      return !!selectedMedia; // review / prediction
     }
     // Allow posting with just a rating OR just content (text is optional if rating is set)
     if (selectedAction === "post") return !!contentText.trim() || ratingValue > 0;
