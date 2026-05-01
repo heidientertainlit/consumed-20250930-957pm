@@ -1619,7 +1619,11 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
                   {isPosting ? (
                     <Loader2 className="animate-spin" size={20} />
                   ) : (
-                    selectedAction === "track" ? (roomId ? "Share" : "Add Media") : 
+                    selectedAction === "track" ? (
+                      roomId ? "Share" :
+                      (trackPostType === 'hot_take' || trackPostType === 'question') ? "Post" :
+                      "Add Media"
+                    ) : 
                     selectedAction === "rank" ? "Add to Rank" : 
                     sayMode === "ask" ? "Ask" :
                     "Share"
