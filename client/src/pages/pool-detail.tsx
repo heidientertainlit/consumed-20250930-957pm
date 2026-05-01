@@ -883,22 +883,14 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
     setSubmittingComment(false);
   };
 
-  return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      {/* Media banner if present */}
-      {post.image_url && (
-        <div className="flex items-center gap-3 px-4 pt-3 pb-2 bg-gray-50 border-b border-gray-100">
-          <img src={post.image_url} alt={post.media_title || ''} className="w-10 h-10 rounded-lg object-cover shrink-0" />
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">{post.media_title}</p>
-            {post.media_type && <p className="text-xs text-gray-400 capitalize">{post.media_type}</p>}
-          </div>
-        </div>
-      )}
+  const isPredict = post.post_type === 'predict' || post.post_type === 'prediction';
+  const predictionQuestion = post.question || post.prediction_question || post.title;
 
-      <div className="px-4 pt-3 pb-3">
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="px-4 pt-3.5 pb-3">
         {/* Header */}
-        <div className="flex items-start justify-between mb-2">
+        <div className="flex items-start justify-between mb-2.5">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
               {initial}
@@ -909,43 +901,44 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {post.visibility === 'private' && (
-              <span className="text-[10px] font-medium text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">Room only</span>
-            )}
             {isOwn && (
-              <button
-                onClick={() => onDelete(post.id)}
-                className="p-1 rounded-full hover:bg-red-50 transition-colors"
-              >
+              <button onClick={() => onDelete(post.id)} className="p-1 rounded-full hover:bg-red-50 transition-colors">
                 <Trash2 size={13} className="text-gray-300 hover:text-red-400" />
               </button>
             )}
           </div>
         </div>
 
-        {/* Star rating if rate-review */}
+        {/* Prediction question */}
+        {isPredict && predictionQuestion && (
+          <div className="mb-2 px-3 py-2 rounded-xl bg-purple-50 border border-purple-100">
+            <p className="text-[10px] font-bold text-purple-500 uppercase tracking-wide mb-0.5">Prediction</p>
+            <p className="text-sm font-semibold text-purple-900 leading-snug">{predictionQuestion}</p>
+            {post.content && post.content !== predictionQuestion && (
+              <p className="text-xs text-purple-700 mt-1 italic">"{post.content}"</p>
+            )}
+          </div>
+        )}
+
+        {/* Star rating */}
         {isRateReview && post.rating > 0 && (
           <div className="flex items-center gap-0.5 mb-1.5">
             {[1, 2, 3, 4, 5].map(s => (
-              <Star
-                key={s}
-                size={13}
-                className={s <= Math.round(post.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-100'}
-              />
+              <Star key={s} size={13} className={s <= Math.round(post.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-100'} />
             ))}
           </div>
         )}
 
         {/* Content */}
-        {post.content && (
+        {post.content && !isPredict && (
           <p className="text-sm text-gray-800 leading-relaxed">{post.content}</p>
         )}
 
-        {/* Post type badge */}
-        {isRateReview && (
-          <div className="mt-2">
-            <span className="text-[10px] font-semibold text-purple-600 bg-purple-50 rounded-full px-2 py-0.5">Review</span>
-          </div>
+        {/* Media title (text only, no image) */}
+        {post.media_title && (
+          <p className="text-[11px] text-gray-400 mt-1.5">
+            re: <span className="font-medium text-gray-500">{post.media_title}</span>
+          </p>
         )}
       </div>
 
@@ -2653,8 +2646,21 @@ export default function PoolDetailPage() {
             question: '#10b981', discussion: '#8b5cf6',
           };
 
-          // Non-review room posts (thoughts, general activity)
-          const activityPosts = roomPosts.filter((p: any) => !(p.content && p.content.trim().length > 0 && p.rating));
+          // Non-review room posts — only show ones with actual displayable content
+          const activityPosts = roomPosts.filter((p: any) => {
+            const hasContent = p.content && p.content.trim().length > 0;
+            const hasRating = p.rating && p.rating > 0;
+            const isPredict = p.post_type === 'predict' || p.post_type === 'prediction';
+            const hasPredictQ = isPredict && (p.question || p.prediction_question || p.title);
+            return (hasContent || hasPredictQ) && !hasRating; // exclude reviews (shown in Ratings & Reviews)
+          });
+
+          // Mock featured threads — replace with real pinned takes once available
+          const MOCK_FEATURED = [
+            { id: 'f1', color: '#ef4444', tag: 'Debate', title: 'Who has the best character arc in the series?', author: 'heidi', replies: 4, time: '2d' },
+            { id: 'f2', color: '#f97316', tag: 'Hot Take', title: 'The ending was perfect — change my mind', author: 'Jeeppler', replies: 7, time: '3d' },
+            { id: 'f3', color: '#8b5cf6', tag: 'Discussion', title: 'Ranking every season from best to worst', author: 'heidi', replies: 2, time: '1w' },
+          ];
 
           return (
             <div className="space-y-6">
@@ -2682,6 +2688,44 @@ export default function PoolDetailPage() {
                   <p className="text-gray-400 text-sm">Join this room to drop takes</p>
                 </div>
               )}
+
+              {/* ── Featured Threads ── */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Featured</p>
+                  <span className="text-[10px] text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">Pinned</span>
+                </div>
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
+                  {(takes.length > 0 ? takes.slice(0, 3) : MOCK_FEATURED).map((item: any) => {
+                    const isMock = !item.user_id;
+                    const dotColor = isMock ? item.color : (TAG_COLORS[item.tag || 'discussion'] || '#8b5cf6');
+                    const title = isMock ? item.title : item.title;
+                    const author = isMock ? item.author : (item.users?.display_name || item.users?.user_name || 'Fan');
+                    const replies = isMock ? item.replies : (item.reply_count || 0);
+                    const time = isMock ? item.time : timeAgo(item.created_at);
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => !isMock && setActiveTake(item)}
+                        className="w-full flex items-start gap-3 px-4 py-4 text-left hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="mt-[5px] w-2 h-2 rounded-full shrink-0" style={{ background: dotColor }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-semibold text-gray-800 leading-snug">{title}</p>
+                          <div className="flex items-center gap-1.5 text-[10px] text-gray-400 mt-1">
+                            <span>{author}</span>
+                            <span>·</span>
+                            <span>{replies} replies</span>
+                            <span>·</span>
+                            <span>{time}</span>
+                          </div>
+                        </div>
+                        <ChevronRight size={14} className="text-gray-300 shrink-0 mt-0.5" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               {/* ── Takes ── */}
               <div>
