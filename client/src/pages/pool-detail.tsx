@@ -3131,6 +3131,11 @@ export default function PoolDetailPage() {
         isOpen={isComposerOpen}
         onClose={() => setIsComposerOpen(false)}
         roomId={params.id}
+        roomDefaultMedia={pool ? {
+          title: pool.name,
+          mediaType: pool.media_type ?? null,
+          imageUrl: pool.media_image ?? null,
+        } : null}
         onPosted={() => {
           setIsComposerOpen(false);
           refetchRoomPosts();

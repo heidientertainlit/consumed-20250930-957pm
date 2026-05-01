@@ -33,11 +33,16 @@ interface QuickActionSheetProps {
     creator?: string;
   } | null;
   roomId?: string | null;
+  roomDefaultMedia?: {
+    title: string;
+    mediaType?: string | null;
+    imageUrl?: string | null;
+  } | null;
   onPosted?: () => void;
   preselectedIntent?: "capture" | null;
 }
 
-export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, onPosted, preselectedIntent }: QuickActionSheetProps) {
+export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, roomDefaultMedia, onPosted, preselectedIntent }: QuickActionSheetProps) {
   const { session, user } = useAuth();
   const { toast } = useToast();
   
@@ -70,6 +75,14 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
       setSelectedIntent("capture");
       setSelectedAction("track");
       setShareToFeed(false);
+      setTrackPostType("hot_take");
+      if (roomDefaultMedia?.title) {
+        setSelectedMedia({
+          title: roomDefaultMedia.title,
+          type: roomDefaultMedia.mediaType ?? undefined,
+          image_url: roomDefaultMedia.imageUrl ?? undefined,
+        });
+      }
     } else if (isOpen && preselectedIntent === "capture" && !preselectedMedia && !roomId) {
       // Direct Add Media flow (e.g. from "Have a Take?" score card button)
       setSelectedIntent("capture");
@@ -78,7 +91,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, on
     if (isOpen && !roomId) {
       setShareToFeed(true);
     }
-  }, [isOpen, preselectedMedia, roomId, preselectedIntent]);
+  }, [isOpen, preselectedMedia, roomId, roomDefaultMedia, preselectedIntent]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
