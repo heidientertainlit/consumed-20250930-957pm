@@ -1500,7 +1500,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 ) : (
                   <p className="text-sm font-bold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
                 )}
-                <p className="text-[11px] text-gray-400 mt-0.5">Have you seen it? Rate it.</p>
                 {tasteAlignment !== null && (
                   <p className="text-[11px] text-violet-600 italic mt-0.5">
                     You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
@@ -2364,7 +2363,6 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
                 ) : (
                   <p className="text-sm font-bold text-gray-900 line-clamp-2">{post.mediaTitle || 'Untitled'}</p>
                 )}
-                <p className="text-[11px] text-gray-400 mt-0.5">Have you seen it? Rate it.</p>
               </div>
             </div>
             <div
