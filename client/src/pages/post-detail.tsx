@@ -79,6 +79,16 @@ export default function PostDetail() {
   const [commentVotes, setCommentVotes] = useState<Map<string, 'up' | 'down'>>(new Map());
   const scrollAttemptedRef = useRef(false);
 
+  // Redirect to feed with scroll-to-post instead of showing a separate detail page
+  useEffect(() => {
+    if (postId) {
+      const dest = highlightCommentId
+        ? `/activity?post=${postId}&comment=${highlightCommentId}`
+        : `/activity?post=${postId}`;
+      setLocation(dest);
+    }
+  }, [postId, highlightCommentId]);
+
   const { data: post, isLoading, error } = useQuery<SocialPost | null>({
     queryKey: ["post-detail", postId],
     queryFn: async () => {
