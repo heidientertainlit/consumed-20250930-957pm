@@ -6420,21 +6420,6 @@ export default function Feed() {
                 </div>
               )}
 
-              {/* Highlighted post from notification - rendered at top of feed */}
-              {highlightPostId && highlightedPost && (
-                <div className="flex items-center justify-between bg-violet-50 border border-violet-200 rounded-xl px-3 py-2 mb-2">
-                  <div className="flex items-center gap-2 text-xs text-violet-600 font-medium">
-                    <Bell size={12} />
-                    <span>Scrolling to post from notification…</span>
-                  </div>
-                  <button
-                    onClick={() => { setHighlightPostId(null); setHighlightCommentId(null); }}
-                    className="text-violet-400 hover:text-violet-600 ml-2"
-                  >
-                    <X size={13} />
-                  </button>
-                </div>
-              )}
 
 
               {/* === FEED SEQUENCE === */}
