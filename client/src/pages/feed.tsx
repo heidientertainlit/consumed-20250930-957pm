@@ -1111,37 +1111,24 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
         className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
       >
-        <Heart size={15} fill={isLiked ? 'currentColor' : 'none'} />
+        <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
         <span className="text-xs">{post.likes || 0}</span>
       </button>
       <button
         onClick={handleCommentToggle}
         className={`flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
       >
-        <MessageCircle size={15} />
+        <MessageCircle size={18} />
         <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
       </button>
-      {(post.externalId || post.mediaTitle) && (
-        <>
-          {onAddToList && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
-              className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
-              title="Add to list"
-            >
-              <Plus size={15} />
-            </button>
-          )}
-          <button
-            onClick={handleSeenIt}
-            className={`flex items-center gap-1.5 text-sm transition-all ${seenItDone ? 'text-green-500' : 'text-gray-400 hover:text-green-500 active:scale-110'}`}
-            title={seenItLabel.idle}
-            disabled={seenItDone}
-          >
-            <Check size={15} />
-            <span className="text-xs">{seenItDone ? seenItLabel.done : seenItLabel.idle}</span>
-          </button>
-        </>
+      {(post.externalId || post.mediaTitle) && onAddToList && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
+          className="flex items-center gap-1 text-sm text-gray-400 hover:text-purple-500 active:scale-110 transition-all"
+          title="Add to list"
+        >
+          <Plus size={18} />
+        </button>
       )}
       <div className="ml-auto flex items-center gap-1.5">
         <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
@@ -1549,10 +1536,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               )}
             </div>
           </div>
-          {/* From your feed separator */}
-          <div className="px-4 pt-3 pb-1">
-            <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">From your feed</p>
-          </div>
           {/* Bottom: friend's content */}
           <div className="px-4 pb-4">
             <div className="flex items-center justify-between mb-2">
@@ -1732,7 +1715,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {/* Other raters for the same media — shown in NORMAL layout too */}
           {relatedRatings.length > 0 && (
             <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2.5">
-              <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">From your feed</p>
               {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
                 <div key={r.userId} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -2406,9 +2388,6 @@ function StandalonePost({ post, onLike, onComment, isLiked, isCommentsActive, on
               {hoverRating > 0 && <span className="ml-1 text-xs text-gray-400">{hoverRating}/5</span>}
               {ratingSubmitted && hoverRating === 0 && <span className="ml-1 text-xs text-gray-400">{ratingValue}/5</span>}
             </div>
-          </div>
-          <div className="px-4 pt-3 pb-1">
-            <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">From your feed</p>
           </div>
           <div className="px-4 pb-3">
             <div className="flex items-center justify-between mb-2">
