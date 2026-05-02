@@ -1868,11 +1868,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             <p className="text-xs text-gray-400 text-center py-4">Loading...</p>
           ) : comments.length === 0 ? (
             <div className="px-4 pt-4 pb-5">
-              <p className="text-[11px] text-gray-400 text-center mb-3">Drop your take 👀</p>
               {session && (
                 <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3.5">
                   <MessageCircle size={16} className="text-violet-400 flex-shrink-0" />
-                  <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="What did you think?" className="flex-1 text-sm bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400" onKeyPress={(e) => e.key === 'Enter' && submitComment()} />
+                  <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Drop your take 👀" className="flex-1 text-sm bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400" onKeyPress={(e) => e.key === 'Enter' && submitComment()} />
                   <button onClick={submitComment} disabled={!commentText.trim() || submitting} className="px-4 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-semibold disabled:opacity-40 hover:bg-violet-700 transition-colors flex-shrink-0">Post</button>
                 </div>
               )}
