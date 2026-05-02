@@ -694,7 +694,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [replyingToId, setReplyingToId] = useState<string | null>(null);
+  const [replyingToId, setReplyingToId] = useState<string | number | null>(null);
   const [contentExpanded, setContentExpanded] = useState(false);
   const [showRating, setShowRating] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
