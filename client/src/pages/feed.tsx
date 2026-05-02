@@ -695,6 +695,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [replyingToId, setReplyingToId] = useState<string | number | null>(null);
+  const [replyText, setReplyText] = useState('');
   const [contentExpanded, setContentExpanded] = useState(false);
   const [showRating, setShowRating] = useState(false);
   const [ratingValue, setRatingValue] = useState(0);
@@ -1052,6 +1053,30 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     setSubmitting(false);
   };
 
+  const submitReply = async (parentId: string | number) => {
+    if (!session?.access_token || !replyText.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${supabaseUrl}/functions/v1/social-feed-comments`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ post_id: post.id, content: replyText.trim(), parent_comment_id: parentId }),
+      });
+      if (res.ok) {
+        setReplyText('');
+        setReplyingToId(null);
+        hasFetched.current = false;
+        const data = await fetchComments(post.id);
+        setComments(data || []);
+        hasFetched.current = true;
+      }
+    } catch (_) {}
+    setSubmitting(false);
+  };
+
   const deleteComment = async (commentId: string) => {
     if (!session?.access_token) return;
     const { error } = await supabase.from('social_post_comments').delete().eq('id', commentId);
@@ -1319,16 +1344,26 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     </div>
                     <p className="text-xs text-gray-600 leading-relaxed mb-2">{c.content}</p>
                     <div className="flex items-center gap-3">
-                      <button className="text-[11px] font-semibold text-violet-600" onClick={() => { setReplyingToId(replyingToId === c.id ? null : c.id); setCommentText(''); }}>Reply</button>
+                      <button className="text-[11px] font-semibold text-violet-600" onClick={() => { setReplyingToId(replyingToId === c.id ? null : c.id); setReplyText(''); }}>Reply</button>
                       <div className="flex items-center gap-1 text-gray-400"><Heart size={11} /><span className="text-[11px]">{c.likes_count || 0}</span></div>
                     </div>
                     {replyingToId === c.id && (
                       <div className="mt-2 ml-1 pl-3 border-l-2 border-violet-200">
                         <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
-                          <input autoFocus type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder={`Replying to @${c.user?.username || c.username || 'user'}…`} className="flex-1 text-xs bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400" onKeyPress={(e) => e.key === 'Enter' && submitComment()} />
-                          <button onClick={submitComment} disabled={!commentText.trim() || submitting} className="text-[11px] font-semibold text-violet-600 disabled:opacity-40 px-1">Post</button>
-                          <button onClick={() => { setReplyingToId(null); setCommentText(''); }} className="text-gray-400 hover:text-gray-600"><X size={11} /></button>
+                          <input autoFocus type="text" value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder={`Replying to @${c.user?.username || c.username || 'user'}…`} className="flex-1 text-xs bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400" onKeyPress={(e) => e.key === 'Enter' && submitReply(c.id)} />
+                          <button onClick={() => submitReply(c.id)} disabled={!replyText.trim() || submitting} className="text-[11px] font-semibold text-violet-600 disabled:opacity-40 px-1">Post</button>
+                          <button onClick={() => { setReplyingToId(null); setReplyText(''); }} className="text-gray-400 hover:text-gray-600"><X size={11} /></button>
                         </div>
+                      </div>
+                    )}
+                    {c.replies?.length > 0 && (
+                      <div className="mt-2 ml-1 pl-3 border-l-2 border-violet-100 space-y-2">
+                        {c.replies.map((r: any) => (
+                          <div key={r.id} className="py-1">
+                            <span className="text-[11px] font-bold text-gray-800">{r.user?.displayName || r.user?.username || r.username || 'User'}</span>
+                            <p className="text-xs text-gray-500 leading-relaxed mt-0.5">{r.content}</p>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -1465,16 +1500,26 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     </div>
                     <p className="text-xs text-gray-600 leading-relaxed mb-2">{c.content}</p>
                     <div className="flex items-center gap-3">
-                      <button className="text-[11px] font-semibold text-violet-600" onClick={() => { setReplyingToId(replyingToId === c.id ? null : c.id); setCommentText(''); }}>Reply</button>
+                      <button className="text-[11px] font-semibold text-violet-600" onClick={() => { setReplyingToId(replyingToId === c.id ? null : c.id); setReplyText(''); }}>Reply</button>
                       <div className="flex items-center gap-1 text-gray-400"><Heart size={11} /><span className="text-[11px]">{c.likes_count || 0}</span></div>
                     </div>
                     {replyingToId === c.id && (
                       <div className="mt-2 ml-1 pl-3 border-l-2 border-violet-200">
                         <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
-                          <input autoFocus type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder={`Replying to @${c.user?.username || c.username || 'user'}…`} className="flex-1 text-xs bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400" onKeyPress={(e) => e.key === 'Enter' && submitComment()} />
-                          <button onClick={submitComment} disabled={!commentText.trim() || submitting} className="text-[11px] font-semibold text-violet-600 disabled:opacity-40 px-1">Post</button>
-                          <button onClick={() => { setReplyingToId(null); setCommentText(''); }} className="text-gray-400 hover:text-gray-600"><X size={11} /></button>
+                          <input autoFocus type="text" value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder={`Replying to @${c.user?.username || c.username || 'user'}…`} className="flex-1 text-xs bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400" onKeyPress={(e) => e.key === 'Enter' && submitReply(c.id)} />
+                          <button onClick={() => submitReply(c.id)} disabled={!replyText.trim() || submitting} className="text-[11px] font-semibold text-violet-600 disabled:opacity-40 px-1">Post</button>
+                          <button onClick={() => { setReplyingToId(null); setReplyText(''); }} className="text-gray-400 hover:text-gray-600"><X size={11} /></button>
                         </div>
+                      </div>
+                    )}
+                    {c.replies?.length > 0 && (
+                      <div className="mt-2 ml-1 pl-3 border-l-2 border-violet-100 space-y-2">
+                        {c.replies.map((r: any) => (
+                          <div key={r.id} className="py-1">
+                            <span className="text-[11px] font-bold text-gray-800">{r.user?.displayName || r.user?.username || r.username || 'User'}</span>
+                            <p className="text-xs text-gray-500 leading-relaxed mt-0.5">{r.content}</p>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -1914,16 +1959,26 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </div>
                   <p className="text-xs text-gray-600 leading-relaxed mb-2">{c.content}</p>
                   <div className="flex items-center gap-3">
-                    <button className="text-[11px] font-semibold text-violet-600" onClick={() => { setReplyingToId(replyingToId === c.id ? null : c.id); setCommentText(''); }}>Reply</button>
+                    <button className="text-[11px] font-semibold text-violet-600" onClick={() => { setReplyingToId(replyingToId === c.id ? null : c.id); setReplyText(''); }}>Reply</button>
                     <div className="flex items-center gap-1 text-gray-400"><Heart size={11} /><span className="text-[11px]">{c.likes_count || 0}</span></div>
                   </div>
                   {replyingToId === c.id && (
                     <div className="mt-2 ml-1 pl-3 border-l-2 border-violet-200">
                       <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-3 py-2">
-                        <input autoFocus type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder={`Replying to @${c.user?.username || c.username || 'user'}…`} className="flex-1 text-xs bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400" onKeyPress={(e) => e.key === 'Enter' && submitComment()} />
-                        <button onClick={submitComment} disabled={!commentText.trim() || submitting} className="text-[11px] font-semibold text-violet-600 disabled:opacity-40 px-1">Post</button>
-                        <button onClick={() => { setReplyingToId(null); setCommentText(''); }} className="text-gray-400 hover:text-gray-600"><X size={11} /></button>
+                        <input autoFocus type="text" value={replyText} onChange={(e) => setReplyText(e.target.value)} placeholder={`Replying to @${c.user?.username || c.username || 'user'}…`} className="flex-1 text-xs bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400" onKeyPress={(e) => e.key === 'Enter' && submitReply(c.id)} />
+                        <button onClick={() => submitReply(c.id)} disabled={!replyText.trim() || submitting} className="text-[11px] font-semibold text-violet-600 disabled:opacity-40 px-1">Post</button>
+                        <button onClick={() => { setReplyingToId(null); setReplyText(''); }} className="text-gray-400 hover:text-gray-600"><X size={11} /></button>
                       </div>
+                    </div>
+                  )}
+                  {c.replies?.length > 0 && (
+                    <div className="mt-2 ml-1 pl-3 border-l-2 border-violet-100 space-y-2">
+                      {c.replies.map((r: any) => (
+                        <div key={r.id} className="py-1">
+                          <span className="text-[11px] font-bold text-gray-800">{r.user?.displayName || r.user?.username || r.username || 'User'}</span>
+                          <p className="text-xs text-gray-500 leading-relaxed mt-0.5">{r.content}</p>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
