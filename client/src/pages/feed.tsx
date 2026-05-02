@@ -30,7 +30,7 @@ import { AwardsCompletionFeed } from "@/components/awards-completion-feed";
 import { PointsGlimpse } from "@/components/points-glimpse";
 import { QuickReactCard } from "@/components/quick-react-card";
 
-import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap } from "lucide-react";
+import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronRight, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap, Bell } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
@@ -1146,7 +1146,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         className={`flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
       >
         <MessageCircle size={18} />
-        <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
+        <span className="text-xs">{comments.length || post.comments || 0}</span>
       </button>
       {(post.externalId || post.mediaTitle) && onAddToList && (
         <button
@@ -1295,7 +1295,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             className={`flex items-center gap-1.5 text-sm ${showComments ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
           >
             <MessageCircle size={15} />
-            <span className="text-xs">{Math.max(post.comments || 0, comments.length)}</span>
+            <span className="text-xs">{comments.length || post.comments || 0}</span>
           </button>
           <div className="ml-auto flex items-center gap-1">
             {currentUserId !== post.user?.id && (
@@ -1444,7 +1444,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${showComments ? 'text-blue-500' : 'text-gray-600 hover:text-blue-500'}`}
           >
             <MessageCircle size={15} />
-            <span className="text-xs">{Math.max(post.comments || 0, comments.length) > 0 ? `${Math.max(post.comments || 0, comments.length)} replies` : 'Reply'}</span>
+            <span className="text-xs">{(comments.length || post.comments || 0) > 0 ? `${comments.length || post.comments || 0} replies` : 'Reply'}</span>
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
@@ -4018,17 +4018,18 @@ export default function Feed() {
           {/* Horizontally swipeable post cards — user name is inside each card */}
           <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory md:flex-col md:overflow-x-visible md:snap-none md:pb-0">
             {grp.posts.map((p) => (
-              <UGCGroupCard
-                key={p.id}
-                post={p}
-                onLike={handleLike}
-                isLiked={likedPosts.has(p.id)}
-                session={session}
-                fetchComments={fetchComments}
-                currentUserId={currentAppUserId || undefined}
-                onDeletePost={handleDeletePost}
-                onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
-              />
+              <div key={p.id} id={`post-${p.id}`} className="contents">
+                <UGCGroupCard
+                  post={p}
+                  onLike={handleLike}
+                  isLiked={likedPosts.has(p.id)}
+                  session={session}
+                  fetchComments={fetchComments}
+                  currentUserId={currentAppUserId || undefined}
+                  onDeletePost={handleDeletePost}
+                  onAddToList={(media) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+                />
+              </div>
             ))}
           </div>
         </div>
@@ -4133,7 +4134,7 @@ export default function Feed() {
     if (item?._isPromoted) {
       const { _isPromoted, _promotedKey, ...originalPost } = item;
       return (
-        <div key={`${keyPrefix}-${_promotedKey || 'promoted'}-${item.id}`} className="mb-4">
+        <div key={`${keyPrefix}-${_promotedKey || 'promoted'}-${item.id}`} id={`post-${item.id}`} className="mb-4">
           <div className="w-full">
             <UGCGroupCard
               post={originalPost as any}
@@ -4403,17 +4404,18 @@ export default function Feed() {
       <div key={carousel.id} className="mb-2">
         <div className="flex items-stretch gap-3 overflow-x-auto pb-1 scrollbar-hide snap-x snap-mandatory md:flex-col md:overflow-x-visible md:snap-none md:pb-0 md:items-stretch">
           {carousel.posts.map((post: any) => (
-            <UGCGroupCard
-              key={post.id}
-              post={post}
-              onLike={handleLike}
-              isLiked={likedPosts.has(post.id)}
-              session={session}
-              fetchComments={fetchComments}
-              currentUserId={currentAppUserId || undefined}
-              onDeletePost={handleDeletePost}
-              onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
-            />
+            <div key={post.id} id={`post-${post.id}`} className="contents">
+              <UGCGroupCard
+                post={post}
+                onLike={handleLike}
+                isLiked={likedPosts.has(post.id)}
+                session={session}
+                fetchComments={fetchComments}
+                currentUserId={currentAppUserId || undefined}
+                onDeletePost={handleDeletePost}
+                onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+              />
+            </div>
           ))}
         </div>
       </div>
@@ -5232,6 +5234,10 @@ export default function Feed() {
     
     const cleanupUrl = () => {
       window.history.replaceState({}, '', '/activity');
+      setTimeout(() => {
+        setHighlightPostId(null);
+        setHighlightCommentId(null);
+      }, 3000);
     };
     
     scrollIntervalRef.current = setInterval(() => {
@@ -6416,112 +6422,17 @@ export default function Feed() {
 
               {/* Highlighted post from notification - rendered at top of feed */}
               {highlightPostId && highlightedPost && (
-                <div 
-                  id={`post-${highlightedPost.id}`}
-                  className="rounded-2xl border-2 border-purple-200 bg-white shadow-sm overflow-hidden"
-                >
-                  <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-                    <span className="text-xs text-purple-500 font-medium">From notification</span>
-                    <button 
-                      onClick={() => { setHighlightPostId(null); setHighlightCommentId(null); }}
-                      className="text-gray-400 hover:text-gray-600 p-1"
-                    >
-                      <X size={16} />
-                    </button>
+                <div className="flex items-center justify-between bg-violet-50 border border-violet-200 rounded-xl px-3 py-2 mb-2">
+                  <div className="flex items-center gap-2 text-xs text-violet-600 font-medium">
+                    <Bell size={12} />
+                    <span>Scrolling to post from notification…</span>
                   </div>
-                  <div className="px-4 pb-4">
-                    {highlightedPost.user && (
-                      <div className="flex items-start gap-3 mb-3">
-                        <Link href={`/user/${highlightedPost.user.id}`}>
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold cursor-pointer flex-shrink-0">
-                            {highlightedPost.user.avatar ? (
-                              <img src={highlightedPost.user.avatar} alt="" className="w-full h-full rounded-full object-cover" />
-                            ) : (
-                              <span className="text-sm">{highlightedPost.user.displayName?.[0]?.toUpperCase() || highlightedPost.user.username?.[0]?.toUpperCase() || '?'}</span>
-                            )}
-                          </div>
-                        </Link>
-                        <div className="min-w-0 flex-1">
-                          <Link href={`/user/${highlightedPost.user.id}`}>
-                            <span className="font-semibold text-sm text-gray-900 hover:text-purple-600 cursor-pointer">
-                              {highlightedPost.user.displayName || highlightedPost.user.username}
-                            </span>
-                          </Link>
-                          {highlightedPost.user.username && highlightedPost.user.displayName && highlightedPost.user.username !== highlightedPost.user.displayName && (
-                            <p className="text-xs text-gray-400 leading-tight">@{highlightedPost.user.username}</p>
-                          )}
-                          <p className="text-xs text-gray-400">{highlightedPost.timestamp ? formatDate(highlightedPost.timestamp) : ''}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {highlightedPost.mediaItems?.[0] && (
-                      <div className="bg-gray-50 rounded-lg p-3 mb-3 border border-gray-100">
-                        <div className="flex gap-3">
-                          <div className="flex-shrink-0">
-                            {highlightedPost.mediaItems[0].imageUrl && highlightedPost.mediaItems[0].imageUrl.startsWith('http') ? (
-                              <img
-                                src={highlightedPost.mediaItems[0].imageUrl}
-                                alt={highlightedPost.mediaItems[0].title}
-                                className="w-14 h-18 rounded-lg object-cover"
-                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                              />
-                            ) : (
-                              <div className="w-14 h-18 rounded-lg bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                                <Film size={18} className="text-purple-300" />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-sm text-gray-900 line-clamp-2">{highlightedPost.mediaItems[0].title}</h3>
-                            {highlightedPost.mediaItems[0].mediaType && (
-                              <p className="text-xs text-gray-500 capitalize">{highlightedPost.mediaItems[0].mediaType}</p>
-                            )}
-                            {highlightedPost.rating && highlightedPost.rating > 0 && (
-                              <div className="flex items-center gap-0.5 mt-1">
-                                {[1, 2, 3, 4, 5].map(s => (
-                                  <Star key={s} size={13} className={s <= (highlightedPost.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {highlightedPost.content && !highlightedPost.content.toLowerCase().startsWith('rated ') && !highlightedPost.content.toLowerCase().startsWith('added ') && (
-                      <div className="text-sm text-gray-800 mb-3 whitespace-pre-wrap">
-                        {renderMentions(highlightedPost.content)}
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
-                      <div className="flex items-center gap-1.5 text-sm text-red-400">
-                        <Heart size={15} fill={highlightedPost.likes > 0 ? 'currentColor' : 'none'} />
-                        <span className="text-xs">{highlightedPost.likes || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-sm text-purple-500">
-                        <MessageCircle size={15} />
-                        <span className="text-xs">{highlightedPost.comments || 0}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-100 p-4 bg-gray-50/50">
-                    <CommentsSection
-                      postId={highlightedPost.id}
-                      fetchComments={fetchComments}
-                      session={session}
-                      commentInput={commentInputs[highlightedPost.id] || ''}
-                      onCommentInputChange={(value) => handleCommentInputChange(highlightedPost.id, value)}
-                      onSubmitComment={(parentCommentId?: string, content?: string) => handleComment(highlightedPost.id, parentCommentId, content)}
-                      isSubmitting={commentMutation.isPending}
-                      currentUserId={user?.id}
-                      onDeleteComment={(commentId) => handleDeleteComment(commentId, highlightedPost.id)}
-                      onVoteComment={handleVoteComment}
-                      commentVotes={commentVotes}
-                    />
-                  </div>
+                  <button
+                    onClick={() => { setHighlightPostId(null); setHighlightCommentId(null); }}
+                    className="text-violet-400 hover:text-violet-600 ml-2"
+                  >
+                    <X size={13} />
+                  </button>
                 </div>
               )}
 
