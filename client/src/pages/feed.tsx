@@ -6496,6 +6496,10 @@ export default function Feed() {
                     )}
 
                     <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
+                      <div className="flex items-center gap-1.5 text-sm text-red-400">
+                        <Heart size={15} fill={highlightedPost.likes > 0 ? 'currentColor' : 'none'} />
+                        <span className="text-xs">{highlightedPost.likes || 0}</span>
+                      </div>
                       <div className="flex items-center gap-1.5 text-sm text-purple-500">
                         <MessageCircle size={15} />
                         <span className="text-xs">{highlightedPost.comments || 0}</span>
