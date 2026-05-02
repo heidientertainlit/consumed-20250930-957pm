@@ -1289,13 +1289,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {loadingComments ? (
               <p className="text-xs text-gray-400 text-center py-4">Loading...</p>
             ) : comments.length === 0 ? (
-              <div className="flex flex-col items-center px-4 pt-5 pb-4">
-                <MessageCircle size={28} className="text-violet-500 mb-2" />
-                <p className="text-sm font-bold text-gray-800 mb-3">Drop your take 👀</p>
+              <div className="px-4 pt-4 pb-5">
+                <p className="text-[11px] text-gray-400 text-center mb-3">Drop your take 👀</p>
                 {session && (
-                  <div className="w-full flex gap-2 items-center">
-                    <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="What did you think?" className="flex-1 text-xs px-4 py-2.5 rounded-full border border-violet-300 focus:outline-none focus:border-violet-500 bg-white" onKeyPress={(e) => e.key === 'Enter' && submitComment()} />
-                    <button onClick={submitComment} disabled={!commentText.trim() || submitting} className="px-4 py-2.5 rounded-full bg-violet-600 text-white text-xs font-semibold disabled:opacity-40 hover:bg-violet-700 transition-colors">Send</button>
+                  <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3.5">
+                    <MessageCircle size={16} className="text-violet-400 flex-shrink-0" />
+                    <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="What did you think?" className="flex-1 text-sm bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400" onKeyPress={(e) => e.key === 'Enter' && submitComment()} />
+                    <button onClick={submitComment} disabled={!commentText.trim() || submitting} className="px-4 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-semibold disabled:opacity-40 hover:bg-violet-700 transition-colors flex-shrink-0">Post</button>
                   </div>
                 )}
               </div>
@@ -1426,13 +1426,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {loadingComments ? (
               <p className="text-xs text-gray-400 text-center py-4">Loading...</p>
             ) : comments.length === 0 ? (
-              <div className="flex flex-col items-center px-4 pt-5 pb-4">
-                <MessageCircle size={28} className="text-violet-500 mb-2" />
-                <p className="text-sm font-bold text-gray-800 mb-3">Drop your take 👀</p>
+              <div className="px-4 pt-4 pb-5">
+                <p className="text-[11px] text-gray-400 text-center mb-3">Drop your take 👀</p>
                 {session && (
-                  <div className="w-full flex gap-2 items-center">
-                    <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="What did you think?" className="flex-1 text-xs px-4 py-2.5 rounded-full border border-violet-300 focus:outline-none focus:border-violet-500 bg-white" onKeyPress={(e) => e.key === 'Enter' && submitComment()} />
-                    <button onClick={submitComment} disabled={!commentText.trim() || submitting} className="px-4 py-2.5 rounded-full bg-violet-600 text-white text-xs font-semibold disabled:opacity-40 hover:bg-violet-700 transition-colors">Send</button>
+                  <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3.5">
+                    <MessageCircle size={16} className="text-violet-400 flex-shrink-0" />
+                    <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="What did you think?" className="flex-1 text-sm bg-transparent focus:outline-none text-gray-700 placeholder:text-gray-400" onKeyPress={(e) => e.key === 'Enter' && submitComment()} />
+                    <button onClick={submitComment} disabled={!commentText.trim() || submitting} className="px-4 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-semibold disabled:opacity-40 hover:bg-violet-700 transition-colors flex-shrink-0">Post</button>
                   </div>
                 )}
               </div>
