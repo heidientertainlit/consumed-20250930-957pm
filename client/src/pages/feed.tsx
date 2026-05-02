@@ -1557,11 +1557,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           <div className="px-4 pb-4">
             <div className="flex items-center justify-between mb-2">
               <Link href={`/user/${post.user?.id || ''}`} className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold overflow-hidden flex-shrink-0">
-                  {post.user?.avatar
-                    ? <img src={post.user.avatar} alt="" className="w-full h-full object-cover" />
-                    : (post.user?.displayName || post.user?.username || '?')[0]?.toUpperCase()}
-                </div>
                 <p className="text-xs font-semibold text-gray-900 hover:text-purple-600">
                   {post.user?.displayName || post.user?.username || 'Someone'}
                 </p>
@@ -1587,12 +1582,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 )}
               </div>
             </div>
-            {/* Taste alignment */}
-            {tasteAlignment !== null && (
-              <p className="text-[11px] text-violet-600 italic mb-1.5">
-                You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
-              </p>
-            )}
             {post.content && (
               <div className="mb-2">
                 <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
@@ -1614,9 +1603,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
                   <div key={r.userId} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 overflow-hidden">
-                        {(r.displayName || r.userName || '?')[0]?.toUpperCase()}
-                      </div>
                       <span className="text-xs font-semibold text-gray-700">{r.displayName || r.userName}</span>
                     </div>
                     <div className="flex flex-col items-end">
