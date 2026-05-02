@@ -1368,9 +1368,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     )}
                   </div>
                 ))}
-                {Math.max(post.comments || 0, comments.length) > 3 && (
+                {comments.length > 3 && (
                   <div className="border-t border-gray-200 px-4 py-2.5 text-center bg-white">
-                    <button className="text-xs font-semibold text-violet-600">View all {Math.max(post.comments || 0, comments.length)} takes →</button>
+                    <button className="text-xs font-semibold text-violet-600">View all {comments.length} takes →</button>
                   </div>
                 )}
                 {session && (
@@ -1524,9 +1524,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     )}
                   </div>
                 ))}
-                {Math.max(post.comments || 0, comments.length) > 3 && (
+                {comments.length > 3 && (
                   <div className="border-t border-gray-200 px-4 py-2.5 text-center bg-white">
-                    <button className="text-xs font-semibold text-violet-600">View all {Math.max(post.comments || 0, comments.length)} takes →</button>
+                    <button className="text-xs font-semibold text-violet-600">View all {comments.length} takes →</button>
                   </div>
                 )}
                 {session && (
