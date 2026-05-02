@@ -1410,41 +1410,83 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         </div>
 
         {showComments && (
-          <div className="border-t border-gray-100 px-4 pb-4 bg-gray-50/50">
+          <div className="border-t border-gray-100">
+            {/* Header */}
+            <div className="px-4 pt-4 pb-3">
+              <div className="flex items-center gap-2 mb-0.5">
+                <MessageCircle size={18} className="text-violet-600" />
+                <span className="text-sm font-bold text-gray-900 tracking-wide uppercase">
+                  {Math.max(post.comments || 0, comments.length)} Takes
+                </span>
+              </div>
+              <p className="text-xs text-gray-400">Add your take. Agree, disagree, or add to it.</p>
+            </div>
+
+            {/* Comment rows */}
             {loadingComments ? (
-              <p className="text-xs text-gray-400 text-center py-3">Loading...</p>
+              <p className="text-xs text-gray-400 text-center py-4">Loading...</p>
             ) : comments.length === 0 ? (
-              <p className="text-xs text-gray-400 text-center py-3">No replies yet. Be the first!</p>
+              <div className="px-4 pb-4 text-center">
+                <p className="text-sm font-bold text-gray-800 mb-1">Be the first to share</p>
+                <p className="text-xs text-gray-400">No takes yet. What did you think?</p>
+              </div>
             ) : (
-              <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pt-3 mb-2">
-                {comments.slice(0, 5).map((c: any) => (
-                  <div key={c.id} className="flex items-start gap-2">
-                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                      <User size={12} className="text-blue-500" />
+              <div>
+                {comments.slice(0, 3).map((c: any, idx: number) => (
+                  <div key={c.id} className={`px-4 py-3 ${idx < Math.min(comments.length, 3) - 1 ? 'border-b border-gray-100' : ''}`}>
+                    <div className="flex items-baseline justify-between mb-1">
+                      <span className="text-xs font-bold text-gray-900">{c.user?.displayName || c.user?.username || c.username || 'User'}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-400">{c.created_at ? timeAgo(c.created_at) : ''}</span>
+                        {(currentUserId === (c.user?.id || c.userId) || currentUserId === post.userId) && (
+                          <button onClick={(e) => { e.stopPropagation(); deleteComment(c.id); }} className="text-gray-300 hover:text-red-400 transition-colors" title="Delete">
+                            <Trash2 size={10} />
+                          </button>
+                        )}
+                        {currentUserId && currentUserId !== (c.user?.id || c.userId) && (
+                          <button onClick={(e) => { e.stopPropagation(); setReportCommentTarget({ id: c.id, userId: c.user?.id || c.userId || '', userName: c.user?.username || c.username || 'User' }); }} className="text-gray-300 hover:text-red-400 transition-colors" title="Report">
+                            <Flag size={10} />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-xs font-semibold text-gray-800 mr-1">{c.user?.username || c.username || 'User'}</span>
-                      <span className="text-xs text-gray-600">{c.content}</span>
+                    <p className="text-xs text-gray-600 leading-relaxed mb-2">{c.content}</p>
+                    <div className="flex items-center gap-3">
+                      <button className="text-[11px] font-semibold text-violet-600 hover:text-violet-700">Reply</button>
+                      <div className="flex items-center gap-1 text-gray-400">
+                        <Heart size={11} />
+                        <span className="text-[11px]">{c.likes_count || 0}</span>
+                      </div>
                     </div>
-                    {(currentUserId === (c.user?.id || c.userId) || currentUserId === post.userId) && (
-                      <button onClick={(e) => { e.stopPropagation(); deleteComment(c.id); }} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5" title="Delete comment">
-                        <Trash2 size={11} />
-                      </button>
-                    )}
-                    {currentUserId && currentUserId !== (c.user?.id || c.userId) && (
-                      <button onClick={(e) => { e.stopPropagation(); setReportCommentTarget({ id: c.id, userId: c.user?.id || c.userId || '', userName: c.user?.username || c.username || 'User' }); }} className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5" title="Report comment">
-                        <Flag size={11} />
-                      </button>
-                    )}
                   </div>
                 ))}
+                {Math.max(post.comments || 0, comments.length) > 3 && (
+                  <div className="border-t border-gray-100 px-4 py-3 text-center">
+                    <button className="text-xs font-semibold text-violet-600 hover:text-violet-700">
+                      View all {Math.max(post.comments || 0, comments.length)} takes →
+                    </button>
+                  </div>
+                )}
               </div>
             )}
+
+            {/* Input */}
             {session && (
-              <div className="flex gap-2 pt-2">
-                <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Write a reply..." className="flex-1 text-xs px-3 py-2 rounded-full border border-gray-200 focus:outline-none focus:border-blue-400 bg-white" onKeyPress={(e) => e.key === 'Enter' && submitComment()} />
-                <button onClick={submitComment} disabled={!commentText.trim() || submitting} className="p-2 rounded-full bg-blue-500 text-white disabled:opacity-50">
-                  <Send size={14} />
+              <div className="border-t border-gray-100 px-3 py-3 flex gap-2 items-center">
+                <input
+                  type="text"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="What's your take?"
+                  className="flex-1 text-xs px-4 py-2.5 rounded-full border border-gray-200 focus:outline-none focus:border-violet-400 bg-white"
+                  onKeyPress={(e) => e.key === 'Enter' && submitComment()}
+                />
+                <button
+                  onClick={submitComment}
+                  disabled={!commentText.trim() || submitting}
+                  className="px-4 py-2.5 rounded-full bg-violet-600 text-white text-xs font-semibold disabled:opacity-40 hover:bg-violet-700 transition-colors"
+                >
+                  Send
                 </button>
               </div>
             )}
