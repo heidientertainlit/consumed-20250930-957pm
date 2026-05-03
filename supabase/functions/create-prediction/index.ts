@@ -144,7 +144,6 @@ serve(async (req) => {
         media_type: media_type || null,
         media_external_id: media_external_id || null,
         media_external_source: media_external_source || null,
-        media_image_url: media_image_url || null,
         deadline: deadline || null,
         likes_count: 0,
         comments_count: 0,
