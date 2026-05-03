@@ -58,7 +58,8 @@ function SortableListItem({ item, onRemove, onMove, isOwner }: SortableListItemP
         <div
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 touch-none"
+          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 flex-shrink-0"
+          style={{ touchAction: 'none' }}
         >
           <GripVertical size={18} />
         </div>
@@ -150,7 +151,7 @@ export default function ListDetail() {
       activationConstraint: { distance: 8 },
     }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 150, tolerance: 5 },
+      activationConstraint: { delay: 250, tolerance: 10 },
     })
   );
 
