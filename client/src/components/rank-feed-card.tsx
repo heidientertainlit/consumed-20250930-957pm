@@ -71,7 +71,7 @@ interface RankFeedCardProps {
   commentVotes?: Map<string, 'up' | 'down'>;
 }
 
-const PREVIEW_COUNT = 3;
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
 function PctBar({ upCount, downCount }: { upCount: number; downCount: number }) {
@@ -122,19 +122,23 @@ export default function RankFeedCard({
   const [localItems, setLocalItems] = useState<RankItemWithVotes[]>(rank.items || []);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
-  const [showAll, setShowAll] = useState(false);
   const [localLikesCount, setLocalLikesCount] = useState(likesCount);
   const [localIsLiked, setLocalIsLiked] = useState(isLiked);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [reportPostOpen, setReportPostOpen] = useState(false);
 
-  // Drag ranking state
-  const [isDragMode, setIsDragMode] = useState(false);
+  // Drag ranking state — always active, no mode toggle needed
   const [myOrder, setMyOrder] = useState<RankItemWithVotes[]>([]);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const isOwner = user?.id === rank.user_id;
   const hasItems = !!(rank.items && rank.items.length > 0);
+
+  // Keep myOrder in sync with localItems (sorted by official position)
+  useEffect(() => {
+    const sorted = [...localItems].sort((a, b) => (a.position || 0) - (b.position || 0));
+    setMyOrder(sorted);
+  }, [localItems]);
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -194,7 +198,6 @@ export default function RankFeedCard({
             : item;
         }));
       }
-      setIsDragMode(false);
       setHasSubmitted(true);
       toast({ title: 'Ranking saved!', description: 'Your personal ranking has been recorded.' });
     },
@@ -221,21 +224,6 @@ export default function RankFeedCard({
 
   const handleDelete = () => { setShowDeleteDialog(false); deleteMutation.mutate(); };
 
-  const enterDragMode = () => {
-    if (!session?.access_token) {
-      toast({ title: 'Sign in to rank', variant: 'destructive' });
-      return;
-    }
-    if (isOwner) {
-      toast({ title: "Can't rank your own list", variant: 'destructive' });
-      return;
-    }
-    // Use the current local items order (already sorted by position)
-    const sorted = [...localItems].sort((a, b) => (a.position || 0) - (b.position || 0));
-    setMyOrder(sorted);
-    setShowAll(true);
-    setIsDragMode(true);
-  };
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -243,6 +231,7 @@ export default function RankFeedCard({
     const [moved] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, moved);
     setMyOrder(items);
+    setHasSubmitted(false); // reset so user can re-submit after reordering
   };
 
   const formatTimeAgo = (dateString?: string) => {
@@ -254,11 +243,6 @@ export default function RankFeedCard({
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
     return `${Math.floor(diffInMinutes / 1440)}d`;
   };
-
-  const displayItems = isDragMode
-    ? myOrder
-    : (showAll ? localItems : localItems.slice(0, PREVIEW_COUNT));
-  const hiddenCount = localItems.length - PREVIEW_COUNT;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden" data-testid={`rank-feed-card-${rank.id}`}>
@@ -335,15 +319,15 @@ export default function RankFeedCard({
           )}
         </div>
 
-        {/* Drag mode hint */}
-        {isDragMode && (
+        {/* Drag hint */}
+        {!isOwner && localItems.length > 0 && (
           <div className="mb-2 flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 rounded-lg px-3 py-1.5">
             <GripVertical size={12} />
             Drag to reorder into your personal ranking
           </div>
         )}
 
-        {/* Items */}
+        {/* Items — always in drag-ready state */}
         {isLoadingItems ? (
           <div className="space-y-2">
             {[1, 2, 3].map(n => (
@@ -366,8 +350,26 @@ export default function RankFeedCard({
               </Link>
             )}
           </div>
-        ) : isDragMode ? (
-          /* ── DRAG MODE ── */
+        ) : isOwner ? (
+          /* Owner sees read-only list with pct bars */
+          <div className="space-y-1.5">
+            {myOrder.map((item, idx) => (
+              <div key={item.id} className="flex items-center gap-2.5 py-2 px-3 bg-gray-50 rounded-lg">
+                <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-orange-100 text-orange-700 flex-shrink-0">
+                  {item.position || idx + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
+                  {item.creator && item.creator.toLowerCase() !== 'unknown' && (
+                    <p className="text-xs text-gray-500 truncate">{item.creator}</p>
+                  )}
+                </div>
+                <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* Everyone else gets immediate drag-and-drop */
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId={`rank-drag-${rank.id}`}>
               {(provided) => (
@@ -399,6 +401,7 @@ export default function RankFeedCard({
                               <p className="text-xs text-gray-400 truncate">{item.creator}</p>
                             )}
                           </div>
+                          <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
                         </div>
                       )}
                     </Draggable>
@@ -408,82 +411,28 @@ export default function RankFeedCard({
               )}
             </Droppable>
           </DragDropContext>
-        ) : (
-          /* ── NORMAL MODE with percentages ── */
-          <div className="space-y-1.5">
-            {displayItems.map((item, idx) => (
-              <div key={item.id} className="flex items-center gap-2.5 py-2 px-3 bg-gray-50 rounded-lg">
-                <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-orange-100 text-orange-700 flex-shrink-0">
-                  {item.position || idx + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
-                  {item.creator && item.creator.toLowerCase() !== 'unknown' && (
-                    <p className="text-xs text-gray-500 truncate">{item.creator}</p>
-                  )}
-                </div>
-                <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
-              </div>
-            ))}
-            {!showAll && hiddenCount > 0 && (
-              <button
-                onClick={() => setShowAll(true)}
-                className="w-full text-xs text-purple-600 text-center py-1 hover:text-purple-800 transition-colors"
-              >
-                +{hiddenCount} more items
-              </button>
-            )}
-            {showAll && localItems.length > PREVIEW_COUNT && (
-              <button
-                onClick={() => setShowAll(false)}
-                className="w-full text-xs text-gray-400 text-center py-1 hover:text-gray-600 transition-colors"
-              >
-                Show less
-              </button>
-            )}
-          </div>
         )}
 
-        {/* Rank It / Submit / Cancel buttons */}
+        {/* Submit button — always visible for non-owners */}
         {!isOwner && localItems.length > 0 && (
-          <div className="mt-2 flex items-center gap-2">
-            {isDragMode ? (
-              <>
-                <button
-                  onClick={() => submitOrderingMutation.mutate(myOrder)}
-                  disabled={submitOrderingMutation.isPending}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition-colors font-medium disabled:opacity-60"
-                >
-                  {submitOrderingMutation.isPending ? (
-                    <><Loader2 size={11} className="animate-spin" /> Saving...</>
-                  ) : (
-                    <><Check size={11} /> Submit My Ranking</>
-                  )}
-                </button>
-                <button
-                  onClick={() => setIsDragMode(false)}
-                  disabled={submitOrderingMutation.isPending}
-                  className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={enterDragMode}
-                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors font-medium ${
-                  hasSubmitted
-                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100'
-                    : 'bg-gray-100 text-gray-600 hover:bg-purple-50 hover:text-purple-600 border border-transparent'
-                }`}
-              >
-                {hasSubmitted ? (
-                  <><Check size={11} /> Re-rank It</>
-                ) : (
-                  <><GripVertical size={11} /> Rank It</>
-                )}
-              </button>
-            )}
+          <div className="mt-2">
+            <button
+              onClick={() => submitOrderingMutation.mutate(myOrder)}
+              disabled={submitOrderingMutation.isPending}
+              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors font-medium disabled:opacity-60 ${
+                hasSubmitted
+                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100'
+                  : 'bg-purple-600 text-white hover:bg-purple-700'
+              }`}
+            >
+              {submitOrderingMutation.isPending ? (
+                <><Loader2 size={11} className="animate-spin" /> Saving...</>
+              ) : hasSubmitted ? (
+                <><Check size={11} /> Submitted — Re-submit</>
+              ) : (
+                <><Check size={11} /> Submit My Ranking</>
+              )}
+            </button>
           </div>
         )}
       </div>
