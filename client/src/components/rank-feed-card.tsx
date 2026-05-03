@@ -71,28 +71,28 @@ interface RankFeedCardProps {
   commentVotes?: Map<string, 'up' | 'down'>;
 }
 
-
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+const MAX_ITEMS = 10;
 
 function PctBar({ upCount, downCount }: { upCount: number; downCount: number }) {
   const total = upCount + downCount;
   if (total === 0) {
     return (
-      <div className="flex items-center gap-1 flex-shrink-0 min-w-[72px]">
-        <span className="text-[10px] text-gray-300 font-semibold w-7 text-right">↑—</span>
+      <div className="flex items-center gap-1 flex-shrink-0 min-w-[68px]">
+        <span className="text-[10px] text-gray-300 font-semibold w-6 text-right">↑—</span>
         <div className="flex-1 h-1 bg-gray-100 rounded-full" />
-        <span className="text-[10px] text-gray-300 font-semibold w-7">—↓</span>
+        <span className="text-[10px] text-gray-300 font-semibold w-6">—↓</span>
       </div>
     );
   }
   const upPct = Math.round(upCount / total * 100);
   return (
-    <div className="flex items-center gap-1 flex-shrink-0 min-w-[72px]">
-      <span className="text-[10px] text-emerald-600 font-semibold w-7 text-right">↑{upPct}%</span>
+    <div className="flex items-center gap-1 flex-shrink-0 min-w-[68px]">
+      <span className="text-[10px] text-emerald-600 font-semibold w-6 text-right">↑{upPct}%</span>
       <div className="flex-1 h-1 bg-red-100 rounded-full overflow-hidden">
         <div className="h-full bg-emerald-400 rounded-full transition-all" style={{ width: `${upPct}%` }} />
       </div>
-      <span className="text-[10px] text-red-400 font-semibold w-7">{100 - upPct}%↓</span>
+      <span className="text-[10px] text-red-400 font-semibold w-6">{100 - upPct}%↓</span>
     </div>
   );
 }
@@ -134,20 +134,16 @@ export default function RankFeedCard({
   const [localIsLiked, setLocalIsLiked] = useState(isLiked);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [reportPostOpen, setReportPostOpen] = useState(false);
-
-  // Expanded/collapsed state — collapsed by default in feed
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  // Drag ranking state — active when expanded
   const [myOrder, setMyOrder] = useState<RankItemWithVotes[]>([]);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const isOwner = user?.id === rank.user_id;
   const hasItems = !!(rank.items && rank.items.length > 0);
 
-  // Keep myOrder in sync with localItems (sorted by official position)
   useEffect(() => {
-    const sorted = [...localItems].sort((a, b) => (a.position || 0) - (b.position || 0));
+    const sorted = [...localItems]
+      .sort((a, b) => (a.position || 0) - (b.position || 0))
+      .slice(0, MAX_ITEMS);
     setMyOrder(sorted);
   }, [localItems]);
 
@@ -235,14 +231,13 @@ export default function RankFeedCard({
 
   const handleDelete = () => { setShowDeleteDialog(false); deleteMutation.mutate(); };
 
-
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     const items = Array.from(myOrder);
     const [moved] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, moved);
     setMyOrder(items);
-    setHasSubmitted(false); // reset so user can re-submit after reordering
+    setHasSubmitted(false);
   };
 
   const formatTimeAgo = (dateString?: string) => {
@@ -353,70 +348,26 @@ export default function RankFeedCard({
               </Link>
             )}
           </div>
-        ) : !isExpanded ? (
-          /* ── COLLAPSED PREVIEW ── show first 3 items + Rank It CTA */
-          <>
-            <div className="space-y-1.5">
-              {myOrder.slice(0, 3).map((item, idx) => (
-                <div key={item.id} className="flex items-center gap-2.5 py-2 px-3 bg-gray-50 rounded-lg">
-                  <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-orange-100 text-orange-700 flex-shrink-0">
-                    {item.position || idx + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
-                  </div>
-                  <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
-                </div>
-              ))}
-            </div>
-            {/* CTA row */}
-            <div className="mt-2.5 flex items-center justify-between">
-              {!isOwner ? (
-                <button
-                  onClick={() => setIsExpanded(true)}
-                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition-colors font-medium"
-                >
-                  <GripVertical size={11} />
-                  {hasSubmitted ? 'Re-rank' : 'Rank It'}
-                </button>
-              ) : (
-                <div />
-              )}
-              {myOrder.length > 3 && (
-                <button
-                  onClick={() => setIsExpanded(true)}
-                  className="text-xs text-gray-400 hover:text-purple-600 transition-colors"
-                >
-                  +{myOrder.length - 3} more
-                </button>
-              )}
-            </div>
-          </>
         ) : isOwner ? (
-          /* ── OWNER EXPANDED — read-only with pct bars ── */
-          <>
-            <div className="space-y-1.5">
-              {myOrder.map((item, idx) => (
-                <div key={item.id} className="flex items-center gap-2.5 py-2 px-3 bg-gray-50 rounded-lg">
-                  <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-orange-100 text-orange-700 flex-shrink-0">
-                    {item.position || idx + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
-                    {item.creator && item.creator.toLowerCase() !== 'unknown' && (
-                      <p className="text-xs text-gray-500 truncate">{item.creator}</p>
-                    )}
-                  </div>
-                  <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
+          /* Owner: read-only list with pct bars */
+          <div className="space-y-1.5">
+            {myOrder.map((item, idx) => (
+              <div key={item.id} className="flex items-center gap-2.5 py-2 px-3 bg-gray-50 rounded-lg">
+                <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-orange-100 text-orange-700 flex-shrink-0">
+                  {item.position || idx + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
+                  {item.creator && item.creator.toLowerCase() !== 'unknown' && (
+                    <p className="text-xs text-gray-500 truncate">{item.creator}</p>
+                  )}
                 </div>
-              ))}
-            </div>
-            <button onClick={() => setIsExpanded(false)} className="mt-2 text-xs text-gray-400 hover:text-gray-600 transition-colors">
-              ↑ Collapse
-            </button>
-          </>
+                <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
+              </div>
+            ))}
+          </div>
         ) : (
-          /* ── NON-OWNER EXPANDED — drag & drop ── */
+          /* Everyone else: drag & drop, always shown, capped at 10 */
           <>
             <div className="mb-2 flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 rounded-lg px-3 py-1.5">
               <GripVertical size={12} />
@@ -463,8 +414,7 @@ export default function RankFeedCard({
                 )}
               </Droppable>
             </DragDropContext>
-            {/* Submit + collapse row */}
-            <div className="mt-2 flex items-center justify-between">
+            <div className="mt-2">
               <button
                 onClick={() => submitOrderingMutation.mutate(myOrder)}
                 disabled={submitOrderingMutation.isPending}
@@ -481,9 +431,6 @@ export default function RankFeedCard({
                 ) : (
                   <><Check size={11} /> Submit My Ranking</>
                 )}
-              </button>
-              <button onClick={() => setIsExpanded(false)} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-                ↑ Collapse
               </button>
             </div>
           </>
