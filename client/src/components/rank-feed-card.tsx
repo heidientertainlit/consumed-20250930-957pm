@@ -76,7 +76,15 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawv
 
 function PctBar({ upCount, downCount }: { upCount: number; downCount: number }) {
   const total = upCount + downCount;
-  if (total === 0) return null;
+  if (total === 0) {
+    return (
+      <div className="flex items-center gap-1 flex-shrink-0 min-w-[72px]">
+        <span className="text-[10px] text-gray-300 font-semibold w-7 text-right">↑—</span>
+        <div className="flex-1 h-1 bg-gray-100 rounded-full" />
+        <span className="text-[10px] text-gray-300 font-semibold w-7">—↓</span>
+      </div>
+    );
+  }
   const upPct = Math.round(upCount / total * 100);
   return (
     <div className="flex items-center gap-1 flex-shrink-0 min-w-[72px]">
@@ -127,7 +135,10 @@ export default function RankFeedCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [reportPostOpen, setReportPostOpen] = useState(false);
 
-  // Drag ranking state — always active, no mode toggle needed
+  // Expanded/collapsed state — collapsed by default in feed
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Drag ranking state — active when expanded
   const [myOrder, setMyOrder] = useState<RankItemWithVotes[]>([]);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
@@ -319,15 +330,7 @@ export default function RankFeedCard({
           )}
         </div>
 
-        {/* Drag hint */}
-        {!isOwner && localItems.length > 0 && (
-          <div className="mb-2 flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 rounded-lg px-3 py-1.5">
-            <GripVertical size={12} />
-            Drag to reorder into your personal ranking
-          </div>
-        )}
-
-        {/* Items — always in drag-ready state */}
+        {/* Items */}
         {isLoadingItems ? (
           <div className="space-y-2">
             {[1, 2, 3].map(n => (
@@ -350,90 +353,140 @@ export default function RankFeedCard({
               </Link>
             )}
           </div>
-        ) : isOwner ? (
-          /* Owner sees read-only list with pct bars */
-          <div className="space-y-1.5">
-            {myOrder.map((item, idx) => (
-              <div key={item.id} className="flex items-center gap-2.5 py-2 px-3 bg-gray-50 rounded-lg">
-                <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-orange-100 text-orange-700 flex-shrink-0">
-                  {item.position || idx + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
-                  {item.creator && item.creator.toLowerCase() !== 'unknown' && (
-                    <p className="text-xs text-gray-500 truncate">{item.creator}</p>
-                  )}
+        ) : !isExpanded ? (
+          /* ── COLLAPSED PREVIEW ── show first 3 items + Rank It CTA */
+          <>
+            <div className="space-y-1.5">
+              {myOrder.slice(0, 3).map((item, idx) => (
+                <div key={item.id} className="flex items-center gap-2.5 py-2 px-3 bg-gray-50 rounded-lg">
+                  <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-orange-100 text-orange-700 flex-shrink-0">
+                    {item.position || idx + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
+                  </div>
+                  <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
                 </div>
-                <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          /* Everyone else gets immediate drag-and-drop */
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId={`rank-drag-${rank.id}`}>
-              {(provided) => (
-                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1.5">
-                  {myOrder.map((item, idx) => (
-                    <Draggable key={item.id} draggableId={item.id} index={idx}>
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          className={`flex items-center gap-2 py-2 px-3 rounded-lg border transition-colors ${
-                            snapshot.isDragging
-                              ? 'bg-purple-50 border-purple-300 shadow-md'
-                              : 'bg-gray-50 border-transparent'
-                          }`}
-                        >
-                          <div {...provided.dragHandleProps} className="text-gray-300 hover:text-purple-400 cursor-grab active:cursor-grabbing flex-shrink-0">
-                            <GripVertical size={16} />
-                          </div>
-                          <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-purple-100 text-purple-600 flex-shrink-0">
-                            {idx + 1}
-                          </span>
-                          {item.image_url && (
-                            <img src={item.image_url} alt={item.title} className="w-6 h-8 rounded object-cover flex-shrink-0" />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
-                            {item.creator && item.creator.toLowerCase() !== 'unknown' && (
-                              <p className="text-xs text-gray-400 truncate">{item.creator}</p>
-                            )}
-                          </div>
-                          <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        )}
-
-        {/* Submit button — always visible for non-owners */}
-        {!isOwner && localItems.length > 0 && (
-          <div className="mt-2">
-            <button
-              onClick={() => submitOrderingMutation.mutate(myOrder)}
-              disabled={submitOrderingMutation.isPending}
-              className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors font-medium disabled:opacity-60 ${
-                hasSubmitted
-                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100'
-                  : 'bg-purple-600 text-white hover:bg-purple-700'
-              }`}
-            >
-              {submitOrderingMutation.isPending ? (
-                <><Loader2 size={11} className="animate-spin" /> Saving...</>
-              ) : hasSubmitted ? (
-                <><Check size={11} /> Submitted — Re-submit</>
+              ))}
+            </div>
+            {/* CTA row */}
+            <div className="mt-2.5 flex items-center justify-between">
+              {!isOwner ? (
+                <button
+                  onClick={() => setIsExpanded(true)}
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition-colors font-medium"
+                >
+                  <GripVertical size={11} />
+                  {hasSubmitted ? 'Re-rank' : 'Rank It'}
+                </button>
               ) : (
-                <><Check size={11} /> Submit My Ranking</>
+                <div />
               )}
+              {myOrder.length > 3 && (
+                <button
+                  onClick={() => setIsExpanded(true)}
+                  className="text-xs text-gray-400 hover:text-purple-600 transition-colors"
+                >
+                  +{myOrder.length - 3} more
+                </button>
+              )}
+            </div>
+          </>
+        ) : isOwner ? (
+          /* ── OWNER EXPANDED — read-only with pct bars ── */
+          <>
+            <div className="space-y-1.5">
+              {myOrder.map((item, idx) => (
+                <div key={item.id} className="flex items-center gap-2.5 py-2 px-3 bg-gray-50 rounded-lg">
+                  <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-orange-100 text-orange-700 flex-shrink-0">
+                    {item.position || idx + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
+                    {item.creator && item.creator.toLowerCase() !== 'unknown' && (
+                      <p className="text-xs text-gray-500 truncate">{item.creator}</p>
+                    )}
+                  </div>
+                  <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setIsExpanded(false)} className="mt-2 text-xs text-gray-400 hover:text-gray-600 transition-colors">
+              ↑ Collapse
             </button>
-          </div>
+          </>
+        ) : (
+          /* ── NON-OWNER EXPANDED — drag & drop ── */
+          <>
+            <div className="mb-2 flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 rounded-lg px-3 py-1.5">
+              <GripVertical size={12} />
+              Drag to set your personal order
+            </div>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId={`rank-drag-${rank.id}`}>
+                {(provided) => (
+                  <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1.5">
+                    {myOrder.map((item, idx) => (
+                      <Draggable key={item.id} draggableId={item.id} index={idx}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={`flex items-center gap-2 py-2 px-3 rounded-lg border transition-colors ${
+                              snapshot.isDragging
+                                ? 'bg-purple-50 border-purple-300 shadow-md'
+                                : 'bg-gray-50 border-transparent'
+                            }`}
+                          >
+                            <div {...provided.dragHandleProps} className="text-gray-300 hover:text-purple-400 cursor-grab active:cursor-grabbing flex-shrink-0">
+                              <GripVertical size={16} />
+                            </div>
+                            <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-purple-100 text-purple-600 flex-shrink-0">
+                              {idx + 1}
+                            </span>
+                            {item.image_url && (
+                              <img src={item.image_url} alt={item.title} className="w-6 h-8 rounded object-cover flex-shrink-0" />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
+                              {item.creator && item.creator.toLowerCase() !== 'unknown' && (
+                                <p className="text-xs text-gray-400 truncate">{item.creator}</p>
+                              )}
+                            </div>
+                            <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+            {/* Submit + collapse row */}
+            <div className="mt-2 flex items-center justify-between">
+              <button
+                onClick={() => submitOrderingMutation.mutate(myOrder)}
+                disabled={submitOrderingMutation.isPending}
+                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors font-medium disabled:opacity-60 ${
+                  hasSubmitted
+                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100'
+                    : 'bg-purple-600 text-white hover:bg-purple-700'
+                }`}
+              >
+                {submitOrderingMutation.isPending ? (
+                  <><Loader2 size={11} className="animate-spin" /> Saving...</>
+                ) : hasSubmitted ? (
+                  <><Check size={11} /> Submitted — Re-submit</>
+                ) : (
+                  <><Check size={11} /> Submit My Ranking</>
+                )}
+              </button>
+              <button onClick={() => setIsExpanded(false)} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+                ↑ Collapse
+              </button>
+            </div>
+          </>
         )}
       </div>
 
