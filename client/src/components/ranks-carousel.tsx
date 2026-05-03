@@ -7,7 +7,8 @@ import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { trackEvent } from '@/lib/posthog';
-import { BarChart3, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Loader2, ArrowUp, ArrowDown, Plus, X, MessageCircle, Send, Heart, Flag } from 'lucide-react';
+import { BarChart3, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Loader2, Plus, X, MessageCircle, Send, Heart, Flag, GripVertical, Check } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { ReportSheet } from '@/components/report-sheet';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -33,56 +34,17 @@ interface RankData {
   likesCount?: number;
 }
 
-interface VoteItemProps {
-  item: RankItem;
-  index: number;
-  userVote: 'up' | 'down' | null;
-  onVote: (itemId: string, direction: 'up' | 'down') => void;
-  isVoting: boolean;
-}
-
-function VoteItem({ item, index, userVote, onVote, isVoting }: VoteItemProps) {
+function PctBar({ upCount, downCount }: { upCount: number; downCount: number }) {
+  const total = upCount + downCount;
+  if (total === 0) return null;
+  const upPct = Math.round(upCount / total * 100);
   return (
-    <div className="flex items-center gap-2 py-2.5 px-3 rounded-xl bg-gray-50 border border-gray-100">
-      <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${
-        index === 0 ? 'bg-gradient-to-br from-teal-500 to-emerald-600 text-white' :
-        index === 1 ? 'bg-gradient-to-br from-teal-400 to-emerald-500 text-white' :
-        'bg-gradient-to-br from-teal-300 to-emerald-400 text-white'
-      }`}>
-        {index + 1}
+    <div className="flex items-center gap-1 flex-shrink-0 min-w-[72px]">
+      <span className="text-[10px] text-emerald-600 font-semibold w-7 text-right">↑{upPct}%</span>
+      <div className="flex-1 h-1 bg-red-100 rounded-full overflow-hidden">
+        <div className="h-full bg-emerald-400 rounded-full transition-all" style={{ width: `${upPct}%` }} />
       </div>
-      <span className="text-gray-900 font-medium flex-1 truncate text-sm">
-        {item.title}
-      </span>
-      <div className="flex items-center gap-0.5">
-        <button
-          onClick={() => onVote(item.id, 'up')}
-          disabled={isVoting}
-          className={`w-6 h-6 rounded-l flex items-center justify-center transition-colors ${
-            userVote === 'up' 
-              ? 'bg-teal-500 text-white' 
-              : 'bg-gray-100 text-gray-500 hover:bg-teal-100 hover:text-teal-600'
-          }`}
-        >
-          <ArrowUp size={14} strokeWidth={2.5} />
-        </button>
-        <div className="flex items-center bg-gray-100 px-1.5 py-1 text-[10px] font-medium">
-          <span className="text-teal-600">+{item.up_vote_count || 0}</span>
-          <span className="text-gray-400 mx-0.5">/</span>
-          <span className="text-red-500">-{item.down_vote_count || 0}</span>
-        </div>
-        <button
-          onClick={() => onVote(item.id, 'down')}
-          disabled={isVoting}
-          className={`w-6 h-6 rounded-r flex items-center justify-center transition-colors ${
-            userVote === 'down' 
-              ? 'bg-red-500 text-white' 
-              : 'bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-600'
-          }`}
-        >
-          <ArrowDown size={14} strokeWidth={2.5} />
-        </button>
-      </div>
+      <span className="text-[10px] text-red-400 font-semibold w-7">{100 - upPct}%↓</span>
     </div>
   );
 }
@@ -111,11 +73,10 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
   const [currentIndex, setCurrentIndex] = useState(0);
   const [expandedRanks, setExpandedRanks] = useState<Record<string, boolean>>({});
   const [localRankings, setLocalRankings] = useState<Record<string, RankItem[]>>({});
-  const [submittedRanks, setSubmittedRanks] = useState<Record<string, boolean>>({});
   const [addingToRank, setAddingToRank] = useState<string | null>(null);
   const [customAddInput, setCustomAddInput] = useState('');
-  const [userVotes, setUserVotes] = useState<Record<string, 'up' | 'down' | null>>({});
   const [expandedVoting, setExpandedVoting] = useState<Record<string, boolean>>({});
+  const [submittedRankIds, setSubmittedRankIds] = useState<Set<string>>(new Set());
   const [showComments, setShowComments] = useState<Record<string, boolean>>({});
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [rankComments, setRankComments] = useState<Record<string, RankComment[]>>({});
@@ -211,259 +172,56 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
 
   const submitMutation = useMutation({
     mutationFn: async ({ rankId, items }: { rankId: string; items: RankItem[] }) => {
-      if (!user?.id) throw new Error('Must be logged in');
-      
-      // Save user's complete order to user_rank_orders table
-      const itemOrder = items.map(item => item.id);
-      const { data: existingOrder } = await supabase
-        .from('user_rank_orders')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('rank_id', rankId)
-        .single();
-      
-      if (existingOrder) {
-        await supabase
-          .from('user_rank_orders')
-          .update({ item_order: itemOrder, updated_at: new Date().toISOString() })
-          .eq('id', existingOrder.id);
-      } else {
-        await supabase.from('user_rank_orders').insert({
-          user_id: user.id,
-          rank_id: rankId,
-          item_order: itemOrder
-        });
+      if (!session?.access_token) throw new Error('Must be logged in');
+      const item_positions = items.map((item, index) => ({
+        rank_item_id: item.id,
+        position: index + 1,
+      }));
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/save-rank-ordering`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ rank_id: rankId, item_positions }),
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to save ranking');
       }
-      
-      // Also record individual up/down votes for aggregate scoring
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        const originalPosition = ranks?.find(r => r.id === rankId)?.items.find(it => it.id === item.id)?.position || i + 1;
-        
-        if (i + 1 < originalPosition) {
-          const existing = await supabase
-            .from('rank_item_votes')
-            .select('id')
-            .eq('rank_item_id', item.id)
-            .eq('voter_id', user.id)
-            .single();
-          
-          if (existing.data) {
-            await supabase.from('rank_item_votes')
-              .update({ direction: 'up' })
-              .eq('id', existing.data.id);
-          } else {
-            await supabase.from('rank_item_votes').insert({
-              rank_item_id: item.id,
-              voter_id: user.id,
-              direction: 'up'
-            });
-            
-            await supabase.from('rank_items')
-              .update({ up_vote_count: (item.up_vote_count || 0) + 1 })
-              .eq('id', item.id);
-          }
-        } else if (i + 1 > originalPosition) {
-          const existing = await supabase
-            .from('rank_item_votes')
-            .select('id')
-            .eq('rank_item_id', item.id)
-            .eq('voter_id', user.id)
-            .single();
-          
-          if (existing.data) {
-            await supabase.from('rank_item_votes')
-              .update({ direction: 'down' })
-              .eq('id', existing.data.id);
-          } else {
-            await supabase.from('rank_item_votes').insert({
-              rank_item_id: item.id,
-              voter_id: user.id,
-              direction: 'down'
-            });
-            
-            await supabase.from('rank_items')
-              .update({ down_vote_count: (item.down_vote_count || 0) + 1 })
-              .eq('id', item.id);
-          }
-        }
-      }
-      
-      return { rankId };
+      const data = await response.json();
+      return { rankId, updatedItems: data.items || [] };
     },
-    onSuccess: ({ rankId }) => {
-      setSubmittedRanks(prev => ({ ...prev, [rankId]: true }));
+    onSuccess: ({ rankId, updatedItems }) => {
+      setSubmittedRankIds(prev => new Set([...prev, rankId]));
+      // Update local item counts with fresh server data
+      if (updatedItems.length > 0) {
+        setLocalRankings(prev => ({
+          ...prev,
+          [rankId]: (prev[rankId] || []).map(item => {
+            const updated = updatedItems.find((i: any) => i.id === item.id);
+            return updated ? { ...item, up_vote_count: updated.up_vote_count, down_vote_count: updated.down_vote_count } : item;
+          }),
+        }));
+      }
       queryClient.invalidateQueries({ queryKey: ['consumed-ranks-carousel'] });
       trackEvent('rank_submitted', { rank_id: rankId });
+      toast({ title: 'Ranking saved!', description: 'Your personal ranking has been recorded.' });
     },
-    onError: () => {
-      console.error('Failed to submit rank');
-    }
+    onError: (error: Error) => {
+      toast({ title: 'Failed to save ranking', description: error.message, variant: 'destructive' });
+    },
   });
 
-  const voteMutation = useMutation({
-    mutationFn: async ({ itemId, direction, rankId }: { itemId: string; direction: 'up' | 'down'; rankId: string }) => {
-      if (!user?.id) throw new Error('Must be logged in');
-      
-      console.log('🗳️ Voting:', { itemId, direction, userId: user.id });
-      
-      const currentVote = userVotes[itemId];
-      
-      if (currentVote === direction) {
-        console.log('🗳️ Removing existing vote');
-        const { error: deleteError } = await supabase
-          .from('rank_item_votes')
-          .delete()
-          .eq('rank_item_id', itemId)
-          .eq('voter_id', user.id);
-        
-        if (deleteError) console.error('Delete vote error:', deleteError);
-        
-        const field = direction === 'up' ? 'up_vote_count' : 'down_vote_count';
-        const { data: item, error: fetchError } = await supabase
-          .from('rank_items')
-          .select('up_vote_count, down_vote_count')
-          .eq('id', itemId)
-          .single();
-        
-        if (fetchError) console.error('Fetch item error:', fetchError);
-        
-        const newCount = Math.max(0, ((item as any)?.[field] || 1) - 1);
-        const { error: updateError } = await supabase
-          .from('rank_items')
-          .update({ [field]: newCount })
-          .eq('id', itemId);
-        
-        if (updateError) console.error('Update count error:', updateError);
-        console.log('🗳️ Vote removed, new count:', newCount);
-        
-        return { itemId, direction: null as 'up' | 'down' | null, rankId };
-      }
-      
-      const { data: existing, error: existingError } = await supabase
-        .from('rank_item_votes')
-        .select('id, direction')
-        .eq('rank_item_id', itemId)
-        .eq('voter_id', user.id)
-        .maybeSingle();
-      
-      if (existingError) console.error('Fetch existing vote error:', existingError);
-      console.log('🗳️ Existing vote:', existing);
-      
-      if (existing) {
-        const oldDir = existing.direction as 'up' | 'down';
-        const { error: updateVoteError } = await supabase
-          .from('rank_item_votes')
-          .update({ direction })
-          .eq('id', existing.id);
-        
-        if (updateVoteError) console.error('Update vote error:', updateVoteError);
-        
-        const { data: item, error: fetchError } = await supabase
-          .from('rank_items')
-          .select('up_vote_count, down_vote_count')
-          .eq('id', itemId)
-          .single();
-        
-        if (fetchError) console.error('Fetch item error:', fetchError);
-        
-        const updates: Record<string, number> = {};
-        if (oldDir === 'up') updates.up_vote_count = Math.max(0, (item?.up_vote_count || 1) - 1);
-        if (oldDir === 'down') updates.down_vote_count = Math.max(0, (item?.down_vote_count || 1) - 1);
-        if (direction === 'up') updates.up_vote_count = (updates.up_vote_count ?? item?.up_vote_count ?? 0) + 1;
-        if (direction === 'down') updates.down_vote_count = (updates.down_vote_count ?? item?.down_vote_count ?? 0) + 1;
-        
-        const { error: updateError } = await supabase.from('rank_items').update(updates).eq('id', itemId);
-        if (updateError) console.error('Update counts error:', updateError);
-        console.log('🗳️ Changed vote from', oldDir, 'to', direction, 'new counts:', updates);
-      } else {
-        console.log('🗳️ Inserting new vote');
-        const { error: insertError } = await supabase.from('rank_item_votes').insert({
-          rank_item_id: itemId,
-          voter_id: user.id,
-          direction
-        });
-        
-        if (insertError) console.error('Insert vote error:', insertError);
-        
-        const field = direction === 'up' ? 'up_vote_count' : 'down_vote_count';
-        const { data: item, error: fetchError } = await supabase
-          .from('rank_items')
-          .select('up_vote_count, down_vote_count')
-          .eq('id', itemId)
-          .single();
-        
-        if (fetchError) console.error('Fetch item error:', fetchError);
-        
-        const newCount = ((item as any)?.[field] || 0) + 1;
-        const { error: updateError } = await supabase
-          .from('rank_items')
-          .update({ [field]: newCount })
-          .eq('id', itemId);
-        
-        if (updateError) console.error('Update count error:', updateError);
-        console.log('🗳️ New vote inserted, new count:', newCount);
-      }
-      
-      return { itemId, direction, rankId };
-    },
-    onMutate: async ({ itemId, direction, rankId }) => {
-      await queryClient.cancelQueries({ queryKey: ['consumed-ranks-carousel'] });
-      
-      const previousRanks = queryClient.getQueryData(['consumed-ranks-carousel', offset]);
-      
-      setLocalRankings(prev => {
-        const items = prev[rankId] || [];
-        return {
-          ...prev,
-          [rankId]: items.map(item => {
-            if (item.id !== itemId) return item;
-            const currentVote = userVotes[itemId];
-            let upDelta = 0;
-            let downDelta = 0;
-            
-            if (currentVote === direction) {
-              if (direction === 'up') upDelta = -1;
-              else downDelta = -1;
-            } else if (currentVote) {
-              if (currentVote === 'up') upDelta = -1;
-              else downDelta = -1;
-              if (direction === 'up') upDelta += 1;
-              else downDelta += 1;
-            } else {
-              if (direction === 'up') upDelta = 1;
-              else downDelta = 1;
-            }
-            
-            return {
-              ...item,
-              up_vote_count: Math.max(0, item.up_vote_count + upDelta),
-              down_vote_count: Math.max(0, item.down_vote_count + downDelta)
-            };
-          })
-        };
-      });
-      
-      const newVote = userVotes[itemId] === direction ? null : direction;
-      setUserVotes(prev => ({ ...prev, [itemId]: newVote }));
-      
-      return { previousRanks };
-    },
-    onSuccess: ({ itemId, direction }) => {
-      queryClient.invalidateQueries({ queryKey: ['consumed-ranks-carousel'] });
-      trackEvent('rank_item_voted', { item_id: itemId, direction });
-      console.log('🗳️ Vote success:', { itemId, direction });
-    },
-    onError: (err, variables, context) => {
-      console.error('Failed to vote:', err);
-      if (context?.previousRanks) {
-        queryClient.setQueryData(['consumed-ranks-carousel', offset], context.previousRanks);
-      }
-    }
-  });
-
-  const handleVote = (itemId: string, direction: 'up' | 'down', rankId: string) => {
-    voteMutation.mutate({ itemId, direction, rankId });
+  const handleDragEnd = (rankId: string, result: DropResult) => {
+    if (!result.destination) return;
+    setLocalRankings(prev => {
+      const items = Array.from(prev[rankId] || []);
+      const [moved] = items.splice(result.source.index, 1);
+      items.splice(result.destination!.index, 0, moved);
+      return { ...prev, [rankId]: items };
+    });
   };
 
   const fetchComments = async (rankId: string) => {
@@ -749,41 +507,83 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                   </div>
                   <div className="mx-3 flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2">
                     <span className="text-xs text-gray-500">
-                      {hiddenCount > 0 ? `+${hiddenCount} more · ` : ''}Vote to rank
+                      {hiddenCount > 0 ? `+${hiddenCount} more · ` : ''}Tap to drag &amp; rank
                     </span>
                     <ChevronDown size={14} className="text-purple-500" />
                   </div>
                 </button>
               )}
 
-              {/* ── EXPANDED VOTING ── */}
+              {/* ── EXPANDED DRAG RANKING ── */}
               {isVotingExpanded && (
                 <>
-                  <div className="px-3 space-y-2 mb-2">
-                    {displayItems.map((item, index) => (
-                      <VoteItem
-                        key={item.id}
-                        item={item}
-                        index={index}
-                        userVote={userVotes[item.id] || null}
-                        onVote={(itemId, direction) => handleVote(itemId, direction, rank.id)}
-                        isVoting={voteMutation.isPending}
-                      />
-                    ))}
+                  <div className="px-3 mb-1.5">
+                    <div className="flex items-center gap-1.5 text-[11px] text-purple-600 bg-purple-50 rounded-lg px-2.5 py-1.5 mb-2">
+                      <GripVertical size={11} />
+                      Drag items into your preferred order
+                    </div>
+                    <DragDropContext onDragEnd={(result) => handleDragEnd(rank.id, result)}>
+                      <Droppable droppableId={`carousel-rank-${rank.id}`}>
+                        {(provided) => (
+                          <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1.5">
+                            {currentItems.map((item, index) => (
+                              <Draggable key={item.id} draggableId={`${rank.id}-${item.id}`} index={index}>
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    className={`flex items-center gap-2 py-2 px-2.5 rounded-xl border transition-colors ${
+                                      snapshot.isDragging
+                                        ? 'bg-purple-50 border-purple-300 shadow-md'
+                                        : 'bg-gray-50 border-transparent'
+                                    }`}
+                                  >
+                                    <div {...provided.dragHandleProps} className="text-gray-300 hover:text-purple-400 cursor-grab active:cursor-grabbing flex-shrink-0">
+                                      <GripVertical size={14} />
+                                    </div>
+                                    <div className={`w-5 h-5 rounded flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 ${
+                                      index === 0 ? 'bg-gradient-to-br from-teal-500 to-emerald-600' :
+                                      index === 1 ? 'bg-gradient-to-br from-teal-400 to-emerald-500' :
+                                      'bg-gradient-to-br from-teal-300 to-emerald-400'
+                                    }`}>
+                                      {index + 1}
+                                    </div>
+                                    {item.image_url && (
+                                      <img src={item.image_url} alt={item.title} className="w-6 h-6 rounded object-cover flex-shrink-0" />
+                                    )}
+                                    <span className="text-gray-900 font-medium flex-1 truncate text-sm">{item.title}</span>
+                                    <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
                   </div>
 
-                  <div className="px-3 flex items-center gap-3">
-                    {rank.items.length > 5 && (
-                      <button onClick={() => toggleExpanded(rank.id)} className="text-purple-600 text-xs hover:underline">
-                        {isExpanded ? 'Show less' : `Show all ${rank.items.length}`}
-                      </button>
-                    )}
+                  <div className="px-3 flex items-center gap-2 mb-1">
+                    <button
+                      onClick={() => submitMutation.mutate({ rankId: rank.id, items: currentItems })}
+                      disabled={submitMutation.isPending}
+                      className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition-colors font-medium disabled:opacity-60"
+                    >
+                      {submitMutation.isPending ? (
+                        <><Loader2 size={11} className="animate-spin" /> Saving...</>
+                      ) : submittedRankIds.has(rank.id) ? (
+                        <><Check size={11} /> Re-submit Ranking</>
+                      ) : (
+                        <><Check size={11} /> Submit My Ranking</>
+                      )}
+                    </button>
                     <button
                       onClick={() => setExpandedVoting(prev => ({ ...prev, [rank.id]: false }))}
                       className="ml-auto flex items-center gap-0.5 text-xs text-gray-400 hover:text-purple-500 transition-colors"
                     >
                       <ChevronUp size={13} />
-                      Show less
+                      Collapse
                     </button>
                   </div>
                 </>

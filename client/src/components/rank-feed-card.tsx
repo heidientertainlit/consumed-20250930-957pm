@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowBigUp, ArrowBigDown, Heart, MessageCircle, Trash2, BarChart2, Users, Flag } from "lucide-react";
+import { GripVertical, Heart, MessageCircle, Trash2, BarChart2, Users, Flag, Check, Loader2 } from "lucide-react";
 import { ReportSheet } from "@/components/report-sheet";
 import {
   AlertDialog,
@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Link } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -29,7 +30,6 @@ interface RankItemWithVotes {
   external_source?: string;
   up_vote_count?: number;
   down_vote_count?: number;
-  user_vote?: 'up' | 'down' | null;
 }
 
 interface RankData {
@@ -72,6 +72,22 @@ interface RankFeedCardProps {
 }
 
 const PREVIEW_COUNT = 3;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+
+function PctBar({ upCount, downCount }: { upCount: number; downCount: number }) {
+  const total = upCount + downCount;
+  if (total === 0) return null;
+  const upPct = Math.round(upCount / total * 100);
+  return (
+    <div className="flex items-center gap-1 flex-shrink-0 min-w-[72px]">
+      <span className="text-[10px] text-emerald-600 font-semibold w-7 text-right">↑{upPct}%</span>
+      <div className="flex-1 h-1 bg-red-100 rounded-full overflow-hidden">
+        <div className="h-full bg-emerald-400 rounded-full transition-all" style={{ width: `${upPct}%` }} />
+      </div>
+      <span className="text-[10px] text-red-400 font-semibold w-7">{100 - upPct}%↓</span>
+    </div>
+  );
+}
 
 export default function RankFeedCard({
   rank,
@@ -101,6 +117,8 @@ export default function RankFeedCard({
   const { session, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
   const [localItems, setLocalItems] = useState<RankItemWithVotes[]>(rank.items || []);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
@@ -110,9 +128,12 @@ export default function RankFeedCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [reportPostOpen, setReportPostOpen] = useState(false);
 
+  // Drag ranking state
+  const [isDragMode, setIsDragMode] = useState(false);
+  const [myOrder, setMyOrder] = useState<RankItemWithVotes[]>([]);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
   const isOwner = user?.id === rank.user_id;
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
   const hasItems = !!(rank.items && rank.items.length > 0);
 
   useEffect(() => {
@@ -121,7 +142,7 @@ export default function RankFeedCard({
         setHasFetched(true);
         setIsLoadingItems(true);
         try {
-          const response = await fetch(`${supabaseUrl}/functions/v1/get-user-ranks?user_id=${rank.user_id}`, {
+          const response = await fetch(`${SUPABASE_URL}/functions/v1/get-user-ranks?user_id=${rank.user_id}`, {
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
               'apikey': supabaseAnonKey,
@@ -140,51 +161,53 @@ export default function RankFeedCard({
       }
     };
     fetchItems();
-  }, [rank.id, rank.user_id, hasItems, hasFetched, session?.access_token, supabaseUrl, supabaseAnonKey]);
+  }, [rank.id, rank.user_id, hasItems, hasFetched, session?.access_token]);
 
-  const voteMutation = useMutation({
-    mutationFn: async ({ rankItemId, direction }: { rankItemId: string; direction: 'up' | 'down' }) => {
-      const response = await fetch(`${supabaseUrl}/functions/v1/vote-rank-item`, {
-        method: "POST",
+  const submitOrderingMutation = useMutation({
+    mutationFn: async (items: RankItemWithVotes[]) => {
+      if (!session?.access_token) throw new Error('Not authenticated');
+      const item_positions = items.map((item, index) => ({
+        rank_item_id: item.id,
+        position: index + 1
+      }));
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/save-rank-ordering`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token || ''}`,
-          "apikey": supabaseAnonKey,
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          'apikey': supabaseAnonKey,
         },
-        body: JSON.stringify({ rankItemId, direction }),
+        body: JSON.stringify({ rank_id: rank.id, item_positions }),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to vote');
+        const err = await response.json();
+        throw new Error(err.error || 'Failed to save ranking');
       }
       return response.json();
     },
     onSuccess: (data) => {
-      setLocalItems(prev => prev.map(item =>
-        item.id === data.data.rankItemId
-          ? { ...item, up_vote_count: data.data.upVoteCount, down_vote_count: data.data.downVoteCount, user_vote: data.data.userVote }
-          : item
-      ));
+      if (data.items) {
+        setLocalItems(prev => prev.map(item => {
+          const updated = data.items.find((i: any) => i.id === item.id);
+          return updated
+            ? { ...item, up_vote_count: updated.up_vote_count, down_vote_count: updated.down_vote_count }
+            : item;
+        }));
+      }
+      setIsDragMode(false);
+      setHasSubmitted(true);
+      toast({ title: 'Ranking saved!', description: 'Your personal ranking has been recorded.' });
     },
     onError: (error: Error) => {
-      toast({ title: "Vote Failed", description: error.message, variant: "destructive" });
+      toast({ title: 'Failed to save ranking', description: error.message, variant: 'destructive' });
     },
   });
-
-  const handleVote = (e: React.MouseEvent, itemId: string, direction: 'up' | 'down') => {
-    e.stopPropagation();
-    if (!session?.access_token) { toast({ title: "Sign in to vote", variant: "destructive" }); return; }
-    if (isOwner) { toast({ title: "Can't vote on your own rank", variant: "destructive" }); return; }
-    voteMutation.mutate({ rankItemId: itemId, direction });
-  };
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from('ranks').delete().eq('id', rank.id);
       if (error) throw new Error(error.message || 'Failed to delete rank');
-      if (postId) {
-        await supabase.from('social_posts').delete().eq('id', postId);
-      }
+      if (postId) await supabase.from('social_posts').delete().eq('id', postId);
       return { success: true };
     },
     onSuccess: () => {
@@ -192,11 +215,35 @@ export default function RankFeedCard({
       queryClient.invalidateQueries({ queryKey: ['user-ranks'] });
     },
     onError: (error: Error) => {
-      toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
+      toast({ title: 'Delete Failed', description: error.message, variant: 'destructive' });
     },
   });
 
   const handleDelete = () => { setShowDeleteDialog(false); deleteMutation.mutate(); };
+
+  const enterDragMode = () => {
+    if (!session?.access_token) {
+      toast({ title: 'Sign in to rank', variant: 'destructive' });
+      return;
+    }
+    if (isOwner) {
+      toast({ title: "Can't rank your own list", variant: 'destructive' });
+      return;
+    }
+    // Use the current local items order (already sorted by position)
+    const sorted = [...localItems].sort((a, b) => (a.position || 0) - (b.position || 0));
+    setMyOrder(sorted);
+    setShowAll(true);
+    setIsDragMode(true);
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    const items = Array.from(myOrder);
+    const [moved] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, moved);
+    setMyOrder(items);
+  };
 
   const formatTimeAgo = (dateString?: string) => {
     if (!dateString) return '';
@@ -208,13 +255,14 @@ export default function RankFeedCard({
     return `${Math.floor(diffInMinutes / 1440)}d`;
   };
 
-  const displayItems = showAll ? localItems : localItems.slice(0, PREVIEW_COUNT);
+  const displayItems = isDragMode
+    ? myOrder
+    : (showAll ? localItems : localItems.slice(0, PREVIEW_COUNT));
   const hiddenCount = localItems.length - PREVIEW_COUNT;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden" data-testid={`rank-feed-card-${rank.id}`}>
 
-      {/* Delete Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -226,7 +274,7 @@ export default function RankFeedCard({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700" data-testid="confirm-delete-rank">
-              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -287,6 +335,14 @@ export default function RankFeedCard({
           )}
         </div>
 
+        {/* Drag mode hint */}
+        {isDragMode && (
+          <div className="mb-2 flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 rounded-lg px-3 py-1.5">
+            <GripVertical size={12} />
+            Drag to reorder into your personal ranking
+          </div>
+        )}
+
         {/* Items */}
         {isLoadingItems ? (
           <div className="space-y-2">
@@ -310,11 +366,54 @@ export default function RankFeedCard({
               </Link>
             )}
           </div>
+        ) : isDragMode ? (
+          /* ── DRAG MODE ── */
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId={`rank-drag-${rank.id}`}>
+              {(provided) => (
+                <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-1.5">
+                  {myOrder.map((item, idx) => (
+                    <Draggable key={item.id} draggableId={item.id} index={idx}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`flex items-center gap-2 py-2 px-3 rounded-lg border transition-colors ${
+                            snapshot.isDragging
+                              ? 'bg-purple-50 border-purple-300 shadow-md'
+                              : 'bg-gray-50 border-transparent'
+                          }`}
+                        >
+                          <div {...provided.dragHandleProps} className="text-gray-300 hover:text-purple-400 cursor-grab active:cursor-grabbing flex-shrink-0">
+                            <GripVertical size={16} />
+                          </div>
+                          <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-purple-100 text-purple-600 flex-shrink-0">
+                            {idx + 1}
+                          </span>
+                          {item.image_url && (
+                            <img src={item.image_url} alt={item.title} className="w-6 h-8 rounded object-cover flex-shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
+                            {item.creator && item.creator.toLowerCase() !== 'unknown' && (
+                              <p className="text-xs text-gray-400 truncate">{item.creator}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         ) : (
-          <div className="space-y-2">
+          /* ── NORMAL MODE with percentages ── */
+          <div className="space-y-1.5">
             {displayItems.map((item, idx) => (
-              <div key={item.id} className="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-lg">
-                <span className="w-6 h-6 flex items-center justify-center text-xs font-bold rounded bg-orange-100 text-orange-700 flex-shrink-0">
+              <div key={item.id} className="flex items-center gap-2.5 py-2 px-3 bg-gray-50 rounded-lg">
+                <span className="w-5 h-5 flex items-center justify-center text-[11px] font-bold rounded bg-orange-100 text-orange-700 flex-shrink-0">
                   {item.position || idx + 1}
                 </span>
                 <div className="flex-1 min-w-0">
@@ -323,28 +422,7 @@ export default function RankFeedCard({
                     <p className="text-xs text-gray-500 truncate">{item.creator}</p>
                   )}
                 </div>
-                {item.id && (
-                  <div className="flex items-center gap-0.5 flex-shrink-0">
-                    <button
-                      onClick={(e) => handleVote(e, item.id, 'up')}
-                      disabled={voteMutation.isPending || isOwner}
-                      className={`flex items-center gap-0.5 px-1 py-0.5 rounded transition-colors ${item.user_vote === 'up' ? 'text-green-500' : 'text-gray-400 hover:text-green-500'} ${isOwner ? 'opacity-40 cursor-not-allowed' : ''}`}
-                      data-testid={`vote-up-${item.id}`}
-                    >
-                      <ArrowBigUp size={14} fill={item.user_vote === 'up' ? 'currentColor' : 'none'} />
-                      <span className="text-[10px] font-medium">{item.up_vote_count || 0}</span>
-                    </button>
-                    <button
-                      onClick={(e) => handleVote(e, item.id, 'down')}
-                      disabled={voteMutation.isPending || isOwner}
-                      className={`flex items-center gap-0.5 px-1 py-0.5 rounded transition-colors ${item.user_vote === 'down' ? 'text-red-500' : 'text-gray-400 hover:text-red-500'} ${isOwner ? 'opacity-40 cursor-not-allowed' : ''}`}
-                      data-testid={`vote-down-${item.id}`}
-                    >
-                      <ArrowBigDown size={14} fill={item.user_vote === 'down' ? 'currentColor' : 'none'} />
-                      <span className="text-[10px] font-medium">{item.down_vote_count || 0}</span>
-                    </button>
-                  </div>
-                )}
+                <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
               </div>
             ))}
             {!showAll && hiddenCount > 0 && (
@@ -365,6 +443,49 @@ export default function RankFeedCard({
             )}
           </div>
         )}
+
+        {/* Rank It / Submit / Cancel buttons */}
+        {!isOwner && localItems.length > 0 && (
+          <div className="mt-2 flex items-center gap-2">
+            {isDragMode ? (
+              <>
+                <button
+                  onClick={() => submitOrderingMutation.mutate(myOrder)}
+                  disabled={submitOrderingMutation.isPending}
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition-colors font-medium disabled:opacity-60"
+                >
+                  {submitOrderingMutation.isPending ? (
+                    <><Loader2 size={11} className="animate-spin" /> Saving...</>
+                  ) : (
+                    <><Check size={11} /> Submit My Ranking</>
+                  )}
+                </button>
+                <button
+                  onClick={() => setIsDragMode(false)}
+                  disabled={submitOrderingMutation.isPending}
+                  className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={enterDragMode}
+                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors font-medium ${
+                  hasSubmitted
+                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100'
+                    : 'bg-gray-100 text-gray-600 hover:bg-purple-50 hover:text-purple-600 border border-transparent'
+                }`}
+              >
+                {hasSubmitted ? (
+                  <><Check size={11} /> Re-rank It</>
+                ) : (
+                  <><GripVertical size={11} /> Rank It</>
+                )}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Footer: like & comment */}
@@ -372,7 +493,7 @@ export default function RankFeedCard({
         <div className="px-4 py-2.5 border-t border-gray-100 flex items-center gap-4">
           <button
             onClick={() => {
-              if (!session?.access_token) { toast({ title: "Sign in to like", variant: "destructive" }); return; }
+              if (!session?.access_token) { toast({ title: 'Sign in to like', variant: 'destructive' }); return; }
               setLocalIsLiked(!localIsLiked);
               setLocalLikesCount(prev => localIsLiked ? prev - 1 : prev + 1);
               onLike?.(postId);
@@ -380,7 +501,7 @@ export default function RankFeedCard({
             className="flex items-center gap-1.5 text-gray-400 hover:text-red-400 transition-colors"
             data-testid={`like-rank-${postId}`}
           >
-            <Heart size={16} className={localIsLiked ? "text-red-400 fill-red-400" : ""} />
+            <Heart size={16} className={localIsLiked ? 'text-red-400 fill-red-400' : ''} />
             <span className="text-xs font-medium text-gray-500">{localLikesCount}</span>
           </button>
           <button
