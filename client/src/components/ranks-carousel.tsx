@@ -36,15 +36,30 @@ interface RankData {
 
 function PctBar({ upCount, downCount }: { upCount: number; downCount: number }) {
   const total = upCount + downCount;
-  if (total === 0) return null;
-  const upPct = Math.round(upCount / total * 100);
-  return (
-    <div className="flex items-center gap-1 flex-shrink-0 min-w-[72px]">
-      <span className="text-[10px] text-emerald-600 font-semibold w-7 text-right">↑{upPct}%</span>
-      <div className="flex-1 h-1 bg-red-100 rounded-full overflow-hidden">
-        <div className="h-full bg-emerald-400 rounded-full transition-all" style={{ width: `${upPct}%` }} />
+  if (total === 0) {
+    return (
+      <div className="flex flex-col items-end gap-0.5 flex-shrink-0 w-16">
+        <span className="text-[9px] text-gray-300 leading-none">community</span>
+        <div className="flex items-center gap-0.5 w-full">
+          <span className="text-[9px] text-gray-300 font-semibold">↑</span>
+          <div className="flex-1 h-1.5 bg-gray-100 rounded-full" />
+          <span className="text-[9px] text-gray-300 font-semibold">↓</span>
+        </div>
       </div>
-      <span className="text-[10px] text-red-400 font-semibold w-7">{100 - upPct}%↓</span>
+    );
+  }
+  const upPct = Math.round(upCount / total * 100);
+  const downPct = 100 - upPct;
+  return (
+    <div className="flex flex-col items-end gap-0.5 flex-shrink-0 w-16">
+      <span className="text-[9px] text-gray-400 leading-none">community</span>
+      <div className="flex items-center gap-0.5 w-full">
+        <span className="text-[9px] text-emerald-600 font-bold leading-none">↑{upPct}%</span>
+        <div className="flex-1 h-1.5 bg-red-100 rounded-full overflow-hidden">
+          <div className="h-full bg-emerald-400 rounded-full transition-all duration-500" style={{ width: `${upPct}%` }} />
+        </div>
+        <span className="text-[9px] text-red-400 font-bold leading-none">{downPct}%↓</span>
+      </div>
     </div>
   );
 }
