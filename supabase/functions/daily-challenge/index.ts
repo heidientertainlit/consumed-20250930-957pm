@@ -362,7 +362,8 @@ serve(async (req) => {
               .update({
                 current_streak: newStreak,
                 longest_streak: newLongest,
-                last_login: todayDate
+                last_login: todayDate,
+                play_completed_date: todayDate
               })
               .eq('user_id', user.id);
             
@@ -376,7 +377,8 @@ serve(async (req) => {
               .from('login_streaks')
               .update({
                 current_streak: 1,
-                last_login: todayDate
+                last_login: todayDate,
+                play_completed_date: todayDate
               })
               .eq('user_id', user.id);
             
@@ -391,7 +393,8 @@ serve(async (req) => {
               user_id: user.id,
               current_streak: 1,
               longest_streak: 1,
-              last_login: todayDate
+              last_login: todayDate,
+              play_completed_date: todayDate
             });
         }
         
