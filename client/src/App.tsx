@@ -1,4 +1,5 @@
 import { Switch, Route, useLocation } from "wouter";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { useEffect } from "react";
 import { useKeyboardAdjust } from "@/hooks/use-keyboard-adjust";
 import { Capacitor } from "@capacitor/core";
@@ -627,14 +628,18 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <FeatureFlagsProvider>
-          <Router />
-          <Toaster />
-        </FeatureFlagsProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <FeatureFlagsProvider>
+            <ErrorBoundary>
+              <Router />
+            </ErrorBoundary>
+            <Toaster />
+          </FeatureFlagsProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
