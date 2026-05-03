@@ -61,7 +61,7 @@ serve(async (req) => {
     // Map list names to list types for lookup - use ilike patterns for flexible matching
     const listTypeMap: { [key: string]: { title: string; patterns: string[] } } = {
       'currently': { title: 'Currently', patterns: ['Currently%', '%Currently%'] },
-      'queue': { title: 'Want To', patterns: ['Want To', 'Queue', '%Want%', '%Queue%'] },
+      'queue': { title: 'Want To', patterns: ['Want To', '%Want%'] },
       'finished': { title: 'Finished', patterns: ['Finished', '%Finished%'] },
       'dnf': { title: 'Did Not Finish', patterns: ['Did Not Finish', 'DNF', '%Not Finish%', '%DNF%'] },
       'favorites': { title: 'Favorites', patterns: ['Favorites', '%Favorite%'] }

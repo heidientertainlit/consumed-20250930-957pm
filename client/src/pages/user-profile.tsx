@@ -1927,13 +1927,7 @@ export default function UserProfile() {
     setIsTrackModalOpen(true);
   };
 
-  // Helper function to map list titles for display (e.g., "Queue" -> "Want To")
-  const getDisplayTitle = (title: string): string => {
-    const displayMap: { [key: string]: string } = {
-      'Queue': 'Want To',
-    };
-    return displayMap[title] || title;
-  };
+  const getDisplayTitle = (title: string): string => title;
 
 
   const handleShareList = (listName: string, itemCount: number, isPublic: boolean) => {

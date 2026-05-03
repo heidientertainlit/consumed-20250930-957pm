@@ -406,12 +406,8 @@ export default function ListDetail() {
 
   // Helper functions
   
-  // Map list titles for display (e.g., "Queue" -> "Want To")
   function getDisplayTitle(title: string): string {
-    const displayMap: { [key: string]: string } = {
-      'Queue': 'Want To',
-    };
-    return displayMap[title] || title;
+    return title;
   }
 
   function getListDescription(title: string) {

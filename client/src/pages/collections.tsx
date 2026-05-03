@@ -812,7 +812,7 @@ export default function CollectionsPage() {
                       <div className="flex items-center gap-3 flex-1">
                         <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-blue-100 rounded-lg flex items-center justify-center">
                           {list.is_default ? (
-                            list.title === 'Want to Watch' ? <Play className="text-purple-600" size={18} /> :
+                            list.title === 'Want To' ? <Play className="text-purple-600" size={18} /> :
                             list.title === 'Currently' ? <Clock className="text-blue-600" size={18} /> :
                             list.title === 'Completed' ? <Trophy className="text-green-600" size={18} /> :
                             <List className="text-gray-600" size={18} />
