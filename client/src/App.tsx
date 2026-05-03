@@ -292,6 +292,10 @@ function Router() {
             </ProtectedRoute>
           </Route>
 
+          <Route path="/notifications">
+            <RedirectTo to="/friends" />
+          </Route>
+
           <Route path="/friendsupdates">
             <ProtectedRoute>
               <FriendsUpdates />

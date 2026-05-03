@@ -22,8 +22,9 @@ interface NotificationRequest {
 function routeForType(type: string, postId?: string): string {
   switch (type) {
     case 'friend_request':
+      return '/friends';
     case 'friend_accepted':
-      return '/notifications';
+      return '/friends';
     case 'comment':
     case 'comment_reply':
     case 'like':
