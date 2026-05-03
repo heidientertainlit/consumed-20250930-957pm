@@ -65,14 +65,12 @@ serve(async (req) => {
       console.log('[daily-challenge] getToday - params received:', JSON.stringify(params));
       console.log('[daily-challenge] getToday - looking for featured_date:', today, params.localDate ? '(from client)' : '(UTC fallback)');
       
-      // Query prediction_pools with featured_date = today (Daily Call)
-      // Exclude trivia — those belong to Today's Play. Daily Call is poll/predict/vote only.
+      // Query prediction_pools with featured_date = today — any type (trivia, poll, predict, vote, opinion)
       const { data: challenge, error } = await supabaseAdmin
         .from('prediction_pools')
         .select('id, featured_date, type, title, options, points_reward, status, category, icon, correct_answer, media_title')
         .eq('featured_date', today)
         .eq('status', 'open')
-        .in('type', ['predict', 'poll', 'vote'])
         .limit(1)
         .single();
 

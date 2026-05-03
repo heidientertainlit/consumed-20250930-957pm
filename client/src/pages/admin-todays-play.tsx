@@ -317,6 +317,7 @@ export default function AdminTodaysPlayPage() {
 
   // Write your own state
   const [showManualForm, setShowManualForm] = useState(false);
+  const [manualPlayType, setManualPlayType] = useState<"trivia" | "poll" | "predict">("trivia");
   const [manualTitle, setManualTitle] = useState("");
   const [manualOptions, setManualOptions] = useState(["", "", "", ""]);
   const [manualAnswer, setManualAnswer] = useState("");
@@ -324,6 +325,7 @@ export default function AdminTodaysPlayPage() {
   const [manualMediaType, setManualMediaType] = useState("tv");
   const [manualMediaExternalId, setManualMediaExternalId] = useState<string | null>(null);
   const [manualMediaExternalSource, setManualMediaExternalSource] = useState<string | null>(null);
+  const [manualFeaturedDate, setManualFeaturedDate] = useState("");
   const [savingManual, setSavingManual] = useState(false);
 
   // Pending drafts
@@ -883,6 +885,18 @@ export default function AdminTodaysPlayPage() {
     await refetchDrafts();
   }
 
+  function resetManualForm() {
+    setManualTitle("");
+    setManualOptions(["", "", "", ""]);
+    setManualAnswer("");
+    setManualShowTag("");
+    setManualMediaType("tv");
+    setManualMediaExternalId(null);
+    setManualMediaExternalSource(null);
+    setManualFeaturedDate("");
+    setShowManualForm(false);
+  }
+
   async function handleSaveManualTrivia() {
     const filled = manualOptions.filter(o => o.trim());
     if (!manualTitle.trim() || filled.length < 2 || !manualAnswer || !manualShowTag.trim()) {
@@ -908,16 +922,49 @@ export default function AdminTodaysPlayPage() {
       });
       if (error) throw error;
       toast({ title: "Saved to Drafts!", description: "Go to Drafts tab to schedule it." });
-      setManualTitle("");
-      setManualOptions(["", "", "", ""]);
-      setManualAnswer("");
-      setManualShowTag("");
-      setManualMediaType("tv");
-      setManualMediaExternalId(null);
-      setManualMediaExternalSource(null);
-      setShowManualForm(false);
+      resetManualForm();
       await refetchDrafts();
       setTab("drafts");
+    } catch (err: any) {
+      toast({ title: "Save failed", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingManual(false);
+    }
+  }
+
+  async function handleSaveManualOpinion() {
+    const filled = manualOptions.filter(o => o.trim());
+    if (!manualTitle.trim() || filled.length < 2 || !manualFeaturedDate) {
+      toast({ title: "Fill in question, at least 2 options, and a featured date", variant: "destructive" });
+      return;
+    }
+    const categoryMap: Record<string, string> = { movie: "Movies", tv: "TV", book: "Books", music: "Music", podcast: "Podcasts", gaming: "Gaming", mixed: "Pop Culture" };
+    setSavingManual(true);
+    try {
+      const { error } = await supabase.from("prediction_pools").insert({
+        id: crypto.randomUUID(),
+        title: manualTitle.trim(),
+        type: manualPlayType,
+        options: filled,
+        correct_answer: null,
+        category: categoryMap[manualMediaType] || "TV",
+        show_tag: manualShowTag.trim() || null,
+        media_tags: manualShowTag.trim() ? [manualShowTag.trim()] : null,
+        media_type: manualMediaType,
+        media_external_id: manualMediaExternalId || null,
+        media_external_source: manualMediaExternalSource || null,
+        featured_date: manualFeaturedDate,
+        status: "open",
+        origin_type: "consumed",
+        inline: true,
+        points_reward: 10,
+      });
+      if (error) throw error;
+      toast({ title: `Scheduled for ${manualFeaturedDate}!`, description: "Today's Play will show this question on that date." });
+      resetManualForm();
+      await refetchScheduled();
+      queryClient.invalidateQueries({ queryKey: ["todays-play-scheduled"] });
+      setTab("scheduled");
     } catch (err: any) {
       toast({ title: "Save failed", description: err.message, variant: "destructive" });
     } finally {
@@ -1102,19 +1149,41 @@ export default function AdminTodaysPlayPage() {
               >
                 <div className="flex items-center gap-2">
                   <Pencil size={14} className="text-teal-400" />
-                  <span className="text-sm font-medium text-gray-300">Write your own trivia question</span>
+                  <span className="text-sm font-medium text-gray-300">Write your own Today's Play</span>
                 </div>
                 {showManualForm ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
               </button>
 
               {showManualForm && (
                 <div className="mt-2 bg-gray-900 border border-gray-800 rounded-2xl p-5 space-y-4">
+
+                  {/* Play type selector */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Play type</label>
+                    <div className="flex gap-2">
+                      {[
+                        { value: "trivia" as const, label: "Trivia", desc: "Has a correct answer" },
+                        { value: "poll" as const, label: "Opinion Poll", desc: "No right answer" },
+                        { value: "predict" as const, label: "Prediction", desc: "Forecast outcome" },
+                      ].map(t => (
+                        <button
+                          key={t.value}
+                          onClick={() => setManualPlayType(t.value)}
+                          className={`flex-1 py-2 px-2 rounded-xl border text-center transition-all ${manualPlayType === t.value ? "bg-teal-500/20 border-teal-500/40 text-teal-300" : "bg-gray-800 border-gray-700 text-gray-500"}`}
+                        >
+                          <p className="text-xs font-semibold">{t.label}</p>
+                          <p className="text-[10px] opacity-60 mt-0.5">{t.desc}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div>
                     <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Question</label>
                     <Textarea
                       value={manualTitle}
                       onChange={e => setManualTitle(e.target.value)}
-                      placeholder="e.g. What is the name of the coffee shop in Friends?"
+                      placeholder={manualPlayType === "trivia" ? "e.g. What is the name of the coffee shop in Friends?" : "e.g. Who will win the Emmy for Best Drama this year?"}
                       className="bg-gray-800 border-gray-700 text-white resize-none h-20 text-sm"
                     />
                   </div>
@@ -1145,19 +1214,36 @@ export default function AdminTodaysPlayPage() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Correct answer</label>
-                    <select
-                      value={manualAnswer}
-                      onChange={e => setManualAnswer(e.target.value)}
-                      className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2"
-                    >
-                      <option value="">— select the correct answer —</option>
-                      {manualOptions.filter(o => o.trim()).map((opt, i) => (
-                        <option key={i} value={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* Correct answer — trivia only */}
+                  {manualPlayType === "trivia" && (
+                    <div>
+                      <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Correct answer</label>
+                      <select
+                        value={manualAnswer}
+                        onChange={e => setManualAnswer(e.target.value)}
+                        className="w-full bg-gray-800 border border-gray-700 text-white text-sm rounded-lg px-3 py-2"
+                      >
+                        <option value="">— select the correct answer —</option>
+                        {manualOptions.filter(o => o.trim()).map((opt, i) => (
+                          <option key={i} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Featured date — opinion/prediction publish directly, no draft stage */}
+                  {manualPlayType !== "trivia" && (
+                    <div>
+                      <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5 block">Featured date</label>
+                      <Input
+                        type="date"
+                        value={manualFeaturedDate}
+                        onChange={e => setManualFeaturedDate(e.target.value)}
+                        className="bg-gray-800 border-gray-700 text-white text-sm"
+                      />
+                      <p className="text-[10px] text-gray-500 mt-1">Today's Play will show this question on this date instead of trivia.</p>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <div>
@@ -1201,11 +1287,16 @@ export default function AdminTodaysPlayPage() {
                   </div>
 
                   <Button
-                    onClick={handleSaveManualTrivia}
+                    onClick={manualPlayType === "trivia" ? handleSaveManualTrivia : handleSaveManualOpinion}
                     disabled={savingManual}
                     className="w-full bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 border border-teal-500/40 font-semibold rounded-xl"
                   >
-                    {savingManual ? <><Loader2 size={14} className="animate-spin mr-2" /> Saving...</> : <><Send size={14} className="mr-2" /> Save to Drafts</>}
+                    {savingManual
+                      ? <><Loader2 size={14} className="animate-spin mr-2" /> Saving...</>
+                      : manualPlayType === "trivia"
+                        ? <><Send size={14} className="mr-2" /> Save to Drafts</>
+                        : <><CalendarDays size={14} className="mr-2" /> Schedule Today's Play</>
+                    }
                   </Button>
                 </div>
               )}

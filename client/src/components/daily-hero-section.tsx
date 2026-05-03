@@ -1778,7 +1778,10 @@ export function DailyHeroSection() {
   });
 
   const readyQuestions = questions.slice(0, 3);
-  const hasTodaysPlay = readyQuestions.length >= 1;
+  // isTriviaDay: true when today's featured content is trivia (or nothing is scheduled yet)
+  const isTriviaDay = !dailyCall || dailyCall.challenge_type === 'trivia';
+  const isOpinionDay = !!dailyCall && dailyCall.challenge_type !== 'trivia';
+  const hasTodaysPlay = readyQuestions.length >= 1 || isOpinionDay;
   const hasDailyCall = !!dailyCall && (dailyCall.options?.length ?? 0) > 0;
 
   // First question preview (truncated)
@@ -1791,7 +1794,8 @@ export function DailyHeroSection() {
     ? truncateWords(dailyCall.title, 32)
     : 'Loading today\'s call…';
 
-  const bothCompleted = playCompleted && callCompleted && !showDnaInCarousel;
+  // Today's Play is "done" when the relevant type is completed
+  const bothCompleted = (isTriviaDay ? playCompleted : callCompleted) && !showDnaInCarousel;
 
   return (
     <>
@@ -1800,7 +1804,7 @@ export function DailyHeroSection() {
         <div className="flex flex-col gap-2">
           {/* TODAY'S PLAY — completed mini card */}
           <button
-            onClick={() => setShowPlayShare(true)}
+            onClick={() => isTriviaDay ? setShowPlayShare(true) : setShowCallShare(true)}
             className="w-full rounded-xl px-3 py-3 flex items-center justify-between gap-3 text-left"
             style={{
               background: 'linear-gradient(150deg,#312e81 0%,#1e3a8a 40%,#0369a1 100%)',
@@ -1811,7 +1815,11 @@ export function DailyHeroSection() {
               <div className="flex flex-col">
                 <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-cyan-300/70">Today's Play</span>
                 <div className="flex items-end gap-1.5 mt-0.5">
-                  <p className="text-white text-[20px] font-black leading-none">{playScore?.correct ?? '–'}<span className="text-white/30 text-[13px] font-bold">/{playScore?.total ?? 3}</span></p>
+                  {isTriviaDay ? (
+                    <p className="text-white text-[20px] font-black leading-none">{playScore?.correct ?? '–'}<span className="text-white/30 text-[13px] font-bold">/{playScore?.total ?? 3}</span></p>
+                  ) : (
+                    <p className="text-white/90 text-[14px] font-bold leading-snug line-clamp-1">{callAnswer ?? 'Done'}</p>
+                  )}
                   {streak && streak > 0 ? (
                     <span className="flex items-center gap-0.5 text-orange-400 text-[11px] font-bold leading-none mb-0.5">
                       <Flame size={11} fill="currentColor" />
@@ -1853,8 +1861,13 @@ export function DailyHeroSection() {
               key="play"
               type="button"
               onClick={() => {
-                if (playCompleted) setShowPlayShare(true);
-                else if (hasTodaysPlay) setShowPlayGame(true);
+                if (isTriviaDay) {
+                  if (playCompleted) setShowPlayShare(true);
+                  else if (hasTodaysPlay) setShowPlayGame(true);
+                } else {
+                  if (callCompleted) setShowCallShare(true);
+                  else if (hasDailyCall) setShowCallOverlay(true);
+                }
               }}
               className={front ? frontPosClass : backPosClass}
               style={{
@@ -1871,10 +1884,12 @@ export function DailyHeroSection() {
                     </span>
                   </div>
                   {front && (
-                    <p className="text-[12px] text-white/55 font-medium ml-0.5">Start here → Test your entertainment instincts</p>
+                    <p className="text-[12px] text-white/55 font-medium ml-0.5">
+                      {isOpinionDay ? 'Cast your call on today\'s question' : 'Start here → Test your entertainment instincts'}
+                    </p>
                   )}
                 </div>
-                {playCompleted ? (
+                {(isTriviaDay ? playCompleted : callCompleted) ? (
                   <span className="flex items-center gap-1 bg-green-400/15 rounded-full px-1.5 py-0.5 border border-green-400/30">
                     <Check size={9} className="text-green-300" strokeWidth={3} />
                     <span className="text-[8px] font-bold text-green-200">DONE</span>
@@ -1884,7 +1899,7 @@ export function DailyHeroSection() {
                     {front && (
                       <span className="flex items-center gap-1 bg-purple-400/20 rounded-full px-1.5 py-0.5 border border-purple-400/30">
                         <Sparkles size={8} className="text-purple-200" />
-                        <span className="text-[8px] font-bold text-purple-100">+{readyQuestions.length * 10} pts</span>
+                        <span className="text-[8px] font-bold text-purple-100">+{isOpinionDay ? (dailyCall?.points_reward ?? 10) : readyQuestions.length * 10} pts</span>
                       </span>
                     )}
                     <span className="flex items-center gap-1 bg-white/10 rounded-full px-1.5 py-0.5 border border-white/5">
@@ -1896,7 +1911,7 @@ export function DailyHeroSection() {
               </div>
 
               <div className={`flex-1 flex flex-col justify-center ${front ? 'py-2' : 'pt-3 pb-2'}`}>
-                {playCompleted && playScore ? (
+                {isTriviaDay && playCompleted && playScore ? (
                   <div>
                     <p className={`${front ? 'text-[28px]' : 'text-[22px]'} font-black text-white leading-none`}>
                       {playScore.correct}
@@ -1904,23 +1919,30 @@ export function DailyHeroSection() {
                     </p>
                     <p className={`${front ? 'text-[10px]' : 'text-[9px]'} text-white/40 uppercase tracking-wider font-semibold mt-1`}>correct</p>
                   </div>
+                ) : (!isTriviaDay && callCompleted && callAnswer) ? (
+                  <>
+                    <p className={`${front ? 'text-[10px]' : 'text-[9px]'} text-white/40 uppercase tracking-wider font-semibold mb-1`}>Your Call</p>
+                    <p className={`text-white/90 ${front ? 'text-xl font-bold' : 'text-[13px] font-semibold'} leading-snug line-clamp-3`}>{callAnswer}</p>
+                  </>
                 ) : (
                   <p className={`text-white ${front ? 'text-xl' : 'text-[13px]'} font-bold leading-tight drop-shadow-sm line-clamp-3`}>
-                    {firstQPreview}
+                    {isOpinionDay ? callPreview : firstQPreview}
                   </p>
                 )}
               </div>
 
               <div className={`flex items-center justify-between ${front ? 'mt-4' : ''}`}>
-                <span className={`${front ? 'text-xs' : 'text-[10px]'} text-purple-200/60 font-medium`}>3 questions</span>
+                <span className={`${front ? 'text-xs' : 'text-[10px]'} text-purple-200/60 font-medium`}>
+                  {isOpinionDay ? '1 question' : '3 questions'}
+                </span>
                 {front ? (
                   <span className="bg-white text-purple-950 text-sm font-bold px-6 py-2.5 rounded-full shadow-lg flex items-center gap-1.5">
-                    {playCompleted ? 'Share' : 'Play'}
+                    {isTriviaDay ? (playCompleted ? 'Share' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
                     <ArrowRight size={14} strokeWidth={2.5} />
                   </span>
                 ) : (
                   <span className="bg-white/95 text-purple-900 text-[11px] font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1">
-                    {playCompleted ? 'Share' : 'Play'}
+                    {isTriviaDay ? (playCompleted ? 'Share' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
                     <ArrowRight size={12} strokeWidth={2.5} />
                   </span>
                 )}
@@ -2234,7 +2256,7 @@ export function DailyHeroSection() {
               <div className="relative">
                 {todaysPlayCard(true)}
               </div>
-              {typeof totalPlayers === 'number' && totalPlayers > 0 && (
+              {isTriviaDay && typeof totalPlayers === 'number' && totalPlayers > 0 && (
                 <p className="text-center text-[11px] text-white/35 tracking-wide">
                   {(totalPlayers + 61).toLocaleString()} people playing today
                 </p>
