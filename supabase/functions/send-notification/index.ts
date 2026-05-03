@@ -9,7 +9,7 @@ const ONESIGNAL_APP_ID = Deno.env.get('ONESIGNAL_APP_ID') || 'f3e5ce59-cb78-4f05
 
 interface NotificationRequest {
   userId: string;
-  type: 'comment' | 'comment_reply' | 'like' | 'friend_request' | 'friend_accepted' | 'follow' | 'mention' | 'inner_circle' | 'collaborator_added' | 'cast' | 'room_added' | 'room_joined' | 'room_new_question';
+  type: 'comment' | 'comment_reply' | 'like' | 'post_like' | 'comment_like' | 'friend_request' | 'friend_accepted' | 'follow' | 'mention' | 'inner_circle' | 'collaborator_added' | 'cast' | 'room_added' | 'room_joined' | 'room_new_question' | 'hot_take_pass' | 'hot_take_vote';
   triggeredByUserId: string;
   message: string;
   postId?: string;
@@ -22,22 +22,30 @@ interface NotificationRequest {
 function routeForType(type: string, postId?: string): string {
   switch (type) {
     case 'friend_request':
-      return '/friends';
     case 'friend_accepted':
       return '/friends';
     case 'comment':
     case 'comment_reply':
     case 'like':
+    case 'post_like':
+    case 'comment_like':
     case 'mention':
-      return postId ? `/post/${postId}` : '/notifications';
+      return postId ? `/activity?post=${postId}` : '/activity';
     case 'collaborator_added':
       return '/library';
     case 'room_added':
     case 'room_joined':
     case 'room_new_question':
       return '/play';
+    case 'cast':
+    case 'hot_take_pass':
+    case 'hot_take_vote':
+      return postId ? `/activity?post=${postId}` : '/activity';
+    case 'follow':
+    case 'inner_circle':
+      return '/friends';
     default:
-      return '/notifications';
+      return '/activity';
   }
 }
 
