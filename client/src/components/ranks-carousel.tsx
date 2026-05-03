@@ -34,32 +34,21 @@ interface RankData {
   likesCount?: number;
 }
 
-function PctBar({ upCount, downCount }: { upCount: number; downCount: number }) {
+function VoteCount({ upCount, downCount }: { upCount: number; downCount: number }) {
   const total = upCount + downCount;
   if (total === 0) {
     return (
-      <div className="flex flex-col items-end gap-0.5 flex-shrink-0 w-16">
-        <span className="text-[9px] text-gray-300 leading-none">community</span>
-        <div className="flex items-center gap-0.5 w-full">
-          <span className="text-[9px] text-gray-300 font-semibold">↑</span>
-          <div className="flex-1 h-1.5 bg-gray-100 rounded-full" />
-          <span className="text-[9px] text-gray-300 font-semibold">↓</span>
-        </div>
+      <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+        <span className="text-[11px] text-gray-200 leading-none font-medium">↑</span>
+        <span className="text-[11px] text-gray-200 leading-none font-medium">↓</span>
       </div>
     );
   }
   const upPct = Math.round(upCount / total * 100);
-  const downPct = 100 - upPct;
   return (
-    <div className="flex flex-col items-end gap-0.5 flex-shrink-0 w-16">
-      <span className="text-[9px] text-gray-400 leading-none">community</span>
-      <div className="flex items-center gap-0.5 w-full">
-        <span className="text-[9px] text-emerald-600 font-bold leading-none">↑{upPct}%</span>
-        <div className="flex-1 h-1.5 bg-red-100 rounded-full overflow-hidden">
-          <div className="h-full bg-emerald-400 rounded-full transition-all duration-500" style={{ width: `${upPct}%` }} />
-        </div>
-        <span className="text-[9px] text-red-400 font-bold leading-none">{downPct}%↓</span>
-      </div>
+    <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+      <span className="text-[11px] text-emerald-500 leading-none font-semibold">↑ {upPct}%</span>
+      <span className="text-[11px] text-rose-400 leading-none font-semibold">↓ {100 - upPct}%</span>
     </div>
   );
 }
@@ -566,8 +555,8 @@ export function RanksCarousel({ expanded = false, offset = 0 }: RanksCarouselPro
                                     {item.image_url && (
                                       <img src={item.image_url} alt={item.title} className="w-6 h-6 rounded object-cover flex-shrink-0" />
                                     )}
-                                    <span className="text-gray-900 font-medium flex-1 truncate text-sm">{item.title}</span>
-                                    <PctBar upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
+                                    <span className="text-gray-900 font-medium text-sm truncate" style={{maxWidth: '45%'}}>{item.title}</span>
+                                    <VoteCount upCount={item.up_vote_count || 0} downCount={item.down_vote_count || 0} />
                                   </div>
                                 )}
                               </Draggable>
