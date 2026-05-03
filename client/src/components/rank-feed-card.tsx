@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { GripVertical, Heart, MessageCircle, Trash2, BarChart2, Users, Flag, Check, Loader2 } from "lucide-react";
 import { ReportSheet } from "@/components/report-sheet";
 import {
@@ -78,21 +78,28 @@ function PctBar({ upCount, downCount }: { upCount: number; downCount: number }) 
   const total = upCount + downCount;
   if (total === 0) {
     return (
-      <div className="flex items-center gap-1 flex-shrink-0 min-w-[68px]">
-        <span className="text-[10px] text-gray-300 font-semibold w-6 text-right">↑—</span>
-        <div className="flex-1 h-1 bg-gray-100 rounded-full" />
-        <span className="text-[10px] text-gray-300 font-semibold w-6">—↓</span>
+      <div className="flex flex-col items-end gap-0.5 flex-shrink-0 w-16">
+        <span className="text-[9px] text-gray-300 leading-none">community</span>
+        <div className="flex items-center gap-0.5 w-full">
+          <span className="text-[9px] text-gray-300 font-semibold">↑</span>
+          <div className="flex-1 h-1.5 bg-gray-100 rounded-full" />
+          <span className="text-[9px] text-gray-300 font-semibold">↓</span>
+        </div>
       </div>
     );
   }
   const upPct = Math.round(upCount / total * 100);
+  const downPct = 100 - upPct;
   return (
-    <div className="flex items-center gap-1 flex-shrink-0 min-w-[68px]">
-      <span className="text-[10px] text-emerald-600 font-semibold w-6 text-right">↑{upPct}%</span>
-      <div className="flex-1 h-1 bg-red-100 rounded-full overflow-hidden">
-        <div className="h-full bg-emerald-400 rounded-full transition-all" style={{ width: `${upPct}%` }} />
+    <div className="flex flex-col items-end gap-0.5 flex-shrink-0 w-16">
+      <span className="text-[9px] text-gray-400 leading-none">community</span>
+      <div className="flex items-center gap-0.5 w-full">
+        <span className="text-[9px] text-emerald-600 font-bold leading-none">↑{upPct}%</span>
+        <div className="flex-1 h-1.5 bg-red-100 rounded-full overflow-hidden">
+          <div className="h-full bg-emerald-400 rounded-full transition-all duration-500" style={{ width: `${upPct}%` }} />
+        </div>
+        <span className="text-[9px] text-red-400 font-bold leading-none">{downPct}%↓</span>
       </div>
-      <span className="text-[10px] text-red-400 font-semibold w-6">{100 - upPct}%↓</span>
     </div>
   );
 }
@@ -136,15 +143,21 @@ export default function RankFeedCard({
   const [reportPostOpen, setReportPostOpen] = useState(false);
   const [myOrder, setMyOrder] = useState<RankItemWithVotes[]>([]);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const initializedRef = useRef(false);
 
   const isOwner = user?.id === rank.user_id;
   const hasItems = !!(rank.items && rank.items.length > 0);
 
+  // Only initialize myOrder ONCE when items first become available.
+  // Never re-sort after that — we must preserve the user's drag order.
   useEffect(() => {
+    if (initializedRef.current) return;
+    if (localItems.length === 0) return;
     const sorted = [...localItems]
       .sort((a, b) => (a.position || 0) - (b.position || 0))
       .slice(0, MAX_ITEMS);
     setMyOrder(sorted);
+    initializedRef.current = true;
   }, [localItems]);
 
   useEffect(() => {
@@ -198,7 +211,8 @@ export default function RankFeedCard({
     },
     onSuccess: (data) => {
       if (data.items) {
-        setLocalItems(prev => prev.map(item => {
+        // Patch vote counts directly into myOrder — preserves drag order
+        setMyOrder(prev => prev.map(item => {
           const updated = data.items.find((i: any) => i.id === item.id);
           return updated
             ? { ...item, up_vote_count: updated.up_vote_count, down_vote_count: updated.down_vote_count }
@@ -349,7 +363,7 @@ export default function RankFeedCard({
             )}
           </div>
         ) : isOwner ? (
-          /* Owner: read-only list with pct bars */
+          /* Owner: read-only with community pct bars */
           <div className="space-y-1.5">
             {myOrder.map((item, idx) => (
               <div key={item.id} className="flex items-center gap-2.5 py-2 px-3 bg-gray-50 rounded-lg">
@@ -367,11 +381,11 @@ export default function RankFeedCard({
             ))}
           </div>
         ) : (
-          /* Everyone else: drag & drop, always shown, capped at 10 */
+          /* Everyone else: drag to set personal order, community % shown live */
           <>
             <div className="mb-2 flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 rounded-lg px-3 py-1.5">
               <GripVertical size={12} />
-              Drag to set your personal order
+              Drag to set your order — see community % after submitting
             </div>
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId={`rank-drag-${rank.id}`}>
