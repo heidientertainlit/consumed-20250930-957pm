@@ -207,7 +207,6 @@ export default function RankFeedCard({
             : item;
         }));
       }
-      toast({ title: 'Ranking saved!', description: 'Your personal ranking has been recorded.' });
     },
     onError: (error: Error) => {
       toast({ title: 'Failed to save ranking', description: error.message, variant: 'destructive' });
