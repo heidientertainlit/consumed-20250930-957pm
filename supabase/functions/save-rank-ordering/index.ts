@@ -50,15 +50,6 @@ serve(async (req) => {
       });
     }
 
-    // Prevent owner from submitting
-    const { data: rank } = await supabaseAdmin
-      .from('ranks').select('user_id').eq('id', rank_id).single();
-    if (rank?.user_id === appUser.id) {
-      return new Response(JSON.stringify({ error: 'Cannot rank your own list' }), {
-        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
     // Get official positions + current counts
     const { data: officialItems } = await supabaseAdmin
       .from('rank_items')

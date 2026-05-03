@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { GripVertical, Heart, MessageCircle, Trash2, BarChart2, Users, Flag, Check, Loader2 } from "lucide-react";
+import { GripVertical, Heart, MessageCircle, Trash2, BarChart2, Users, Flag, Loader2 } from "lucide-react";
 import { ReportSheet } from "@/components/report-sheet";
 import {
   AlertDialog,
@@ -131,7 +131,6 @@ export default function RankFeedCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [reportPostOpen, setReportPostOpen] = useState(false);
   const [myOrder, setMyOrder] = useState<RankItemWithVotes[]>([]);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
   const initializedRef = useRef(false);
 
   const isOwner = user?.id === rank.user_id;
@@ -208,7 +207,6 @@ export default function RankFeedCard({
             : item;
         }));
       }
-      setHasSubmitted(true);
       toast({ title: 'Ranking saved!', description: 'Your personal ranking has been recorded.' });
     },
     onError: (error: Error) => {
@@ -236,11 +234,12 @@ export default function RankFeedCard({
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
+    if (result.destination.index === result.source.index) return;
     const items = Array.from(myOrder);
     const [moved] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, moved);
     setMyOrder(items);
-    setHasSubmitted(false);
+    submitOrderingMutation.mutate(items);
   };
 
   const formatTimeAgo = (dateString?: string) => {
@@ -374,7 +373,8 @@ export default function RankFeedCard({
           <>
             <div className="mb-2 flex items-center gap-1.5 text-xs text-purple-600 bg-purple-50 rounded-lg px-3 py-1.5">
               <GripVertical size={12} />
-              Drag to set your order — see community % after submitting
+              Drag to reorder — saves automatically
+              {submitOrderingMutation.isPending && <Loader2 size={11} className="animate-spin ml-auto text-purple-400" />}
             </div>
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId={`rank-drag-${rank.id}`}>
@@ -418,25 +418,6 @@ export default function RankFeedCard({
                 )}
               </Droppable>
             </DragDropContext>
-            <div className="mt-2">
-              <button
-                onClick={() => submitOrderingMutation.mutate(myOrder)}
-                disabled={submitOrderingMutation.isPending}
-                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors font-medium disabled:opacity-60 ${
-                  hasSubmitted
-                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100'
-                    : 'bg-purple-600 text-white hover:bg-purple-700'
-                }`}
-              >
-                {submitOrderingMutation.isPending ? (
-                  <><Loader2 size={11} className="animate-spin" /> Saving...</>
-                ) : hasSubmitted ? (
-                  <><Check size={11} /> Submitted — Re-submit</>
-                ) : (
-                  <><Check size={11} /> Submit My Ranking</>
-                )}
-              </button>
-            </div>
           </>
         )}
       </div>
