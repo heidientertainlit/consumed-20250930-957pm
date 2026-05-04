@@ -1020,9 +1020,34 @@ serve(async (req) => {
         }
       }
       
-      // 3. Description matching - weakest signal
+      // 3. Description matching
       if (description && queryLower.length > 2) {
         if (description.includes(queryLower)) score += 10;
+        // Per-word description bonus: helps movies whose TMDB title is short but
+        // whose synopsis contains the subtitle words the user typed.
+        // e.g. "star wars new hope" → TMDB description mentions "New Hope" → movie scores higher
+        const descLower = description.toLowerCase();
+        const STOP_WORDS = new Set(['a','an','the','of','in','and','or','to','is','it','by','as','for','on','with','at','from','that','this','but','not','are','was','be','have','has','had','will','would','could','should','may','might','do','does','did','its','my','your','our','their','his','her','we','he','she','they','i','you']);
+        const significantQueryWords = queryWords.filter(w => w.length > 2 && !STOP_WORDS.has(w));
+        if (significantQueryWords.length > 0) {
+          const descWordMatches = significantQueryWords.filter(w => descLower.includes(w));
+          score += descWordMatches.length * 8;
+        }
+      }
+
+      // 3c. Word-coverage penalty — penalise results that are missing significant query words
+      // from BOTH their title AND description. This stops generic "Star Wars" books from ranking
+      // above the specific film when user searches "star wars new hope".
+      if (queryWords.length >= 3) {
+        const STOP_WORDS2 = new Set(['a','an','the','of','in','and','or','to','is','it','by','as','for','on','with','at','from','that','this','but','not','are','was','be','have','has','had','will','would','could','should']);
+        const sigWords = queryWords.filter(w => w.length > 2 && !STOP_WORDS2.has(w));
+        if (sigWords.length >= 2) {
+          const combined = `${title} ${creator} ${(description || '').toLowerCase().substring(0, 300)}`;
+          const missingCount = sigWords.filter(w => !combined.includes(w)).length;
+          if (missingCount > 0) {
+            score -= missingCount * 18;  // -18 per missing significant word
+          }
+        }
       }
 
       // 3b. Sequel search scoring — "harry potter 2", "star wars iv", etc.
