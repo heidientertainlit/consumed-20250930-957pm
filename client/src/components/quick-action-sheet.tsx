@@ -378,6 +378,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                 privateMode: true, // don't double-post to feed
               }),
             });
+            window.dispatchEvent(new CustomEvent('consumed:media-tracked'));
           }
           queryClient.invalidateQueries({ queryKey: ['room-posts', roomId] });
           queryClient.invalidateQueries({ queryKey: ['social-feed'] });
@@ -441,6 +442,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                 privateMode: true,
               }),
             });
+            window.dispatchEvent(new CustomEvent('consumed:media-tracked'));
           }
           const { error: htErr } = await supabase.from('social_posts').insert({
             user_id: authUser.id,
@@ -490,6 +492,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                 privateMode: true,
               }),
             });
+            window.dispatchEvent(new CustomEvent('consumed:media-tracked'));
           }
           const { error: qErr } = await supabase.from('social_posts').insert({
             user_id: authUser.id,
@@ -582,6 +585,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           throw new Error(errorData.error || 'Failed to track media');
         }
         
+        window.dispatchEvent(new CustomEvent('consumed:media-tracked'));
         trackEvent('media_tracked', { 
           media_type: selectedMedia.type, 
           list_type: selectedListId || 'currently',

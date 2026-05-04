@@ -1429,6 +1429,13 @@ export default function UserProfile() {
     }
   }, [session?.access_token, viewingUserId, isRouteResolving]);
 
+  // Refresh lists when media is tracked from anywhere (e.g. nav "+" button)
+  useEffect(() => {
+    const handleMediaTracked = () => { fetchUserLists(viewingUserId); };
+    window.addEventListener('consumed:media-tracked', handleMediaTracked);
+    return () => window.removeEventListener('consumed:media-tracked', handleMediaTracked);
+  }, [viewingUserId, session?.access_token]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const isInvite = params.get('ref') === 'invite';
