@@ -157,21 +157,31 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   const [seriesBooksMap, setSeriesBooksMap] = useState<Record<string, MediaResult[]>>({});
   const [loadingSeriesId, setLoadingSeriesId] = useState<string | null>(null);
 
-  const fetchSeriesBooks = async (seriesTitle: string, seriesId: string) => {
+  const fetchSeriesBooks = async (seriesTitle: string, seriesId: string, author?: string) => {
     if (seriesBooksMap[seriesId] || !session?.access_token) return;
     setLoadingSeriesId(seriesId);
     try {
+      // Include author in query so we get all books in the series (e.g. New Moon, Eclipse,
+      // Breaking Dawn all share "Stephenie Meyer" even though they don't mention "Twilight")
+      const query = author && author !== 'Unknown Author'
+        ? `${seriesTitle} ${author}`
+        : seriesTitle;
       const resp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search`,
         {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: seriesTitle, type: 'book' }),
+          body: JSON.stringify({ query, type: 'book' }),
         }
       );
       if (resp.ok) {
         const data = await resp.json();
-        const books = (data.results || []).filter((r: any) => r.type === 'book').slice(0, 8);
+        // Deduplicate by external_id and filter to books only
+        const seen = new Set<string>();
+        const books = (data.results || [])
+          .filter((r: any) => r.type === 'book')
+          .filter((r: any) => { const id = r.external_id; if (seen.has(id)) return false; seen.add(id); return true; })
+          .slice(0, 8);
         setSeriesBooksMap(prev => ({ ...prev, [seriesId]: books }));
       }
     } catch (_) {}
@@ -427,7 +437,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
         setExpandedSeriesId(null);
       } else {
         setExpandedSeriesId(sid);
-        fetchSeriesBooks(result.title, sid);
+        fetchSeriesBooks(result.title, sid, result.creator);
       }
       return;
     }
@@ -639,32 +649,37 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                           </div>
                           {/* Expanded individual books */}
                           {isSeriesExpanded && (
-                            <div className="bg-white/[0.03] border-b border-white/[0.04]">
+                            <div className="ml-4 mr-2 mb-2 rounded-xl overflow-hidden border border-purple-500/20" style={{ background: 'rgba(109,40,217,0.08)' }}>
+                              <div className="px-3 py-1.5 border-b border-purple-500/15 flex items-center gap-1.5">
+                                <span className="text-[10px] font-semibold text-purple-300 uppercase tracking-wider">Books in this series</span>
+                              </div>
                               {isLoadingSeries ? (
-                                <div className="px-6 py-3 text-xs text-gray-400 flex items-center gap-2">
+                                <div className="px-4 py-3 text-xs text-gray-400 flex items-center gap-2">
                                   <div className="w-3 h-3 border border-gray-500 border-t-purple-400 rounded-full animate-spin" />
                                   Loading books...
                                 </div>
                               ) : seriesBooks.length === 0 ? (
-                                <p className="px-6 py-3 text-xs text-gray-500">No individual books found.</p>
+                                <p className="px-4 py-3 text-xs text-gray-500">No individual books found.</p>
                               ) : (
                                 seriesBooks.map((book, bIdx) => {
                                   const bPoster = (book as any).poster_url || (book as any).image_url || book.image || '';
                                   const bObj = { title: book.title, mediaType: 'book', imageUrl: bPoster, externalId: book.external_id, externalSource: book.external_source || 'googlebooks', creator: book.creator };
                                   return (
-                                    <div key={`${book.external_id}-b${bIdx}`} className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 border-b border-white/[0.03] last:border-0">
+                                    <div key={`${book.external_id}-b${bIdx}`} className="flex items-center gap-2 px-3 py-2 hover:bg-white/5 border-b border-purple-500/10 last:border-0">
                                       <div
                                         onClick={() => { setIsSearchExpanded(false); setSearchQuery(""); setLocation(`/media/book/${book.external_source || 'googlebooks'}/${book.external_id}`); }}
                                         className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer"
                                       >
                                         {bPoster ? (
-                                          <img src={bPoster} alt={book.title} className="w-7 h-10 object-cover rounded shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                          <img src={bPoster} alt={book.title} className="w-8 h-11 object-cover rounded shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                                         ) : (
-                                          <div className="w-7 h-10 bg-gray-700 rounded shrink-0" />
+                                          <div className="w-8 h-11 bg-gray-700/60 rounded shrink-0 flex items-center justify-center">
+                                            <span className="text-gray-500 text-[10px]">📖</span>
+                                          </div>
                                         )}
                                         <div className="flex-1 min-w-0">
-                                          <p className="text-white text-xs font-medium line-clamp-2 leading-snug">{book.title}</p>
-                                          {book.year && <p className="text-gray-500 text-[10px]">{book.year}</p>}
+                                          <p className="text-white/90 text-xs font-medium line-clamp-2 leading-snug">{book.title}</p>
+                                          <p className="text-gray-500 text-[10px] mt-0.5">{book.creator && book.creator !== 'Unknown Author' ? book.creator : ''}{book.year ? (book.creator && book.creator !== 'Unknown Author' ? ` · ${book.year}` : book.year) : ''}</p>
                                         </div>
                                       </div>
                                       <button
