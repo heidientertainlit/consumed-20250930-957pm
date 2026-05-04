@@ -620,6 +620,9 @@ export default function Search() {
                               {result.creator && (
                                 <p className="text-xs text-gray-400 truncate">{result.creator}</p>
                               )}
+                              {result.type === 'book' && result.series && (
+                                <p className="text-xs text-purple-500 truncate">📚 {result.series}</p>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0">

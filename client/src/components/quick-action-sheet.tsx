@@ -814,6 +814,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 truncate">{result.title}</p>
                         <p className="text-sm text-gray-500 truncate">{result.type} {result.year && `• ${result.year}`}</p>
+                        {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
+                        {result.type === 'book' && result.series && <p className="text-xs text-purple-500 truncate">📚 {result.series}</p>}
                       </div>
                     </button>
                   ))}
@@ -1165,7 +1167,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{result.title}</p>
-                    <p className="text-xs text-gray-500">{result.type}</p>
+                    <p className="text-xs text-gray-500">{result.type}{result.creator && result.creator !== 'Unknown Author' ? ` • ${result.creator}` : ''}</p>
+                    {result.type === 'book' && result.series && <p className="text-xs text-purple-500 truncate">📚 {result.series}</p>}
                   </div>
                 </button>
               ))}
@@ -1326,6 +1329,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 truncate">{result.title}</p>
                             <p className="text-sm text-gray-500 truncate">{result.type} {result.year && `• ${result.year}`}</p>
+                            {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
+                            {result.type === 'book' && result.series && <p className="text-xs text-purple-500 truncate">📚 {result.series}</p>}
                           </div>
                         </button>
                       ))}
@@ -1561,7 +1566,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">{result.title}</p>
-                      <p className="text-xs text-gray-500 truncate">{result.type}</p>
+                      <p className="text-xs text-gray-500 truncate">{result.type}{result.creator && result.creator !== 'Unknown Author' ? ` • ${result.creator}` : ''}</p>
+                      {result.type === 'book' && result.series && <p className="text-xs text-purple-500 truncate">📚 {result.series}</p>}
                     </div>
                   </button>
                 ))}

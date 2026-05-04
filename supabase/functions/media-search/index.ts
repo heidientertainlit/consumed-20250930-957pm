@@ -274,35 +274,57 @@ serve(async (req) => {
       searchPromises.push((async () => {
         let foundBooks = false;
         const googleBooksApiKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
-        
-        // DEBUG: Log first 8 chars of API key to verify correct key is loaded
-        console.log('DEBUG GOOGLE_BOOKS_API_KEY first 8 chars:', googleBooksApiKey ? googleBooksApiKey.slice(0, 8) : 'NOT SET');
-        
-        // Try Google Books first (with API key for proper quota)
+
+        // --- Smart query building ---
+        // Detect "Title by Author" pattern → intitle:X+inauthor:Y
+        // Detect pure author name (2-3 alpha words, no title stop-words) → run inauthor: search too
+        let gbPrimaryQuery = searchQuery;
+        let gbAuthorQuery: string | null = null;
+        let isAuthorSearch = false;
+
+        const byMatch = /^(.+?)\s+by\s+(.+)$/i.exec(searchQuery);
+        if (byMatch) {
+          gbPrimaryQuery = `intitle:${byMatch[1].trim()}+inauthor:${byMatch[2].trim()}`;
+        } else {
+          const words = searchQuery.trim().split(/\s+/);
+          const stopWords = /^(the|a|an|and|of|in|to|for|on|with|at|by|from|is|was)$/i;
+          const looksLikeName = words.length >= 2 && words.length <= 3 &&
+            words.every(w => /^[A-Za-zÀ-ÿ'.-]+$/.test(w)) &&
+            !words.some(w => stopWords.test(w));
+          if (looksLikeName) {
+            isAuthorSearch = true;
+            gbAuthorQuery = `inauthor:"${searchQuery}"`;
+          }
+        }
+
+        // Helper to extract series name from a Google Books volume
+        const extractSeries = (volumeInfo: any): string | null => {
+          const subtitle = volumeInfo.subtitle || '';
+          if (/series|saga|chronicles|trilogy|book \d|vol\.|volume \d/i.test(subtitle)) return subtitle;
+          if (volumeInfo.seriesInfo?.volumeSeries?.[0]?.seriesId) return volumeInfo.seriesInfo.volumeSeries[0].seriesId;
+          return null;
+        };
+
+        // Try Google Books first
         if (googleBooksApiKey) {
           try {
-            const googleBooksUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=20&key=${googleBooksApiKey}`;
-            console.log('Fetching Google Books with API key (key length:', googleBooksApiKey.length, ')');
-            const googleResponse = await fetchWithTimeout(googleBooksUrl, {}, 5000);
+            const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(gbPrimaryQuery)}&maxResults=20&printType=books&key=${googleBooksApiKey}`;
+            console.log('Fetching Google Books (primary)');
+            const googleResponse = await fetchWithTimeout(gbUrl, {}, 5000);
             console.log('Google Books response status:', googleResponse.status);
-            
-            // Log error details if not OK
+
             if (!googleResponse.ok) {
               const errorText = await googleResponse.text();
               console.error('Google Books API error:', errorText);
             }
-            
+
             if (googleResponse.ok) {
               const googleData = await googleResponse.json();
               console.log('Google Books items count:', googleData.items?.length || 0);
-              // Log titles for debugging
-              const titles = googleData.items?.slice(0, 15).map((i: any) => i.volumeInfo?.title) || [];
-              console.log('Google Books titles found:', JSON.stringify(titles));
               for (const item of googleData.items?.slice(0, 15) || []) {
                 const volumeInfo = item.volumeInfo;
                 if (volumeInfo && isContentAppropriate(volumeInfo, 'book')) {
                   const posterUrl = `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`;
-                  
                   bookResults.push({
                     title: volumeInfo.title,
                     type: 'book',
@@ -313,14 +335,50 @@ serve(async (req) => {
                     description: volumeInfo.description?.substring(0, 200) || '',
                     release_date: volumeInfo.publishedDate || null,
                     ratings_count: volumeInfo.ratingsCount ?? 0,
-                    page_count: volumeInfo.pageCount || 0
+                    page_count: volumeInfo.pageCount || 0,
+                    series: extractSeries(volumeInfo),
                   });
                   foundBooks = true;
                 }
               }
-              console.log('Books added from Google Books:', bookResults.length);
-            } else {
-              console.error('Google Books error response:', googleResponse.status);
+              console.log('Books added from Google Books (primary):', bookResults.length);
+            }
+
+            // If this looks like an author search, run a dedicated inauthor: query in parallel
+            if (gbAuthorQuery) {
+              try {
+                const authorUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(gbAuthorQuery)}&maxResults=20&printType=books&orderBy=relevance&key=${googleBooksApiKey}`;
+                const authorResponse = await fetchWithTimeout(authorUrl, {}, 5000);
+                if (authorResponse.ok) {
+                  const authorData = await authorResponse.json();
+                  const existingIds = new Set(bookResults.map((b: any) => b.external_id));
+                  for (const item of authorData.items?.slice(0, 15) || []) {
+                    const volumeInfo = item.volumeInfo;
+                    if (volumeInfo && isContentAppropriate(volumeInfo, 'book') && !existingIds.has(item.id)) {
+                      const posterUrl = `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`;
+                      bookResults.push({
+                        title: volumeInfo.title,
+                        type: 'book',
+                        creator: volumeInfo.authors?.[0] || 'Unknown Author',
+                        poster_url: posterUrl,
+                        external_id: item.id,
+                        external_source: 'googlebooks',
+                        description: volumeInfo.description?.substring(0, 200) || '',
+                        release_date: volumeInfo.publishedDate || null,
+                        ratings_count: volumeInfo.ratingsCount ?? 0,
+                        page_count: volumeInfo.pageCount || 0,
+                        series: extractSeries(volumeInfo),
+                        _author_match: true,
+                      });
+                      foundBooks = true;
+                      existingIds.add(item.id);
+                    }
+                  }
+                  console.log('Books added from Google Books (inauthor):', bookResults.length);
+                }
+              } catch (err) {
+                console.error('Google Books inauthor search error:', err);
+              }
             }
           } catch (error) {
             console.error('Google Books search error:', error);
@@ -328,23 +386,26 @@ serve(async (req) => {
         } else {
           console.warn('GOOGLE_BOOKS_API_KEY not set, skipping Google Books');
         }
-        
+
         // Fallback to Open Library if Google Books fails or returns no results
         if (!foundBooks) {
           try {
-            let bookUrl;
-            if (searchQuery.toLowerCase().includes(' by ')) {
-              const parts = searchQuery.split(/\s+by\s+/i);
-              const title = parts[0].trim();
-              const author = parts[1].trim();
-              bookUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}&limit=20`;
+            let bookUrl: string;
+            if (byMatch) {
+              // "Title by Author" — search both fields separately for best results
+              bookUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(byMatch[1].trim())}&author=${encodeURIComponent(byMatch[2].trim())}&limit=20`;
+            } else if (isAuthorSearch) {
+              // Pure author name search
+              bookUrl = `https://openlibrary.org/search.json?author=${encodeURIComponent(searchQuery)}&limit=20&sort=editions`;
             } else {
               bookUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}&limit=20`;
             }
-            
+
             console.log('Fetching Open Library (fallback):', bookUrl);
-            const bookResponse = await fetchWithTimeout(bookUrl, {}, 5000);
-            
+            const bookResponse = await fetchWithTimeout(bookUrl, {
+              headers: { 'User-Agent': 'Consumed-App/1.0 (support@consumed.app)' }
+            }, 5000);
+
             if (bookResponse.ok) {
               const bookData = await bookResponse.json();
               bookData.docs?.slice(0, 15).forEach((book: any) => {
@@ -358,7 +419,8 @@ serve(async (req) => {
                     external_source: 'openlibrary',
                     description: book.first_sentence?.[0] || '',
                     release_date: book.first_publish_year ? `${book.first_publish_year}` : null,
-                    edition_count: book.edition_count ?? 0
+                    edition_count: book.edition_count ?? 0,
+                    series: book.series?.[0] || null,
                   });
                 }
               });
@@ -809,6 +871,17 @@ serve(async (req) => {
         const creatorLower = creator.toLowerCase().trim();
         if (creatorLower === queryLower || creatorLower.includes(queryLower) || queryLower.includes(creatorLower)) {
           score += 75;  // Strong: user is searching for this artist by name
+        }
+      }
+      // Book author search boost — result came from a dedicated inauthor: query
+      if (item.type === 'book' && (item as any)._author_match) {
+        score += 60;
+      }
+      // Book author name match — query words appear in creator field
+      if (item.type === 'book' && creator && queryLower.length > 2) {
+        const creatorLower = creator.toLowerCase().trim();
+        if (creatorLower === queryLower || creatorLower.includes(queryLower) || queryLower.includes(creatorLower)) {
+          score += 50;
         }
       }
       // Similar boost for podcasts searched by show host/creator name
