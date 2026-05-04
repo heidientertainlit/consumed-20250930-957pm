@@ -162,6 +162,30 @@ serve(async (req) => {
     // "star wars episode 4" — the secondary TMDB query that returns properly titled installments
     const tmdbEpisodeQuery: string | null = (earlySeqBase && earlySeqNum) ? `${earlySeqBase} episode ${earlySeqNum}` : null;
 
+    // Convert a number to its Roman numeral string (1–20) for title matching
+    const intToRoman = (n: number): string => {
+      const vals = [10,'x',9,'ix',5,'v',4,'iv',1,'i'];
+      let result = '';
+      for (let i = 0; i < vals.length; i += 2) {
+        while (n >= (vals[i] as number)) { result += vals[i + 1]; n -= (vals[i] as number); }
+      }
+      return result;
+    };
+    // Strings that the correctly-numbered installment's title should contain
+    // e.g. earlySeqNum=4 → seqTitleTokens=["4","iv"]
+    const seqTitleTokens: string[] = earlySeqNum
+      ? [String(earlySeqNum), intToRoman(earlySeqNum)]
+      : [];
+    // Returns true if a title string contains the target sequel number (Arabic or Roman, word-boundary)
+    const titleContainsSeqNum = (title: string): boolean => {
+      if (!seqTitleTokens.length) return false;
+      const t = title.toLowerCase();
+      return seqTitleTokens.some(tok => {
+        const re = new RegExp(`(?<![a-z0-9])${tok}(?![a-z0-9])`);
+        return re.test(t);
+      });
+    };
+
     console.log('Original query:', query, '| Cleaned query:', searchQuery, '| TMDB query:', tmdbSearchQuery, '| Episode query:', tmdbEpisodeQuery, '| Type hints:', { queryHasBook, queryHasMovie, queryHasMusic, queryHasTv, queryHasPodcast });
 
     // If caller didn't pass an explicit type but query has an unambiguous type hint,
@@ -253,6 +277,10 @@ serve(async (req) => {
                     const episodeTitle = item.title || item.name || '';
                     const releaseDate = item.release_date || item.first_air_date || '';
                     // Check if this ID already exists in movieTvResults from the primary search
+                    // Only award the _episode_match boost if this result's title actually
+                    // contains the target number (Arabic or Roman). This prevents Episode V
+                    // from stealing the boost when we searched for Episode 4.
+                    const isCorrectInstallment = titleContainsSeqNum(episodeTitle);
                     const existingIdx = movieTvResults.findIndex((r: any) => r.external_id === itemId);
                     if (existingIdx !== -1) {
                       // Same TMDB ID found — upgrade to the episode-titled version if it's longer/better
@@ -261,7 +289,9 @@ serve(async (req) => {
                       if (episodeTitle.length > existingTitle.length) {
                         movieTvResults[existingIdx].title = episodeTitle;
                       }
-                      movieTvResults[existingIdx]._episode_match = true;
+                      if (isCorrectInstallment) {
+                        movieTvResults[existingIdx]._episode_match = true;
+                      }
                     } else {
                       // New result not seen in primary search — add it
                       movieTvResults.push({
@@ -277,7 +307,7 @@ serve(async (req) => {
                         popularity: item.popularity ?? 0,
                         vote_count: item.vote_count ?? 0,
                         release_date: releaseDate || null,
-                        _episode_match: true
+                        _episode_match: isCorrectInstallment
                       });
                     }
                   });
