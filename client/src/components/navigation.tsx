@@ -145,6 +145,30 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
     }
   }, [isSearchExpanded]);
 
+  // Detect series from title pattern "X and the Y" → "X"
+  const inferSeries = (title: string): string | null => {
+    const m = /^(.+?)\s+and\s+the\s+/i.exec(title);
+    if (m) { const c = m[1].trim(); if (c.split(/\s+/).length <= 4) return c; }
+    return null;
+  };
+
+  // Type priority for display order: series card → movies → TV → books → other
+  const TYPE_ORDER: Record<string, number> = { book_series: 0, movie: 1, tv: 2, tv_show: 2, book: 3, music: 4, podcast: 5 };
+  const prioritizeAndDiversify = (results: MediaResult[]): MediaResult[] => {
+    const MAX_PER_TYPE = 2;
+    const counts: Record<string, number> = {};
+    const primary: MediaResult[] = [];
+    const overflow: MediaResult[] = [];
+    const sorted = [...results].sort((a, b) => (TYPE_ORDER[a.type] ?? 99) - (TYPE_ORDER[b.type] ?? 99));
+    for (const r of sorted) {
+      const t = r.type === 'book_series' ? 'book_series' : (r.type || 'other');
+      counts[t] = (counts[t] || 0) + 1;
+      if (counts[t] <= MAX_PER_TYPE) primary.push(r);
+      else overflow.push(r);
+    }
+    return [...primary, ...overflow].slice(0, 8);
+  };
+
   // Debounced media search
   const mediaQuery = useQuery<MediaResult[]>({
     queryKey: ['inline-media-search', searchQuery],
@@ -157,7 +181,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query: searchQuery })
+        body: JSON.stringify({ query: searchQuery, include_book_series: true })
       });
 
       if (!response.ok) {
@@ -498,71 +522,70 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                 {mediaResults.length > 0 && (
                   <div>
                     <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-white/10">
-                      Media
+                      Results
                     </div>
-                    {mediaResults.slice(0, 8).map((media, idx) => (
-                      <div
-                        key={`${media.external_id}-${idx}`}
-                        className="flex items-center gap-3 px-3 py-2 hover:bg-white/5"
-                      >
+                    {prioritizeAndDiversify(mediaResults).map((media, idx) => {
+                      const posterSrc = (media as any).poster_url || (media as any).image_url || media.image || (media as any).poster_path || '';
+                      const typeLabel = (media as any).series_count && media.type === 'book_series'
+                        ? `${(media as any).series_count}-book series`
+                        : media.type === 'tv' ? 'TV show' : media.type;
+                      const seriesLabel = (media as any).series || inferSeries(media.title);
+                      const mediaObj = {
+                        title: media.title,
+                        mediaType: media.type || 'movie',
+                        imageUrl: posterSrc,
+                        externalId: media.external_id,
+                        externalSource: media.external_source || 'tmdb',
+                        creator: media.creator,
+                      };
+                      return (
                         <div
-                          onClick={() => handleMediaClick(media)}
-                          className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                          key={`${media.external_id}-${idx}`}
+                          className="flex items-start gap-2 px-3 py-2.5 hover:bg-white/5 border-b border-white/[0.04] last:border-0"
                         >
-                          {(() => {
-                            const posterSrc = media.image || (media as any).poster_url || (media as any).image_url || '';
-                            return posterSrc ? (
+                          <div
+                            onClick={() => handleMediaClick(media)}
+                            className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
+                          >
+                            {posterSrc ? (
                               <img src={posterSrc} alt={media.title} className="w-10 h-14 object-cover rounded shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
                             ) : (
                               <div className="w-10 h-14 bg-gray-700 rounded flex items-center justify-center shrink-0">
                                 <Activity size={16} className="text-gray-500" />
                               </div>
-                            );
-                          })()}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white text-sm font-medium truncate">{media.title}</p>
-                            <p className="text-gray-400 text-xs">{media.type} {media.year && `• ${media.year}`}</p>
+                            )}
+                            <div className="flex-1 min-w-0 pt-0.5">
+                              <p className="text-white text-sm font-semibold line-clamp-2 leading-snug">{media.title}</p>
+                              <p className="text-gray-400 text-xs mt-0.5 capitalize">{typeLabel}{media.year ? ` • ${media.year}` : ''}</p>
+                              {media.creator && media.creator !== 'Unknown Author' && (
+                                <p className="text-gray-500 text-xs truncate">{media.creator}</p>
+                              )}
+                              {media.type === 'book_series' && (media as any).series_count > 0 && (
+                                <span className="inline-block text-[10px] font-medium bg-purple-500/30 text-purple-200 border border-purple-400/40 px-1.5 py-0.5 rounded-full mt-1">📚 {(media as any).series_count} books</span>
+                              )}
+                              {media.type === 'book' && seriesLabel && (
+                                <span className="inline-block text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded-full mt-1 max-w-[130px] truncate">📚 {seriesLabel}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0 mt-1">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setQuickAddMedia(mediaObj); setIsQuickAddOpen(true); }}
+                              className="w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
+                            >
+                              <Plus size={16} className="text-white" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setActionSheetMedia(mediaObj); setIsQuickActionOpen(true); }}
+                              className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
+                            >
+                              <MessageSquarePlus size={14} className="text-white" />
+                              <Star size={8} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
+                            </button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setQuickAddMedia({
-                                title: media.title,
-                                mediaType: media.type || 'movie',
-                                imageUrl: media.image,
-                                externalId: media.external_id,
-                                externalSource: media.external_source || 'tmdb',
-                                creator: media.creator,
-                              });
-                              setIsQuickAddOpen(true);
-                            }}
-                            className="w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
-                          >
-                            <Plus size={16} className="text-white" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActionSheetMedia({
-                                title: media.title,
-                                mediaType: media.type || 'movie',
-                                imageUrl: media.image,
-                                externalId: media.external_id,
-                                externalSource: media.external_source || 'tmdb',
-                                creator: media.creator,
-                              });
-                              setIsQuickActionOpen(true);
-                            }}
-                            className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
-                          >
-                            <MessageSquarePlus size={14} className="text-white" />
-                            <Star size={8} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
