@@ -498,6 +498,46 @@ serve(async (req) => {
               console.log('Books added from Google Books (primary):', bookResults.length);
             }
 
+            // Always run a parallel intitle: search — catches book titles that the general
+            // query misses. e.g. "emma m lion" won't return "Emma M. Lion" from a generic
+            // search but intitle:"emma m lion" will find it directly.
+            try {
+              const titleQuery = `intitle:${searchQuery}`;
+              const titleUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(titleQuery)}&maxResults=10&printType=books&key=${googleBooksApiKey}`;
+              const titleResponse = await fetchWithTimeout(titleUrl, {}, 4000);
+              if (titleResponse.ok) {
+                const titleData = await titleResponse.json();
+                const existingIds = new Set(bookResults.map((b: any) => b.external_id));
+                for (const item of titleData.items?.slice(0, 10) || []) {
+                  const volumeInfo = item.volumeInfo;
+                  if (volumeInfo && isContentAppropriate(volumeInfo, 'book') && !existingIds.has(item.id)) {
+                    const posterUrl = `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`;
+                    bookResults.push({
+                      title: volumeInfo.title,
+                      type: 'book',
+                      creator: volumeInfo.authors?.[0] || 'Unknown Author',
+                      poster_url: posterUrl,
+                      external_id: item.id,
+                      external_source: 'googlebooks',
+                      description: volumeInfo.description?.substring(0, 200) || '',
+                      release_date: volumeInfo.publishedDate || null,
+                      ratings_count: volumeInfo.ratingsCount ?? 0,
+                      page_count: volumeInfo.pageCount || 0,
+                      series: extractSeries(volumeInfo),
+                      subtitle: volumeInfo.subtitle || '',
+                      categories: volumeInfo.categories || [],
+                      _title_match: true,
+                    });
+                    foundBooks = true;
+                    existingIds.add(item.id);
+                  }
+                }
+                console.log('Books added from Google Books (intitle):', bookResults.filter((b: any) => b._title_match).length);
+              }
+            } catch (err) {
+              console.error('Google Books intitle search error:', err);
+            }
+
             // If this looks like an author search, run a dedicated inauthor: query in parallel
             if (gbAuthorQuery) {
               try {
@@ -1117,12 +1157,17 @@ serve(async (req) => {
       if (queryHasTv && item.type === 'tv') score += 40;
       if (queryHasPodcast && item.type === 'podcast') score += 60;
 
-      // Penalise music/podcast when the query has no music-specific intent.
-      // e.g. "star wars new hope" should surface the movie, not the soundtrack.
+      // Penalise music/podcast/game when the query has no explicit intent for that type.
+      // e.g. "star wars new hope" should surface the movie, not the soundtrack or the video game.
+      const queryHasGame = /\b(game|gaming|play|xbox|playstation|nintendo|steam|ps[1-9])\b/i.test(query);
       if (!queryHasMusic && !queryHasPodcast) {
         if (item.type === 'music') score -= 30;
         if (item.type === 'podcast') score -= 20;
       }
+      if (!queryHasGame && item.type === 'game') score -= 35;
+
+      // Boost books that came from the intitle: search — they directly matched the title
+      if (item.type === 'book' && (item as any)._title_match) score += 25;
       
       // 5. Type filter boost - if caller passed a specific type
       if (type && item.type === type) {
