@@ -152,6 +152,32 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
     return null;
   };
 
+  // Expandable book series state
+  const [expandedSeriesId, setExpandedSeriesId] = useState<string | null>(null);
+  const [seriesBooksMap, setSeriesBooksMap] = useState<Record<string, MediaResult[]>>({});
+  const [loadingSeriesId, setLoadingSeriesId] = useState<string | null>(null);
+
+  const fetchSeriesBooks = async (seriesTitle: string, seriesId: string) => {
+    if (seriesBooksMap[seriesId] || !session?.access_token) return;
+    setLoadingSeriesId(seriesId);
+    try {
+      const resp = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/media-search`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: seriesTitle, type: 'book' }),
+        }
+      );
+      if (resp.ok) {
+        const data = await resp.json();
+        const books = (data.results || []).filter((r: any) => r.type === 'book').slice(0, 8);
+        setSeriesBooksMap(prev => ({ ...prev, [seriesId]: books }));
+      }
+    } catch (_) {}
+    finally { setLoadingSeriesId(null); }
+  };
+
   // Per-type caps prevent any single category from flooding results.
   // Music/podcast are capped tightly unless the query is clearly music-intent.
   // Books get a higher cap so a book-heavy query still surfaces them.
@@ -394,10 +420,15 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   };
 
   const handleMediaClick = (result: MediaResult) => {
-    // Book series cards are informational — no detail page exists for the series itself.
-    // Individual books are listed below, so just nudge the user downward.
+    // Book series: toggle inline expansion and fetch individual books on demand
     if (result.type === 'book_series') {
-      toast({ title: "Browse individual books below", description: "Scroll down to see each book in the series." });
+      const sid = result.external_id;
+      if (expandedSeriesId === sid) {
+        setExpandedSeriesId(null);
+      } else {
+        setExpandedSeriesId(sid);
+        fetchSeriesBooks(result.title, sid);
+      }
       return;
     }
     setIsSearchExpanded(false);
@@ -559,51 +590,95 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                         externalSource: media.external_source === 'openai' ? 'openlibrary' : (media.external_source || 'tmdb'),
                         creator: media.creator,
                       };
+                      const isSeriesExpanded = media.type === 'book_series' && expandedSeriesId === media.external_id;
+                      const seriesBooks = seriesBooksMap[media.external_id] || [];
+                      const isLoadingSeries = loadingSeriesId === media.external_id;
                       return (
-                        <div
-                          key={`${media.external_id}-${idx}`}
-                          className="flex items-start gap-2 px-3 py-2.5 hover:bg-white/5 border-b border-white/[0.04] last:border-0"
-                        >
-                          <div
-                            onClick={() => handleMediaClick(media)}
-                            className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
-                          >
-                            {posterSrc ? (
-                              <img src={posterSrc} alt={media.title} className="w-10 h-14 object-cover rounded shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-                            ) : (
-                              <div className="w-10 h-14 bg-gray-700 rounded flex items-center justify-center shrink-0">
-                                <Activity size={16} className="text-gray-500" />
+                        <div key={`${media.external_id}-${idx}`}>
+                          <div className="flex items-start gap-2 px-3 py-2.5 hover:bg-white/5 border-b border-white/[0.04]">
+                            <div
+                              onClick={() => handleMediaClick(media)}
+                              className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer"
+                            >
+                              {posterSrc ? (
+                                <img src={posterSrc} alt={media.title} className="w-10 h-14 object-cover rounded shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                              ) : (
+                                <div className="w-10 h-14 bg-gray-700 rounded flex items-center justify-center shrink-0">
+                                  <Activity size={16} className="text-gray-500" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0 pt-0.5">
+                                <p className="text-white text-sm font-semibold line-clamp-2 leading-snug">{media.title}</p>
+                                <p className="text-gray-400 text-xs mt-0.5 capitalize">{typeLabel}{media.year ? ` • ${media.year}` : ''}</p>
+                                {media.creator && media.creator !== 'Unknown Author' && (
+                                  <p className="text-gray-500 text-xs truncate">{media.creator}</p>
+                                )}
+                                {media.type === 'book_series' && (media as any).series_count > 0 && (
+                                  <span className="inline-block text-[10px] font-medium bg-purple-500/30 text-purple-200 border border-purple-400/40 px-1.5 py-0.5 rounded-full mt-1">📚 {(media as any).series_count} books {isSeriesExpanded ? '▲' : '▼'}</span>
+                                )}
+                                {media.type === 'book' && seriesLabel && (
+                                  <span className="inline-block text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded-full mt-1 max-w-[130px] truncate">📚 {seriesLabel}</span>
+                                )}
                               </div>
-                            )}
-                            <div className="flex-1 min-w-0 pt-0.5">
-                              <p className="text-white text-sm font-semibold line-clamp-2 leading-snug">{media.title}</p>
-                              <p className="text-gray-400 text-xs mt-0.5 capitalize">{typeLabel}{media.year ? ` • ${media.year}` : ''}</p>
-                              {media.creator && media.creator !== 'Unknown Author' && (
-                                <p className="text-gray-500 text-xs truncate">{media.creator}</p>
-                              )}
-                              {media.type === 'book_series' && (media as any).series_count > 0 && (
-                                <span className="inline-block text-[10px] font-medium bg-purple-500/30 text-purple-200 border border-purple-400/40 px-1.5 py-0.5 rounded-full mt-1">📚 {(media as any).series_count} books</span>
-                              )}
-                              {media.type === 'book' && seriesLabel && (
-                                <span className="inline-block text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded-full mt-1 max-w-[130px] truncate">📚 {seriesLabel}</span>
-                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-shrink-0 mt-1">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setQuickAddMedia(mediaObj); setIsQuickAddOpen(true); }}
+                                className="w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
+                              >
+                                <Plus size={16} className="text-white" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setActionSheetMedia(mediaObj); setIsQuickActionOpen(true); }}
+                                className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
+                              >
+                                <MessageSquarePlus size={14} className="text-white" />
+                                <Star size={8} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
+                              </button>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5 flex-shrink-0 mt-1">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setQuickAddMedia(mediaObj); setIsQuickAddOpen(true); }}
-                              className="w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
-                            >
-                              <Plus size={16} className="text-white" />
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setActionSheetMedia(mediaObj); setIsQuickActionOpen(true); }}
-                              className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
-                            >
-                              <MessageSquarePlus size={14} className="text-white" />
-                              <Star size={8} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
-                            </button>
-                          </div>
+                          {/* Expanded individual books */}
+                          {isSeriesExpanded && (
+                            <div className="bg-white/[0.03] border-b border-white/[0.04]">
+                              {isLoadingSeries ? (
+                                <div className="px-6 py-3 text-xs text-gray-400 flex items-center gap-2">
+                                  <div className="w-3 h-3 border border-gray-500 border-t-purple-400 rounded-full animate-spin" />
+                                  Loading books...
+                                </div>
+                              ) : seriesBooks.length === 0 ? (
+                                <p className="px-6 py-3 text-xs text-gray-500">No individual books found.</p>
+                              ) : (
+                                seriesBooks.map((book, bIdx) => {
+                                  const bPoster = (book as any).poster_url || (book as any).image_url || book.image || '';
+                                  const bObj = { title: book.title, mediaType: 'book', imageUrl: bPoster, externalId: book.external_id, externalSource: book.external_source || 'googlebooks', creator: book.creator };
+                                  return (
+                                    <div key={`${book.external_id}-b${bIdx}`} className="flex items-center gap-2 px-4 py-2 hover:bg-white/5 border-b border-white/[0.03] last:border-0">
+                                      <div
+                                        onClick={() => { setIsSearchExpanded(false); setSearchQuery(""); setLocation(`/media/book/${book.external_source || 'googlebooks'}/${book.external_id}`); }}
+                                        className="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer"
+                                      >
+                                        {bPoster ? (
+                                          <img src={bPoster} alt={book.title} className="w-7 h-10 object-cover rounded shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                        ) : (
+                                          <div className="w-7 h-10 bg-gray-700 rounded shrink-0" />
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-white text-xs font-medium line-clamp-2 leading-snug">{book.title}</p>
+                                          {book.year && <p className="text-gray-500 text-[10px]">{book.year}</p>}
+                                        </div>
+                                      </div>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); setQuickAddMedia(bObj); setIsQuickAddOpen(true); }}
+                                        className="w-7 h-7 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors flex-shrink-0"
+                                      >
+                                        <Plus size={13} className="text-white" />
+                                      </button>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
