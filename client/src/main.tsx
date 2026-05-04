@@ -85,3 +85,11 @@ if (
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
+
+// Remove the inline loading overlay once React has taken over
+const appLoading = document.getElementById("app-loading");
+if (appLoading) {
+  appLoading.style.transition = "opacity 0.2s ease";
+  appLoading.style.opacity = "0";
+  setTimeout(() => appLoading.remove(), 250);
+}
