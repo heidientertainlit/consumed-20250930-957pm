@@ -1053,6 +1053,13 @@ serve(async (req) => {
       if (queryHasMusic && item.type === 'music') score += 40;
       if (queryHasTv && item.type === 'tv') score += 40;
       if (queryHasPodcast && item.type === 'podcast') score += 60;
+
+      // Penalise music/podcast when the query has no music-specific intent.
+      // e.g. "star wars new hope" should surface the movie, not the soundtrack.
+      if (!queryHasMusic && !queryHasPodcast) {
+        if (item.type === 'music') score -= 30;
+        if (item.type === 'podcast') score -= 20;
+      }
       
       // 5. Type filter boost - if caller passed a specific type
       if (type && item.type === type) {

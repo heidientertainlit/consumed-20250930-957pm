@@ -155,8 +155,9 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   // Type priority for display order: series card → movies → TV → books → other
   const TYPE_ORDER: Record<string, number> = { book_series: 0, movie: 1, tv: 2, tv_show: 2, book: 3, music: 4, podcast: 5 };
   // Per-type caps: series gets 1 slot, movies/TV get 3, books are uncapped (scroll through all),
-  // music/podcast get 2. Total cap raised to 14 so users can scroll the full book list.
-  const MAX_PER_TYPE: Record<string, number> = { book_series: 1, movie: 3, tv: 3, tv_show: 3, book: 99, music: 2, podcast: 2 };
+  // music/podcast get 1 unless the query has explicit music intent. Total cap raised to 14.
+  const queryLooksLikeMusic = /\b(song|album|music|soundtrack|listen|track|band|artist)\b/i.test(searchQuery);
+  const MAX_PER_TYPE: Record<string, number> = { book_series: 1, movie: 3, tv: 3, tv_show: 3, book: 99, music: queryLooksLikeMusic ? 3 : 1, podcast: queryLooksLikeMusic ? 2 : 1 };
   const prioritizeAndDiversify = (results: MediaResult[]): MediaResult[] => {
     const counts: Record<string, number> = {};
     const primary: MediaResult[] = [];
