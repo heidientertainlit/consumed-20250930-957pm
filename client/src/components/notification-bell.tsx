@@ -1,13 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Bell, Heart, MessageCircle, UserPlus, UserCheck, Users, AtSign, Star, FileEdit, Trophy, Zap, Brain, BookOpen, Dna, Vote, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient } from '@/lib/queryClient';
 import { formatDistanceToNow } from 'date-fns';
 import { useLocation } from 'wouter';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 interface Notification {
   id: string;
@@ -154,55 +152,50 @@ export function NotificationBell() {
   };
 
   const getNotificationIcon = (type: string) => {
-    const iconClass = "h-5 w-5";
+    const cls = "h-5 w-5";
     switch (type) {
-      case 'like':
-      case 'post_like':
-      case 'comment_like':
-        return <Heart className={`${iconClass} text-red-400`} />;
-      case 'comment':
-      case 'comment_reply':
-      case 'friend_activity':
-        return <MessageCircle className={`${iconClass} text-blue-400`} />;
+      case 'like': case 'post_like': case 'comment_like':
+        return <Heart className={`${cls} text-red-400`} />;
+      case 'comment': case 'comment_reply': case 'friend_activity':
+        return <MessageCircle className={`${cls} text-blue-400`} />;
       case 'friend_request':
-        return <UserPlus className={`${iconClass} text-purple-400`} />;
+        return <UserPlus className={`${cls} text-purple-400`} />;
       case 'friend_accepted':
-        return <UserCheck className={`${iconClass} text-green-400`} />;
+        return <UserCheck className={`${cls} text-green-400`} />;
       case 'follow':
-        return <Users className={`${iconClass} text-purple-400`} />;
+        return <Users className={`${cls} text-purple-400`} />;
       case 'mention':
-        return <AtSign className={`${iconClass} text-cyan-400`} />;
+        return <AtSign className={`${cls} text-cyan-400`} />;
       case 'inner_circle':
-        return <Star className={`${iconClass} text-yellow-400`} />;
+        return <Star className={`${cls} text-yellow-400`} />;
       case 'collaborator_added':
-        return <FileEdit className={`${iconClass} text-orange-400`} />;
-      case 'room_joined':
-      case 'room_added':
-        return <Users className={`${iconClass} text-violet-400`} />;
+        return <FileEdit className={`${cls} text-orange-400`} />;
+      case 'room_joined': case 'room_added':
+        return <Users className={`${cls} text-violet-400`} />;
       case 'room_new_question':
-        return <Bell className={`${iconClass} text-violet-400`} />;
+        return <Bell className={`${cls} text-violet-400`} />;
       case 'cast':
-        return <Users className={`${iconClass} text-amber-400`} />;
+        return <Users className={`${cls} text-amber-400`} />;
       case 'leaderboard_position':
-        return <Trophy className={`${iconClass} text-yellow-400`} />;
+        return <Trophy className={`${cls} text-yellow-400`} />;
       case 'points_to_rank':
-        return <Zap className={`${iconClass} text-purple-400`} />;
+        return <Zap className={`${cls} text-purple-400`} />;
       case 'trivia_rank':
-        return <Brain className={`${iconClass} text-pink-400`} />;
-      case 'tracking_milestone':
-      case 'tracking_competition':
-        return <BookOpen className={`${iconClass} text-green-400`} />;
+        return <Brain className={`${cls} text-pink-400`} />;
+      case 'tracking_milestone': case 'tracking_competition':
+        return <BookOpen className={`${cls} text-green-400`} />;
       case 'dna_recommendation':
-        return <Dna className={`${iconClass} text-indigo-400`} />;
+        return <Dna className={`${cls} text-indigo-400`} />;
       case 'poll_nudge':
-        return <Vote className={`${iconClass} text-blue-400`} />;
+        return <Vote className={`${cls} text-blue-400`} />;
       default:
-        return <Bell className={`${iconClass} text-slate-400`} />;
+        return <Bell className={`${cls} text-slate-400`} />;
     }
   };
 
   return (
     <>
+      {/* Bell button — plain onClick, no Radix wrapper, works on iOS WebView */}
       <button
         className="relative p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
         data-testid="button-notifications"
@@ -219,14 +212,19 @@ export function NotificationBell() {
         )}
       </button>
 
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent
-          side="bottom"
-          className="bg-slate-900 border-slate-700 rounded-t-2xl p-0 max-h-[80vh] flex flex-col"
-        >
-          <SheetHeader className="px-4 pt-4 pb-3 border-b border-slate-700 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <SheetTitle className="text-white text-base font-semibold">Notifications</SheetTitle>
+      {/* Full-screen overlay + bottom panel — avoids all Radix portal/pointer issues on iOS */}
+      {open && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60"
+            onClick={() => setOpen(false)}
+          />
+          {/* Panel */}
+          <div className="relative bg-slate-900 rounded-t-2xl flex flex-col max-h-[80vh] border-t border-slate-700">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-4 border-b border-slate-700 flex-shrink-0">
+              <h3 className="font-semibold text-white text-base">Notifications</h3>
               <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
                   <Button
@@ -239,50 +237,57 @@ export function NotificationBell() {
                     Mark all read
                   </Button>
                 )}
+                <button
+                  onClick={() => setOpen(false)}
+                  className="p-1 text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
             </div>
-          </SheetHeader>
 
-          <ScrollArea className="flex-1 overflow-y-auto">
-            {notifications.length === 0 ? (
-              <div className="p-8 text-center text-slate-400" data-testid="text-no-notifications">
-                <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>No notifications yet</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-700/50">
-                {notifications.map((notification) => (
-                  <button
-                    key={notification.id}
-                    onClick={() => handleNotificationClick(notification)}
-                    className={`w-full p-4 text-left transition-colors active:bg-slate-700 ${
-                      !notification.read ? 'bg-slate-800/50' : 'hover:bg-slate-800'
-                    }`}
-                    data-testid={`notification-${notification.id}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-0.5">
-                        {getNotificationIcon(notification.type)}
+            {/* Scrollable list */}
+            <div className="overflow-y-auto flex-1">
+              {notifications.length === 0 ? (
+                <div className="p-8 text-center text-slate-400" data-testid="text-no-notifications">
+                  <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>No notifications yet</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-700/50">
+                  {notifications.map((notification) => (
+                    <button
+                      key={notification.id}
+                      onClick={() => handleNotificationClick(notification)}
+                      className={`w-full p-4 text-left transition-colors active:bg-slate-700 ${
+                        !notification.read ? 'bg-slate-800/50' : 'hover:bg-slate-800'
+                      }`}
+                      data-testid={`notification-${notification.id}`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          {getNotificationIcon(notification.type)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm ${!notification.read ? 'text-white font-medium' : 'text-slate-300'}`}>
+                            {notification.message}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                          </p>
+                        </div>
+                        {!notification.read && (
+                          <div className="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0" />
+                        )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${!notification.read ? 'text-white font-medium' : 'text-slate-300'}`}>
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                        </p>
-                      </div>
-                      {!notification.read && (
-                        <div className="w-2 h-2 bg-purple-500 rounded-full mt-1.5 flex-shrink-0" />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-        </SheetContent>
-      </Sheet>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
