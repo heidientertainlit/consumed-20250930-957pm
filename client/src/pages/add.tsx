@@ -276,7 +276,7 @@ export default function Search() {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query: debouncedSearchQuery })
+        body: JSON.stringify({ query: debouncedSearchQuery, include_book_series: true })
       });
       if (!response.ok) return [];
       const data = await response.json();
@@ -613,15 +613,18 @@ export default function Search() {
                             )}
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold text-gray-900 line-clamp-2">{result.title}</p>
-                              <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <span className="capitalize">{result.type}</span>
+                              <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
+                                <span className="capitalize">{result.type === 'book_series' ? (result.series_count ? `${result.series_count}-book series` : 'book series') : result.type}</span>
                                 {result.year && <span>• {result.year}</span>}
+                                {result.type === 'book_series' && result.series_count > 0 && (
+                                  <span className="text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full">📚 {result.series_count} books</span>
+                                )}
+                                {result.type === 'book' && result.series && (
+                                  <span className="text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full">📚 {result.series}</span>
+                                )}
                               </div>
-                              {result.creator && (
+                              {result.creator && result.creator !== 'Unknown Author' && (
                                 <p className="text-xs text-gray-400 truncate">{result.creator}</p>
-                              )}
-                              {result.type === 'book' && result.series && (
-                                <p className="text-xs text-purple-500 truncate">📚 {result.series}</p>
                               )}
                             </div>
                           </div>

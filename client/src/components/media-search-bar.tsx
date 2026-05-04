@@ -8,10 +8,15 @@ import { QuickAddModal } from "@/components/quick-add-modal";
 const normalizeMediaType = (type: string | undefined | null): string => {
   const t = (type || "").toLowerCase().trim();
   if (t === "tv" || t === "tv show" || t === "tv_show" || t === "tvshow" || t === "series" || t === "television") return "tv";
-  if (t === "book") return "book";
+  if (t === "book" || t === "book_series") return "book";
   if (t === "podcast") return "podcast";
   if (t === "music" || t === "album" || t === "song") return "music";
   return "movie";
+};
+
+const formatTypeLabel = (type: string, seriesCount?: number): string => {
+  if (type === 'book_series') return seriesCount ? `${seriesCount}-book series` : 'book series';
+  return type;
 };
 
 interface MediaSearchBarProps {
@@ -54,7 +59,7 @@ export function MediaSearchBar({
               Authorization: `Bearer ${session.access_token}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ query: query.trim() }),
+            body: JSON.stringify({ query: query.trim(), include_book_series: true }),
           }
         );
         if (currentId !== searchIdRef.current) return;
@@ -125,7 +130,10 @@ export function MediaSearchBar({
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-white text-sm line-clamp-2 leading-snug">{result.title}</p>
                       <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                        <span className="text-xs text-white/50 capitalize">{result.type}{result.year ? ` • ${result.year}` : ""}</span>
+                        <span className="text-xs text-white/50 capitalize">{formatTypeLabel(result.type, result.series_count)}{result.year ? ` • ${result.year}` : ""}</span>
+                        {result.type === 'book_series' && result.series_count > 0 && (
+                          <span className="text-[10px] font-medium bg-purple-500/30 text-purple-200 border border-purple-400/40 px-1.5 py-0.5 rounded-full">📚 {result.series_count} books</span>
+                        )}
                         {result.type === 'book' && result.series && (
                           <span className="text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded-full truncate max-w-[120px]">📚 {result.series}</span>
                         )}

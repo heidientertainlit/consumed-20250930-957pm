@@ -918,15 +918,15 @@ serve(async (req) => {
         score += Math.min(30, voteCount / 80);
       }
       
-      // For books: ratings_count or edition_count indicates cultural significance
+      // For books: use logarithmic scale so Harry Potter (50k ratings) crushes companion books (200 ratings)
       const ratingsCount = (item as any).ratings_count;
       if (typeof ratingsCount === 'number' && ratingsCount > 0) {
-        score += Math.min(20, ratingsCount / 50);
+        score += Math.min(70, Math.log10(ratingsCount + 1) * 22);
       }
       
       const editionCount = (item as any).edition_count;
       if (typeof editionCount === 'number' && editionCount > 0) {
-        score += Math.min(15, editionCount / 10);
+        score += Math.min(25, Math.log10(editionCount + 1) * 12);
       }
       
       // 7. CLASSIC BONUS - old content with high engagement = cultural classic

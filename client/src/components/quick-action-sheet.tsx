@@ -196,7 +196,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ query })
+        body: JSON.stringify({ query, include_book_series: true })
       });
       if (response.ok) {
         const data = await response.json();
@@ -813,8 +813,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-gray-900 line-clamp-2 leading-snug">{result.title}</p>
-                        <p className="text-sm text-gray-500">{result.type} {result.year && `• ${result.year}`}</p>
+                        <p className="text-sm text-gray-500">{result.type === 'book_series' ? (result.series_count ? `${result.series_count}-book series` : 'book series') : result.type} {result.year && `• ${result.year}`}</p>
                         {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
+                        {result.type === 'book_series' && result.series_count > 0 && <span className="inline-block text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full mt-0.5">📚 {result.series_count} books</span>}
                         {result.type === 'book' && result.series && <span className="inline-block text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full mt-0.5">📚 {result.series}</span>}
                       </div>
                     </button>
@@ -1328,8 +1329,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                           )}
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-gray-900 line-clamp-2 leading-snug">{result.title}</p>
-                            <p className="text-sm text-gray-500">{result.type} {result.year && `• ${result.year}`}</p>
+                            <p className="text-sm text-gray-500">{result.type === 'book_series' ? (result.series_count ? `${result.series_count}-book series` : 'book series') : result.type} {result.year && `• ${result.year}`}</p>
                             {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
+                            {result.type === 'book_series' && result.series_count > 0 && <span className="inline-block text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full mt-0.5">📚 {result.series_count} books</span>}
                             {result.type === 'book' && result.series && <span className="inline-block text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full mt-0.5">📚 {result.series}</span>}
                           </div>
                         </button>
