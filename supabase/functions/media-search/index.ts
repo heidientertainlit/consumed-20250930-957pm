@@ -1123,7 +1123,7 @@ serve(async (req) => {
           const combined = `${title} ${creator} ${(description || '').toLowerCase().substring(0, 300)}`;
           const missingCount = sigWords.filter(w => !combined.includes(w)).length;
           if (missingCount > 0) {
-            score -= missingCount * 18;  // -18 per missing significant word
+            score -= missingCount * 25;  // -25 per missing significant word
           }
         }
       }
@@ -1167,7 +1167,8 @@ serve(async (req) => {
       if (!queryHasGame && item.type === 'game') score -= 35;
 
       // Boost books that came from the intitle: search — they directly matched the title
-      if (item.type === 'book' && (item as any)._title_match) score += 25;
+      // Needs to be high enough to beat popular movies whose popularity gives them +40-70 pts
+      if (item.type === 'book' && (item as any)._title_match) score += 65;
       
       // 5. Type filter boost - if caller passed a specific type
       if (type && item.type === type) {
