@@ -263,6 +263,38 @@ serve(async (req) => {
                 }
               });
               console.log('TMDB movie/TV results added:', movieTvResults.length);
+
+              // Title enrichment: for movie results whose title is shorter than the search
+              // query (suggesting a subtitle was omitted), fetch the full movie details from
+              // TMDB to get the canonical title — e.g. "Star Wars" → "Star Wars: Episode IV – A New Hope"
+              const sigQueryWordCount = searchQuery.trim().split(/\s+/).filter(w => w.length > 2).length;
+              const enrichCandidates = movieTvResults
+                .filter((r: any) => r.external_source === 'tmdb' && r.type === 'movie')
+                .filter((r: any) => {
+                  const titleWordCount = (r.title || '').trim().split(/\s+/).length;
+                  return sigQueryWordCount > titleWordCount; // title looks incomplete relative to query
+                })
+                .slice(0, 3); // only enrich top 3 to keep latency low
+
+              if (enrichCandidates.length > 0) {
+                await Promise.all(enrichCandidates.map(async (r: any) => {
+                  try {
+                    const detailResp = await fetchWithTimeout(
+                      `https://api.themoviedb.org/3/movie/${r.external_id}?api_key=${tmdbKey}&language=en-US`,
+                      { headers: { 'Authorization': `Bearer ${tmdbKey}` } },
+                      3000
+                    );
+                    if (detailResp.ok) {
+                      const detail = await detailResp.json();
+                      const fullTitle = detail.title || '';
+                      if (fullTitle.length > (r.title || '').length) {
+                        console.log('Enriched title:', r.title, '→', fullTitle);
+                        r.title = fullTitle;
+                      }
+                    }
+                  } catch (_) { /* ignore — enrich is best-effort */ }
+                }));
+              }
             } else {
               const errText = await tmdbResponse.text().catch(() => '');
               console.error('TMDB non-ok response:', tmdbResponse.status, errText.substring(0, 200));
