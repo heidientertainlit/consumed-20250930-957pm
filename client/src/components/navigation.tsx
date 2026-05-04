@@ -157,7 +157,16 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   // Per-type caps: series gets 1 slot, movies/TV get 3, books are uncapped (scroll through all),
   // music/podcast get 1 unless the query has explicit music intent. Total cap raised to 14.
   const queryLooksLikeMusic = /\b(song|album|music|soundtrack|listen|track|band|artist)\b/i.test(searchQuery);
-  const MAX_PER_TYPE: Record<string, number> = { book_series: 1, movie: 3, tv: 3, tv_show: 3, book: 99, music: queryLooksLikeMusic ? 3 : 1, podcast: queryLooksLikeMusic ? 2 : 1 };
+  const queryLooksLikeBook = /\b(book|novel|read|author|written|chapter|series)\b/i.test(searchQuery);
+  const MAX_PER_TYPE: Record<string, number> = {
+    book_series: 1,
+    movie: 3,
+    tv: 3,
+    tv_show: 3,
+    book: queryLooksLikeBook ? 99 : 2,
+    music: queryLooksLikeMusic ? 3 : 1,
+    podcast: queryLooksLikeMusic ? 2 : 1,
+  };
   const prioritizeAndDiversify = (results: MediaResult[]): MediaResult[] => {
     const counts: Record<string, number> = {};
     const primary: MediaResult[] = [];

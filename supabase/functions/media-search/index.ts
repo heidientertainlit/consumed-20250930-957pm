@@ -239,9 +239,15 @@ serve(async (req) => {
                 if ((item.media_type === 'movie' || item.media_type === 'tv') && isContentAppropriate(item, item.media_type)) {
                   const releaseDate = item.release_date || item.first_air_date || '';
                   const year = releaseDate ? releaseDate.substring(0, 4) : '';
-                  
+                  // Use the longer of title vs original_title — TMDB sometimes returns
+                  // a short localized title when the original_title has the full subtitle.
+                  // e.g. title:"Star Wars" but original_title:"Star Wars: Episode IV - A New Hope"
+                  const rawTitle = item.title || item.name || '';
+                  const rawOriginal = item.original_title || item.original_name || '';
+                  const bestTitle = rawOriginal.length > rawTitle.length ? rawOriginal : rawTitle;
+                  console.log('TMDB item:', rawTitle, '| original:', rawOriginal, '| chosen:', bestTitle, '| id:', item.id);
                   movieTvResults.push({
-                    title: item.title || item.name,
+                    title: bestTitle,
                     type: item.media_type === 'movie' ? 'movie' : 'tv',
                     media_subtype: item.media_type === 'tv' ? 'series' : null,
                     creator: '',
