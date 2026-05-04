@@ -151,7 +151,18 @@ serve(async (req) => {
       ? `${romanSeqMatch[1].trim()} ${romanSeqNum}`
       : searchQuery;
 
-    console.log('Original query:', query, '| Cleaned query:', searchQuery, '| TMDB query:', tmdbSearchQuery, '| Type hints:', { queryHasBook, queryHasMovie, queryHasMusic, queryHasTv, queryHasPodcast });
+    // Pre-detect Arabic sequel number so the TMDB promise can use it for a secondary search.
+    // e.g. "star wars 4" → earlySeqBase="star wars", earlySeqNum=4 → also search "star wars episode 4"
+    const earlyArabicMatch = /^(.+?)\s+(\d{1,2})$/.exec(searchQuery.toLowerCase().trim());
+    const earlyArabicNum = earlyArabicMatch ? parseInt(earlyArabicMatch[2], 10) : null;
+    const earlySeqNum: number | null = (earlyArabicNum && earlyArabicNum <= 20) ? earlyArabicNum : romanSeqNum;
+    const earlySeqBase: string | null = earlySeqNum
+      ? ((earlyArabicNum && earlyArabicNum <= 20) ? earlyArabicMatch![1] : romanSeqMatch?.[1] ?? null)?.trim() ?? null
+      : null;
+    // "star wars episode 4" — the secondary TMDB query that returns properly titled installments
+    const tmdbEpisodeQuery: string | null = (earlySeqBase && earlySeqNum) ? `${earlySeqBase} episode ${earlySeqNum}` : null;
+
+    console.log('Original query:', query, '| Cleaned query:', searchQuery, '| TMDB query:', tmdbSearchQuery, '| Episode query:', tmdbEpisodeQuery, '| Type hints:', { queryHasBook, queryHasMovie, queryHasMusic, queryHasTv, queryHasPodcast });
 
     // If caller didn't pass an explicit type but query has an unambiguous type hint,
     // narrow the search so we only call the relevant API and avoid category collisions.
@@ -225,6 +236,43 @@ serve(async (req) => {
             } else {
               const errText = await tmdbResponse.text().catch(() => '');
               console.error('TMDB non-ok response:', tmdbResponse.status, errText.substring(0, 200));
+            }
+
+            // Secondary TMDB search for sequel queries: "star wars 4" → also try "star wars episode 4"
+            // This surfaces the properly-titled installment (e.g. "Star Wars: Episode IV - A New Hope")
+            if (tmdbEpisodeQuery) {
+              const seenIds = new Set(movieTvResults.map((r: any) => r.external_id));
+              try {
+                const episodeUrl = `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(tmdbEpisodeQuery)}&page=1&include_adult=false`;
+                const episodeResp = await fetchWithTimeout(episodeUrl, { headers: { 'Authorization': `Bearer ${tmdbKey}` } }, 5000);
+                if (episodeResp.ok) {
+                  const episodeData = await episodeResp.json();
+                  episodeData.results?.slice(0, 10).forEach((item: any) => {
+                    if ((item.media_type === 'movie' || item.media_type === 'tv') && isContentAppropriate(item, item.media_type) && !seenIds.has(item.id?.toString())) {
+                      const releaseDate = item.release_date || item.first_air_date || '';
+                      movieTvResults.push({
+                        title: item.title || item.name,
+                        type: item.media_type === 'movie' ? 'movie' : 'tv',
+                        media_subtype: item.media_type === 'tv' ? 'series' : null,
+                        creator: '',
+                        year: releaseDate ? releaseDate.substring(0, 4) : null,
+                        poster_url: item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : '',
+                        external_id: item.id?.toString(),
+                        external_source: 'tmdb',
+                        description: item.overview,
+                        popularity: item.popularity ?? 0,
+                        vote_count: item.vote_count ?? 0,
+                        release_date: releaseDate || null,
+                        _episode_match: true  // flag so scorer can give extra boost
+                      });
+                      seenIds.add(item.id?.toString());
+                    }
+                  });
+                  console.log('TMDB episode-query results added, total now:', movieTvResults.length);
+                }
+              } catch (epErr) {
+                console.error('TMDB episode secondary search error:', epErr);
+              }
             }
           } else {
             console.warn('TMDB_API_KEY not set in environment');
@@ -934,10 +982,9 @@ serve(async (req) => {
         if (description.includes(queryLower)) score += 10;
       }
 
-      // 3b. Sequel search scoring — "harry potter 2", "toy story 3", etc.
-      // When a query ends with a number, boost movie/book/tv results whose title contains
-      // all the base words (the part before the number). Penalise music/podcast which rarely
-      // correspond to numbered sequels.
+      // 3b. Sequel search scoring — "harry potter 2", "star wars iv", etc.
+      // When a query ends with a number/roman, boost movie/book/tv that contain all base words.
+      // Results from the secondary "episode N" TMDB search get an extra boost.
       if (isSequelSearch && sequelBaseWords.length > 0) {
         const baseMatchCount = sequelBaseWords.filter(bw => title.includes(bw)).length;
         const allBaseWordsMatch = baseMatchCount === sequelBaseWords.length;
@@ -945,6 +992,11 @@ serve(async (req) => {
           if (item.type === 'movie' || item.type === 'book' || item.type === 'tv') {
             score += 55;  // Strong boost: movie/book that contains all base words of "X N" query
           }
+        }
+        // Extra boost for results from the secondary "episode N" TMDB search — these are
+        // specifically the properly-titled installments (e.g. "Star Wars: Episode IV - A New Hope")
+        if ((item as any)._episode_match) {
+          score += 40;
         }
         // Music and podcasts are almost never a numbered sequel — push them down
         if (item.type === 'music' || item.type === 'podcast') {
