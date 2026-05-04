@@ -113,16 +113,14 @@ serve(async (req) => {
     const queryHasBook = /\b(book|novel|read)\b/i.test(query);
     const queryHasMovie = /\b(movie|film)\b/i.test(query);
     const queryHasMusic = /\b(song|album|music|listen)\b/i.test(query);
-    // When include_book_series is true, "series" in the query means book series, not TV series
-    const queryHasTv = includeBookSeries
-      ? /\b(tv show|television)\b/i.test(query)
-      : /\b(series|tv show|television)\b/i.test(query);
+    // "series" alone is ambiguous (book series, film series, TV series) — never treat it as a TV-only hint
+    const queryHasTv = /\b(tv show|television)\b/i.test(query);
     const queryHasPodcast = /\b(podcast|podcasts)\b/i.test(query);
     
     // Strip type keywords from query for cleaner API searches
     // e.g., "anne of green gables book" → "anne of green gables"
     const cleanedQuery = query
-      .replace(/\b(book|novel|read|movie|film|song|album|music|listen|tv show|series|television|podcast|podcasts)\b/gi, '')
+      .replace(/\b(book|novel|read|movie|film|song|album|music|listen|tv show|television|podcast|podcasts)\b/gi, '')
       .replace(/\s+/g, ' ')
       .trim();
     

@@ -812,10 +812,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                         <img src={result.image} alt={result.title} className="w-10 h-14 object-cover rounded" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">{result.title}</p>
-                        <p className="text-sm text-gray-500 truncate">{result.type} {result.year && `• ${result.year}`}</p>
+                        <p className="font-medium text-gray-900 line-clamp-2 leading-snug">{result.title}</p>
+                        <p className="text-sm text-gray-500">{result.type} {result.year && `• ${result.year}`}</p>
                         {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
-                        {result.type === 'book' && result.series && <p className="text-xs text-purple-500 truncate">📚 {result.series}</p>}
+                        {result.type === 'book' && result.series && <span className="inline-block text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full mt-0.5">📚 {result.series}</span>}
                       </div>
                     </button>
                   ))}
@@ -1166,9 +1166,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                     <img src={result.image} alt={result.title} className="w-8 h-10 object-cover rounded" />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{result.title}</p>
+                    <p className="font-medium line-clamp-2 leading-snug">{result.title}</p>
                     <p className="text-xs text-gray-500">{result.type}{result.creator && result.creator !== 'Unknown Author' ? ` • ${result.creator}` : ''}</p>
-                    {result.type === 'book' && result.series && <p className="text-xs text-purple-500 truncate">📚 {result.series}</p>}
+                    {result.type === 'book' && result.series && <span className="inline-block text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full mt-0.5">📚 {result.series}</span>}
                   </div>
                 </button>
               ))}
@@ -1327,10 +1327,10 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                             <img src={result.image} alt={result.title} className="w-10 h-14 object-cover rounded" />
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 truncate">{result.title}</p>
-                            <p className="text-sm text-gray-500 truncate">{result.type} {result.year && `• ${result.year}`}</p>
+                            <p className="font-medium text-gray-900 line-clamp-2 leading-snug">{result.title}</p>
+                            <p className="text-sm text-gray-500">{result.type} {result.year && `• ${result.year}`}</p>
                             {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
-                            {result.type === 'book' && result.series && <p className="text-xs text-purple-500 truncate">📚 {result.series}</p>}
+                            {result.type === 'book' && result.series && <span className="inline-block text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full mt-0.5">📚 {result.series}</span>}
                           </div>
                         </button>
                       ))}
@@ -1565,9 +1565,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                       <img src={result.image} alt={result.title} className="w-8 h-10 object-cover rounded" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{result.title}</p>
-                      <p className="text-xs text-gray-500 truncate">{result.type}{result.creator && result.creator !== 'Unknown Author' ? ` • ${result.creator}` : ''}</p>
-                      {result.type === 'book' && result.series && <p className="text-xs text-purple-500 truncate">📚 {result.series}</p>}
+                      <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-snug">{result.title}</p>
+                      <p className="text-xs text-gray-500">{result.type}{result.creator && result.creator !== 'Unknown Author' ? ` • ${result.creator}` : ''}</p>
+                      {result.type === 'book' && result.series && <span className="inline-block text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full mt-0.5">📚 {result.series}</span>}
                     </div>
                   </button>
                 ))}
