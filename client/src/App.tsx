@@ -631,6 +631,15 @@ function Router() {
 }
 
 function App() {
+  useEffect(() => {
+    const el = document.getElementById("app-loading");
+    if (el) {
+      el.style.transition = "opacity 0.2s ease";
+      el.style.opacity = "0";
+      setTimeout(() => el.remove(), 250);
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
