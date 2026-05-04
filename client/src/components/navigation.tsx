@@ -583,7 +583,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               <span className="text-white text-[10px] mt-0.5">Play</span>
             </Link>
             <button
-              onClick={() => setIsQuickActionOpen(true)}
+              onClick={() => { setDirectCapture(true); setIsQuickActionOpen(true); }}
               className="flex flex-col items-center justify-center p-2 opacity-55"
               data-testid="nav-add"
               aria-label="Add"
