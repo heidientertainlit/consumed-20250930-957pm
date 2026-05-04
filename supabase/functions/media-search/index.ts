@@ -126,7 +126,32 @@ serve(async (req) => {
     
     // Use cleaned query for API calls, but keep original for logging
     const searchQuery = cleanedQuery.length > 2 ? cleanedQuery : query;
-    console.log('Original query:', query, '| Cleaned query:', searchQuery, '| Type hints:', { queryHasBook, queryHasMovie, queryHasMusic, queryHasTv, queryHasPodcast });
+
+    // Roman numeral helper — converts trailing roman numeral (I–XX) to an integer
+    const romanToInt = (s: string): number | null => {
+      const lower = s.toLowerCase().trim();
+      if (!/^[ivxl]+$/.test(lower) || lower.length > 5) return null;
+      const map: Record<string, number> = { i: 1, v: 5, x: 10, l: 50 };
+      let result = 0;
+      for (let k = 0; k < lower.length; k++) {
+        const cur = map[lower[k]] ?? 0;
+        const nxt = map[lower[k + 1]] ?? 0;
+        if (nxt > cur) result -= cur; else result += cur;
+      }
+      return result > 0 && result <= 20 ? result : null;
+    };
+
+    // Detect roman numeral sequel at end of cleaned query: "Star Wars IV", "Rocky III"
+    const romanSeqMatch = /^(.+?)\s+([ivxl]{1,5})$/i.exec(searchQuery.trim());
+    const romanSeqNum = romanSeqMatch ? romanToInt(romanSeqMatch[2]) : null;
+
+    // Build a TMDB-normalised query: replace trailing roman numeral with Arabic so TMDB
+    // returns the right installment. "Star Wars IV" → TMDB gets "Star Wars 4".
+    const tmdbSearchQuery = (romanSeqNum !== null && romanSeqMatch)
+      ? `${romanSeqMatch[1].trim()} ${romanSeqNum}`
+      : searchQuery;
+
+    console.log('Original query:', query, '| Cleaned query:', searchQuery, '| TMDB query:', tmdbSearchQuery, '| Type hints:', { queryHasBook, queryHasMovie, queryHasMusic, queryHasTv, queryHasPodcast });
 
     // If caller didn't pass an explicit type but query has an unambiguous type hint,
     // narrow the search so we only call the relevant API and avoid category collisions.
@@ -165,13 +190,13 @@ serve(async (req) => {
             //   v3 API key  → short alphanumeric, passed as ?api_key= query param
             //   v4 Bearer   → long JWT token, passed as Authorization: Bearer header
             // We send the key BOTH ways so either format works without any reconfiguration.
-            const tmdbUrl = `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(searchQuery)}&page=1&include_adult=false`;
+            const tmdbUrl = `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(tmdbSearchQuery)}&page=1&include_adult=false`;
             const tmdbResponse = await fetchWithTimeout(
               tmdbUrl,
               { headers: { 'Authorization': `Bearer ${tmdbKey}` } },
               6000
             );
-            console.log('TMDB response status:', tmdbResponse.status, 'query:', searchQuery);
+            console.log('TMDB response status:', tmdbResponse.status, 'query:', tmdbSearchQuery);
             if (tmdbResponse.ok) {
               const tmdbData = await tmdbResponse.json();
               console.log('TMDB results count:', tmdbData.results?.length ?? 0);
@@ -799,11 +824,15 @@ serve(async (req) => {
     const queryLower = searchQuery.toLowerCase().trim();
     const queryWords = queryLower.split(/\s+/).filter(w => w.length > 2);
 
-    // Detect "sequel search" pattern: "harry potter 2", "toy story 3", "book 2" etc.
-    // Pattern: one or more words followed by a trailing integer (1–20)
+    // Detect "sequel search" pattern: Arabic ("harry potter 2") OR roman ("star wars iv")
     const sequelMatch = /^(.+?)\s+(\d{1,2})$/.exec(queryLower.trim());
-    const isSequelSearch = !!sequelMatch && parseInt(sequelMatch[2], 10) <= 20;
-    const sequelBaseWords = isSequelSearch ? sequelMatch![1].trim().split(/\s+/).filter(w => w.length > 1) : [];
+    const arabicSeqNum = sequelMatch ? parseInt(sequelMatch[2], 10) : null;
+    // romanSeqNum + romanSeqMatch already defined above from the pre-TMDB section
+    const isSequelSearch = (arabicSeqNum !== null && arabicSeqNum <= 20) || romanSeqNum !== null;
+    const sequelBaseStr = isSequelSearch
+      ? (arabicSeqNum !== null ? sequelMatch![1] : romanSeqMatch![1]).trim()
+      : queryLower;
+    const sequelBaseWords = isSequelSearch ? sequelBaseStr.split(/\s+/).filter(w => w.length > 1) : [];
     
     // Helper for safe string lowercasing
     const safeLower = (val: any) => (typeof val === 'string' ? val : '').toLowerCase();
