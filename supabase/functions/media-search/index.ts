@@ -241,34 +241,47 @@ serve(async (req) => {
             // Secondary TMDB search for sequel queries: "star wars 4" → also try "star wars episode 4"
             // This surfaces the properly-titled installment (e.g. "Star Wars: Episode IV - A New Hope")
             if (tmdbEpisodeQuery) {
-              const seenIds = new Set(movieTvResults.map((r: any) => r.external_id));
               try {
                 const episodeUrl = `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(tmdbEpisodeQuery)}&page=1&include_adult=false`;
                 const episodeResp = await fetchWithTimeout(episodeUrl, { headers: { 'Authorization': `Bearer ${tmdbKey}` } }, 5000);
                 if (episodeResp.ok) {
                   const episodeData = await episodeResp.json();
                   episodeData.results?.slice(0, 10).forEach((item: any) => {
-                    if ((item.media_type === 'movie' || item.media_type === 'tv') && isContentAppropriate(item, item.media_type) && !seenIds.has(item.id?.toString())) {
-                      const releaseDate = item.release_date || item.first_air_date || '';
+                    if (item.media_type !== 'movie' && item.media_type !== 'tv') return;
+                    if (!isContentAppropriate(item, item.media_type)) return;
+                    const itemId = item.id?.toString();
+                    const episodeTitle = item.title || item.name || '';
+                    const releaseDate = item.release_date || item.first_air_date || '';
+                    // Check if this ID already exists in movieTvResults from the primary search
+                    const existingIdx = movieTvResults.findIndex((r: any) => r.external_id === itemId);
+                    if (existingIdx !== -1) {
+                      // Same TMDB ID found — upgrade to the episode-titled version if it's longer/better
+                      // e.g. "Star Wars" → "Star Wars: Episode IV - A New Hope"
+                      const existingTitle = movieTvResults[existingIdx].title || '';
+                      if (episodeTitle.length > existingTitle.length) {
+                        movieTvResults[existingIdx].title = episodeTitle;
+                      }
+                      movieTvResults[existingIdx]._episode_match = true;
+                    } else {
+                      // New result not seen in primary search — add it
                       movieTvResults.push({
-                        title: item.title || item.name,
+                        title: episodeTitle,
                         type: item.media_type === 'movie' ? 'movie' : 'tv',
                         media_subtype: item.media_type === 'tv' ? 'series' : null,
                         creator: '',
                         year: releaseDate ? releaseDate.substring(0, 4) : null,
                         poster_url: item.poster_path ? `https://image.tmdb.org/t/p/w300${item.poster_path}` : '',
-                        external_id: item.id?.toString(),
+                        external_id: itemId,
                         external_source: 'tmdb',
                         description: item.overview,
                         popularity: item.popularity ?? 0,
                         vote_count: item.vote_count ?? 0,
                         release_date: releaseDate || null,
-                        _episode_match: true  // flag so scorer can give extra boost
+                        _episode_match: true
                       });
-                      seenIds.add(item.id?.toString());
                     }
                   });
-                  console.log('TMDB episode-query results added, total now:', movieTvResults.length);
+                  console.log('TMDB episode-query pass done, total results:', movieTvResults.length);
                 }
               } catch (epErr) {
                 console.error('TMDB episode secondary search error:', epErr);
