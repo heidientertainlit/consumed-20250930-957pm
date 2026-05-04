@@ -1222,8 +1222,26 @@ serve(async (req) => {
     // Sort by score descending (best matches first)
     scoredResults.sort((a, b) => b._score - a._score);
     
-    // Limit results to avoid massive responses
-    const trimmed = scoredResults.slice(0, 50);
+    // Guarantee type diversity before trimming: always keep at least 2 results per type
+    // so no type is silently dropped by the score cut (e.g. books penalised below position 50).
+    const MIN_PER_TYPE = 2;
+    const typeGuaranteed = new Set<string>();
+    const typeGuaranteeList: typeof scoredResults = [];
+    const typeGuaranteeCounts: Record<string, number> = {};
+    const remaining: typeof scoredResults = [];
+    for (const r of scoredResults) {
+      const t = r.type || 'other';
+      if ((typeGuaranteeCounts[t] || 0) < MIN_PER_TYPE) {
+        typeGuaranteeCounts[t] = (typeGuaranteeCounts[t] || 0) + 1;
+        typeGuaranteeList.push(r);
+        typeGuaranteed.add(r as any);
+      } else {
+        remaining.push(r);
+      }
+    }
+    // Re-merge: guaranteed items first (already sorted by score within type), then the rest
+    const merged = [...typeGuaranteeList, ...remaining];
+    const trimmed = merged.slice(0, 60);
     
     // Normalize image fields on both scored results and series results
     const normalizeResult = ({ _score, poster_url, ...item }: any) => ({
