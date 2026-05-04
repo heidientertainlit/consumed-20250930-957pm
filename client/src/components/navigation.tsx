@@ -154,19 +154,22 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
 
   // Type priority for display order: series card → movies → TV → books → other
   const TYPE_ORDER: Record<string, number> = { book_series: 0, movie: 1, tv: 2, tv_show: 2, book: 3, music: 4, podcast: 5 };
+  // Per-type caps: series gets 1 slot, movies/TV get 3, books are uncapped (scroll through all),
+  // music/podcast get 2. Total cap raised to 14 so users can scroll the full book list.
+  const MAX_PER_TYPE: Record<string, number> = { book_series: 1, movie: 3, tv: 3, tv_show: 3, book: 99, music: 2, podcast: 2 };
   const prioritizeAndDiversify = (results: MediaResult[]): MediaResult[] => {
-    const MAX_PER_TYPE = 2;
     const counts: Record<string, number> = {};
     const primary: MediaResult[] = [];
     const overflow: MediaResult[] = [];
     const sorted = [...results].sort((a, b) => (TYPE_ORDER[a.type] ?? 99) - (TYPE_ORDER[b.type] ?? 99));
     for (const r of sorted) {
-      const t = r.type === 'book_series' ? 'book_series' : (r.type || 'other');
+      const t = r.type || 'other';
+      const cap = MAX_PER_TYPE[t] ?? 2;
       counts[t] = (counts[t] || 0) + 1;
-      if (counts[t] <= MAX_PER_TYPE) primary.push(r);
+      if (counts[t] <= cap) primary.push(r);
       else overflow.push(r);
     }
-    return [...primary, ...overflow].slice(0, 8);
+    return [...primary, ...overflow].slice(0, 14);
   };
 
   // Debounced media search
@@ -380,6 +383,12 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   };
 
   const handleMediaClick = (result: MediaResult) => {
+    // Book series cards are informational — no detail page exists for the series itself.
+    // Individual books are listed below, so just nudge the user downward.
+    if (result.type === 'book_series') {
+      toast({ title: "Browse individual books below", description: "Scroll down to see each book in the series." });
+      return;
+    }
     setIsSearchExpanded(false);
     setSearchQuery("");
     const type = result.type;
@@ -532,10 +541,11 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                       const seriesLabel = (media as any).series || inferSeries(media.title);
                       const mediaObj = {
                         title: media.title,
-                        mediaType: media.type || 'movie',
+                        // book_series has no tracking type — map to 'book' for list/action compatibility
+                        mediaType: media.type === 'book_series' ? 'book' : (media.type || 'movie'),
                         imageUrl: posterSrc,
                         externalId: media.external_id,
-                        externalSource: media.external_source || 'tmdb',
+                        externalSource: media.external_source === 'openai' ? 'openlibrary' : (media.external_source || 'tmdb'),
                         creator: media.creator,
                       };
                       return (

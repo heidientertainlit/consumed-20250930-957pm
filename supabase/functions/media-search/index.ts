@@ -798,6 +798,12 @@ serve(async (req) => {
     // Use cleaned query (without type keywords) for title matching
     const queryLower = searchQuery.toLowerCase().trim();
     const queryWords = queryLower.split(/\s+/).filter(w => w.length > 2);
+
+    // Detect "sequel search" pattern: "harry potter 2", "toy story 3", "book 2" etc.
+    // Pattern: one or more words followed by a trailing integer (1–20)
+    const sequelMatch = /^(.+?)\s+(\d{1,2})$/.exec(queryLower.trim());
+    const isSequelSearch = !!sequelMatch && parseInt(sequelMatch[2], 10) <= 20;
+    const sequelBaseWords = isSequelSearch ? sequelMatch![1].trim().split(/\s+/).filter(w => w.length > 1) : [];
     
     // Helper for safe string lowercasing
     const safeLower = (val: any) => (typeof val === 'string' ? val : '').toLowerCase();
@@ -898,7 +904,25 @@ serve(async (req) => {
       if (description && queryLower.length > 2) {
         if (description.includes(queryLower)) score += 10;
       }
-      
+
+      // 3b. Sequel search scoring — "harry potter 2", "toy story 3", etc.
+      // When a query ends with a number, boost movie/book/tv results whose title contains
+      // all the base words (the part before the number). Penalise music/podcast which rarely
+      // correspond to numbered sequels.
+      if (isSequelSearch && sequelBaseWords.length > 0) {
+        const baseMatchCount = sequelBaseWords.filter(bw => title.includes(bw)).length;
+        const allBaseWordsMatch = baseMatchCount === sequelBaseWords.length;
+        if (allBaseWordsMatch) {
+          if (item.type === 'movie' || item.type === 'book' || item.type === 'tv') {
+            score += 55;  // Strong boost: movie/book that contains all base words of "X N" query
+          }
+        }
+        // Music and podcasts are almost never a numbered sequel — push them down
+        if (item.type === 'music' || item.type === 'podcast') {
+          score -= 40;
+        }
+      }
+
       // 4. Query intent - explicit type keywords in query
       if (queryHasBook && item.type === 'book') score += 40;
       if (queryHasMovie && item.type === 'movie') score += 40;
