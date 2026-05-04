@@ -16,6 +16,7 @@ const normalizeMediaType = (type: string | undefined | null): string => {
 
 const formatTypeLabel = (type: string, seriesCount?: number): string => {
   if (type === 'book_series') return seriesCount ? `${seriesCount}-book series` : 'book series';
+  if (type === 'tv' || type === 'tv_show') return 'TV show';
   return type;
 };
 
@@ -27,6 +28,21 @@ const inferSeries = (title: string): string | null => {
     if (candidate.split(/\s+/).length <= 4) return candidate;
   }
   return null;
+};
+
+// Limit same-type results so mixed media shows up (max 2 per type in first 6)
+const diversifyResults = (results: any[]): any[] => {
+  const MAX_PER_TYPE = 2;
+  const typeCounts: Record<string, number> = {};
+  const primary: any[] = [];
+  const overflow: any[] = [];
+  for (const r of results) {
+    const t = r.type === 'book_series' ? 'book' : (r.type || 'other');
+    typeCounts[t] = (typeCounts[t] || 0) + 1;
+    if (typeCounts[t] <= MAX_PER_TYPE) primary.push(r);
+    else overflow.push(r);
+  }
+  return [...primary, ...overflow].slice(0, 6);
 };
 
 interface MediaSearchBarProps {
@@ -89,6 +105,8 @@ export function MediaSearchBar({
     return () => clearTimeout(timer);
   }, [query, session?.access_token]);
 
+  const displayResults = diversifyResults(results);
+
   return (
     <>
       <div className="relative">
@@ -111,11 +129,12 @@ export function MediaSearchBar({
           )}
         </div>
 
-        {results.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl bg-[#1a1a2e] border border-white/10 shadow-2xl z-50 overflow-hidden max-h-80 overflow-y-auto">
-            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider px-4 pt-3 pb-2">Media</p>
-            {results.slice(0, 6).map((result, index) => {
-              const poster = result.poster_url || result.image_url || result.poster_path || result.image;
+        {displayResults.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-2 rounded-2xl bg-[#1a1a2e] border border-white/10 shadow-2xl z-50 overflow-hidden max-h-96 overflow-y-auto">
+            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider px-4 pt-3 pb-1">Results</p>
+            {displayResults.map((result, index) => {
+              const poster = result.poster_url || result.image_url || result.image || result.poster_path || result.poster || '';
+              const seriesLabel = result.series || inferSeries(result.title);
               const mediaObj = {
                 title: result.title,
                 mediaType: result.type || "movie",
@@ -126,50 +145,47 @@ export function MediaSearchBar({
               return (
                 <div
                   key={`${result.external_id || result.id}-${index}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.05] transition-colors"
+                  className="flex items-start gap-2 px-3 py-2.5 hover:bg-white/[0.05] transition-colors border-b border-white/[0.04] last:border-0"
                 >
                   <Link
                     href={`/media/${normalizeMediaType(result.type)}/${result.external_source || "tmdb"}/${result.external_id || result.id}`}
-                    className="flex items-center gap-3 flex-1 min-w-0"
+                    className="flex items-start gap-3 flex-1 min-w-0"
                     onClick={clear}
                   >
                     {poster
-                      ? <img src={poster} alt={result.title} className="w-12 h-16 object-cover rounded-lg shrink-0" onError={(e) => { e.currentTarget.style.display = "none"; }} />
-                      : <div className="w-12 h-16 bg-white/10 rounded-lg shrink-0 flex items-center justify-center"><Film size={16} className="text-white/30" /></div>
+                      ? <img src={poster} alt={result.title} className="w-10 h-14 object-cover rounded shrink-0" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                      : <div className="w-10 h-14 bg-white/10 rounded shrink-0 flex items-center justify-center"><Film size={14} className="text-white/30" /></div>
                     }
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className="font-semibold text-white text-sm leading-snug"
-                        style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-                      >{result.title}</p>
-                      <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                        <span className="text-xs text-white/50 capitalize">{formatTypeLabel(result.type, result.series_count)}{result.year ? ` • ${result.year}` : ""}</span>
-                        {result.type === 'book_series' && result.series_count > 0 && (
-                          <span className="text-[10px] font-medium bg-purple-500/30 text-purple-200 border border-purple-400/40 px-1.5 py-0.5 rounded-full">📚 {result.series_count} books</span>
-                        )}
-                        {result.type === 'book' && (result.series || inferSeries(result.title)) && (
-                          <span className="text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded-full truncate max-w-[140px]">📚 {result.series || inferSeries(result.title)}</span>
-                        )}
-                      </div>
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <p className="font-semibold text-white text-sm line-clamp-2 leading-snug">{result.title}</p>
+                      <p className="text-xs text-white/50 mt-0.5 capitalize">
+                        {formatTypeLabel(result.type, result.series_count)}{result.year ? ` • ${result.year}` : ""}
+                      </p>
                       {result.creator && result.creator !== 'Unknown Author' && (
-                        <p className="text-xs text-white/40 truncate mt-0.5">{result.creator}</p>
+                        <p className="text-xs text-white/40 truncate">{result.creator}</p>
+                      )}
+                      {result.type === 'book_series' && result.series_count > 0 && (
+                        <span className="inline-block text-[10px] font-medium bg-purple-500/30 text-purple-200 border border-purple-400/40 px-1.5 py-0.5 rounded-full mt-1">📚 {result.series_count} books</span>
+                      )}
+                      {result.type === 'book' && seriesLabel && (
+                        <span className="inline-block text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded-full mt-1 max-w-[140px] truncate">📚 {seriesLabel}</span>
                       )}
                     </div>
                   </Link>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1.5 shrink-0 mt-1">
                     <button
                       onClick={() => { clear(); setQuickAddMedia(mediaObj); setIsQuickAddOpen(true); }}
-                      className="w-10 h-10 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
+                      className="w-9 h-9 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
                     >
-                      <Plus size={20} className="text-white" />
+                      <Plus size={18} className="text-white" />
                     </button>
                     <button
                       onClick={() => { clear(); setComposerMedia(mediaObj); setIsComposerOpen(true); }}
-                      className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
+                      className="w-9 h-9 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
                     >
-                      <MessageSquarePlus size={16} className="text-white" />
-                      <Star size={10} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
+                      <MessageSquarePlus size={15} className="text-white" />
+                      <Star size={9} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
                     </button>
                   </div>
                 </div>

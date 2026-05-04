@@ -922,13 +922,13 @@ serve(async (req) => {
         score += Math.min(30, voteCount / 80);
       }
       
-      // For books: use logarithmic scale so Harry Potter (50k ratings) crushes companion books (200 ratings)
+      // For books: use logarithmic scale so popular novels beat companion books
       const ratingsCount = (item as any).ratings_count;
       if (typeof ratingsCount === 'number' && ratingsCount > 0) {
-        score += Math.min(90, Math.log10(ratingsCount + 1) * 25);
+        score += Math.min(60, Math.log10(ratingsCount + 1) * 18);
       }
       
-      // Book quality signals: penalize companion/activity/illustrated books, boost core fiction
+      // Book quality signals: penalize companion/activity/illustrated books
       if (item.type === 'book') {
         const bookSubtitle = ((item as any).subtitle || '').toLowerCase();
         const bookCategories: string[] = (item as any).categories || [];
@@ -941,23 +941,17 @@ serve(async (req) => {
           score -= 50;
         }
         
-        // Penalize non-fiction categories for fiction queries
+        // Penalize non-fiction/companion categories
         const companionCategories = /games|activities|crafts|hobbies|reference|humor|comics|juvenile nonfiction/i;
         if (companionCategories.test(catLower)) {
           score -= 40;
         }
         
-        // Boost core fiction novels (the kind you'd actually track on Consumed)
-        const fictionCategories = /juvenile fiction|young adult fiction|fiction|literary fiction|fantasy fiction|science fiction/i;
-        if (fictionCategories.test(catLower)) {
-          score += 25;
-        }
-        
-        // Boost books with substantial page counts (novels are 200-800 pages)
+        // Small boost for novels with substantial page count
         if (bookPageCount >= 200 && bookPageCount <= 900) {
-          score += 15;
+          score += 8;
         } else if (bookPageCount > 0 && bookPageCount < 100) {
-          score -= 20; // Likely activity/picture book
+          score -= 15;
         }
       }
       
