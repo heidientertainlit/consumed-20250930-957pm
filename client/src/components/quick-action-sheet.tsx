@@ -360,7 +360,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           });
           if (postError) throw postError;
           // Also track to list if media selected and a list is chosen
-          if (selectedMedia && addToList) {
+          if (selectedMedia && selectedListId) {
             await fetch(`${supabaseUrl}/functions/v1/track-media`, {
               method: 'POST',
               headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
@@ -424,7 +424,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           }
           const { data: { user: authUser } } = await supabase.auth.getUser();
           if (!authUser) throw new Error('Not authenticated');
-          if (selectedMedia && addToList) {
+          if (selectedMedia && selectedListId) {
             await fetch(`${supabaseUrl}/functions/v1/track-media`, {
               method: 'POST',
               headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
@@ -473,7 +473,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           }
           const { data: { user: authUser } } = await supabase.auth.getUser();
           if (!authUser) throw new Error('Not authenticated');
-          if (selectedMedia && addToList) {
+          if (selectedMedia && selectedListId) {
             await fetch(`${supabaseUrl}/functions/v1/track-media`, {
               method: 'POST',
               headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
