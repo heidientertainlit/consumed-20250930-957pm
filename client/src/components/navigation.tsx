@@ -152,34 +152,35 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
     return null;
   };
 
-  // Type priority for display order: series card → movies → TV → books → other
-  const TYPE_ORDER: Record<string, number> = { book_series: 0, movie: 1, tv: 2, tv_show: 2, book: 3, music: 4, podcast: 5 };
-  // Per-type caps: series gets 1 slot, movies/TV get 3, books are uncapped (scroll through all),
-  // music/podcast get 1 unless the query has explicit music intent. Total cap raised to 14.
+  // Per-type caps prevent any single category from flooding results.
+  // Music/podcast are capped tightly unless the query is clearly music-intent.
+  // Books get a higher cap so a book-heavy query still surfaces them.
   const queryLooksLikeMusic = /\b(song|album|music|soundtrack|listen|track|band|artist)\b/i.test(searchQuery);
   const queryLooksLikeBook = /\b(book|novel|read|author|written|chapter|series)\b/i.test(searchQuery);
   const MAX_PER_TYPE: Record<string, number> = {
     book_series: 1,
-    movie: 3,
-    tv: 3,
-    tv_show: 3,
-    book: queryLooksLikeBook ? 99 : 2,
-    music: queryLooksLikeMusic ? 3 : 1,
+    movie: 4,
+    tv: 4,
+    tv_show: 4,
+    book: queryLooksLikeBook ? 8 : 4,
+    music: queryLooksLikeMusic ? 4 : 1,
     podcast: queryLooksLikeMusic ? 2 : 1,
+    game: 1,
   };
+  // Results arrive from the edge function already sorted by relevance score.
+  // We preserve that order — just apply per-type caps so no single type floods.
+  // Do NOT re-sort by type here: a highly-relevant book should beat a
+  // low-relevance movie, not be pushed below it.
   const prioritizeAndDiversify = (results: MediaResult[]): MediaResult[] => {
     const counts: Record<string, number> = {};
-    const primary: MediaResult[] = [];
-    const overflow: MediaResult[] = [];
-    const sorted = [...results].sort((a, b) => (TYPE_ORDER[a.type] ?? 99) - (TYPE_ORDER[b.type] ?? 99));
-    for (const r of sorted) {
+    const output: MediaResult[] = [];
+    for (const r of results) {
       const t = r.type || 'other';
       const cap = MAX_PER_TYPE[t] ?? 2;
       counts[t] = (counts[t] || 0) + 1;
-      if (counts[t] <= cap) primary.push(r);
-      else overflow.push(r);
+      if (counts[t] <= cap) output.push(r);
     }
-    return [...primary, ...overflow].slice(0, 14);
+    return output.slice(0, 12);
   };
 
   // Debounced media search
