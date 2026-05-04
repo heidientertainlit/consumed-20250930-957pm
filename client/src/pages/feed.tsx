@@ -6518,6 +6518,9 @@ export default function Feed() {
                       isSubmitting={commentMutation.isPending}
                       currentUserId={user?.id}
                       onDeleteComment={(commentId) => handleDeleteComment(commentId, highlightedPost.id)}
+                      onReportComment={handleReportComment}
+                      onLikeComment={handleLikeComment}
+                      likedComments={likedComments}
                       onVoteComment={handleVoteComment}
                       commentVotes={commentVotes}
                     />

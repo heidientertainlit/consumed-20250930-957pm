@@ -335,6 +335,8 @@ serve(async (req) => {
                     ratings_count: volumeInfo.ratingsCount ?? 0,
                     page_count: volumeInfo.pageCount || 0,
                     series: extractSeries(volumeInfo),
+                    subtitle: volumeInfo.subtitle || '',
+                    categories: volumeInfo.categories || [],
                   });
                   foundBooks = true;
                 }
@@ -366,6 +368,8 @@ serve(async (req) => {
                         ratings_count: volumeInfo.ratingsCount ?? 0,
                         page_count: volumeInfo.pageCount || 0,
                         series: extractSeries(volumeInfo),
+                        subtitle: volumeInfo.subtitle || '',
+                        categories: volumeInfo.categories || [],
                         _author_match: true,
                       });
                       foundBooks = true;
@@ -921,7 +925,40 @@ serve(async (req) => {
       // For books: use logarithmic scale so Harry Potter (50k ratings) crushes companion books (200 ratings)
       const ratingsCount = (item as any).ratings_count;
       if (typeof ratingsCount === 'number' && ratingsCount > 0) {
-        score += Math.min(70, Math.log10(ratingsCount + 1) * 22);
+        score += Math.min(90, Math.log10(ratingsCount + 1) * 25);
+      }
+      
+      // Book quality signals: penalize companion/activity/illustrated books, boost core fiction
+      if (item.type === 'book') {
+        const bookSubtitle = ((item as any).subtitle || '').toLowerCase();
+        const bookCategories: string[] = (item as any).categories || [];
+        const catLower = bookCategories.join(' ').toLowerCase();
+        const bookPageCount = (item as any).page_count || 0;
+        
+        // Penalize companion/supplementary books
+        const companionKeywords = /coloring|activity|sticker|puzzle|journal|diary|notebook|workbook|illustrated companion|visual companion|trivia|quiz|recipe|cookbook|craft|how to draw|art of|making of|behind the scenes|guide to|world of|places|creatures|characters|character guide/i;
+        if (companionKeywords.test(bookSubtitle) || companionKeywords.test(item.title || '')) {
+          score -= 50;
+        }
+        
+        // Penalize non-fiction categories for fiction queries
+        const companionCategories = /games|activities|crafts|hobbies|reference|humor|comics|juvenile nonfiction/i;
+        if (companionCategories.test(catLower)) {
+          score -= 40;
+        }
+        
+        // Boost core fiction novels (the kind you'd actually track on Consumed)
+        const fictionCategories = /juvenile fiction|young adult fiction|fiction|literary fiction|fantasy fiction|science fiction/i;
+        if (fictionCategories.test(catLower)) {
+          score += 25;
+        }
+        
+        // Boost books with substantial page counts (novels are 200-800 pages)
+        if (bookPageCount >= 200 && bookPageCount <= 900) {
+          score += 15;
+        } else if (bookPageCount > 0 && bookPageCount < 100) {
+          score -= 20; // Likely activity/picture book
+        }
       }
       
       const editionCount = (item as any).edition_count;
