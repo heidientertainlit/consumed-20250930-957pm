@@ -19,6 +19,16 @@ const formatTypeLabel = (type: string, seriesCount?: number): string => {
   return type;
 };
 
+// Detect series name from title patterns like "X and the Y" → series "X"
+const inferSeries = (title: string): string | null => {
+  const andThe = /^(.+?)\s+and\s+the\s+/i.exec(title);
+  if (andThe) {
+    const candidate = andThe[1].trim();
+    if (candidate.split(/\s+/).length <= 4) return candidate;
+  }
+  return null;
+};
+
 interface MediaSearchBarProps {
   session: any;
   placeholder?: string;
@@ -128,14 +138,17 @@ export function MediaSearchBar({
                       : <div className="w-12 h-16 bg-white/10 rounded-lg shrink-0 flex items-center justify-center"><Film size={16} className="text-white/30" /></div>
                     }
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-white text-sm line-clamp-2 leading-snug">{result.title}</p>
+                      <p
+                        className="font-semibold text-white text-sm leading-snug"
+                        style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                      >{result.title}</p>
                       <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                         <span className="text-xs text-white/50 capitalize">{formatTypeLabel(result.type, result.series_count)}{result.year ? ` • ${result.year}` : ""}</span>
                         {result.type === 'book_series' && result.series_count > 0 && (
                           <span className="text-[10px] font-medium bg-purple-500/30 text-purple-200 border border-purple-400/40 px-1.5 py-0.5 rounded-full">📚 {result.series_count} books</span>
                         )}
-                        {result.type === 'book' && result.series && (
-                          <span className="text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded-full truncate max-w-[120px]">📚 {result.series}</span>
+                        {result.type === 'book' && (result.series || inferSeries(result.title)) && (
+                          <span className="text-[10px] font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded-full truncate max-w-[140px]">📚 {result.series || inferSeries(result.title)}</span>
                         )}
                       </div>
                       {result.creator && result.creator !== 'Unknown Author' && (

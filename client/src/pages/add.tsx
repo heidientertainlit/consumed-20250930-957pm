@@ -619,8 +619,8 @@ export default function Search() {
                                 {result.type === 'book_series' && result.series_count > 0 && (
                                   <span className="text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full">📚 {result.series_count} books</span>
                                 )}
-                                {result.type === 'book' && result.series && (
-                                  <span className="text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full">📚 {result.series}</span>
+                                {result.type === 'book' && (result.series || (() => { const m = /^(.+?)\s+and\s+the\s+/i.exec(result.title); return m && m[1].split(/\s+/).length <= 4 ? m[1].trim() : null; })()) && (
+                                  <span className="text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full">📚 {result.series || (() => { const m = /^(.+?)\s+and\s+the\s+/i.exec(result.title); return m ? m[1].trim() : ''; })()}</span>
                                 )}
                               </div>
                               {result.creator && result.creator !== 'Unknown Author' && (
