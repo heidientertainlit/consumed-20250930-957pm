@@ -504,14 +504,18 @@ serve(async (req) => {
 
         // Open Library — always runs in parallel (not just fallback).
         // Catches self-published, indie, and international books that Google Books misses.
+        // Always uses q= (general search) which covers title, author, and subject all at once.
+        // Never use author= alone — it misses books whose titles look like names (e.g. "Emma M. Lion").
         const olPromise = (async () => {
           try {
             let bookUrl: string;
             if (byMatch) {
+              // "Title by Author" — use specific fields for best precision
               bookUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(byMatch[1].trim())}&author=${encodeURIComponent(byMatch[2].trim())}&limit=15`;
-            } else if (isAuthorSearch) {
-              bookUrl = `https://openlibrary.org/search.json?author=${encodeURIComponent(searchQuery)}&limit=15&sort=editions`;
             } else {
+              // General q= search covers title, author, and subject simultaneously.
+              // Do NOT use author= here even if the query looks like a name — it would miss
+              // books whose titles look like person names (e.g. "Emma M. Lion", "J.K. Rowling").
               bookUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}&limit=15`;
             }
             console.log('Fetching Open Library (parallel):', bookUrl);
