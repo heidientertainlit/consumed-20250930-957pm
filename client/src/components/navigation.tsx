@@ -72,6 +72,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   const [actionSheetMedia, setActionSheetMedia] = useState<any>(null);
   const [directCapture, setDirectCapture] = useState(false);
   const [totalPoints, setTotalPoints] = useState<number | null>(null);
+  const [searchFeedbackSent, setSearchFeedbackSent] = useState<string | null>(null); // stores query that was reported
 
   useEffect(() => {
     const handler = () => setIsQuickActionOpen(true);
@@ -727,40 +728,29 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                   </div>
                 )}
 
-                {/* Can't find it? Add manually */}
+                {/* Missing search feedback */}
                 {searchQuery.trim().length >= 2 && (
-                  <div className="border-t border-white/[0.06] px-3 py-2.5">
-                    <p className="text-[10px] text-gray-500 mb-1.5 uppercase tracking-wide font-medium">Can't find it?</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {([
-                        { label: '📚 Book', type: 'book' },
-                        { label: '🎬 Movie', type: 'movie' },
-                        { label: '📺 TV Show', type: 'tv' },
-                        { label: '🎵 Music', type: 'music' },
-                        { label: '🎮 Game', type: 'game' },
-                      ] as { label: string; type: string }[]).map(({ label, type }) => (
-                        <button
-                          key={type}
-                          onClick={() => {
-                            const manualMedia = {
-                              title: searchQuery.trim(),
-                              mediaType: type,
-                              imageUrl: '',
-                              externalId: `manual-${Date.now()}-${type}`,
-                              externalSource: 'manual',
-                              creator: '',
-                            };
-                            setIsSearchExpanded(false);
-                            setSearchQuery('');
-                            setActionSheetMedia(manualMedia);
-                            setIsQuickActionOpen(true);
-                          }}
-                          className="text-[11px] px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-gray-300 hover:bg-purple-500/20 hover:border-purple-500/40 hover:text-white transition-colors"
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="border-t border-white/[0.06] px-3 py-2">
+                    {searchFeedbackSent === searchQuery.trim() ? (
+                      <p className="text-[11px] text-green-400/80">Thanks! We'll use this to improve search.</p>
+                    ) : (
+                      <button
+                        onClick={async () => {
+                          const q = searchQuery.trim();
+                          try {
+                            await supabase.from('search_feedback').insert({
+                              search_query: q,
+                              user_id: user?.id ?? null,
+                            });
+                          } catch (_) { /* silent — table may not exist yet */ }
+                          setSearchFeedbackSent(q);
+                          toast({ title: "Got it!", description: "We'll look into improving search for this." });
+                        }}
+                        className="text-[11px] text-gray-500 hover:text-gray-300 transition-colors text-left"
+                      >
+                        Can't find what you're looking for? <span className="text-purple-400 hover:text-purple-300">Let us know →</span>
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

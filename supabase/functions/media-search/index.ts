@@ -430,27 +430,17 @@ serve(async (req) => {
         const googleBooksApiKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
 
         // --- Smart query building ---
+        // We always use the plain q= primary query + intitle: secondary.
+        // We do NOT send inauthor: queries — Google Books ignores the constraint for many
+        // inputs and returns millions of garbage results (e.g. inauthor:"emma m lion" → 1M hits),
+        // polluting the result pool with Shakespeare, Bible, etc. The primary q= search
+        // already surfaces author-named results well (e.g. "stephen king" returns his books).
         let gbPrimaryQuery = searchQuery;
-        let gbAuthorQuery: string | null = null;
-        let isAuthorSearch = false;
 
         const byMatch = /^(.+?)\s+by\s+(.+)$/i.exec(searchQuery);
         if (byMatch) {
+          // "Title by Author" phrasing → use combined intitle+inauthor for precision
           gbPrimaryQuery = `intitle:${byMatch[1].trim()}+inauthor:${byMatch[2].trim()}`;
-        } else {
-          const words = searchQuery.trim().split(/\s+/);
-          const stopWords = /^(the|a|an|and|of|in|to|for|on|with|at|by|from|is|was)$/i;
-          // Do NOT treat queries with single-letter words (initials) as author searches.
-          // "emma m lion" has "m" — it's a book title, not an author name.
-          // An inauthor:"emma m lion" query returns 1M+ garbage results from Google Books.
-          const looksLikeName = words.length >= 2 && words.length <= 3 &&
-            words.every(w => /^[A-Za-zÀ-ÿ'.-]+$/.test(w)) &&
-            !words.some(w => stopWords.test(w)) &&
-            !words.some(w => w.replace(/\./g, '').length <= 1);  // no bare initials like "m", "j", "k"
-          if (looksLikeName) {
-            isAuthorSearch = true;
-            gbAuthorQuery = `inauthor:"${searchQuery}"`;
-          }
         }
 
         // Helper to extract series name from a Google Books volume
@@ -493,18 +483,9 @@ serve(async (req) => {
           } catch (e) { console.error('Google Books intitle error:', e); return []; }
         })() : Promise.resolve([]);
 
-        const gbAuthorPromise = (googleBooksApiKey && gbAuthorQuery) ? (async () => {
-          try {
-            const authorUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(gbAuthorQuery!)}&maxResults=20&printType=books&orderBy=relevance&key=${googleBooksApiKey}`;
-            const res = await fetchWithTimeout(authorUrl, {}, 5000);
-            if (!res.ok) return [];
-            const data = await res.json();
-            return (data.items || []).slice(0, 15).filter((item: any) => item.volumeInfo && isContentAppropriate(item.volumeInfo, 'book')).map((item: any) => {
-              const v = item.volumeInfo;
-              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`, external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [], _author_match: true };
-            });
-          } catch (e) { console.error('Google Books inauthor error:', e); return []; }
-        })() : Promise.resolve([]);
+        // gbAuthorPromise removed — inauthor: queries are unreliable (Google Books
+        // ignores constraints, returns millions of unrelated results). The primary q=
+        // and intitle: searches handle author-named queries perfectly well.
 
         // Open Library — always runs in parallel (not just fallback).
         // Catches self-published, indie, and international books that Google Books misses.
@@ -543,8 +524,8 @@ serve(async (req) => {
         })();
 
         // Wait for all book sources in parallel
-        const [gbPrimary, gbIntitle, gbAuthor, olResults] = await Promise.all([
-          gbPrimaryPromise, gbIntitlePromise, gbAuthorPromise, olPromise,
+        const [gbPrimary, gbIntitle, olResults] = await Promise.all([
+          gbPrimaryPromise, gbIntitlePromise, olPromise,
         ]);
 
         // Merge: Google Books results take priority (better metadata/covers).
@@ -562,10 +543,9 @@ serve(async (req) => {
           bookResults.push(book);
         };
 
-        // Priority order: intitle (highest signal) → primary → author → Open Library
+        // Priority order: intitle (highest title signal) → primary → Open Library
         for (const b of gbIntitle) addBook(b);
         for (const b of gbPrimary) addBook(b);
-        for (const b of gbAuthor) addBook(b);
         for (const b of olResults) addBook(b);
 
         console.log('Total book results after merge:', bookResults.length, '(GB intitle:', gbIntitle.length, 'GB primary:', gbPrimary.length, 'OL:', olResults.length, ')');
@@ -1022,10 +1002,6 @@ serve(async (req) => {
         if (creatorLower === queryLower || creatorLower.includes(queryLower) || queryLower.includes(creatorLower)) {
           score += 75;  // Strong: user is searching for this artist by name
         }
-      }
-      // Book author search boost — result came from a dedicated inauthor: query
-      if (item.type === 'book' && (item as any)._author_match) {
-        score += 60;
       }
       // Book author name match — query words appear in creator field
       if (item.type === 'book' && creator && queryLower.length > 2) {

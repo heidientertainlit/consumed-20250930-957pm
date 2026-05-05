@@ -896,3 +896,13 @@ export const bingeBattles = pgTable("binge_battles", {
 export const insertBingeBattleSchema = createInsertSchema(bingeBattles).omit({ id: true, createdAt: true, updatedAt: true });
 export type BingeBattle = typeof bingeBattles.$inferSelect;
 export type InsertBingeBattle = z.infer<typeof insertBingeBattleSchema>;
+
+// Search feedback — logged when users can't find what they're searching for
+export const searchFeedback = pgTable("search_feedback", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id"),
+  searchQuery: text("search_query").notNull(),
+  mediaType: text("media_type"),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
