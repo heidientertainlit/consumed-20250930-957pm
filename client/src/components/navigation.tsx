@@ -230,7 +230,20 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
       counts[t] = (counts[t] || 0) + 1;
       if (counts[t] <= cap) output.push(r);
     }
-    return output.slice(0, 12);
+    const trimmed = output.slice(0, 12);
+
+    // Safety net: if books exist in raw results but none made the cut (all slots
+    // taken by movies/TV), force the best book in at position 2.
+    const hasBook = trimmed.some(r => r.type === 'book' || r.type === 'book_series');
+    if (!hasBook) {
+      const firstBook = results.find(r => r.type === 'book' || r.type === 'book_series');
+      if (firstBook) {
+        const insertAt = Math.min(2, trimmed.length);
+        trimmed.splice(insertAt, 0, firstBook);
+        return trimmed.slice(0, 12);
+      }
+    }
+    return trimmed;
   };
 
   // Debounced media search
@@ -253,6 +266,9 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
         throw new Error('Media search failed');
       }
       const data = await response.json();
+      const byType: Record<string, number> = {};
+      (data.results || []).forEach((r: any) => { byType[r.type] = (byType[r.type] || 0) + 1; });
+      console.log('[media-search] results by type:', byType, 'total:', data.results?.length);
       return data.results || [];
     },
     enabled: !!searchQuery.trim() && !!session?.access_token && isSearchExpanded,

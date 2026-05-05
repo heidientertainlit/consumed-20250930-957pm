@@ -1166,9 +1166,20 @@ serve(async (req) => {
       }
       if (!queryHasGame && item.type === 'game') score -= 35;
 
-      // Boost books that came from the intitle: search — they directly matched the title
-      // Needs to be high enough to beat popular movies whose popularity gives them +40-70 pts
-      if (item.type === 'book' && (item as any)._title_match) score += 65;
+      // Boost books based on how well the title matches the query.
+      // intitle: results get the highest boost; all other books get a scaled boost
+      // so that e.g. the Twilight novel beats the Twilight movie even from Open Library.
+      if (item.type === 'book') {
+        if ((item as any)._title_match) {
+          score += 65; // from intitle: search — direct title match
+        } else if (title === queryLower || normalizedTitle === normalizedQuery) {
+          score += 55; // exact title match from primary search
+        } else if (title.startsWith(queryLower) || normalizedTitle.startsWith(normalizedQuery)) {
+          score += 40; // title starts with query
+        } else if (title.includes(queryLower)) {
+          score += 25; // query appears anywhere in title
+        }
+      }
       
       // 5. Type filter boost - if caller passed a specific type
       if (type && item.type === type) {
