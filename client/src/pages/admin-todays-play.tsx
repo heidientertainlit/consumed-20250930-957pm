@@ -343,6 +343,22 @@ export default function AdminTodaysPlayPage() {
     },
   });
 
+  useEffect(() => {
+    if (!drafts.length) return;
+    const today = toLocalDateStr(new Date());
+    const isValidDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && parseInt(s.slice(0, 4)) >= 2020;
+    setDates(prev => {
+      const next = { ...prev };
+      for (const d of drafts) {
+        const existing = next[d.id];
+        if (!existing || !isValidDate(existing)) {
+          next[d.id] = (d.featured_date && isValidDate(d.featured_date)) ? d.featured_date : today;
+        }
+      }
+      return next;
+    });
+  }, [drafts]);
+
   // Published (past + today scheduled) trivia
   const { data: published = [] } = useQuery<{ date: string; questions: any[] }[]>({
     queryKey: ["todays-play-published"],
