@@ -421,15 +421,15 @@ serve(async (req) => {
       })());
     }
 
-    // Google Books Search (primary) with API key + Open Library fallback
+    // Book Search: Google Books + Open Library run in PARALLEL and results are merged.
+    // Open Library is NOT a fallback — it runs every time so self-published and
+    // indie books (e.g. "Emma M. Lion") are always included even when Google Books
+    // returns 0 results or only returns unrelated titles.
     if (!type || type === 'book') {
       searchPromises.push((async () => {
-        let foundBooks = false;
         const googleBooksApiKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
 
         // --- Smart query building ---
-        // Detect "Title by Author" pattern → intitle:X+inauthor:Y
-        // Detect pure author name (2-3 alpha words, no title stop-words) → run inauthor: search too
         let gbPrimaryQuery = searchQuery;
         let gbAuthorQuery: string | null = null;
         let isAuthorSearch = false;
@@ -457,176 +457,110 @@ serve(async (req) => {
           return null;
         };
 
-        // Try Google Books first
-        if (googleBooksApiKey) {
+        // Normalise a title for deduplication (lowercase, strip punctuation/articles)
+        const normTitle = (t: string) => t.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+
+        // --- Fire all book searches in parallel ---
+        const gbPrimaryPromise = googleBooksApiKey ? (async () => {
           try {
             const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(gbPrimaryQuery)}&maxResults=20&printType=books&key=${googleBooksApiKey}`;
-            console.log('Fetching Google Books (primary)');
-            const googleResponse = await fetchWithTimeout(gbUrl, {}, 5000);
-            console.log('Google Books response status:', googleResponse.status);
+            const res = await fetchWithTimeout(gbUrl, {}, 5000);
+            if (!res.ok) { console.error('Google Books primary error:', res.status); return []; }
+            const data = await res.json();
+            console.log('Google Books (primary) items:', data.items?.length ?? 0);
+            return (data.items || []).slice(0, 15).filter((item: any) => item.volumeInfo && isContentAppropriate(item.volumeInfo, 'book')).map((item: any) => {
+              const v = item.volumeInfo;
+              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`, external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [] };
+            });
+          } catch (e) { console.error('Google Books primary error:', e); return []; }
+        })() : Promise.resolve([]);
 
-            if (!googleResponse.ok) {
-              const errorText = await googleResponse.text();
-              console.error('Google Books API error:', errorText);
-            }
+        const gbIntitlePromise = googleBooksApiKey ? (async () => {
+          try {
+            const titleUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(`intitle:${searchQuery}`)}&maxResults=10&printType=books&key=${googleBooksApiKey}`;
+            const res = await fetchWithTimeout(titleUrl, {}, 4000);
+            if (!res.ok) return [];
+            const data = await res.json();
+            console.log('Google Books (intitle) items:', data.items?.length ?? 0);
+            return (data.items || []).slice(0, 10).filter((item: any) => item.volumeInfo && isContentAppropriate(item.volumeInfo, 'book')).map((item: any) => {
+              const v = item.volumeInfo;
+              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`, external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [], _title_match: true };
+            });
+          } catch (e) { console.error('Google Books intitle error:', e); return []; }
+        })() : Promise.resolve([]);
 
-            if (googleResponse.ok) {
-              const googleData = await googleResponse.json();
-              console.log('Google Books items count:', googleData.items?.length || 0);
-              for (const item of googleData.items?.slice(0, 15) || []) {
-                const volumeInfo = item.volumeInfo;
-                if (volumeInfo && isContentAppropriate(volumeInfo, 'book')) {
-                  const posterUrl = `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`;
-                  bookResults.push({
-                    title: volumeInfo.title,
-                    type: 'book',
-                    creator: volumeInfo.authors?.[0] || 'Unknown Author',
-                    poster_url: posterUrl,
-                    external_id: item.id,
-                    external_source: 'googlebooks',
-                    description: volumeInfo.description?.substring(0, 200) || '',
-                    release_date: volumeInfo.publishedDate || null,
-                    ratings_count: volumeInfo.ratingsCount ?? 0,
-                    page_count: volumeInfo.pageCount || 0,
-                    series: extractSeries(volumeInfo),
-                    subtitle: volumeInfo.subtitle || '',
-                    categories: volumeInfo.categories || [],
-                  });
-                  foundBooks = true;
-                }
-              }
-              console.log('Books added from Google Books (primary):', bookResults.length);
-            }
+        const gbAuthorPromise = (googleBooksApiKey && gbAuthorQuery) ? (async () => {
+          try {
+            const authorUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(gbAuthorQuery!)}&maxResults=20&printType=books&orderBy=relevance&key=${googleBooksApiKey}`;
+            const res = await fetchWithTimeout(authorUrl, {}, 5000);
+            if (!res.ok) return [];
+            const data = await res.json();
+            return (data.items || []).slice(0, 15).filter((item: any) => item.volumeInfo && isContentAppropriate(item.volumeInfo, 'book')).map((item: any) => {
+              const v = item.volumeInfo;
+              return { title: v.title, type: 'book', creator: v.authors?.[0] || 'Unknown Author', poster_url: `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`, external_id: item.id, external_source: 'googlebooks', description: v.description?.substring(0, 200) || '', release_date: v.publishedDate || null, ratings_count: v.ratingsCount ?? 0, page_count: v.pageCount || 0, series: extractSeries(v), subtitle: v.subtitle || '', categories: v.categories || [], _author_match: true };
+            });
+          } catch (e) { console.error('Google Books inauthor error:', e); return []; }
+        })() : Promise.resolve([]);
 
-            // Always run a parallel intitle: search — catches book titles that the general
-            // query misses. e.g. "emma m lion" won't return "Emma M. Lion" from a generic
-            // search but intitle:"emma m lion" will find it directly.
-            try {
-              const titleQuery = `intitle:${searchQuery}`;
-              const titleUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(titleQuery)}&maxResults=10&printType=books&key=${googleBooksApiKey}`;
-              const titleResponse = await fetchWithTimeout(titleUrl, {}, 4000);
-              if (titleResponse.ok) {
-                const titleData = await titleResponse.json();
-                const existingIds = new Set(bookResults.map((b: any) => b.external_id));
-                for (const item of titleData.items?.slice(0, 10) || []) {
-                  const volumeInfo = item.volumeInfo;
-                  if (volumeInfo && isContentAppropriate(volumeInfo, 'book') && !existingIds.has(item.id)) {
-                    const posterUrl = `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`;
-                    bookResults.push({
-                      title: volumeInfo.title,
-                      type: 'book',
-                      creator: volumeInfo.authors?.[0] || 'Unknown Author',
-                      poster_url: posterUrl,
-                      external_id: item.id,
-                      external_source: 'googlebooks',
-                      description: volumeInfo.description?.substring(0, 200) || '',
-                      release_date: volumeInfo.publishedDate || null,
-                      ratings_count: volumeInfo.ratingsCount ?? 0,
-                      page_count: volumeInfo.pageCount || 0,
-                      series: extractSeries(volumeInfo),
-                      subtitle: volumeInfo.subtitle || '',
-                      categories: volumeInfo.categories || [],
-                      _title_match: true,
-                    });
-                    foundBooks = true;
-                    existingIds.add(item.id);
-                  }
-                }
-                console.log('Books added from Google Books (intitle):', bookResults.filter((b: any) => b._title_match).length);
-              }
-            } catch (err) {
-              console.error('Google Books intitle search error:', err);
-            }
-
-            // If this looks like an author search, run a dedicated inauthor: query in parallel
-            if (gbAuthorQuery) {
-              try {
-                const authorUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(gbAuthorQuery)}&maxResults=20&printType=books&orderBy=relevance&key=${googleBooksApiKey}`;
-                const authorResponse = await fetchWithTimeout(authorUrl, {}, 5000);
-                if (authorResponse.ok) {
-                  const authorData = await authorResponse.json();
-                  const existingIds = new Set(bookResults.map((b: any) => b.external_id));
-                  for (const item of authorData.items?.slice(0, 15) || []) {
-                    const volumeInfo = item.volumeInfo;
-                    if (volumeInfo && isContentAppropriate(volumeInfo, 'book') && !existingIds.has(item.id)) {
-                      const posterUrl = `https://books.google.com/books/content?id=${item.id}&printsec=frontcover&img=1&zoom=1&source=gbs_api`;
-                      bookResults.push({
-                        title: volumeInfo.title,
-                        type: 'book',
-                        creator: volumeInfo.authors?.[0] || 'Unknown Author',
-                        poster_url: posterUrl,
-                        external_id: item.id,
-                        external_source: 'googlebooks',
-                        description: volumeInfo.description?.substring(0, 200) || '',
-                        release_date: volumeInfo.publishedDate || null,
-                        ratings_count: volumeInfo.ratingsCount ?? 0,
-                        page_count: volumeInfo.pageCount || 0,
-                        series: extractSeries(volumeInfo),
-                        subtitle: volumeInfo.subtitle || '',
-                        categories: volumeInfo.categories || [],
-                        _author_match: true,
-                      });
-                      foundBooks = true;
-                      existingIds.add(item.id);
-                    }
-                  }
-                  console.log('Books added from Google Books (inauthor):', bookResults.length);
-                }
-              } catch (err) {
-                console.error('Google Books inauthor search error:', err);
-              }
-            }
-          } catch (error) {
-            console.error('Google Books search error:', error);
-          }
-        } else {
-          console.warn('GOOGLE_BOOKS_API_KEY not set, skipping Google Books');
-        }
-
-        // Fallback to Open Library if Google Books fails or returns no results
-        if (!foundBooks) {
+        // Open Library — always runs in parallel (not just fallback).
+        // Catches self-published, indie, and international books that Google Books misses.
+        const olPromise = (async () => {
           try {
             let bookUrl: string;
             if (byMatch) {
-              // "Title by Author" — search both fields separately for best results
-              bookUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(byMatch[1].trim())}&author=${encodeURIComponent(byMatch[2].trim())}&limit=20`;
+              bookUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(byMatch[1].trim())}&author=${encodeURIComponent(byMatch[2].trim())}&limit=15`;
             } else if (isAuthorSearch) {
-              // Pure author name search
-              bookUrl = `https://openlibrary.org/search.json?author=${encodeURIComponent(searchQuery)}&limit=20&sort=editions`;
+              bookUrl = `https://openlibrary.org/search.json?author=${encodeURIComponent(searchQuery)}&limit=15&sort=editions`;
             } else {
-              bookUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}&limit=20`;
+              bookUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}&limit=15`;
             }
+            console.log('Fetching Open Library (parallel):', bookUrl);
+            const res = await fetchWithTimeout(bookUrl, { headers: { 'User-Agent': 'Consumed-App/1.0 (support@consumed.app)' } }, 6000);
+            if (!res.ok) return [];
+            const data = await res.json();
+            console.log('Open Library docs:', data.docs?.length ?? 0);
+            return (data.docs || []).slice(0, 15).filter((book: any) => isContentAppropriate(book, 'book')).map((book: any) => ({
+              title: book.title,
+              type: 'book',
+              creator: book.author_name?.[0] || 'Unknown Author',
+              poster_url: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : '',
+              external_id: book.key,
+              external_source: 'openlibrary',
+              description: book.first_sentence?.[0] || '',
+              release_date: book.first_publish_year ? `${book.first_publish_year}` : null,
+              edition_count: book.edition_count ?? 0,
+              series: book.series?.[0] || null,
+            }));
+          } catch (e) { console.error('Open Library parallel error:', e); return []; }
+        })();
 
-            console.log('Fetching Open Library (fallback):', bookUrl);
-            const bookResponse = await fetchWithTimeout(bookUrl, {
-              headers: { 'User-Agent': 'Consumed-App/1.0 (support@consumed.app)' }
-            }, 5000);
+        // Wait for all book sources in parallel
+        const [gbPrimary, gbIntitle, gbAuthor, olResults] = await Promise.all([
+          gbPrimaryPromise, gbIntitlePromise, gbAuthorPromise, olPromise,
+        ]);
 
-            if (bookResponse.ok) {
-              const bookData = await bookResponse.json();
-              bookData.docs?.slice(0, 15).forEach((book: any) => {
-                if (isContentAppropriate(book, 'book')) {
-                  bookResults.push({
-                    title: book.title,
-                    type: 'book',
-                    creator: book.author_name?.[0] || 'Unknown Author',
-                    poster_url: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` : '',
-                    external_id: book.key,
-                    external_source: 'openlibrary',
-                    description: book.first_sentence?.[0] || '',
-                    release_date: book.first_publish_year ? `${book.first_publish_year}` : null,
-                    edition_count: book.edition_count ?? 0,
-                    series: book.series?.[0] || null,
-                  });
-                }
-              });
-              console.log('Books added from Open Library:', bookResults.length);
-            }
-          } catch (error) {
-            console.error('Open Library fallback error:', error);
-            errors.push('books');
-          }
-        }
+        // Merge: Google Books results take priority (better metadata/covers).
+        // Open Library results fill in books that Google Books didn't find.
+        // Deduplicate by normalised title (prefer GB over OL for same title).
+        const seenIds = new Set<string>();
+        const seenTitles = new Set<string>();
+
+        const addBook = (book: any) => {
+          const id = book.external_id;
+          const nt = normTitle(book.title || '');
+          if (!id || seenIds.has(id) || seenTitles.has(nt)) return;
+          seenIds.add(id);
+          seenTitles.add(nt);
+          bookResults.push(book);
+        };
+
+        // Priority order: intitle (highest signal) → primary → author → Open Library
+        for (const b of gbIntitle) addBook(b);
+        for (const b of gbPrimary) addBook(b);
+        for (const b of gbAuthor) addBook(b);
+        for (const b of olResults) addBook(b);
+
+        console.log('Total book results after merge:', bookResults.length, '(GB intitle:', gbIntitle.length, 'GB primary:', gbPrimary.length, 'OL:', olResults.length, ')');
       })());
     }
 
