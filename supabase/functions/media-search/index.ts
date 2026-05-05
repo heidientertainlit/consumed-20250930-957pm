@@ -440,9 +440,13 @@ serve(async (req) => {
         } else {
           const words = searchQuery.trim().split(/\s+/);
           const stopWords = /^(the|a|an|and|of|in|to|for|on|with|at|by|from|is|was)$/i;
+          // Do NOT treat queries with single-letter words (initials) as author searches.
+          // "emma m lion" has "m" — it's a book title, not an author name.
+          // An inauthor:"emma m lion" query returns 1M+ garbage results from Google Books.
           const looksLikeName = words.length >= 2 && words.length <= 3 &&
             words.every(w => /^[A-Za-zÀ-ÿ'.-]+$/.test(w)) &&
-            !words.some(w => stopWords.test(w));
+            !words.some(w => stopWords.test(w)) &&
+            !words.some(w => w.replace(/\./g, '').length <= 1);  // no bare initials like "m", "j", "k"
           if (looksLikeName) {
             isAuthorSearch = true;
             gbAuthorQuery = `inauthor:"${searchQuery}"`;
@@ -988,9 +992,11 @@ serve(async (req) => {
         score += 60;   // Query appears in title
       } else {
         // Word overlap in title
+        // Note: only use qw.includes(tw) when tw is at least 3 chars, to prevent
+        // query words like "emma" from matching single-char title words like "a".
         const titleWords = title.split(/\s+/);
         const matchingWords = queryWords.filter(qw => 
-          titleWords.some(tw => tw.includes(qw) || qw.includes(tw))
+          titleWords.some(tw => tw.includes(qw) || (tw.length >= 3 && qw.includes(tw)))
         );
         score += Math.min(40, matchingWords.length * 15);
       }

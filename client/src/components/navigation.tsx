@@ -266,9 +266,6 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
         throw new Error('Media search failed');
       }
       const data = await response.json();
-      const byType: Record<string, number> = {};
-      (data.results || []).forEach((r: any) => { byType[r.type] = (byType[r.type] || 0) + 1; });
-      console.log('[media-search] results by type:', byType, 'total:', data.results?.length);
       return data.results || [];
     },
     enabled: !!searchQuery.trim() && !!session?.access_token && isSearchExpanded,
