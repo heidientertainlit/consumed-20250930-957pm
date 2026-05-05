@@ -3634,6 +3634,7 @@ export default function Feed() {
           options: (p as any).options || [], optionVotes: (p as any).optionVotes || [], timestamp: p.createdAt || p.created_at || p.timestamp, pollId: (p as any).poolId || p.id,
           userHasVoted: (p as any).userHasAnswered || false,
           userVotedOption: (p as any).userVotes?.[0]?.vote || undefined,
+          origin_type: (p as any).origin_type,
           _rawPost: p,
         };
       });
@@ -3665,7 +3666,7 @@ export default function Feed() {
     for (const post of allUGC) {
       // game_moment, cast_approved, rank, and binge_battle posts must always be solo cards —
       // never grouped into the 24h carousel because UGCGroupCard doesn't know how to render them
-      const uid = (post.type === 'game_moment' || post.type === 'cast_approved' || post.type === 'rank' || post.type === 'binge_battle' || post.type === 'hot_take' || post.type === 'question')
+      const uid = (post.type === 'game_moment' || post.type === 'cast_approved' || post.type === 'rank' || post.type === 'binge_battle' || post.type === 'hot_take' || post.type === 'question' || post.type === 'predict' || post.type === 'prediction' || post.type === 'poll')
         ? `solo-${post.id}`
         : post.user?.id || 'anon';
       if (!byUser.has(uid)) byUser.set(uid, []);
