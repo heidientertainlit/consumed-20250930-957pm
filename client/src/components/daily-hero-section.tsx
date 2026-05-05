@@ -598,7 +598,14 @@ function TodaysPlayGame({
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({ action: 'update_streak', localDate }),
-      }).then(() => {
+      }).then(async (res) => {
+        try {
+          const data = await res.json();
+          // Seed the cache directly with the returned value so RLS can't hide it
+          if (typeof data.currentStreak === 'number') {
+            queryClient.setQueryData(['play-streak-hero', session?.user?.id], data.currentStreak);
+          }
+        } catch { /* ignore parse errors */ }
         queryClient.invalidateQueries({ queryKey: ['play-streak-hero'] });
       }).catch(() => { /* non-critical */ });
     }
@@ -1103,6 +1110,10 @@ function DailyCallOverlay({
       if (data.error && !data.error.includes('Already')) throw new Error(data.error);
       localStorage.setItem(getDailyCallKey(session?.user?.id), JSON.stringify({ completed: true, result: { userAnswer: selected } }));
       queryClient.invalidateQueries({ queryKey: ['daily-challenge-response'] });
+      // Seed streak cache directly from response so RLS can't hide it
+      if (data.run?.currentRun && typeof data.run.currentRun === 'number') {
+        queryClient.setQueryData(['play-streak-hero', session?.user?.id], data.run.currentRun);
+      }
 
       // Fetch how many other players picked the same option (social proof)
       try {
@@ -1544,9 +1555,9 @@ export function DailyHeroSection() {
   });
 
   // ── Supabase fallback: verify Today's Play completion ──
-  // login_streaks.play_completed_date is set only by the update_streak action (called after all 3 trivia
-  // questions are answered). Unlike last_login, this is NOT set by submitAnswer for the Daily Call,
-  // so it accurately reflects Today's Play completion only — independent of question IDs shown.
+  // login_streaks.play_completed_date is set by BOTH update_streak (trivia) and submit (Daily Call).
+  // It's used as a cross-device fallback when localStorage is cleared. If RLS blocks the read,
+  // this returns false and localStorage is the sole source of completion state.
   const { data: supabasePlayDone } = useQuery<boolean>({
     queryKey: ['daily-play-supabase-check', user?.id],
     queryFn: async () => {

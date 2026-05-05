@@ -202,20 +202,37 @@ serve(async (req) => {
             currentStreak = 1;
             longestStreak = existing.longest_streak || 1;
           }
-          await supabaseAdmin.from('login_streaks').update({
+          // Try with play_completed_date first; fall back without if column is missing
+          const { error: upErr } = await supabaseAdmin.from('login_streaks').update({
             current_streak: currentStreak,
             longest_streak: longestStreak,
             last_login: todayDate,
             play_completed_date: todayDate
           }).eq('user_id', user.id);
+          if (upErr) {
+            await supabaseAdmin.from('login_streaks').update({
+              current_streak: currentStreak,
+              longest_streak: longestStreak,
+              last_login: todayDate,
+            }).eq('user_id', user.id);
+          }
         } else {
-          await supabaseAdmin.from('login_streaks').insert({
+          // Try with play_completed_date first; fall back without if column is missing
+          const { error: insErr } = await supabaseAdmin.from('login_streaks').insert({
             user_id: user.id,
             current_streak: 1,
             longest_streak: 1,
             last_login: todayDate,
             play_completed_date: todayDate
           });
+          if (insErr) {
+            await supabaseAdmin.from('login_streaks').insert({
+              user_id: user.id,
+              current_streak: 1,
+              longest_streak: 1,
+              last_login: todayDate,
+            });
+          }
         }
 
         // Award bonus points for streak milestones
@@ -357,7 +374,7 @@ serve(async (req) => {
             const milestone = milestones.find(m => m.days === newStreak);
             const bonusPoints = milestone?.points || 0;
             
-            await supabaseAdmin
+            const { error: upErr1 } = await supabaseAdmin
               .from('login_streaks')
               .update({
                 current_streak: newStreak,
@@ -366,14 +383,20 @@ serve(async (req) => {
                 play_completed_date: todayDate
               })
               .eq('user_id', user.id);
-            
+            if (upErr1) {
+              await supabaseAdmin.from('login_streaks').update({
+                current_streak: newStreak,
+                longest_streak: newLongest,
+                last_login: todayDate,
+              }).eq('user_id', user.id);
+            }
             runInfo.currentRun = newStreak;
             runInfo.longestRun = newLongest;
             runInfo.bonusPoints = bonusPoints;
             pointsEarned += bonusPoints;
           } else {
             // Streak broken - reset to 1
-            await supabaseAdmin
+            const { error: upErr2 } = await supabaseAdmin
               .from('login_streaks')
               .update({
                 current_streak: 1,
@@ -381,13 +404,18 @@ serve(async (req) => {
                 play_completed_date: todayDate
               })
               .eq('user_id', user.id);
-            
+            if (upErr2) {
+              await supabaseAdmin.from('login_streaks').update({
+                current_streak: 1,
+                last_login: todayDate,
+              }).eq('user_id', user.id);
+            }
             runInfo.currentRun = 1;
             runInfo.longestRun = existingStreak.longest_streak;
           }
         } else if (!streakQueryError || streakQueryError.code === 'PGRST116') {
           // No record found (PGRST116) - first time playing, create record
-          await supabaseAdmin
+          const { error: insErr } = await supabaseAdmin
             .from('login_streaks')
             .insert({
               user_id: user.id,
@@ -396,6 +424,14 @@ serve(async (req) => {
               last_login: todayDate,
               play_completed_date: todayDate
             });
+          if (insErr) {
+            await supabaseAdmin.from('login_streaks').insert({
+              user_id: user.id,
+              current_streak: 1,
+              longest_streak: 1,
+              last_login: todayDate,
+            });
+          }
         }
         
         // Find next milestone
