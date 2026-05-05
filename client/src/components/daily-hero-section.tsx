@@ -543,15 +543,39 @@ function TodaysPlayGame({
     const points = isCorrect ? q.points_reward : 0;
 
     setSocialProof(null);
+
+    // Record answer in user_predictions so the leaderboard and carousel both see it.
+    // Fire-and-forget — only inserts on first answer (unique constraint on user_id+pool_id).
+    if (session?.user?.id) {
+      supabase
+        .from('user_predictions')
+        .insert({
+          user_id: session.user.id,
+          pool_id: q.id,
+          prediction: selected,
+          points_earned: points,
+        })
+        .then(({ error }) => {
+          // Only credit points when it's a new answer (not a duplicate)
+          if (!error && points > 0) {
+            supabase.rpc('increment_user_points', {
+              user_id_param: session.user.id,
+              points_to_add: points,
+            }).catch(() => {});
+          }
+        })
+        .catch(() => {});
+    }
+
     try {
       const { data: votes } = await supabase
         .from('user_predictions')
-        .select('answer_text')
+        .select('prediction')
         .eq('pool_id', q.id)
         .limit(200);
 
       if (votes && votes.length > 0) {
-        const correct = votes.filter((v: any) => v.answer_text === q.correct_answer).length;
+        const correct = votes.filter((v: any) => v.prediction === q.correct_answer).length;
         setSocialProof(Math.round((correct / votes.length) * 100));
       } else {
         setSocialProof(Math.floor(Math.random() * 25) + 52);
