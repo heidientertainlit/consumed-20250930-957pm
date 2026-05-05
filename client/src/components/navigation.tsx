@@ -558,7 +558,8 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
 
             {/* Search Results Dropdown */}
             {searchQuery.trim() && (
-              <div className="mt-2 bg-[#1a1a2e] border border-white/10 rounded-xl max-h-80 overflow-y-auto">
+              <div className="mt-2 bg-[#1a1a2e] border border-white/10 rounded-xl flex flex-col" style={{ maxHeight: '22rem' }}>
+                <div className="overflow-y-auto flex-1 min-h-0">
                 {isLoading && (
                   <div className="p-4 text-center text-gray-400 text-sm">Searching...</div>
                 )}
@@ -728,9 +729,11 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                   </div>
                 )}
 
-                {/* Missing search feedback */}
+                </div>{/* end scrollable results */}
+
+                {/* Missing search feedback — pinned footer, always visible */}
                 {searchQuery.trim().length >= 2 && (
-                  <div className="border-t border-white/[0.06] px-3 py-2">
+                  <div className="border-t border-white/[0.06] px-3 py-2 flex-shrink-0">
                     {searchFeedbackSent === searchQuery.trim() ? (
                       <p className="text-[11px] text-green-400/80">Thanks! We'll use this to improve search.</p>
                     ) : (
@@ -742,11 +745,11 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                               search_query: q,
                               user_id: user?.id ?? null,
                             });
-                          } catch (_) { /* silent — table may not exist yet */ }
+                          } catch (_) { /* silent */ }
                           setSearchFeedbackSent(q);
                           toast({ title: "Got it!", description: "We'll look into improving search for this." });
                         }}
-                        className="text-[11px] text-gray-500 hover:text-gray-300 transition-colors text-left"
+                        className="text-[11px] text-gray-500 hover:text-gray-300 transition-colors text-left w-full"
                       >
                         Can't find what you're looking for? <span className="text-purple-400 hover:text-purple-300">Let us know →</span>
                       </button>
