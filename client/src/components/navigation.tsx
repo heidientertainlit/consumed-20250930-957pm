@@ -612,8 +612,8 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                 {/* Media Section */}
                 {mediaResults.length > 0 && (
                   <div>
-                    <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-white/10">
-                      Results
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-white/10 flex items-center justify-between">
+                      <span>Results</span>
                     </div>
                     {prioritizeAndDiversify(mediaResults).map((media, idx) => {
                       const posterSrc = (media as any).poster_url || (media as any).image_url || media.image || (media as any).poster_path || '';
@@ -727,6 +727,43 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                         </div>
                       );
                     })}
+                  </div>
+                )}
+
+                {/* Can't find it? Add manually */}
+                {searchQuery.trim().length >= 2 && (
+                  <div className="border-t border-white/[0.06] px-3 py-2.5">
+                    <p className="text-[10px] text-gray-500 mb-1.5 uppercase tracking-wide font-medium">Can't find it?</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {([
+                        { label: '📚 Book', type: 'book' },
+                        { label: '🎬 Movie', type: 'movie' },
+                        { label: '📺 TV Show', type: 'tv' },
+                        { label: '🎵 Music', type: 'music' },
+                        { label: '🎮 Game', type: 'game' },
+                      ] as { label: string; type: string }[]).map(({ label, type }) => (
+                        <button
+                          key={type}
+                          onClick={() => {
+                            const manualMedia = {
+                              title: searchQuery.trim(),
+                              mediaType: type,
+                              imageUrl: '',
+                              externalId: `manual-${Date.now()}-${type}`,
+                              externalSource: 'manual',
+                              creator: '',
+                            };
+                            setIsSearchExpanded(false);
+                            setSearchQuery('');
+                            setActionSheetMedia(manualMedia);
+                            setIsQuickActionOpen(true);
+                          }}
+                          className="text-[11px] px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-gray-300 hover:bg-purple-500/20 hover:border-purple-500/40 hover:text-white transition-colors"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
