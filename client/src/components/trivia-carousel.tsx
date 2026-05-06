@@ -411,19 +411,17 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         const total = poolPreds.length || 1;
 
         for (const question of poolQuestions) {
-          if (question.options.includes(userPred.prediction)) {
-            const stats: Record<string, number> = {};
-            for (const opt of question.options) {
-              const count = poolPreds.filter(p => p === opt).length;
-              stats[opt] = Math.round((count / total) * 100);
-            }
-            answered[question.id] = {
-              answer: userPred.prediction,
-              isCorrect: question.correctAnswer === userPred.prediction,
-              stats,
-            };
-            break;
+          const stats: Record<string, number> = {};
+          for (const opt of question.options) {
+            const count = poolPreds.filter(p => p === opt).length;
+            stats[opt] = Math.round((count / total) * 100);
           }
+          answered[question.id] = {
+            answer: userPred.prediction,
+            isCorrect: question.correctAnswer === userPred.prediction,
+            stats,
+          };
+          break;
         }
       }
 
@@ -812,9 +810,17 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
             
             return (
               <div key={item.id} ref={(el) => { slideRefs.current[idx] = el; }} className="flex-shrink-0 w-full snap-center h-auto relative">
-                {item.showTag && (
-                  <p className="text-[11px] font-bold text-purple-600 uppercase tracking-wider mb-1">{item.showTag}</p>
-                )}
+                <div className="flex items-start justify-between mb-1">
+                  {item.showTag && (
+                    <p className="text-[11px] font-bold text-purple-600 uppercase tracking-wider">{item.showTag}</p>
+                  )}
+                  {answered && (
+                    <span className="flex items-center gap-1 bg-green-50 border border-green-200 rounded-full px-2 py-0.5 ml-auto flex-shrink-0">
+                      <CheckCircle size={10} className="text-green-500" />
+                      <span className="text-[10px] font-bold text-green-600">Done</span>
+                    </span>
+                  )}
+                </div>
                 <h3 className="text-gray-900 font-semibold text-base leading-snug mb-4">{item.question}</h3>
                 
                 {!answered ? (

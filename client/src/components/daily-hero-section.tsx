@@ -1933,6 +1933,12 @@ export function DailyHeroSection() {
                   </span>
                 ) : (
                   <div className="flex items-center gap-1.5">
+                    {front && streak && streak > 0 && (
+                      <span className="flex items-center gap-1 bg-orange-400/20 rounded-full px-1.5 py-0.5 border border-orange-400/30">
+                        <Flame size={8} className="text-orange-300" fill="currentColor" />
+                        <span className="text-[8px] font-bold text-orange-200">{streak}-Day Streak</span>
+                      </span>
+                    )}
                     {front && (
                       <span className="flex items-center gap-1 bg-purple-400/20 rounded-full px-1.5 py-0.5 border border-purple-400/30">
                         <Sparkles size={8} className="text-purple-200" />
