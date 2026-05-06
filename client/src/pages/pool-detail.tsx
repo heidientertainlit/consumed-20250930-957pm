@@ -2787,34 +2787,111 @@ export default function PoolDetailPage() {
                     <span className="text-[10px] text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">Example</span>
                   )}
                 </div>
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
-                  {displayFeatured.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        if (item.isTake && item.takeRef) {
-                          setActiveTake(item.takeRef);
-                        } else if (!item.isTake && item.id && !item.id.startsWith('f')) {
-                          const post = activityPosts.find((p: any) => p.id === item.id);
-                          if (post) setActivePost(post);
-                        }
-                      }}
-                      className="w-full flex items-start gap-3 px-4 py-4 text-left hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="mt-[5px] w-2 h-2 rounded-full shrink-0" style={{ background: item.dotColor }} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold text-gray-800 leading-snug line-clamp-2">{item.title}</p>
-                        <div className="flex items-center gap-1.5 text-[10px] text-gray-400 mt-1">
-                          <span>{item.author}</span>
-                          <span>·</span>
-                          <span>{item.engagement} {item.isTake ? 'replies' : 'comments'}</span>
-                          <span>·</span>
-                          <span>{item.ts}</span>
-                        </div>
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-100">
+                  {displayFeatured.map((item) => {
+                    const isPostExpanded = !item.isTake && activePost?.id === item.id;
+                    const isMockItem = item.id.startsWith('f');
+                    return (
+                      <div key={item.id}>
+                        {/* Row header */}
+                        <button
+                          onClick={() => {
+                            if (item.isTake && item.takeRef) {
+                              setActiveTake(item.takeRef);
+                            } else if (!item.isTake && !isMockItem) {
+                              if (isPostExpanded) {
+                                setActivePost(null);
+                                setActivePostNewComment('');
+                              } else {
+                                const post = activityPosts.find((p: any) => p.id === item.id);
+                                if (post) setActivePost(post);
+                              }
+                            }
+                          }}
+                          className="w-full flex items-start gap-3 px-4 py-4 text-left hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="mt-[5px] w-2 h-2 rounded-full shrink-0" style={{ background: item.dotColor }} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-semibold text-gray-800 leading-snug line-clamp-2">{item.title}</p>
+                            <div className="flex items-center gap-1.5 text-[10px] text-gray-400 mt-1">
+                              <span>{item.author}</span>
+                              <span>·</span>
+                              <span>{item.engagement} {item.isTake ? 'replies' : 'comments'}</span>
+                              <span>·</span>
+                              <span>{item.ts}</span>
+                            </div>
+                          </div>
+                          {item.isTake
+                            ? <ChevronRight size={14} className="text-gray-300 shrink-0 mt-0.5" />
+                            : isPostExpanded
+                              ? <ChevronUp size={14} className="text-purple-400 shrink-0 mt-0.5" />
+                              : <ChevronDown size={14} className="text-gray-300 shrink-0 mt-0.5" />
+                          }
+                        </button>
+
+                        {/* Inline thread — social posts only */}
+                        {isPostExpanded && activePost && (
+                          <div className="bg-gray-50 border-t border-gray-100">
+                            {/* Full post body */}
+                            <div className="px-4 pt-3 pb-2">
+                              <p className="text-[13px] text-gray-700 leading-relaxed">{activePost.content}</p>
+                              {activePost.media_title && (
+                                <p className="text-[11px] text-gray-400 mt-1">re: <span className="font-medium text-gray-500">{activePost.media_title}</span></p>
+                              )}
+                            </div>
+
+                            {/* Comments */}
+                            <div className="px-4 space-y-3 pb-2">
+                              {loadingActivePostComments ? (
+                                <p className="text-xs text-gray-400 py-2">Loading…</p>
+                              ) : activePostComments.length === 0 ? (
+                                <p className="text-xs text-gray-400 py-2 text-center">No comments yet — jump in!</p>
+                              ) : (
+                                activePostComments.map((c: any) => {
+                                  const cName = (c.users as any)?.display_name || (c.users as any)?.user_name || 'Fan';
+                                  return (
+                                    <div key={c.id} className="flex items-start gap-2 pt-2">
+                                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 ${avatarColor(cName)}`}>
+                                        {cName[0].toUpperCase()}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <span className="text-[11px] font-semibold text-gray-800 mr-1.5">{cName}</span>
+                                        <span className="text-[10px] text-gray-400">{timeAgo(c.created_at)}</span>
+                                        <p className="text-sm text-gray-700 leading-snug mt-0.5">{c.content}</p>
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+
+                            {/* Comment input */}
+                            {isMember && (
+                              <div className="px-4 py-3 border-t border-gray-100">
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="text"
+                                    value={activePostNewComment}
+                                    onChange={e => setActivePostNewComment(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitActivePostComment(); } }}
+                                    placeholder="Add a comment…"
+                                    className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 bg-white"
+                                  />
+                                  <button
+                                    onClick={submitActivePostComment}
+                                    disabled={!activePostNewComment.trim() || submittingActivePostComment}
+                                    className="w-8 h-8 rounded-xl bg-purple-600 flex items-center justify-center disabled:opacity-40 shrink-0"
+                                  >
+                                    <Send size={13} className="text-white" />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <ChevronRight size={14} className="text-gray-300 shrink-0 mt-0.5" />
-                    </button>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -3103,88 +3180,6 @@ export default function PoolDetailPage() {
                   <button
                     onClick={handleSubmitTakeReply}
                     disabled={!takeReplyText.trim() || submittingTakeReply}
-                    className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center disabled:opacity-40 shrink-0"
-                  >
-                    <Send size={15} className="text-white" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── Social Post Thread Sheet ── */}
-      {activePost && (
-        <div className="fixed inset-0 z-50 flex items-end" onClick={() => { setActivePost(null); setActivePostNewComment(''); }}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative w-full bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[92vh]" onClick={e => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-0 shrink-0" />
-
-            {/* Post header */}
-            <div className="px-5 pt-4 pb-3 border-b border-gray-100 shrink-0">
-              {(() => {
-                const author = activePost.users?.display_name || activePost.users?.user_name || 'Fan';
-                return (
-                  <>
-                    <div className="flex items-center gap-2 mb-2">
-                      <AvatarCircle name={author} size="sm" />
-                      <div>
-                        <span className="text-sm font-semibold text-gray-900">{author}</span>
-                        <span className="text-[11px] text-gray-400 ml-2">{timeAgo(activePost.created_at)}</span>
-                      </div>
-                    </div>
-                    <p className="text-gray-800 text-sm leading-relaxed">{activePost.content}</p>
-                    {activePost.media_title && (
-                      <p className="text-[11px] text-gray-400 mt-1.5">re: <span className="font-medium text-gray-500">{activePost.media_title}</span></p>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-
-            {/* Comments list */}
-            <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
-              {loadingActivePostComments ? (
-                <p className="text-xs text-gray-400 text-center py-6">Loading…</p>
-              ) : activePostComments.length === 0 ? (
-                <div className="text-center py-8">
-                  <MessageCircle size={24} className="text-gray-200 mx-auto mb-2" />
-                  <p className="text-gray-400 text-sm">No comments yet — jump in!</p>
-                </div>
-              ) : (
-                activePostComments.map((c: any) => {
-                  const cName = (c.users as any)?.display_name || (c.users as any)?.user_name || 'Fan';
-                  return (
-                    <div key={c.id} className="flex items-start gap-2">
-                      <AvatarCircle name={cName} size="sm" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className="text-xs font-semibold text-gray-800">{cName}</span>
-                          <span className="text-[10px] text-gray-400">{timeAgo(c.created_at)}</span>
-                        </div>
-                        <p className="text-sm text-gray-700 leading-relaxed">{c.content}</p>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Comment input */}
-            {isMember && (
-              <div className="px-4 py-3 border-t border-gray-100 shrink-0 bg-white">
-                <div className="flex items-end gap-2">
-                  <textarea
-                    value={activePostNewComment}
-                    onChange={e => setActivePostNewComment(e.target.value)}
-                    placeholder="Add a comment…"
-                    rows={1}
-                    className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 resize-none"
-                  />
-                  <button
-                    onClick={submitActivePostComment}
-                    disabled={!activePostNewComment.trim() || submittingActivePostComment}
                     className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center disabled:opacity-40 shrink-0"
                   >
                     <Send size={15} className="text-white" />
