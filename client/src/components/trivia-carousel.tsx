@@ -560,7 +560,6 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
       
       incrementActivityCount();
       setTimeout(() => queryClient.refetchQueries({ queryKey: ['social-feed'] }), 800);
-      setTimeout(() => queryClient.invalidateQueries({ queryKey: ['trivia-carousel', user?.id] }), 4000);
     },
     onError: (error: Error, variables) => {
       if (error.message === 'You already answered this question') {
