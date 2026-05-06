@@ -563,6 +563,8 @@ function TodaysPlayGame({
               points_to_add: points,
             }).catch(() => {});
           }
+          // Bust the carousel cache so answered pools are filtered on next load
+          queryClient.invalidateQueries({ queryKey: ['trivia-carousel'] });
         })
         .catch(() => {});
     }
