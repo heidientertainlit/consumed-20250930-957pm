@@ -2250,6 +2250,50 @@ export default function PoolDetailPage() {
   const [submittingTakeReply, setSubmittingTakeReply] = useState(false);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
 
+  // Social post thread sheet state
+  const [activePost, setActivePost] = useState<any | null>(null);
+  const [activePostComments, setActivePostComments] = useState<any[]>([]);
+  const [loadingActivePostComments, setLoadingActivePostComments] = useState(false);
+  const [activePostNewComment, setActivePostNewComment] = useState('');
+  const [submittingActivePostComment, setSubmittingActivePostComment] = useState(false);
+
+  useEffect(() => {
+    if (!activePost?.id) return;
+    setLoadingActivePostComments(true);
+    supabase
+      .from('social_post_comments')
+      .select('id, content, created_at, user_id, users:user_id(id, user_name, display_name)')
+      .eq('social_post_id', activePost.id)
+      .order('created_at', { ascending: true })
+      .limit(50)
+      .then(({ data }) => {
+        setActivePostComments(data || []);
+        setLoadingActivePostComments(false);
+      });
+  }, [activePost?.id]);
+
+  const submitActivePostComment = async () => {
+    if (!activePostNewComment.trim() || !session?.access_token || !activePost?.id) return;
+    setSubmittingActivePostComment(true);
+    try {
+      await supabase.functions.invoke('social-feed-comments', {
+        method: 'POST',
+        body: { post_id: activePost.id, content: activePostNewComment.trim() }
+      });
+      setActivePostNewComment('');
+      const { data } = await supabase
+        .from('social_post_comments')
+        .select('id, content, created_at, user_id, users:user_id(id, user_name, display_name)')
+        .eq('social_post_id', activePost.id)
+        .order('created_at', { ascending: true })
+        .limit(50);
+      setActivePostComments(data || []);
+    } catch {
+      toast({ title: 'Failed to post comment', variant: 'destructive' });
+    }
+    setSubmittingActivePostComment(false);
+  };
+
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -2550,24 +2594,33 @@ export default function PoolDetailPage() {
         </div>
 
         {/* Room name + meta */}
-        <div className="px-4 pb-3">
-          <p className="text-white/40 text-[10px] font-medium uppercase tracking-widest mb-1">Room</p>
-          <h1 className="text-white text-[22px] font-medium leading-tight mb-1.5 flex items-center gap-2 flex-wrap" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            {isLoading ? '...' : pool?.name || 'Room'}
-            {!isLoading && pool?.partner_name && (
-              <span title="Official Partner Room" className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full shrink-0" style={{ marginTop: '1px', background: '#4f7ef7' }}>
-                <Check size={12} className="text-white" strokeWidth={3} />
-              </span>
-            )}
-          </h1>
-          {!isLoading && pool?.media_type && (
-            <div className="flex items-center gap-2 mb-2">
-              <RoomMediaTypePill mediaType={pool.media_type} />
-              {pool.series_volumes && (
-                <span className="text-white/40 text-[11px]">{pool.series_volumes} volumes</span>
-              )}
+        <div className="px-4 pb-3 flex items-start gap-3">
+          {/* Media poster thumbnail */}
+          {!isLoading && pool?.media_image && (
+            <div className="shrink-0 mt-1">
+              <div className="w-14 h-20 rounded-xl overflow-hidden shadow-lg" style={{ border: '1.5px solid rgba(255,255,255,0.15)' }}>
+                <img src={pool.media_image} alt={pool.name} className="w-full h-full object-cover" />
+              </div>
             </div>
           )}
+          <div className="flex-1 min-w-0">
+            <p className="text-white/40 text-[10px] font-medium uppercase tracking-widest mb-1">Room</p>
+            <h1 className="text-white text-[22px] font-medium leading-tight mb-1.5 flex items-center gap-2 flex-wrap" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              {isLoading ? '...' : pool?.name || 'Room'}
+              {!isLoading && pool?.partner_name && (
+                <span title="Official Partner Room" className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full shrink-0" style={{ marginTop: '1px', background: '#4f7ef7' }}>
+                  <Check size={12} className="text-white" strokeWidth={3} />
+                </span>
+              )}
+            </h1>
+            {!isLoading && pool?.media_type && (
+              <div className="flex items-center gap-2 mb-2">
+                <RoomMediaTypePill mediaType={pool.media_type} />
+                {pool.series_volumes && (
+                  <span className="text-white/40 text-[11px]">{pool.series_volumes} volumes</span>
+                )}
+              </div>
+            )}
           {/* Member count + visibility */}
           {!isLoading && (
             <div className="flex items-center gap-2">
@@ -2594,6 +2647,7 @@ export default function PoolDetailPage() {
               </button>
             </div>
           )}
+          </div>{/* end flex-1 min-w-0 */}
         </div>
 
         {/* Tabs at bottom of gradient */}
@@ -2737,7 +2791,14 @@ export default function PoolDetailPage() {
                   {displayFeatured.map((item) => (
                     <button
                       key={item.id}
-                      onClick={() => item.isTake && item.takeRef && setActiveTake(item.takeRef)}
+                      onClick={() => {
+                        if (item.isTake && item.takeRef) {
+                          setActiveTake(item.takeRef);
+                        } else if (!item.isTake && item.id && !item.id.startsWith('f')) {
+                          const post = activityPosts.find((p: any) => p.id === item.id);
+                          if (post) setActivePost(post);
+                        }
+                      }}
                       className="w-full flex items-start gap-3 px-4 py-4 text-left hover:bg-gray-50 transition-colors"
                     >
                       <div className="mt-[5px] w-2 h-2 rounded-full shrink-0" style={{ background: item.dotColor }} />
@@ -2751,7 +2812,7 @@ export default function PoolDetailPage() {
                           <span>{item.ts}</span>
                         </div>
                       </div>
-                      {item.isTake && <ChevronRight size={14} className="text-gray-300 shrink-0 mt-0.5" />}
+                      <ChevronRight size={14} className="text-gray-300 shrink-0 mt-0.5" />
                     </button>
                   ))}
                 </div>
@@ -3042,6 +3103,88 @@ export default function PoolDetailPage() {
                   <button
                     onClick={handleSubmitTakeReply}
                     disabled={!takeReplyText.trim() || submittingTakeReply}
+                    className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center disabled:opacity-40 shrink-0"
+                  >
+                    <Send size={15} className="text-white" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Social Post Thread Sheet ── */}
+      {activePost && (
+        <div className="fixed inset-0 z-50 flex items-end" onClick={() => { setActivePost(null); setActivePostNewComment(''); }}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div className="relative w-full bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[92vh]" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-0 shrink-0" />
+
+            {/* Post header */}
+            <div className="px-5 pt-4 pb-3 border-b border-gray-100 shrink-0">
+              {(() => {
+                const author = activePost.users?.display_name || activePost.users?.user_name || 'Fan';
+                return (
+                  <>
+                    <div className="flex items-center gap-2 mb-2">
+                      <AvatarCircle name={author} size="sm" />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-900">{author}</span>
+                        <span className="text-[11px] text-gray-400 ml-2">{timeAgo(activePost.created_at)}</span>
+                      </div>
+                    </div>
+                    <p className="text-gray-800 text-sm leading-relaxed">{activePost.content}</p>
+                    {activePost.media_title && (
+                      <p className="text-[11px] text-gray-400 mt-1.5">re: <span className="font-medium text-gray-500">{activePost.media_title}</span></p>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Comments list */}
+            <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
+              {loadingActivePostComments ? (
+                <p className="text-xs text-gray-400 text-center py-6">Loading…</p>
+              ) : activePostComments.length === 0 ? (
+                <div className="text-center py-8">
+                  <MessageCircle size={24} className="text-gray-200 mx-auto mb-2" />
+                  <p className="text-gray-400 text-sm">No comments yet — jump in!</p>
+                </div>
+              ) : (
+                activePostComments.map((c: any) => {
+                  const cName = (c.users as any)?.display_name || (c.users as any)?.user_name || 'Fan';
+                  return (
+                    <div key={c.id} className="flex items-start gap-2">
+                      <AvatarCircle name={cName} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="text-xs font-semibold text-gray-800">{cName}</span>
+                          <span className="text-[10px] text-gray-400">{timeAgo(c.created_at)}</span>
+                        </div>
+                        <p className="text-sm text-gray-700 leading-relaxed">{c.content}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Comment input */}
+            {isMember && (
+              <div className="px-4 py-3 border-t border-gray-100 shrink-0 bg-white">
+                <div className="flex items-end gap-2">
+                  <textarea
+                    value={activePostNewComment}
+                    onChange={e => setActivePostNewComment(e.target.value)}
+                    placeholder="Add a comment…"
+                    rows={1}
+                    className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 resize-none"
+                  />
+                  <button
+                    onClick={submitActivePostComment}
+                    disabled={!activePostNewComment.trim() || submittingActivePostComment}
                     className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center disabled:opacity-40 shrink-0"
                   >
                     <Send size={15} className="text-white" />
