@@ -322,7 +322,7 @@ export default function PlayChallengePage() {
     if (user?.id && points > 0) {
       setSubmitting(true);
       try {
-        await supabase.rpc("increment_user_points", { user_id_param: user.id, points_to_add: points });
+        await supabase.rpc("increment_trivia_points", { uid: user.id, pts: points });
       } catch (e) {
         console.error("[PlayChallenge] points error:", e);
       } finally {

@@ -381,7 +381,7 @@ export default function PlayBingeBattle() {
     setMyProgress(total);
 
     // Award 100 points to the winner
-    await supabase.rpc("increment_user_points", { user_id_param: user.id, points_to_add: 100 });
+    // Binge battle win recorded in bets table — leaderboard reads bets.points_awarded directly
 
     const { data } = await supabase.from("binge_battles").select("*").eq("id", currentBattle.id).single();
     if (data) setCurrentBattle(data);

@@ -249,7 +249,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
       
       if (error) throw error;
       
-      await supabase.rpc('increment_user_points', { user_id_param: user.id, points_to_add: pointsReward });
+      // Poll participation points tracked via user_predictions.points_earned (leaderboard reads that directly)
       
       const poll = data?.find(p => p.id === pollId);
       const { data: allVotes } = await supabase

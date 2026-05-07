@@ -286,17 +286,17 @@ serve(async (req) => {
         });
       }
 
-      // Award points to user balance for trivia (immediate scoring) and polls (participation)
-      // Only on first vote — never double-count if they change their answer
-      if (isFirstVote && pointsEarned > 0) {
-        const { error: pointsError } = await supabaseAdmin.rpc('increment_user_points', {
-          user_id_param: appUser.id,
-          points_to_add: pointsEarned,
+      // For trivia: increment user_points.trivia_points so profile/stats reflect earnings
+      // Polls/predictions: points tracked via user_predictions.points_earned only (leaderboard reads that directly)
+      if (isFirstVote && pointsEarned > 0 && pool.type === 'trivia') {
+        const { error: pointsError } = await supabaseAdmin.rpc('increment_trivia_points', {
+          uid: appUser.id,
+          pts: pointsEarned,
         });
         if (pointsError) {
-          console.error('DEBUG /predict: Failed to increment user points', pointsError);
+          console.error('DEBUG /predict: Failed to increment trivia points', pointsError);
         } else {
-          console.log('DEBUG /predict: Points awarded', { user_id: appUser.id, pointsEarned });
+          console.log('DEBUG /predict: Trivia points awarded', { user_id: appUser.id, pointsEarned });
         }
       }
 

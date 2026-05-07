@@ -90,9 +90,7 @@ export default function PlayPollsPage() {
         throw error;
       }
 
-      if (pointsReward > 0) {
-        await supabase.rpc('increment_user_points', { user_id_param: user.id, points_to_add: pointsReward });
-      }
+      // Poll participation points tracked via user_predictions.points_earned (leaderboard reads that directly)
 
       const { data: allPreds } = await supabase
         .from('user_predictions').select('prediction').eq('pool_id', poolId);

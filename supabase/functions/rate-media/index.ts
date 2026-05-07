@@ -309,13 +309,8 @@ serve(async (req) => {
             })
             .eq('id', bet.id);
           
-          // Award points if won
+          // Award points if won — bet win already stored in bets.points_awarded; leaderboard reads that directly
           if (betWon) {
-            await supabaseAdmin.rpc('increment_user_points', {
-              p_user_id: bet.user_id,
-              p_column: 'app_engagement',
-              p_amount: pointsToAward
-            });
             
             // Send notification to winner
             await supabaseAdmin
