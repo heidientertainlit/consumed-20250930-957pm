@@ -10,6 +10,8 @@ import Navigation from "@/components/navigation";
 import { supabase } from "@/lib/supabase";
 import { formatDistanceToNow } from "date-fns";
 import { QuickActionSheet } from "@/components/quick-action-sheet";
+import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
+import BingeBattleFeedCard from "@/components/binge-battle-feed-card";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
 
@@ -999,6 +1001,68 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ─── Room Prediction Card — fetches pool data and renders full vote bars ─ */
+function RoomPredictionCard({ post, currentUserId }: { post: any; currentUserId: string | null }) {
+  const [poolData, setPoolData] = useState<any>(null);
+  const poolId = post.prediction_pool_id;
+
+  useEffect(() => {
+    if (!poolId) return;
+    supabase
+      .from('prediction_pools')
+      .select('id, title, options, correct_answer, status, type, vote_counts, media_type, category, show_tag')
+      .eq('id', poolId)
+      .single()
+      .then(({ data }) => { if (data) setPoolData(data); });
+  }, [poolId]);
+
+  if (!poolId || !poolData) {
+    return (
+      <RoomPostCard
+        post={post}
+        currentUserId={currentUserId || ''}
+        onDelete={() => {}}
+      />
+    );
+  }
+
+  const options: string[] = poolData.options || [];
+  const voteCounts: Record<string, number> = poolData.vote_counts || {};
+  const total = Object.values(voteCounts).reduce((s: number, n: any) => s + (n as number), 0);
+  const optionVotes = options.map((opt: string) => ({
+    option: opt,
+    count: voteCounts[opt] || 0,
+    percentage: total > 0 ? Math.round(((voteCounts[opt] || 0) / total) * 100) : 0,
+  }));
+
+  const predictionCardData = {
+    id: poolData.id,
+    title: poolData.title || post.question || post.content,
+    creator: {
+      id: post.user_id,
+      username: post.users?.user_name || post.users?.display_name || 'Someone',
+    },
+    poolId: poolData.id,
+    options,
+    optionVotes,
+    userVotes: [],
+    userHasAnswered: false,
+    likesCount: post.likes_count || 0,
+    commentsCount: post.comment_count || 0,
+    isLiked: false,
+    status: poolData.status || 'open',
+    type: poolData.type || 'predict',
+    origin_type: 'user' as const,
+    origin_user_id: post.user_id,
+  };
+
+  return (
+    <div className="mb-2">
+      <CollaborativePredictionCard prediction={predictionCardData} currentUserId={currentUserId || undefined} />
     </div>
   );
 }
@@ -2706,7 +2770,8 @@ export default function PoolDetailPage() {
             return (hasContent || hasPredictQ) && !hasRating && !isListAdd;
           });
 
-          // Build Featured: merge room_takes + social_posts, rank by engagement, take top 3
+          // Build Featured: merge room_takes + social_posts (thoughts only — no game content)
+          // Predictions and binge battles are shown in Activity below, not Featured
           type FeaturedItem = {
             id: string; isTake: boolean; dotColor: string;
             title: string; author: string; engagement: number; ts: string;
@@ -2716,6 +2781,10 @@ export default function PoolDetailPage() {
             debate: '#ef4444', hot_take: '#f97316', ranking: '#3b82f6',
             question: '#10b981', discussion: '#8b5cf6',
           };
+          const isGamePost = (p: any) =>
+            p.post_type === 'predict' || p.post_type === 'prediction' ||
+            p.post_type === 'binge_battle' || p.post_type === 'poll' ||
+            p.post_type === 'trivia';
           const allCandidates: FeaturedItem[] = [
             ...takes.map((t: any) => ({
               id: t.id, isTake: true,
@@ -2726,7 +2795,7 @@ export default function PoolDetailPage() {
               ts: timeAgo(t.created_at),
               takeRef: t,
             })),
-            ...activityPosts.map((p: any) => ({
+            ...activityPosts.filter((p: any) => !isGamePost(p)).map((p: any) => ({
               id: p.id, isTake: false,
               dotColor: '#8b5cf6',
               title: p.content?.slice(0, 120) || '',
@@ -2937,17 +3006,56 @@ export default function PoolDetailPage() {
                 <div>
                   <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Activity</p>
                   <div className="space-y-2">
-                    {activityForFeed.map((post: any) => (
-                      <RoomPostCard
-                        key={post.id}
-                        post={post}
-                        currentUserId={session?.user?.id}
-                        onDelete={async (id: string) => {
-                          await supabase.from('social_posts').delete().eq('id', id);
-                          refetchRoomPosts();
-                        }}
-                      />
-                    ))}
+                    {activityForFeed.map((post: any) => {
+                      const isBingeBattle = post.post_type === 'binge_battle';
+                      const isPredict = post.post_type === 'predict' || post.post_type === 'prediction';
+
+                      if (isBingeBattle) {
+                        return (
+                          <BingeBattleFeedCard
+                            key={post.id}
+                            post={{
+                              id: post.id,
+                              content: post.content || '',
+                              image_url: post.image_url || '',
+                              media_title: post.media_title || '',
+                              timestamp: post.created_at,
+                              user: {
+                                displayName: post.users?.display_name,
+                                username: post.users?.user_name,
+                              },
+                            }}
+                            isOwn={post.user_id === session?.user?.id}
+                            onDelete={async (id: string) => {
+                              await supabase.from('social_posts').delete().eq('id', id);
+                              refetchRoomPosts();
+                            }}
+                          />
+                        );
+                      }
+
+                      if (isPredict) {
+                        return (
+                          <RoomPredictionCard
+                            key={post.id}
+                            post={post}
+                            currentUserId={session?.user?.id || null}
+                          />
+                        );
+                      }
+
+                      return (
+                        <RoomPostCard
+                          key={post.id}
+                          post={post}
+                          currentUserId={session?.user?.id}
+                          onDelete={async (id: string) => {
+                            await supabase.from('social_posts').delete().eq('id', id);
+                            refetchRoomPosts();
+                          }}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               )}
