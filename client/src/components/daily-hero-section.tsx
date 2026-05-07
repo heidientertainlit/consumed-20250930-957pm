@@ -1939,12 +1939,6 @@ export function DailyHeroSection() {
                         <span className="text-[8px] font-bold text-orange-200">{streak}-Day Streak</span>
                       </span>
                     )}
-                    {front && (
-                      <span className="flex items-center gap-1 bg-purple-400/20 rounded-full px-1.5 py-0.5 border border-purple-400/30">
-                        <Sparkles size={8} className="text-purple-200" />
-                        <span className="text-[8px] font-bold text-purple-100">+{isOpinionDay ? (dailyCall?.points_reward ?? 10) : readyQuestions.length * 10} pts</span>
-                      </span>
-                    )}
                     <span className="flex items-center gap-1 bg-white/10 rounded-full px-1.5 py-0.5 border border-white/5">
                       <span className="w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]" style={{ animation: 'pulse 2s infinite' }} />
                       <span className="text-[8px] font-bold text-white/80">LIVE</span>
@@ -1975,9 +1969,17 @@ export function DailyHeroSection() {
               </div>
 
               <div className={`flex items-center justify-between ${front ? 'mt-4' : ''}`}>
-                <span className={`${front ? 'text-xs' : 'text-[10px]'} text-purple-200/60 font-medium`}>
-                  {isOpinionDay ? '1 question' : '3 questions'}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  {front && (
+                    <span className="flex items-center gap-1 bg-purple-400/20 rounded-full px-1.5 py-0.5 border border-purple-400/30">
+                      <Sparkles size={8} className="text-purple-200" />
+                      <span className="text-[8px] font-bold text-purple-100">+{isOpinionDay ? (dailyCall?.points_reward ?? 10) : readyQuestions.length * 10} pts</span>
+                    </span>
+                  )}
+                  <span className={`${front ? 'text-xs' : 'text-[10px]'} text-purple-200/60 font-medium`}>
+                    {isOpinionDay ? '1 question' : '3 questions'}
+                  </span>
+                </div>
                 {front ? (
                   <span className="bg-white text-purple-950 text-sm font-bold px-6 py-2.5 rounded-full shadow-lg flex items-center gap-1.5">
                     {isTriviaDay ? (playCompleted ? 'Share' : 'Play') : (callCompleted ? 'Share' : 'Weigh In')}
