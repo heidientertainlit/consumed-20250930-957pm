@@ -3001,10 +3001,7 @@ export default function PoolDetailPage() {
           // matchPct, roomVibe, topContributors are hoisted to main component scope above
 
           return (
-            <div className="flex gap-3 items-start">
-
-              {/* ── Left column ── */}
-              <div className="flex-1 min-w-0 space-y-3">
+            <div className="space-y-3">
 
               {/* Composer */}
               {isMember ? (
@@ -3123,32 +3120,25 @@ export default function PoolDetailPage() {
                 </div>
               )}
 
-              </div>{/* end left column */}
-
-              {/* ── Right sidebar ── */}
-              <div className="w-[140px] shrink-0 space-y-3">
-
-                {/* Top contributors */}
-                {topContributors.length > 0 && (
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Top Fans</p>
-                    <div className="space-y-2">
-                      {topContributors.map((c, i) => (
-                        <div key={i} className="flex items-center gap-1.5">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 ${avatarColor(c.name)}`}>
-                            {c.name[0].toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-semibold text-gray-800 truncate">{c.name}</p>
-                            <p className="text-[9px] text-gray-400">{c.pts} pts</p>
-                          </div>
+              {/* Top Fans — inline below feed */}
+              {topContributors.length > 0 && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Top Fans</p>
+                  <div className="flex items-center gap-3">
+                    {topContributors.map((c, i) => (
+                      <div key={i} className="flex items-center gap-1.5">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 ${avatarColor(c.name)}`}>
+                          {c.name[0].toUpperCase()}
                         </div>
-                      ))}
-                    </div>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-semibold text-gray-800 truncate">{c.name}</p>
+                          <p className="text-[9px] text-gray-400">{c.pts} pts</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                )}
-
-              </div>{/* end right sidebar */}
+                </div>
+              )}
 
             </div>
           );
