@@ -1648,13 +1648,84 @@ function CarouselCard({
   );
 }
 
+/* ─── PicksList: host-created picks for non-partner rooms ──────────── */
+function PicksList({ picks, isHost, managingId, onManagePick }: {
+  picks: any[];
+  isHost: boolean;
+  managingId: string | null;
+  onManagePick: (id: string, action: 'close' | 'delete') => void;
+}) {
+  return (
+    <div>
+      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-0.5">Room Picks</p>
+      <div className="space-y-2">
+        {[...picks].reverse().map((p: any) => {
+          const isOpen = p.status !== 'resolved';
+          const opts: string[] = p.options || [];
+          const allAnswers: any[] = p.all_answers || [];
+          const pvc: Record<string, number> = {};
+          allAnswers.forEach((a: any) => { pvc[a.answer] = (pvc[a.answer] || 0) + 1; });
+          const totalVotes = Object.values(pvc).reduce((s: number, n: number) => s + n, 0);
+          const isBusy = managingId === p.id;
+          return (
+            <div key={p.id} className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #12102b 0%, #1e1654 55%, #2d1f6e 100%)' }}>
+              <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
+                <div className="flex items-center gap-2">
+                  <BarChart2 size={13} className="text-white/60" />
+                  <span className="text-white text-xs font-semibold">The Pick</span>
+                  {isOpen
+                    ? <span className="text-[10px] font-bold text-emerald-400 tracking-widest">LIVE</span>
+                    : <span className="text-[10px] font-medium text-white/35 tracking-wide">CLOSED</span>}
+                </div>
+                {isHost && (
+                  <div className="flex items-center gap-3">
+                    {isOpen && (
+                      <button onClick={() => onManagePick(p.id, 'close')} disabled={isBusy} className="text-white/50 text-[11px] font-medium hover:text-white/80 transition-colors disabled:opacity-40">
+                        {isBusy ? '...' : 'Close'}
+                      </button>
+                    )}
+                    <button onClick={() => onManagePick(p.id, 'delete')} disabled={isBusy} className="text-rose-400/60 text-[11px] font-medium hover:text-rose-300 transition-colors disabled:opacity-40">Delete</button>
+                  </div>
+                )}
+              </div>
+              <div className="px-4 pb-2">
+                <p className="text-white/90 text-sm font-medium leading-snug">{p.prompt_text}</p>
+              </div>
+              {opts.length > 0 && (
+                <div className="px-4 pb-4 space-y-1.5">
+                  {opts.map((opt: string) => {
+                    const count = pvc[opt] || 0;
+                    const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                    return (
+                      <div key={opt} className="rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                        <div className="relative px-3 py-2">
+                          <div className="absolute inset-y-0 left-0 rounded-lg transition-all duration-500" style={{ width: `${pct}%`, background: 'rgba(139,92,246,0.2)' }} />
+                          <div className="relative flex items-center justify-between">
+                            <span className="text-xs text-white/75">{opt}</span>
+                            <span className="text-[11px] font-medium text-white/40">{pct}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Play Tab: Main component ───────────────────────────────────────── */
-function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, managingId, onManagePick }: {
+function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh, managingId, onManagePick }: {
   featuredPolls: any[];
   picks: any[];
   token: string;
   isHost: boolean;
   poolId: string;
+  pool: any;
   onRefresh: () => void;
   managingId: string | null;
   onManagePick: (id: string, action: 'close' | 'delete') => void;
@@ -1664,6 +1735,29 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, manag
   const [showSearch, setShowSearch] = useState('');
   const [correctStreak, setCorrectStreak] = useState(0);
   const [streakBanner, setStreakBanner] = useState<{ message: string; sub: string; streak: number } | null>(null);
+
+  // Fetch prediction_pools related to this room's media (for non-partner rooms)
+  const roomName = pool?.name || '';
+  const { data: relatedPoolsRaw } = useQuery({
+    queryKey: ['room-related-pools', poolId, roomName],
+    enabled: !isPartnerRoom && !!roomName,
+    queryFn: async () => {
+      const words = roomName.split(/\s+/).filter((w: string) => w.length > 2);
+      if (!words.length) return [];
+      // Build OR filter: show_tag ilike each significant word in the room name
+      const orFilter = words.map((w: string) => `show_tag.ilike.%${w}%,title.ilike.%${w}%`).join(',');
+      const { data } = await supabase
+        .from('prediction_pools')
+        .select('id, title, type, status, options, points_reward, category, show_tag, correct_answer, deadline, media_external_source, vote_counts, featured_date')
+        .or(orFilter)
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(30);
+      return data || [];
+    },
+    staleTime: 60_000,
+  });
+  const relatedPools: any[] = relatedPoolsRaw || [];
 
   const handleTriviaAnswered = (isCorrect: boolean) => {
     onRefresh();
@@ -1683,65 +1777,95 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, onRefresh, manag
   };
 
   if (!isPartnerRoom) {
-    // Regular room: show host-created picks
-    return (
-      <div className="space-y-3">
-        {isHost && <PickComposer poolId={poolId} token={token} onPosted={onRefresh} />}
-        {picks.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-400 text-sm">No picks yet.</p>
-            {isHost && <p className="text-gray-300 text-xs mt-1">Create the first pick above.</p>}
+    // Group related pools by type
+    const relatedTrivia = relatedPools.filter(p => p.type === 'trivia');
+    const relatedPredictions = relatedPools.filter(p => p.type === 'predict' || p.type === 'prediction');
+    const relatedPolls = relatedPools.filter(p => p.type === 'poll');
+
+    const TYPE_BADGE: Record<string, { label: string; color: string; icon: string }> = {
+      trivia:     { label: 'Trivia',     color: '#7c3aed', icon: '🧠' },
+      predict:    { label: 'Prediction', color: '#0891b2', icon: '🎯' },
+      prediction: { label: 'Prediction', color: '#0891b2', icon: '🎯' },
+      poll:       { label: 'Poll',       color: '#059669', icon: '📊' },
+    };
+
+    const RelatedCard = ({ p }: { p: any }) => {
+      const badge = TYPE_BADGE[p.type] || { label: p.type, color: '#6b7280', icon: '▶' };
+      const opts: string[] = p.options || [];
+      const vc: Record<string, number> = p.vote_counts || {};
+      const total = Object.values(vc).reduce((s: number, n: any) => s + (n as number), 0);
+      return (
+        <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #12102b 0%, #1e1654 55%, #2d1f6e 100%)' }}>
+          <div className="flex items-center gap-2 px-4 pt-3.5 pb-1.5">
+            <span className="text-sm">{badge.icon}</span>
+            <span className="text-[11px] font-bold tracking-widest uppercase" style={{ color: badge.color }}>{badge.label}</span>
+            {p.show_tag && <span className="text-[10px] text-white/35 ml-auto">{p.show_tag}</span>}
           </div>
-        )}
-        {[...picks].reverse().map((p: any) => {
-          const isOpen = p.status !== 'resolved';
-          const opts: string[] = p.options || [];
-          const allAnswers: any[] = p.all_answers || [];
-          const vc: Record<string, number> = {};
-          allAnswers.forEach((a: any) => { vc[a.answer] = (vc[a.answer] || 0) + 1; });
-          const totalVotes = Object.values(vc).reduce((s, n) => s + n, 0);
-          const isBusy = managingId === p.id;
-          return (
-            <div key={p.id} className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #12102b 0%, #1e1654 55%, #2d1f6e 100%)' }}>
-              <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
-                <div className="flex items-center gap-2">
-                  <BarChart2 size={13} className="text-white/60" />
-                  <span className="text-white text-xs font-semibold">The Pick</span>
-                  {isOpen ? <span className="text-[10px] font-bold text-emerald-400 tracking-widest">LIVE</span>
-                    : <span className="text-[10px] font-medium text-white/35 tracking-wide">CLOSED</span>}
-                </div>
-                {isHost && (
-                  <div className="flex items-center gap-3">
-                    {isOpen && <button onClick={() => onManagePick(p.id, 'close')} disabled={isBusy} className="text-white/50 text-[11px] font-medium hover:text-white/80 transition-colors disabled:opacity-40">{isBusy ? '...' : 'Close'}</button>}
-                    <button onClick={() => onManagePick(p.id, 'delete')} disabled={isBusy} className="text-rose-400/60 text-[11px] font-medium hover:text-rose-300 transition-colors disabled:opacity-40">Delete</button>
-                  </div>
-                )}
-              </div>
-              <div className="px-4 pb-2">
-                <p className="text-white/90 text-sm font-medium leading-snug">{p.prompt_text}</p>
-              </div>
-              {opts.length > 0 && (
-                <div className="px-4 pb-4 space-y-1.5">
-                  {opts.map((opt: string) => {
-                    const count = vc[opt] || 0;
-                    const pct = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-                    return (
-                      <div key={opt} className="rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
-                        <div className="relative px-3 py-2">
-                          <div className="absolute inset-y-0 left-0 rounded-lg transition-all duration-500" style={{ width: `${pct}%`, background: 'rgba(139,92,246,0.2)' }} />
-                          <div className="relative flex items-center justify-between">
-                            <span className="text-xs text-white/75">{opt}</span>
-                            <span className="text-[11px] font-medium text-white/40">{pct}%</span>
-                          </div>
+          <div className="px-4 pb-3">
+            <p className="text-white/90 text-sm font-medium leading-snug mb-3">{p.title}</p>
+            {opts.length > 0 && (
+              <div className="space-y-1.5">
+                {opts.map((opt: string) => {
+                  const count = vc[opt] || 0;
+                  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                  return (
+                    <div key={opt} className="rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+                      <div className="relative px-3 py-2">
+                        <div className="absolute inset-y-0 left-0 rounded-lg transition-all duration-500" style={{ width: `${pct}%`, background: 'rgba(139,92,246,0.22)' }} />
+                        <div className="relative flex items-center justify-between">
+                          <span className="text-xs text-white/80">{opt}</span>
+                          {total > 0 && <span className="text-[11px] font-medium text-white/40">{pct}%</span>}
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {p.points_reward > 0 && (
+              <p className="text-[10px] text-yellow-400/70 mt-2.5">⭐ {p.points_reward} pts</p>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <div className="space-y-4">
+        {/* Related trivia */}
+        {relatedTrivia.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-0.5">Trivia</p>
+            <div className="space-y-2">{relatedTrivia.map(p => <RelatedCard key={p.id} p={p} />)}</div>
+          </div>
+        )}
+        {/* Related predictions */}
+        {relatedPredictions.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-0.5">Predictions</p>
+            <div className="space-y-2">{relatedPredictions.map(p => <RelatedCard key={p.id} p={p} />)}</div>
+          </div>
+        )}
+        {/* Related polls */}
+        {relatedPolls.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-0.5">Polls</p>
+            <div className="space-y-2">{relatedPolls.map(p => <RelatedCard key={p.id} p={p} />)}</div>
+          </div>
+        )}
+        {picks.length > 0 && (
+          <PicksList
+            picks={picks}
+            isHost={isHost}
+            managingId={managingId}
+            onManagePick={onManagePick}
+          />
+        )}
+        {relatedTrivia.length === 0 && relatedPredictions.length === 0 && relatedPolls.length === 0 && picks.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-400 text-sm">No play content yet for this room.</p>
+          </div>
+        )}
       </div>
     );
   }
@@ -3046,6 +3170,7 @@ export default function PoolDetailPage() {
             token={token}
             isHost={isHost}
             poolId={params.id}
+            pool={pool}
             onRefresh={refresh}
             managingId={managingId}
             onManagePick={handleManagePrompt}
