@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check, Play, Clock, Ban, Heart } from "lucide-react";
+import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check, Play, Clock, Ban, Heart, BarChart2, TrendingUp, ListOrdered } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
@@ -509,10 +509,27 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
             ice_votes: 0,
           });
           if (qErr) throw qErr;
+          // Also create a prediction pool for the poll options if provided
+          const validPollOpts = pollOptions.filter(o => o.trim());
+          if (validPollOpts.length >= 2) {
+            await fetch(`${supabaseUrl}/functions/v1/create-prediction`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                question: contentText,
+                options: validPollOpts,
+                type: 'poll',
+                media_external_id: selectedMedia?.external_id || null,
+                media_external_source: selectedMedia?.external_source || null,
+                media_title: selectedMedia?.title || null,
+                media_type: selectedMedia?.type || null,
+              }),
+            });
+          }
           queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
           queryClient.invalidateQueries({ queryKey: ['social-feed'] });
           queryClient.invalidateQueries({ queryKey: ['feed'] });
-          toast({ title: "Question posted!" });
+          toast({ title: "Poll posted!" });
           handleClose();
           return;
         }
@@ -873,24 +890,26 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                 </div>
               )}
 
-              {/* Post type toggle - all types */}
-              <div className="flex items-center gap-2 flex-wrap">
+              {/* Post type selector — flat icon+text bar */}
+              <div className="flex items-center gap-0 border-t border-b border-gray-100 py-2 -mx-1">
                 {([
-                  { key: 'thought'    as const, label: 'Thought'       },
-                  { key: 'review'     as const, label: 'Rate / Review' },
-                  { key: 'prediction' as const, label: 'Prediction'    },
-                  { key: 'hot_take'   as const, label: 'Hot Take'      },
-                  { key: 'question'   as const, label: 'Question'      },
-                  { key: 'rank'       as const, label: 'Rank'          },
-                ] as const).map(({ key, label }) => (
+                  { key: 'thought'    as const, label: 'Take',       icon: <Flame size={12} /> },
+                  { key: 'review'     as const, label: 'Review',     icon: <Star size={12} /> },
+                  { key: 'question'   as const, label: 'Poll',       icon: <BarChart2 size={12} /> },
+                  { key: 'rank'       as const, label: 'Rank',       icon: <ListOrdered size={12} /> },
+                  { key: 'prediction' as const, label: 'Prediction', icon: <TrendingUp size={12} /> },
+                ] as const).map(({ key, label, icon }, i, arr) => (
                   <button
                     key={key}
                     onClick={() => setTrackPostType(key)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      trackPostType === key ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    className={`flex items-center gap-1 px-3 py-1 text-[13px] font-medium transition-colors whitespace-nowrap ${
+                      i < arr.length - 1 ? 'border-r border-gray-200' : ''
+                    } ${
+                      trackPostType === key ? 'text-purple-700' : 'text-gray-500 hover:text-gray-700'
                     }`}
                   >
-                    {label}
+                    {icon}
+                    <span>{label}</span>
                   </button>
                 ))}
               </div>
@@ -901,20 +920,19 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                   value={contentText}
                   onChange={(e) => setContentText(e.target.value)}
                   placeholder={
-                    trackPostType === 'thought'    ? "What's on your mind?" :
+                    trackPostType === 'thought'    ? "What's your take?" :
                     trackPostType === 'review'     ? "Write your review..." :
                     trackPostType === 'prediction' ? "What do you predict?" :
-                    trackPostType === 'hot_take'   ? "Drop your hot take — don't hold back…" :
-                    trackPostType === 'question'   ? "Ask the room a question…" :
+                    trackPostType === 'question'   ? "Ask fans a question to vote on…" :
                     ""
                   }
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg resize-none text-sm"
-                  rows={trackPostType === 'hot_take' || trackPostType === 'thought' ? 4 : 3}
+                  rows={trackPostType === 'thought' ? 4 : 3}
                 />
               )}
 
-              {/* Prediction poll options */}
-              {trackPostType === 'prediction' && (
+              {/* Poll / Prediction options */}
+              {(trackPostType === 'prediction' || trackPostType === 'question') && (
                 <div className="space-y-2">
                   {pollOptions.map((option, idx) => (
                     <div key={idx} className="flex items-center gap-2">
@@ -939,8 +957,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                 </div>
               )}
 
-              {/* Thought / Hot Take — spoiler toggle */}
-              {(trackPostType === 'thought' || trackPostType === 'hot_take') && (
+              {/* Take — spoiler toggle */}
+              {trackPostType === 'thought' && (
                 <button
                   type="button"
                   onClick={() => setContainsSpoilers(v => !v)}
