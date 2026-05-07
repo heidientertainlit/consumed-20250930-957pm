@@ -558,9 +558,9 @@ function TodaysPlayGame({
         .then(({ error }) => {
           // Only credit points when it's a new answer (not a duplicate)
           if (!error && points > 0) {
-            supabase.rpc('increment_user_points', {
-              user_id_param: session.user.id,
-              points_to_add: points,
+            supabase.rpc('increment_trivia_points', {
+              uid: session.user.id,
+              pts: points,
             }).catch(() => {});
           }
           // Bust the carousel cache so answered pools are filtered on next load

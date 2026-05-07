@@ -154,7 +154,7 @@ export default function PlayTriviaPage() {
       }
 
       if (points > 0) {
-        await supabase.rpc('increment_user_points', { user_id_param: user.id, points_to_add: points });
+        await supabase.rpc('increment_trivia_points', { uid: user.id, pts: points });
       }
 
       const { data: allPreds } = await supabase

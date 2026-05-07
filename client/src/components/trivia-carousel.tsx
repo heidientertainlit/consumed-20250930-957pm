@@ -466,7 +466,9 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
         throw new Error(`Insert failed: ${error.message}`);
       }
       
-      await supabase.rpc('increment_user_points', { user_id_param: user.id, points_to_add: points });
+      if (points > 0) {
+        await supabase.rpc('increment_trivia_points', { uid: user.id, pts: points });
+      }
 
       const { data: allPredictions } = await supabase
         .from('user_predictions')
