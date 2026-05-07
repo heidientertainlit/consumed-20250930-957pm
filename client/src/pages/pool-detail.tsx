@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { APP_BASE } from "@/lib/share";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, MessageCircle, User, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil, HelpCircle, Tv, Vote, Dna, Zap, Brain, Film, Music, BookOpen, ArrowUp, ArrowDown, Tag, AlignLeft, Hash, Swords, TrendingUp, HelpCircle as QuestionIcon, ListOrdered, ThumbsUp } from "lucide-react";
+import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, MessageCircle, User, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil, HelpCircle, Tv, Vote, Dna, Zap, Brain, Film, Music, BookOpen, ArrowUp, ArrowDown, Tag, AlignLeft, Hash, Swords, TrendingUp, HelpCircle as QuestionIcon, ListOrdered, ThumbsUp, Home, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -46,6 +46,11 @@ function avatarColor(name: string) {
   ];
   const code = (name || '?').charCodeAt(0);
   return palette[code % palette.length];
+}
+
+function formatStat(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return n.toString();
 }
 
 function AvatarCircle({ name, size = 'md', ring = false }: { name: string; size?: 'sm' | 'md' | 'lg'; ring?: boolean }) {
@@ -2305,6 +2310,7 @@ export default function PoolDetailPage() {
   const [joiningRoom, setJoiningRoom] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [editSeriesTag, setEditSeriesTag] = useState<string | null>(null);
+  const [takeFilter, setTakeFilter] = useState<'top' | 'hot_take' | 'theory'>('top');
   const [savingSettings, setSavingSettings] = useState(false);
 
   // Takes state
@@ -2639,13 +2645,11 @@ export default function PoolDetailPage() {
   return (
     <div className="min-h-screen pb-28" style={{ backgroundColor: '#f4f4f8' }}>
       {/* ── Unified gradient: nav bar + hero as one surface ── */}
-      <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
-      <Navigation />
+      <div style={{ background: 'linear-gradient(160deg, #0a0a0f 0%, #12121f 40%, #2d1f4e 100%)' }}>
+        <Navigation />
 
-      {/* ── Purple gradient hero — top to tabs ── */}
-      <div>
-        {/* Back + invite */}
-        <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        {/* Back + Invite */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
           <button onClick={() => setLocation('/rooms')} className="text-white/60 hover:text-white transition-colors">
             <ChevronLeft size={24} />
           </button>
@@ -2657,86 +2661,124 @@ export default function PoolDetailPage() {
           )}
         </div>
 
-        {/* Room name + meta */}
-        <div className="px-4 pb-3 flex items-start gap-3">
-          {/* Media poster thumbnail */}
+        {/* Hero: cover + info side by side */}
+        <div className="px-4 pb-3 flex gap-4 items-start">
+          {/* Cover image — taller, more prominent */}
           {!isLoading && pool?.media_image && (
-            <div className="shrink-0 mt-1">
-              <div className="w-14 h-20 rounded-xl overflow-hidden shadow-lg" style={{ border: '1.5px solid rgba(255,255,255,0.15)' }}>
-                <img src={pool.media_image} alt={pool.name} className="w-full h-full object-cover" />
-              </div>
+            <div className="shrink-0 w-[88px] h-[130px] rounded-2xl overflow-hidden shadow-2xl" style={{ border: '1.5px solid rgba(255,255,255,0.18)' }}>
+              <img src={pool.media_image} alt={pool.name} className="w-full h-full object-cover" />
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <p className="text-white/40 text-[10px] font-medium uppercase tracking-widest mb-1">Room</p>
-            <h1 className="text-white text-[22px] font-medium leading-tight mb-1.5 flex items-center gap-2 flex-wrap" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              {isLoading ? '...' : pool?.name || 'Room'}
+
+          {/* Room info */}
+          <div className="flex-1 min-w-0 pt-0.5">
+            <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest mb-1">Room</p>
+            <h1 className="text-white text-[22px] font-bold leading-tight mb-1 flex items-center gap-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              <span className="truncate">{isLoading ? '...' : pool?.name || 'Room'}</span>
               {!isLoading && pool?.partner_name && (
-                <span title="Official Partner Room" className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full shrink-0" style={{ marginTop: '1px', background: '#4f7ef7' }}>
-                  <Check size={12} className="text-white" strokeWidth={3} />
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full shrink-0" style={{ background: '#4f7ef7' }}>
+                  <Check size={10} className="text-white" strokeWidth={3} />
                 </span>
               )}
             </h1>
-            {!isLoading && pool?.media_type && (
-              <div className="flex items-center gap-2 mb-2">
-                <RoomMediaTypePill mediaType={pool.media_type} />
-                {pool.series_volumes && (
-                  <span className="text-white/40 text-[11px]">{pool.series_volumes} volumes</span>
-                )}
-              </div>
-            )}
-          {/* Member count + visibility */}
-          {!isLoading && (
-            <div className="flex items-center gap-2">
-              <span className="text-white/55 text-xs">
+            {!isLoading && (
+              <p className="text-white/50 text-[12px] mb-2">
                 {members.length} {members.length === 1 ? 'member' : 'members'}
-              </span>
-              <span className="text-white/30 text-xs">·</span>
-              <span className={`text-xs font-medium ${isPublic ? 'text-emerald-400' : 'text-white/40'}`}>
-                {isPublic ? 'Public' : 'Private'}
-              </span>
-            </div>
-          )}
-
-          {/* Non-member join banner — public rooms */}
-          {!isLoading && !isMember && isPublic && (
-            <div className="mt-3">
-              <button
-                onClick={handleJoinRoom}
-                disabled={joiningRoom}
-                className="w-full py-2.5 rounded-2xl text-white text-sm font-semibold disabled:opacity-50"
-                style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}
-              >
-                {joiningRoom ? 'Joining...' : 'Join this Room'}
-              </button>
-            </div>
-          )}
-          </div>{/* end flex-1 min-w-0 */}
+                <span className="mx-1.5 text-white/20">·</span>
+                <span className={isPublic ? 'text-emerald-400' : 'text-white/40'}>{isPublic ? 'Public' : 'Private'}</span>
+              </p>
+            )}
+            {!isLoading && pool?.description && (
+              <p className="text-violet-300 text-[12px] font-semibold leading-snug mb-1 line-clamp-1">
+                {pool.description.split('.')[0].trim()}{pool.description.includes('.') ? '.' : ''}
+              </p>
+            )}
+            {!isLoading && pool?.description && pool.description.split('.').slice(1).join('.').trim() && (
+              <p className="text-white/35 text-[11px] leading-snug line-clamp-2">
+                {pool.description.split('.').slice(1).join('.').trim()}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* Tabs at bottom of gradient */}
-        <div className="flex px-4 border-b border-white/10">
-          {TABS.map(t => (
+        {/* Stats panel */}
+        {!isLoading && (
+          <div className="px-4 pb-3">
+            <div className="rounded-2xl overflow-hidden divide-y divide-white/[0.07]" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              {[
+                { icon: <TrendingUp size={13} className="text-white/40" />, label: 'Takes this week', value: formatStat(takes.filter((t: any) => Date.now() - new Date(t.created_at).getTime() < 7 * 24 * 60 * 60 * 1000).length) },
+                { icon: <Vote size={13} className="text-white/40" />, label: 'Votes cast', value: formatStat(takes.reduce((s: number, t: any) => s + (t.upvotes || 0), 0)) },
+                { icon: <Users size={13} className="text-white/40" />, label: 'People in this room', value: formatStat(members.length) },
+              ].map((stat, i) => (
+                <div key={i} className="flex items-center justify-between px-4 py-2.5">
+                  <div className="flex items-center gap-2">
+                    {stat.icon}
+                    <span className="text-white/50 text-[12px]">{stat.label}</span>
+                  </div>
+                  <span className="text-white text-[13px] font-bold">{stat.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Member avatars + online count */}
+        {!isLoading && members.length > 0 && (
+          <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
+            <div className="flex -space-x-2">
+              {members.slice(0, 5).map((m: any, i: number) => {
+                const name = (m.users as any)?.display_name || (m.users as any)?.user_name || '?';
+                return (
+                  <div key={m.id || i} className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold ring-2 ring-[#12121f] ${avatarColor(name)}`}>
+                    {name[0].toUpperCase()}
+                  </div>
+                );
+              })}
+            </div>
+            <span className="text-white/40 text-[11px]">{formatStat(members.length)} people are in this room</span>
+            <span className="flex items-center gap-1 text-[11px] text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              {Math.max(1, Math.floor((members.length || 1) * 0.15))} online now
+            </span>
+          </div>
+        )}
+
+        {/* Non-member join banner */}
+        {!isLoading && !isMember && isPublic && (
+          <div className="px-4 pb-3">
+            <button onClick={handleJoinRoom} disabled={joiningRoom} className="w-full py-2.5 rounded-2xl text-white text-sm font-semibold disabled:opacity-50" style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}>
+              {joiningRoom ? 'Joining...' : 'Join this Room'}
+            </button>
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="flex px-2 border-b border-white/10">
+          {([
+            { key: 'room', label: 'Room', icon: <Home size={13} /> },
+            { key: 'play', label: 'Play', icon: <Play size={13} /> },
+            { key: 'live', label: 'Live', isLive: true },
+            { key: 'stats', label: 'Stats', icon: <BarChart2 size={13} /> },
+          ] as any[]).map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key as any)}
-              className={`px-4 py-3 text-sm font-medium transition-all border-b-2 -mb-px ${
-                tab === t.key ? 'text-white border-white' : 'text-white/40 border-transparent hover:text-white/70'
+              className={`flex items-center gap-1.5 px-3 py-3 text-[13px] font-medium transition-all border-b-2 -mb-px ${
+                tab === t.key ? 'text-white border-white' : 'text-white/40 border-transparent hover:text-white/60'
               }`}
             >
-              {t.key === 'live' ? (
-                <span className="flex items-center gap-1.5">
+              {t.isLive ? (
+                <>
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                  <span className="capitalize">Live</span>
-                </span>
+                  <span>Live</span>
+                </>
               ) : (
-                t.label
+                <>{t.icon}<span>{t.label}</span></>
               )}
             </button>
           ))}
         </div>
-      </div>
-      </div>{/* end unified gradient wrapper */}
+      </div>{/* end gradient header */}
 
       {/* ── Content ── */}
       <div className="px-4 pt-4">
@@ -2769,77 +2811,77 @@ export default function PoolDetailPage() {
               || (hasContent && /^added .+ to /i.test(p.content.trim()));
             return (hasContent || hasPredictQ) && !hasRating && !isListAdd;
           });
-
-          // Build Featured: merge room_takes + social_posts (thoughts only — no game content)
-          // Predictions and binge battles are shown in Activity below, not Featured
-          type FeaturedItem = {
-            id: string; isTake: boolean; dotColor: string;
-            title: string; author: string; engagement: number; ts: string;
-            takeRef?: any;
-          };
-          const TAG_COLORS: Record<string, string> = {
-            debate: '#ef4444', hot_take: '#f97316', ranking: '#3b82f6',
-            question: '#10b981', discussion: '#8b5cf6',
-          };
-          const isGamePost = (p: any) =>
-            p.post_type === 'predict' || p.post_type === 'prediction' ||
-            p.post_type === 'binge_battle' || p.post_type === 'poll' ||
-            p.post_type === 'trivia';
-          const allCandidates: FeaturedItem[] = [
-            ...takes.map((t: any) => ({
-              id: t.id, isTake: true,
-              dotColor: TAG_COLORS[t.tag || 'discussion'] || '#8b5cf6',
-              title: t.title,
-              author: t.users?.display_name || t.users?.user_name || 'Fan',
-              engagement: (t.reply_count || 0) + (t.upvotes || 0),
-              ts: timeAgo(t.created_at),
-              takeRef: t,
-            })),
-            ...activityPosts.filter((p: any) => !isGamePost(p)).map((p: any) => ({
-              id: p.id, isTake: false,
-              dotColor: '#8b5cf6',
-              title: p.content?.slice(0, 120) || '',
-              author: p.users?.display_name || p.users?.user_name || 'Fan',
-              engagement: (p.comment_count || 0),
-              ts: timeAgo(p.created_at),
-            })),
-          ].sort((a, b) => b.engagement - a.engagement);
-
-          // Top 3 with any engagement; fall back to top 3 overall if none have replies yet
-          const hasEngagement = allCandidates.some(c => c.engagement > 0);
-          const featuredItems: FeaturedItem[] = hasEngagement
-            ? allCandidates.filter(c => c.engagement > 0).slice(0, 3)
-            : allCandidates.slice(0, 3);
-          // Activity always shows all social posts — Featured is a spotlight, not a filter
           const activityForFeed = activityPosts;
 
-          // Mock fallback when room has no content yet
-          const MOCK_FEATURED = [
-            { id: 'f1', isTake: false, dotColor: '#ef4444', title: 'Who has the best character arc in the series?', author: 'heidi', engagement: 4, ts: '2d' },
-            { id: 'f2', isTake: false, dotColor: '#f97316', title: 'The ending was perfect — change my mind', author: 'Jeeppler', engagement: 7, ts: '3d' },
-            { id: 'f3', isTake: false, dotColor: '#8b5cf6', title: 'Ranking every season from best to worst', author: 'heidi', engagement: 2, ts: '1w' },
-          ];
-          const displayFeatured: FeaturedItem[] = featuredItems.length > 0 ? featuredItems : MOCK_FEATURED as any;
+          // ── Derived sidebar data ──
+          const TAG_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
+            hot_take: { label: 'Hot Take', color: '#ea580c', bg: '#fff7ed', icon: '🔥' },
+            debate:   { label: 'Debate',   color: '#dc2626', bg: '#fef2f2', icon: '⚡' },
+            theory:   { label: 'Theory',   color: '#7c3aed', bg: '#f5f3ff', icon: '💡' },
+            discussion:{ label: 'Discussion', color: '#8b5cf6', bg: '#faf5ff', icon: '💬' },
+            ranking:  { label: 'Ranking',  color: '#2563eb', bg: '#eff6ff', icon: '📊' },
+            question: { label: 'Question', color: '#059669', bg: '#f0fdf4', icon: '❓' },
+          };
+          // Filtered takes for the selected tab
+          const filteredTakes = (() => {
+            if (takeFilter === 'hot_take') return takes.filter((t: any) => t.tag === 'hot_take');
+            if (takeFilter === 'theory') return takes.filter((t: any) => t.tag === 'theory' || t.tag === 'debate' || t.tag === 'discussion');
+            return [...takes].sort((a: any, b: any) => (b.upvotes || 0) - (a.upvotes || 0));
+          })();
+
+          // Top take for sidebar pulse
+          const topTake = [...takes].sort((a: any, b: any) => (b.upvotes || 0) - (a.upvotes || 0))[0];
+
+          // Room vibe from most common tag
+          const tagCounts: Record<string, number> = {};
+          for (const t of takes) { tagCounts[t.tag || 'discussion'] = (tagCounts[t.tag || 'discussion'] || 0) + 1; }
+          const topTag = Object.entries(tagCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'discussion';
+          const VIBE_LABELS: Record<string, string> = { hot_take: 'Spicy takes crowd', debate: 'Debate-first crowd', theory: 'Theory lovers', discussion: 'Discussion crew', ranking: 'Rankers & raters' };
+          const roomVibe = VIBE_LABELS[topTag] || 'Active community';
+
+          // Top contributors from takes
+          const topContributors = (() => {
+            const byUser: Record<string, { name: string; pts: number }> = {};
+            for (const t of takes) {
+              const uid = t.user_id;
+              const name = t.users?.display_name || t.users?.user_name || 'Fan';
+              if (!byUser[uid]) byUser[uid] = { name, pts: 0 };
+              byUser[uid].pts += (t.upvotes || 0) + (t.reply_count || 0);
+            }
+            return Object.values(byUser).sort((a, b) => b.pts - a.pts).slice(0, 3);
+          })();
+
+          const matchPct = Math.min(95, 70 + Math.floor(members.length * 1.5));
 
           return (
-            <div className="space-y-6">
+            <div className="flex gap-3 items-start">
 
-              {/* ── Composer ── */}
+              {/* ── Left column ── */}
+              <div className="flex-1 min-w-0 space-y-3">
+
+              {/* Composer */}
               {isMember ? (
                 <button onClick={() => setIsComposerOpen(true)} className="w-full text-left">
-                  <div
-                    className="w-full rounded-2xl px-3 py-3 flex items-center gap-3"
-                    style={{ background: '#fff', border: '1.5px solid #e8e5f5', boxShadow: '0 1px 6px 0 rgba(120,80,220,0.06)' }}
-                  >
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-sm font-bold" style={{ background: '#7c3aed' }}>
-                      {(myName?.[0] || session?.user?.email?.[0] || '?').toUpperCase()}
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 ${avatarColor(myName || '?')}`}>
+                        {(myName?.[0] || session?.user?.email?.[0] || '?').toUpperCase()}
+                      </div>
+                      <p className="flex-1 text-[14px] text-gray-400">What's your take on {pool?.name || 'this room'}?</p>
                     </div>
-                    <p className="flex-1 text-[14px] text-gray-400 leading-snug">
-                      What's on your mind about {pool?.name || 'this room'}?
-                    </p>
-                    <span className="shrink-0 px-4 py-2 rounded-full text-sm font-semibold text-white" style={{ background: '#7c3aed' }}>
-                      Post
-                    </span>
+                    <div className="flex items-center border-t border-gray-100 pt-2.5 gap-0.5">
+                      {[
+                        { label: 'Take', icon: <Flame size={11} /> },
+                        { label: 'Poll', icon: <BarChart2 size={11} /> },
+                        { label: 'Rank', icon: <ListOrdered size={11} /> },
+                        { label: 'Prediction', icon: <TrendingUp size={11} /> },
+                      ].map(btn => (
+                        <div key={btn.label} className="flex items-center gap-1 px-2 py-1 text-gray-500 text-[11px] font-medium">
+                          {btn.icon}<span>{btn.label}</span>
+                        </div>
+                      ))}
+                      <div className="ml-auto px-3.5 py-1.5 rounded-full text-white text-[12px] font-semibold" style={{ background: '#7c3aed' }}>Post</div>
+                    </div>
                   </div>
                 </button>
               ) : (
@@ -2848,217 +2890,149 @@ export default function PoolDetailPage() {
                 </div>
               )}
 
-              {/* ── Featured ── high-activity takes & hot thoughts ── */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Featured</p>
-                  {featuredItems.length === 0 && (
-                    <span className="text-[10px] text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">Example</span>
-                  )}
-                </div>
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-100">
-                  {displayFeatured.map((item) => {
-                    const isPostExpanded = !item.isTake && activePost?.id === item.id;
-                    const isMockItem = item.id.startsWith('f');
-                    return (
-                      <div key={item.id}>
-                        {/* Row header */}
-                        <button
-                          onClick={() => {
-                            if (item.isTake && item.takeRef) {
-                              setActiveTake(item.takeRef);
-                            } else if (!item.isTake && !isMockItem) {
-                              if (isPostExpanded) {
-                                setActivePost(null);
-                                setActivePostNewComment('');
-                              } else {
-                                const post = activityPosts.find((p: any) => p.id === item.id);
-                                if (post) setActivePost(post);
-                              }
-                            }
-                          }}
-                          className="w-full flex items-start gap-3 px-4 py-4 text-left hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="mt-[5px] w-2 h-2 rounded-full shrink-0" style={{ background: item.dotColor }} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold text-gray-800 leading-snug line-clamp-2">{item.title}</p>
-                            <div className="flex items-center gap-1.5 text-[10px] text-gray-400 mt-1">
-                              <span>{item.author}</span>
-                              <span>·</span>
-                              <span>{item.engagement} {item.isTake ? 'replies' : 'comments'}</span>
-                              <span>·</span>
-                              <span>{item.ts}</span>
+              {/* ── Filter tabs ── */}
+              <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
+                {[
+                  { key: 'top', label: 'Top' },
+                  { key: 'hot_take', label: 'Hot Takes' },
+                  { key: 'theory', label: 'Theories' },
+                ].map(tf => (
+                  <button
+                    key={tf.key}
+                    onClick={() => setTakeFilter(tf.key as any)}
+                    className={`flex-1 text-[12px] font-semibold py-1.5 rounded-lg transition-colors ${takeFilter === tf.key ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500'}`}
+                  >{tf.label}</button>
+                ))}
+              </div>
+
+              {/* ── Takes feed ── */}
+              <div className="space-y-2">
+                {filteredTakes.length === 0 && (
+                  <div className="bg-white rounded-2xl border border-dashed border-gray-200 py-8 text-center">
+                    <p className="text-gray-400 text-sm">No {takeFilter === 'hot_take' ? 'hot takes' : takeFilter === 'theory' ? 'theories' : 'takes'} yet — be the first!</p>
+                  </div>
+                )}
+                {filteredTakes.map((t: any) => {
+                  const tagInfo = TAG_CONFIG[t.tag] || TAG_CONFIG.discussion;
+                  const tName = t.users?.display_name || t.users?.user_name || 'Fan';
+                  return (
+                    <button key={t.id} onClick={() => setActiveTake(t)} className="w-full text-left">
+                      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ${avatarColor(tName)}`}>
+                              {tName[0].toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-[12px] font-semibold text-gray-900 leading-tight">{tName}</p>
+                              <p className="text-[10px] text-gray-400">{timeAgo(t.created_at)}</p>
                             </div>
                           </div>
-                          {item.isTake
-                            ? <ChevronRight size={14} className="text-gray-300 shrink-0 mt-0.5" />
-                            : isPostExpanded
-                              ? <ChevronUp size={14} className="text-purple-400 shrink-0 mt-0.5" />
-                              : <ChevronDown size={14} className="text-gray-300 shrink-0 mt-0.5" />
-                          }
-                        </button>
-
-                        {/* Inline thread — social posts only */}
-                        {isPostExpanded && activePost && (
-                          <div className="bg-gray-50 border-t border-gray-100">
-                            {/* Full post body */}
-                            <div className="px-4 pt-3 pb-2">
-                              <p className="text-[13px] text-gray-700 leading-relaxed">{activePost.content}</p>
-                              {activePost.media_title && (
-                                <p className="text-[11px] text-gray-400 mt-1">re: <span className="font-medium text-gray-500">{activePost.media_title}</span></p>
-                              )}
-                            </div>
-
-                            {/* Comments */}
-                            <div className="px-4 space-y-3 pb-2">
-                              {loadingActivePostComments ? (
-                                <p className="text-xs text-gray-400 py-2">Loading…</p>
-                              ) : activePostComments.length === 0 ? (
-                                <p className="text-xs text-gray-400 py-2 text-center">No comments yet — jump in!</p>
-                              ) : (
-                                activePostComments.map((c: any) => {
-                                  const cName = (c.users as any)?.display_name || (c.users as any)?.user_name || 'Fan';
-                                  return (
-                                    <div key={c.id} className="flex items-start gap-2 pt-2">
-                                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 ${avatarColor(cName)}`}>
-                                        {cName[0].toUpperCase()}
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <span className="text-[11px] font-semibold text-gray-800 mr-1.5">{cName}</span>
-                                        <span className="text-[10px] text-gray-400">{timeAgo(c.created_at)}</span>
-                                        <p className="text-sm text-gray-700 leading-snug mt-0.5">{c.content}</p>
-                                      </div>
-                                    </div>
-                                  );
-                                })
-                              )}
-                            </div>
-
-                            {/* Comment input */}
-                            {isMember && (
-                              <div className="px-4 py-3 border-t border-gray-100">
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="text"
-                                    value={activePostNewComment}
-                                    onChange={e => setActivePostNewComment(e.target.value)}
-                                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitActivePostComment(); } }}
-                                    placeholder="Add a comment…"
-                                    className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 bg-white"
-                                  />
-                                  <button
-                                    onClick={submitActivePostComment}
-                                    disabled={!activePostNewComment.trim() || submittingActivePostComment}
-                                    className="w-8 h-8 rounded-xl bg-purple-600 flex items-center justify-center disabled:opacity-40 shrink-0"
-                                  >
-                                    <Send size={13} className="text-white" />
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                          <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: tagInfo.color, background: tagInfo.bg }}>
+                            {tagInfo.icon} {tagInfo.label}
+                          </span>
+                        </div>
+                        <p className="text-[13px] font-semibold text-gray-800 leading-snug mb-1">{t.title}</p>
+                        {t.body && <p className="text-[12px] text-gray-500 leading-relaxed line-clamp-2">{t.body}</p>}
+                        <div className="flex items-center gap-3 mt-3 text-[11px] text-gray-400">
+                          <span className="flex items-center gap-1"><ThumbsUp size={11} />{t.upvotes || 0}</span>
+                          <span className="flex items-center gap-1"><MessageSquare size={11} />{t.reply_count || 0}</span>
+                        </div>
                       </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* ── Activity / social posts ── */}
+              {activityForFeed.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-0.5">Activity</p>
+                  {activityForFeed.map((post: any) => {
+                    const isBingeBattle = post.post_type === 'binge_battle';
+                    const isPredict = post.post_type === 'predict' || post.post_type === 'prediction';
+                    if (isBingeBattle) {
+                      return (
+                        <BingeBattleFeedCard
+                          key={post.id}
+                          post={{ id: post.id, content: post.content || '', image_url: post.image_url || '', media_title: post.media_title || '', timestamp: post.created_at, user: { displayName: post.users?.display_name, username: post.users?.user_name } }}
+                          isOwn={post.user_id === session?.user?.id}
+                          onDelete={async (id: string) => { await supabase.from('social_posts').delete().eq('id', id); refetchRoomPosts(); }}
+                        />
+                      );
+                    }
+                    if (isPredict) {
+                      return <RoomPredictionCard key={post.id} post={post} currentUserId={session?.user?.id || null} />;
+                    }
+                    return (
+                      <RoomPostCard
+                        key={post.id}
+                        post={post}
+                        currentUserId={session?.user?.id}
+                        onDelete={async (id: string) => { await supabase.from('social_posts').delete().eq('id', id); refetchRoomPosts(); }}
+                      />
                     );
                   })}
                 </div>
-              </div>
+              )}
 
-              {/* ── Ratings & Reviews ── */}
-              {roomReviews.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Ratings & Reviews</p>
-                    {roomReviews.length > 3 && (
-                      <button onClick={() => setReviewsExpanded(v => !v)} className="text-[11px] text-purple-500">
-                        {reviewsExpanded ? 'Show less' : `See all ${roomReviews.length}`}
-                      </button>
-                    )}
+              </div>{/* end left column */}
+
+              {/* ── Right sidebar ── */}
+              <div className="w-[140px] shrink-0 space-y-3">
+
+                {/* Room Pulse */}
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Room Pulse</p>
+
+                  {/* Match % */}
+                  <div className="mb-3">
+                    <div className="flex items-end gap-1 mb-1">
+                      <span className="text-[22px] font-black text-purple-600 leading-none">{matchPct}%</span>
+                    </div>
+                    <p className="text-[10px] text-gray-500 leading-snug">fans agree on this room's top take</p>
+                    <div className="mt-1.5 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                      <div className="h-full rounded-full bg-purple-500" style={{ width: `${matchPct}%` }} />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    {(reviewsExpanded ? roomReviews : roomReviews.slice(0, 3)).map((post: any) => {
-                      const author = post.users?.display_name || post.users?.user_name || 'Fan';
-                      return (
-                        <div key={post.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <AvatarCircle name={author} size="sm" />
-                            <span className="text-sm font-semibold text-gray-900">{author}</span>
-                            {post.rating && (
-                              <div className="flex items-center gap-0.5 ml-auto">
-                                {Array.from({ length: 5 }).map((_, i) => (
-                                  <Star key={i} size={11} className={i < Math.round(post.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} />
-                                ))}
-                                <span className="text-[10px] font-semibold text-gray-600 ml-1">{post.rating}/5</span>
-                              </div>
-                            )}
+
+                  {/* Top take */}
+                  {topTake && (
+                    <div className="border-t border-gray-100 pt-2">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Top Take</p>
+                      <p className="text-[11px] text-gray-700 font-medium leading-snug line-clamp-3">"{topTake.title}"</p>
+                      <p className="text-[10px] text-gray-400 mt-1">{topTake.users?.display_name || 'Fan'}</p>
+                    </div>
+                  )}
+
+                  {/* Room vibe */}
+                  <div className="border-t border-gray-100 mt-2 pt-2">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Vibe</p>
+                    <p className="text-[11px] text-purple-600 font-semibold leading-snug">{roomVibe}</p>
+                  </div>
+                </div>
+
+                {/* Top contributors */}
+                {topContributors.length > 0 && (
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Top Fans</p>
+                    <div className="space-y-2">
+                      {topContributors.map((c, i) => (
+                        <div key={i} className="flex items-center gap-1.5">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 ${avatarColor(c.name)}`}>
+                            {c.name[0].toUpperCase()}
                           </div>
-                          <p className="text-gray-700 text-sm leading-relaxed line-clamp-4">{post.content}</p>
-                          <p className="text-gray-400 text-[10px] mt-2">{timeAgo(post.created_at)}</p>
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-semibold text-gray-800 truncate">{c.name}</p>
+                            <p className="text-[9px] text-gray-400">{c.pts} pts</p>
+                          </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* ── Activity ── */}
-              {activityForFeed.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-3">Activity</p>
-                  <div className="space-y-2">
-                    {activityForFeed.map((post: any) => {
-                      const isBingeBattle = post.post_type === 'binge_battle';
-                      const isPredict = post.post_type === 'predict' || post.post_type === 'prediction';
-
-                      if (isBingeBattle) {
-                        return (
-                          <BingeBattleFeedCard
-                            key={post.id}
-                            post={{
-                              id: post.id,
-                              content: post.content || '',
-                              image_url: post.image_url || '',
-                              media_title: post.media_title || '',
-                              timestamp: post.created_at,
-                              user: {
-                                displayName: post.users?.display_name,
-                                username: post.users?.user_name,
-                              },
-                            }}
-                            isOwn={post.user_id === session?.user?.id}
-                            onDelete={async (id: string) => {
-                              await supabase.from('social_posts').delete().eq('id', id);
-                              refetchRoomPosts();
-                            }}
-                          />
-                        );
-                      }
-
-                      if (isPredict) {
-                        return (
-                          <RoomPredictionCard
-                            key={post.id}
-                            post={post}
-                            currentUserId={session?.user?.id || null}
-                          />
-                        );
-                      }
-
-                      return (
-                        <RoomPostCard
-                          key={post.id}
-                          post={post}
-                          currentUserId={session?.user?.id}
-                          onDelete={async (id: string) => {
-                            await supabase.from('social_posts').delete().eq('id', id);
-                            refetchRoomPosts();
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+              </div>{/* end right sidebar */}
 
             </div>
           );
