@@ -2748,13 +2748,22 @@ export default function PoolDetailPage() {
   const currentFeedPick = openPicks[safePickIndex] || null;
   const featuredPolls: any[] = data?.featured_polls || [];
 
-  // Hoisted for stats panel Room Pulse (also used inside room-tab IIFE)
+  // Hoisted for stats panel Room Vibe (also used inside room-tab IIFE)
   const matchPct = !isLoading ? Math.min(95, 70 + Math.floor(members.length * 1.5)) : 0;
   const _tagCounts: Record<string, number> = {};
   for (const t of takes) { _tagCounts[t.tag || 'discussion'] = (_tagCounts[t.tag || 'discussion'] || 0) + 1; }
   const _topTag = Object.entries(_tagCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'discussion';
-  const _VIBE_LABELS: Record<string, string> = { hot_take: 'Spicy takes crowd', debate: 'Debate-first crowd', theory: 'Theory lovers', discussion: 'Discussion crew', ranking: 'Rankers & raters' };
-  const roomVibe = _VIBE_LABELS[_topTag] || 'Active community';
+  const _VIBE_META: Record<string, { label: string; emoji: string; desc: string }> = {
+    hot_take:   { label: 'Hot-take heavy',    emoji: '🔥', desc: 'This room runs hot. Controversial opinions only.' },
+    debate:     { label: 'Debate-first',       emoji: '⚔️', desc: 'Every take gets challenged. Come ready to argue.' },
+    theory:     { label: 'Theory-heavy',       emoji: '🧠', desc: 'This room leans toward prediction posts and twist theories.' },
+    discussion: { label: 'Discussion crew',    emoji: '💬', desc: 'Thoughtful and curious. A place for real conversation.' },
+    ranking:    { label: 'Rankers & raters',   emoji: '📊', desc: 'Everything gets a score. Ranking culture is strong here.' },
+  };
+  const _vibeMeta = _VIBE_META[_topTag] || { label: 'Active community', emoji: '✨', desc: 'A lively room with strong opinions.' };
+  const roomVibe = _vibeMeta.label;
+  const vibeEmoji = _vibeMeta.emoji;
+  const vibeDesc = _vibeMeta.desc;
   const topContributors = (() => {
     const byUser: Record<string, { name: string; pts: number }> = {};
     for (const t of takes) {
@@ -2765,6 +2774,9 @@ export default function PoolDetailPage() {
     }
     return Object.values(byUser).sort((a, b) => b.pts - a.pts).slice(0, 3);
   })();
+  const topTakeText: string | null = takes.length > 0
+    ? ([...takes].sort((a: any, b: any) => (b.upvotes || 0) - (a.upvotes || 0))[0]?.content || null)
+    : null;
 
   const isPartnerRoom = !!pool?.partner_name;
   const TABS = [
@@ -2851,41 +2863,32 @@ export default function PoolDetailPage() {
           </div>
         </div>
 
-        {/* Stats panel + Room Pulse side by side */}
+        {/* Room Vibe card */}
         {!isLoading && (
-          <div className="px-4 pb-3 flex gap-3 items-start">
-            {/* Stats list */}
-            <div className="flex-1 rounded-2xl overflow-hidden divide-y divide-white/[0.07]" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              {[
-                { icon: <TrendingUp size={12} className="text-white/40" />, label: 'Takes this week', value: formatStat(takes.filter((t: any) => Date.now() - new Date(t.created_at).getTime() < 7 * 24 * 60 * 60 * 1000).length) },
-                { icon: <Vote size={12} className="text-white/40" />, label: 'Votes cast', value: formatStat(takes.reduce((s: number, t: any) => s + (t.upvotes || 0), 0)) },
-                { icon: <Users size={12} className="text-white/40" />, label: 'People in room', value: formatStat(members.length) },
-              ].map((stat, i) => (
-                <div key={i} className="flex items-center justify-between px-3 py-1.5">
-                  <div className="flex items-center gap-1.5">
-                    {stat.icon}
-                    <span className="text-white/50 text-[11px]">{stat.label}</span>
+          <div className="px-4 pb-3">
+            <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-3">Room Vibe</p>
+              <div className="flex items-start gap-3">
+                {/* Left: vibe info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-bold text-[15px] mb-1">{vibeEmoji} {roomVibe}</p>
+                  <p className="text-white/50 text-[12px] leading-snug mb-3">{vibeDesc}</p>
+                  {topTakeText && (
+                    <div className="mb-0">
+                      <p className="text-[10px] text-white/35 uppercase tracking-wider mb-1">Most agreed take:</p>
+                      <p className="text-[12px] text-white/70 italic leading-snug">"{topTakeText.length > 80 ? topTakeText.slice(0, 80) + '…' : topTakeText}"</p>
+                    </div>
+                  )}
+                </div>
+                {/* Right: match % card */}
+                <div className="shrink-0 w-[88px] rounded-xl p-3 text-center" style={{ background: 'linear-gradient(135deg, #5b21b6, #4338ca)' }}>
+                  <p className="text-[8px] font-bold text-white/50 uppercase tracking-wider leading-none mb-2">You match</p>
+                  <p className="text-[26px] font-black text-white leading-none">{matchPct}%</p>
+                  <div className="h-[3px] rounded-full bg-white/20 overflow-hidden mt-2">
+                    <div className="h-full rounded-full bg-white/60" style={{ width: `${matchPct}%` }} />
                   </div>
-                  <span className="text-white text-[12px] font-bold">{stat.value}</span>
                 </div>
-              ))}
-            </div>
-            {/* Room Pulse — compact inline version */}
-            <div className="shrink-0 w-[110px] bg-white rounded-2xl border border-gray-100 shadow-sm p-2.5">
-              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Room Pulse</p>
-              <div className="flex items-end gap-1 mb-0.5">
-                <span className="text-[20px] font-black text-purple-600 leading-none">{matchPct}%</span>
               </div>
-              <p className="text-[9px] text-gray-500 leading-snug mb-1.5">fans agree on top take</p>
-              <div className="h-1 rounded-full bg-gray-100 overflow-hidden mb-2">
-                <div className="h-full rounded-full bg-purple-500" style={{ width: `${matchPct}%` }} />
-              </div>
-              {roomVibe && (
-                <div className="border-t border-gray-100 pt-1.5">
-                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Vibe</p>
-                  <p className="text-[10px] text-purple-600 font-semibold leading-snug">{roomVibe}</p>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -2903,11 +2906,7 @@ export default function PoolDetailPage() {
                 );
               })}
             </div>
-            <span className="text-white/40 text-[11px]">{formatStat(members.length)} people are in this room</span>
-            <span className="flex items-center gap-1 text-[11px] text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-              {Math.max(1, Math.floor((members.length || 1) * 0.15))} online now
-            </span>
+            <span className="text-white/40 text-[11px]">{formatStat(members.length)} people in this room</span>
           </div>
         )}
 
