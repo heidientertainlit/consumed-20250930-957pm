@@ -434,10 +434,11 @@ export default function AdminTodaysPlayPage() {
     }
   });
 
-  function suggestDates() {
-    // Only assign to drafts that don't already have a date pending and aren't duplicates
+  function suggestDates(forceAll = false) {
+    // forceAll = true → reassign all non-duplicate drafts (used by Re-suggest button)
+    // forceAll = false → only fill in drafts that have no date yet (initial auto-fill)
     const dupIds = new Set(computeDuplicateIds(drafts, scheduled, published));
-    const unassigned = drafts.filter(d => !dates[d.id] && !dupIds.has(d.id));
+    const unassigned = drafts.filter(d => !dupIds.has(d.id) && (forceAll || !dates[d.id]));
     const movieDrafts = [...unassigned.filter(d => typeMeta(d).mediaType === "movie")];
     const bookDrafts  = [...unassigned.filter(d => typeMeta(d).mediaType === "book")];
     const tvDrafts    = [...unassigned.filter(d => typeMeta(d).mediaType === "tv")];
@@ -1398,7 +1399,7 @@ export default function AdminTodaysPlayPage() {
                 {Object.keys(dates).length > 0 && (
                   <div className="flex items-center justify-end">
                     <button
-                      onClick={suggestDates}
+                      onClick={() => suggestDates(true)}
                       className="text-xs text-gray-600 hover:text-teal-400 flex items-center gap-1 transition-colors"
                     >
                       <CalendarDays size={11} /> Re-suggest dates
@@ -1555,7 +1556,7 @@ export default function AdminTodaysPlayPage() {
                                       {new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                                     </option>
                                   ))}
-                                  <option value="__ungroup__">Remove from group (unassign)</option>
+                                  <option value="__ungroup__">Remove date (leave unscheduled)</option>
                                 </select>
                                 <Button
                                   onClick={() => deleteDraft(draft.id)}

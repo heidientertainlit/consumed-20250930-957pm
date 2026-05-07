@@ -318,16 +318,35 @@ MOVIE DIVERSITY RULES — enforce these strictly:
 - NEVER generate more than 1 question per movie in a single batch.
 - Avoid over-indexing on: Marvel, DC, Star Wars, Harry Potter, Fast & Furious, Avengers, The Dark Knight, Titanic, Jurassic Park — if they appear in the existing list, skip them. If they don't, you may use them ONCE max.`,
 
-      poll: `Generate POLL questions only — opinion-based, no correct answer. Use these addictive templates:
+      poll: `Generate POLL questions only — opinion-based, no correct answer. These should feel like the debates fans are ALREADY having — the ones that start arguments in group chats. Tap into real fandom fault lines: iconic character decisions, controversial plot moments, "who was right?" debates, loyalty tests, and identity questions that reveal what kind of fan you are.
+
+PRIORITY TEMPLATES (use these the most — they drive the most engagement):
+- Show-specific fan debates rooted in a real plot moment or character decision:
+  e.g. "Were they on a break?" / "Was Cersei right to blow up the Sept?" / "Did Ted deserve Robin in the end?" / "Was Walter White a villain from the start?" / "Did Ross and Rachel belong together?" / "Was Carrie too harsh on Big?"
+  These MUST reference a specific show/movie/book by name and a real event or decision from it.
+- "Whose side are you on?" character splits:
+  e.g. "Team Tony or Team Cap?" / "Team Peeta or Team Gale?" / "Team Stefan or Team Damon?"
+- Ending / finale verdicts:
+  e.g. "Did Game of Thrones stick the landing?" / "Was the How I Met Your Mother finale good actually?" / "Did Breaking Bad have the perfect ending?"
+- Recast debates: "Who should have played [character]?"
+- "Was [character] actually the villain?" hot takes
+- Era/season loyalty: "Best era of [franchise]?" / "Peak [show] was Season ___?"
+
+SECONDARY TEMPLATES:
 - "Which one are you picking right now?" (pick between 2 shows/movies)
 - "This says a lot about you… Your comfort show is:"
 - "Hot take — be honest:" (provocative opinion)
-- "Everyone has one — which camp are you in?"
 - "Which one hurts more?" (emotional pull)
 - "Who's actually the best?" (controversial ranking)
-- "Best era of [genre/franchise]?"
 - "You either get it or you don't — this show is:"
-Make them feel personal, slightly dramatic, shareable. 2-4 options.`,
+
+RULES:
+- At least 60% of polls must use the PRIORITY TEMPLATES above (show-specific, named, rooted in a real plot/character moment)
+- Always name the specific show/movie/book in the question — never generic ("a show") always specific ("Friends", "Succession", "The Last of Us")
+- 2-4 options. Keep options SHORT and punchy (under 6 words each)
+- No correct answer. These are pure opinion/debate.
+- Make them feel slightly charged — the kind of question that makes you want to see what others said
+- show_tag = the show/movie the debate is about`,
 
       featured_play: `Generate FEATURED PLAY content — the main daily call. These should look and feel like predictions but are actually opinion polls. They are speculative, trendy, culturally urgent questions about what's happening RIGHT NOW in entertainment. No correct answers — users vote based on gut, opinion, and vibes.
 
