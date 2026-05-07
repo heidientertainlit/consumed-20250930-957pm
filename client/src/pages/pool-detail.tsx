@@ -2787,11 +2787,19 @@ export default function PoolDetailPage() {
 
         {/* Hero: cover + info side by side */}
         <div className="px-4 pb-3 flex gap-4 items-start">
-          {/* Cover image — taller, more prominent */}
+          {/* Cover image — taller, more prominent; tappable → media detail */}
           {!isLoading && pool?.media_image && (
-            <div className="shrink-0 w-[88px] h-[130px] rounded-2xl overflow-hidden shadow-2xl" style={{ border: '1.5px solid rgba(255,255,255,0.18)' }}>
+            <button
+              className="shrink-0 w-[88px] h-[130px] rounded-2xl overflow-hidden shadow-2xl block"
+              style={{ border: '1.5px solid rgba(255,255,255,0.18)' }}
+              onClick={() => {
+                if (pool.media_external_id && pool.media_external_source) {
+                  setLocation(`/media/${pool.media_type || 'tv'}/${pool.media_external_source}/${pool.media_external_id}`);
+                }
+              }}
+            >
               <img src={pool.media_image} alt={pool.name} className="w-full h-full object-cover" />
-            </div>
+            </button>
           )}
 
           {/* Room info */}
@@ -2825,23 +2833,41 @@ export default function PoolDetailPage() {
           </div>
         </div>
 
-        {/* Stats panel */}
+        {/* Stats panel + Room Pulse side by side */}
         {!isLoading && (
-          <div className="px-4 pb-3">
-            <div className="rounded-2xl overflow-hidden divide-y divide-white/[0.07]" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <div className="px-4 pb-3 flex gap-3 items-start">
+            {/* Stats list */}
+            <div className="flex-1 rounded-2xl overflow-hidden divide-y divide-white/[0.07]" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
               {[
-                { icon: <TrendingUp size={13} className="text-white/40" />, label: 'Takes this week', value: formatStat(takes.filter((t: any) => Date.now() - new Date(t.created_at).getTime() < 7 * 24 * 60 * 60 * 1000).length) },
-                { icon: <Vote size={13} className="text-white/40" />, label: 'Votes cast', value: formatStat(takes.reduce((s: number, t: any) => s + (t.upvotes || 0), 0)) },
-                { icon: <Users size={13} className="text-white/40" />, label: 'People in this room', value: formatStat(members.length) },
+                { icon: <TrendingUp size={12} className="text-white/40" />, label: 'Takes this week', value: formatStat(takes.filter((t: any) => Date.now() - new Date(t.created_at).getTime() < 7 * 24 * 60 * 60 * 1000).length) },
+                { icon: <Vote size={12} className="text-white/40" />, label: 'Votes cast', value: formatStat(takes.reduce((s: number, t: any) => s + (t.upvotes || 0), 0)) },
+                { icon: <Users size={12} className="text-white/40" />, label: 'People in room', value: formatStat(members.length) },
               ].map((stat, i) => (
-                <div key={i} className="flex items-center justify-between px-4 py-2.5">
-                  <div className="flex items-center gap-2">
+                <div key={i} className="flex items-center justify-between px-3 py-1.5">
+                  <div className="flex items-center gap-1.5">
                     {stat.icon}
-                    <span className="text-white/50 text-[12px]">{stat.label}</span>
+                    <span className="text-white/50 text-[11px]">{stat.label}</span>
                   </div>
-                  <span className="text-white text-[13px] font-bold">{stat.value}</span>
+                  <span className="text-white text-[12px] font-bold">{stat.value}</span>
                 </div>
               ))}
+            </div>
+            {/* Room Pulse — compact inline version */}
+            <div className="shrink-0 w-[110px] bg-white rounded-2xl border border-gray-100 shadow-sm p-2.5">
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Room Pulse</p>
+              <div className="flex items-end gap-1 mb-0.5">
+                <span className="text-[20px] font-black text-purple-600 leading-none">{matchPct}%</span>
+              </div>
+              <p className="text-[9px] text-gray-500 leading-snug mb-1.5">fans agree on top take</p>
+              <div className="h-1 rounded-full bg-gray-100 overflow-hidden mb-2">
+                <div className="h-full rounded-full bg-purple-500" style={{ width: `${matchPct}%` }} />
+              </div>
+              {roomVibe && (
+                <div className="border-t border-gray-100 pt-1.5">
+                  <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Vibe</p>
+                  <p className="text-[10px] text-purple-600 font-semibold leading-snug">{roomVibe}</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -3104,37 +3130,6 @@ export default function PoolDetailPage() {
 
               {/* ── Right sidebar ── */}
               <div className="w-[140px] shrink-0 space-y-3">
-
-                {/* Room Pulse */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Room Pulse</p>
-
-                  {/* Match % */}
-                  <div className="mb-3">
-                    <div className="flex items-end gap-1 mb-1">
-                      <span className="text-[22px] font-black text-purple-600 leading-none">{matchPct}%</span>
-                    </div>
-                    <p className="text-[10px] text-gray-500 leading-snug">fans agree on this room's top take</p>
-                    <div className="mt-1.5 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                      <div className="h-full rounded-full bg-purple-500" style={{ width: `${matchPct}%` }} />
-                    </div>
-                  </div>
-
-                  {/* Top take */}
-                  {topTake && (
-                    <div className="border-t border-gray-100 pt-2">
-                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">Top Take</p>
-                      <p className="text-[11px] text-gray-700 font-medium leading-snug line-clamp-3">"{topTake.title}"</p>
-                      <p className="text-[10px] text-gray-400 mt-1">{topTake.users?.display_name || 'Fan'}</p>
-                    </div>
-                  )}
-
-                  {/* Room vibe */}
-                  <div className="border-t border-gray-100 mt-2 pt-2">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Vibe</p>
-                    <p className="text-[11px] text-purple-600 font-semibold leading-snug">{roomVibe}</p>
-                  </div>
-                </div>
 
                 {/* Top contributors */}
                 {topContributors.length > 0 && (
