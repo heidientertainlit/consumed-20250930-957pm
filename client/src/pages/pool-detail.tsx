@@ -2748,6 +2748,24 @@ export default function PoolDetailPage() {
   const currentFeedPick = openPicks[safePickIndex] || null;
   const featuredPolls: any[] = data?.featured_polls || [];
 
+  // Hoisted for stats panel Room Pulse (also used inside room-tab IIFE)
+  const matchPct = !isLoading ? Math.min(95, 70 + Math.floor(members.length * 1.5)) : 0;
+  const _tagCounts: Record<string, number> = {};
+  for (const t of takes) { _tagCounts[t.tag || 'discussion'] = (_tagCounts[t.tag || 'discussion'] || 0) + 1; }
+  const _topTag = Object.entries(_tagCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'discussion';
+  const _VIBE_LABELS: Record<string, string> = { hot_take: 'Spicy takes crowd', debate: 'Debate-first crowd', theory: 'Theory lovers', discussion: 'Discussion crew', ranking: 'Rankers & raters' };
+  const roomVibe = _VIBE_LABELS[_topTag] || 'Active community';
+  const topContributors = (() => {
+    const byUser: Record<string, { name: string; pts: number }> = {};
+    for (const t of takes) {
+      const uid = t.user_id;
+      const name = t.users?.display_name || t.users?.user_name || 'Fan';
+      if (!byUser[uid]) byUser[uid] = { name, pts: 0 };
+      byUser[uid].pts += (t.upvotes || 0) + (t.reply_count || 0);
+    }
+    return Object.values(byUser).sort((a, b) => b.pts - a.pts).slice(0, 3);
+  })();
+
   const isPartnerRoom = !!pool?.partner_name;
   const TABS = [
     { key: 'room', label: 'Room' },
@@ -2981,27 +2999,7 @@ export default function PoolDetailPage() {
 
           // Top take for sidebar pulse
           const topTake = [...takes].sort((a: any, b: any) => (b.upvotes || 0) - (a.upvotes || 0))[0];
-
-          // Room vibe from most common tag
-          const tagCounts: Record<string, number> = {};
-          for (const t of takes) { tagCounts[t.tag || 'discussion'] = (tagCounts[t.tag || 'discussion'] || 0) + 1; }
-          const topTag = Object.entries(tagCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'discussion';
-          const VIBE_LABELS: Record<string, string> = { hot_take: 'Spicy takes crowd', debate: 'Debate-first crowd', theory: 'Theory lovers', discussion: 'Discussion crew', ranking: 'Rankers & raters' };
-          const roomVibe = VIBE_LABELS[topTag] || 'Active community';
-
-          // Top contributors from takes
-          const topContributors = (() => {
-            const byUser: Record<string, { name: string; pts: number }> = {};
-            for (const t of takes) {
-              const uid = t.user_id;
-              const name = t.users?.display_name || t.users?.user_name || 'Fan';
-              if (!byUser[uid]) byUser[uid] = { name, pts: 0 };
-              byUser[uid].pts += (t.upvotes || 0) + (t.reply_count || 0);
-            }
-            return Object.values(byUser).sort((a, b) => b.pts - a.pts).slice(0, 3);
-          })();
-
-          const matchPct = Math.min(95, 70 + Math.floor(members.length * 1.5));
+          // matchPct, roomVibe, topContributors are hoisted to main component scope above
 
           return (
             <div className="flex gap-3 items-start">
