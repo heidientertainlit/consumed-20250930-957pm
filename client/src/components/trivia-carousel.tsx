@@ -156,12 +156,14 @@ export function TriviaCarousel({ expanded = false, category, challengesOnly = fa
     queryKey: ['trivia-carousel', user?.id],
     queryFn: async () => {
       const now = new Date().toISOString();
+      const today = now.slice(0, 10); // YYYY-MM-DD
       const { data: pools, error } = await supabase
         .from('prediction_pools')
         .select('*')
         .eq('type', 'trivia')
         .eq('status', 'open')
         .or(`publish_at.is.null,publish_at.lte.${now}`)
+        .or(`featured_date.is.null,featured_date.lt.${today}`)
         .order('created_at', { ascending: false })
         .limit(500);
       

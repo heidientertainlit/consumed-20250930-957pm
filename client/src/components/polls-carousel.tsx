@@ -70,6 +70,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
     queryKey: ['polls-carousel', user?.id],
     queryFn: async () => {
       const now = new Date().toISOString();
+      const today = now.slice(0, 10); // YYYY-MM-DD
       const { data: pools, error } = await supabase
         .from('prediction_pools')
         .select('*')
@@ -77,6 +78,7 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
         .eq('status', 'open')
         .is('partner_tag', null)
         .or(`publish_at.is.null,publish_at.lte.${now}`)
+        .or(`featured_date.is.null,featured_date.lt.${today}`)
         .order('created_at', { ascending: false })
         .limit(500);
       
