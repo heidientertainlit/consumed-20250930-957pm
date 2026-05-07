@@ -3,18 +3,9 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Users, ListChecks, ChevronRight, Layers, Star, Gamepad2, BarChart3, Dna } from "lucide-react";
+import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, Dna } from "lucide-react";
 
 const TOOLS = [
-  {
-    path: "/admin/daily-call",
-    icon: Star,
-    title: "Daily Call Generator",
-    description: "Generate speculative prediction-polls — trending hot takes and will-it-happen questions. One per day.",
-    color: "from-yellow-900/40 to-yellow-800/20 border-yellow-700/40",
-    iconColor: "text-yellow-400",
-    iconBg: "bg-yellow-900/50",
-  },
   {
     path: "/admin/todays-play",
     icon: Gamepad2,
