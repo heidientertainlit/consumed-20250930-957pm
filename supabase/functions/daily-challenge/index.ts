@@ -184,7 +184,9 @@ serve(async (req) => {
         let bonusPoints = 0;
 
         if (existing) {
-          const lastLogin = existing.last_login;
+          // Normalise: last_login may be a full timestamp ("2026-05-07T00:00:00+00:00")
+          // or a plain date ("2026-05-07"). Slice to first 10 chars for safe comparison.
+          const lastLogin = (existing.last_login || '').slice(0, 10);
           if (lastLogin === todayDate) {
             // Already updated today — just return current value
             return new Response(JSON.stringify({
@@ -352,7 +354,9 @@ serve(async (req) => {
           console.log('login_streaks table does not exist, skipping streak tracking');
           runInfo = null;
         } else if (existingStreak) {
-          const lastLoginStr = existingStreak.last_login;
+          // Normalise: last_login may be a full timestamp ("2026-05-07T00:00:00+00:00")
+          // or a plain date ("2026-05-07"). Slice to first 10 chars for safe comparison.
+          const lastLoginStr = (existingStreak.last_login || '').slice(0, 10);
           
           if (lastLoginStr === todayDate) {
             // Already played today - return existing streak info
