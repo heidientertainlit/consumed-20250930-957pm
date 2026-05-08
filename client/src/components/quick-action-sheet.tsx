@@ -1579,7 +1579,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   return (
     <>
     <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <SheetContent side="bottom" className="rounded-t-3xl max-h-[95svh] overflow-y-auto !bg-white border-t border-gray-100 pb-safe" style={{ backgroundColor: 'white', maxHeight: '95svh' }}>
+      <SheetContent side="bottom" className="rounded-t-3xl h-[92svh] overflow-y-auto !bg-white border-t border-gray-100 pb-safe" style={{ backgroundColor: 'white', height: '92svh' }}>
         {!selectedIntent ? (
           <>
             <SheetHeader className="pb-4">
