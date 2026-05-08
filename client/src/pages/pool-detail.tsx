@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { APP_BASE } from "@/lib/share";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, MessageCircle, User, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil, HelpCircle, Tv, Vote, Dna, Zap, Brain, Film, Music, BookOpen, ArrowUp, ArrowDown, Tag, AlignLeft, Hash, Swords, TrendingUp, HelpCircle as QuestionIcon, ListOrdered, ThumbsUp, Home, Users } from "lucide-react";
+import { ChevronLeft, Copy, Check, Crown, X, Search, UserPlus, Send, CheckCircle2, MessageSquare, MessageCircle, User, BarChart2, Plus, Play, ChevronDown, ChevronUp, Globe, Lock, Trash2, ChevronRight, Star, Flame, Pencil, HelpCircle, Tv, Vote, Dna, Zap, Brain, Film, Music, BookOpen, ArrowUp, ArrowDown, Tag, AlignLeft, Hash, Swords, TrendingUp, HelpCircle as QuestionIcon, ListOrdered, ThumbsUp, ThumbsDown, Heart, Home, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -851,6 +851,16 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
   const [newComment, setNewComment] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [commentCount, setCommentCount] = useState<number>(post.comment_count ?? 0);
+  const [likeCount, setLikeCount] = useState<number>(post.likes_count ?? 0);
+  const [liked, setLiked] = useState(false);
+
+  const handleLike = async () => {
+    if (!session?.user?.id) return;
+    const next = !liked;
+    setLiked(next);
+    setLikeCount(c => c + (next ? 1 : -1));
+    await supabase.from('social_posts').update({ likes_count: likeCount + (next ? 1 : -1) }).eq('id', post.id);
+  };
 
   const fetchComments = async () => {
     setLoadingComments(true);
@@ -950,10 +960,17 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
       </div>
 
       {/* Action bar — matches feed card style */}
-      <div className="flex items-center gap-4 px-4 pt-3 pb-3 border-t border-gray-50">
+      <div className="flex items-center gap-4 px-4 pt-2.5 pb-2.5 border-t border-gray-50">
+        <button
+          onClick={handleLike}
+          className={`flex items-center gap-1.5 transition-colors ${liked ? 'text-rose-500' : 'text-gray-400 hover:text-rose-400'}`}
+        >
+          <Heart size={15} fill={liked ? 'currentColor' : 'none'} />
+          <span className="text-xs">{likeCount}</span>
+        </button>
         <button
           onClick={toggleComments}
-          className={`flex items-center gap-1.5 text-sm ${commentsExpanded ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'} transition-colors`}
+          className={`flex items-center gap-1.5 transition-colors ${commentsExpanded ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'}`}
         >
           <MessageCircle size={15} />
           <span className="text-xs">{commentCount}</span>
@@ -3081,38 +3098,52 @@ export default function PoolDetailPage() {
                   const isTop = idx === 0 && (t.upvotes || 0) > 0;
                   const tagInfo = TAG_CONFIG[t.tag] || TAG_CONFIG.discussion;
                   const tName = t.users?.display_name || t.users?.user_name || 'Fan';
+                  const myVote = (myTakeVotes || []).find((v: any) => v.take_id === t.id && !v.reply_id);
                   return (
-                    <button key={t.id} onClick={() => setActiveTake(t)} className="w-full text-left">
-                      <div className={`rounded-2xl border shadow-sm overflow-hidden ${isTop ? 'border-purple-200/60' : 'border-gray-100 bg-white'}`}
-                        style={isTop ? { background: 'linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%)' } : {}}>
-                        <div className="flex">
-                          {/* Upvote column */}
-                          <div className={`flex flex-col items-center justify-start pt-4 px-3 gap-0.5 ${isTop ? 'bg-purple-100/40' : 'bg-gray-50'}`}>
-                            <ChevronUp size={16} className={isTop ? 'text-purple-500' : 'text-gray-400'} />
-                            <span className={`text-[11px] font-bold tabular-nums ${isTop ? 'text-purple-600' : 'text-gray-500'}`}>{t.upvotes || 0}</span>
-                          </div>
-                          {/* Content */}
-                          <div className="flex-1 p-3 min-w-0">
-                            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0 ${avatarColor(tName)}`}>
-                                {tName[0].toUpperCase()}
-                              </div>
-                              <span className="text-[11px] font-semibold text-gray-700">{tName}</span>
-                              <span className="text-[10px] text-gray-400">· {timeAgo(t.created_at)}</span>
-                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full ml-auto" style={{ color: tagInfo.color, background: tagInfo.bg }}>
-                                {tagInfo.icon} {tagInfo.label}
-                              </span>
+                    <div key={t.id} className={`rounded-2xl border shadow-sm overflow-hidden ${isTop ? 'border-purple-200/60' : 'border-gray-100 bg-white'}`}
+                      style={isTop ? { background: 'linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%)' } : {}}>
+                      <div className="flex">
+                        {/* Vote column */}
+                        <div className={`flex flex-col items-center justify-start pt-3 px-2.5 pb-3 gap-1 ${isTop ? 'bg-purple-100/40' : 'bg-gray-50'}`}>
+                          <button
+                            onClick={() => handleVoteTake(t.id, 1)}
+                            className={`transition-colors ${myVote?.vote === 1 ? 'text-purple-600' : 'text-gray-300 hover:text-purple-500'}`}
+                          >
+                            <ChevronUp size={18} />
+                          </button>
+                          <span className={`text-[11px] font-bold tabular-nums ${myVote?.vote === 1 ? 'text-purple-600' : myVote?.vote === -1 ? 'text-red-400' : 'text-gray-500'}`}>
+                            {t.upvotes || 0}
+                          </span>
+                          <button
+                            onClick={() => handleVoteTake(t.id, -1)}
+                            className={`transition-colors ${myVote?.vote === -1 ? 'text-red-400' : 'text-gray-300 hover:text-red-400'}`}
+                          >
+                            <ChevronDown size={18} />
+                          </button>
+                        </div>
+                        {/* Content */}
+                        <div className="flex-1 p-3 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0 ${avatarColor(tName)}`}>
+                              {tName[0].toUpperCase()}
                             </div>
-                            <p className="text-[13px] font-semibold text-gray-800 leading-snug">{t.title}</p>
-                            {t.body && <p className="text-[12px] text-gray-500 leading-relaxed line-clamp-2 mt-0.5">{t.body}</p>}
-                            <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-400">
-                              <span className="flex items-center gap-1"><MessageSquare size={11} />{t.reply_count || 0} replies</span>
-                              <span className="text-purple-400 font-medium">View thread →</span>
-                            </div>
+                            <span className="text-[11px] font-semibold text-gray-700">{tName}</span>
+                            <span className="text-[10px] text-gray-400">· {timeAgo(t.created_at)}</span>
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full ml-auto" style={{ color: tagInfo.color, background: tagInfo.bg }}>
+                              {tagInfo.icon} {tagInfo.label}
+                            </span>
                           </div>
+                          <p className="text-[13px] font-semibold text-gray-800 leading-snug">{t.title}</p>
+                          {t.body && <p className="text-[12px] text-gray-500 leading-relaxed mt-1">{t.body}</p>}
+                          <button
+                            onClick={() => setActiveTake(t)}
+                            className="flex items-center gap-1 mt-2 text-[11px] text-gray-400 hover:text-purple-500 transition-colors"
+                          >
+                            <MessageSquare size={11} />{t.reply_count || 0} {t.reply_count === 1 ? 'reply' : 'replies'}
+                          </button>
                         </div>
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
