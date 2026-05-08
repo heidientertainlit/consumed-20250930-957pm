@@ -2968,15 +2968,16 @@ export default function PoolDetailPage() {
 
         {/* ── ROOM — Fan room feed ── */}
         {!isLoading && tab === 'room' && (() => {
-          // Non-review room posts with actual displayable content, no list additions
+          // All room posts worth showing — everything except silent list-add noise
           const activityPosts = roomPosts.filter((p: any) => {
             const hasContent = p.content && p.content.trim().length > 0;
             const hasRating = p.rating && p.rating > 0;
             const isPredict = p.post_type === 'predict' || p.post_type === 'prediction';
             const hasPredictQ = isPredict && (p.question || p.prediction_question || p.title);
+            const isPoll = p.post_type === 'poll';
             const isListAdd = p.post_type === 'track' || p.post_type === 'add_media' || p.post_type === 'list_add'
               || (hasContent && /^added .+ to /i.test(p.content.trim()));
-            return (hasContent || hasPredictQ) && !hasRating && !isListAdd;
+            return (hasContent || hasPredictQ || isPoll || hasRating) && !isListAdd;
           });
           const activityForFeed = activityPosts;
 
@@ -2989,12 +2990,8 @@ export default function PoolDetailPage() {
             ranking:  { label: 'Ranking',  color: '#2563eb', bg: '#eff6ff', icon: '📊' },
             question: { label: 'Question', color: '#059669', bg: '#f0fdf4', icon: '❓' },
           };
-          // Filtered takes for the selected tab
-          const filteredTakes = (() => {
-            if (takeFilter === 'hot_take') return takes.filter((t: any) => t.tag === 'hot_take');
-            if (takeFilter === 'theory') return takes.filter((t: any) => t.tag === 'theory' || t.tag === 'debate' || t.tag === 'discussion');
-            return [...takes].sort((a: any, b: any) => (b.upvotes || 0) - (a.upvotes || 0));
-          })();
+          // All takes sorted by upvotes
+          const filteredTakes = [...takes].sort((a: any, b: any) => (b.upvotes || 0) - (a.upvotes || 0));
 
           // Top take for sidebar pulse
           const topTake = [...takes].sort((a: any, b: any) => (b.upvotes || 0) - (a.upvotes || 0))[0];
@@ -3034,26 +3031,14 @@ export default function PoolDetailPage() {
                 </div>
               )}
 
-              {/* ── Filter tabs ── */}
-              <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1">
-                {[
-                  { key: 'top', label: 'Top' },
-                  { key: 'hot_take', label: 'Hot Takes' },
-                  { key: 'theory', label: 'Theories' },
-                ].map(tf => (
-                  <button
-                    key={tf.key}
-                    onClick={() => setTakeFilter(tf.key as any)}
-                    className={`flex-1 text-[12px] font-semibold py-1.5 rounded-lg transition-colors ${takeFilter === tf.key ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500'}`}
-                  >{tf.label}</button>
-                ))}
-              </div>
+              {/* ── Takes section header ── */}
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-0.5">Takes</p>
 
               {/* ── Takes feed ── */}
               <div className="space-y-2">
                 {filteredTakes.length === 0 && (
                   <div className="bg-white rounded-2xl border border-dashed border-gray-200 py-8 text-center">
-                    <p className="text-gray-400 text-sm">No {takeFilter === 'hot_take' ? 'hot takes' : takeFilter === 'theory' ? 'theories' : 'takes'} yet — be the first!</p>
+                    <p className="text-gray-400 text-sm">No takes yet — be the first!</p>
                   </div>
                 )}
                 {filteredTakes.map((t: any) => {
