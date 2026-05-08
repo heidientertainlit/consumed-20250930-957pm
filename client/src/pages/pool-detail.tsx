@@ -2433,6 +2433,11 @@ export default function PoolDetailPage() {
   const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [joiningRoom, setJoiningRoom] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [isConvComposerOpen, setIsConvComposerOpen] = useState(false);
+  const [convTitle, setConvTitle] = useState('');
+  const [convBody, setConvBody] = useState('');
+  const [convTag, setConvTag] = useState<'discussion' | 'hot_take' | 'debate' | 'theory' | 'question'>('discussion');
+  const [submittingConv, setSubmittingConv] = useState(false);
   const [editSeriesTag, setEditSeriesTag] = useState<string | null>(null);
   const [takeFilter, setTakeFilter] = useState<'top' | 'hot_take' | 'theory'>('top');
   const [savingSettings, setSavingSettings] = useState(false);
@@ -2623,6 +2628,27 @@ export default function PoolDetailPage() {
     refresh();
     setEditSeriesTag(null);
     toast({ title: 'Room settings saved!' });
+  };
+
+  // ── Conversation composer submit ──────────────────────────────────────────
+  const handleSubmitConversation = async () => {
+    if (!convTitle.trim() || !currentUserId) return;
+    setSubmittingConv(true);
+    const { error } = await supabase.from('room_takes').insert({
+      room_id: params.id,
+      user_id: currentUserId,
+      title: convTitle.trim(),
+      body: convBody.trim() || null,
+      tag: convTag,
+    });
+    if (!error) {
+      setConvTitle('');
+      setConvBody('');
+      setConvTag('discussion');
+      setIsConvComposerOpen(false);
+      refetchTakes();
+    }
+    setSubmittingConv(false);
   };
 
   // ── Takes handlers ────────────────────────────────────────────────────────
@@ -3019,21 +3045,35 @@ export default function PoolDetailPage() {
           return (
             <div className="space-y-4">
 
-              {/* ── Composer — minimal Reddit-style prompt ── */}
+              {/* ── Two-button composer ── */}
               {isMember ? (
-                <button onClick={() => setIsComposerOpen(true)} className="w-full text-left">
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ${avatarColor(myName || '?')}`}>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setIsConvComposerOpen(true)}
+                    className="flex-1 flex items-center gap-2.5 bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 text-left"
+                  >
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 ${avatarColor(myName || '?')}`}>
                       {(myName?.[0] || session?.user?.email?.[0] || '?').toUpperCase()}
                     </div>
-                    <span className="flex-1 text-[13px] text-gray-400">Start a thread, take, or poll…</span>
-                    <div className="flex items-center gap-2 text-gray-300">
-                      <Flame size={15} />
-                      <BarChart2 size={15} />
-                      <TrendingUp size={15} />
+                    <div className="min-w-0">
+                      <p className="text-[12px] font-semibold text-gray-700">Start a conversation</p>
+                      <p className="text-[10px] text-gray-400 leading-tight">Open a thread</p>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                  <button
+                    onClick={() => setIsComposerOpen(true)}
+                    className="flex-1 flex items-center gap-2.5 rounded-2xl border shadow-sm px-4 py-3 text-left"
+                    style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', borderColor: '#7c3aed' }}
+                  >
+                    <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                      <Flame size={14} className="text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[12px] font-semibold text-white">Drop a take</p>
+                      <p className="text-[10px] text-white/70 leading-tight">Review, poll, predict</p>
+                    </div>
+                  </button>
+                </div>
               ) : (
                 <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-4 px-4 text-center">
                   <p className="text-gray-400 text-sm">Join this room to participate</p>
@@ -3391,6 +3431,62 @@ export default function PoolDetailPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Conversation Composer Sheet ── */}
+      {isConvComposerOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setIsConvComposerOpen(false)} />
+          <div className="relative bg-white rounded-t-3xl p-5 space-y-4 shadow-2xl">
+            {/* Handle */}
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto -mt-1 mb-1" />
+            <div className="flex items-center justify-between">
+              <h3 className="text-[15px] font-bold text-gray-900">Start a conversation</h3>
+              <button onClick={() => setIsConvComposerOpen(false)}><X size={18} className="text-gray-400" /></button>
+            </div>
+            {/* Title */}
+            <input
+              autoFocus
+              value={convTitle}
+              onChange={e => setConvTitle(e.target.value)}
+              placeholder="What's your thought or question?"
+              className="w-full text-[14px] text-gray-800 placeholder:text-gray-400 bg-gray-50 rounded-xl px-4 py-3 outline-none border border-gray-100 focus:border-purple-300"
+            />
+            {/* Body (optional) */}
+            <textarea
+              value={convBody}
+              onChange={e => setConvBody(e.target.value)}
+              placeholder="Add more detail... (optional)"
+              rows={3}
+              className="w-full text-[13px] text-gray-700 placeholder:text-gray-400 bg-gray-50 rounded-xl px-4 py-3 outline-none border border-gray-100 focus:border-purple-300 resize-none"
+            />
+            {/* Tag selector */}
+            <div className="flex gap-1.5 flex-wrap">
+              {([
+                { key: 'discussion', label: '💬 Discussion' },
+                { key: 'hot_take',   label: '🔥 Hot Take' },
+                { key: 'debate',     label: '⚡ Debate' },
+                { key: 'theory',     label: '💡 Theory' },
+                { key: 'question',   label: '❓ Question' },
+              ] as const).map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => setConvTag(t.key)}
+                  className={`text-[12px] font-semibold px-3 py-1.5 rounded-full border transition-colors ${convTag === t.key ? 'bg-purple-600 text-white border-purple-600' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
+                >{t.label}</button>
+              ))}
+            </div>
+            {/* Post */}
+            <button
+              onClick={handleSubmitConversation}
+              disabled={!convTitle.trim() || submittingConv}
+              className="w-full py-3 rounded-2xl text-white text-[14px] font-bold disabled:opacity-40 transition-opacity"
+              style={{ background: 'linear-gradient(to right, #7c3aed, #6d28d9)' }}
+            >
+              {submittingConv ? 'Posting…' : 'Post Thread'}
+            </button>
           </div>
         </div>
       )}
