@@ -325,7 +325,12 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
       
       if (selectedAction === "track") {
         if (!selectedMedia && !roomId) {
-          toast({ title: "Please select media to track", variant: "destructive" });
+          if (trackPostType === 'review') {
+            toast({ title: "You have to add media to review", variant: "destructive" });
+          } else {
+            toast({ title: "Please select media to track", variant: "destructive" });
+          }
+          setIsPosting(false);
           return;
         }
         
@@ -814,18 +819,19 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
               <div className="px-4 pt-3 pb-2 text-sm text-gray-400 min-h-[2.5rem]">Select a rank below…</div>
             )}
             <div className="h-px bg-gray-100" />
-            <div className="flex items-center px-2 py-1.5 gap-0.5 flex-wrap">
+            {/* Row 1: all 5 type pills on one line */}
+            <div className="flex items-center px-2 pt-1.5 pb-0.5 gap-0.5">
               {([
-                { key: 'thought'    as const, label: 'Take',       icon: <Flame size={11} /> },
-                { key: 'review'     as const, label: 'Review',     icon: <Star size={11} /> },
-                { key: 'question'   as const, label: 'Poll',       icon: <BarChart2 size={11} /> },
-                { key: 'rank'       as const, label: 'Rank',       icon: <ListOrdered size={11} /> },
-                { key: 'prediction' as const, label: 'Prediction', icon: <TrendingUp size={11} /> },
+                { key: 'thought'    as const, label: 'Take',       icon: <Flame size={10} /> },
+                { key: 'review'     as const, label: 'Review',     icon: <Star size={10} /> },
+                { key: 'question'   as const, label: 'Poll',       icon: <BarChart2 size={10} /> },
+                { key: 'rank'       as const, label: 'Rank',       icon: <ListOrdered size={10} /> },
+                { key: 'prediction' as const, label: 'Prediction', icon: <TrendingUp size={10} /> },
               ] as const).map(({ key, label, icon }) => (
                 <button
                   key={key}
                   onClick={() => setTrackPostType(key)}
-                  className={`flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium transition-colors whitespace-nowrap rounded-full ${
+                  className={`flex items-center gap-0.5 px-2 py-0.5 text-[11px] font-medium transition-colors whitespace-nowrap rounded-full ${
                     trackPostType === key ? 'text-purple-700 bg-purple-50' : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
@@ -833,19 +839,38 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                   <span>{label}</span>
                 </button>
               ))}
+            </div>
+            {/* Row 2: Add Media pill + Post button */}
+            <div className="flex items-center px-2 pb-2 pt-1 gap-2">
+              {selectedMedia ? (
+                <div className="flex items-center gap-1.5 flex-1 min-w-0 px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-full">
+                  <span className="text-[12px] font-medium text-purple-700 truncate">{selectedMedia.title}</span>
+                  <button onClick={() => setSelectedMedia(null)} className="shrink-0 text-purple-400 hover:text-purple-600">
+                    <X size={12} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => { (document.querySelector('[data-testid="quick-action-search"]') as HTMLInputElement)?.focus(); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-[12px] font-medium text-gray-500 hover:border-purple-300 hover:text-purple-600 transition-colors"
+                >
+                  <Search size={12} />
+                  Add media
+                </button>
+              )}
               <div className="flex-1" />
               <button
                 onClick={handlePost}
                 disabled={!canPost() || isPosting}
-                className="rounded-full bg-purple-500 hover:bg-purple-600 disabled:opacity-40 text-white text-[13px] font-semibold px-4 py-1.5 shrink-0 ml-1 transition-colors"
+                className="rounded-full bg-purple-500 hover:bg-purple-600 disabled:opacity-40 text-white text-[13px] font-semibold px-4 py-1.5 shrink-0 transition-colors"
                 data-testid="submit-action-inline"
               >
                 {isPosting ? (
                   <Loader2 className="animate-spin" size={14} />
                 ) : (
                   roomId ? "Share" :
-                  trackPostType === 'rank'   ? "Add to Rank" :
-                  trackPostType === 'review' ? "Add Media" :
+                  trackPostType === 'rank' ? "Add to Rank" :
                   "Post"
                 )}
               </button>
@@ -951,12 +976,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           <div>
             {!selectedMedia ? (
               <>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                  {trackPostType === 'review' ? '⭐ What are you reviewing?' : 'Attach media (optional)'}
-                </p>
-                {trackPostType === 'review' && (
-                  <p className="text-xs text-gray-400 mb-2">Reviews are tied to a specific title.</p>
-                )}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input
@@ -967,9 +986,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                     data-testid="quick-action-search"
                   />
                 </div>
-                {trackPostType !== 'review' && !searchQuery && (
-                  <p className="text-xs text-gray-400 mt-1.5">Add media to give your take more context.</p>
-                )}
                 {isSearching && (
                   <div className="flex justify-center py-3">
                     <Loader2 className="animate-spin text-purple-500" size={20} />
