@@ -1036,32 +1036,49 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                   </button>
                 </div>
 
-                {/* Add to list — compact dropdown */}
-                <div className="flex items-center gap-2 mt-3">
-                  {selectedListId ? (
-                    <>
-                      <ListPlus size={16} className="text-purple-500 shrink-0" />
-                      <select value={selectedListId}
-                        onChange={(e) => { if (e.target.value === '') { setSelectedListId(null); setAddToList(false); } else { setSelectedListId(e.target.value); setAddToList(true); } }}
-                        className="flex-1 text-sm border border-purple-200 bg-purple-50 text-purple-800 rounded-lg px-3 py-2 font-medium focus:outline-none"
-                        data-testid="list-dropdown">
-                        <option value="finished">Finished</option>
-                        <option value="currently">Currently</option>
-                        <option value="queue">Want To</option>
-                        <option value="favorites">Favorites</option>
-                        <option value="dnf">DNF</option>
-                      </select>
-                      <button type="button" onClick={() => { setSelectedListId(null); setAddToList(false); }} className="p-1.5 text-gray-400 hover:text-gray-600 shrink-0" aria-label="Remove from list">
-                        <X size={16} />
-                      </button>
-                    </>
-                  ) : (
-                    <button type="button" onClick={() => { setSelectedListId('currently'); setAddToList(true); }}
-                      className="flex items-center gap-2 text-sm text-gray-500 hover:text-purple-600 transition-colors py-1"
-                      data-testid="add-to-list-btn">
-                      <ListPlus size={16} />
-                      Add to a list
+                {/* ── Save to List — prominent toggle card ── */}
+                <div className="mt-3">
+                  {!selectedListId ? (
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedListId('currently'); setAddToList(true); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 transition-all group"
+                      data-testid="add-to-list-btn"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 group-hover:bg-purple-100 flex items-center justify-center transition-colors flex-shrink-0">
+                        <Bookmark size={16} className="text-gray-400 group-hover:text-purple-500 transition-colors" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-semibold text-gray-600 group-hover:text-purple-700 transition-colors">Save to a list</p>
+                        <p className="text-xs text-gray-400">Finished · Want to · Favorites…</p>
+                      </div>
+                      <Plus size={16} className="text-gray-300 group-hover:text-purple-400 ml-auto transition-colors" />
                     </button>
+                  ) : (
+                    <div className="flex items-center gap-2 px-4 py-3 rounded-xl border-2 border-purple-200 bg-purple-50">
+                      <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                        <Bookmark size={16} className="text-purple-600 fill-purple-200" />
+                      </div>
+                      <select
+                        value={selectedListId}
+                        onChange={(e) => { if (e.target.value === '') { setSelectedListId(null); setAddToList(false); } else { setSelectedListId(e.target.value); setAddToList(true); } }}
+                        className="flex-1 text-sm bg-transparent text-purple-800 font-semibold focus:outline-none border-none"
+                        data-testid="list-dropdown"
+                      >
+                        <option value="finished">✅ Finished</option>
+                        <option value="currently">▶️ Currently</option>
+                        <option value="queue">🔖 Want To</option>
+                        <option value="favorites">⭐ Favorites</option>
+                        <option value="dnf">❌ DNF</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedListId(null); setAddToList(false); }}
+                        className="p-1.5 hover:bg-purple-200 rounded-full transition-colors flex-shrink-0"
+                      >
+                        <X size={14} className="text-purple-400" />
+                      </button>
+                    </div>
                   )}
                 </div>
 
