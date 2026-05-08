@@ -109,7 +109,6 @@
     background: var(--dark-primary);
     min-height: 100vh;
     min-height: 100dvh;
-    overscroll-behavior: none;
   }
 
   /* Safe area padding for iOS devices */
