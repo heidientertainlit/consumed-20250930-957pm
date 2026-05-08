@@ -11,6 +11,7 @@ import { trackEvent } from "@/lib/posthog";
 import { useQuery } from "@tanstack/react-query";
 import { Checkbox } from "@/components/ui/checkbox";
 import MentionTextarea from "@/components/mention-textarea";
+import CreateRankDialog from "@/components/create-rank-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -117,6 +118,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [isListDrawerOpen, setIsListDrawerOpen] = useState(false);
+  const [showCreateRankDialog, setShowCreateRankDialog] = useState(false);
   const [shareToFeed, setShareToFeed] = useState(true);
   
   const episodeCache = useRef<Record<string, any[]>>({});
@@ -927,7 +929,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                 <div className="text-center py-4">
                   <Trophy size={28} className="text-gray-300 mx-auto mb-2" />
                   <p className="text-sm text-gray-500 mb-1">No ranked lists yet</p>
-                  <button type="button" onClick={() => { handleClose(); window.location.href = "/collections?tab=ranks"; }} className="text-sm text-purple-600 font-medium">
+                  <button type="button" onClick={() => setShowCreateRankDialog(true)} className="text-sm text-purple-600 font-medium">
                     Create a ranked list →
                   </button>
                 </div>
@@ -946,7 +948,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                       </button>
                     ))}
                   </div>
-                  <button type="button" onClick={() => { handleClose(); window.location.href = "/collections?tab=ranks"; }} className="text-xs text-purple-600 font-medium">
+                  <button type="button" onClick={() => setShowCreateRankDialog(true)} className="text-xs text-purple-600 font-medium">
                     + Create new ranked list
                   </button>
                 </>
@@ -1743,6 +1745,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
         </div>
       </DrawerContent>
     </Drawer>
+    <CreateRankDialog open={showCreateRankDialog} onOpenChange={setShowCreateRankDialog} />
     </>
   );
 }
