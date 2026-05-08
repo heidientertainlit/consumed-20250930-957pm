@@ -790,391 +790,313 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
     if (selectedAction === "track") {
       const isRoomMode = !!roomId;
       return (
-        <div className="space-y-4">
-          {/* Media search — required normally, optional in room mode */}
-          {!selectedMedia && (
-            <div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={isRoomMode ? "Tag a movie, show, book... (optional)" : "Search for a movie, show, book..."}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  data-testid="quick-action-search"
-                />
+        <div className="space-y-4 pb-20">
+
+          {/* ── Composer card: textarea → hairline → type pills + Post pill ── */}
+          <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white">
+            {trackPostType !== 'rank' && (
+              <textarea
+                value={contentText}
+                onChange={(e) => setContentText(e.target.value)}
+                placeholder={
+                  trackPostType === 'thought'    ? "What's your take?" :
+                  trackPostType === 'review'     ? "Write your review..." :
+                  trackPostType === 'prediction' ? "What do you predict?" :
+                  trackPostType === 'question'   ? "Ask fans a question to vote on…" :
+                  ""
+                }
+                className="w-full px-4 pt-3 pb-2 resize-none text-sm text-gray-900 bg-transparent border-0 outline-none focus:outline-none focus:ring-0"
+                style={{ boxShadow: 'none' }}
+                rows={trackPostType === 'thought' ? 3 : 2}
+              />
+            )}
+            {trackPostType === 'rank' && (
+              <div className="px-4 pt-3 pb-2 text-sm text-gray-400 min-h-[2.5rem]">Select a rank below…</div>
+            )}
+            <div className="h-px bg-gray-100" />
+            <div className="flex items-center px-2 py-1.5 gap-0.5 flex-wrap">
+              {([
+                { key: 'thought'    as const, label: 'Take',       icon: <Flame size={11} /> },
+                { key: 'review'     as const, label: 'Review',     icon: <Star size={11} /> },
+                { key: 'question'   as const, label: 'Poll',       icon: <BarChart2 size={11} /> },
+                { key: 'rank'       as const, label: 'Rank',       icon: <ListOrdered size={11} /> },
+                { key: 'prediction' as const, label: 'Prediction', icon: <TrendingUp size={11} /> },
+              ] as const).map(({ key, label, icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setTrackPostType(key)}
+                  className={`flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium transition-colors whitespace-nowrap rounded-full ${
+                    trackPostType === key ? 'text-purple-700 bg-purple-50' : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  {icon}
+                  <span>{label}</span>
+                </button>
+              ))}
+              <div className="flex-1" />
+              <button
+                onClick={handlePost}
+                disabled={!canPost() || isPosting}
+                className="rounded-full bg-purple-500 hover:bg-purple-600 disabled:opacity-40 text-white text-[13px] font-semibold px-4 py-1.5 shrink-0 ml-1 transition-colors"
+                data-testid="submit-action-inline"
+              >
+                {isPosting ? (
+                  <Loader2 className="animate-spin" size={14} />
+                ) : (
+                  roomId ? "Share" :
+                  trackPostType === 'rank'   ? "Add to Rank" :
+                  trackPostType === 'review' ? "Add Media" :
+                  "Post"
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* ── Rating (below composer, for review / prediction) ── */}
+          {(trackPostType === 'review' || trackPostType === 'prediction') && (
+            <div className="flex items-center gap-2 px-1">
+              <span className="text-sm text-gray-600">Rating:</span>
+              <div className="relative flex gap-0.5">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <div key={star} className="relative" style={{ width: 24, height: 24 }}>
+                    <Star className="w-6 h-6 text-gray-300 absolute inset-0" />
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none"
+                      style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}>
+                      <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                    </div>
+                  </div>
+                ))}
+                <input type="range" min="0" max="5" step="0.5" value={ratingValue}
+                  onChange={(e) => setRatingValue(parseFloat(e.target.value))}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  style={{ margin: 0 }} data-testid="rating-slider" />
               </div>
+              {ratingValue > 0 && <span className="text-sm font-medium text-gray-700">{ratingValue}/5</span>}
+            </div>
+          )}
 
-              {isSearching && (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="animate-spin text-purple-500" size={24} />
-                </div>
-              )}
-
-              {searchResults.length > 0 && (
-                <div className="max-h-48 overflow-y-auto space-y-2 mt-2">
-                  {searchResults.slice(0, 6).map((result, idx) => (
-                    <button
-                      key={`${result.external_id}-${idx}`}
-                      onClick={() => {
-                        setSelectedMedia(result);
-                        setSearchResults([]);
-                        setSearchQuery("");
-                      }}
-                      className="w-full flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg text-left"
-                      data-testid={`search-result-${result.external_id}`}
-                    >
-                      {result.image && (
-                        <img src={result.image} alt={result.title} className="w-10 h-14 object-cover rounded" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 line-clamp-2 leading-snug">{result.title}</p>
-                        <p className="text-sm text-gray-500">{result.type === 'book_series' ? (result.series_count ? `${result.series_count}-book series` : 'book series') : result.type} {result.year && `• ${result.year}`}</p>
-                        {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
-                        {result.type === 'book_series' && result.series_count > 0 && <span className="inline-block text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full mt-0.5">📚 {result.series_count} books</span>}
-                        {result.type === 'book' && (() => { const s = result.series || ((/^(.+?)\s+and\s+the\s+/i.exec(result.title) || [])[1] || '').trim(); return s ? <span className="inline-block text-[10px] font-medium bg-purple-100 text-purple-600 border border-purple-200 px-1.5 py-0.5 rounded-full mt-0.5">📚 {s}</span> : null; })()}
-                      </div>
+          {/* ── Poll / Prediction options ── */}
+          {(trackPostType === 'prediction' || trackPostType === 'question') && (
+            <div className="space-y-2">
+              {pollOptions.map((option, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <input type="text" value={option}
+                    onChange={(e) => { const n = [...pollOptions]; n[idx] = e.target.value; setPollOptions(n); }}
+                    placeholder={`Option ${idx + 1}`}
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                  />
+                  {pollOptions.length > 2 && (
+                    <button onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))} className="p-1 text-gray-400 hover:text-red-500">
+                      <X size={16} />
                     </button>
-                  ))}
+                  )}
                 </div>
+              ))}
+              {pollOptions.length < 4 && (
+                <button onClick={() => setPollOptions([...pollOptions, ""])} className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                  + Add option
+                </button>
               )}
             </div>
           )}
 
-          {/* Show full form: media selected normally, OR always in room mode, OR direct capture (so user sees form before searching) */}
-          {(selectedMedia || isRoomMode || preselectedIntent === "capture") && (
-            <div className="space-y-3 pb-20">
-              {/* Media card — shown when media is selected */}
-              {selectedMedia && (
-                <div className="flex items-center gap-3 p-2 bg-purple-50 rounded-lg">
-                  {selectedMedia.image && (
-                    <img src={selectedMedia.image} alt={selectedMedia.title} className="w-10 h-14 object-cover rounded" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 truncate">{selectedMedia.title}</p>
-                    <p className="text-xs text-gray-600">{selectedMedia.type} {selectedMedia.year && `• ${selectedMedia.year}`}</p>
-                  </div>
-                  <button onClick={() => setSelectedMedia(null)} className="p-1 hover:bg-purple-100 rounded">
-                    <X size={16} className="text-gray-500" />
-                  </button>
-                </div>
-              )}
-
-              {/* Composer card: textarea → hairline → type pills + Post pill */}
-              <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white">
-                {/* Text area — borderless inside the card */}
-                {trackPostType !== 'rank' && (
-                  <textarea
-                    value={contentText}
-                    onChange={(e) => setContentText(e.target.value)}
-                    placeholder={
-                      trackPostType === 'thought'    ? "What's your take?" :
-                      trackPostType === 'review'     ? "Write your review..." :
-                      trackPostType === 'prediction' ? "What do you predict?" :
-                      trackPostType === 'question'   ? "Ask fans a question to vote on…" :
-                      ""
-                    }
-                    className="w-full px-4 pt-3 pb-2 resize-none text-sm text-gray-900 bg-transparent border-0 outline-none focus:outline-none focus:ring-0"
-                    style={{ boxShadow: 'none' }}
-                    rows={trackPostType === 'thought' ? 3 : 2}
-                  />
-                )}
-                {trackPostType === 'rank' && (
-                  <div className="px-4 pt-3 pb-2 text-sm text-gray-400 min-h-[2.5rem]">Select a rank below…</div>
-                )}
-
-                {/* Hairline separator */}
-                <div className="h-px bg-gray-100" />
-
-                {/* Type pills + Post pill button */}
-                <div className="flex items-center px-2 py-1.5 gap-0.5 flex-wrap">
-                  {([
-                    { key: 'thought'    as const, label: 'Take',       icon: <Flame size={11} /> },
-                    { key: 'review'     as const, label: 'Review',     icon: <Star size={11} /> },
-                    { key: 'question'   as const, label: 'Poll',       icon: <BarChart2 size={11} /> },
-                    { key: 'rank'       as const, label: 'Rank',       icon: <ListOrdered size={11} /> },
-                    { key: 'prediction' as const, label: 'Prediction', icon: <TrendingUp size={11} /> },
-                  ] as const).map(({ key, label, icon }) => (
-                    <button
-                      key={key}
-                      onClick={() => setTrackPostType(key)}
-                      className={`flex items-center gap-1 px-2.5 py-1 text-[12px] font-medium transition-colors whitespace-nowrap rounded-full ${
-                        trackPostType === key ? 'text-purple-700 bg-purple-50' : 'text-gray-400 hover:text-gray-600'
-                      }`}
-                    >
-                      {icon}
-                      <span>{label}</span>
-                    </button>
-                  ))}
-                  <div className="flex-1" />
-                  <button
-                    onClick={handlePost}
-                    disabled={!canPost() || isPosting}
-                    className="rounded-full bg-purple-500 hover:bg-purple-600 disabled:opacity-40 text-white text-[13px] font-semibold px-4 py-1.5 shrink-0 ml-1 transition-colors"
-                    data-testid="submit-action-inline"
-                  >
-                    {isPosting ? (
-                      <Loader2 className="animate-spin" size={14} />
-                    ) : (
-                      roomId ? "Share" :
-                      trackPostType === 'rank'   ? "Add to Rank" :
-                      trackPostType === 'review' ? "Add Media" :
-                      "Post"
-                    )}
-                  </button>
-                </div>
+          {/* ── Take — spoiler toggle ── */}
+          {trackPostType === 'thought' && (
+            <button type="button" onClick={() => setContainsSpoilers(v => !v)}
+              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm transition-colors ${
+                containsSpoilers ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-gray-50 border-gray-200 text-gray-600'
+              }`}>
+              <span className="flex items-center gap-2"><span>⚠️</span> Contains spoilers</span>
+              <div className="w-8 h-4 rounded-full relative transition-colors" style={{ background: containsSpoilers ? '#fbbf24' : '#d1d5db' }}>
+                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${containsSpoilers ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </div>
+            </button>
+          )}
 
-              {/* Rating — below the card, for review / prediction */}
-              {(trackPostType === 'review' || trackPostType === 'prediction') && (
-                <div className="flex items-center gap-2 px-1">
-                  <span className="text-sm text-gray-600">Rating:</span>
-                  <div className="relative flex gap-0.5">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <div key={star} className="relative" style={{ width: 24, height: 24 }}>
-                        <Star className="w-6 h-6 text-gray-300 absolute inset-0" />
-                        <div
-                          className="absolute inset-0 overflow-hidden pointer-events-none"
-                          style={{ width: ratingValue >= star ? '100%' : ratingValue >= star - 0.5 ? '50%' : '0%' }}
-                        >
-                          <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-                        </div>
-                      </div>
-                    ))}
-                    <input
-                      type="range" min="0" max="5" step="0.5"
-                      value={ratingValue}
-                      onChange={(e) => setRatingValue(parseFloat(e.target.value))}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      style={{ margin: 0 }}
-                      data-testid="rating-slider"
-                    />
-                  </div>
-                  {ratingValue > 0 && <span className="text-sm font-medium text-gray-700">{ratingValue}/5</span>}
-                </div>
-              )}
-
-              {/* Poll / Prediction options */}
-              {(trackPostType === 'prediction' || trackPostType === 'question') && (
-                <div className="space-y-2">
-                  {pollOptions.map((option, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <input
-                        type="text" value={option}
-                        onChange={(e) => { const n = [...pollOptions]; n[idx] = e.target.value; setPollOptions(n); }}
-                        placeholder={`Option ${idx + 1}`}
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
-                      />
-                      {pollOptions.length > 2 && (
-                        <button onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))} className="p-1 text-gray-400 hover:text-red-500">
-                          <X size={16} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {pollOptions.length < 4 && (
-                    <button onClick={() => setPollOptions([...pollOptions, ""])} className="text-sm text-purple-600 hover:text-purple-700 font-medium">
-                      + Add option
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Take — spoiler toggle */}
-              {trackPostType === 'thought' && (
-                <button
-                  type="button"
-                  onClick={() => setContainsSpoilers(v => !v)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm transition-colors ${
-                    containsSpoilers ? 'bg-amber-50 border-amber-300 text-amber-700' : 'bg-gray-50 border-gray-200 text-gray-600'
-                  }`}
-                >
-                  <span className="flex items-center gap-2"><span>⚠️</span> Contains spoilers</span>
-                  <div className="w-8 h-4 rounded-full relative transition-colors" style={{ background: containsSpoilers ? '#fbbf24' : '#d1d5db' }}>
-                    <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${containsSpoilers ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                  </div>
-                </button>
-              )}
-
-              {/* Rank — rank selector */}
-              {trackPostType === 'rank' && (
-                <div className="space-y-3">
-                  {userRanks.length === 0 ? (
-                    <div className="text-center py-4">
-                      <Trophy size={28} className="text-gray-300 mx-auto mb-2" />
-                      <p className="text-sm text-gray-500 mb-1">No ranked lists yet</p>
-                      <button
-                        type="button"
-                        onClick={() => { handleClose(); window.location.href = "/collections?tab=ranks"; }}
-                        className="text-sm text-purple-600 font-medium"
-                      >
-                        Create a ranked list →
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Add to which rank?</p>
-                      <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                        {userRanks.map((rank: any) => (
-                          <button
-                            key={rank.id}
-                            type="button"
-                            onClick={() => setSelectedRankId(rank.id)}
-                            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-sm text-left transition-colors ${
-                              selectedRankId === rank.id
-                                ? 'bg-purple-50 border-purple-300 text-purple-800'
-                                : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300'
-                            }`}
-                          >
-                            <Trophy size={14} className={selectedRankId === rank.id ? 'text-purple-500' : 'text-gray-400'} />
-                            <span className="flex-1 truncate">{rank.title}</span>
-                            {selectedRankId === rank.id && <Check size={14} className="text-purple-500 shrink-0" />}
-                          </button>
-                        ))}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => { handleClose(); window.location.href = "/collections?tab=ranks"; }}
-                        className="text-xs text-purple-600 font-medium"
-                      >
-                        + Create new ranked list
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Status pills + advanced options — only shown when media is selected */}
-              {selectedMedia && (
-                <>
-                  {/* Add to list — compact dropdown row */}
-                  <div className="flex items-center gap-2">
-                    {selectedListId ? (
-                      <>
-                        <ListPlus size={18} className="text-purple-500 shrink-0" />
-                        <select
-                          value={selectedListId}
-                          onChange={(e) => {
-                            if (e.target.value === '') {
-                              setSelectedListId(null);
-                              setAddToList(false);
-                            } else {
-                              setSelectedListId(e.target.value);
-                              setAddToList(true);
-                            }
-                          }}
-                          className="flex-1 text-base border border-purple-300 bg-purple-50 text-purple-800 rounded-xl px-3 py-4 font-medium focus:outline-none"
-                          data-testid="list-dropdown"
-                        >
-                          <option value="finished">Finished</option>
-                          <option value="currently">Currently</option>
-                          <option value="queue">Want To</option>
-                          <option value="favorites">Favorites</option>
-                          <option value="dnf">DNF</option>
-                        </select>
-                        <button
-                          type="button"
-                          onClick={() => { setSelectedListId(null); setAddToList(false); }}
-                          className="p-2 text-gray-400 hover:text-gray-600 shrink-0"
-                          aria-label="Remove from list"
-                        >
-                          <X size={18} />
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => { setSelectedListId('currently'); setAddToList(true); }}
-                        className="flex items-center gap-2 text-base text-gray-500 hover:text-purple-600 transition-colors py-2"
-                        data-testid="add-to-list-btn"
-                      >
-                        <ListPlus size={18} />
-                        Add to a list
-                      </button>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => setShowMoreOptions(!showMoreOptions)}
-                    className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 py-1"
-                    data-testid="more-options-toggle"
-                  >
-                    <ChevronDown size={16} className={`transition-transform ${showMoreOptions ? 'rotate-180' : ''}`} />
-                    {showMoreOptions ? 'Less options' : 'More options'}
+          {/* ── Rank selector ── */}
+          {trackPostType === 'rank' && (
+            <div className="space-y-3">
+              {userRanks.length === 0 ? (
+                <div className="text-center py-4">
+                  <Trophy size={28} className="text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 mb-1">No ranked lists yet</p>
+                  <button type="button" onClick={() => { handleClose(); window.location.href = "/collections?tab=ranks"; }} className="text-sm text-purple-600 font-medium">
+                    Create a ranked list →
                   </button>
-
-                  {showMoreOptions && (
-                    <div className="space-y-3 pt-2 border-t border-gray-100">
-                      <div className="flex items-center gap-2">
-                        <Checkbox checked={rewatchCount > 1} onCheckedChange={(c) => setRewatchCount(c ? 2 : 1)} data-testid="rewatch-toggle" />
-                        <span className="text-sm text-gray-600">Repeat?</span>
-                        {rewatchCount > 1 && (
-                          <input type="number" min="2" max="99" value={rewatchCount}
-                            onChange={(e) => { const val = parseInt(e.target.value); if (!isNaN(val) && val >= 2) setRewatchCount(Math.min(99, val)); }}
-                            className="w-12 px-2 py-1 text-sm border border-gray-200 rounded text-center"
-                            data-testid="rewatch-count-input"
-                          />
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <label className="flex items-center gap-1.5">
-                          <Checkbox checked={containsSpoilers} onCheckedChange={(c) => setContainsSpoilers(!!c)} />
-                          Spoilers
-                        </label>
-                        <label className="flex items-center gap-1.5">
-                          <Checkbox checked={privateMode} onCheckedChange={(c) => setPrivateMode(!!c)} />
-                          Don't post to feed
-                        </label>
-                      </div>
-                      {selectedMedia.type === 'tv' && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-gray-500 uppercase">Episode</p>
-                      {isLoadingSeasons ? (
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <Loader2 className="animate-spin" size={14} />
-                          Loading...
-                        </div>
-                      ) : seasons.length > 0 ? (
-                        <div className="flex gap-2">
-                          <select
-                            value={selectedSeason || ""}
-                            onChange={(e) => setSelectedSeason(Number(e.target.value) || null)}
-                            className="flex-1 px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white"
-                          >
-                            <option value="">All seasons</option>
-                            {seasons.map((s) => (
-                              <option key={s.seasonNumber || s.season_number} value={s.seasonNumber || s.season_number}>
-                                S{s.seasonNumber || s.season_number}
-                              </option>
-                            ))}
-                          </select>
-                          {selectedSeason && (
-                            <select
-                              value={selectedEpisode || ""}
-                              onChange={(e) => setSelectedEpisode(Number(e.target.value) || null)}
-                              className="flex-1 px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white"
-                              disabled={isLoadingEpisodes}
-                            >
-                              <option value="">{isLoadingEpisodes ? "..." : "All eps"}</option>
-                              {episodes.map((ep) => (
-                                <option key={ep.episodeNumber || ep.episode_number} value={ep.episodeNumber || ep.episode_number}>
-                                  E{ep.episodeNumber || ep.episode_number}
-                                </option>
-                              ))}
-                            </select>
-                          )}
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
-
-                    </div>
-                  )}
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Add to which rank?</p>
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                    {userRanks.map((rank: any) => (
+                      <button key={rank.id} type="button" onClick={() => setSelectedRankId(rank.id)}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-sm text-left transition-colors ${
+                          selectedRankId === rank.id ? 'bg-purple-50 border-purple-300 text-purple-800' : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300'
+                        }`}>
+                        <Trophy size={14} className={selectedRankId === rank.id ? 'text-purple-500' : 'text-gray-400'} />
+                        <span className="flex-1 truncate">{rank.title}</span>
+                        {selectedRankId === rank.id && <Check size={14} className="text-purple-500 shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                  <button type="button" onClick={() => { handleClose(); window.location.href = "/collections?tab=ranks"; }} className="text-xs text-purple-600 font-medium">
+                    + Create new ranked list
+                  </button>
                 </>
               )}
             </div>
           )}
+
+          {/* ── Attach media section ── */}
+          <div>
+            {!selectedMedia ? (
+              <>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                  {trackPostType === 'review' ? '⭐ What are you reviewing?' : 'Attach media (optional)'}
+                </p>
+                {trackPostType === 'review' && (
+                  <p className="text-xs text-gray-400 mb-2">Reviews are tied to a specific title.</p>
+                )}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                  <input
+                    type="text" value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search for a movie, show, book..."
+                    className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    data-testid="quick-action-search"
+                  />
+                </div>
+                {trackPostType !== 'review' && !searchQuery && (
+                  <p className="text-xs text-gray-400 mt-1.5">Add media to give your take more context.</p>
+                )}
+                {isSearching && (
+                  <div className="flex justify-center py-3">
+                    <Loader2 className="animate-spin text-purple-500" size={20} />
+                  </div>
+                )}
+                {searchResults.length > 0 && (
+                  <div className="max-h-48 overflow-y-auto space-y-1 mt-2 border border-gray-100 rounded-xl overflow-hidden">
+                    {searchResults.slice(0, 6).map((result, idx) => (
+                      <button
+                        key={`${result.external_id}-${idx}`}
+                        onClick={() => { setSelectedMedia(result); setSearchResults([]); setSearchQuery(""); }}
+                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 text-left"
+                        data-testid={`search-result-${result.external_id}`}
+                      >
+                        {result.image && <img src={result.image} alt={result.title} className="w-8 h-11 object-cover rounded flex-shrink-0" />}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 text-sm line-clamp-1">{result.title}</p>
+                          <p className="text-xs text-gray-500">{result.type === 'book_series' ? (result.series_count ? `${result.series_count}-book series` : 'book series') : result.type}{result.year && ` • ${result.year}`}</p>
+                          {result.creator && result.creator !== 'Unknown Author' && <p className="text-xs text-gray-400 truncate">{result.creator}</p>}
+                        </div>
+                        <Plus size={16} className="text-purple-500 shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Attached media</p>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  {selectedMedia.image && (
+                    <img src={selectedMedia.image} alt={selectedMedia.title} className="w-10 h-14 object-cover rounded flex-shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm truncate">{selectedMedia.title}</p>
+                    <p className="text-xs text-gray-500 capitalize">{selectedMedia.type}{selectedMedia.year && ` • ${selectedMedia.year}`}</p>
+                  </div>
+                  <button onClick={() => setSelectedMedia(null)} className="p-1.5 hover:bg-gray-200 rounded-full transition-colors">
+                    <X size={14} className="text-gray-500" />
+                  </button>
+                </div>
+
+                {/* Add to list — compact dropdown */}
+                <div className="flex items-center gap-2 mt-3">
+                  {selectedListId ? (
+                    <>
+                      <ListPlus size={16} className="text-purple-500 shrink-0" />
+                      <select value={selectedListId}
+                        onChange={(e) => { if (e.target.value === '') { setSelectedListId(null); setAddToList(false); } else { setSelectedListId(e.target.value); setAddToList(true); } }}
+                        className="flex-1 text-sm border border-purple-200 bg-purple-50 text-purple-800 rounded-lg px-3 py-2 font-medium focus:outline-none"
+                        data-testid="list-dropdown">
+                        <option value="finished">Finished</option>
+                        <option value="currently">Currently</option>
+                        <option value="queue">Want To</option>
+                        <option value="favorites">Favorites</option>
+                        <option value="dnf">DNF</option>
+                      </select>
+                      <button type="button" onClick={() => { setSelectedListId(null); setAddToList(false); }} className="p-1.5 text-gray-400 hover:text-gray-600 shrink-0" aria-label="Remove from list">
+                        <X size={16} />
+                      </button>
+                    </>
+                  ) : (
+                    <button type="button" onClick={() => { setSelectedListId('currently'); setAddToList(true); }}
+                      className="flex items-center gap-2 text-sm text-gray-500 hover:text-purple-600 transition-colors py-1"
+                      data-testid="add-to-list-btn">
+                      <ListPlus size={16} />
+                      Add to a list
+                    </button>
+                  )}
+                </div>
+
+                <button onClick={() => setShowMoreOptions(!showMoreOptions)}
+                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 py-1 mt-1"
+                  data-testid="more-options-toggle">
+                  <ChevronDown size={14} className={`transition-transform ${showMoreOptions ? 'rotate-180' : ''}`} />
+                  {showMoreOptions ? 'Less options' : 'More options'}
+                </button>
+
+                {showMoreOptions && (
+                  <div className="space-y-3 pt-2 border-t border-gray-100 mt-1">
+                    <div className="flex items-center gap-2">
+                      <Checkbox checked={rewatchCount > 1} onCheckedChange={(c) => setRewatchCount(c ? 2 : 1)} data-testid="rewatch-toggle" />
+                      <span className="text-sm text-gray-600">Repeat?</span>
+                      {rewatchCount > 1 && (
+                        <input type="number" min="2" max="99" value={rewatchCount}
+                          onChange={(e) => { const val = parseInt(e.target.value); if (!isNaN(val) && val >= 2) setRewatchCount(Math.min(99, val)); }}
+                          className="w-12 px-2 py-1 text-sm border border-gray-200 rounded text-center"
+                          data-testid="rewatch-count-input" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <label className="flex items-center gap-1.5">
+                        <Checkbox checked={containsSpoilers} onCheckedChange={(c) => setContainsSpoilers(!!c)} />
+                        Spoilers
+                      </label>
+                      <label className="flex items-center gap-1.5">
+                        <Checkbox checked={privateMode} onCheckedChange={(c) => setPrivateMode(!!c)} />
+                        Don't post to feed
+                      </label>
+                    </div>
+                    {selectedMedia.type === 'tv' && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-gray-500 uppercase">Episode</p>
+                        {isLoadingSeasons ? (
+                          <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="animate-spin" size={14} />Loading...</div>
+                        ) : seasons.length > 0 ? (
+                          <div className="flex gap-2">
+                            <select value={selectedSeason || ""} onChange={(e) => setSelectedSeason(Number(e.target.value) || null)} className="flex-1 px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white">
+                              <option value="">All seasons</option>
+                              {seasons.map((s) => <option key={s.seasonNumber || s.season_number} value={s.seasonNumber || s.season_number}>S{s.seasonNumber || s.season_number}</option>)}
+                            </select>
+                            {selectedSeason && (
+                              <select value={selectedEpisode || ""} onChange={(e) => setSelectedEpisode(Number(e.target.value) || null)} className="flex-1 px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white" disabled={isLoadingEpisodes}>
+                                <option value="">{isLoadingEpisodes ? "..." : "All eps"}</option>
+                                {episodes.map((ep) => <option key={ep.episodeNumber || ep.episode_number} value={ep.episodeNumber || ep.episode_number}>E{ep.episodeNumber || ep.episode_number}</option>)}
+                              </select>
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
         </div>
       );
     }
