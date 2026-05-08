@@ -2875,12 +2875,10 @@ export default function PoolDetailPage() {
           <button onClick={() => setLocation('/rooms')} className="text-white/60 hover:text-white transition-colors">
             <ChevronLeft size={24} />
           </button>
-          {isMember && (
-            <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/70 text-xs font-medium border border-white/20 hover:bg-white/10 transition-colors">
-              {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-              {copied ? 'Copied!' : 'Invite'}
-            </button>
-          )}
+          <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/70 text-xs font-medium border border-white/20 hover:bg-white/10 transition-colors">
+            {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+            {copied ? 'Copied!' : 'Invite'}
+          </button>
         </div>
 
         {/* Hero: cover + info side by side */}
@@ -2945,14 +2943,6 @@ export default function PoolDetailPage() {
           </div>
         )}
 
-        {/* Non-member join banner */}
-        {!isLoading && !isMember && isPublic && (
-          <div className="px-4 pb-3">
-            <button onClick={handleJoinRoom} disabled={joiningRoom} className="w-full py-2.5 rounded-2xl text-white text-sm font-semibold disabled:opacity-50" style={{ background: 'linear-gradient(to right, #7c3aed, #2563eb)' }}>
-              {joiningRoom ? 'Joining...' : 'Join this Room'}
-            </button>
-          </div>
-        )}
 
         {/* Tabs */}
         <div className="flex px-2 border-b border-white/10">
@@ -3035,30 +3025,24 @@ export default function PoolDetailPage() {
             <div className="space-y-4">
 
               {/* ── Two-button composer ── */}
-              {isMember ? (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setIsConvComposerOpen(true)}
-                    className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full text-white text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80"
-                    style={{ background: 'linear-gradient(135deg, #a78bfa, #7c3aed)', border: 'none' }}
-                  >
-                    <MessageSquare size={14} />
-                    Start a conversation
-                  </button>
-                  <button
-                    onClick={() => setIsComposerOpen(true)}
-                    className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full text-white text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80"
-                    style={{ background: 'linear-gradient(135deg, #f472b6, #a855f7)', border: 'none' }}
-                  >
-                    <Star size={14} />
-                    Drop a take
-                  </button>
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-4 px-4 text-center">
-                  <p className="text-gray-400 text-sm">Join this room to participate</p>
-                </div>
-              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsConvComposerOpen(true)}
+                  className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full text-white text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80"
+                  style={{ background: 'linear-gradient(135deg, #a78bfa, #7c3aed)', border: 'none' }}
+                >
+                  <MessageSquare size={14} />
+                  Start a conversation
+                </button>
+                <button
+                  onClick={() => setIsComposerOpen(true)}
+                  className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full text-white text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80"
+                  style={{ background: 'linear-gradient(135deg, #f472b6, #a855f7)', border: 'none' }}
+                >
+                  <Star size={14} />
+                  Drop a take
+                </button>
+              </div>
 
               {/* ── Conversations (Deep Dive) ── */}
               <div className="space-y-2">
@@ -3155,9 +3139,7 @@ export default function PoolDetailPage() {
                                         <button onClick={() => handleVoteReply(reply.id, 1)} className={`flex items-center gap-0.5 text-[11px] transition-colors ${rVote?.vote === 1 ? 'text-purple-600' : 'text-gray-400 hover:text-purple-500'}`}>
                                           <ChevronUp size={12} /><span>{reply.upvotes || 0}</span>
                                         </button>
-                                        {isMember && (
-                                          <button onClick={() => setReplyingToReplyId(reply.id)} className="text-[11px] text-gray-400 hover:text-purple-500">Reply</button>
-                                        )}
+                                        <button onClick={() => setReplyingToReplyId(reply.id)} className="text-[11px] text-gray-400 hover:text-purple-500">Reply</button>
                                       </div>
                                     </div>
                                   </div>
@@ -3167,8 +3149,7 @@ export default function PoolDetailPage() {
                           </div>
 
                           {/* Compose */}
-                          {isMember && (
-                            <div className="px-4 pb-3 pt-2">
+                          <div className="px-4 pb-3 pt-2">
                               {replyingToReplyId && (
                                 <div className="flex items-center gap-1 mb-1">
                                   <span className="text-[10px] text-gray-400">Replying to a comment</span>
@@ -3193,7 +3174,6 @@ export default function PoolDetailPage() {
                                 </button>
                               </div>
                             </div>
-                          )}
                         </div>
                       )}
                     </div>
