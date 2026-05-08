@@ -669,7 +669,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                                 <Bookmark size={15} className="text-white" fill="white" />
                               </button>
                               <button
-                                onClick={(e) => { e.stopPropagation(); setActionSheetMedia(mediaObj); setIsQuickActionOpen(true); }}
+                                onClick={(e) => { e.stopPropagation(); setActionSheetMedia(mediaObj); setDirectCapture(true); setIsQuickActionOpen(true); }}
                                 className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
                               >
                                 <MessageSquarePlus size={14} className="text-white" />
