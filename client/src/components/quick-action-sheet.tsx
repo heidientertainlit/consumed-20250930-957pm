@@ -1,17 +1,19 @@
 import { useState, useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check, Play, Clock, Ban, Heart, BarChart2, TrendingUp, ListOrdered } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check, Play, Clock, Ban, Heart, BarChart2, TrendingUp, ListOrdered, Globe, Lock } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { supabase } from "@/lib/supabase";
 import { trackEvent } from "@/lib/posthog";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Checkbox } from "@/components/ui/checkbox";
 import MentionTextarea from "@/components/mention-textarea";
-import CreateRankDialog from "@/components/create-rank-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -119,6 +121,8 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [isListDrawerOpen, setIsListDrawerOpen] = useState(false);
   const [showCreateRankDialog, setShowCreateRankDialog] = useState(false);
+  const [newRankName, setNewRankName] = useState("");
+  const [newRankVisibility, setNewRankVisibility] = useState("public");
   const [shareToFeed, setShareToFeed] = useState(true);
   
   const episodeCache = useRef<Record<string, any[]>>({});
@@ -156,6 +160,34 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   });
 
   const userRanks = userRanksData?.ranks || [];
+
+  const [, setLocation] = useLocation();
+
+  const createRankMutation = useMutation({
+    mutationFn: async () => {
+      if (!session?.access_token || !newRankName.trim()) throw new Error('Missing title or session');
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+      const response = await fetch(`${supabaseUrl}/functions/v1/create-rank`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newRankName.trim(), visibility: newRankVisibility }),
+      });
+      if (!response.ok) throw new Error('Failed to create rank');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      const rankId = data?.data?.id;
+      setNewRankName("");
+      setNewRankVisibility("public");
+      setShowCreateRankDialog(false);
+      queryClient.invalidateQueries({ queryKey: ['user-ranks'] });
+      queryClient.invalidateQueries({ queryKey: ['public-ranks-play'] });
+      if (rankId) setLocation(`/rank/${rankId}`);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create rank", variant: "destructive" });
+    },
+  });
 
   useEffect(() => {
     if (!session?.access_token || !searchQuery.trim()) {
@@ -1718,7 +1750,57 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
         </div>
       </DrawerContent>
     </Drawer>
-    <CreateRankDialog open={showCreateRankDialog} onOpenChange={setShowCreateRankDialog} />
+    <Dialog open={showCreateRankDialog} onOpenChange={(open) => { setShowCreateRankDialog(open); if (!open) { setNewRankName(""); setNewRankVisibility("public"); } }}>
+      <DialogContent className="rounded-2xl !bg-white w-[calc(100vw-2rem)] max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-gray-900">Create Rank</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 pt-2">
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1.5 block">Title</label>
+            <Input
+              className="bg-white text-gray-900 border-gray-300 placeholder:text-gray-400"
+              placeholder="e.g. Best Movies of 2024"
+              value={newRankName}
+              onChange={(e) => setNewRankName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && newRankName.trim()) createRankMutation.mutate(); }}
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-1.5 block">Visibility</label>
+            <div className="flex gap-2">
+              {(['public', 'private'] as const).map(v => (
+                <button
+                  key={v}
+                  onClick={() => setNewRankVisibility(v)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                    newRankVisibility === v
+                      ? 'bg-purple-600 border-purple-600 text-white'
+                      : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {v === 'public' ? <Globe size={15} /> : <Lock size={15} />}
+                  {v.charAt(0).toUpperCase() + v.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <Button
+            className="w-full text-white rounded-xl"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #db2777)' }}
+            onClick={() => createRankMutation.mutate()}
+            disabled={!newRankName.trim() || createRankMutation.isPending}
+          >
+            {createRankMutation.isPending ? (
+              <><Loader2 size={16} className="mr-2 animate-spin" /> Creating...</>
+            ) : (
+              'Create & Add Items'
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }
