@@ -1162,7 +1162,7 @@ const POOL_STREAK_MILESTONES = [
 ];
 
 /* ─── Play Tab: Trivia card ──────────────────────────────────────────── */
-function PlayTriviaCard({ poll, token, onVoted }: { poll: any; token: string; onVoted: (isCorrect: boolean) => void }) {
+function PlayTriviaCard({ poll, token, onVoted, noWrapper = false }: { poll: any; token: string; onVoted: (isCorrect: boolean) => void; noWrapper?: boolean }) {
   const { toast } = useToast();
   const [myVote, setMyVote] = useState<string | null>(poll.user_vote || null);
   const [counts, setCounts] = useState<Record<string, number>>(poll.vote_counts || {});
@@ -1217,8 +1217,8 @@ function PlayTriviaCard({ poll, token, onVoted }: { poll: any; token: string; on
     setSubmitting(false);
   };
 
-  return (
-    <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm">
+  const inner = (
+    <>
       {/* Card header: show tag left, media type pill right */}
       <div className="flex items-center justify-between px-4 pt-3 pb-0">
         <div className="flex items-center gap-1.5">
@@ -1229,7 +1229,7 @@ function PlayTriviaCard({ poll, token, onVoted }: { poll: any; token: string; on
             </>
           )}
         </div>
-        <MediaTypePill poll={poll} />
+        {!noWrapper && <MediaTypePill poll={poll} />}
       </div>
       {/* Question */}
       <div className="px-4 pt-2.5 pb-3">
@@ -1276,6 +1276,13 @@ function PlayTriviaCard({ poll, token, onVoted }: { poll: any; token: string; on
         )}
         {!hasVoted && <p className="text-[11px] text-gray-300 pt-0.5">+{poll.points_reward || 10} pts for correct answer</p>}
       </div>
+    </>
+  );
+
+  if (noWrapper) return <>{inner}</>;
+  return (
+    <div className="rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm">
+      {inner}
     </div>
   );
 }
@@ -2107,58 +2114,59 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
               const [justAnswered, setJustAnswered] = useState(false);
               const q = sortedQuestions[idx];
               const hasNext = idx < sortedQuestions.length - 1;
-              // Show next button if already answered from a prior session OR just answered now
               const isAnswered = !!q.user_vote || justAnswered;
-
               const goNext = () => { setIdx(i => i + 1); setJustAnswered(false); };
+              const qLabel = sortedQuestions.length === 1 ? 'One question trivia' : `${sortedQuestions.length} questions`;
 
               return (
-                <div className="mb-6">
-                  {/* Header */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-                      <Brain size={14} className="text-purple-600" />
+                <div className="mb-6 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  {/* Header — inside card, matching feed style */}
+                  <div className="flex items-center justify-between px-4 pt-4 pb-0">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                        <Brain size={16} className="text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-900 leading-tight">
+                          {show !== 'General' ? `${show} Trivia` : 'Trivia'}
+                        </p>
+                        <p className="text-[11px] text-gray-400 leading-tight">{qLabel}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-900 leading-tight">Trivia</p>
-                      <p className="text-[11px] text-gray-400 leading-tight">
-                        {sortedQuestions.length} question{sortedQuestions.length !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    {sortedQuestions.length > 1 && (
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          onClick={() => { setIdx(i => Math.max(0, i - 1)); setJustAnswered(false); }}
-                          disabled={idx === 0}
-                          className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 transition-colors"
-                        >
-                          <ChevronLeft size={14} className="text-gray-600" />
-                        </button>
-                        <span className="text-xs font-semibold text-gray-500 tabular-nums">{idx + 1}/{sortedQuestions.length}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {sortedQuestions.length > 1 && idx < sortedQuestions.length - 1 && (
                         <button
                           onClick={goNext}
-                          disabled={idx === sortedQuestions.length - 1}
-                          className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 transition-colors"
+                          className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
                         >
                           <ChevronRight size={14} className="text-gray-600" />
                         </button>
-                      </div>
-                    )}
+                      )}
+                      {sortedQuestions.length > 1 && (
+                        <span className="text-xs text-gray-400 font-medium tabular-nums">{idx + 1}/{sortedQuestions.length}</span>
+                      )}
+                    </div>
                   </div>
-                  <PlayTriviaCard key={q.id} poll={q} token={token} onVoted={(correct) => {
+
+                  {/* Trivia content — no own card wrapper */}
+                  <PlayTriviaCard key={q.id} poll={q} token={token} noWrapper onVoted={(correct) => {
                     handleTriviaAnswered(correct);
                     setJustAnswered(true);
                   }} />
+
+                  {/* Next question button inside the card */}
                   {isAnswered && hasNext && (
-                    <button
-                      onClick={goNext}
-                      className="w-full mt-3 py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-sm font-semibold transition-all flex items-center justify-center gap-2"
-                    >
-                      Next question <ChevronRight size={15} />
-                    </button>
+                    <div className="px-4 pb-4 -mt-1">
+                      <button
+                        onClick={goNext}
+                        className="w-full py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                      >
+                        Next question <ChevronRight size={15} />
+                      </button>
+                    </div>
                   )}
                   {isAnswered && !hasNext && (
-                    <p className="text-center text-xs text-gray-400 mt-3 font-medium">All done! 🎉</p>
+                    <p className="text-center text-xs text-gray-400 px-4 pb-4 -mt-1 font-medium">All done! 🎉</p>
                   )}
                 </div>
               );
