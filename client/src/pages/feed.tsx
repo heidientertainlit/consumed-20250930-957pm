@@ -1609,7 +1609,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               )}
             </div>
             {/* Media poster + title — below the stars */}
-            <div className="flex items-center gap-3 mt-1">
+            <div className="flex gap-3 mt-1 items-start">
               {posterEl}
               <div className="flex-1 min-w-0">
                 {post.externalId && post.externalSource ? (
@@ -1621,43 +1621,57 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 )}
                 {tasteAlignment !== null && (
                   <p className="text-[11px] text-violet-600 italic mt-0.5">
-                    You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
+                    You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste
                   </p>
                 )}
+                {/* All raters: post author first, then others — all inside the gray section */}
+                {(() => {
+                  const ratingColors = ['bg-violet-500','bg-orange-400','bg-teal-500','bg-rose-500','bg-blue-500','bg-emerald-500','bg-amber-500'];
+                  const authorRow = post.rating && post.rating > 0 ? [{
+                    userId: post.user?.id || 'author',
+                    displayName: post.user?.displayName || post.user?.username || 'Someone',
+                    userName: post.user?.username || '',
+                    avatar: post.user?.avatar,
+                    rating: post.rating as number,
+                  }] : [];
+                  const allRaters = [...authorRow, ...relatedRatings];
+                  if (allRaters.length === 0) return null;
+                  return (
+                    <div className="mt-2 flex flex-col">
+                      {(showAllRelated ? allRaters : allRaters.slice(0, 3)).map((r, idx) => (
+                        <div key={r.userId} className="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0">
+                          <div className={`w-6 h-6 rounded-full ${ratingColors[idx % ratingColors.length]} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 overflow-hidden`}>
+                            {r.avatar ? <img src={r.avatar} className="w-full h-full object-cover" alt="" /> : (r.displayName || r.userName || 'U')[0]?.toUpperCase()}
+                          </div>
+                          <span className="text-xs font-semibold text-gray-800 flex-1 min-w-0 truncate">{r.displayName || r.userName}</span>
+                          <div className="flex items-center gap-0.5 flex-shrink-0">
+                            {[1,2,3,4,5].map(s => {
+                              if (s <= Math.floor(r.rating)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
+                              if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative w-3 h-3"><Star size={12} className="absolute text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                              return <Star key={s} size={12} className="text-gray-200" />;
+                            })}
+                          </div>
+                          <button
+                            onClick={() => { setCommentText(`@${r.displayName || r.userName} `); if (!showComments) handleCommentToggle(); }}
+                            className="text-[10px] font-semibold text-gray-400 hover:text-violet-500 transition-colors flex-shrink-0"
+                          >Reply</button>
+                        </div>
+                      ))}
+                      {allRaters.length > 3 && (
+                        <button onClick={() => setShowAllRelated(v => !v)} className="text-[10px] text-violet-500 font-medium text-left pt-1">
+                          {showAllRelated ? 'Show less' : `+ ${allRaters.length - 3} more`}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
-          {/* Bottom: friend's content */}
+          {/* Bottom: action bar + discussion */}
           <div className="px-4 pb-4">
-            <div className="flex items-center justify-between mb-2">
-              <Link href={`/user/${post.user?.id || ''}`} className="flex items-center gap-2">
-                <p className="text-xs font-semibold text-gray-900 hover:text-purple-600">
-                  {post.user?.displayName || post.user?.username || 'Someone'}
-                </p>
-              </Link>
-              <div className="flex items-center gap-2">
-                {post.rating && post.rating > 0 && (
-                  <div className="flex flex-col items-end">
-                    <div className="flex items-center gap-0.5">
-                      {[1,2,3,4,5].map(s => {
-                        const r = post.rating!;
-                        if (s <= Math.floor(r)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
-                        if (s === Math.ceil(r) && r % 1 >= 0.5) return <div key={s} className="relative"><Star size={12} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                        return <Star key={s} size={12} className="text-gray-200" />;
-                      })}
-                    </div>
-                    {ratingDiffLine(post.rating, 'mt-0.5 text-right')}
-                  </div>
-                )}
-                {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
-                  <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors shrink-0" title="Delete post">
-                    <Trash2 size={13} />
-                  </button>
-                )}
-              </div>
-            </div>
             {post.content && (
-              <div className="mb-2">
+              <div className="mb-2 pt-3">
                 <div onClick={(e) => { e.stopPropagation(); setContentExpanded(v => !v); }} className="cursor-pointer">
                   <p className={`text-gray-600 text-sm leading-relaxed ${contentExpanded ? '' : 'line-clamp-2'}`}>{post.content}</p>
                   {!contentExpanded && post.content.length > 80 && <span className="text-purple-500 text-xs font-medium">Read more</span>}
@@ -1671,53 +1685,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 )}
               </div>
             )}
-            {/* Other users who rated the same media */}
-            {relatedRatings.length > 0 && (() => {
-              const ratingColors = ['bg-violet-500','bg-orange-400','bg-teal-500','bg-rose-500','bg-blue-500','bg-emerald-500','bg-amber-500'];
-              return (
-                <div className="mt-3 border-t border-gray-100 pt-2.5 flex flex-col gap-0">
-                  {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 3)).map((r, idx) => (
-                    <div key={r.userId} className="flex items-center gap-2.5 py-2 border-b border-gray-50 last:border-0">
-                      {/* Colored avatar circle */}
-                      <div className={`w-7 h-7 rounded-full ${ratingColors[idx % ratingColors.length]} flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 overflow-hidden`}>
-                        {r.avatar
-                          ? <img src={r.avatar} className="w-full h-full object-cover" alt="" />
-                          : (r.displayName || r.userName || 'U')[0]?.toUpperCase()}
-                      </div>
-                      {/* Name */}
-                      <span className="text-xs font-semibold text-gray-800 flex-1 min-w-0 truncate">
-                        {r.displayName || r.userName}
-                      </span>
-                      {/* Stars */}
-                      <div className="flex items-center gap-0.5 flex-shrink-0">
-                        {[1,2,3,4,5].map(s => {
-                          if (s <= Math.floor(r.rating)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
-                          if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative w-[13px] h-[13px]"><Star size={13} className="absolute text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                          return <Star key={s} size={13} className="text-gray-200" />;
-                        })}
-                      </div>
-                      {/* Reply button */}
-                      <button
-                        onClick={() => {
-                          const name = r.displayName || r.userName || '';
-                          setCommentText(`@${name} `);
-                          if (!showComments) handleCommentToggle();
-                        }}
-                        className="text-[10px] font-semibold text-gray-400 hover:text-violet-500 transition-colors flex-shrink-0 ml-1"
-                      >
-                        Reply
-                      </button>
-                    </div>
-                  ))}
-                  {relatedRatings.length > 3 && (
-                    <button onClick={() => setShowAllRelated(v => !v)} className="text-[10px] text-violet-500 font-medium text-left pt-1.5">
-                      {showAllRelated ? 'Show less' : `+ ${relatedRatings.length - 3} more`}
-                    </button>
-                  )}
-                </div>
-              );
-            })()}
-            <div className="pt-2 border-t border-gray-50 mt-2">{actionBar}</div>
+            <div className={`${post.content ? '' : 'pt-3 '}border-t border-gray-50`}>{actionBar}</div>
             {/* Discussion thread — always visible for action-first cards */}
             <div className="mt-3 pt-3 border-t border-gray-100">
               {/* Existing comments preview */}
