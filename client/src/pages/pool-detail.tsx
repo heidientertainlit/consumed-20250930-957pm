@@ -3055,18 +3055,18 @@ export default function PoolDetailPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setIsConvComposerOpen(true)}
-                    className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full text-white/80 text-sm font-medium transition-colors hover:text-white"
-                    style={{ background: 'rgba(139, 92, 246, 0.12)', border: '1px solid rgba(139, 92, 246, 0.25)' }}
+                    className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full text-white text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80"
+                    style={{ background: 'linear-gradient(135deg, #a78bfa, #7c3aed)', border: 'none' }}
                   >
                     <MessageSquare size={14} />
                     Start a conversation
                   </button>
                   <button
                     onClick={() => setIsComposerOpen(true)}
-                    className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full text-white/80 text-sm font-medium transition-colors hover:text-white"
-                    style={{ background: 'rgba(244, 114, 182, 0.10)', border: '1px solid rgba(244, 114, 182, 0.22)' }}
+                    className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full text-white text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80"
+                    style={{ background: 'linear-gradient(135deg, #f472b6, #a855f7)', border: 'none' }}
                   >
-                    <Star size={14} className="text-pink-400" />
+                    <Star size={14} />
                     Drop a take
                   </button>
                 </div>
