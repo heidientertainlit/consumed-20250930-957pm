@@ -1171,8 +1171,8 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
   // Action bar variant for "What's Your Take?" action-first cards
   const actionFirstBar = (
-    <div className="flex items-center gap-2 py-2">
-      {/* Like — unchanged */}
+    <div className="flex items-center gap-3 py-2">
+      {/* Like */}
       <button
         onClick={(e) => { e.stopPropagation(); onLike(post.id); }}
         className={`flex items-center gap-1.5 text-sm transition-all active:scale-125 ${isLiked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
@@ -1180,16 +1180,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
         <span className="text-xs">{post.likes || 0}</span>
       </button>
-      {/* Join the discussion — comment bubble + count + label */}
-      <button
-        onClick={handleCommentToggle}
-        className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
-      >
-        <MessageCircle size={14} />
-        <span>{Math.max(post.comments || 0, comments.length)}</span>
-        <span>Join the discussion</span>
-      </button>
-      {/* + — unchanged */}
+      {/* + add to list */}
       {(post.externalId || post.mediaTitle) && onAddToList && (
         <button
           onClick={(e) => { e.stopPropagation(); onAddToList({ title: post.mediaTitle, externalId: post.externalId || '', externalSource: post.externalSource || 'tmdb', imageUrl: post.mediaImage || '', type: post.mediaType || 'movie' }); }}
@@ -1199,16 +1190,21 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           <Plus size={18} />
         </button>
       )}
-      {/* Right side: type pill + timestamp + delete */}
-      <div className="ml-auto flex items-center gap-1.5">
-        <span className={`text-[11px] font-medium ${ti.color} ${ti.bg} px-2 py-0.5 rounded-full`}>{ti.label}</span>
-        <span className="text-xs text-gray-400">{timeAgo(post.timestamp)}</span>
-        {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
-          <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors" title="Delete post">
-            <Trash2 size={13} />
-          </button>
-        )}
-      </div>
+      {/* Delete (owner only) */}
+      {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
+        <button onClick={(e) => { e.stopPropagation(); onDeletePost(post.id); }} className="text-gray-300 hover:text-red-500 transition-colors" title="Delete post">
+          <Trash2 size={14} />
+        </button>
+      )}
+      {/* Join the discussion — far right */}
+      <button
+        onClick={handleCommentToggle}
+        className="ml-auto flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+      >
+        <MessageCircle size={14} />
+        <span>{Math.max(post.comments || 0, comments.length)}</span>
+        <span>Join the discussion</span>
+      </button>
     </div>
   );
 
