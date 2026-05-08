@@ -897,6 +897,14 @@ export const insertBingeBattleSchema = createInsertSchema(bingeBattles).omit({ i
 export type BingeBattle = typeof bingeBattles.$inferSelect;
 export type InsertBingeBattle = z.infer<typeof insertBingeBattleSchema>;
 
+// Room follows — users opt-in to get notified of new posts in a room
+export const roomFollows = pgTable("room_follows", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  roomId: varchar("room_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Search feedback — logged when users can't find what they're searching for
 export const searchFeedback = pgTable("search_feedback", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

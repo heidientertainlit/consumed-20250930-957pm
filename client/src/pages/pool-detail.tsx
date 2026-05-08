@@ -2628,6 +2628,39 @@ export default function PoolDetailPage() {
   });
   const activeThreadReplies: any[] = activeThreadRepliesData || [];
 
+  // ── Room follow state ─────────────────────────────────────────────────────
+  const { data: followData, refetch: refetchFollow } = useQuery({
+    queryKey: ['room-follow', params.id, currentUserId],
+    queryFn: async () => {
+      if (!currentUserId || !params.id) return { following: false, count: 0 };
+      const [{ count }, { data: myFollow }] = await Promise.all([
+        supabase.from('room_follows').select('*', { count: 'exact', head: true }).eq('room_id', params.id),
+        supabase.from('room_follows').select('id').eq('room_id', params.id).eq('user_id', currentUserId).maybeSingle(),
+      ]);
+      return { following: !!myFollow, count: count || 0 };
+    },
+    enabled: !!params.id,
+  });
+  const isFollowing = followData?.following ?? false;
+  const followerCount = followData?.count ?? 0;
+  const [togglingFollow, setTogglingFollow] = useState(false);
+
+  const handleFollowToggle = async () => {
+    if (!currentUserId || !session?.access_token) {
+      toast({ title: 'Sign in to follow rooms' });
+      return;
+    }
+    setTogglingFollow(true);
+    if (isFollowing) {
+      await supabase.from('room_follows').delete().eq('room_id', params.id).eq('user_id', currentUserId);
+    } else {
+      await supabase.from('room_follows').insert({ room_id: params.id, user_id: currentUserId });
+    }
+    await refetchFollow();
+    setTogglingFollow(false);
+    toast({ title: isFollowing ? 'Unfollowed room' : 'Following! You\'ll be notified of new posts.' });
+  };
+
   const { data: myTakeVotes, refetch: refetchMyVotes } = useQuery({
     queryKey: ['my-take-votes', currentUserId, params.id],
     queryFn: async () => {
@@ -2685,6 +2718,31 @@ export default function PoolDetailPage() {
       setSubmittingConv(false);
       return;
     }
+
+    // Notify all followers of this room (excluding the poster)
+    try {
+      const { data: followers } = await supabase
+        .from('room_follows')
+        .select('user_id')
+        .eq('room_id', params.id)
+        .neq('user_id', currentUserId);
+      if (followers && followers.length > 0) {
+        const posterName = myName || 'Someone';
+        const roomName = pool?.name || 'a room';
+        const notifs = followers.map((f: any) => ({
+          user_id: f.user_id,
+          type: 'room_new_post',
+          message: `${posterName} started a conversation in ${roomName}`,
+          read: false,
+          list_id: params.id,
+          action_url: `/room/${params.id}`,
+        }));
+        await supabase.from('notifications').insert(notifs);
+      }
+    } catch (e) {
+      console.error('[room follow notify error]', e);
+    }
+
     setConvTitle('');
     setConvBody('');
     setConvTag('discussion');
@@ -2875,10 +2933,24 @@ export default function PoolDetailPage() {
           <button onClick={() => setLocation('/rooms')} className="text-white/60 hover:text-white transition-colors">
             <ChevronLeft size={24} />
           </button>
-          <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/70 text-xs font-medium border border-white/20 hover:bg-white/10 transition-colors">
-            {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
-            {copied ? 'Copied!' : 'Invite'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleFollowToggle}
+              disabled={togglingFollow}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all disabled:opacity-50"
+              style={isFollowing
+                ? { background: 'rgba(139,92,246,0.25)', border: '1px solid rgba(139,92,246,0.5)', color: '#c4b5fd' }
+                : { background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)' }
+              }
+            >
+              {isFollowing ? <Check size={12} className="text-violet-400" /> : <Plus size={12} />}
+              {isFollowing ? `Following${followerCount > 0 ? ` · ${followerCount}` : ''}` : 'Follow'}
+            </button>
+            <button onClick={handleCopyLink} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white/70 text-xs font-medium border border-white/20 hover:bg-white/10 transition-colors">
+              {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
+              {copied ? 'Copied!' : 'Invite'}
+            </button>
+          </div>
         </div>
 
         {/* Hero: cover + info side by side */}
