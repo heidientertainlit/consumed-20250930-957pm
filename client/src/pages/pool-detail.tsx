@@ -2640,14 +2640,18 @@ export default function PoolDetailPage() {
       title: convTitle.trim(),
       body: convBody.trim() || null,
       tag: convTag,
-    });
-    if (!error) {
-      setConvTitle('');
-      setConvBody('');
-      setConvTag('discussion');
-      setIsConvComposerOpen(false);
-      refetchTakes();
+    }).select('*, users:user_id(id, display_name, user_name)').single();
+    if (error) {
+      console.error('[room_takes insert error]', error);
+      toast({ title: 'Could not post conversation', description: error.message, variant: 'destructive' });
+      setSubmittingConv(false);
+      return;
     }
+    setConvTitle('');
+    setConvBody('');
+    setConvTag('discussion');
+    setIsConvComposerOpen(false);
+    await refetchTakes();
     setSubmittingConv(false);
   };
 
