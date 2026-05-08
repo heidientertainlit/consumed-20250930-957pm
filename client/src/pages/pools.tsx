@@ -1,16 +1,127 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, Tv, BookOpen, Film, Music } from "lucide-react";
+import { Search, X, Tv, BookOpen, Film, Music, Gamepad2, ChevronRight } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import Navigation from "@/components/navigation";
+import { createPortal } from "react-dom";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
+
+const MEDIA_TYPES = [
+  { id: 'tv',    label: 'TV Show', Icon: Tv },
+  { id: 'movie', label: 'Movie',   Icon: Film },
+  { id: 'book',  label: 'Book',    Icon: BookOpen },
+  { id: 'music', label: 'Music',   Icon: Music },
+  { id: 'game',  label: 'Game',    Icon: Gamepad2 },
+];
+
+function RequestRoomSheet({ onClose }: { onClose: () => void }) {
+  const [selectedType, setSelectedType] = useState('');
+  const [title, setTitle] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = () => {
+    if (!title.trim()) return;
+    setSubmitted(true);
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9998] flex flex-col justify-end">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
+      {/* Sheet */}
+      <div className="relative bg-white rounded-t-3xl px-5 pt-5 pb-10 w-full" style={{ maxHeight: '85vh', overflowY: 'auto' }}>
+        {/* Handle */}
+        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5" />
+
+        {/* Close */}
+        <button onClick={onClose} className="absolute top-5 right-5 text-gray-400 hover:text-gray-600">
+          <X size={20} />
+        </button>
+
+        {submitted ? (
+          <div className="text-center py-8">
+            <div className="text-4xl mb-3">🎉</div>
+            <h2 className="text-lg font-bold text-gray-900 mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>Request sent!</h2>
+            <p className="text-sm text-gray-500">We'll let you know when your room is ready.</p>
+            <button
+              onClick={onClose}
+              className="mt-6 w-full py-3 rounded-2xl text-sm font-semibold text-white"
+              style={{ background: '#7c3aed' }}
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+          <>
+            <h2 className="text-lg font-bold text-gray-900 mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>Request a Room</h2>
+            <p className="text-sm text-gray-500 mb-5">What media item would you like a room for?</p>
+
+            {/* Media type chips */}
+            <div className="flex flex-wrap gap-2 mb-5">
+              {MEDIA_TYPES.map(({ id, label, Icon }) => {
+                const active = selectedType === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setSelectedType(id)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all"
+                    style={active
+                      ? { background: '#7c3aed', color: '#fff', borderColor: '#7c3aed' }
+                      : { background: '#fff', color: '#6b7280', borderColor: '#e5e7eb' }
+                    }
+                  >
+                    <Icon size={13} />
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Title input */}
+            <div className="mb-6">
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                Title
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                placeholder={
+                  selectedType === 'tv'    ? 'e.g. The Bear, Severance…' :
+                  selectedType === 'movie' ? 'e.g. Dune, Inception…' :
+                  selectedType === 'book'  ? 'e.g. Fourth Wing, Atomic Habits…' :
+                  selectedType === 'music' ? 'e.g. Beyoncé, Taylor Swift…' :
+                  selectedType === 'game'  ? 'e.g. Elden Ring, Stardew Valley…' :
+                  'Start typing a title…'
+                }
+                className="w-full px-4 py-3 rounded-xl text-sm text-gray-800 placeholder:text-gray-400 outline-none border border-gray-200 focus:border-purple-400"
+              />
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              disabled={!title.trim()}
+              className="w-full py-3 rounded-2xl text-sm font-semibold text-white transition-opacity"
+              style={{ background: '#7c3aed', opacity: title.trim() ? 1 : 0.4 }}
+            >
+              Send Request
+            </button>
+          </>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 export default function PoolsPage() {
   const [, setLocation] = useLocation();
   const { session } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const [showRequest, setShowRequest] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['user-pools'],
@@ -48,7 +159,7 @@ export default function PoolsPage() {
       </div>
 
       <div className="bg-gray-50 px-4 pt-4 space-y-5 min-h-screen">
-        {/* Search bar — on the white background, above My Rooms */}
+        {/* Search bar */}
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           <input
@@ -101,9 +212,14 @@ export default function PoolsPage() {
 
         {/* Request a room */}
         <div className="pt-4 pb-2 text-center">
-          <p className="text-xs text-gray-400">Don't see your show? <span className="text-purple-500 font-medium">Request a room</span></p>
+          <button onClick={() => setShowRequest(true)} className="text-xs text-gray-400">
+            Don't see your show?{' '}
+            <span className="text-purple-500 font-medium">Request a room</span>
+          </button>
         </div>
       </div>
+
+      {showRequest && <RequestRoomSheet onClose={() => setShowRequest(false)} />}
     </div>
   );
 }
