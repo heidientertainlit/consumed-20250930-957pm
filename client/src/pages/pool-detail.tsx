@@ -903,99 +903,119 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
   const isPredict = post.post_type === 'predict' || post.post_type === 'prediction';
   const predictionQuestion = post.question || post.prediction_question || post.title;
 
+  // Determine type pill label + color
+  const typeConfig: Record<string, { label: string; color: string }> = {
+    rating:     { label: 'Rating',     color: '#f59e0b' },
+    rate_review:{ label: 'Review',     color: '#8b5cf6' },
+    review:     { label: 'Review',     color: '#8b5cf6' },
+    thought:    { label: 'Take',       color: '#7c3aed' },
+    hot_take:   { label: 'Hot Take',   color: '#ef4444' },
+    predict:    { label: 'Prediction', color: '#3b82f6' },
+    prediction: { label: 'Prediction', color: '#3b82f6' },
+    poll:       { label: 'Poll',       color: '#10b981' },
+    question:   { label: 'Question',   color: '#06b6d4' },
+  };
+  const pill = typeConfig[post.post_type] || { label: 'Post', color: '#6b7280' };
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div className="px-4 pt-3.5 pb-3">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-2.5">
+    <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+      <div className="px-3.5 pt-3 pb-2.5">
+        {/* Header row */}
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-400 to-blue-500 flex items-center justify-center text-white text-[11px] font-bold shrink-0">
               {initial}
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900 leading-tight">{displayName}</p>
-              <p className="text-[11px] text-gray-400">{timeAgo}</p>
+              <p className="text-[13px] font-semibold text-white/90 leading-tight">{displayName}</p>
+              <p className="text-[10px] text-white/35">{timeAgo}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: `${pill.color}22`, color: pill.color }}>
+              {pill.label}
+            </span>
             {isOwn && (
-              <button onClick={() => onDelete(post.id)} className="p-1 rounded-full hover:bg-red-50 transition-colors">
-                <Trash2 size={13} className="text-gray-300 hover:text-red-400" />
+              <button onClick={() => onDelete(post.id)} className="p-1 rounded-full transition-colors hover:bg-white/10">
+                <Trash2 size={12} className="text-white/20 hover:text-red-400" />
               </button>
             )}
           </div>
         </div>
 
-        {/* Prediction question */}
-        {isPredict && predictionQuestion && (
-          <div className="mb-2 px-3 py-2 rounded-xl bg-purple-50 border border-purple-100">
-            <p className="text-[10px] font-bold text-purple-500 uppercase tracking-wide mb-0.5">Prediction</p>
-            <p className="text-sm font-semibold text-purple-900 leading-snug">{predictionQuestion}</p>
-            {post.content && post.content !== predictionQuestion && (
-              <p className="text-xs text-purple-700 mt-1 italic">"{post.content}"</p>
+        {/* Media row: poster + title + stars */}
+        {post.media_title && (
+          <div className="flex gap-2.5 items-start mb-2">
+            {post.image_url && (
+              <img src={post.image_url} alt={post.media_title} className="w-9 h-12 rounded-lg object-cover shrink-0 opacity-90" />
             )}
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] font-semibold text-white/80 leading-snug line-clamp-2">{post.media_title}</p>
+              {isRateReview && post.rating > 0 && (
+                <div className="flex items-center gap-0.5 mt-0.5">
+                  {[1,2,3,4,5].map(s => (
+                    <Star key={s} size={11} className={s <= Math.round(post.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-white/15 fill-white/10'} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Star rating */}
-        {isRateReview && post.rating > 0 && (
-          <div className="flex items-center gap-0.5 mb-1.5">
-            {[1, 2, 3, 4, 5].map(s => (
-              <Star key={s} size={13} className={s <= Math.round(post.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-100'} />
-            ))}
+        {/* Prediction block */}
+        {isPredict && predictionQuestion && (
+          <div className="mb-2 px-2.5 py-2 rounded-xl" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.2)' }}>
+            <p className="text-[9px] font-bold text-indigo-300 uppercase tracking-wide mb-0.5">Prediction</p>
+            <p className="text-[12px] font-semibold text-white/90 leading-snug">{predictionQuestion}</p>
+            {post.content && post.content !== predictionQuestion && (
+              <p className="text-[11px] text-white/50 mt-0.5 italic">"{post.content}"</p>
+            )}
           </div>
         )}
 
         {/* Content */}
         {post.content && !isPredict && (
-          <p className="text-sm text-gray-800 leading-relaxed">{post.content}</p>
-        )}
-
-        {/* Media title (text only, no image) */}
-        {post.media_title && (
-          <p className="text-[11px] text-gray-400 mt-1.5">
-            re: <span className="font-medium text-gray-500">{post.media_title}</span>
-          </p>
+          <p className="text-[13px] text-white/65 leading-relaxed">{post.content}</p>
         )}
       </div>
 
-      {/* Action bar — matches feed card style */}
-      <div className="flex items-center gap-4 px-4 pt-2.5 pb-2.5 border-t border-gray-50">
+      {/* Action bar */}
+      <div className="flex items-center gap-4 px-3.5 py-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <button
           onClick={handleLike}
-          className={`flex items-center gap-1.5 transition-colors ${liked ? 'text-rose-500' : 'text-gray-400 hover:text-rose-400'}`}
+          className={`flex items-center gap-1 transition-colors ${liked ? 'text-rose-400' : 'text-white/30 hover:text-rose-400'}`}
         >
-          <Heart size={15} fill={liked ? 'currentColor' : 'none'} />
-          <span className="text-xs">{likeCount}</span>
+          <Heart size={13} fill={liked ? 'currentColor' : 'none'} />
+          <span className="text-[11px]">{likeCount}</span>
         </button>
         <button
           onClick={toggleComments}
-          className={`flex items-center gap-1.5 transition-colors ${commentsExpanded ? 'text-purple-500' : 'text-gray-400 hover:text-purple-400'}`}
+          className={`flex items-center gap-1 transition-colors ${commentsExpanded ? 'text-violet-400' : 'text-white/30 hover:text-violet-400'}`}
         >
-          <MessageCircle size={15} />
-          <span className="text-xs">{commentCount}</span>
+          <MessageCircle size={13} />
+          <span className="text-[11px]">{commentCount}</span>
         </button>
       </div>
 
-      {/* Comments section — matches feed card style */}
+      {/* Inline comments */}
       {commentsExpanded && (
-        <div className="border-t border-gray-100 px-4 pb-4 bg-gray-50/50">
+        <div className="px-3.5 pb-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           {loadingComments ? (
-            <p className="text-xs text-gray-400 text-center py-3">Loading...</p>
+            <p className="text-[11px] text-white/30 text-center py-3">Loading...</p>
           ) : comments.length === 0 ? (
-            <p className="text-xs text-gray-400 text-center py-3">No comments yet. Be the first!</p>
+            <p className="text-[11px] text-white/30 text-center py-3">No comments yet — be the first!</p>
           ) : (
-            <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pt-3 mb-2">
+            <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pt-2.5 mb-2">
               {comments.map((c: any) => {
                 const cName = (c.users as any)?.display_name || (c.users as any)?.user_name || 'Someone';
                 return (
                   <div key={c.id} className="flex items-start gap-2">
-                    <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
-                      <User size={12} className="text-purple-600" />
+                    <div className="w-5 h-5 rounded-full bg-violet-500/30 flex items-center justify-center flex-shrink-0">
+                      <span className="text-[9px] font-bold text-violet-300">{cName[0]?.toUpperCase()}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-xs font-semibold text-gray-800 mr-1">{cName}</span>
-                      <span className="text-xs text-gray-600">{c.content}</span>
+                      <span className="text-[11px] font-semibold text-white/70 mr-1">{cName}</span>
+                      <span className="text-[11px] text-white/50">{c.content}</span>
                     </div>
                   </div>
                 );
@@ -1010,14 +1030,15 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
                 onChange={e => setNewComment(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') submitComment(); }}
                 placeholder="Add a comment..."
-                className="flex-1 text-xs px-3 py-2 rounded-full border border-gray-200 focus:outline-none focus:border-purple-400 bg-white"
+                className="flex-1 text-[11px] px-3 py-1.5 rounded-full focus:outline-none focus:border-violet-500"
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)' }}
               />
               <button
                 onClick={submitComment}
                 disabled={!newComment.trim() || submittingComment}
-                className="p-2 rounded-full bg-purple-600 text-white disabled:opacity-50"
+                className="w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center disabled:opacity-40 shrink-0"
               >
-                <Send size={14} />
+                <Send size={12} className="text-white" />
               </button>
             </div>
           )}
