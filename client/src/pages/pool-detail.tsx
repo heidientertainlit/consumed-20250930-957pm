@@ -2912,29 +2912,13 @@ export default function PoolDetailPage() {
 
         {/* Room Vibe card */}
         {!isLoading && (
-          <div className="px-4 pb-3">
-            <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-3">Room Vibe</p>
-              <div className="flex items-start gap-3">
-                {/* Left: vibe info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-bold text-[15px] mb-1">{vibeEmoji} {roomVibe}</p>
-                  <p className="text-white/50 text-[12px] leading-snug mb-3">{vibeDesc}</p>
-                  {topTakeText && (
-                    <div className="mb-0">
-                      <p className="text-[10px] text-white/35 uppercase tracking-wider mb-1">Most agreed take:</p>
-                      <p className="text-[12px] text-white/70 italic leading-snug">"{topTakeText.length > 80 ? topTakeText.slice(0, 80) + '…' : topTakeText}"</p>
-                    </div>
-                  )}
-                </div>
-                {/* Right: match % card */}
-                <div className="shrink-0 w-[72px] rounded-xl px-2 py-2 text-center -mt-1" style={{ background: 'linear-gradient(135deg, #5b21b6, #4338ca)' }}>
-                  <p className="text-[7px] font-bold text-white/50 uppercase tracking-wider leading-none mb-1">You match</p>
-                  <p className="text-[20px] font-black text-white leading-none">{matchPct}%</p>
-                  <div className="h-[2px] rounded-full bg-white/20 overflow-hidden mt-1.5">
-                    <div className="h-full rounded-full bg-white/60" style={{ width: `${matchPct}%` }} />
-                  </div>
-                </div>
+          <div className="px-4 pb-2">
+            <div className="rounded-xl px-3 py-2 flex items-center gap-2" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest shrink-0">Vibe</span>
+              <span className="text-white/80 text-[12px] font-semibold flex-1 truncate">{vibeEmoji} {roomVibe}</span>
+              <div className="shrink-0 rounded-lg px-2 py-0.5 flex items-center gap-1" style={{ background: 'linear-gradient(135deg, #5b21b6, #4338ca)' }}>
+                <p className="text-[9px] font-bold text-white/60 uppercase tracking-wider leading-none">Match</p>
+                <p className="text-[13px] font-black text-white leading-none">{matchPct}%</p>
               </div>
             </div>
           </div>
