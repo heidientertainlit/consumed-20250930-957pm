@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation } from "wouter";
-import { Dices, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Gamepad2, MessageSquarePlus, Home, Star, DoorOpen } from "lucide-react";
+import { Dices, Wallet, Plus, Activity, BarChart3, Users, Bell, User, Search, X, ChevronDown, MessageCircle, Flame, Dna, Sparkles, Gamepad2, MessageSquarePlus, Home, Star, DoorOpen, Bookmark } from "lucide-react";
 import { FeedbackDialog } from "./feedback-dialog";
 import { NotificationBell } from "./notification-bell";
 import { useAuth } from "@/lib/auth";
@@ -68,6 +68,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [showAddMenu, setShowAddMenu] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [actionSheetMedia, setActionSheetMedia] = useState<any>(null);
   const [directCapture, setDirectCapture] = useState(false);
@@ -764,6 +765,52 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
 
       {createPortal(
         <nav className="fixed bottom-0 left-0 right-0 z-[9999]" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
+          {/* Add menu backdrop */}
+          {showAddMenu && (
+            <div
+              className="fixed inset-0 z-[-1]"
+              onClick={() => setShowAddMenu(false)}
+            />
+          )}
+
+          {/* Floating two-button fan-out */}
+          {showAddMenu && (
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 flex gap-5 items-center">
+              {/* Bookmark / Add to List */}
+              <div className="flex flex-col items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    setShowAddMenu(false);
+                    setIsSearchExpanded(true);
+                  }}
+                  className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
+                  style={{ background: '#7c3aed' }}
+                  aria-label="Add to list"
+                >
+                  <Bookmark size={24} className="text-white" fill="white" />
+                </button>
+                <span className="text-white text-[10px] font-medium">Save</span>
+              </div>
+
+              {/* Chat bubble / Compose */}
+              <div className="flex flex-col items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    setShowAddMenu(false);
+                    setDirectCapture(false);
+                    setIsQuickActionOpen(true);
+                  }}
+                  className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform relative"
+                  style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
+                  aria-label="Share a take"
+                >
+                  <MessageSquarePlus size={24} className="text-white" />
+                  <Star size={10} className="absolute top-1 right-1 fill-yellow-300 text-yellow-300" />
+                </button>
+                <span className="text-white text-[10px] font-medium">Post</span>
+              </div>
+            </div>
+          )}
           <div className="flex justify-around items-center px-2" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 8px), 8px)', paddingTop: '8px' }}>
             <Link href="/activity" className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all ${location === "/activity" ? "bg-gradient-to-b from-white/12 to-transparent" : "opacity-55"}`} data-testid="nav-activity">
               <div className="h-[22px] flex items-center justify-center"><Activity className="text-white" size={22} /></div>
@@ -774,13 +821,13 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               <span className="text-white text-[10px] mt-0.5">Play</span>
             </Link>
             <button
-              onClick={() => { setDirectCapture(true); setIsQuickActionOpen(true); }}
-              className="flex flex-col items-center justify-center p-2 opacity-55"
+              onClick={() => setShowAddMenu(v => !v)}
+              className={`flex flex-col items-center justify-center p-2 transition-all ${showAddMenu ? '' : 'opacity-55'}`}
               data-testid="nav-add"
               aria-label="Add"
             >
               <div className="h-[22px] flex items-center justify-center">
-                <Plus size={22} strokeWidth={1.8} className="text-white" />
+                <Bookmark size={21} strokeWidth={1.8} className="text-white" />
               </div>
               <span className="text-white text-[10px] mt-0.5">Add</span>
             </button>
