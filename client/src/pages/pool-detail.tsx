@@ -1815,91 +1815,101 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
   };
 
   if (!isPartnerRoom) {
-    // Group related pools by type
     const relatedTrivia = relatedPools.filter(p => p.type === 'trivia');
-    const relatedPredictions = relatedPools.filter(p => p.type === 'predict' || p.type === 'prediction');
     const relatedPolls = relatedPools.filter(p => p.type === 'poll');
 
-    const TYPE_BADGE: Record<string, { label: string; color: string; icon: string }> = {
-      trivia:     { label: 'Trivia',     color: '#7c3aed', icon: '🧠' },
-      predict:    { label: 'Prediction', color: '#0891b2', icon: '🎯' },
-      prediction: { label: 'Prediction', color: '#0891b2', icon: '🎯' },
-      poll:       { label: 'Poll',       color: '#059669', icon: '📊' },
-    };
-
-    const RelatedCard = ({ p }: { p: any }) => {
-      const badge = TYPE_BADGE[p.type] || { label: p.type, color: '#6b7280', icon: '▶' };
-      const opts: string[] = p.options || [];
+    // Single-card carousel for a group of pools
+    const PoolCarousel = ({ pools, label, icon, subtitle }: { pools: any[]; label: string; icon: string; subtitle: string }) => {
+      const [idx, setIdx] = useState(0);
+      if (!pools.length) return null;
+      const p = pools[idx];
+      const opts: string[] = Array.isArray(p.options) ? p.options : [];
       const vc: Record<string, number> = p.vote_counts || {};
       const total = Object.values(vc).reduce((s: number, n: any) => s + (n as number), 0);
+      const isTrivia = p.type === 'trivia';
+
       return (
-        <div className="rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #12102b 0%, #1e1654 55%, #2d1f6e 100%)' }}>
-          <div className="flex items-center gap-2 px-4 pt-3.5 pb-1.5">
-            <span className="text-sm">{badge.icon}</span>
-            <span className="text-[11px] font-bold tracking-widest uppercase" style={{ color: badge.color }}>{badge.label}</span>
-            {p.show_tag && <span className="text-[10px] text-white/35 ml-auto">{p.show_tag}</span>}
-          </div>
-          <div className="px-4 pb-3">
-            <p className="text-white/90 text-sm font-medium leading-snug mb-3">{p.title}</p>
-            {opts.length > 0 && (
-              <div className="space-y-1.5">
-                {opts.map((opt: string) => {
-                  const count = vc[opt] || 0;
-                  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                  return (
-                    <div key={opt} className="rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
-                      <div className="relative px-3 py-2">
-                        <div className="absolute inset-y-0 left-0 rounded-lg transition-all duration-500" style={{ width: `${pct}%`, background: 'rgba(139,92,246,0.22)' }} />
-                        <div className="relative flex items-center justify-between">
-                          <span className="text-xs text-white/80">{opt}</span>
-                          {total > 0 && <span className="text-[11px] font-medium text-white/40">{pct}%</span>}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+        <div className="mb-6">
+          {/* Section header with count */}
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-base shrink-0">{icon}</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-gray-900 leading-tight">{label}</p>
+              <p className="text-[11px] text-gray-400 leading-tight">{subtitle}</p>
+            </div>
+            {pools.length > 1 && (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  onClick={() => setIdx(i => Math.max(0, i - 1))}
+                  disabled={idx === 0}
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 transition-colors"
+                >
+                  <ChevronLeft size={14} className="text-gray-600" />
+                </button>
+                <span className="text-xs font-semibold text-gray-500 tabular-nums">{idx + 1}/{pools.length}</span>
+                <button
+                  onClick={() => setIdx(i => Math.min(pools.length - 1, i + 1))}
+                  disabled={idx === pools.length - 1}
+                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 transition-colors"
+                >
+                  <ChevronRight size={14} className="text-gray-600" />
+                </button>
               </div>
             )}
-            {p.points_reward > 0 && (
-              <p className="text-[10px] text-yellow-400/70 mt-2.5">⭐ {p.points_reward} pts</p>
+          </div>
+
+          {/* Card */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {p.show_tag && (
+              <p className="text-[10px] font-bold tracking-widest uppercase text-violet-600 px-4 pt-3.5 pb-0">{p.show_tag}</p>
             )}
+            <div className="px-4 pt-2.5 pb-4">
+              <p className="text-sm font-bold text-gray-900 leading-snug mb-3">{p.title}</p>
+              {opts.length > 0 && (
+                <div className="space-y-2">
+                  {opts.map((opt: string) => {
+                    const count = vc[opt] || 0;
+                    const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                    return (
+                      <div key={opt} className="rounded-xl border border-gray-200 overflow-hidden bg-gray-50">
+                        <div className="relative px-3.5 py-2.5">
+                          {total > 0 && (
+                            <div className="absolute inset-y-0 left-0 rounded-xl bg-violet-100 transition-all duration-500" style={{ width: `${pct}%` }} />
+                          )}
+                          <div className="relative flex items-center justify-between">
+                            <span className="text-xs text-gray-800">{opt}</span>
+                            {total > 0 && <span className="text-[11px] font-semibold text-violet-500">{pct}%</span>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              <div className="flex items-center justify-between mt-3">
+                <span className="text-[11px] text-gray-400">
+                  {total > 0 ? `${total} ${total === 1 ? 'vote' : 'votes'}` : isTrivia ? '+10 pts for correct answer' : 'Be the first to vote'}
+                </span>
+                {p.points_reward > 0 && (
+                  <span className="text-[11px] font-bold text-emerald-600">+{p.points_reward} pts</span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       );
     };
 
+    const hasContent = relatedTrivia.length > 0 || relatedPolls.length > 0 || picks.length > 0;
+
     return (
-      <div className="space-y-4">
-        {/* Related trivia */}
-        {relatedTrivia.length > 0 && (
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-0.5">Trivia</p>
-            <div className="space-y-2">{relatedTrivia.map(p => <RelatedCard key={p.id} p={p} />)}</div>
-          </div>
-        )}
-        {/* Related predictions */}
-        {relatedPredictions.length > 0 && (
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-0.5">Predictions</p>
-            <div className="space-y-2">{relatedPredictions.map(p => <RelatedCard key={p.id} p={p} />)}</div>
-          </div>
-        )}
-        {/* Related polls */}
-        {relatedPolls.length > 0 && (
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 px-0.5">Polls</p>
-            <div className="space-y-2">{relatedPolls.map(p => <RelatedCard key={p.id} p={p} />)}</div>
-          </div>
-        )}
+      <div>
+        <PoolCarousel pools={relatedTrivia} label="Trivia" icon="🧠" subtitle={`${relatedTrivia.length} question${relatedTrivia.length !== 1 ? 's' : ''}`} />
+        <PoolCarousel pools={relatedPolls} label="Polls" icon="📊" subtitle={`${relatedPolls.length} poll${relatedPolls.length !== 1 ? 's' : ''}`} />
         {picks.length > 0 && (
-          <PicksList
-            picks={picks}
-            isHost={isHost}
-            managingId={managingId}
-            onManagePick={onManagePick}
-          />
+          <PicksList picks={picks} isHost={isHost} managingId={managingId} onManagePick={onManagePick} />
         )}
-        {relatedTrivia.length === 0 && relatedPredictions.length === 0 && relatedPolls.length === 0 && picks.length === 0 && (
+        {!hasContent && (
           <div className="text-center py-12">
             <p className="text-gray-400 text-sm">No play content yet for this room.</p>
           </div>
@@ -2028,41 +2038,6 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
         </div>
       )}
 
-      {/* ── Cast Your Vote Section ── */}
-      {showVote && (
-        <div className="mb-2">
-          {showTrivia && headToHeadPolls.length + dnaPolls.length > 0 && <div className="pt-1 pb-3 border-t border-gray-100" />}
-          <PlaySectionHeader
-            icon={<Vote size={14} className="text-purple-600" />}
-            label="Cast Your Vote"
-            count={headToHeadPolls.length}
-          />
-          {headToHeadPolls.length === 0 && <PlayComingSoon label="Head-to-head polls" />}
-          <div className="space-y-2.5">
-            {headToHeadPolls.map(poll => (
-              <PlayPollCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Entertainment DNA Section ── */}
-      {showDna && (
-        <div className="mb-2">
-          {(showTrivia || showVote) && dnaPolls.length >= 0 && <div className="pt-1 pb-3 border-t border-gray-100" />}
-          <PlaySectionHeader
-            icon={<Zap size={14} className="text-purple-600" />}
-            label="Entertainment DNA"
-            count={dnaPolls.length}
-          />
-          {dnaPolls.length === 0 && <PlayComingSoon label="How-you-watch polls" />}
-          <div className="space-y-2.5">
-            {dnaPolls.map(poll => (
-              <PlayPollCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
-            ))}
-          </div>
-        </div>
-      )}
 
     </div>
     </>
