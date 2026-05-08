@@ -3055,29 +3055,19 @@ export default function PoolDetailPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setIsConvComposerOpen(true)}
-                    className="flex-1 flex items-center gap-2.5 rounded-2xl border shadow-sm px-4 py-3 text-left"
-                    style={{ background: 'linear-gradient(135deg, #1e1b4b, #312e81)', borderColor: '#3730a3' }}
+                    className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full text-white/80 text-sm font-medium transition-colors hover:text-white"
+                    style={{ background: 'rgba(139, 92, 246, 0.12)', border: '1px solid rgba(139, 92, 246, 0.25)' }}
                   >
-                    <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center shrink-0">
-                      <MessageSquare size={14} className="text-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[12px] font-semibold text-white">Start a conversation</p>
-                      <p className="text-[10px] text-white/60 leading-tight">Open a thread</p>
-                    </div>
+                    <MessageSquare size={14} />
+                    Start a conversation
                   </button>
                   <button
                     onClick={() => setIsComposerOpen(true)}
-                    className="flex-1 flex items-center gap-2.5 rounded-2xl border shadow-sm px-4 py-3 text-left"
-                    style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', borderColor: '#7c3aed' }}
+                    className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-full text-white/80 text-sm font-medium transition-colors hover:text-white"
+                    style={{ background: 'rgba(244, 114, 182, 0.10)', border: '1px solid rgba(244, 114, 182, 0.22)' }}
                   >
-                    <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center shrink-0">
-                      <Flame size={14} className="text-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[12px] font-semibold text-white">Drop a take</p>
-                      <p className="text-[10px] text-white/60 leading-tight">Review, poll, predict</p>
-                    </div>
+                    <Star size={14} className="text-pink-400" />
+                    Drop a take
                   </button>
                 </div>
               ) : (
