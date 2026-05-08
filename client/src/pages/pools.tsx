@@ -40,30 +40,31 @@ export default function PoolsPage() {
     <div className="min-h-screen pb-24" style={{ backgroundColor: '#0a0a0f' }}>
       <Navigation />
       <div style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
-        <div className="flex flex-col items-center pt-8 pb-5 px-4 gap-4">
+        <div className="flex flex-col items-center pt-8 pb-5 px-4">
           <div className="w-full flex items-center justify-between max-w-sm">
             <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>Rooms</h1>
-          </div>
-          <div className="relative w-full max-w-sm">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Search rooms..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-9 py-2.5 rounded-xl text-sm text-white placeholder:text-white/35 outline-none"
-              style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}
-            />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70">
-                <X size={14} />
-              </button>
-            )}
           </div>
         </div>
       </div>
 
       <div className="bg-gray-50 px-4 pt-4 space-y-5 min-h-screen">
+        {/* Search bar — on the white background, above My Rooms */}
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search rooms..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-9 py-2.5 rounded-xl text-sm text-gray-800 placeholder:text-gray-400 outline-none bg-white border border-gray-200"
+          />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
         {isLoading && (
           <div className="space-y-3">
             {[1, 2].map(i => <div key={i} className="h-24 rounded-2xl bg-gray-200 animate-pulse" />)}
@@ -97,6 +98,11 @@ export default function PoolsPage() {
             </p>
           </div>
         )}
+
+        {/* Request a room */}
+        <div className="pt-4 pb-2 text-center">
+          <p className="text-xs text-gray-400">Don't see your show? <span className="text-purple-500 font-medium">Request a room</span></p>
+        </div>
       </div>
     </div>
   );
