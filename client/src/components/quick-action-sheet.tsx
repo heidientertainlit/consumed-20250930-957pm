@@ -958,6 +958,9 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           <div>
             {!selectedMedia ? (
               <>
+                {trackPostType === 'review' && (
+                  <p className="text-xs text-gray-400 mb-1.5">Media required to post a review.</p>
+                )}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input
