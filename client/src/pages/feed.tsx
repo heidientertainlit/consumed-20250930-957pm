@@ -1201,9 +1201,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         onClick={handleCommentToggle}
         className="ml-auto flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
       >
+        <span>Join the discussion</span>
         <MessageCircle size={14} />
         <span>{Math.max(post.comments || 0, comments.length)}</span>
-        <span>Join the discussion</span>
       </button>
     </div>
   );
@@ -1726,7 +1726,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             )}
             <div className={`${post.content ? '' : 'pt-2 '}border-t border-gray-50`}>{actionFirstBar}</div>
             {/* Discussion thread — always visible for action-first cards */}
-            <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="mt-1">
               {/* Existing comments preview */}
               {!showComments && !loadingComments && comments.length > 0 && (
                 <div className="pl-2 mb-2 space-y-2">
@@ -2088,12 +2088,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   </div>
                 );
               })}
-              {/* View more link */}
-              {Math.max(post.comments || 0, comments.length) > comments.length && (
-                <button className="text-xs font-semibold text-violet-500 hover:text-violet-700 transition-colors pt-1 pl-8">
-                  View all {Math.max(post.comments || 0, comments.length)} replies →
-                </button>
-              )}
               {/* New comment composer */}
               {session && (
                 <div className="flex items-center gap-2.5 pt-2 mt-1 border-t border-gray-100">
