@@ -84,17 +84,8 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
       
       if (error) throw error;
       
-      // Filter out polls user has already voted on
-      let votedPoolIds: string[] = [];
-      if (user?.id) {
-        const { data: userPredictions } = await supabase
-          .from('user_predictions')
-          .select('pool_id')
-          .eq('user_id', user.id);
-        votedPoolIds = (userPredictions || []).map(p => p.pool_id);
-      }
-      
-      const unvotedPools = (pools || []).filter(pool => !votedPoolIds.includes(pool.id) && pool.origin_type !== 'user');
+      // Keep all polls — voted ones are sorted to the end in lockedOrder, not hidden
+      const unvotedPools = (pools || []).filter(pool => pool.origin_type !== 'user');
       
       const uniqueTitles = new Map<string, any>();
       for (const pool of unvotedPools) {
@@ -438,7 +429,15 @@ export function PollsCarousel({ expanded = false, category }: PollsCarouselProps
           
           return (
             <div key={poll.id} className="flex-shrink-0 w-full snap-center">
-              <h3 className="text-gray-900 font-semibold text-base mb-3">{poll.title}</h3>
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <h3 className="text-gray-900 font-semibold text-base leading-snug flex-1">{poll.title}</h3>
+                {voted && (
+                  <span className="flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-700 text-[10px] font-bold">
+                    <Check className="w-2.5 h-2.5" />
+                    Voted
+                  </span>
+                )}
+              </div>
               
               {!voted ? (
                 <div className="grid grid-cols-2 gap-2">
