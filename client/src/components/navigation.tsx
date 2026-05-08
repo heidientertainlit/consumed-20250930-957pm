@@ -827,7 +827,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
               aria-label="Add"
             >
               <div className="h-[22px] flex items-center justify-center">
-                <Bookmark size={21} strokeWidth={1.8} className="text-white" />
+                <Plus size={22} strokeWidth={1.8} className="text-white" />
               </div>
               <span className="text-white text-[10px] mt-0.5">Add</span>
             </button>
