@@ -3019,7 +3019,7 @@ export default function PoolDetailPage() {
             hot_take:   { label: 'Hot Take',   color: '#ea580c', bg: '#fff7ed', icon: '🔥' },
             debate:     { label: 'Debate',     color: '#dc2626', bg: '#fef2f2', icon: '⚡' },
             theory:     { label: 'Theory',     color: '#7c3aed', bg: '#f5f3ff', icon: '💡' },
-            discussion: { label: 'Discussion', color: '#8b5cf6', bg: '#faf5ff', icon: '💬' },
+            discussion: { label: 'Conversation', color: '#8b5cf6', bg: '#faf5ff', icon: '💬' },
             ranking:    { label: 'Ranking',    color: '#2563eb', bg: '#eff6ff', icon: '📊' },
             question:   { label: 'Question',   color: '#059669', bg: '#f0fdf4', icon: '❓' },
             thought:    { label: 'Take',       color: '#7c3aed', bg: '#f5f3ff', icon: '💬' },
@@ -3135,12 +3135,36 @@ export default function PoolDetailPage() {
                           </div>
                           <p className="text-[13px] font-semibold text-gray-800 leading-snug">{t.title}</p>
                           {t.body && <p className="text-[12px] text-gray-500 leading-relaxed mt-1">{t.body}</p>}
-                          <button
-                            onClick={() => setActiveTake(t)}
-                            className="flex items-center gap-1 mt-2 text-[11px] text-gray-400 hover:text-purple-500 transition-colors"
-                          >
-                            <MessageSquare size={11} />{t.reply_count || 0} {t.reply_count === 1 ? 'reply' : 'replies'}
-                          </button>
+                          {/* Action row */}
+                          <div className="flex items-center gap-4 mt-2.5 pt-2 border-t border-gray-100">
+                            <button
+                              onClick={() => handleVoteTake(t.id, 1)}
+                              className={`flex items-center gap-1 text-[11px] transition-colors ${myVote?.vote === 1 ? 'text-purple-600 font-semibold' : 'text-gray-400 hover:text-purple-500'}`}
+                            >
+                              <ChevronUp size={13} />
+                              <span>Upvote</span>
+                            </button>
+                            <button
+                              className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-rose-400 transition-colors"
+                            >
+                              <Heart size={12} />
+                              <span>Like</span>
+                            </button>
+                            <button
+                              onClick={() => handleVoteTake(t.id, -1)}
+                              className={`flex items-center gap-1 text-[11px] transition-colors ${myVote?.vote === -1 ? 'text-red-400 font-semibold' : 'text-gray-400 hover:text-red-400'}`}
+                            >
+                              <ThumbsDown size={12} />
+                              <span>Dislike</span>
+                            </button>
+                            <button
+                              onClick={() => setActiveTake(t)}
+                              className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-purple-500 transition-colors ml-auto"
+                            >
+                              <MessageSquare size={12} />
+                              <span>{t.reply_count || 0} {t.reply_count === 1 ? 'reply' : 'replies'}</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -3336,7 +3360,7 @@ export default function PoolDetailPage() {
                   ranking:    { label: 'Ranking',     colorClass: 'text-blue-600 bg-blue-50' },
                   hot_take:   { label: 'Hot Take',    colorClass: 'text-orange-600 bg-orange-50' },
                   question:   { label: 'Question',    colorClass: 'text-green-600 bg-green-50' },
-                  discussion: { label: 'Discussion',  colorClass: 'text-purple-600 bg-purple-50' },
+                  discussion: { label: 'Conversation', colorClass: 'text-purple-600 bg-purple-50' },
                 };
                 const tagCfg = TAG_CONFIG[activeTake.tag] || TAG_CONFIG.discussion;
                 const author = activeTake.users?.display_name || activeTake.users?.user_name || 'Fan';
