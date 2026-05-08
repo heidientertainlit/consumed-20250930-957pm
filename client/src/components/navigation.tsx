@@ -766,7 +766,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
       </div>
 
       {createPortal(
-        <nav className="fixed bottom-0 left-0 right-0 z-[9999]" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)' }}>
+        <nav className="fixed bottom-0 left-0 right-0 z-[9999]" style={{ background: 'linear-gradient(to right, #0a0a0f, #12121f, #2d1f4e)', WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)', WebkitBackfaceVisibility: 'hidden', backfaceVisibility: 'hidden' }}>
           {/* Add menu backdrop */}
           {showAddMenu && (
             <div

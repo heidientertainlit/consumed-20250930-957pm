@@ -109,6 +109,7 @@
     background: var(--dark-primary);
     min-height: 100vh;
     min-height: 100dvh;
+    overscroll-behavior: none;
   }
 
   /* Safe area padding for iOS devices */
@@ -116,13 +117,16 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Force bottom navigation to stay fixed at bottom */
+  /* Force bottom navigation to stay fixed at bottom on iOS Safari */
   nav[class*="fixed bottom-0"] {
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    transform: none !important;
+    -webkit-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
     font-family: 'Poppins', sans-serif;
     color: hsl(0, 0%, 98%);
   }
