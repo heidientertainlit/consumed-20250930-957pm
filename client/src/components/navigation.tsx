@@ -666,7 +666,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                                 onClick={(e) => { e.stopPropagation(); setQuickAddMedia(mediaObj); setIsQuickAddOpen(true); }}
                                 className="w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors"
                               >
-                                <Plus size={16} className="text-white" />
+                                <Bookmark size={15} className="text-white" fill="white" />
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setActionSheetMedia(mediaObj); setIsQuickActionOpen(true); }}
@@ -716,7 +716,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                                         onClick={(e) => { e.stopPropagation(); setQuickAddMedia(bObj); setIsQuickAddOpen(true); }}
                                         className="w-7 h-7 rounded-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center transition-colors flex-shrink-0"
                                       >
-                                        <Plus size={13} className="text-white" />
+                                        <Bookmark size={13} className="text-white" fill="white" />
                                       </button>
                                     </div>
                                   );
