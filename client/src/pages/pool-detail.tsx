@@ -2992,12 +2992,8 @@ export default function PoolDetailPage() {
 
         {/* ── LIVE — Coming Soon ── */}
         {!isLoading && tab === 'live' && (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mb-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse block" />
-            </div>
-            <p className="text-gray-800 font-semibold text-base">Live is coming soon</p>
-            <p className="text-gray-400 text-sm text-center max-w-xs leading-relaxed">Real-time watch parties, live reactions, and synchronized viewing experiences — all in one place.</p>
+          <div className="flex flex-col items-center justify-center py-20 gap-2">
+            <p className="text-gray-500 font-semibold text-base">Coming Soon</p>
           </div>
         )}
 
@@ -3205,68 +3201,6 @@ export default function PoolDetailPage() {
                 })}
               </div>
 
-              {/* ── Activity feed ── */}
-              <div className="space-y-2">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-0.5">Activity</p>
-
-                {/* Room-tagged prediction_pools first */}
-                {activityPolls.map((poll: any) => (
-                  <PlayPollCard key={`pool-${poll.id}`} poll={poll} token={token} onVoted={() => {}} />
-                ))}
-
-                {activityPosts.length === 0 && activityPolls.length === 0 && (
-                  <div className="bg-white rounded-2xl border border-dashed border-gray-200 py-8 text-center">
-                    <p className="text-gray-400 text-sm">No activity yet</p>
-                  </div>
-                )}
-
-                {activityPosts.map((post: any) => {
-                  const isBingeBattle = post.post_type === 'binge_battle';
-                  const isPredict = post.post_type === 'predict' || post.post_type === 'prediction';
-                  const isPoll = post.post_type === 'poll';
-                  if (isBingeBattle) {
-                    return (
-                      <BingeBattleFeedCard
-                        key={post.id}
-                        post={{ id: post.id, content: post.content || '', image_url: post.image_url || '', media_title: post.media_title || '', timestamp: post.created_at, user: { displayName: post.users?.display_name, username: post.users?.user_name } }}
-                        isOwn={post.user_id === session?.user?.id}
-                        onDelete={async (id: string) => { await supabase.from('social_posts').delete().eq('id', id); refetchRoomPosts(); }}
-                      />
-                    );
-                  }
-                  if (isPredict || isPoll) {
-                    return <RoomPredictionCard key={post.id} post={post} currentUserId={session?.user?.id || null} />;
-                  }
-                  return (
-                    <RoomPostCard
-                      key={post.id}
-                      post={post}
-                      currentUserId={session?.user?.id}
-                      onDelete={async (id: string) => { await supabase.from('social_posts').delete().eq('id', id); refetchRoomPosts(); }}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Top Fans — inline below feed */}
-              {topContributors.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Top Fans</p>
-                  <div className="flex items-center gap-3">
-                    {topContributors.map((c, i) => (
-                      <div key={i} className="flex items-center gap-1.5">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 ${avatarColor(c.name)}`}>
-                          {c.name[0].toUpperCase()}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[11px] font-semibold text-gray-800 truncate">{c.name}</p>
-                          <p className="text-[9px] text-gray-400">{c.pts} pts</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
             </div>
           );
@@ -3291,12 +3225,8 @@ export default function PoolDetailPage() {
         {!isLoading && tab === 'stats' && (
           <div className="space-y-4">
             {/* Stats placeholder */}
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mb-1">
-                <BarChart2 size={22} className="text-purple-400" />
-              </div>
-              <p className="text-gray-800 font-semibold text-base">Stats coming soon</p>
-              <p className="text-gray-400 text-sm text-center max-w-xs leading-relaxed">Fan rankings, engagement streaks, top contributors, and room heat maps — all on their way.</p>
+            <div className="flex flex-col items-center justify-center py-12 gap-2">
+              <p className="text-gray-500 font-semibold text-base">Coming Soon</p>
             </div>
 
             {/* Host Settings */}
