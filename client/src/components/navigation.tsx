@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { QuickActionSheet } from "./quick-action-sheet";
 import { useFeatureFlags } from "@/lib/feature-flags";
 import { QuickAddListSheet } from "./quick-add-list-sheet";
+import { SaveMediaSheet } from "./save-media-sheet";
 
 interface NavigationProps {
   onTrackConsumption?: () => void;
@@ -69,6 +70,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
+  const [isSaveMediaOpen, setIsSaveMediaOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [actionSheetMedia, setActionSheetMedia] = useState<any>(null);
   const [directCapture, setDirectCapture] = useState(false);
@@ -781,8 +783,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                 <button
                   onClick={() => {
                     setShowAddMenu(false);
-                    setIsSearchExpanded(true);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    setIsSaveMediaOpen(true);
                   }}
                   className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform"
                   style={{ background: '#7c3aed' }}
@@ -864,6 +865,12 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
         isOpen={isQuickAddOpen}
         onClose={() => { setIsQuickAddOpen(false); setQuickAddMedia(null); }}
         media={quickAddMedia}
+      />
+
+      {/* Save Media Sheet (search → list picker) */}
+      <SaveMediaSheet
+        isOpen={isSaveMediaOpen}
+        onClose={() => setIsSaveMediaOpen(false)}
       />
 
       {/* Feedback Dialog */}
