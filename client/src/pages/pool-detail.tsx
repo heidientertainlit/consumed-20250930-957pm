@@ -1973,25 +1973,121 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
       )}
     <div className="pb-4">
 
-      {/* ── Cast Your Vote: polls section (partner rooms only) ── */}
-      {pollsOnly.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-              <Vote size={14} className="text-purple-600" />
+      {/* ── Cast Your Vote: polls carousel (partner rooms only) ── */}
+      {pollsOnly.length > 0 && (() => {
+        const PollCarousel = () => {
+          const { toast } = useToast();
+          const [idx, setIdx] = useState(0);
+          const [votes, setVotes] = useState<Record<string, string>>(() => {
+            const init: Record<string, string> = {};
+            for (const p of pollsOnly) if (p.user_vote) init[p.id] = p.user_vote;
+            return init;
+          });
+          const [counts, setCounts] = useState<Record<string, Record<string, number>>>(() => {
+            const init: Record<string, Record<string, number>> = {};
+            for (const p of pollsOnly) init[p.id] = p.vote_counts || {};
+            return init;
+          });
+          const [submitting, setSubmitting] = useState(false);
+
+          const poll = pollsOnly[idx];
+          const myVote = votes[poll.id] || null;
+          const hasVoted = !!myVote;
+          const pollCounts = counts[poll.id] || {};
+          const total = Object.values(pollCounts).reduce((s: number, n: any) => s + n, 0);
+
+          const catRaw = (poll.category || poll.media_external_source || 'TV').toLowerCase();
+          const catLabel = catRaw === 'tv' || catRaw === 'tv-show' || catRaw === 'tv show' ? 'TV'
+            : catRaw === 'movie' || catRaw === 'movies' ? 'Movie'
+            : catRaw === 'book' || catRaw === 'books' ? 'Book'
+            : catRaw === 'music' ? 'Music'
+            : (poll.category || 'TV');
+
+          const handleVote = async (option: string) => {
+            if (hasVoted || submitting) return;
+            setSubmitting(true);
+            setVotes(v => ({ ...v, [poll.id]: option }));
+            setCounts(c => ({ ...c, [poll.id]: { ...(c[poll.id] || {}), [option]: ((c[poll.id] || {})[option] || 0) + 1 } }));
+            try {
+              const res = await fetch(`${SUPABASE_URL}/functions/v1/predictions`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pool_id: poll.id, prediction: option }),
+              });
+              const d = await res.json();
+              if (d.error) {
+                setVotes(v => { const n = { ...v }; delete n[poll.id]; return n; });
+                setCounts(c => ({ ...c, [poll.id]: { ...(c[poll.id] || {}), [option]: Math.max(0, ((c[poll.id] || {})[option] || 1) - 1) } }));
+                toast({ title: d.error, variant: 'destructive' });
+              } else { onRefresh(); }
+            } catch { toast({ title: 'Network error', variant: 'destructive' }); }
+            setSubmitting(false);
+          };
+
+          return (
+            <div className="mb-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center justify-center px-2 h-7 rounded-full bg-blue-100 text-blue-700 text-[11px] font-bold min-w-[32px]">
+                    {catLabel}
+                  </span>
+                  <p className="text-sm font-semibold text-gray-900">Cast Your Vote</p>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-gray-400 font-medium">{idx + 1}/{pollsOnly.length}</span>
+                  {idx < pollsOnly.length - 1 && (
+                    <button onClick={() => setIdx(i => i + 1)} className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                      <ChevronRight size={14} className="text-gray-600" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Question */}
+              <h3 className="text-gray-900 font-semibold text-base leading-snug mb-3">{poll.title}</h3>
+
+              {/* Options: 2×2 grid before voting, bar list after */}
+              {!hasVoted ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {(poll.options || []).slice(0, 4).map((opt: string) => (
+                    <button
+                      key={opt}
+                      onClick={() => handleVote(opt)}
+                      disabled={submitting}
+                      className="min-h-[72px] py-3 px-3 rounded-2xl border border-gray-200 bg-gray-50 text-[14px] font-medium text-gray-700 transition-all hover:bg-purple-50 hover:border-purple-200 flex items-center justify-center text-center leading-tight"
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {(poll.options || []).map((opt: string) => {
+                    const pct = total > 0 ? Math.round(((pollCounts[opt] || 0) / total) * 100) : 0;
+                    const isMyPick = opt === myVote;
+                    return (
+                      <div key={opt} className={`relative rounded-xl border overflow-hidden ${isMyPick ? 'border-purple-300' : 'border-gray-200'}`}>
+                        <div className={`absolute inset-y-0 left-0 transition-all duration-700 ${isMyPick ? 'bg-purple-100' : 'bg-gray-100'}`} style={{ width: `${pct}%` }} />
+                        <div className="relative px-3 py-2.5 flex items-center justify-between">
+                          <span className={`text-sm font-medium ${isMyPick ? 'text-purple-700' : 'text-gray-700'}`}>{opt}</span>
+                          <span className="text-[11px] font-semibold text-gray-400">{pct}%</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <p className="text-[11px] text-gray-400 pt-0.5">{total} {total === 1 ? 'vote' : 'votes'}</p>
+                </div>
+              )}
+
+              {!hasVoted && (
+                <p className="text-right text-[12px] font-semibold text-green-500 mt-2">+{poll.points_reward || 5} pts</p>
+              )}
             </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900 leading-tight">Cast Your Vote</p>
-              <p className="text-[11px] text-gray-400 leading-tight">{pollsOnly.length} poll{pollsOnly.length !== 1 ? 's' : ''}</p>
-            </div>
-          </div>
-          <div className="space-y-3">
-            {pollsOnly.map(poll => (
-              <PlayPollCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
-            ))}
-          </div>
-        </div>
-      )}
+          );
+        };
+        return <PollCarousel />;
+      })()}
 
       {/* ── Trivia Section ── */}
       {showTrivia && (
