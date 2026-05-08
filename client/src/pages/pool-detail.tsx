@@ -3004,10 +3004,10 @@ export default function PoolDetailPage() {
             thought:    { label: 'Take',       color: '#7c3aed', bg: '#f5f3ff', icon: '💬' },
           };
 
-          // ── Conversations: only room_takes table entries ──
+          // ── Conversations: only room_takes table entries, sorted by upvotes ──
           const allTakes = takes
             .map((t: any) => ({ ...t, _source: 'room_take' }))
-            .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            .sort((a: any, b: any) => (b.upvotes || 0) - (a.upvotes || 0));
 
           // ── Activity: predictions, polls, reviews, thoughts/hot_takes ──
           const activityPosts = roomPosts.filter((p: any) => {
@@ -3073,27 +3073,39 @@ export default function PoolDetailPage() {
                     <p className="text-gray-400 text-sm">No conversations yet — start one!</p>
                   </div>
                 )}
-                {allTakes.map((t: any) => {
+                {allTakes.map((t: any, idx: number) => {
+                  const isTop = idx === 0 && (t.upvotes || 0) > 0;
                   const tagInfo = TAG_CONFIG[t.tag] || TAG_CONFIG.discussion;
                   const tName = t.users?.display_name || t.users?.user_name || 'Fan';
                   return (
                     <button key={t.id} onClick={() => setActiveTake(t)} className="w-full text-left">
-                      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-3">
-                        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0 ${avatarColor(tName)}`}>
-                            {tName[0].toUpperCase()}
+                      <div className={`rounded-2xl border shadow-sm overflow-hidden ${isTop ? 'border-purple-200/60' : 'border-gray-100 bg-white'}`}
+                        style={isTop ? { background: 'linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%)' } : {}}>
+                        <div className="flex">
+                          {/* Upvote column */}
+                          <div className={`flex flex-col items-center justify-start pt-4 px-3 gap-0.5 ${isTop ? 'bg-purple-100/40' : 'bg-gray-50'}`}>
+                            <ChevronUp size={16} className={isTop ? 'text-purple-500' : 'text-gray-400'} />
+                            <span className={`text-[11px] font-bold tabular-nums ${isTop ? 'text-purple-600' : 'text-gray-500'}`}>{t.upvotes || 0}</span>
                           </div>
-                          <span className="text-[11px] font-semibold text-gray-700">{tName}</span>
-                          <span className="text-[10px] text-gray-400">· {timeAgo(t.created_at)}</span>
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full ml-auto" style={{ color: tagInfo.color, background: tagInfo.bg }}>
-                            {tagInfo.icon} {tagInfo.label}
-                          </span>
-                        </div>
-                        <p className="text-[13px] font-semibold text-gray-800 leading-snug">{t.title}</p>
-                        {t.body && <p className="text-[12px] text-gray-500 leading-relaxed line-clamp-2 mt-0.5">{t.body}</p>}
-                        <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-400">
-                          <span className="flex items-center gap-1"><MessageSquare size={11} />{t.reply_count || 0} replies</span>
-                          <span className="text-purple-400 font-medium">View thread →</span>
+                          {/* Content */}
+                          <div className="flex-1 p-3 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0 ${avatarColor(tName)}`}>
+                                {tName[0].toUpperCase()}
+                              </div>
+                              <span className="text-[11px] font-semibold text-gray-700">{tName}</span>
+                              <span className="text-[10px] text-gray-400">· {timeAgo(t.created_at)}</span>
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full ml-auto" style={{ color: tagInfo.color, background: tagInfo.bg }}>
+                                {tagInfo.icon} {tagInfo.label}
+                              </span>
+                            </div>
+                            <p className="text-[13px] font-semibold text-gray-800 leading-snug">{t.title}</p>
+                            {t.body && <p className="text-[12px] text-gray-500 leading-relaxed line-clamp-2 mt-0.5">{t.body}</p>}
+                            <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-400">
+                              <span className="flex items-center gap-1"><MessageSquare size={11} />{t.reply_count || 0} replies</span>
+                              <span className="text-purple-400 font-medium">View thread →</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </button>
