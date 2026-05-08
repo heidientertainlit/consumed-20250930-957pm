@@ -3031,11 +3031,49 @@ export default function PoolDetailPage() {
                 </div>
               )}
 
-              {/* ── Takes section header ── */}
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-0.5">Takes</p>
+              {/* ── Featured Takes (top 1–2 by upvotes) ── */}
+              {filteredTakes.length > 0 && (() => {
+                const featured = filteredTakes.slice(0, 2);
+                return (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-0.5">🔥 Hot Takes</p>
+                    {featured.map((t: any) => {
+                      const tagInfo = TAG_CONFIG[t.tag] || TAG_CONFIG.discussion;
+                      const tName = t.users?.display_name || t.users?.user_name || 'Fan';
+                      return (
+                        <button key={`feat-${t.id}`} onClick={() => setActiveTake(t)} className="w-full text-left">
+                          <div className="rounded-2xl p-4 border border-purple-200/60" style={{ background: 'linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%)' }}>
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ${avatarColor(tName)}`}>
+                                  {tName[0].toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-[12px] font-semibold text-gray-900 leading-tight">{tName}</p>
+                                  <p className="text-[10px] text-gray-400">{timeAgo(t.created_at)}</p>
+                                </div>
+                              </div>
+                              <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: tagInfo.color, background: tagInfo.bg }}>
+                                {tagInfo.icon} {tagInfo.label}
+                              </span>
+                            </div>
+                            <p className="text-[13px] font-semibold text-gray-800 leading-snug mb-1">{t.title}</p>
+                            {t.body && <p className="text-[12px] text-gray-600 leading-relaxed line-clamp-2">{t.body}</p>}
+                            <div className="flex items-center gap-3 mt-3 text-[11px] text-purple-500">
+                              <span className="flex items-center gap-1"><ThumbsUp size={11} />{t.upvotes || 0}</span>
+                              <span className="flex items-center gap-1"><MessageSquare size={11} />{t.reply_count || 0} replies</span>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
 
-              {/* ── Takes feed ── */}
+              {/* ── All Takes ── */}
               <div className="space-y-2">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-0.5">Takes</p>
                 {filteredTakes.length === 0 && (
                   <div className="bg-white rounded-2xl border border-dashed border-gray-200 py-8 text-center">
                     <p className="text-gray-400 text-sm">No takes yet — be the first!</p>
@@ -3073,37 +3111,41 @@ export default function PoolDetailPage() {
                 })}
               </div>
 
-              {/* ── Activity / social posts ── */}
-              {activityForFeed.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-0.5">Activity</p>
-                  {activityForFeed.map((post: any) => {
-                    const isBingeBattle = post.post_type === 'binge_battle';
-                    const isPredict = post.post_type === 'predict' || post.post_type === 'prediction';
-                    if (isBingeBattle) {
-                      return (
-                        <BingeBattleFeedCard
-                          key={post.id}
-                          post={{ id: post.id, content: post.content || '', image_url: post.image_url || '', media_title: post.media_title || '', timestamp: post.created_at, user: { displayName: post.users?.display_name, username: post.users?.user_name } }}
-                          isOwn={post.user_id === session?.user?.id}
-                          onDelete={async (id: string) => { await supabase.from('social_posts').delete().eq('id', id); refetchRoomPosts(); }}
-                        />
-                      );
-                    }
-                    if (isPredict) {
-                      return <RoomPredictionCard key={post.id} post={post} currentUserId={session?.user?.id || null} />;
-                    }
+              {/* ── Activity feed ── */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-0.5">Activity</p>
+                {activityForFeed.length === 0 && (
+                  <div className="bg-white rounded-2xl border border-dashed border-gray-200 py-8 text-center">
+                    <p className="text-gray-400 text-sm">No activity yet</p>
+                  </div>
+                )}
+                {activityForFeed.map((post: any) => {
+                  const isBingeBattle = post.post_type === 'binge_battle';
+                  const isPredict = post.post_type === 'predict' || post.post_type === 'prediction';
+                  const isPoll = post.post_type === 'poll';
+                  if (isBingeBattle) {
                     return (
-                      <RoomPostCard
+                      <BingeBattleFeedCard
                         key={post.id}
-                        post={post}
-                        currentUserId={session?.user?.id}
+                        post={{ id: post.id, content: post.content || '', image_url: post.image_url || '', media_title: post.media_title || '', timestamp: post.created_at, user: { displayName: post.users?.display_name, username: post.users?.user_name } }}
+                        isOwn={post.user_id === session?.user?.id}
                         onDelete={async (id: string) => { await supabase.from('social_posts').delete().eq('id', id); refetchRoomPosts(); }}
                       />
                     );
-                  })}
-                </div>
-              )}
+                  }
+                  if (isPredict || isPoll) {
+                    return <RoomPredictionCard key={post.id} post={post} currentUserId={session?.user?.id || null} />;
+                  }
+                  return (
+                    <RoomPostCard
+                      key={post.id}
+                      post={post}
+                      currentUserId={session?.user?.id}
+                      onDelete={async (id: string) => { await supabase.from('social_posts').delete().eq('id', id); refetchRoomPosts(); }}
+                    />
+                  );
+                })}
+              </div>
 
               {/* Top Fans — inline below feed */}
               {topContributors.length > 0 && (
