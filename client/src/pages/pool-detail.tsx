@@ -2005,36 +2005,59 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
 
       {/* ── Trivia Section ── */}
       {showTrivia && (
-        <div className="mb-2">
-          <PlaySectionHeader
-            icon={<Brain size={14} className="text-purple-600" />}
-            label="Trivia"
-            count={triviaPolls.length}
-          />
-
+        <div className="mb-4">
           {showGroups.length === 0 && !showSearch && <PlayComingSoon label="Trivia" />}
           {showGroups.length === 0 && showSearch && (
             <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-5 px-4 text-center mb-4">
               <p className="text-gray-400 text-sm">No shows matching "{showSearch}"</p>
             </div>
           )}
-
-          {showGroups.map(([show, questions]) => (
-            <div key={show} className="mb-4">
-              {(showGroups.length > 1 || showSearch) && (
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Tv size={11} className="text-gray-400" />
-                  <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{show}</span>
-                  <span className="text-[10px] text-gray-300">· {questions.length} {questions.length === 1 ? 'question' : 'questions'}</span>
+          {showGroups.map(([show, questions]) => {
+            const TriviaCarousel = () => {
+              const [idx, setIdx] = useState(0);
+              const q = questions[idx];
+              return (
+                <div className="mb-6">
+                  {/* Header */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+                      <Brain size={14} className="text-purple-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-gray-900 leading-tight">Trivia</p>
+                      <p className="text-[11px] text-gray-400 leading-tight">
+                        {questions.length} question{questions.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    {questions.length > 1 && (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          onClick={() => setIdx(i => Math.max(0, i - 1))}
+                          disabled={idx === 0}
+                          className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 transition-colors"
+                        >
+                          <ChevronLeft size={14} className="text-gray-600" />
+                        </button>
+                        <span className="text-xs font-semibold text-gray-500 tabular-nums">{idx + 1}/{questions.length}</span>
+                        <button
+                          onClick={() => setIdx(i => Math.min(questions.length - 1, i + 1))}
+                          disabled={idx === questions.length - 1}
+                          className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 transition-colors"
+                        >
+                          <ChevronRight size={14} className="text-gray-600" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <PlayTriviaCard key={q.id} poll={q} token={token} onVoted={(correct) => {
+                    handleTriviaAnswered(correct);
+                    if (idx < questions.length - 1) setTimeout(() => setIdx(i => i + 1), 800);
+                  }} />
                 </div>
-              )}
-              <div className="space-y-2.5">
-                {questions.map(poll => (
-                  <PlayTriviaCard key={poll.id} poll={poll} token={token} onVoted={handleTriviaAnswered} />
-                ))}
-              </div>
-            </div>
-          ))}
+              );
+            };
+            return <TriviaCarousel key={show} />;
+          })}
         </div>
       )}
 
