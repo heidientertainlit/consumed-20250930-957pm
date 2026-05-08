@@ -2968,142 +2968,123 @@ export default function PoolDetailPage() {
 
         {/* ── ROOM — Fan room feed ── */}
         {!isLoading && tab === 'room' && (() => {
-          // All room posts worth showing — everything except silent list-add noise
+          const TAG_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
+            hot_take:   { label: 'Hot Take',   color: '#ea580c', bg: '#fff7ed', icon: '🔥' },
+            debate:     { label: 'Debate',     color: '#dc2626', bg: '#fef2f2', icon: '⚡' },
+            theory:     { label: 'Theory',     color: '#7c3aed', bg: '#f5f3ff', icon: '💡' },
+            discussion: { label: 'Discussion', color: '#8b5cf6', bg: '#faf5ff', icon: '💬' },
+            ranking:    { label: 'Ranking',    color: '#2563eb', bg: '#eff6ff', icon: '📊' },
+            question:   { label: 'Question',   color: '#059669', bg: '#f0fdf4', icon: '❓' },
+            thought:    { label: 'Take',       color: '#7c3aed', bg: '#f5f3ff', icon: '💬' },
+          };
+
+          // ── Takes: room_takes table + thought/hot_take social posts merged ──
+          const thoughtPosts = roomPosts.filter((p: any) =>
+            p.post_type === 'thought' || p.post_type === 'hot_take'
+          );
+          const takesFromTable = takes.map((t: any) => ({ ...t, _source: 'room_take' }));
+          const takesFromPosts = thoughtPosts.map((p: any) => ({
+            id: p.id,
+            title: p.content || '',
+            body: null,
+            tag: p.post_type === 'hot_take' ? 'hot_take' : 'thought',
+            upvotes: p.likes_count || 0,
+            reply_count: p.comment_count || 0,
+            created_at: p.created_at,
+            users: p.users,
+            _source: 'social_post',
+            _post: p,
+          }));
+          const allTakes = [...takesFromTable, ...takesFromPosts]
+            .sort((a: any, b: any) => (b.upvotes || 0) - (a.upvotes || 0));
+
+          // ── Activity: predictions, polls, reviews — not thoughts ──
           const activityPosts = roomPosts.filter((p: any) => {
+            const isThought = p.post_type === 'thought' || p.post_type === 'hot_take';
+            const isListAdd = p.post_type === 'track' || p.post_type === 'add_media' || p.post_type === 'list_add'
+              || (p.content && /^added .+ to /i.test(p.content.trim()));
             const hasContent = p.content && p.content.trim().length > 0;
             const hasRating = p.rating && p.rating > 0;
             const isPredict = p.post_type === 'predict' || p.post_type === 'prediction';
-            const hasPredictQ = isPredict && (p.question || p.prediction_question || p.title);
             const isPoll = p.post_type === 'poll';
-            const isListAdd = p.post_type === 'track' || p.post_type === 'add_media' || p.post_type === 'list_add'
-              || (hasContent && /^added .+ to /i.test(p.content.trim()));
-            return (hasContent || hasPredictQ || isPoll || hasRating) && !isListAdd;
+            const hasPredictQ = isPredict && (p.question || p.prediction_question || p.title);
+            return !isThought && !isListAdd && (hasContent || hasPredictQ || isPoll || hasRating);
           });
-          const activityForFeed = activityPosts;
 
-          // ── Derived sidebar data ──
-          const TAG_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-            hot_take: { label: 'Hot Take', color: '#ea580c', bg: '#fff7ed', icon: '🔥' },
-            debate:   { label: 'Debate',   color: '#dc2626', bg: '#fef2f2', icon: '⚡' },
-            theory:   { label: 'Theory',   color: '#7c3aed', bg: '#f5f3ff', icon: '💡' },
-            discussion:{ label: 'Discussion', color: '#8b5cf6', bg: '#faf5ff', icon: '💬' },
-            ranking:  { label: 'Ranking',  color: '#2563eb', bg: '#eff6ff', icon: '📊' },
-            question: { label: 'Question', color: '#059669', bg: '#f0fdf4', icon: '❓' },
-          };
-          // All takes sorted by upvotes
-          const filteredTakes = [...takes].sort((a: any, b: any) => (b.upvotes || 0) - (a.upvotes || 0));
-
-          // Top take for sidebar pulse
-          const topTake = [...takes].sort((a: any, b: any) => (b.upvotes || 0) - (a.upvotes || 0))[0];
-          // matchPct, roomVibe, topContributors are hoisted to main component scope above
+          // Featured polls from prediction_pools (room-tagged) go first in activity
+          const activityPolls = featuredPolls.filter((p: any) =>
+            p.type === 'poll' || p.type === 'predict'
+          );
 
           return (
-            <div className="space-y-3">
+            <div className="space-y-4">
 
-              {/* Composer */}
+              {/* ── Composer — minimal Reddit-style prompt ── */}
               {isMember ? (
                 <button onClick={() => setIsComposerOpen(true)} className="w-full text-left">
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3">
-                    <div className="flex items-center gap-2.5 mb-3">
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 ${avatarColor(myName || '?')}`}>
-                        {(myName?.[0] || session?.user?.email?.[0] || '?').toUpperCase()}
-                      </div>
-                      <p className="flex-1 text-[14px] text-gray-400">What's your take on {pool?.name || 'this room'}?</p>
+                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ${avatarColor(myName || '?')}`}>
+                      {(myName?.[0] || session?.user?.email?.[0] || '?').toUpperCase()}
                     </div>
-                    <div className="flex items-center border-t border-gray-100 pt-2.5 gap-0.5">
-                      {[
-                        { label: 'Take', icon: <Flame size={11} /> },
-                        { label: 'Poll', icon: <BarChart2 size={11} /> },
-                        { label: 'Rank', icon: <ListOrdered size={11} /> },
-                        { label: 'Prediction', icon: <TrendingUp size={11} /> },
-                      ].map(btn => (
-                        <div key={btn.label} className="flex items-center gap-1 px-2 py-1 text-gray-500 text-[11px] font-medium">
-                          {btn.icon}<span>{btn.label}</span>
-                        </div>
-                      ))}
-                      <div className="ml-auto px-3.5 py-1.5 rounded-full text-white text-[12px] font-semibold" style={{ background: '#7c3aed' }}>Post</div>
+                    <span className="flex-1 text-[13px] text-gray-400">Start a thread, take, or poll…</span>
+                    <div className="flex items-center gap-2 text-gray-300">
+                      <Flame size={15} />
+                      <BarChart2 size={15} />
+                      <TrendingUp size={15} />
                     </div>
                   </div>
                 </button>
               ) : (
                 <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-4 px-4 text-center">
-                  <p className="text-gray-400 text-sm">Join this room to drop takes</p>
+                  <p className="text-gray-400 text-sm">Join this room to participate</p>
                 </div>
               )}
 
-              {/* ── Featured Takes (top 1–2 by upvotes) ── */}
-              {filteredTakes.length > 0 && (() => {
-                const featured = filteredTakes.slice(0, 2);
-                return (
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-0.5">🔥 Hot Takes</p>
-                    {featured.map((t: any) => {
-                      const tagInfo = TAG_CONFIG[t.tag] || TAG_CONFIG.discussion;
-                      const tName = t.users?.display_name || t.users?.user_name || 'Fan';
-                      return (
-                        <button key={`feat-${t.id}`} onClick={() => setActiveTake(t)} className="w-full text-left">
-                          <div className="rounded-2xl p-4 border border-purple-200/60" style={{ background: 'linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%)' }}>
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ${avatarColor(tName)}`}>
-                                  {tName[0].toUpperCase()}
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="text-[12px] font-semibold text-gray-900 leading-tight">{tName}</p>
-                                  <p className="text-[10px] text-gray-400">{timeAgo(t.created_at)}</p>
-                                </div>
-                              </div>
-                              <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: tagInfo.color, background: tagInfo.bg }}>
-                                {tagInfo.icon} {tagInfo.label}
-                              </span>
-                            </div>
-                            <p className="text-[13px] font-semibold text-gray-800 leading-snug mb-1">{t.title}</p>
-                            {t.body && <p className="text-[12px] text-gray-600 leading-relaxed line-clamp-2">{t.body}</p>}
-                            <div className="flex items-center gap-3 mt-3 text-[11px] text-purple-500">
-                              <span className="flex items-center gap-1"><ThumbsUp size={11} />{t.upvotes || 0}</span>
-                              <span className="flex items-center gap-1"><MessageSquare size={11} />{t.reply_count || 0} replies</span>
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-
-              {/* ── All Takes ── */}
+              {/* ── Takes section ── */}
               <div className="space-y-2">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-0.5">Takes</p>
-                {filteredTakes.length === 0 && (
+                {allTakes.length === 0 && (
                   <div className="bg-white rounded-2xl border border-dashed border-gray-200 py-8 text-center">
                     <p className="text-gray-400 text-sm">No takes yet — be the first!</p>
                   </div>
                 )}
-                {filteredTakes.map((t: any) => {
+                {allTakes.map((t: any, idx: number) => {
+                  const isHot = idx < 2 && (t.upvotes || 0) > 0;
                   const tagInfo = TAG_CONFIG[t.tag] || TAG_CONFIG.discussion;
                   const tName = t.users?.display_name || t.users?.user_name || 'Fan';
+                  const handleTakeClick = () => {
+                    if (t._source === 'social_post') return; // no thread detail for social posts yet
+                    setActiveTake(t);
+                  };
                   return (
-                    <button key={t.id} onClick={() => setActiveTake(t)} className="w-full text-left">
-                      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 ${avatarColor(tName)}`}>
-                              {tName[0].toUpperCase()}
+                    <button key={t.id} onClick={handleTakeClick} className="w-full text-left">
+                      <div className={`rounded-2xl border shadow-sm overflow-hidden ${isHot ? 'border-purple-200/60' : 'border-gray-100 bg-white'}`}
+                        style={isHot ? { background: 'linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%)' } : {}}>
+                        <div className="flex">
+                          {/* Reddit-style upvote column */}
+                          <div className={`flex flex-col items-center justify-start pt-4 px-3 gap-0.5 ${isHot ? 'bg-purple-100/40' : 'bg-gray-50'}`}>
+                            <ChevronUp size={16} className={isHot ? 'text-purple-500' : 'text-gray-400'} />
+                            <span className={`text-[11px] font-bold tabular-nums ${isHot ? 'text-purple-600' : 'text-gray-500'}`}>{t.upvotes || 0}</span>
+                          </div>
+                          {/* Content */}
+                          <div className="flex-1 p-3 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0 ${avatarColor(tName)}`}>
+                                {tName[0].toUpperCase()}
+                              </div>
+                              <span className="text-[11px] font-semibold text-gray-700">{tName}</span>
+                              <span className="text-[10px] text-gray-400">· {timeAgo(t.created_at)}</span>
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full ml-auto" style={{ color: tagInfo.color, background: tagInfo.bg }}>
+                                {tagInfo.icon} {tagInfo.label}
+                              </span>
                             </div>
-                            <div className="min-w-0">
-                              <p className="text-[12px] font-semibold text-gray-900 leading-tight">{tName}</p>
-                              <p className="text-[10px] text-gray-400">{timeAgo(t.created_at)}</p>
+                            <p className="text-[13px] font-semibold text-gray-800 leading-snug">{t.title}</p>
+                            {t.body && <p className="text-[12px] text-gray-500 leading-relaxed line-clamp-2 mt-0.5">{t.body}</p>}
+                            <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-400">
+                              <span className="flex items-center gap-1"><MessageSquare size={11} />{t.reply_count || 0} replies</span>
+                              {t._source === 'room_take' && <span className="text-purple-400 font-medium">View thread →</span>}
                             </div>
                           </div>
-                          <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: tagInfo.color, background: tagInfo.bg }}>
-                            {tagInfo.icon} {tagInfo.label}
-                          </span>
-                        </div>
-                        <p className="text-[13px] font-semibold text-gray-800 leading-snug mb-1">{t.title}</p>
-                        {t.body && <p className="text-[12px] text-gray-500 leading-relaxed line-clamp-2">{t.body}</p>}
-                        <div className="flex items-center gap-3 mt-3 text-[11px] text-gray-400">
-                          <span className="flex items-center gap-1"><ThumbsUp size={11} />{t.upvotes || 0}</span>
-                          <span className="flex items-center gap-1"><MessageSquare size={11} />{t.reply_count || 0}</span>
                         </div>
                       </div>
                     </button>
@@ -3114,12 +3095,19 @@ export default function PoolDetailPage() {
               {/* ── Activity feed ── */}
               <div className="space-y-2">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-0.5">Activity</p>
-                {activityForFeed.length === 0 && (
+
+                {/* Room-tagged prediction_pools first */}
+                {activityPolls.map((poll: any) => (
+                  <PlayPollCard key={`pool-${poll.id}`} poll={poll} token={token} onVoted={() => {}} />
+                ))}
+
+                {activityPosts.length === 0 && activityPolls.length === 0 && (
                   <div className="bg-white rounded-2xl border border-dashed border-gray-200 py-8 text-center">
                     <p className="text-gray-400 text-sm">No activity yet</p>
                   </div>
                 )}
-                {activityForFeed.map((post: any) => {
+
+                {activityPosts.map((post: any) => {
                   const isBingeBattle = post.post_type === 'binge_battle';
                   const isPredict = post.post_type === 'predict' || post.post_type === 'prediction';
                   const isPoll = post.post_type === 'poll';
