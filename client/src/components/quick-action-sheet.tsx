@@ -1598,7 +1598,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   return (
     <>
     <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <SheetContent side="bottom" className="rounded-t-3xl h-[92svh] !bg-white flex flex-col overflow-hidden p-0" style={{ backgroundColor: 'white', height: '92svh' }}>
+      <SheetContent side="bottom" className="rounded-t-3xl h-[92svh] !bg-white flex flex-col overflow-hidden p-0 !shadow-none !border-0 !outline-none" style={{ backgroundColor: 'white', height: '92svh', boxShadow: 'none', border: 'none' }}>
         {/* ── Gradient header ── */}
         <div
           className="flex-shrink-0 rounded-t-3xl px-5 pt-7 pb-7 flex items-center relative"
