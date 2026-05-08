@@ -832,7 +832,13 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
               ] as const).map(({ key, label, icon }) => (
                 <button
                   key={key}
-                  onClick={() => setTrackPostType(key)}
+                  onClick={() => {
+                    if (key === 'rank') {
+                      setShowCreateRankDialog(true);
+                    } else {
+                      setTrackPostType(key);
+                    }
+                  }}
                   className={`flex items-center gap-0.5 px-2 py-0.5 text-[11px] font-medium transition-colors whitespace-nowrap rounded-full ${
                     trackPostType === key ? 'text-purple-700 bg-purple-50' : 'text-gray-400 hover:text-gray-600'
                   }`}
@@ -922,39 +928,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
             </button>
           )}
 
-          {/* ── Rank selector ── */}
-          {trackPostType === 'rank' && (
-            <div className="space-y-3">
-              {userRanks.length === 0 ? (
-                <div className="text-center py-4">
-                  <Trophy size={28} className="text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500 mb-1">No ranked lists yet</p>
-                  <button type="button" onClick={() => setShowCreateRankDialog(true)} className="text-sm text-purple-600 font-medium">
-                    Create a ranked list →
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Add to which rank?</p>
-                  <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                    {userRanks.map((rank: any) => (
-                      <button key={rank.id} type="button" onClick={() => setSelectedRankId(rank.id)}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-sm text-left transition-colors ${
-                          selectedRankId === rank.id ? 'bg-purple-50 border-purple-300 text-purple-800' : 'bg-gray-50 border-gray-200 text-gray-700 hover:border-gray-300'
-                        }`}>
-                        <Trophy size={14} className={selectedRankId === rank.id ? 'text-purple-500' : 'text-gray-400'} />
-                        <span className="flex-1 truncate">{rank.title}</span>
-                        {selectedRankId === rank.id && <Check size={14} className="text-purple-500 shrink-0" />}
-                      </button>
-                    ))}
-                  </div>
-                  <button type="button" onClick={() => setShowCreateRankDialog(true)} className="text-xs text-purple-600 font-medium">
-                    + Create new ranked list
-                  </button>
-                </>
-              )}
-            </div>
-          )}
 
           {/* ── Attach media section ── */}
           <div>
