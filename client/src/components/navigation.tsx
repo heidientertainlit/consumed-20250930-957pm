@@ -777,7 +777,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
 
           {/* Floating two-button fan-out */}
           {showAddMenu && (
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 flex gap-5 items-center">
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 flex gap-5 items-center px-6 py-4 rounded-3xl" style={{ background: 'rgba(15, 10, 30, 0.92)', backdropFilter: 'blur(12px)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
               {/* Bookmark / Add to List */}
               <div className="flex flex-col items-center gap-1.5">
                 <button
