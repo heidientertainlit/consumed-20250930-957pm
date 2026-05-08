@@ -2652,9 +2652,30 @@ export default function PoolDetailPage() {
     }
     setTogglingFollow(true);
     if (isFollowing) {
-      await supabase.from('room_follows').delete().eq('room_id', params.id).eq('user_id', currentUserId);
+      await Promise.all([
+        supabase.from('room_follows').delete().eq('room_id', params.id).eq('user_id', currentUserId),
+        supabase.from('user_interest_signals').delete().eq('user_id', currentUserId).eq('source_type', 'room_follow').eq('source_id', params.id),
+      ]);
     } else {
-      await supabase.from('room_follows').insert({ room_id: params.id, user_id: currentUserId });
+      const roomTags: string[] = [
+        ...(pool?.tags || []),
+        ...(pool?.media_tags || []),
+        pool?.category,
+        pool?.media_type,
+      ].filter(Boolean) as string[];
+      await Promise.all([
+        supabase.from('room_follows').insert({ room_id: params.id, user_id: currentUserId }),
+        supabase.from('user_interest_signals').upsert({
+          user_id: currentUserId,
+          source_type: 'room_follow',
+          source_id: params.id,
+          category: pool?.category || null,
+          media_title: pool?.media_title || null,
+          media_source: pool?.media_external_source || null,
+          tags: roomTags.length > 0 ? roomTags : null,
+          weight: 1.0,
+        }, { onConflict: 'user_id,source_type,source_id' }),
+      ]);
     }
     await refetchFollow();
     setTogglingFollow(false);

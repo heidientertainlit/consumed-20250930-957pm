@@ -149,6 +149,14 @@ serve(async (req) => {
       .eq('user_id', userId)
       .limit(20);
 
+    // 8. Room Interest Signals (from room follows)
+    const { data: interestSignals } = await supabase
+      .from('user_interest_signals')
+      .select('source_type, category, media_title, media_source, tags, weight')
+      .eq('user_id', userId)
+      .order('weight', { ascending: false })
+      .limit(30);
+
     const userProfile = {
       dnaProfile: dnaProfile ? {
         label: dnaProfile.label,
@@ -182,7 +190,14 @@ serve(async (req) => {
       followedCreators: followedCreators?.map(c => ({
         name: c.creator_name,
         role: c.creator_role
-      })) || []
+      })) || [],
+      interestSignals: interestSignals?.map(s => ({
+        type: s.source_type,
+        category: s.category,
+        mediaTitle: s.media_title,
+        tags: s.tags,
+        weight: s.weight,
+      })) || [],
     };
 
     console.log('User profile compiled:', {
@@ -192,7 +207,8 @@ serve(async (req) => {
       ratingsCount: userProfile.highlyRated.length,
       postsCount: userProfile.socialActivity.length,
       listsCount: userProfile.customListThemes.length,
-      followedCreatorsCount: userProfile.followedCreators.length
+      followedCreatorsCount: userProfile.followedCreators.length,
+      interestSignalsCount: userProfile.interestSignals.length,
     });
 
     // Build AI prompt
@@ -227,8 +243,18 @@ ${userProfile.customListThemes.join(', ') || 'None'}
 Followed Creators (${userProfile.followedCreators.length}):
 ${userProfile.followedCreators.slice(0, 15).map(c => `- ${c.name} (${c.role})`).join('\n') || 'None'}
 
+Room & Interest Signals (${userProfile.interestSignals.length} explicit interests):
+${userProfile.interestSignals.length > 0
+  ? userProfile.interestSignals.map(s => {
+      const parts = [`[${s.category || s.type}]`];
+      if (s.mediaTitle) parts.push(s.mediaTitle);
+      if (s.tags?.length) parts.push(`tags: ${s.tags.join(', ')}`);
+      return `- ${parts.join(' — ')}`;
+    }).join('\n')
+  : 'None'}
+
 TASK:
-Generate 8-10 personalized entertainment recommendations based on ALL the data above. Consider patterns in their consumption, ratings, engagement, AND the creators they follow. If they follow specific directors, musicians, or authors, PRIORITIZE recommending new/recent work from those creators or similar artists.
+Generate 8-10 personalized entertainment recommendations based on ALL the data above. Consider patterns in their consumption, ratings, engagement, the creators they follow, AND their explicit Room & Interest Signals. If they follow specific directors, musicians, or authors, PRIORITIZE recommending new/recent work from those creators or similar artists. Room interest signals represent the user's strongest current interests — weight them heavily when genres/categories/tags overlap with other signals.
 
 For each recommendation, provide:
 - title: exact title (must be real, existing media)
