@@ -2641,8 +2641,10 @@ export default function PoolDetailPage() {
     },
     enabled: !!params.id,
   });
-  const isFollowing = followData?.following ?? false;
+  const serverFollowing = followData?.following ?? false;
   const followerCount = followData?.count ?? 0;
+  const [optimisticFollowing, setOptimisticFollowing] = useState<boolean | null>(null);
+  const isFollowing = optimisticFollowing !== null ? optimisticFollowing : serverFollowing;
   const [togglingFollow, setTogglingFollow] = useState(false);
 
   const handleFollowToggle = async () => {
@@ -2650,8 +2652,10 @@ export default function PoolDetailPage() {
       toast({ title: 'Sign in to follow rooms' });
       return;
     }
+    const next = !isFollowing;
+    setOptimisticFollowing(next);
     setTogglingFollow(true);
-    if (isFollowing) {
+    if (!next) {
       await Promise.all([
         supabase.from('room_follows').delete().eq('room_id', params.id).eq('user_id', currentUserId),
         supabase.from('user_interest_signals').delete().eq('user_id', currentUserId).eq('source_type', 'room_follow').eq('source_id', params.id),
@@ -2678,8 +2682,9 @@ export default function PoolDetailPage() {
       ]);
     }
     await refetchFollow();
+    setOptimisticFollowing(null); // hand back to server truth
     setTogglingFollow(false);
-    toast({ title: isFollowing ? 'Unfollowed room' : 'Following! You\'ll be notified of new posts.' });
+    toast({ title: next ? 'Following! You\'ll be notified of new posts.' : 'Unfollowed room' });
   };
 
   const { data: myTakeVotes, refetch: refetchMyVotes } = useQuery({
