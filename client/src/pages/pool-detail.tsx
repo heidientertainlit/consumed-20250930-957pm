@@ -3158,8 +3158,8 @@ export default function PoolDetailPage() {
                               <span>Dislike</span>
                             </button>
                             <button
-                              onClick={() => setActiveTake(t)}
-                              className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-purple-500 transition-colors ml-auto"
+                              onClick={() => { setActiveTake(activeTake?.id === t.id ? null : t); setTakeReplyText(''); setReplyingToReplyId(null); }}
+                              className={`flex items-center gap-1 text-[11px] transition-colors ml-auto ${activeTake?.id === t.id ? 'text-purple-500 font-semibold' : 'text-gray-400 hover:text-purple-500'}`}
                             >
                               <MessageSquare size={12} />
                               <span>{t.reply_count || 0} {t.reply_count === 1 ? 'reply' : 'replies'}</span>
@@ -3167,6 +3167,84 @@ export default function PoolDetailPage() {
                           </div>
                         </div>
                       </div>
+
+                      {/* ── Inline reply thread ── */}
+                      {activeTake?.id === t.id && (
+                        <div className="border-t border-gray-100 bg-gray-50/60">
+                          {/* Replies */}
+                          <div className="px-4 pt-3 pb-1 space-y-3 max-h-72 overflow-y-auto">
+                            {activeThreadReplies.length === 0 && (
+                              <p className="text-xs text-gray-400 text-center py-2">No replies yet — jump in!</p>
+                            )}
+                            {activeThreadReplies.map((reply: any) => {
+                              const rAuthor = reply.users?.display_name || reply.users?.user_name || 'Fan';
+                              const rVote = (myTakeVotes || []).find((v: any) => v.reply_id === reply.id);
+                              const isNested = !!reply.parent_reply_id;
+                              const parentReply = isNested ? activeThreadReplies.find((r: any) => r.id === reply.parent_reply_id) : null;
+                              const parentAuthor = parentReply?.users?.display_name || parentReply?.users?.user_name;
+                              return (
+                                <div key={reply.id} className={isNested ? 'ml-5 border-l-2 border-purple-100 pl-3' : ''}>
+                                  {isNested && parentAuthor && (
+                                    <p className="text-[10px] text-gray-400 mb-0.5">↩ replying to {parentAuthor}</p>
+                                  )}
+                                  <div className="flex items-start gap-2">
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0 mt-0.5 ${avatarColor(rAuthor)}`}>
+                                      {rAuthor[0].toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-1.5 mb-0.5">
+                                        <span className="text-xs font-semibold text-gray-800">{rAuthor}</span>
+                                        <span className="text-[10px] text-gray-400">{timeAgo(reply.created_at)}</span>
+                                      </div>
+                                      <p className="text-sm text-gray-700 leading-relaxed">{reply.content}</p>
+                                      <div className="flex items-center gap-3 mt-1">
+                                        <button onClick={() => handleVoteReply(reply.id, 1)} className={`flex items-center gap-0.5 text-[11px] transition-colors ${rVote?.vote === 1 ? 'text-purple-600' : 'text-gray-400 hover:text-purple-500'}`}>
+                                          <ArrowUp size={11} />{reply.upvotes || 0}
+                                        </button>
+                                        <button onClick={() => handleVoteReply(reply.id, -1)} className={`flex items-center gap-0.5 text-[11px] transition-colors ${rVote?.vote === -1 ? 'text-rose-500' : 'text-gray-400 hover:text-rose-400'}`}>
+                                          <ArrowDown size={11} />{reply.downvotes || 0}
+                                        </button>
+                                        {isMember && (
+                                          <button onClick={() => setReplyingToReplyId(reply.id)} className="text-[11px] text-gray-400 hover:text-purple-500">Reply</button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Compose */}
+                          {isMember && (
+                            <div className="px-4 pb-3 pt-2">
+                              {replyingToReplyId && (
+                                <div className="flex items-center gap-1 mb-1">
+                                  <span className="text-[10px] text-gray-400">Replying to a comment</span>
+                                  <button onClick={() => setReplyingToReplyId(null)} className="text-[10px] text-purple-500 ml-1">Cancel</button>
+                                </div>
+                              )}
+                              <div className="flex items-end gap-2">
+                                <input
+                                  type="text"
+                                  value={takeReplyText}
+                                  onChange={e => setTakeReplyText(e.target.value)}
+                                  onKeyDown={e => { if (e.key === 'Enter') handleSubmitTakeReply(); }}
+                                  placeholder="Jump in…"
+                                  className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 bg-white"
+                                />
+                                <button
+                                  onClick={handleSubmitTakeReply}
+                                  disabled={!takeReplyText.trim() || submittingTakeReply}
+                                  className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center disabled:opacity-40 shrink-0"
+                                >
+                                  <Send size={15} className="text-white" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -3345,135 +3423,6 @@ export default function PoolDetailPage() {
       </div>
 
 
-      {/* ── Take Thread Sheet ── */}
-      {activeTake && (
-        <div className="fixed inset-0 z-50 flex items-end" onClick={() => { setActiveTake(null); setTakeReplyText(''); setReplyingToReplyId(null); }}>
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative w-full bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[92vh]" onClick={e => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-0 shrink-0" />
-
-            {/* Thread header */}
-            <div className="px-5 pt-4 pb-3 border-b border-gray-100 shrink-0">
-              {(() => {
-                const TAG_CONFIG: Record<string, { label: string; colorClass: string }> = {
-                  debate:     { label: 'Debate',      colorClass: 'text-rose-600 bg-rose-50' },
-                  ranking:    { label: 'Ranking',     colorClass: 'text-blue-600 bg-blue-50' },
-                  hot_take:   { label: 'Hot Take',    colorClass: 'text-orange-600 bg-orange-50' },
-                  question:   { label: 'Question',    colorClass: 'text-green-600 bg-green-50' },
-                  discussion: { label: 'Conversation', colorClass: 'text-purple-600 bg-purple-50' },
-                };
-                const tagCfg = TAG_CONFIG[activeTake.tag] || TAG_CONFIG.discussion;
-                const author = activeTake.users?.display_name || activeTake.users?.user_name || 'Fan';
-                return (
-                  <>
-                    <div className="flex items-start gap-2 mb-1">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${tagCfg.colorClass}`}>{tagCfg.label}</span>
-                      <p className="text-gray-900 text-base font-bold leading-snug">{activeTake.title}</p>
-                    </div>
-                    {activeTake.body && <p className="text-gray-600 text-sm leading-relaxed mb-2">{activeTake.body}</p>}
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
-                      <AvatarCircle name={author} size="sm" />
-                      <span className="font-medium text-gray-600">{author}</span>
-                      <span>·</span>
-                      <span>{timeAgo(activeTake.created_at)}</span>
-                      <button
-                        onClick={() => handleVoteTake(activeTake.id, 1)}
-                        className={`ml-auto flex items-center gap-1 ${(myTakeVotes || []).find((v: any) => v.take_id === activeTake.id && !v.reply_id)?.vote === 1 ? 'text-purple-600' : 'text-gray-400'}`}
-                      >
-                        <ArrowUp size={13} /><span>{activeTake.upvotes || 0}</span>
-                      </button>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-
-            {/* Replies list */}
-            <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
-              {activeThreadReplies.length === 0 && (
-                <div className="text-center py-8">
-                  <MessageCircle size={24} className="text-gray-200 mx-auto mb-2" />
-                  <p className="text-gray-400 text-sm">No replies yet — jump in!</p>
-                </div>
-              )}
-              {activeThreadReplies.map((reply: any) => {
-                const author = reply.users?.display_name || reply.users?.user_name || 'Fan';
-                const myVote = (myTakeVotes || []).find((v: any) => v.reply_id === reply.id);
-                const isNested = !!reply.parent_reply_id;
-                const parentReply = isNested ? activeThreadReplies.find((r: any) => r.id === reply.parent_reply_id) : null;
-                const parentAuthor = parentReply?.users?.display_name || parentReply?.users?.user_name;
-                return (
-                  <div key={reply.id} className={`${isNested ? 'ml-6 border-l-2 border-purple-100 pl-3' : ''}`}>
-                    {isNested && parentAuthor && (
-                      <p className="text-[10px] text-gray-400 mb-0.5">↩ replying to {parentAuthor}</p>
-                    )}
-                    <div className="flex items-start gap-2">
-                      <AvatarCircle name={author} size="sm" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className="text-xs font-semibold text-gray-800">{author}</span>
-                          <span className="text-[10px] text-gray-400">{timeAgo(reply.created_at)}</span>
-                        </div>
-                        <p className="text-sm text-gray-700 leading-relaxed">{reply.content}</p>
-                        <div className="flex items-center gap-3 mt-1.5">
-                          <button
-                            onClick={() => handleVoteReply(reply.id, 1)}
-                            className={`flex items-center gap-0.5 text-xs transition-colors ${myVote?.vote === 1 ? 'text-purple-600' : 'text-gray-400 hover:text-purple-500'}`}
-                          >
-                            <ArrowUp size={12} />{reply.upvotes || 0}
-                          </button>
-                          <button
-                            onClick={() => handleVoteReply(reply.id, -1)}
-                            className={`flex items-center gap-0.5 text-xs transition-colors ${myVote?.vote === -1 ? 'text-rose-500' : 'text-gray-400 hover:text-rose-400'}`}
-                          >
-                            <ArrowDown size={12} />{reply.downvotes || 0}
-                          </button>
-                          {isMember && (
-                            <button
-                              onClick={() => setReplyingToReplyId(reply.id)}
-                              className="text-xs text-gray-400 hover:text-purple-500"
-                            >
-                              Reply
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Reply input */}
-            {isMember && (
-              <div className="px-4 py-3 border-t border-gray-100 shrink-0 bg-white">
-                {replyingToReplyId && (
-                  <div className="flex items-center gap-1 mb-1.5">
-                    <span className="text-[10px] text-gray-400">Replying to a comment</span>
-                    <button onClick={() => setReplyingToReplyId(null)} className="text-[10px] text-purple-500 ml-1">Cancel</button>
-                  </div>
-                )}
-                <div className="flex items-end gap-2">
-                  <textarea
-                    value={takeReplyText}
-                    onChange={e => setTakeReplyText(e.target.value)}
-                    placeholder="Jump in…"
-                    rows={1}
-                    className="flex-1 px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 resize-none"
-                  />
-                  <button
-                    onClick={handleSubmitTakeReply}
-                    disabled={!takeReplyText.trim() || submittingTakeReply}
-                    className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center disabled:opacity-40 shrink-0"
-                  >
-                    <Send size={15} className="text-white" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* ── Conversation Composer Modal ── */}
       {isConvComposerOpen && (
