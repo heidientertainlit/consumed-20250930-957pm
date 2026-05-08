@@ -840,30 +840,12 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
                 </button>
               ))}
             </div>
-            {/* Row 2: Add Media pill + Post button */}
-            <div className="flex items-center px-2 pb-2 pt-1 gap-2">
-              {selectedMedia ? (
-                <div className="flex items-center gap-1.5 flex-1 min-w-0 px-3 py-1.5 bg-purple-50 border border-purple-200 rounded-full">
-                  <span className="text-[12px] font-medium text-purple-700 truncate">{selectedMedia.title}</span>
-                  <button onClick={() => setSelectedMedia(null)} className="shrink-0 text-purple-400 hover:text-purple-600">
-                    <X size={12} />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => { (document.querySelector('[data-testid="quick-action-search"]') as HTMLInputElement)?.focus(); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-[12px] font-medium text-gray-500 hover:border-purple-300 hover:text-purple-600 transition-colors"
-                >
-                  <Search size={12} />
-                  Add media
-                </button>
-              )}
-              <div className="flex-1" />
+            {/* Row 2: Post button — left-aligned under the type pills */}
+            <div className="px-2 pb-2 pt-0.5">
               <button
                 onClick={handlePost}
                 disabled={!canPost() || isPosting}
-                className="rounded-full bg-purple-500 hover:bg-purple-600 disabled:opacity-40 text-white text-[13px] font-semibold px-4 py-1.5 shrink-0 transition-colors"
+                className="rounded-full bg-purple-500 hover:bg-purple-600 disabled:opacity-40 text-white text-[13px] font-semibold px-4 py-1.5 transition-colors"
                 data-testid="submit-action-inline"
               >
                 {isPosting ? (
