@@ -797,7 +797,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar }: Navigatio
                 <button
                   onClick={() => {
                     setShowAddMenu(false);
-                    setDirectCapture(false);
+                    setDirectCapture(true);
                     setIsQuickActionOpen(true);
                   }}
                   className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform relative"
