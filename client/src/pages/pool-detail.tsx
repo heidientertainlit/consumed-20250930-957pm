@@ -1937,23 +1937,18 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
 
   // Partner room: categorized game sections
   const triviaPolls = featuredPolls.filter(p => p.type === 'trivia' || (p.category || '').includes('trivia'));
+  const pollsOnly = featuredPolls.filter(p => p.type === 'poll');
 
-  // Group trivia by show_tag, applying search filter
+  // Group trivia by show_tag
   const triviaByShow: Record<string, any[]> = {};
   for (const poll of triviaPolls) {
     const show = poll.show_tag || 'General';
-    if (showSearch && !show.toLowerCase().includes(showSearch.toLowerCase())) continue;
     if (!triviaByShow[show]) triviaByShow[show] = [];
     triviaByShow[show].push(poll);
   }
   const showGroups = Object.entries(triviaByShow);
 
-  const FILTER_PILLS = [
-    { key: 'all', label: 'All' },
-    { key: 'trivia', label: 'Trivia' },
-  ] as const;
-
-  const showTrivia = filter === 'all' || filter === 'trivia';
+  const showTrivia = true;
 
   return (
     <>
@@ -1978,51 +1973,30 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
       )}
     <div className="pb-4">
 
-      {/* ── Filter pills ── */}
-      <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-none">
-        {FILTER_PILLS.map(pill => (
-          <button
-            key={pill.key}
-            onClick={() => { setFilter(pill.key); if (pill.key !== 'trivia' && pill.key !== 'all') setShowSearch(''); }}
-            className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-              filter === pill.key
-                ? 'bg-purple-600 text-white border-purple-600'
-                : 'bg-white text-gray-500 border-gray-200 hover:border-purple-300 hover:text-purple-600'
-            }`}
-          >
-            {pill.label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Show search (visible when Trivia or All is selected) ── */}
-      {(filter === 'all' || filter === 'trivia') && triviaPolls.length > 0 && (
-        <div className="relative mb-4">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            value={showSearch}
-            onChange={e => setShowSearch(e.target.value)}
-            placeholder="Search by show..."
-            className="w-full pl-8 pr-4 py-2 rounded-xl bg-white border border-gray-200 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-200"
-          />
-          {showSearch && (
-            <button onClick={() => setShowSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-              <X size={13} />
-            </button>
-          )}
+      {/* ── Cast Your Vote: polls section (partner rooms only) ── */}
+      {pollsOnly.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+              <Vote size={14} className="text-purple-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900 leading-tight">Cast Your Vote</p>
+              <p className="text-[11px] text-gray-400 leading-tight">{pollsOnly.length} poll{pollsOnly.length !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {pollsOnly.map(poll => (
+              <PlayPollCard key={poll.id} poll={poll} token={token} onVoted={onRefresh} />
+            ))}
+          </div>
         </div>
       )}
 
       {/* ── Trivia Section ── */}
       {showTrivia && (
         <div className="mb-4">
-          {showGroups.length === 0 && !showSearch && <PlayComingSoon label="Trivia" />}
-          {showGroups.length === 0 && showSearch && (
-            <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-5 px-4 text-center mb-4">
-              <p className="text-gray-400 text-sm">No shows matching "{showSearch}"</p>
-            </div>
-          )}
+          {showGroups.length === 0 && <PlayComingSoon label="Trivia" />}
           {showGroups.map(([show, questions]) => {
             // Unanswered questions first, then answered ones
             const sortedQuestions = [...questions].sort((a, b) => {
