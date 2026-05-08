@@ -3416,13 +3416,12 @@ export default function PoolDetailPage() {
         </div>
       )}
 
-      {/* ── Conversation Composer Sheet ── */}
+      {/* ── Conversation Composer Modal ── */}
       {isConvComposerOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setIsConvComposerOpen(false)} />
-          <div className="relative bg-white rounded-t-3xl p-5 space-y-3 shadow-2xl">
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto -mt-1 mb-2" />
-            <div className="flex items-center justify-between mb-1">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setIsConvComposerOpen(false)} />
+          <div className="relative bg-white rounded-3xl p-5 space-y-3 shadow-2xl w-full max-w-sm">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 ${avatarColor(myName || '?')}`}>
                   {(myName?.[0] || session?.user?.email?.[0] || '?').toUpperCase()}
@@ -3431,20 +3430,22 @@ export default function PoolDetailPage() {
               </div>
               <button onClick={() => setIsConvComposerOpen(false)}><X size={18} className="text-gray-400" /></button>
             </div>
-            <input
-              autoFocus
-              value={convTitle}
-              onChange={e => setConvTitle(e.target.value)}
-              placeholder={`Start a thread about ${pool?.name || 'this room'}…`}
-              className="w-full text-[15px] font-semibold text-gray-800 placeholder:text-gray-300 bg-transparent outline-none border-none"
-            />
-            <textarea
-              value={convBody}
-              onChange={e => setConvBody(e.target.value)}
-              placeholder="Add more context… (optional)"
-              rows={3}
-              className="w-full text-[13px] text-gray-600 placeholder:text-gray-300 bg-transparent outline-none border-none resize-none"
-            />
+            <div className="border-t border-gray-100 pt-3 space-y-2">
+              <input
+                autoFocus
+                value={convTitle}
+                onChange={e => setConvTitle(e.target.value)}
+                placeholder={`Start a thread about ${pool?.name || 'this room'}…`}
+                className="w-full text-[15px] font-semibold text-gray-800 placeholder:text-gray-300 bg-transparent outline-none border-none"
+              />
+              <textarea
+                value={convBody}
+                onChange={e => setConvBody(e.target.value)}
+                placeholder="Add more context… (optional)"
+                rows={3}
+                className="w-full text-[13px] text-gray-600 placeholder:text-gray-300 bg-transparent outline-none border-none resize-none"
+              />
+            </div>
             <div className="border-t border-gray-100 pt-3">
               <button
                 onClick={handleSubmitConversation}
