@@ -2881,10 +2881,10 @@ export default function PoolDetailPage() {
                   )}
                 </div>
                 {/* Right: match % card */}
-                <div className="shrink-0 w-[88px] rounded-xl p-3 text-center" style={{ background: 'linear-gradient(135deg, #5b21b6, #4338ca)' }}>
-                  <p className="text-[8px] font-bold text-white/50 uppercase tracking-wider leading-none mb-2">You match</p>
-                  <p className="text-[26px] font-black text-white leading-none">{matchPct}%</p>
-                  <div className="h-[3px] rounded-full bg-white/20 overflow-hidden mt-2">
+                <div className="shrink-0 w-[72px] rounded-xl px-2 py-2 text-center -mt-1" style={{ background: 'linear-gradient(135deg, #5b21b6, #4338ca)' }}>
+                  <p className="text-[7px] font-bold text-white/50 uppercase tracking-wider leading-none mb-1">You match</p>
+                  <p className="text-[20px] font-black text-white leading-none">{matchPct}%</p>
+                  <div className="h-[2px] rounded-full bg-white/20 overflow-hidden mt-1.5">
                     <div className="h-full rounded-full bg-white/60" style={{ width: `${matchPct}%` }} />
                   </div>
                 </div>
