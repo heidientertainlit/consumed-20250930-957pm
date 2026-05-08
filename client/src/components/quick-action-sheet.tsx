@@ -844,7 +844,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
 
           {/* Show full form: media selected normally, OR always in room mode, OR direct capture (so user sees form before searching) */}
           {(selectedMedia || isRoomMode || preselectedIntent === "capture") && (
-            <div className="space-y-3">
+            <div className="space-y-3 pb-20">
               {/* Media card — shown when media is selected */}
               {selectedMedia && (
                 <div className="flex items-center gap-3 p-2 bg-purple-50 rounded-lg">
