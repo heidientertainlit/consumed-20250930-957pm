@@ -2897,16 +2897,6 @@ export default function PoolDetailPage() {
                 <span className={isPublic ? 'text-emerald-400' : 'text-white/40'}>{isPublic ? 'Public' : 'Private'}</span>
               </p>
             )}
-            {!isLoading && pool?.description && (
-              <p className="text-violet-300 text-[12px] font-semibold leading-snug mb-1 line-clamp-1">
-                {pool.description.split('.')[0].trim()}{pool.description.includes('.') ? '.' : ''}
-              </p>
-            )}
-            {!isLoading && pool?.description && pool.description.split('.').slice(1).join('.').trim() && (
-              <p className="text-white/35 text-[11px] leading-snug line-clamp-2">
-                {pool.description.split('.').slice(1).join('.').trim()}
-              </p>
-            )}
           </div>
         </div>
 
