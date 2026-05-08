@@ -3139,30 +3139,17 @@ export default function PoolDetailPage() {
                           <div className="flex items-center gap-4 mt-2.5 pt-2 border-t border-gray-100">
                             <button
                               onClick={() => handleVoteTake(t.id, 1)}
-                              className={`flex items-center gap-1 text-[11px] transition-colors ${myVote?.vote === 1 ? 'text-purple-600 font-semibold' : 'text-gray-400 hover:text-purple-500'}`}
+                              className={`flex items-center gap-1.5 text-[12px] transition-colors ${myVote?.vote === 1 ? 'text-purple-600 font-semibold' : 'text-gray-400 hover:text-purple-500'}`}
                             >
-                              <ChevronUp size={13} />
-                              <span>Upvote</span>
-                            </button>
-                            <button
-                              className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-rose-400 transition-colors"
-                            >
-                              <Heart size={12} />
-                              <span>Like</span>
-                            </button>
-                            <button
-                              onClick={() => handleVoteTake(t.id, -1)}
-                              className={`flex items-center gap-1 text-[11px] transition-colors ${myVote?.vote === -1 ? 'text-red-400 font-semibold' : 'text-gray-400 hover:text-red-400'}`}
-                            >
-                              <ThumbsDown size={12} />
-                              <span>Dislike</span>
+                              <ChevronUp size={14} />
+                              <span>{t.upvotes || 0}</span>
                             </button>
                             <button
                               onClick={() => { setActiveTake(activeTake?.id === t.id ? null : t); setTakeReplyText(''); setReplyingToReplyId(null); }}
-                              className={`flex items-center gap-1 text-[11px] transition-colors ml-auto ${activeTake?.id === t.id ? 'text-purple-500 font-semibold' : 'text-gray-400 hover:text-purple-500'}`}
+                              className={`flex items-center gap-1.5 text-[12px] transition-colors ${activeTake?.id === t.id ? 'text-purple-500 font-semibold' : 'text-gray-400 hover:text-purple-500'}`}
                             >
-                              <MessageSquare size={12} />
-                              <span>{t.reply_count || 0} {t.reply_count === 1 ? 'reply' : 'replies'}</span>
+                              <MessageCircle size={13} />
+                              <span>{t.reply_count || 0}</span>
                             </button>
                           </div>
                         </div>
@@ -3170,9 +3157,9 @@ export default function PoolDetailPage() {
 
                       {/* ── Inline reply thread ── */}
                       {activeTake?.id === t.id && (
-                        <div className="border-t border-gray-100 bg-gray-50/60">
+                        <div className="border-t border-gray-100 bg-gray-50/40">
                           {/* Replies */}
-                          <div className="px-4 pt-3 pb-1 space-y-3 max-h-72 overflow-y-auto">
+                          <div className="px-4 pt-3 pb-1 space-y-2.5 max-h-72 overflow-y-auto">
                             {activeThreadReplies.length === 0 && (
                               <p className="text-xs text-gray-400 text-center py-2">No replies yet — jump in!</p>
                             )}
@@ -3183,26 +3170,23 @@ export default function PoolDetailPage() {
                               const parentReply = isNested ? activeThreadReplies.find((r: any) => r.id === reply.parent_reply_id) : null;
                               const parentAuthor = parentReply?.users?.display_name || parentReply?.users?.user_name;
                               return (
-                                <div key={reply.id} className={isNested ? 'ml-5 border-l-2 border-purple-100 pl-3' : ''}>
+                                <div key={reply.id} className={isNested ? 'ml-7' : ''}>
                                   {isNested && parentAuthor && (
-                                    <p className="text-[10px] text-gray-400 mb-0.5">↩ replying to {parentAuthor}</p>
+                                    <p className="text-[10px] text-gray-400 mb-0.5 pl-1">↩ {parentAuthor}</p>
                                   )}
                                   <div className="flex items-start gap-2">
                                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-[9px] font-bold shrink-0 mt-0.5 ${avatarColor(rAuthor)}`}>
                                       {rAuthor[0].toUpperCase()}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-1.5 mb-0.5">
-                                        <span className="text-xs font-semibold text-gray-800">{rAuthor}</span>
+                                      <div className="bg-white rounded-2xl rounded-tl-sm px-3 py-2 border border-gray-100 shadow-sm">
+                                        <span className="text-[11px] font-semibold text-gray-800 mr-1.5">{rAuthor}</span>
                                         <span className="text-[10px] text-gray-400">{timeAgo(reply.created_at)}</span>
+                                        <p className="text-[13px] text-gray-700 leading-relaxed mt-0.5">{reply.content}</p>
                                       </div>
-                                      <p className="text-sm text-gray-700 leading-relaxed">{reply.content}</p>
-                                      <div className="flex items-center gap-3 mt-1">
+                                      <div className="flex items-center gap-3 mt-1 pl-1">
                                         <button onClick={() => handleVoteReply(reply.id, 1)} className={`flex items-center gap-0.5 text-[11px] transition-colors ${rVote?.vote === 1 ? 'text-purple-600' : 'text-gray-400 hover:text-purple-500'}`}>
-                                          <ArrowUp size={11} />{reply.upvotes || 0}
-                                        </button>
-                                        <button onClick={() => handleVoteReply(reply.id, -1)} className={`flex items-center gap-0.5 text-[11px] transition-colors ${rVote?.vote === -1 ? 'text-rose-500' : 'text-gray-400 hover:text-rose-400'}`}>
-                                          <ArrowDown size={11} />{reply.downvotes || 0}
+                                          <ChevronUp size={12} /><span>{reply.upvotes || 0}</span>
                                         </button>
                                         {isMember && (
                                           <button onClick={() => setReplyingToReplyId(reply.id)} className="text-[11px] text-gray-400 hover:text-purple-500">Reply</button>
@@ -3224,21 +3208,21 @@ export default function PoolDetailPage() {
                                   <button onClick={() => setReplyingToReplyId(null)} className="text-[10px] text-purple-500 ml-1">Cancel</button>
                                 </div>
                               )}
-                              <div className="flex items-end gap-2">
+                              <div className="flex items-center gap-2">
                                 <input
                                   type="text"
                                   value={takeReplyText}
                                   onChange={e => setTakeReplyText(e.target.value)}
                                   onKeyDown={e => { if (e.key === 'Enter') handleSubmitTakeReply(); }}
                                   placeholder="Jump in…"
-                                  className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-purple-400 bg-white"
+                                  className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-full focus:outline-none focus:border-purple-400 bg-white"
                                 />
                                 <button
                                   onClick={handleSubmitTakeReply}
                                   disabled={!takeReplyText.trim() || submittingTakeReply}
-                                  className="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center disabled:opacity-40 shrink-0"
+                                  className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center disabled:opacity-40 shrink-0"
                                 >
-                                  <Send size={15} className="text-white" />
+                                  <Send size={13} className="text-white" />
                                 </button>
                               </div>
                             </div>
