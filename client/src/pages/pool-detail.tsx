@@ -3050,14 +3050,15 @@ export default function PoolDetailPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setIsConvComposerOpen(true)}
-                    className="flex-1 flex items-center gap-2.5 bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 text-left"
+                    className="flex-1 flex items-center gap-2.5 rounded-2xl border shadow-sm px-4 py-3 text-left"
+                    style={{ background: 'linear-gradient(135deg, #1e1b4b, #312e81)', borderColor: '#3730a3' }}
                   >
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 ${avatarColor(myName || '?')}`}>
-                      {(myName?.[0] || session?.user?.email?.[0] || '?').toUpperCase()}
+                    <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center shrink-0">
+                      <MessageSquare size={14} className="text-white" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[12px] font-semibold text-gray-700">Start a conversation</p>
-                      <p className="text-[10px] text-gray-400 leading-tight">Open a thread</p>
+                      <p className="text-[12px] font-semibold text-white">Start a conversation</p>
+                      <p className="text-[10px] text-white/60 leading-tight">Open a thread</p>
                     </div>
                   </button>
                   <button
@@ -3065,12 +3066,12 @@ export default function PoolDetailPage() {
                     className="flex-1 flex items-center gap-2.5 rounded-2xl border shadow-sm px-4 py-3 text-left"
                     style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', borderColor: '#7c3aed' }}
                   >
-                    <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center shrink-0">
                       <Flame size={14} className="text-white" />
                     </div>
                     <div className="min-w-0">
                       <p className="text-[12px] font-semibold text-white">Drop a take</p>
-                      <p className="text-[10px] text-white/70 leading-tight">Review, poll, predict</p>
+                      <p className="text-[10px] text-white/60 leading-tight">Review, poll, predict</p>
                     </div>
                   </button>
                 </div>
@@ -3439,54 +3440,41 @@ export default function PoolDetailPage() {
       {isConvComposerOpen && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => setIsConvComposerOpen(false)} />
-          <div className="relative bg-white rounded-t-3xl p-5 space-y-4 shadow-2xl">
-            {/* Handle */}
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto -mt-1 mb-1" />
-            <div className="flex items-center justify-between">
-              <h3 className="text-[15px] font-bold text-gray-900">Start a conversation</h3>
+          <div className="relative bg-white rounded-t-3xl p-5 space-y-3 shadow-2xl">
+            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto -mt-1 mb-2" />
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0 ${avatarColor(myName || '?')}`}>
+                  {(myName?.[0] || session?.user?.email?.[0] || '?').toUpperCase()}
+                </div>
+                <span className="text-[13px] font-semibold text-gray-800">{myName || 'You'}</span>
+              </div>
               <button onClick={() => setIsConvComposerOpen(false)}><X size={18} className="text-gray-400" /></button>
             </div>
-            {/* Title */}
             <input
               autoFocus
               value={convTitle}
               onChange={e => setConvTitle(e.target.value)}
-              placeholder="What's your thought or question?"
-              className="w-full text-[14px] text-gray-800 placeholder:text-gray-400 bg-gray-50 rounded-xl px-4 py-3 outline-none border border-gray-100 focus:border-purple-300"
+              placeholder={`Start a thread about ${pool?.name || 'this room'}…`}
+              className="w-full text-[15px] font-semibold text-gray-800 placeholder:text-gray-300 bg-transparent outline-none border-none"
             />
-            {/* Body (optional) */}
             <textarea
               value={convBody}
               onChange={e => setConvBody(e.target.value)}
-              placeholder="Add more detail... (optional)"
+              placeholder="Add more context… (optional)"
               rows={3}
-              className="w-full text-[13px] text-gray-700 placeholder:text-gray-400 bg-gray-50 rounded-xl px-4 py-3 outline-none border border-gray-100 focus:border-purple-300 resize-none"
+              className="w-full text-[13px] text-gray-600 placeholder:text-gray-300 bg-transparent outline-none border-none resize-none"
             />
-            {/* Tag selector */}
-            <div className="flex gap-1.5 flex-wrap">
-              {([
-                { key: 'discussion', label: '💬 Discussion' },
-                { key: 'hot_take',   label: '🔥 Hot Take' },
-                { key: 'debate',     label: '⚡ Debate' },
-                { key: 'theory',     label: '💡 Theory' },
-                { key: 'question',   label: '❓ Question' },
-              ] as const).map(t => (
-                <button
-                  key={t.key}
-                  onClick={() => setConvTag(t.key)}
-                  className={`text-[12px] font-semibold px-3 py-1.5 rounded-full border transition-colors ${convTag === t.key ? 'bg-purple-600 text-white border-purple-600' : 'bg-gray-50 text-gray-600 border-gray-200'}`}
-                >{t.label}</button>
-              ))}
+            <div className="border-t border-gray-100 pt-3">
+              <button
+                onClick={handleSubmitConversation}
+                disabled={!convTitle.trim() || submittingConv}
+                className="w-full py-3 rounded-2xl text-white text-[14px] font-bold disabled:opacity-40 transition-opacity"
+                style={{ background: 'linear-gradient(135deg, #1e1b4b, #7c3aed)' }}
+              >
+                {submittingConv ? 'Posting…' : 'Post Thread'}
+              </button>
             </div>
-            {/* Post */}
-            <button
-              onClick={handleSubmitConversation}
-              disabled={!convTitle.trim() || submittingConv}
-              className="w-full py-3 rounded-2xl text-white text-[14px] font-bold disabled:opacity-40 transition-opacity"
-              style={{ background: 'linear-gradient(to right, #7c3aed, #6d28d9)' }}
-            >
-              {submittingConv ? 'Posting…' : 'Post Thread'}
-            </button>
           </div>
         </div>
       )}
