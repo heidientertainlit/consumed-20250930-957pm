@@ -1551,34 +1551,19 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         <>
           {/* Top: violet action section */}
           <div className="px-4 pt-4 pb-4 bg-gray-50">
-            <div className="flex items-center gap-2 mb-2">
-              <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase">What's Your Take?</p>
-              {mediaTypeLabel && <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">{mediaTypeLabel}</span>}
-            </div>
-            <div className="flex items-center gap-3 mb-3">
-              {posterEl}
-              <div className="flex-1 min-w-0">
-                {post.externalId && post.externalSource ? (
-                  <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
-                    <p className="text-sm font-bold text-gray-900 hover:text-purple-600 line-clamp-2">{post.mediaTitle}</p>
-                  </Link>
-                ) : (
-                  <p className="text-sm font-bold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
-                )}
-                {tasteAlignment !== null && (
-                  <p className="text-[11px] text-violet-600 italic mt-0.5">
-                    You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
-                  </p>
-                )}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] font-bold text-violet-600 tracking-widest uppercase">What's Your Take?</p>
+                {mediaTypeLabel && <span className="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">{mediaTypeLabel}</span>}
               </div>
               <div className="flex items-center px-2 py-1 rounded-full bg-gray-100 border border-gray-200 flex-shrink-0">
                 <span className="text-[10px] font-bold text-gray-500">+10 pts</span>
               </div>
             </div>
-            {/* Large interactive stars */}
+            {/* Large interactive stars — now above the poster */}
             <div
               ref={starsRef}
-              className="flex items-center gap-1.5 touch-none select-none"
+              className="flex items-center gap-1.5 touch-none select-none mb-3"
               onMouseLeave={() => setHoverRating(0)}
               onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
               onTouchMove={(e) => {
@@ -1622,6 +1607,24 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   {!ratingJustSaved && <button onClick={handleRemoveRating} className="text-[10px] text-red-400 hover:text-red-600 transition-colors">× Remove</button>}
                 </span>
               )}
+            </div>
+            {/* Media poster + title — below the stars */}
+            <div className="flex items-center gap-3 mt-1">
+              {posterEl}
+              <div className="flex-1 min-w-0">
+                {post.externalId && post.externalSource ? (
+                  <Link href={`/media/${normalizeMediaType(post.mediaType)}/${post.externalSource}/${post.externalId}`}>
+                    <p className="text-sm font-bold text-gray-900 hover:text-purple-600 line-clamp-2">{post.mediaTitle}</p>
+                  </Link>
+                ) : (
+                  <p className="text-sm font-bold text-gray-900 line-clamp-2">{post.mediaTitle}</p>
+                )}
+                {tasteAlignment !== null && (
+                  <p className="text-[11px] text-violet-600 italic mt-0.5">
+                    You're {tasteAlignment}% aligned with {post.user?.displayName || post.user?.username || 'them'}'s taste overall
+                  </p>
+                )}
+              </div>
             </div>
           </div>
           {/* Bottom: friend's content */}
@@ -1669,32 +1672,51 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               </div>
             )}
             {/* Other users who rated the same media */}
-            {relatedRatings.length > 0 && (
-              <div className="mt-2 border-t border-gray-100 pt-2 flex flex-col gap-2.5">
-                {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 2)).map(r => (
-                  <div key={r.userId} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-gray-700">{r.displayName || r.userName}</span>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <div className="flex items-center gap-0.5">
+            {relatedRatings.length > 0 && (() => {
+              const ratingColors = ['bg-violet-500','bg-orange-400','bg-teal-500','bg-rose-500','bg-blue-500','bg-emerald-500','bg-amber-500'];
+              return (
+                <div className="mt-3 border-t border-gray-100 pt-2.5 flex flex-col gap-0">
+                  {(showAllRelated ? relatedRatings : relatedRatings.slice(0, 3)).map((r, idx) => (
+                    <div key={r.userId} className="flex items-center gap-2.5 py-2 border-b border-gray-50 last:border-0">
+                      {/* Colored avatar circle */}
+                      <div className={`w-7 h-7 rounded-full ${ratingColors[idx % ratingColors.length]} flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0 overflow-hidden`}>
+                        {r.avatar
+                          ? <img src={r.avatar} className="w-full h-full object-cover" alt="" />
+                          : (r.displayName || r.userName || 'U')[0]?.toUpperCase()}
+                      </div>
+                      {/* Name */}
+                      <span className="text-xs font-semibold text-gray-800 flex-1 min-w-0 truncate">
+                        {r.displayName || r.userName}
+                      </span>
+                      {/* Stars */}
+                      <div className="flex items-center gap-0.5 flex-shrink-0">
                         {[1,2,3,4,5].map(s => {
-                          if (s <= Math.floor(r.rating)) return <Star key={s} size={12} className="text-yellow-400 fill-yellow-400" />;
-                          if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative"><Star size={12} className="text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={12} className="text-yellow-400 fill-yellow-400" /></div></div>;
-                          return <Star key={s} size={12} className="text-gray-200" />;
+                          if (s <= Math.floor(r.rating)) return <Star key={s} size={13} className="text-yellow-400 fill-yellow-400" />;
+                          if (s === Math.ceil(r.rating) && r.rating % 1 >= 0.5) return <div key={s} className="relative w-[13px] h-[13px]"><Star size={13} className="absolute text-gray-200" /><div className="absolute inset-0 overflow-hidden w-[50%]"><Star size={13} className="text-yellow-400 fill-yellow-400" /></div></div>;
+                          return <Star key={s} size={13} className="text-gray-200" />;
                         })}
                       </div>
-                      {ratingDiffLine(r.rating, 'mt-0.5 text-right')}
+                      {/* Reply button */}
+                      <button
+                        onClick={() => {
+                          const name = r.displayName || r.userName || '';
+                          setCommentText(`@${name} `);
+                          if (!showComments) handleCommentToggle();
+                        }}
+                        className="text-[10px] font-semibold text-gray-400 hover:text-violet-500 transition-colors flex-shrink-0 ml-1"
+                      >
+                        Reply
+                      </button>
                     </div>
-                  </div>
-                ))}
-                {relatedRatings.length > 2 && (
-                  <button onClick={() => setShowAllRelated(v => !v)} className="text-[10px] text-violet-500 font-medium text-left">
-                    {showAllRelated ? 'Show less' : `+ ${relatedRatings.length - 2} more`}
-                  </button>
-                )}
-              </div>
-            )}
+                  ))}
+                  {relatedRatings.length > 3 && (
+                    <button onClick={() => setShowAllRelated(v => !v)} className="text-[10px] text-violet-500 font-medium text-left pt-1.5">
+                      {showAllRelated ? 'Show less' : `+ ${relatedRatings.length - 3} more`}
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
             <div className="pt-2 border-t border-gray-50 mt-2">{actionBar}</div>
             {/* Discussion thread — always visible for action-first cards */}
             <div className="mt-3 pt-3 border-t border-gray-100">
