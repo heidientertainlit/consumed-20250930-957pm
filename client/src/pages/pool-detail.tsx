@@ -2024,13 +2024,23 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
             </div>
           )}
           {showGroups.map(([show, questions]) => {
+            // Unanswered questions first, then answered ones
+            const sortedQuestions = [...questions].sort((a, b) => {
+              const aAnswered = !!a.user_vote;
+              const bAnswered = !!b.user_vote;
+              if (aAnswered === bAnswered) return 0;
+              return aAnswered ? 1 : -1;
+            });
+
             const TriviaCarousel = () => {
               const [idx, setIdx] = useState(0);
-              const [answered, setAnswered] = useState(false);
-              const q = questions[idx];
-              const hasNext = idx < questions.length - 1;
+              const [justAnswered, setJustAnswered] = useState(false);
+              const q = sortedQuestions[idx];
+              const hasNext = idx < sortedQuestions.length - 1;
+              // Show next button if already answered from a prior session OR just answered now
+              const isAnswered = !!q.user_vote || justAnswered;
 
-              const goNext = () => { setIdx(i => i + 1); setAnswered(false); };
+              const goNext = () => { setIdx(i => i + 1); setJustAnswered(false); };
 
               return (
                 <div className="mb-6">
@@ -2042,22 +2052,22 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-gray-900 leading-tight">Trivia</p>
                       <p className="text-[11px] text-gray-400 leading-tight">
-                        {questions.length} question{questions.length !== 1 ? 's' : ''}
+                        {sortedQuestions.length} question{sortedQuestions.length !== 1 ? 's' : ''}
                       </p>
                     </div>
-                    {questions.length > 1 && (
+                    {sortedQuestions.length > 1 && (
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
-                          onClick={() => { setIdx(i => Math.max(0, i - 1)); setAnswered(false); }}
+                          onClick={() => { setIdx(i => Math.max(0, i - 1)); setJustAnswered(false); }}
                           disabled={idx === 0}
                           className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 transition-colors"
                         >
                           <ChevronLeft size={14} className="text-gray-600" />
                         </button>
-                        <span className="text-xs font-semibold text-gray-500 tabular-nums">{idx + 1}/{questions.length}</span>
+                        <span className="text-xs font-semibold text-gray-500 tabular-nums">{idx + 1}/{sortedQuestions.length}</span>
                         <button
                           onClick={goNext}
-                          disabled={idx === questions.length - 1}
+                          disabled={idx === sortedQuestions.length - 1}
                           className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 transition-colors"
                         >
                           <ChevronRight size={14} className="text-gray-600" />
@@ -2067,9 +2077,9 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
                   </div>
                   <PlayTriviaCard key={q.id} poll={q} token={token} onVoted={(correct) => {
                     handleTriviaAnswered(correct);
-                    setAnswered(true);
+                    setJustAnswered(true);
                   }} />
-                  {answered && hasNext && (
+                  {isAnswered && hasNext && (
                     <button
                       onClick={goNext}
                       className="w-full mt-3 py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-sm font-semibold transition-all flex items-center justify-center gap-2"
@@ -2077,7 +2087,7 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
                       Next question <ChevronRight size={15} />
                     </button>
                   )}
-                  {answered && !hasNext && (
+                  {isAnswered && !hasNext && (
                     <p className="text-center text-xs text-gray-400 mt-3 font-medium">All done! 🎉</p>
                   )}
                 </div>
