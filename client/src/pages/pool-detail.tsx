@@ -2026,7 +2026,12 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
           {showGroups.map(([show, questions]) => {
             const TriviaCarousel = () => {
               const [idx, setIdx] = useState(0);
+              const [answered, setAnswered] = useState(false);
               const q = questions[idx];
+              const hasNext = idx < questions.length - 1;
+
+              const goNext = () => { setIdx(i => i + 1); setAnswered(false); };
+
               return (
                 <div className="mb-6">
                   {/* Header */}
@@ -2043,7 +2048,7 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
                     {questions.length > 1 && (
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
-                          onClick={() => setIdx(i => Math.max(0, i - 1))}
+                          onClick={() => { setIdx(i => Math.max(0, i - 1)); setAnswered(false); }}
                           disabled={idx === 0}
                           className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 transition-colors"
                         >
@@ -2051,7 +2056,7 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
                         </button>
                         <span className="text-xs font-semibold text-gray-500 tabular-nums">{idx + 1}/{questions.length}</span>
                         <button
-                          onClick={() => setIdx(i => Math.min(questions.length - 1, i + 1))}
+                          onClick={goNext}
                           disabled={idx === questions.length - 1}
                           className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center disabled:opacity-30 hover:bg-gray-200 transition-colors"
                         >
@@ -2062,8 +2067,19 @@ function PlayTab({ featuredPolls, picks, token, isHost, poolId, pool, onRefresh,
                   </div>
                   <PlayTriviaCard key={q.id} poll={q} token={token} onVoted={(correct) => {
                     handleTriviaAnswered(correct);
-                    if (idx < questions.length - 1) setTimeout(() => setIdx(i => i + 1), 800);
+                    setAnswered(true);
                   }} />
+                  {answered && hasNext && (
+                    <button
+                      onClick={goNext}
+                      className="w-full mt-3 py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 active:scale-[0.98] text-white text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                    >
+                      Next question <ChevronRight size={15} />
+                    </button>
+                  )}
+                  {answered && !hasNext && (
+                    <p className="text-center text-xs text-gray-400 mt-3 font-medium">All done! 🎉</p>
+                  )}
                 </div>
               );
             };
