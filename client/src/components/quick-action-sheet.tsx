@@ -965,9 +965,6 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
           <div>
             {!selectedMedia ? (
               <>
-                {trackPostType === 'review' && (
-                  <p className="text-xs text-gray-400 mb-1.5">Media required to post a review.</p>
-                )}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                   <input
@@ -1582,7 +1579,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
   return (
     <>
     <Sheet open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <SheetContent side="bottom" className="rounded-t-3xl max-h-[85svh] overflow-y-auto !bg-white border-t border-gray-100 pb-safe" style={{ backgroundColor: 'white', maxHeight: '85svh' }}>
+      <SheetContent side="bottom" className="rounded-t-3xl max-h-[95svh] overflow-y-auto !bg-white border-t border-gray-100 pb-safe" style={{ backgroundColor: 'white', maxHeight: '95svh' }}>
         {!selectedIntent ? (
           <>
             <SheetHeader className="pb-4">
