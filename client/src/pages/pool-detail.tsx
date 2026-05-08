@@ -918,7 +918,7 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
   const pill = typeConfig[post.post_type] || { label: 'Post', color: '#6b7280' };
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div className="rounded-2xl overflow-hidden" style={{ background: '#1e1b2e', border: '1px solid rgba(139,92,246,0.2)' }}>
       <div className="px-3.5 pt-3 pb-2.5">
         {/* Header row */}
         <div className="flex items-center justify-between mb-2">
@@ -932,7 +932,7 @@ function RoomPostCard({ post, currentUserId, onDelete }: {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: `${pill.color}22`, color: pill.color }}>
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: `${pill.color}33`, color: pill.color }}>
               {pill.label}
             </span>
             {isOwn && (
