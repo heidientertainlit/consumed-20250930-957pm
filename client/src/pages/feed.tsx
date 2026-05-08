@@ -1737,20 +1737,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   })}
                 </div>
               )}
-              {/* "Join the discussion" / load more */}
-              <button
-                onClick={handleCommentToggle}
-                className="flex items-center gap-2 text-xs text-gray-400 hover:text-violet-600 transition-colors group"
-              >
-                <MessageCircle size={14} className="text-violet-300 group-hover:text-violet-500 flex-shrink-0" />
-                <span className="font-medium">
-                  {comments.length > 2
-                    ? `${Math.max(post.comments || 0, comments.length) - 2} more replies`
-                    : post.comments && post.comments > 0 && !showComments
-                    ? 'See the discussion'
-                    : 'Join the discussion'}
-                </span>
-              </button>
             </div>
           </div>
         </>
